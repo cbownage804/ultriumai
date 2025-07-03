@@ -20,10 +20,18 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const mainItems = [
+const chatItems = [
   { title: "Chat", url: "/dashboard", icon: MessageSquare },
-  { title: "Custom GPTs", url: "/dashboard/custom-gpts", icon: Bot },
   { title: "History", url: "/dashboard/history", icon: History },
+];
+
+const customGPTItems = [
+  { title: "Build", url: "/dashboard/custom-gpts/build", icon: Bot },
+  { title: "Personalize", url: "/dashboard/custom-gpts/personalize", icon: User },
+  { title: "Actions", url: "/dashboard/custom-gpts/actions", icon: Settings, badge: "Beta" },
+  { title: "Ask", url: "/dashboard/custom-gpts/ask", icon: MessageSquare },
+  { title: "Deploy", url: "/dashboard/custom-gpts/deploy", icon: Settings },
+  { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings },
 ];
 
 const settingsItems = [
@@ -73,20 +81,38 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+          <SidebarGroupLabel>Chat</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => (
+              {chatItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavClass}>
                       <item.icon className="h-4 w-4" />
+                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Custom GPTs</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {customGPTItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavClass}>
+                      <item.icon className="h-4 w-4" />
                       {!isCollapsed && (
                         <span className="ml-2 flex items-center gap-2">
                           {item.title}
-                          {item.title === "Custom GPTs" && subscription.subscription_tier === "free" && (
-                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
-                              1
+                          {item.badge && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                              {item.badge}
                             </span>
                           )}
                         </span>

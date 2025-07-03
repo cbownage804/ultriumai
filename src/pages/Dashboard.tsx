@@ -38,13 +38,23 @@ const Dashboard = () => {
   const isSettingsPage = location.pathname.includes('/settings');
   const isProfilePage = location.pathname.includes('/profile');
   const isHistoryPage = location.pathname.includes('/history');
-  const isCustomGPTPage = location.pathname.includes('/custom-gpts');
+  const isCustomGPTBuildPage = location.pathname.includes('/custom-gpts/build');
+  const isCustomGPTPersonalizePage = location.pathname.includes('/custom-gpts/personalize');
+  const isCustomGPTActionsPage = location.pathname.includes('/custom-gpts/actions');
+  const isCustomGPTAskPage = location.pathname.includes('/custom-gpts/ask');
+  const isCustomGPTDeployPage = location.pathname.includes('/custom-gpts/deploy');
+  const isCustomGPTAnalyzePage = location.pathname.includes('/custom-gpts/analyze');
   
   const getPageTitle = () => {
     if (isSettingsPage) return "Settings";
     if (isProfilePage) return "Profile"; 
     if (isHistoryPage) return "History";
-    if (isCustomGPTPage) return "Custom GPTs";
+    if (isCustomGPTBuildPage) return "Build Custom GPT";
+    if (isCustomGPTPersonalizePage) return "Personalize";
+    if (isCustomGPTActionsPage) return "Actions";
+    if (isCustomGPTAskPage) return "Ask";
+    if (isCustomGPTDeployPage) return "Deploy";
+    if (isCustomGPTAnalyzePage) return "Analyze";
     return "Chat";
   };
 
@@ -52,7 +62,12 @@ const Dashboard = () => {
     if (isSettingsPage) return <SettingsPage />;
     if (isProfilePage) return <ProfilePage />;
     if (isHistoryPage) return <div className="p-6">History page coming soon...</div>;
-    if (isCustomGPTPage) return <div className="p-6"><CustomGPTManager /></div>;
+    if (isCustomGPTBuildPage) return <div className="p-6"><CustomGPTManager /></div>;
+    if (isCustomGPTPersonalizePage) return <div className="p-6">Personalize page coming soon...</div>;
+    if (isCustomGPTActionsPage) return <div className="p-6">Actions page coming soon...</div>;
+    if (isCustomGPTAskPage) return <div className="p-6">Ask page coming soon...</div>;
+    if (isCustomGPTDeployPage) return <div className="p-6">Deploy page coming soon...</div>;
+    if (isCustomGPTAnalyzePage) return <div className="p-6">Analyze page coming soon...</div>;
     return <ChatInterface />;
   };
 
