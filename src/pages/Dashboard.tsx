@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import ChatInterface from "@/components/ChatInterface";
 import SettingsPage from "@/pages/SettingsPage";
 import ProfilePage from "@/pages/ProfilePage";
+import CustomGPTManager from "@/components/CustomGPTManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -37,11 +38,13 @@ const Dashboard = () => {
   const isSettingsPage = location.pathname.includes('/settings');
   const isProfilePage = location.pathname.includes('/profile');
   const isHistoryPage = location.pathname.includes('/history');
+  const isCustomGPTPage = location.pathname.includes('/custom-gpts');
   
   const getPageTitle = () => {
     if (isSettingsPage) return "Settings";
     if (isProfilePage) return "Profile"; 
     if (isHistoryPage) return "History";
+    if (isCustomGPTPage) return "Custom GPTs";
     return "Chat";
   };
 
@@ -49,6 +52,7 @@ const Dashboard = () => {
     if (isSettingsPage) return <SettingsPage />;
     if (isProfilePage) return <ProfilePage />;
     if (isHistoryPage) return <div className="p-6">History page coming soon...</div>;
+    if (isCustomGPTPage) return <div className="p-6"><CustomGPTManager /></div>;
     return <ChatInterface />;
   };
 

@@ -1,7 +1,8 @@
-import { MessageSquare, History, Settings, User, LogOut } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
 
@@ -21,6 +22,7 @@ import {
 
 const mainItems = [
   { title: "Chat", url: "/dashboard", icon: MessageSquare },
+  { title: "Custom GPTs", url: "/dashboard/custom-gpts", icon: Bot },
   { title: "History", url: "/dashboard/history", icon: History },
 ];
 
@@ -33,6 +35,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { subscription } = useSubscription();
   const { toast } = useToast();
   
   const isCollapsed = state === "collapsed";
@@ -78,7 +81,16 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavClass}>
                       <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                      {!isCollapsed && (
+                        <span className="ml-2 flex items-center gap-2">
+                          {item.title}
+                          {item.title === "Custom GPTs" && subscription.subscription_tier === "free" && (
+                            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                              1
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

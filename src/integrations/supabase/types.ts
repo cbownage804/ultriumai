@@ -74,6 +74,45 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_gpts: {
+        Row: {
+          avatar_url: string | null
+          chat_count: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          system_prompt: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          chat_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          system_prompt: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          chat_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          system_prompt?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
