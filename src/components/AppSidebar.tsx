@@ -131,38 +131,38 @@ export function AppSidebar() {
         {subscription.subscription_tier === "free" && !isCollapsed && (
           <SidebarGroup>
             <SidebarGroupContent>
-              <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+              <Card className="mx-2 mb-2 border-yellow-200 bg-yellow-50">
                 <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-black">
-                    <Star className="h-4 w-4 text-purple-500" />
+                  <CardTitle className="text-sm flex items-center gap-2 text-yellow-800">
+                    <Star className="h-4 w-4 text-yellow-600" />
                     Go Premium
                   </CardTitle>
-                  <CardDescription className="text-xs text-black/70">
+                  <CardDescription className="text-xs text-yellow-700">
                     Unlock advanced features
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
                   <div className="space-y-1 mb-3">
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-yellow-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>Document Upload</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-yellow-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>API Access</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-yellow-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>Custom Branding</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-yellow-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>Export Conversations</span>
                     </div>
                   </div>
                   <Button 
                     size="sm" 
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
                     onClick={() => navigate('/pricing')}
                   >
                     <Star className="h-3 w-3 mr-2" />
@@ -178,38 +178,38 @@ export function AppSidebar() {
         {subscription.subscription_tier !== "enterprise" && !isCollapsed && (
           <SidebarGroup>
             <SidebarGroupContent>
-              <Card className="mx-2 mb-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
+              <Card className="mx-2 mb-2 border-orange-200 bg-orange-50">
                 <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-black">
-                    <Crown className="h-4 w-4 text-orange-500" />
+                  <CardTitle className="text-sm flex items-center gap-2 text-orange-800">
+                    <Crown className="h-4 w-4 text-orange-600" />
                     Go Enterprise
                   </CardTitle>
-                  <CardDescription className="text-xs text-black/70">
+                  <CardDescription className="text-xs text-orange-700">
                     Maximum power & flexibility
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
                   <div className="space-y-1 mb-3">
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-orange-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>Everything in Premium</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-orange-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>AI Model Selection</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-orange-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>Priority Support</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
+                    <div className="flex items-center gap-2 text-xs text-orange-800">
+                      <Check className="h-3 w-3 text-green-600" />
                       <span>Advanced Analytics</span>
                     </div>
                   </div>
                   <Button 
                     size="sm" 
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white"
                     onClick={() => navigate('/pricing')}
                   >
                     <Crown className="h-3 w-3 mr-2" />
