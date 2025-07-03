@@ -464,13 +464,13 @@ const CustomGPTActions = () => {
                 icon: Settings
               },
               {
-                name: 'Email Security Guard',
+                name: 'Ultrium SafeEmail™ Scanner',
                 description: 'Email header analysis and reputation checking',
                 type: 'security',
                 icon: Settings
               },
               {
-                name: 'Attachment Shield',
+                name: 'Ultrium SafeDoc™ Scanner',
                 description: 'File hash analysis and malware detection',
                 type: 'security',
                 icon: Settings
