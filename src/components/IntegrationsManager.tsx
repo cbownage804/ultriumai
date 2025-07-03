@@ -181,7 +181,7 @@ const IntegrationsManager = ({ gptId, gptName }: IntegrationsManagerProps) => {
   const { user } = useAuth();
   const { subscription } = useSubscription();
 
-  const canUseIntegrations = subscription.subscription_tier !== "free";
+  const canUseIntegrations = subscription.subscription_tier === "enterprise";
 
   useEffect(() => {
     loadIntegrations();
@@ -215,8 +215,8 @@ const IntegrationsManager = ({ gptId, gptName }: IntegrationsManagerProps) => {
 
     if (!canUseIntegrations) {
       toast({
-        title: "Premium Feature",
-        description: "Integrations are available for Premium and Enterprise plans.",
+        title: "Enterprise Only",
+        description: "Integrations are available for Enterprise plans only.",
         variant: "destructive",
       });
       return;
@@ -670,9 +670,9 @@ const IntegrationsManager = ({ gptId, gptName }: IntegrationsManagerProps) => {
             <div className="flex items-center gap-3">
               <Crown className="w-6 h-6 text-yellow-600" />
               <div>
-                <h4 className="font-medium text-yellow-800">Premium Feature</h4>
+                <h4 className="font-medium text-yellow-800">Enterprise Only</h4>
                 <p className="text-sm text-yellow-700">
-                  Integrations are available for Premium and Enterprise subscribers. Upgrade to connect your GPTs to external services.
+                  Integrations are available for Enterprise subscribers only. Upgrade to connect your GPTs to external services.
                 </p>
               </div>
             </div>
