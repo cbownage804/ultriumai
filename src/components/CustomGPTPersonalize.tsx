@@ -379,45 +379,54 @@ const CustomGPTPersonalize = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Personalize Your GPT</h1>
-        <p className="text-muted-foreground mt-2">
-          Settings here apply to all deployment options.
-        </p>
-      </div>
+    <div className="space-y-8 p-6 bg-gradient-to-br from-background via-background to-primary/5 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center space-y-4 mb-8">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+            <Settings className="h-4 w-4 mr-2" />
+            UltriumGPT Configuration
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+            Personalize Your AI Assistant
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Craft the perfect AI experience with advanced customization options that reflect your brand and workflow.
+          </p>
+        </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="general" className="flex items-center gap-1">
-            <Settings className="h-4 w-4" />
-            General
-          </TabsTrigger>
-          <TabsTrigger value="persona" className="flex items-center gap-1">
-            <User className="h-4 w-4" />
-            Persona
-          </TabsTrigger>
-          <TabsTrigger value="conversation" className="flex items-center gap-1">
-            <MessageSquare className="h-4 w-4" />
-            Conversation
-          </TabsTrigger>
-          <TabsTrigger value="citations" className="flex items-center gap-1">
-            <Quote className="h-4 w-4" />
-            Citations
-          </TabsTrigger>
-          <TabsTrigger value="intelligence" className="flex items-center gap-1">
-            <Brain className="h-4 w-4" />
-            Intelligence
-          </TabsTrigger>
-          <TabsTrigger value="advanced" className="flex items-center gap-1">
-            <Sliders className="h-4 w-4" />
-            Advanced
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-1">
-            <Shield className="h-4 w-4" />
-            Security
-          </TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="general" className="space-y-8">
+          <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b pb-4">
+            <TabsList className="grid w-full grid-cols-7 h-14 p-1 bg-muted/50 rounded-xl">
+              <TabsTrigger value="general" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <Settings className="h-4 w-4" />
+                <span className="text-xs">General</span>
+              </TabsTrigger>
+              <TabsTrigger value="persona" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <User className="h-4 w-4" />
+                <span className="text-xs">Persona</span>
+              </TabsTrigger>
+              <TabsTrigger value="conversation" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <MessageSquare className="h-4 w-4" />
+                <span className="text-xs">Conversation</span>
+              </TabsTrigger>
+              <TabsTrigger value="citations" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <Quote className="h-4 w-4" />
+                <span className="text-xs">Citations</span>
+              </TabsTrigger>
+              <TabsTrigger value="intelligence" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <Brain className="h-4 w-4" />
+                <span className="text-xs">Intelligence</span>
+              </TabsTrigger>
+              <TabsTrigger value="advanced" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <Sliders className="h-4 w-4" />
+                <span className="text-xs">Advanced</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <Shield className="h-4 w-4" />
+                <span className="text-xs">Security</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
         <TabsContent value="general" className="space-y-6">
           <Card>
@@ -1328,12 +1337,25 @@ const CustomGPTPersonalize = () => {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+        </Tabs>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg" disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Settings"}
-        </Button>
+        <div className="flex justify-center pt-8">
+          <Button 
+            onClick={handleSave} 
+            size="lg" 
+            disabled={isLoading}
+            className="px-8 py-3 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all shadow-lg hover:shadow-xl"
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Saving...
+              </>
+            ) : (
+              "Save Configuration"
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
