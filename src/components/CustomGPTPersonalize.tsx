@@ -211,7 +211,6 @@ const CustomGPTPersonalize = () => {
 
   const isAdvancedFeatureAvailable = (feature: string) => {
     switch (feature) {
-      case "branding":
       case "documents":
       case "embedding": 
       case "api":
@@ -219,6 +218,9 @@ const CustomGPTPersonalize = () => {
       case "should_mention_sources":
       case "conversation_retention":
         return subscription.subscription_tier !== "free";
+      case "branding":
+      case "ai_model":
+        return subscription.subscription_tier === "enterprise";
       case "ai_model":
         return subscription.subscription_tier === "enterprise";
       default:
@@ -1166,17 +1168,6 @@ const CustomGPTPersonalize = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Affiliate ID</Label>
-                <Input
-                  value={gptData.affiliate_id}
-                  onChange={(e) => setGptData(prev => ({ ...prev, affiliate_id: e.target.value }))}
-                  placeholder="Enter your Affiliate ID here"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Don't have an Affiliate ID? <span className="text-primary cursor-pointer">Become A Partner</span>
-                </p>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
