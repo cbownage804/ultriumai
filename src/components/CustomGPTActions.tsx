@@ -46,6 +46,8 @@ const CustomGPTActions = () => {
     config: {}
   });
 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const { toast } = useToast();
 
   const actionTypes = [
@@ -95,6 +97,20 @@ const CustomGPTActions = () => {
     toast({
       title: "Testing action",
       description: `Running test for ${action.name}...`,
+    });
+  };
+
+  const useTemplate = (template: any) => {
+    setNewAction({
+      name: template.name,
+      description: template.description,
+      type: template.type,
+      config: template.type === 'security' ? { 
+        scannerType: template.name.includes('SafeLink') ? 'link' : 
+                    template.name.includes('Email') ? 'email' : 'attachment',
+        threatLevel: 'standard',
+        autoBlock: true 
+      } : {}
     });
   };
 
@@ -498,24 +514,140 @@ const CustomGPTActions = () => {
             ].map((template, index) => {
               const Icon = template.icon;
               return (
-                <Card key={index} className="cursor-pointer hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded bg-muted">
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm">{template.name}</h4>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {template.description}
-                        </p>
-                        <Badge variant="outline" className="text-xs mt-2 capitalize">
-                          {template.type}
-                        </Badge>
-                      </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Card 
+                      key={index} 
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => useTemplate(template)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded bg-muted">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-sm">{template.name}</h4>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {template.description}
+                            </p>
+                            <Badge variant="outline" className="text-xs mt-2 capitalize">
+                              {template.type}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Create New Action</DialogTitle>
+                      <DialogDescription>
+                        Add a new capability to your Custom GPT
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <Tabs defaultValue="basic" className="space-y-4">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                        <TabsTrigger value="config">Configuration</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="basic" className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="template-action-name">Action Name</Label>
+                          <Input
+                            id="template-action-name"
+                            placeholder="e.g. Email Sender, Data Analyzer"
+                            value={newAction.name}
+                            onChange={(e) => setNewAction(prev => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="template-action-description">Description</Label>
+                          <Textarea
+                            id="template-action-description"
+                            placeholder="Describe what this action does..."
+                            value={newAction.description}
+                            onChange={(e) => setNewAction(prev => ({ ...prev, description: e.target.value }))}
+                            rows={3}
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Action Type</Label>
+                          <Select 
+                            value={newAction.type} 
+                            onValueChange={(value: Action['type']) => setNewAction(prev => ({ ...prev, type: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {actionTypes.map(type => {
+                                const Icon = type.icon;
+                                return (
+                                  <SelectItem key={type.value} value={type.value}>
+                                    <div className="flex items-center gap-2">
+                                      <Icon className={`h-4 w-4 ${type.color}`} />
+                                      {type.label}
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="config" className="space-y-4">
+                        {newAction.type === 'security' && (
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>Security Scanner Type</Label>
+                              <Select defaultValue="link">
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="link">Link Scanner</SelectItem>
+                                  <SelectItem value="email">Email Security</SelectItem>
+                                  <SelectItem value="attachment">Attachment Scanner</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Threat Detection Level</Label>
+                              <Select defaultValue="standard">
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="basic">Basic</SelectItem>
+                                  <SelectItem value="standard">Standard</SelectItem>
+                                  <SelectItem value="advanced">Advanced</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Auto-Block Malicious Content</Label>
+                              <div className="flex items-center space-x-2">
+                                <Switch defaultChecked />
+                                <span className="text-sm text-muted-foreground">Automatically block detected threats</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </TabsContent>
+                    </Tabs>
+                    
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline">Cancel</Button>
+                      <Button onClick={createAction}>Create Action</Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </DialogContent>
+                </Dialog>
               );
             })}
           </div>
