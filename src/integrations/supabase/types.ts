@@ -84,8 +84,10 @@ export type Database = {
           description: string | null
           embed_enabled: boolean
           id: string
+          integration_settings: Json | null
           is_active: boolean
           logo_url: string | null
+          max_integrations: number | null
           name: string
           system_prompt: string
           theme_color: string | null
@@ -101,8 +103,10 @@ export type Database = {
           description?: string | null
           embed_enabled?: boolean
           id?: string
+          integration_settings?: Json | null
           is_active?: boolean
           logo_url?: string | null
+          max_integrations?: number | null
           name: string
           system_prompt: string
           theme_color?: string | null
@@ -118,8 +122,10 @@ export type Database = {
           description?: string | null
           embed_enabled?: boolean
           id?: string
+          integration_settings?: Json | null
           is_active?: boolean
           logo_url?: string | null
+          max_integrations?: number | null
           name?: string
           system_prompt?: string
           theme_color?: string | null
@@ -165,6 +171,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gpt_documents_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gpt_integrations: {
+        Row: {
+          config: Json
+          created_at: string
+          credentials_encrypted: string | null
+          gpt_id: string | null
+          id: string
+          integration_name: string
+          integration_type: string
+          is_active: boolean
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          credentials_encrypted?: string | null
+          gpt_id?: string | null
+          id?: string
+          integration_name: string
+          integration_type: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          credentials_encrypted?: string | null
+          gpt_id?: string | null
+          id?: string
+          integration_name?: string
+          integration_type?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gpt_integrations_gpt_id_fkey"
             columns: ["gpt_id"]
             isOneToOne: false
             referencedRelation: "custom_gpts"

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import IntegrationsManager from "@/components/IntegrationsManager";
 import { 
   Upload, 
   Palette, 
@@ -22,7 +23,8 @@ import {
   Copy,
   ExternalLink,
   Trash2,
-  Crown
+  Crown,
+  Puzzle
 } from "lucide-react";
 
 interface AdvancedGPTEditorProps {
@@ -218,10 +220,11 @@ const AdvancedGPTEditor = ({ gpt, onUpdate, onClose }: AdvancedGPTEditorProps) =
       </div>
 
       <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="basic">Basic</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge</TabsTrigger>
+          <TabsTrigger value="integrations">Integrations</TabsTrigger>
           <TabsTrigger value="embedding">Embedding</TabsTrigger>
           <TabsTrigger value="api">API</TabsTrigger>
         </TabsList>
@@ -360,6 +363,10 @@ const AdvancedGPTEditor = ({ gpt, onUpdate, onClose }: AdvancedGPTEditorProps) =
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="integrations" className="space-y-4">
+          <IntegrationsManager gptId={gpt.id} gptName={gpt.name} />
         </TabsContent>
 
         <TabsContent value="embedding" className="space-y-4">
