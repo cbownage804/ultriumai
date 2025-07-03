@@ -16,7 +16,7 @@ interface Action {
   id: string;
   name: string;
   description: string;
-  type: 'document' | 'api' | 'webhook' | 'database';
+  type: 'document' | 'api' | 'webhook' | 'database' | 'security';
   config: any;
   enabled: boolean;
   beta?: boolean;
@@ -52,7 +52,8 @@ const CustomGPTActions = () => {
     { value: 'document', label: 'Document Analysis', icon: FileText, color: 'text-blue-600' },
     { value: 'api', label: 'API Integration', icon: Globe, color: 'text-green-600' },
     { value: 'webhook', label: 'Webhook Action', icon: Code, color: 'text-purple-600' },
-    { value: 'database', label: 'Database Query', icon: Database, color: 'text-orange-600' }
+    { value: 'database', label: 'Database Query', icon: Database, color: 'text-orange-600' },
+    { value: 'security', label: 'Security Scanner', icon: Settings, color: 'text-red-600' }
   ];
 
   const toggleAction = (id: string) => {
@@ -288,6 +289,44 @@ const CustomGPTActions = () => {
                     </div>
                   </div>
                 )}
+                
+                {newAction.type === 'security' && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Security Scanner Type</Label>
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select scanner type..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="link">Link Scanner</SelectItem>
+                          <SelectItem value="email">Email Security</SelectItem>
+                          <SelectItem value="attachment">Attachment Scanner</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Threat Detection Level</Label>
+                      <Select defaultValue="standard">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="standard">Standard</SelectItem>
+                          <SelectItem value="advanced">Advanced</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Auto-Block Malicious Content</Label>
+                      <div className="flex items-center space-x-2">
+                        <Switch defaultChecked />
+                        <span className="text-sm text-muted-foreground">Automatically block detected threats</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
             
@@ -402,6 +441,24 @@ const CustomGPTActions = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[
+              {
+                name: 'Ultrium SafeLink™ Scanner',
+                description: 'Advanced link security scanning and threat detection',
+                type: 'security',
+                icon: Settings
+              },
+              {
+                name: 'Email Security Guard',
+                description: 'Email header analysis and reputation checking',
+                type: 'security',
+                icon: Settings
+              },
+              {
+                name: 'Attachment Shield',
+                description: 'File hash analysis and malware detection',
+                type: 'security',
+                icon: Settings
+              },
               {
                 name: 'Email Sender',
                 description: 'Send emails through SMTP or email service APIs',
