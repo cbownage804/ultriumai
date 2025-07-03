@@ -8,12 +8,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from "@/components/ui/badge";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useSubscription } from "@/hooks/useSubscription";
-import { Plus, Bot, Edit, Trash2, MessageSquare, Crown, Lock } from "lucide-react";
+import AdvancedGPTEditor from "@/components/AdvancedGPTEditor";
+import { Plus, Bot, Edit, Trash2, MessageSquare, Crown, Lock, Palette, Globe, Code2 } from "lucide-react";
 
 const CustomGPTManager = () => {
-  const { gpts, isLoading, createGPT, deleteGPT, canCreateMore, limits } = useCustomGPTs();
+  const { gpts, isLoading, createGPT, deleteGPT, canCreateMore, limits, loadGPTs } = useCustomGPTs();
   const { subscription } = useSubscription();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [editingGPT, setEditingGPT] = useState<any>(null);
   const [newGPT, setNewGPT] = useState({
     name: "",
     description: "",
@@ -39,6 +41,19 @@ const CustomGPTManager = () => {
     }
     return "";
   };
+
+  if (editingGPT) {
+    return (
+      <AdvancedGPTEditor
+        gpt={editingGPT}
+        onUpdate={(updatedGPT) => {
+          loadGPTs(); // Refresh the list
+          setEditingGPT(null);
+        }}
+        onClose={() => setEditingGPT(null)}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
@@ -176,11 +191,25 @@ const CustomGPTManager = () => {
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
-                  <Bot className="w-5 h-5 text-primary" />
+                  {gpt.logo_url ? (
+                    <img src={gpt.logo_url} alt={gpt.name} className="w-8 h-8 rounded object-cover" />
+                  ) : (
+                    <div 
+                      className="w-8 h-8 rounded flex items-center justify-center text-white text-sm font-medium"
+                      style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}
+                    >
+                      {gpt.name.charAt(0)}
+                    </div>
+                  )}
                   <CardTitle className="text-lg">{gpt.name}</CardTitle>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0"
+                    onClick={() => setEditingGPT(gpt)}
+                  >
                     <Edit className="w-3 h-3" />
                   </Button>
                   <Button 
@@ -205,6 +234,28 @@ const CustomGPTManager = () => {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MessageSquare className="w-4 h-4" />
                   <span>{gpt.chat_count} conversations</span>
+                </div>
+
+                {/* Feature badges */}
+                <div className="flex gap-1 flex-wrap">
+                  {gpt.embed_enabled && (
+                    <Badge variant="outline" className="text-xs">
+                      <Globe className="w-3 h-3 mr-1" />
+                      Embedded
+                    </Badge>
+                  )}
+                  {gpt.api_enabled && (
+                    <Badge variant="outline" className="text-xs">
+                      <Code2 className="w-3 h-3 mr-1" />
+                      API
+                    </Badge>
+                  )}
+                  {gpt.theme_color !== '#3b82f6' && (
+                    <Badge variant="outline" className="text-xs">
+                      <Palette className="w-3 h-3 mr-1" />
+                      Themed
+                    </Badge>
+                  )}
                 </div>
                 
                 <div className="p-2 bg-muted/30 rounded text-xs text-muted-foreground">

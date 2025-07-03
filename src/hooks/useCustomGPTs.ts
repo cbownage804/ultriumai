@@ -10,6 +10,11 @@ export interface CustomGPT {
   description: string;
   system_prompt: string;
   avatar_url?: string;
+  theme_color?: string;
+  logo_url?: string;
+  embed_enabled?: boolean;
+  api_enabled?: boolean;
+  api_key?: string;
   is_active: boolean;
   chat_count: number;
   created_at: string;

@@ -76,42 +76,101 @@ export type Database = {
       }
       custom_gpts: {
         Row: {
+          api_enabled: boolean
+          api_key: string | null
           avatar_url: string | null
           chat_count: number
           created_at: string
           description: string | null
+          embed_enabled: boolean
           id: string
           is_active: boolean
+          logo_url: string | null
           name: string
           system_prompt: string
+          theme_color: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          api_enabled?: boolean
+          api_key?: string | null
           avatar_url?: string | null
           chat_count?: number
           created_at?: string
           description?: string | null
+          embed_enabled?: boolean
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           name: string
           system_prompt: string
+          theme_color?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          api_enabled?: boolean
+          api_key?: string | null
           avatar_url?: string | null
           chat_count?: number
           created_at?: string
           description?: string | null
+          embed_enabled?: boolean
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           name?: string
           system_prompt?: string
+          theme_color?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Relationships: []
+      }
+      gpt_documents: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: number
+          gpt_id: string | null
+          id: string
+          mime_type: string
+          processed_content: string | null
+          uploaded_at: string
+          user_id: string | null
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size: number
+          gpt_id?: string | null
+          id?: string
+          mime_type: string
+          processed_content?: string | null
+          uploaded_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          gpt_id?: string | null
+          id?: string
+          mime_type?: string
+          processed_content?: string | null
+          uploaded_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gpt_documents_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
