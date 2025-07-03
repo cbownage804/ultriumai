@@ -38,6 +38,7 @@ const CustomGPTDeploy = () => {
             <CardTitle className="flex items-center gap-2">
               <Key className="h-5 w-5" />
               API Access
+              <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">Premium</Badge>
             </CardTitle>
             <CardDescription>
               Enable programmatic access to your Custom GPT
@@ -89,6 +90,7 @@ const CustomGPTDeploy = () => {
             <CardTitle className="flex items-center gap-2">
               <Code className="h-5 w-5" />
               Embed Widget
+              <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">Premium</Badge>
             </CardTitle>
             <CardDescription>
               Add your GPT to websites as a chat widget
