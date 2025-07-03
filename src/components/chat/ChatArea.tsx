@@ -14,6 +14,7 @@ import {
 import { Message, Conversation } from "@/types/chat";
 import { exportConversationAsJSON, exportConversationAsMarkdown, shareConversation } from "@/utils/chatExport";
 import FileAttachment from "./FileAttachment";
+import MediaAttachment from "./MediaAttachment";
 
 interface ChatAreaProps {
   currentConversationId: string | null;
@@ -181,6 +182,20 @@ const ChatArea = ({ currentConversationId, conversations, messages, isLoading }:
                         key={file.id}
                         file={file}
                         showRemove={false}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Generated Media */}
+                {message.generated_media && message.generated_media.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {message.generated_media.map((media, index) => (
+                      <MediaAttachment
+                        key={index}
+                        mediaUrl={media.url}
+                        type={media.type}
+                        prompt={media.prompt}
                       />
                     ))}
                   </div>

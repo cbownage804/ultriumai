@@ -4,6 +4,7 @@ export interface Message {
   role: "user" | "assistant";
   created_at: string;
   file_attachments?: ConversationFile[];
+  generated_media?: { url: string; type: 'image' | 'video'; prompt: string }[];
 }
 
 export interface Conversation {

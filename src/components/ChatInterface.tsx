@@ -44,8 +44,11 @@ const ChatInterface = () => {
     }
   }, [conversations, currentConversationId]);
 
-  const handleSendMessage = async (attachments?: ConversationFile[]) => {
-    if ((!input.trim() && !attachments?.length) || isLoading || !user) return;
+  const handleSendMessage = async (
+    attachments?: ConversationFile[], 
+    generatedMedia?: { url: string; type: 'image' | 'video'; prompt: string }[]
+  ) => {
+    if ((!input.trim() && !attachments?.length && !generatedMedia?.length) || isLoading || !user) return;
 
     // Create conversation if none exists
     let conversationId = currentConversationId;
@@ -56,6 +59,7 @@ const ChatInterface = () => {
     }
 
     let messageContent = input.trim();
+    let displayContent = input.trim();
     
     // If we have file attachments, prepare file content for AI
     if (attachments && attachments.length > 0) {
@@ -70,15 +74,31 @@ const ChatInterface = () => {
         messageContent += '\n\n' + fileContents.join('\n\n');
       } else {
         messageContent = 'Please analyze the uploaded files:\n\n' + fileContents.join('\n\n');
+        displayContent = 'Uploaded files for analysis';
+      }
+    }
+
+    // If we have generated media, add context for AI
+    if (generatedMedia && generatedMedia.length > 0) {
+      const mediaDescriptions = generatedMedia.map(media => 
+        `[Generated ${media.type}]: ${media.prompt}`
+      ).join('\n');
+      
+      if (!displayContent && !messageContent) {
+        displayContent = 'Generated media for discussion';
+        messageContent = `Please discuss these generated media items:\n${mediaDescriptions}`;
+      } else if (messageContent) {
+        messageContent += '\n\n' + mediaDescriptions;
       }
     }
 
     const userMessage = {
       id: Date.now().toString(),
-      content: input.trim() || (attachments ? 'Uploaded files for analysis' : ''),
+      content: displayContent || 'Media and files shared',
       role: "user" as const,
       created_at: new Date().toISOString(),
-      file_attachments: attachments
+      file_attachments: attachments,
+      generated_media: generatedMedia
     };
 
     setMessages(prev => [...prev, userMessage]);
