@@ -9,6 +9,7 @@ import CustomGPTDeploy from "@/components/CustomGPTDeploy";
 import CustomGPTAsk from "@/components/CustomGPTAsk";
 import CustomGPTActions from "@/components/CustomGPTActions";
 import CustomGPTAnalyze from "@/components/CustomGPTAnalyze";
+import ConversationHistory from "@/components/ConversationHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -66,7 +67,7 @@ const Dashboard = () => {
   const renderContent = () => {
     if (isSettingsPage) return <SettingsPage />;
     if (isProfilePage) return <ProfilePage />;
-    if (isHistoryPage) return <div className="p-6">History page coming soon...</div>;
+    if (isHistoryPage) return <ConversationHistory />;
     if (isCustomGPTBuildPage) return <div className="p-6"><CustomGPTBuild /></div>;
     if (isCustomGPTPersonalizePage) return <div className="p-6"><CustomGPTPersonalize /></div>;
     if (isCustomGPTActionsPage) return <div className="p-6"><CustomGPTActions /></div>;
