@@ -50,12 +50,12 @@ serve(async (req) => {
     // Define pricing
     const pricing = {
       premium: {
-        monthly: 999, // $9.99
-        yearly: 9900 // $99.00
+        monthly: 10000, // $100.00
+        yearly: 100000 // $1,000.00 (2 months free)
       },
       enterprise: {
-        monthly: 2999, // $29.99
-        yearly: 29900 // $299.00
+        monthly: 50000, // $500.00
+        yearly: 500000 // $5,000.00 (2 months free)
       }
     };
 

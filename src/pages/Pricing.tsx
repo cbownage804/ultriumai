@@ -24,7 +24,7 @@ const Pricing = () => {
     {
       name: "Small Business",
       description: "Perfect for growing teams and startups",
-      price: "$49",
+      price: "$100",
       period: "/month",
       icon: Users,
       popular: false,
@@ -44,7 +44,7 @@ const Pricing = () => {
     {
       name: "Medium Business",
       description: "Ideal for growing companies with multiple departments",
-      price: "$149",
+      price: "$100",
       period: "/month",
       icon: Building2,
       popular: true,
@@ -66,7 +66,7 @@ const Pricing = () => {
     {
       name: "Enterprise",
       description: "For large organizations with complex needs",
-      price: "Custom",
+      price: "$500",
       period: "pricing",
       icon: Factory,
       popular: false,
@@ -189,7 +189,7 @@ const Pricing = () => {
                         size="lg"
                         onClick={() => createCheckout('premium', 'monthly')}
                       >
-                        $9.99/month
+                        $100/month
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                       <Button 
@@ -198,7 +198,7 @@ const Pricing = () => {
                         size="lg"
                         onClick={() => createCheckout('premium', 'yearly')}
                       >
-                        $99/year (Save 17%)
+                        $1,000/year (Save $200)
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </div>
@@ -208,9 +208,30 @@ const Pricing = () => {
                         variant={plan.popular ? "hero" : "outline"} 
                         className="w-full"
                         size="lg"
+                        onClick={() => createCheckout('premium', 'monthly')}
+                      >
+                        $100/month
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        size="lg"
+                        onClick={() => createCheckout('premium', 'yearly')}
+                      >
+                        $1,000/year (Save $200)
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button 
+                        variant={plan.popular ? "hero" : "outline"} 
+                        className="w-full"
+                        size="lg"
                         onClick={() => createCheckout('enterprise', 'monthly')}
                       >
-                        $29.99/month
+                        $500/month
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                       <Button 
@@ -219,19 +240,10 @@ const Pricing = () => {
                         size="lg"
                         onClick={() => createCheckout('enterprise', 'yearly')}
                       >
-                        $299/year (Save 17%)
+                        $5,000/year (Save $1,000)
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </div>
-                  ) : (
-                    <Button 
-                      variant={plan.popular ? "hero" : "outline"} 
-                      className="w-full"
-                      size="lg"
-                    >
-                      Contact Sales
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
                   )}
                 </div>
               </Card>
