@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Message, Conversation } from "@/types/chat";
 import { exportConversationAsJSON, exportConversationAsMarkdown, shareConversation } from "@/utils/chatExport";
+import FileAttachment from "./FileAttachment";
 
 interface ChatAreaProps {
   currentConversationId: string | null;
@@ -171,6 +172,20 @@ const ChatArea = ({ currentConversationId, conversations, messages, isLoading }:
                 <p className="text-sm whitespace-pre-wrap">
                   {messageSearchQuery ? highlightSearchTerm(message.content, messageSearchQuery) : message.content}
                 </p>
+                
+                {/* File Attachments */}
+                {message.file_attachments && message.file_attachments.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {message.file_attachments.map((file) => (
+                      <FileAttachment
+                        key={file.id}
+                        file={file}
+                        showRemove={false}
+                      />
+                    ))}
+                  </div>
+                )}
+                
                 <p className="text-xs opacity-70 mt-1">
                   {new Date(message.created_at).toLocaleTimeString()}
                 </p>

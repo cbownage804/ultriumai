@@ -9,7 +9,8 @@ import { useMessages } from "@/hooks/useMessages";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
 import ChatArea from "@/components/chat/ChatArea";
 import MessageInput from "@/components/chat/MessageInput";
-import { Conversation } from "@/types/chat";
+import { Conversation, ConversationFile } from "@/types/chat";
+import { useFileUpload } from "@/hooks/useFileUpload";
 
 const ChatInterface = () => {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -27,6 +28,7 @@ const ChatInterface = () => {
   } = useConversations();
   
   const { messages, setMessages, loadMessages, saveMessage } = useMessages();
+  const { getFileContent } = useFileUpload();
 
   // Load messages when conversation changes
   useEffect(() => {
@@ -42,8 +44,8 @@ const ChatInterface = () => {
     }
   }, [conversations, currentConversationId]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading || !user) return;
+  const handleSendMessage = async (attachments?: ConversationFile[]) => {
+    if ((!input.trim() && !attachments?.length) || isLoading || !user) return;
 
     // Create conversation if none exists
     let conversationId = currentConversationId;
@@ -53,11 +55,30 @@ const ChatInterface = () => {
       setCurrentConversationId(conversationId);
     }
 
+    let messageContent = input.trim();
+    
+    // If we have file attachments, prepare file content for AI
+    if (attachments && attachments.length > 0) {
+      const fileContents = await Promise.all(
+        attachments.map(async (file) => {
+          const content = await getFileContent(file);
+          return `[File: ${file.file_name}]\n${content || 'File content not readable'}`;
+        })
+      );
+      
+      if (messageContent) {
+        messageContent += '\n\n' + fileContents.join('\n\n');
+      } else {
+        messageContent = 'Please analyze the uploaded files:\n\n' + fileContents.join('\n\n');
+      }
+    }
+
     const userMessage = {
       id: Date.now().toString(),
-      content: input.trim(),
+      content: input.trim() || (attachments ? 'Uploaded files for analysis' : ''),
       role: "user" as const,
       created_at: new Date().toISOString(),
+      file_attachments: attachments
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -76,10 +97,13 @@ const ChatInterface = () => {
         await updateConversationTitle(conversationId, title);
       }
 
-      // Call AI API
+      // Call AI API with file content
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
-          messages: [...messages, userMessage].map(msg => ({
+          messages: [...messages, { 
+            ...userMessage, 
+            content: messageContent // Send the content with file data to AI
+          }].map(msg => ({
             role: msg.role,
             content: msg.content
           }))
@@ -162,6 +186,7 @@ const ChatInterface = () => {
               setInput={setInput}
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
+              conversationId={currentConversationId}
             />
           </>
         ) : (

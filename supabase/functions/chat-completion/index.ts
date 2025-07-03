@@ -32,11 +32,11 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. Be concise but thorough in your responses.' 
+            content: 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses.' 
           },
           ...messages
         ],
-        max_tokens: 1500,
+        max_tokens: 4000,
         temperature: 0.7,
       }),
     });
