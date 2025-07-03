@@ -108,6 +108,60 @@ const INTEGRATION_TYPES = [
     color: 'text-purple-600',
     tier: 'premium',
     category: 'communication'
+  },
+  {
+    id: 'autotask',
+    name: 'Autotask PSA',
+    description: 'Create tickets and manage clients in Autotask',
+    icon: Settings,
+    color: 'text-blue-600',
+    tier: 'premium',
+    category: 'msp'
+  },
+  {
+    id: 'atera',
+    name: 'Atera',
+    description: 'Manage incidents and alerts in Atera platform',
+    icon: Settings,
+    color: 'text-green-600',
+    tier: 'premium',
+    category: 'msp'
+  },
+  {
+    id: 'ninjaone',
+    name: 'NinjaOne',
+    description: 'Create tickets and monitor endpoints in NinjaOne',
+    icon: Settings,
+    color: 'text-orange-600',
+    tier: 'premium',
+    category: 'msp'
+  },
+  {
+    id: 'connectwise',
+    name: 'ConnectWise Manage',
+    description: 'Service ticket creation and client management',
+    icon: Settings,
+    color: 'text-red-600',
+    tier: 'premium',
+    category: 'msp'
+  },
+  {
+    id: 'kaseya',
+    name: 'Kaseya VSA',
+    description: 'Generate tickets and endpoint alerts in Kaseya',
+    icon: Settings,
+    color: 'text-purple-500',
+    tier: 'premium',
+    category: 'msp'
+  },
+  {
+    id: 'syncro',
+    name: 'Syncro MSP',
+    description: 'Automated ticket creation and client management',
+    icon: Settings,
+    color: 'text-teal-600',
+    tier: 'premium',
+    category: 'msp'
   }
 ];
 
@@ -482,7 +536,8 @@ const IntegrationsManager = ({ gptId, gptName }: IntegrationsManagerProps) => {
     { id: 'ai', name: 'AI & Search' },
     { id: 'social', name: 'Social Media' },
     { id: 'automation', name: 'Automation' },
-    { id: 'communication', name: 'Communication' }
+    { id: 'communication', name: 'Communication' },
+    { id: 'msp', name: 'MSP Platforms' }
   ];
 
   const filteredTypes = selectedCategory === 'all' 
