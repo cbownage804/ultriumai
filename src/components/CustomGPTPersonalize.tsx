@@ -215,11 +215,12 @@ const CustomGPTPersonalize = () => {
       case "documents":
       case "embedding": 
       case "api":
-      case "ai_model":
       case "conversation_exporting":
       case "should_mention_sources":
       case "conversation_retention":
         return subscription.subscription_tier !== "free";
+      case "ai_model":
+        return subscription.subscription_tier === "enterprise";
       default:
         return true;
     }
@@ -954,7 +955,7 @@ const CustomGPTPersonalize = () => {
                 {!isAdvancedFeatureAvailable("ai_model") && (
                   <Badge variant="secondary">
                     <Crown className="w-3 h-3 mr-1" />
-                    Premium Feature
+                    Enterprise Feature
                   </Badge>
                 )}
               </CardTitle>
