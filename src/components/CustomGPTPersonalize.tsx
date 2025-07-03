@@ -956,6 +956,9 @@ const CustomGPTPersonalize = () => {
                 Whitelisted Domains
                 <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
+              <CardDescription>
+                Restrict access to embedding your agent only on allowed domains. Provide domains list separated by spaces, tabs, new lines or commas. Input domain without scheme (e.g. domain.com). You can use * mark as placeholder which mean any count of chars (e.g. *.domain.com will allow any subdomains in domain.com).
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Textarea
