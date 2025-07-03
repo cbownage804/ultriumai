@@ -20,43 +20,43 @@ const Features = () => {
     },
     {
       icon: Users,
-      title: "Multi-Tenant Architecture", 
-      description: "Separate knowledge bases for each customer with isolated data and complete privacy."
+      title: "MSP Multi-Tenant Architecture", 
+      description: "Isolated knowledge bases for each client with complete data separation and privacy controls."
     },
     {
       icon: Palette,
-      title: "White-Label Branding",
-      description: "Customize colors, logos, and branding for each customer's unique identity."
+      title: "White-Label Client Portals",
+      description: "Fully branded experience with your MSP's colors, logos, and custom domain integration."
     },
     {
       icon: Zap,
-      title: "Instant AI Responses",
-      description: "Get accurate answers from your docs in seconds. Reduce support tickets by 20-30%."
+      title: "Instant Client Support",
+      description: "Deliver accurate answers from client documentation in seconds. Reduce tier-1 tickets by 20-30%."
     },
     {
       icon: Shield,
-      title: "Enterprise Security",
-      description: "SOC 2 compliant with data encryption, role-based access, and audit trails."
+      title: "MSP-Grade Security",
+      description: "SOC 2 Type II compliant with encryption, role-based access, and comprehensive audit trails."
     },
     {
       icon: BarChart3,
-      title: "Analytics Dashboard",
-      description: "Track usage, popular queries, and ROI metrics for each customer tenant."
+      title: "MSP Performance Analytics",
+      description: "Track client usage, ticket reduction metrics, and ROI reporting across all tenants."
     },
     {
       icon: Settings,
-      title: "Easy Knowledge Management",
-      description: "Upload docs, PDFs, wikis, and runbooks. AI automatically indexes and optimizes."
+      title: "Streamlined Knowledge Ops",
+      description: "Bulk upload client documentation, runbooks, and procedures. AI handles indexing automatically."
     },
     {
       icon: Globe,
-      title: "API & Webhooks",
-      description: "Integrate with existing tools and workflows via REST API and webhook notifications."
+      title: "RMM & PSA Integration",
+      description: "Connect with ConnectWise, Autotask, Kaseya, and other MSP platforms via REST API."
     },
     {
       icon: FileText,
-      title: "Smart Document Processing",
-      description: "Automatically extract and structure knowledge from PDFs, Word docs, and web pages."
+      title: "Smart Documentation Processing",
+      description: "AI automatically extracts knowledge from client SOPs, network diagrams, and troubleshooting guides."
     }
   ];
 
@@ -65,11 +65,11 @@ const Features = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-6 text-foreground">
-            Everything You Need for AI Knowledge Management
+            Built for MSPs and MSSPs
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Built for teams that need instant access to accurate information. 
-            Scale across multiple customers with enterprise-grade features.
+            Enterprise-grade AI knowledge management designed specifically for managed service providers. 
+            Scale your support operations while delivering exceptional client experiences.
           </p>
         </div>
         

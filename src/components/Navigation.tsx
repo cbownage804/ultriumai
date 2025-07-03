@@ -12,7 +12,7 @@ const Navigation = () => {
           {/* Logo */}
           <div className="flex items-center space-x-2">
             <MessageSquare className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold text-foreground">UltraKB</span>
+            <span className="text-xl font-bold text-foreground">UltriumGPT</span>
           </div>
           
           {/* Desktop Navigation */}
@@ -34,10 +34,10 @@ const Navigation = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="ghost">
-              Sign In
+              Contact Sales
             </Button>
             <Button variant="hero">
-              Get Started
+              Request Demo
             </Button>
           </div>
           
@@ -71,10 +71,10 @@ const Navigation = () => {
               </a>
               <div className="flex flex-col space-y-2 pt-4 px-3">
                 <Button variant="ghost" className="w-full">
-                  Sign In
+                  Contact Sales
                 </Button>
                 <Button variant="hero" className="w-full">
-                  Get Started
+                  Request Demo
                 </Button>
               </div>
             </div>

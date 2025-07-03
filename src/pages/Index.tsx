@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import Features from "@/components/Features";
 import DemoSection from "@/components/DemoSection";
 import Integrations from "@/components/Integrations";
+import ContactSection from "@/components/ContactSection";
 
 const Index = () => {
   return (
@@ -13,6 +14,7 @@ const Index = () => {
         <Features />
         <DemoSection />
         <Integrations />
+        <ContactSection />
       </main>
     </div>
   );

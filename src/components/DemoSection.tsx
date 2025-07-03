@@ -7,10 +7,10 @@ const DemoSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-6 text-foreground">
-            See UltraKB in Action
+            See UltriumGPT in Action
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Try our AI assistant trained on common IT policies and procedures. 
+            Experience our AI assistant trained on common MSP procedures and client documentation. 
             Ask about user onboarding, password resets, or expense reports.
           </p>
         </div>
