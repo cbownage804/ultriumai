@@ -145,23 +145,38 @@ export function AppSidebar() {
                   <div className="space-y-1 mb-3">
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>Document Upload</span>
+                      <span className="flex items-center gap-2">
+                        Document Upload
+                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>API Access</span>
+                      <span className="flex items-center gap-2">
+                        API Access
+                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>Embed Widgets</span>
+                      <span className="flex items-center gap-2">
+                        Embed Widgets
+                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>Custom Branding</span>
+                      <span className="flex items-center gap-2">
+                        Custom Branding
+                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>Export Conversations</span>
+                      <span className="flex items-center gap-2">
+                        Export Conversations
+                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
+                      </span>
                     </div>
                   </div>
                   <Button 
@@ -200,19 +215,31 @@ export function AppSidebar() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>GPT Integrations</span>
+                      <span className="flex items-center gap-2">
+                        GPT Integrations
+                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>AI Model Selection</span>
+                      <span className="flex items-center gap-2">
+                        AI Model Selection
+                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>Priority Support</span>
+                      <span className="flex items-center gap-2">
+                        Priority Support
+                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
-                      <span>Advanced Analytics</span>
+                      <span className="flex items-center gap-2">
+                        Advanced Analytics
+                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
+                      </span>
                     </div>
                   </div>
                   <Button 
