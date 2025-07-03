@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Rocket, Globe, Code, Key, ExternalLink } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
 import IntegrationsManager from "./IntegrationsManager";
 
 const CustomGPTDeploy = () => {
+  const { subscription } = useSubscription();
   const [deploySettings, setDeploySettings] = useState({
     apiEnabled: false,
     embedEnabled: false,
@@ -17,6 +19,10 @@ const CustomGPTDeploy = () => {
   });
 
   const [apiKey] = useState("gpt_" + Math.random().toString(36).substr(2, 16));
+
+  // Check subscription tiers
+  const canUsePremiumFeatures = subscription.subscription_tier === "premium" || subscription.subscription_tier === "enterprise";
+  const canUseEnterpriseFeatures = subscription.subscription_tier === "enterprise";
 
   const toggleSetting = (key: keyof typeof deploySettings) => {
     setDeploySettings(prev => ({ ...prev, [key]: !prev[key] }));
@@ -47,14 +53,18 @@ const CustomGPTDeploy = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label>Enable API Access</Label>
+                <Label className={!canUsePremiumFeatures ? "text-muted-foreground" : ""}>Enable API Access</Label>
                 <p className="text-sm text-muted-foreground">
-                  Allow external applications to use your GPT
+                  {!canUsePremiumFeatures 
+                    ? "Upgrade to Premium or Enterprise to enable API access"
+                    : "Allow external applications to use your GPT"
+                  }
                 </p>
               </div>
               <Switch
-                checked={deploySettings.apiEnabled}
-                onCheckedChange={() => toggleSetting('apiEnabled')}
+                checked={deploySettings.apiEnabled && canUsePremiumFeatures}
+                onCheckedChange={() => canUsePremiumFeatures && toggleSetting('apiEnabled')}
+                disabled={!canUsePremiumFeatures}
               />
             </div>
 
@@ -99,14 +109,18 @@ const CustomGPTDeploy = () => {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label>Enable Embed Widget</Label>
+                <Label className={!canUsePremiumFeatures ? "text-muted-foreground" : ""}>Enable Embed Widget</Label>
                 <p className="text-sm text-muted-foreground">
-                  Generate embeddable chat widget code
+                  {!canUsePremiumFeatures 
+                    ? "Upgrade to Premium or Enterprise to enable embed widgets"
+                    : "Generate embeddable chat widget code"
+                  }
                 </p>
               </div>
               <Switch
-                checked={deploySettings.embedEnabled}
-                onCheckedChange={() => toggleSetting('embedEnabled')}
+                checked={deploySettings.embedEnabled && canUsePremiumFeatures}
+                onCheckedChange={() => canUsePremiumFeatures && toggleSetting('embedEnabled')}
+                disabled={!canUsePremiumFeatures}
               />
             </div>
 
