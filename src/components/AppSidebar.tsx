@@ -131,31 +131,31 @@ export function AppSidebar() {
         {subscription.subscription_tier === "free" && !isCollapsed && (
           <SidebarGroup>
             <SidebarGroupContent>
-              <Card className="mx-2 mb-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
+                <Card className="mx-2 mb-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
                 <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
+                  <CardTitle className="text-sm flex items-center gap-2 text-black">
                     <Zap className="h-4 w-4 text-orange-500" />
                     Go Premium
                   </CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardDescription className="text-xs text-black/70">
                     Unlock advanced features
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
                   <div className="space-y-1 mb-3">
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>Document Upload</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>API Access</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>Custom Branding</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>Export Conversations</span>
                     </div>
@@ -180,29 +180,29 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
                 <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
+                  <CardTitle className="text-sm flex items-center gap-2 text-black">
                     <Star className="h-4 w-4 text-purple-500" />
                     Go Enterprise
                   </CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardDescription className="text-xs text-black/70">
                     Maximum power & flexibility
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
                   <div className="space-y-1 mb-3">
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>Everything in Premium</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>AI Model Selection</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>Priority Support</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
                       <span>Advanced Analytics</span>
                     </div>
