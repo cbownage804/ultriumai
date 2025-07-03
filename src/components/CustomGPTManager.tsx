@@ -34,7 +34,7 @@ const CustomGPTManager = () => {
 
   const getUpgradeMessage = () => {
     if (subscription.subscription_tier === "free") {
-      return "Upgrade to Premium for 5 GPTs with 2,000 character prompts";
+      return "Upgrade to Premium for 5 GPTs, custom branding, documents, embedding & API access";
     }
     if (subscription.subscription_tier === "premium") {
       return "Upgrade to Enterprise for unlimited GPTs with 5,000 character prompts";

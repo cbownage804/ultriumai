@@ -46,9 +46,9 @@ const AdvancedGPTEditor = ({ gpt, onUpdate, onClose }: AdvancedGPTEditorProps) =
       case "documents":
         return subscription.subscription_tier !== "free";
       case "embedding":
-        return subscription.subscription_tier === "enterprise";
+        return subscription.subscription_tier !== "free"; // Now available to Premium
       case "api":
-        return subscription.subscription_tier === "enterprise";
+        return subscription.subscription_tier !== "free"; // Now available to Premium
       default:
         return false;
     }
@@ -371,7 +371,7 @@ const AdvancedGPTEditor = ({ gpt, onUpdate, onClose }: AdvancedGPTEditorProps) =
                 {!isAdvancedFeatureAvailable("embedding") && (
                   <Badge variant="secondary">
                     <Crown className="w-3 h-3 mr-1" />
-                    Enterprise
+                    Premium
                   </Badge>
                 )}
               </CardTitle>
@@ -419,7 +419,7 @@ const AdvancedGPTEditor = ({ gpt, onUpdate, onClose }: AdvancedGPTEditorProps) =
                 {!isAdvancedFeatureAvailable("api") && (
                   <Badge variant="secondary">
                     <Crown className="w-3 h-3 mr-1" />
-                    Enterprise
+                    Premium
                   </Badge>
                 )}
               </CardTitle>
