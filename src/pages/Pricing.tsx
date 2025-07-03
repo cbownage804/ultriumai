@@ -16,8 +16,10 @@ import {
   Globe,
   Phone
 } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const Pricing = () => {
+  const { createCheckout } = useSubscription();
   const plans = [
     {
       name: "Small Business",
@@ -178,14 +180,60 @@ const Pricing = () => {
                   ))}
                 </ul>
 
-                <Button 
-                  variant={plan.popular ? "hero" : "outline"} 
-                  className="w-full"
-                  size="lg"
-                >
-                  {plan.price === "Custom" ? "Contact Sales" : "Start Free Trial"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                <div className="space-y-3">
+                  {plan.name === "Small Business" ? (
+                    <div className="space-y-2">
+                      <Button 
+                        variant={plan.popular ? "hero" : "outline"} 
+                        className="w-full"
+                        size="lg"
+                        onClick={() => createCheckout('premium', 'monthly')}
+                      >
+                        $9.99/month
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        size="lg"
+                        onClick={() => createCheckout('premium', 'yearly')}
+                      >
+                        $99/year (Save 17%)
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+                  ) : plan.name === "Medium Business" ? (
+                    <div className="space-y-2">
+                      <Button 
+                        variant={plan.popular ? "hero" : "outline"} 
+                        className="w-full"
+                        size="lg"
+                        onClick={() => createCheckout('enterprise', 'monthly')}
+                      >
+                        $29.99/month
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        size="lg"
+                        onClick={() => createCheckout('enterprise', 'yearly')}
+                      >
+                        $299/year (Save 17%)
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant={plan.popular ? "hero" : "outline"} 
+                      className="w-full"
+                      size="lg"
+                    >
+                      Contact Sales
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  )}
+                </div>
               </Card>
             ))}
           </div>
