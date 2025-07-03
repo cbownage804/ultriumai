@@ -153,6 +153,10 @@ export function AppSidebar() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
+                      <span>Embed Widgets</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-black">
+                      <Check className="h-3 w-3 text-green-500" />
                       <span>Custom Branding</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
