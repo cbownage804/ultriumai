@@ -22,21 +22,20 @@ const Hero = () => {
           </h1>
           
           <p className="text-xl sm:text-2xl lg:text-3xl mb-4 text-foreground font-semibold drop-shadow-lg">
-            AI Knowledge-Base Chat Assistant by UltriumAI
+            Ready-to-Deploy Knowledge Management by UltriumAI
           </p>
           
           <p className="text-lg sm:text-xl mb-8 text-muted-foreground max-w-3xl mx-auto leading-relaxed drop-shadow-md">
-            The ultimate AI-powered knowledge management solution for MSPs and MSSPs. Reduce client support tickets by 20-30% 
-            while delivering instant, accurate answers from internal documentation. White-label deployment with seamless 
-            Microsoft Teams and Slack integration.
+            From our proven custom AI agent expertise comes UltriumGPT - a ready-to-deploy knowledge management platform. 
+            Built for Business. Secure by Design. Deploy instantly while we handle the complex AI development for you.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button variant="hero" size="lg" className="text-lg px-8 py-6">
-              Request Demo & Setup
+              Schedule Live Demo
             </Button>
             <Button variant="outline" size="lg" className="text-lg px-8 py-6">
-              Contact UltriumAI Sales
+              Call 804-821-1410
             </Button>
           </div>
           

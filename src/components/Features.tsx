@@ -65,11 +65,11 @@ const Features = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-6 text-foreground">
-            Built for MSPs and MSSPs
+            From Custom AI Agents to Ready-to-Deploy Solutions
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Enterprise-grade AI knowledge management designed specifically for managed service providers. 
-            Scale your support operations while delivering exceptional client experiences.
+            Leveraging our proven expertise in building custom AI agents, UltriumGPT delivers enterprise-grade 
+            knowledge management that's ready to deploy today. Built for Business. Secure by Design.
           </p>
         </div>
         

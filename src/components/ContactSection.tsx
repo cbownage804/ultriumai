@@ -8,11 +8,11 @@ const ContactSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-6 text-foreground">
-            Ready to Transform Your MSP Operations?
+            Ready to Power Your Future with UltriumGPT?
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Join leading MSPs and MSSPs who are reducing support overhead while improving client satisfaction. 
-            Contact UltriumAI for a personalized demo and implementation walkthrough.
+            From our proven track record building custom AI agents comes our most accessible solution yet. 
+            Call 804-821-1410 to discuss your knowledge management needs or schedule a personalized demo.
           </p>
         </div>
 
@@ -22,8 +22,8 @@ const ContactSection = () => {
               <div className="flex items-start space-x-4">
                 <CheckCircle className="w-6 h-6 text-primary mt-1" />
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Custom Deployment on UltriumAI.com</h3>
-                  <p className="text-muted-foreground">Get your own branded subdomain (yourcompany.ultraiumai.com) with full white-label customization.</p>
+                  <h3 className="text-lg font-semibold mb-2">Custom Deployment on UltriumAI Platform</h3>
+                  <p className="text-muted-foreground">Deploy on our secure infrastructure or get your own branded subdomain with full customization.</p>
                 </div>
               </div>
               
@@ -38,8 +38,8 @@ const ContactSection = () => {
               <div className="flex items-start space-x-4">
                 <CheckCircle className="w-6 h-6 text-primary mt-1" />
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">MSP-Specific Features</h3>
-                  <p className="text-muted-foreground">Multi-tenant architecture, RMM/PSA integrations, and client-specific knowledge isolation.</p>
+                  <h3 className="text-lg font-semibold mb-2">Built on Proven AI Expertise</h3>
+                  <p className="text-muted-foreground">Backed by UltriumAI's track record in custom AI agent development, security-first design, and business solutions.</p>
                 </div>
               </div>
               
@@ -77,7 +77,7 @@ const ContactSection = () => {
               </div>
               
               <Button variant="hero" size="lg" className="w-full text-lg">
-                Contact UltriumAI Sales
+                Call 804-821-1410
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </Card>
@@ -88,10 +88,10 @@ const ContactSection = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button variant="outline">
-                  Schedule Demo Call
+                  Schedule Live Demo
                 </Button>
                 <Button variant="ghost">
-                  sales@ultraiumai.com
+                  View Our AI Agents
                 </Button>
               </div>
             </div>

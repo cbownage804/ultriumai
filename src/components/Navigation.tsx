@@ -34,10 +34,10 @@ const Navigation = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="ghost">
-              Contact Sales
+              804-821-1410
             </Button>
             <Button variant="hero">
-              Request Demo
+              Live Demo
             </Button>
           </div>
           
@@ -71,10 +71,10 @@ const Navigation = () => {
               </a>
               <div className="flex flex-col space-y-2 pt-4 px-3">
                 <Button variant="ghost" className="w-full">
-                  Contact Sales
+                  804-821-1410
                 </Button>
                 <Button variant="hero" className="w-full">
-                  Request Demo
+                  Live Demo
                 </Button>
               </div>
             </div>
