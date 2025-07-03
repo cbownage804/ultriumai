@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User } from "lucide-react";
+import { Send, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+
+const botLogo = "/lovable-uploads/782bff71-19ad-4277-bed5-375d4114e0c5.png";
 
 interface Message {
   id: string;
@@ -95,8 +97,8 @@ const ChatInterface = () => {
             >
               <div className="flex-shrink-0">
                 {message.role === "assistant" ? (
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-primary-foreground" />
+                  <div className="w-8 h-8 rounded-full overflow-hidden">
+                    <img src={botLogo} alt="UltriumGPT" className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
@@ -120,8 +122,8 @@ const ChatInterface = () => {
           ))}
           {isLoading && (
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <Bot className="w-4 h-4 text-primary-foreground" />
+              <div className="w-8 h-8 rounded-full overflow-hidden">
+                <img src={botLogo} alt="UltriumGPT" className="w-full h-full object-cover" />
               </div>
               <Card className="bg-muted p-3">
                 <div className="flex items-center gap-1">
