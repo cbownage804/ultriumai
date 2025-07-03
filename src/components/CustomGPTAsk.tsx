@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Bot, User } from "lucide-react";
+import { useCustomGPTs, CustomGPT } from "@/hooks/useCustomGPTs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -14,19 +17,29 @@ interface Message {
 }
 
 const CustomGPTAsk = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: "Hello! I'm your Custom GPT. How can I help you today?",
-      role: 'assistant',
-      timestamp: new Date()
-    }
-  ]);
+  const { gpts, isLoading: isLoadingGPTs } = useCustomGPTs();
+  const { toast } = useToast();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const currentGPT = gpts[0]; // Use the first/latest GPT
+
+  useEffect(() => {
+    if (currentGPT) {
+      setMessages([
+        {
+          id: '1',
+          content: currentGPT.placeholder_prompt || "Hello! I'm your Custom GPT. How can I help you today?",
+          role: 'assistant',
+          timestamp: new Date()
+        }
+      ]);
+    }
+  }, [currentGPT]);
+
   const sendMessage = async () => {
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || !currentGPT) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -39,17 +52,58 @@ const CustomGPTAsk = () => {
     setInputMessage("");
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call the chat completion API with the custom GPT's system prompt
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
+        body: {
+          messages: [
+            {
+              role: 'system',
+              content: currentGPT.system_prompt
+            },
+            ...messages.map(msg => ({
+              role: msg.role,
+              content: msg.content
+            })),
+            {
+              role: 'user',
+              content: inputMessage
+            }
+          ]
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to get AI response');
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I understand your question. This is where your Custom GPT would respond based on its training and configuration.",
+        content: data.message,
         role: 'assistant',
         timestamp: new Date()
       };
+      
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive",
+      });
+      
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: "I'm sorry, I'm having trouble responding right now. Please try again.",
+        role: 'assistant',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -58,6 +112,42 @@ const CustomGPTAsk = () => {
       sendMessage();
     }
   };
+
+  if (isLoadingGPTs) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your Custom GPT...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentGPT) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Ask Your GPT</h1>
+          <p className="text-muted-foreground mt-2">
+            Test and interact with your Custom GPT
+          </p>
+        </div>
+        <Card className="h-[600px] flex items-center justify-center">
+          <div className="text-center">
+            <Bot className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Custom GPT Found</h3>
+            <p className="text-muted-foreground mb-4">
+              You need to create and configure a Custom GPT first.
+            </p>
+            <Button onClick={() => window.location.href = '/dashboard/custom-gpts/personalize'}>
+              Create Your GPT
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -72,10 +162,10 @@ const CustomGPTAsk = () => {
         <CardHeader className="border-b">
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            My Custom GPT
+            {currentGPT.name || 'My Custom GPT'}
           </CardTitle>
           <CardDescription>
-            Chat with your Custom GPT to test its responses
+            {currentGPT.description || 'Chat with your Custom GPT to test its responses'}
           </CardDescription>
         </CardHeader>
         

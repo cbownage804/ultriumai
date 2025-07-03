@@ -3,23 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { Tables } from "@/integrations/supabase/types";
 
-export interface CustomGPT {
-  id: string;
-  name: string;
-  description: string;
-  system_prompt: string;
-  avatar_url?: string;
-  theme_color?: string;
-  logo_url?: string;
-  embed_enabled?: boolean;
-  api_enabled?: boolean;
-  api_key?: string;
-  is_active: boolean;
-  chat_count: number;
-  created_at: string;
-  updated_at: string;
-}
+export type CustomGPT = Tables<'custom_gpts'>;
 
 export const useCustomGPTs = () => {
   const [gpts, setGPTs] = useState<CustomGPT[]>([]);
