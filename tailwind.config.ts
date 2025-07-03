@@ -52,6 +52,18 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				hero: {
+					DEFAULT: 'hsl(var(--hero))',
+					foreground: 'hsl(var(--hero-foreground))'
+				},
+				'ai-message': {
+					DEFAULT: 'hsl(var(--ai-message))',
+					foreground: 'hsl(var(--ai-message-foreground))'
+				},
+				'user-message': {
+					DEFAULT: 'hsl(var(--user-message))',
+					foreground: 'hsl(var(--user-message-foreground))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
