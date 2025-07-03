@@ -20,7 +20,7 @@ const Navigation = () => {
             <a href="#features" className="text-foreground/80 hover:text-foreground transition-colors">
               Features
             </a>
-            <a href="#pricing" className="text-foreground/80 hover:text-foreground transition-colors">
+            <a href="/pricing" className="text-foreground/80 hover:text-foreground transition-colors">
               Pricing
             </a>
             <a href="#integrations" className="text-foreground/80 hover:text-foreground transition-colors">
@@ -60,7 +60,7 @@ const Navigation = () => {
               <a href="#features" className="block px-3 py-2 text-foreground/80 hover:text-foreground">
                 Features
               </a>
-              <a href="#pricing" className="block px-3 py-2 text-foreground/80 hover:text-foreground">
+              <a href="/pricing" className="block px-3 py-2 text-foreground/80 hover:text-foreground">
                 Pricing
               </a>
               <a href="#integrations" className="block px-3 py-2 text-foreground/80 hover:text-foreground">
