@@ -3,10 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, User, Plus, MessageSquare } from "lucide-react";
+import { Send, User, Plus, MessageSquare, Download, Share } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Message {
   id: string;
@@ -294,6 +300,103 @@ const ChatInterface = () => {
     setCurrentConversationId(conversation.id);
   };
 
+  const exportConversationAsJSON = () => {
+    const conversation = {
+      id: currentConversationId,
+      title: conversations.find(c => c.id === currentConversationId)?.title || "Untitled",
+      messages: messages,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(conversation, null, 2)], { 
+      type: 'application/json' 
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversation-${conversation.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Conversation exported",
+      description: "Downloaded as JSON file",
+    });
+  };
+
+  const exportConversationAsMarkdown = () => {
+    const conversation = conversations.find(c => c.id === currentConversationId);
+    const title = conversation?.title || "Untitled";
+    
+    let markdown = `# ${title}\n\n`;
+    markdown += `Exported on: ${new Date().toLocaleString()}\n\n`;
+    
+    messages.forEach((message, index) => {
+      const role = message.role === 'user' ? '**You**' : '**Assistant**';
+      markdown += `${role}: ${message.content}\n\n`;
+    });
+    
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversation-${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Conversation exported",
+      description: "Downloaded as Markdown file",
+    });
+  };
+
+  const shareConversation = async () => {
+    if (navigator.share && messages.length > 0) {
+      const conversation = conversations.find(c => c.id === currentConversationId);
+      const title = conversation?.title || "Untitled";
+      
+      let text = `${title}\n\n`;
+      messages.forEach(message => {
+        const role = message.role === 'user' ? 'You' : 'Assistant';
+        text += `${role}: ${message.content}\n\n`;
+      });
+      
+      try {
+        await navigator.share({
+          title: `UltriumGPT Conversation: ${title}`,
+          text: text
+        });
+      } catch (error) {
+        // Fallback to copying to clipboard
+        await navigator.clipboard.writeText(text);
+        toast({
+          title: "Conversation copied",
+          description: "Copied to clipboard",
+        });
+      }
+    } else {
+      // Fallback: copy to clipboard
+      const conversation = conversations.find(c => c.id === currentConversationId);
+      const title = conversation?.title || "Untitled";
+      
+      let text = `${title}\n\n`;
+      messages.forEach(message => {
+        const role = message.role === 'user' ? 'You' : 'Assistant';
+        text += `${role}: ${message.content}\n\n`;
+      });
+      
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Conversation copied",
+        description: "Copied to clipboard",
+      });
+    }
+  };
+
   if (isLoadingConversations) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -353,6 +456,43 @@ const ChatInterface = () => {
       <div className="flex-1 flex flex-col">
         {currentConversationId ? (
           <>
+            {/* Chat Header with Export Options */}
+            <div className="border-b p-4 flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold">
+                  {conversations.find(c => c.id === currentConversationId)?.title || "Untitled"}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {messages.length} message{messages.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              
+              {messages.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Share className="w-4 h-4 mr-2" />
+                      Export
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={exportConversationAsJSON}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={exportConversationAsMarkdown}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export as Markdown
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={shareConversation}>
+                      <Share className="w-4 h-4 mr-2" />
+                      Share/Copy
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+            
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
                 {messages.map((message) => (

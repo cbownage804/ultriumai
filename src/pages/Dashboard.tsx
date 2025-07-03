@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { AppSidebar } from "@/components/AppSidebar";
 import ChatInterface from "@/components/ChatInterface";
 import SettingsPage from "@/pages/SettingsPage";
+import ProfilePage from "@/pages/ProfilePage";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -46,7 +47,7 @@ const Dashboard = () => {
 
   const renderContent = () => {
     if (isSettingsPage) return <SettingsPage />;
-    if (isProfilePage) return <div className="p-6">Profile page coming soon...</div>;
+    if (isProfilePage) return <ProfilePage />;
     if (isHistoryPage) return <div className="p-6">History page coming soon...</div>;
     return <ChatInterface />;
   };
