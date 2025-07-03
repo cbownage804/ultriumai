@@ -476,6 +476,42 @@ const CustomGPTActions = () => {
                 icon: Settings
               },
               {
+                name: 'Autotask Ticket Creator',
+                description: 'Automatically create tickets in Autotask PSA',
+                type: 'api',
+                icon: Globe
+              },
+              {
+                name: 'Atera Incident Manager',
+                description: 'Create and manage incidents in Atera',
+                type: 'api',
+                icon: Globe
+              },
+              {
+                name: 'NinjaOne Ticket Integration',
+                description: 'Open tickets and alerts in NinjaOne RMM',
+                type: 'api',
+                icon: Globe
+              },
+              {
+                name: 'ConnectWise Manage',
+                description: 'Create service tickets in ConnectWise',
+                type: 'api',
+                icon: Globe
+              },
+              {
+                name: 'Kaseya VSA Integration',
+                description: 'Generate tickets and alerts in Kaseya',
+                type: 'api',
+                icon: Globe
+              },
+              {
+                name: 'Syncro Ticket Creator',
+                description: 'Automated ticket creation in Syncro MSP',
+                type: 'api',
+                icon: Globe
+              },
+              {
                 name: 'Email Sender',
                 description: 'Send emails through SMTP or email service APIs',
                 type: 'api',
