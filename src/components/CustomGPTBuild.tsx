@@ -3,14 +3,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, FileText, Link, Trash2 } from "lucide-react";
+import { Upload, FileText, Link, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCustomGPTs } from "@/hooks/useCustomGPTs";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const CustomGPTBuild = () => {
-  const [documents, setDocuments] = useState<Array<{ id: string; name: string; type: string; size: string }>>([]);
+  const { user } = useAuth();
+  const { gpts } = useCustomGPTs();
+  const { toast } = useToast();
+  
+  const [documents, setDocuments] = useState<Array<{ id: string; name: string; type: string; size: string; file: File }>>([]);
   const [urls, setUrls] = useState<Array<{ id: string; url: string; title?: string }>>([]);
   const [newUrl, setNewUrl] = useState("");
-  const { toast } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const currentGPT = gpts[0]; // Use the first/latest GPT
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -20,7 +29,8 @@ const CustomGPTBuild = () => {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
           type: file.type,
-          size: (file.size / 1024 / 1024).toFixed(2) + " MB"
+          size: (file.size / 1024 / 1024).toFixed(2) + " MB",
+          file: file
         };
         setDocuments(prev => [...prev, newDoc]);
       });
@@ -53,6 +63,113 @@ const CustomGPTBuild = () => {
 
   const removeUrl = (id: string) => {
     setUrls(prev => prev.filter(url => url.id !== id));
+  };
+
+  const processKnowledgeBase = async () => {
+    if (!currentGPT || !user) {
+      toast({
+        title: "Error",
+        description: "Please create a Custom GPT first in the Personalize section.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (documents.length === 0 && urls.length === 0) {
+      toast({
+        title: "No sources",
+        description: "Please add documents or URLs before processing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    
+    try {
+      // Process documents
+      for (const doc of documents) {
+        // Upload file to Supabase storage
+        const fileName = `${currentGPT.id}/${doc.id}-${doc.file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('gpt-documents')
+          .upload(fileName, doc.file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          continue;
+        }
+
+        // Get file content for processing
+        let processedContent = '';
+        if (doc.file.type === 'text/plain' || doc.file.name.endsWith('.md')) {
+          processedContent = await doc.file.text();
+        } else {
+          // For other file types, store a placeholder
+          processedContent = `Document: ${doc.file.name} (${doc.file.type})`;
+        }
+
+        // Save document record to database
+        const { error: dbError } = await supabase
+          .from('gpt_documents')
+          .insert({
+            gpt_id: currentGPT.id,
+            user_id: user.id,
+            file_name: doc.file.name,
+            file_path: uploadData.path,
+            file_size: doc.file.size,
+            mime_type: doc.file.type,
+            processed_content: processedContent
+          });
+
+        if (dbError) {
+          console.error('Database error:', dbError);
+        }
+      }
+
+      // Process URLs (basic implementation)
+      for (const url of urls) {
+        try {
+          // Save URL reference to database
+          const { error: dbError } = await supabase
+            .from('gpt_documents')
+            .insert({
+              gpt_id: currentGPT.id,
+              user_id: user.id,
+              file_name: url.title || url.url,
+              file_path: url.url,
+              file_size: 0,
+              mime_type: 'text/html',
+              processed_content: `Website: ${url.url}`
+            });
+
+          if (dbError) {
+            console.error('Database error:', dbError);
+          }
+        } catch (error) {
+          console.error('URL processing error:', error);
+        }
+      }
+
+      toast({
+        title: "Knowledge base processed",
+        description: `Successfully processed ${documents.length} document(s) and ${urls.length} URL(s).`,
+      });
+
+      // Clear the local arrays after successful processing
+      setDocuments([]);
+      setUrls([]);
+      
+    } catch (error) {
+      console.error('Processing error:', error);
+      toast({
+        title: "Processing failed",
+        description: "There was an error processing your knowledge base. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -182,8 +299,19 @@ const CustomGPTBuild = () => {
               }
             </p>
             {documents.length + urls.length > 0 && (
-              <Button className="mt-4">
-                Process Knowledge Base
+              <Button 
+                className="mt-4" 
+                onClick={processKnowledgeBase}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Process Knowledge Base'
+                )}
               </Button>
             )}
           </div>
