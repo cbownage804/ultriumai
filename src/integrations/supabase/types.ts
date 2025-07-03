@@ -76,61 +76,172 @@ export type Database = {
       }
       custom_gpts: {
         Row: {
+          affiliate_id: string | null
+          agent_capability: string | null
+          agent_title: string | null
+          agent_visibility: string | null
+          ai_model: string | null
+          anti_hallucination: boolean | null
           api_enabled: boolean
           api_key: string | null
+          avatar_orientations: string | null
           avatar_url: string | null
+          background_color: string | null
+          background_type: string | null
           chat_count: number
+          conversation_duration: string | null
+          conversation_exporting: boolean | null
+          conversation_retention: string | null
+          conversation_sharing: boolean | null
           created_at: string
+          custom_loading_message: string | null
+          custom_message_ending: string | null
           description: string | null
           embed_enabled: boolean
+          error_message: string | null
+          generate_responses_from: string | null
           id: string
           integration_settings: Json | null
           is_active: boolean
+          language: string | null
+          loading_indicator: string | null
           logo_url: string | null
           max_integrations: number | null
           name: string
+          placeholder_prompt: string | null
+          primary_color: string | null
+          recaptcha: boolean | null
+          remove_branding: boolean | null
+          secondary_color: string | null
+          should_mention_sources: boolean | null
+          show_citations: string | null
+          spotlight_avatar: boolean | null
+          starter_questions: Json | null
+          starter_questions_collapse: string | null
+          starter_questions_expand: string | null
+          starter_questions_header: string | null
           system_prompt: string
+          terms_of_service: string | null
           theme_color: string | null
+          title_color: string | null
+          unknown_message: string | null
           updated_at: string
+          user_avatar: boolean | null
+          user_feedback: boolean | null
           user_id: string | null
+          whitelisted_domains: string | null
         }
         Insert: {
+          affiliate_id?: string | null
+          agent_capability?: string | null
+          agent_title?: string | null
+          agent_visibility?: string | null
+          ai_model?: string | null
+          anti_hallucination?: boolean | null
           api_enabled?: boolean
           api_key?: string | null
+          avatar_orientations?: string | null
           avatar_url?: string | null
+          background_color?: string | null
+          background_type?: string | null
           chat_count?: number
+          conversation_duration?: string | null
+          conversation_exporting?: boolean | null
+          conversation_retention?: string | null
+          conversation_sharing?: boolean | null
           created_at?: string
+          custom_loading_message?: string | null
+          custom_message_ending?: string | null
           description?: string | null
           embed_enabled?: boolean
+          error_message?: string | null
+          generate_responses_from?: string | null
           id?: string
           integration_settings?: Json | null
           is_active?: boolean
+          language?: string | null
+          loading_indicator?: string | null
           logo_url?: string | null
           max_integrations?: number | null
           name: string
+          placeholder_prompt?: string | null
+          primary_color?: string | null
+          recaptcha?: boolean | null
+          remove_branding?: boolean | null
+          secondary_color?: string | null
+          should_mention_sources?: boolean | null
+          show_citations?: string | null
+          spotlight_avatar?: boolean | null
+          starter_questions?: Json | null
+          starter_questions_collapse?: string | null
+          starter_questions_expand?: string | null
+          starter_questions_header?: string | null
           system_prompt: string
+          terms_of_service?: string | null
           theme_color?: string | null
+          title_color?: string | null
+          unknown_message?: string | null
           updated_at?: string
+          user_avatar?: boolean | null
+          user_feedback?: boolean | null
           user_id?: string | null
+          whitelisted_domains?: string | null
         }
         Update: {
+          affiliate_id?: string | null
+          agent_capability?: string | null
+          agent_title?: string | null
+          agent_visibility?: string | null
+          ai_model?: string | null
+          anti_hallucination?: boolean | null
           api_enabled?: boolean
           api_key?: string | null
+          avatar_orientations?: string | null
           avatar_url?: string | null
+          background_color?: string | null
+          background_type?: string | null
           chat_count?: number
+          conversation_duration?: string | null
+          conversation_exporting?: boolean | null
+          conversation_retention?: string | null
+          conversation_sharing?: boolean | null
           created_at?: string
+          custom_loading_message?: string | null
+          custom_message_ending?: string | null
           description?: string | null
           embed_enabled?: boolean
+          error_message?: string | null
+          generate_responses_from?: string | null
           id?: string
           integration_settings?: Json | null
           is_active?: boolean
+          language?: string | null
+          loading_indicator?: string | null
           logo_url?: string | null
           max_integrations?: number | null
           name?: string
+          placeholder_prompt?: string | null
+          primary_color?: string | null
+          recaptcha?: boolean | null
+          remove_branding?: boolean | null
+          secondary_color?: string | null
+          should_mention_sources?: boolean | null
+          show_citations?: string | null
+          spotlight_avatar?: boolean | null
+          starter_questions?: Json | null
+          starter_questions_collapse?: string | null
+          starter_questions_expand?: string | null
+          starter_questions_header?: string | null
           system_prompt?: string
+          terms_of_service?: string | null
           theme_color?: string | null
+          title_color?: string | null
+          unknown_message?: string | null
           updated_at?: string
+          user_avatar?: boolean | null
+          user_feedback?: boolean | null
           user_id?: string | null
+          whitelisted_domains?: string | null
         }
         Relationships: []
       }

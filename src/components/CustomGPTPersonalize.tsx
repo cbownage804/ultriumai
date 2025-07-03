@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,104 +24,357 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Info,
   Crown
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+
+interface GPTData {
+  id?: string;
+  name: string;
+  description: string;
+  system_prompt: string;
+  avatar_url: string;
+  primary_color: string;
+  secondary_color: string;
+  background_color: string;
+  background_type: string;
+  language: string;
+  placeholder_prompt: string;
+  loading_indicator: string;
+  custom_loading_message: string;
+  starter_questions: string[];
+  starter_questions_header: string;
+  starter_questions_expand: string;
+  starter_questions_collapse: string;
+  custom_message_ending: string;
+  error_message: string;
+  conversation_duration: string;
+  unknown_message: string;
+  show_citations: string;
+  should_mention_sources: boolean;
+  agent_capability: string;
+  generate_responses_from: string;
+  ai_model: string;
+  user_feedback: boolean;
+  conversation_sharing: boolean;
+  conversation_exporting: boolean;
+  remove_branding: boolean;
+  agent_title: string;
+  title_color: string;
+  spotlight_avatar: boolean;
+  user_avatar: boolean;
+  avatar_orientations: string;
+  terms_of_service: string;
+  affiliate_id: string;
+  anti_hallucination: boolean;
+  agent_visibility: string;
+  recaptcha: boolean;
+  whitelisted_domains: string;
+  conversation_retention: string;
+}
 
 const CustomGPTPersonalize = () => {
-  const [gptData, setGptData] = useState({
+  const [gptData, setGptData] = useState<GPTData>({
     name: "",
     description: "",
-    systemPrompt: "",
-    avatarUrl: "",
-    themeColor: "#3b82f6",
-    primaryColor: "#3b82f6",
-    secondaryColor: "#3b82f6",
-    backgroundColor: "#ffffff",
-    backgroundType: "color",
+    system_prompt: "",
+    avatar_url: "",
+    primary_color: "#3b82f6",
+    secondary_color: "#3b82f6",
+    background_color: "#ffffff",
+    background_type: "color",
     language: "english",
-    placeholderPrompt: "How can I help you today?",
-    loadingIndicator: "typing",
-    customLoadingMessage: "",
-    starterQuestions: [
+    placeholder_prompt: "How can I help you today?",
+    loading_indicator: "typing",
+    custom_loading_message: "",
+    starter_questions: [
       "How do I restart my Windows 365 cloud PC?",
       "My Teams notifications aren't working — can you help?",
       "How do I set up Outlook on a new device?"
     ],
-    starterQuestionsHeader: "Welcome! I'm ChatKWC — your virtual IT assistant. I can help with common IT issues like email, Teams, Windows 365, or file access. What do you need help with today?",
-    starterQuestionsExpand: "View More",
-    starterQuestionsCollapse: "View less",
-    customMessageEnding: "",
-    errorMessage: "I didn't find a walkthrough for that. You can contact the KWC IT Support Team for assistance.",
-    conversationDuration: "24hours",
-    unknownMessage: "I couldn't find a specific answer to that. You may want to contact the KWC IT Support Team for assistance.",
-    showCitations: "dont_display",
-    shouldMentionSources: true,
-    agentCapability: "optimal",
-    generateResponsesFrom: "my_data_llm",
-    aiModel: "gpt-4o",
-    userFeedback: true,
-    conversationSharing: true,
-    conversationExporting: false,
-    removeBranding: false,
-    agentTitle: "",
-    titleColor: "#000000",
-    spotlightAvatar: false,
-    userAvatar: false,
-    avatarOrientations: "agent_left_user_right",
-    termsOfService: "",
-    affiliateId: "",
-    antiHallucination: true,
-    agentVisibility: "public",
+    starter_questions_header: "Welcome! I'm your virtual IT assistant. I can help with common IT issues like email, Teams, Windows 365, or file access. What do you need help with today?",
+    starter_questions_expand: "View More",
+    starter_questions_collapse: "View less",
+    custom_message_ending: "",
+    error_message: "I didn't find a walkthrough for that. You can contact the IT Support Team for assistance.",
+    conversation_duration: "24hours",
+    unknown_message: "I couldn't find a specific answer to that. You may want to contact the IT Support Team for assistance.",
+    show_citations: "dont_display",
+    should_mention_sources: true,
+    agent_capability: "optimal",
+    generate_responses_from: "my_data_llm",
+    ai_model: "gpt-4o",
+    user_feedback: true,
+    conversation_sharing: true,
+    conversation_exporting: false,
+    remove_branding: false,
+    agent_title: "",
+    title_color: "#000000",
+    spotlight_avatar: false,
+    user_avatar: false,
+    avatar_orientations: "agent_left_user_right",
+    terms_of_service: "",
+    affiliate_id: "",
+    anti_hallucination: true,
+    agent_visibility: "public",
     recaptcha: false,
-    whitelistedDomains: "",
-    conversationRetention: "12_months"
+    whitelisted_domains: "",
+    conversation_retention: "12_months"
   });
+  
+  const [currentGptId, setCurrentGptId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { subscription } = useSubscription();
 
-  const handleSave = () => {
-    toast({
-      title: "Settings saved",
-      description: "Your Custom GPT configuration has been updated",
-    });
-  };
+  // Load existing GPT data
+  useEffect(() => {
+    loadGPTData();
+  }, [user]);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setGptData(prev => ({ ...prev, avatarUrl: result }));
-      };
-      reader.readAsDataURL(file);
+  const loadGPTData = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('custom_gpts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading GPT data:', error);
+        return;
+      }
+
+      if (data) {
+        setCurrentGptId(data.id);
+        setGptData({
+          id: data.id,
+          name: data.name || "",
+          description: data.description || "",
+          system_prompt: data.system_prompt || "",
+          avatar_url: data.avatar_url || "",
+          primary_color: data.primary_color || "#3b82f6",
+          secondary_color: data.secondary_color || "#3b82f6",
+          background_color: data.background_color || "#ffffff",
+          background_type: data.background_type || "color",
+          language: data.language || "english",
+          placeholder_prompt: data.placeholder_prompt || "How can I help you today?",
+          loading_indicator: data.loading_indicator || "typing",
+          custom_loading_message: data.custom_loading_message || "",
+          starter_questions: Array.isArray(data.starter_questions) 
+            ? data.starter_questions.filter((q): q is string => typeof q === 'string') 
+            : [],
+          starter_questions_header: data.starter_questions_header || "",
+          starter_questions_expand: data.starter_questions_expand || "View More",
+          starter_questions_collapse: data.starter_questions_collapse || "View less",
+          custom_message_ending: data.custom_message_ending || "",
+          error_message: data.error_message || "",
+          conversation_duration: data.conversation_duration || "24hours",
+          unknown_message: data.unknown_message || "",
+          show_citations: data.show_citations || "dont_display",
+          should_mention_sources: data.should_mention_sources ?? true,
+          agent_capability: data.agent_capability || "optimal",
+          generate_responses_from: data.generate_responses_from || "my_data_llm",
+          ai_model: data.ai_model || "gpt-4o",
+          user_feedback: data.user_feedback ?? true,
+          conversation_sharing: data.conversation_sharing ?? true,
+          conversation_exporting: data.conversation_exporting ?? false,
+          remove_branding: data.remove_branding ?? false,
+          agent_title: data.agent_title || "",
+          title_color: data.title_color || "#000000",
+          spotlight_avatar: data.spotlight_avatar ?? false,
+          user_avatar: data.user_avatar ?? false,
+          avatar_orientations: data.avatar_orientations || "agent_left_user_right",
+          terms_of_service: data.terms_of_service || "",
+          affiliate_id: data.affiliate_id || "",
+          anti_hallucination: data.anti_hallucination ?? true,
+          agent_visibility: data.agent_visibility || "public",
+          recaptcha: data.recaptcha ?? false,
+          whitelisted_domains: data.whitelisted_domains || "",
+          conversation_retention: data.conversation_retention || "12_months"
+        });
+      }
+    } catch (error) {
+      console.error('Error loading GPT data:', error);
     }
   };
 
-  const colorOptions = [
-    "#3b82f6", "#8b5cf6", "#ef4444", "#f59e0b", 
-    "#10b981", "#06b6d4", "#ec4899", "#6366f1"
-  ];
+  const isAdvancedFeatureAvailable = (feature: string) => {
+    switch (feature) {
+      case "branding":
+      case "documents":
+      case "embedding": 
+      case "api":
+      case "ai_model":
+      case "conversation_exporting":
+      case "should_mention_sources":
+      case "conversation_retention":
+        return subscription.subscription_tier !== "free";
+      default:
+        return true;
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to save your GPT configuration.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const gptPayload = {
+        name: gptData.name,
+        description: gptData.description,
+        system_prompt: gptData.system_prompt,
+        avatar_url: gptData.avatar_url,
+        primary_color: gptData.primary_color,
+        secondary_color: gptData.secondary_color,
+        background_color: gptData.background_color,
+        background_type: gptData.background_type,
+        language: gptData.language,
+        placeholder_prompt: gptData.placeholder_prompt,
+        loading_indicator: gptData.loading_indicator,
+        custom_loading_message: gptData.custom_loading_message,
+        starter_questions: gptData.starter_questions,
+        starter_questions_header: gptData.starter_questions_header,
+        starter_questions_expand: gptData.starter_questions_expand,
+        starter_questions_collapse: gptData.starter_questions_collapse,
+        custom_message_ending: gptData.custom_message_ending,
+        error_message: gptData.error_message,
+        conversation_duration: gptData.conversation_duration,
+        unknown_message: gptData.unknown_message,
+        show_citations: gptData.show_citations,
+        should_mention_sources: gptData.should_mention_sources,
+        agent_capability: gptData.agent_capability,
+        generate_responses_from: gptData.generate_responses_from,
+        ai_model: gptData.ai_model,
+        user_feedback: gptData.user_feedback,
+        conversation_sharing: gptData.conversation_sharing,
+        conversation_exporting: gptData.conversation_exporting,
+        remove_branding: gptData.remove_branding,
+        agent_title: gptData.agent_title,
+        title_color: gptData.title_color,
+        spotlight_avatar: gptData.spotlight_avatar,
+        user_avatar: gptData.user_avatar,
+        avatar_orientations: gptData.avatar_orientations,
+        terms_of_service: gptData.terms_of_service,
+        affiliate_id: gptData.affiliate_id,
+        anti_hallucination: gptData.anti_hallucination,
+        agent_visibility: gptData.agent_visibility,
+        recaptcha: gptData.recaptcha,
+        whitelisted_domains: gptData.whitelisted_domains,
+        conversation_retention: gptData.conversation_retention,
+        user_id: user.id
+      };
+
+      let result;
+      if (currentGptId) {
+        result = await supabase
+          .from('custom_gpts')
+          .update(gptPayload)
+          .eq('id', currentGptId)
+          .select()
+          .single();
+      } else {
+        result = await supabase
+          .from('custom_gpts')
+          .insert(gptPayload)
+          .select()
+          .single();
+      }
+
+      if (result.error) throw result.error;
+
+      if (!currentGptId && result.data) {
+        setCurrentGptId(result.data.id);
+      }
+
+      toast({
+        title: "Settings saved",
+        description: "Your UltriumGPT configuration has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving GPT data:', error);
+      toast({
+        title: "Save failed",
+        description: "Failed to save your configuration. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${currentGptId || 'temp'}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('gpt-logos')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('gpt-logos')
+        .getPublicUrl(fileName);
+
+      setGptData(prev => ({ ...prev, avatar_url: data.publicUrl }));
+      
+      toast({
+        title: "Avatar uploaded",
+        description: "Your GPT avatar has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload avatar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const addStarterQuestion = () => {
     setGptData(prev => ({
       ...prev,
-      starterQuestions: [...prev.starterQuestions, ""]
+      starter_questions: [...prev.starter_questions, ""]
     }));
   };
 
   const removeStarterQuestion = (index: number) => {
     setGptData(prev => ({
       ...prev,
-      starterQuestions: prev.starterQuestions.filter((_, i) => i !== index)
+      starter_questions: prev.starter_questions.filter((_, i) => i !== index)
     }));
   };
 
   const updateStarterQuestion = (index: number, value: string) => {
     setGptData(prev => ({
       ...prev,
-      starterQuestions: prev.starterQuestions.map((q, i) => i === index ? value : q)
+      starter_questions: prev.starter_questions.map((q, i) => i === index ? value : q)
     }));
   };
 
@@ -135,7 +388,7 @@ const CustomGPTPersonalize = () => {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="general" className="flex items-center gap-1">
             <Settings className="h-4 w-4" />
             General
@@ -173,10 +426,13 @@ const CustomGPTPersonalize = () => {
                 <Settings className="h-5 w-5" />
                 Agent Name
               </CardTitle>
+              <CardDescription>
+                Choose a name for your AI assistant that reflects its purpose and personality.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <Input
-                placeholder="ChatKWC"
+                placeholder="e.g., IT Helper, Support Bot, Company Assistant"
                 value={gptData.name}
                 onChange={(e) => setGptData(prev => ({ ...prev, name: e.target.value }))}
               />
@@ -189,21 +445,24 @@ const CustomGPTPersonalize = () => {
                 <User className="h-5 w-5" />
                 Agent Avatar
               </CardTitle>
+              <CardDescription>
+                Upload a profile picture for your AI assistant. This image will appear in conversations.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src={gptData.avatarUrl} />
+                  <AvatarImage src={gptData.avatar_url} />
                   <AvatarFallback>
                     {gptData.name ? gptData.name.substring(0, 2).toUpperCase() : "GPT"}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <Label htmlFor="avatar-upload" className="cursor-pointer">
-                    <Button variant="outline" size="sm" asChild>
+                    <Button variant="outline" size="sm" asChild disabled={isUploading}>
                       <span>
                         <Upload className="h-4 w-4 mr-2" />
-                        Change Avatar
+                        {isUploading ? "Uploading..." : "Change Avatar"}
                       </span>
                     </Button>
                   </Label>
@@ -228,6 +487,9 @@ const CustomGPTPersonalize = () => {
                 <Palette className="h-5 w-5" />
                 Colors
               </CardTitle>
+              <CardDescription>
+                Customize the color scheme for your AI assistant's interface to match your brand.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -236,13 +498,13 @@ const CustomGPTPersonalize = () => {
                   <div className="flex gap-2">
                     <Input
                       type="color"
-                      value={gptData.primaryColor}
-                      onChange={(e) => setGptData(prev => ({ ...prev, primaryColor: e.target.value }))}
+                      value={gptData.primary_color}
+                      onChange={(e) => setGptData(prev => ({ ...prev, primary_color: e.target.value }))}
                       className="w-16 h-10"
                     />
                     <Input
-                      value={gptData.primaryColor}
-                      onChange={(e) => setGptData(prev => ({ ...prev, primaryColor: e.target.value }))}
+                      value={gptData.primary_color}
+                      onChange={(e) => setGptData(prev => ({ ...prev, primary_color: e.target.value }))}
                       placeholder="#0D599F"
                     />
                   </div>
@@ -252,13 +514,13 @@ const CustomGPTPersonalize = () => {
                   <div className="flex gap-2">
                     <Input
                       type="color"
-                      value={gptData.secondaryColor}
-                      onChange={(e) => setGptData(prev => ({ ...prev, secondaryColor: e.target.value }))}
+                      value={gptData.secondary_color}
+                      onChange={(e) => setGptData(prev => ({ ...prev, secondary_color: e.target.value }))}
                       className="w-16 h-10"
                     />
                     <Input
-                      value={gptData.secondaryColor}
-                      onChange={(e) => setGptData(prev => ({ ...prev, secondaryColor: e.target.value }))}
+                      value={gptData.secondary_color}
+                      onChange={(e) => setGptData(prev => ({ ...prev, secondary_color: e.target.value }))}
                       placeholder="#0D599F"
                     />
                   </div>
@@ -273,11 +535,14 @@ const CustomGPTPersonalize = () => {
                 <Palette className="h-5 w-5" />
                 Background
               </CardTitle>
+              <CardDescription>
+                Choose between a solid color or image background for the chat interface.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <RadioGroup
-                value={gptData.backgroundType}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, backgroundType: value }))}
+                value={gptData.background_type}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, background_type: value }))}
                 className="flex gap-6"
               >
                 <div className="flex items-center space-x-2">
@@ -290,10 +555,10 @@ const CustomGPTPersonalize = () => {
                 </div>
               </RadioGroup>
               
-              {gptData.backgroundType === "color" && (
+              {gptData.background_type === "color" && (
                 <Input
-                  value={gptData.backgroundColor}
-                  onChange={(e) => setGptData(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                  value={gptData.background_color}
+                  onChange={(e) => setGptData(prev => ({ ...prev, background_color: e.target.value }))}
                   placeholder="#FFFFFF"
                 />
               )}
@@ -306,14 +571,14 @@ const CustomGPTPersonalize = () => {
             <CardHeader>
               <CardTitle>System Instructions</CardTitle>
               <CardDescription>
-                Customize your agent behavior to control its personality traits and role to fit your use case. Use our handy Persona Generator tool to get started!
+                Customize your agent behavior to control its personality traits and role. Define how your AI should respond, what tone to use, and what expertise it should demonstrate.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Textarea
-                placeholder="Act as the internal helpdesk assistant for KWC. Answer employee questions using the uploaded helpdesk flows..."
-                value={gptData.systemPrompt}
-                onChange={(e) => setGptData(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                placeholder="Act as a helpful IT support assistant. Answer employee questions professionally and provide step-by-step guidance. Always be patient and clear in your explanations..."
+                value={gptData.system_prompt}
+                onChange={(e) => setGptData(prev => ({ ...prev, system_prompt: e.target.value }))}
                 rows={8}
               />
             </CardContent>
@@ -327,6 +592,9 @@ const CustomGPTPersonalize = () => {
                 <MessageSquare className="h-5 w-5" />
                 Agent Language
               </CardTitle>
+              <CardDescription>
+                Select the primary language your AI assistant will use for responses.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Select value={gptData.language} onValueChange={(value) => setGptData(prev => ({ ...prev, language: value }))}>
@@ -334,7 +602,7 @@ const CustomGPTPersonalize = () => {
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="english">English - Worldwide(English)</SelectItem>
+                  <SelectItem value="english">English - Worldwide</SelectItem>
                   <SelectItem value="spanish">Spanish</SelectItem>
                   <SelectItem value="french">French</SelectItem>
                   <SelectItem value="german">German</SelectItem>
@@ -349,11 +617,14 @@ const CustomGPTPersonalize = () => {
                 <MessageSquare className="h-5 w-5" />
                 Placeholder Prompt
               </CardTitle>
+              <CardDescription>
+                The text that appears in the message input field before users start typing.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Input
-                value={gptData.placeholderPrompt}
-                onChange={(e) => setGptData(prev => ({ ...prev, placeholderPrompt: e.target.value }))}
+                value={gptData.placeholder_prompt}
+                onChange={(e) => setGptData(prev => ({ ...prev, placeholder_prompt: e.target.value }))}
                 placeholder="How can I help you today?"
               />
             </CardContent>
@@ -365,15 +636,18 @@ const CustomGPTPersonalize = () => {
                 <MessageSquare className="h-5 w-5" />
                 Loading Indicator
               </CardTitle>
+              <CardDescription>
+                Choose what users see while your AI is generating a response.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <RadioGroup
-                value={gptData.loadingIndicator}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, loadingIndicator: value }))}
+                value={gptData.loading_indicator}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, loading_indicator: value }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="typing" id="typing-dots" />
-                  <Label htmlFor="typing-dots">Typing dots</Label>
+                  <Label htmlFor="typing-dots">Typing dots animation</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="custom" id="custom-message" />
@@ -381,10 +655,10 @@ const CustomGPTPersonalize = () => {
                 </div>
               </RadioGroup>
               
-              {gptData.loadingIndicator === "custom" && (
+              {gptData.loading_indicator === "custom" && (
                 <Input
-                  value={gptData.customLoadingMessage}
-                  onChange={(e) => setGptData(prev => ({ ...prev, customLoadingMessage: e.target.value }))}
+                  value={gptData.custom_loading_message}
+                  onChange={(e) => setGptData(prev => ({ ...prev, custom_loading_message: e.target.value }))}
                   placeholder="Hang in there! I'm thinking..."
                 />
               )}
@@ -397,9 +671,12 @@ const CustomGPTPersonalize = () => {
                 <MessageSquare className="h-5 w-5" />
                 Starter Questions
               </CardTitle>
+              <CardDescription>
+                Pre-written questions that help users get started with your AI assistant.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {gptData.starterQuestions.map((question, index) => (
+              {gptData.starter_questions.map((question, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
                     value={question}
@@ -426,26 +703,26 @@ const CustomGPTPersonalize = () => {
                 <div className="space-y-2">
                   <Label>Starter Questions Header</Label>
                   <Input
-                    value={gptData.starterQuestionsHeader}
-                    onChange={(e) => setGptData(prev => ({ ...prev, starterQuestionsHeader: e.target.value }))}
-                    placeholder="Welcome message"
+                    value={gptData.starter_questions_header}
+                    onChange={(e) => setGptData(prev => ({ ...prev, starter_questions_header: e.target.value }))}
+                    placeholder="Welcome message that appears above starter questions"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Starter Questions Expand</Label>
+                  <Label>Starter Questions Expand Text</Label>
                   <Input
-                    value={gptData.starterQuestionsExpand}
-                    onChange={(e) => setGptData(prev => ({ ...prev, starterQuestionsExpand: e.target.value }))}
+                    value={gptData.starter_questions_expand}
+                    onChange={(e) => setGptData(prev => ({ ...prev, starter_questions_expand: e.target.value }))}
                     placeholder="View More"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Starter Questions Collapse</Label>
+                  <Label>Starter Questions Collapse Text</Label>
                   <Input
-                    value={gptData.starterQuestionsCollapse}
-                    onChange={(e) => setGptData(prev => ({ ...prev, starterQuestionsCollapse: e.target.value }))}
+                    value={gptData.starter_questions_collapse}
+                    onChange={(e) => setGptData(prev => ({ ...prev, starter_questions_collapse: e.target.value }))}
                     placeholder="View less"
                   />
                 </div>
@@ -459,12 +736,15 @@ const CustomGPTPersonalize = () => {
                 <MessageSquare className="h-5 w-5" />
                 Custom Message Ending
               </CardTitle>
+              <CardDescription>
+                Optional text that gets appended to every AI response.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Input
-                value={gptData.customMessageEnding}
-                onChange={(e) => setGptData(prev => ({ ...prev, customMessageEnding: e.target.value }))}
-                placeholder=""
+                value={gptData.custom_message_ending}
+                onChange={(e) => setGptData(prev => ({ ...prev, custom_message_ending: e.target.value }))}
+                placeholder="e.g., 'Need more help? Contact support at help@company.com'"
               />
             </CardContent>
           </Card>
@@ -475,12 +755,15 @@ const CustomGPTPersonalize = () => {
                 <MessageSquare className="h-5 w-5" />
                 Error Message
               </CardTitle>
+              <CardDescription>
+                Message shown when the AI encounters an error or cannot process a request.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Input
-                value={gptData.errorMessage}
-                onChange={(e) => setGptData(prev => ({ ...prev, errorMessage: e.target.value }))}
-                placeholder="Error message"
+                value={gptData.error_message}
+                onChange={(e) => setGptData(prev => ({ ...prev, error_message: e.target.value }))}
+                placeholder="I'm sorry, I encountered an error. Please try again."
               />
             </CardContent>
           </Card>
@@ -491,11 +774,14 @@ const CustomGPTPersonalize = () => {
                 <MessageSquare className="h-5 w-5" />
                 Conversation Duration
               </CardTitle>
+              <CardDescription>
+                How long conversations remain active before they timeout.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={gptData.conversationDuration}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, conversationDuration: value }))}
+                value={gptData.conversation_duration}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, conversation_duration: value }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="24hours" id="24hours" />
@@ -517,12 +803,15 @@ const CustomGPTPersonalize = () => {
                 <Quote className="h-5 w-5" />
                 I don't know message
               </CardTitle>
+              <CardDescription>
+                Response when the AI cannot find relevant information to answer a question.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Input
-                value={gptData.unknownMessage}
-                onChange={(e) => setGptData(prev => ({ ...prev, unknownMessage: e.target.value }))}
-                placeholder="Unknown message"
+                value={gptData.unknown_message}
+                onChange={(e) => setGptData(prev => ({ ...prev, unknown_message: e.target.value }))}
+                placeholder="I couldn't find specific information about that. Please contact support for assistance."
               />
             </CardContent>
           </Card>
@@ -533,9 +822,12 @@ const CustomGPTPersonalize = () => {
                 <Quote className="h-5 w-5" />
                 Show Citations
               </CardTitle>
+              <CardDescription>
+                Whether to display source references when the AI provides information.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={gptData.showCitations} onValueChange={(value) => setGptData(prev => ({ ...prev, showCitations: value }))}>
+              <Select value={gptData.show_citations} onValueChange={(value) => setGptData(prev => ({ ...prev, show_citations: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -553,16 +845,22 @@ const CustomGPTPersonalize = () => {
                 <Quote className="h-5 w-5" />
                 Should the agent mention source names?
               </CardTitle>
+              <CardDescription>
+                Controls whether the AI can reference specific document or source names in responses.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Badge variant="secondary" className="mb-4">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Unlock Feature
-                </Badge>
+                {!isAdvancedFeatureAvailable("should_mention_sources") && (
+                  <Badge variant="secondary" className="mb-4">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium Feature
+                  </Badge>
+                )}
                 <RadioGroup
-                  value={gptData.shouldMentionSources ? "yes" : "no"}
-                  onValueChange={(value) => setGptData(prev => ({ ...prev, shouldMentionSources: value === "yes" }))}
+                  value={gptData.should_mention_sources ? "yes" : "no"}
+                  onValueChange={(value) => setGptData(prev => ({ ...prev, should_mention_sources: value === "yes" }))}
+                  disabled={!isAdvancedFeatureAvailable("should_mention_sources")}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="yes" id="mention-yes" />
@@ -585,21 +883,24 @@ const CustomGPTPersonalize = () => {
                 <Brain className="h-5 w-5" />
                 Agent's Capability
               </CardTitle>
+              <CardDescription>
+                Choose the balance between response speed, accuracy, and reasoning complexity.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-4 gap-4 mb-4">
                 {[
-                  { id: "fastest", label: "Fastest Responses", icon: "🚀" },
-                  { id: "optimal", label: "Optimal Choice", icon: "🧠", selected: true },
-                  { id: "highest", label: "Highest Relevance", icon: "🎯" },
-                  { id: "complex", label: "Complex Reasoning", icon: "🧩" }
+                  { id: "fastest", label: "Fastest Responses", icon: "🚀", description: "Quick replies, basic reasoning" },
+                  { id: "optimal", label: "Optimal Choice", icon: "🧠", description: "Best balance of speed and quality" },
+                  { id: "highest", label: "Highest Relevance", icon: "🎯", description: "Most accurate responses" },
+                  { id: "complex", label: "Complex Reasoning", icon: "🧩", description: "Advanced problem solving" }
                 ].map((option) => (
                   <div
                     key={option.id}
-                    className={`p-4 border rounded-lg cursor-pointer text-center ${
-                      gptData.agentCapability === option.id ? 'border-primary bg-primary/5' : 'border-muted'
+                    className={`p-4 border rounded-lg cursor-pointer text-center transition-colors ${
+                      gptData.agent_capability === option.id ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/50'
                     }`}
-                    onClick={() => setGptData(prev => ({ ...prev, agentCapability: option.id }))}
+                    onClick={() => setGptData(prev => ({ ...prev, agent_capability: option.id }))}
                   >
                     <div className="text-2xl mb-2">{option.icon}</div>
                     <div className="text-sm font-medium">{option.label}</div>
@@ -615,20 +916,23 @@ const CustomGPTPersonalize = () => {
                 <Brain className="h-5 w-5" />
                 Generate Responses From
               </CardTitle>
+              <CardDescription>
+                Control what knowledge sources your AI uses to generate responses.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={gptData.generateResponsesFrom} onValueChange={(value) => setGptData(prev => ({ ...prev, generateResponsesFrom: value }))}>
+              <Select value={gptData.generate_responses_from} onValueChange={(value) => setGptData(prev => ({ ...prev, generate_responses_from: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="my_data_llm">My Data + LLM</SelectItem>
+                  <SelectItem value="my_data_llm">My Data + General Knowledge</SelectItem>
                   <SelectItem value="my_data_only">My Data Only</SelectItem>
-                  <SelectItem value="llm_only">LLM Only</SelectItem>
+                  <SelectItem value="llm_only">General Knowledge Only</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-destructive mt-2">
-                Enabling general LLM knowledge significantly increases chances of hallucination and reduces the effectiveness of CustomGPT.ai system and Persona you have set up. Use this feature with caution.
+                Enabling general knowledge can increase chances of hallucination. Use "My Data Only" for maximum accuracy.
               </p>
             </CardContent>
           </Card>
@@ -638,21 +942,30 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
                 AI Model
-                <Badge variant="secondary">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Unlock Feature
-                </Badge>
+                {!isAdvancedFeatureAvailable("ai_model") && (
+                  <Badge variant="secondary">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium Feature
+                  </Badge>
+                )}
               </CardTitle>
+              <CardDescription>
+                Select the underlying AI model that powers your assistant's responses.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={gptData.aiModel} onValueChange={(value) => setGptData(prev => ({ ...prev, aiModel: value }))}>
+              <Select 
+                value={gptData.ai_model} 
+                onValueChange={(value) => setGptData(prev => ({ ...prev, ai_model: value }))}
+                disabled={!isAdvancedFeatureAvailable("ai_model")}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                  <SelectItem value="gpt-4">GPT-4</SelectItem>
-                  <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
+                  <SelectItem value="gpt-4o">GPT-4o (Most Advanced)</SelectItem>
+                  <SelectItem value="gpt-4">GPT-4 (High Quality)</SelectItem>
+                  <SelectItem value="gpt-3.5">GPT-3.5 (Fast & Efficient)</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>
@@ -666,11 +979,14 @@ const CustomGPTPersonalize = () => {
                 <Sliders className="h-5 w-5" />
                 User Feedback
               </CardTitle>
+              <CardDescription>
+                Allow users to rate responses with thumbs up/down to help improve the AI.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={gptData.userFeedback ? "enabled" : "disabled"}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, userFeedback: value === "enabled" }))}
+                value={gptData.user_feedback ? "enabled" : "disabled"}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, user_feedback: value === "enabled" }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="enabled" id="feedback-enabled" />
@@ -690,11 +1006,14 @@ const CustomGPTPersonalize = () => {
                 <Sliders className="h-5 w-5" />
                 Conversation Sharing
               </CardTitle>
+              <CardDescription>
+                Allow users to share conversations with others via shareable links.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={gptData.conversationSharing ? "enabled" : "disabled"}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, conversationSharing: value === "enabled" }))}
+                value={gptData.conversation_sharing ? "enabled" : "disabled"}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, conversation_sharing: value === "enabled" }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="enabled" id="sharing-enabled" />
@@ -713,16 +1032,22 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Sliders className="h-5 w-5" />
                 Conversation Exporting
-                <Badge variant="secondary">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Unlock Feature
-                </Badge>
+                {!isAdvancedFeatureAvailable("conversation_exporting") && (
+                  <Badge variant="secondary">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium Feature
+                  </Badge>
+                )}
               </CardTitle>
+              <CardDescription>
+                Allow users to export their conversation history as files (PDF, TXT, etc.).
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={gptData.conversationExporting ? "enabled" : "disabled"}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, conversationExporting: value === "enabled" }))}
+                value={gptData.conversation_exporting ? "enabled" : "disabled"}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, conversation_exporting: value === "enabled" }))}
+                disabled={!isAdvancedFeatureAvailable("conversation_exporting")}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="enabled" id="exporting-enabled" />
@@ -742,15 +1067,18 @@ const CustomGPTPersonalize = () => {
                 <Sliders className="h-5 w-5" />
                 Branding
               </CardTitle>
+              <CardDescription>
+                Customize the branding and appearance of your AI assistant interface.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
                 <Label className="text-sm">Remove Branding</Label>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm text-muted-foreground">Powered by CustomGPT.ai</span>
+                  <span className="text-sm text-muted-foreground">Powered by UltriumGPT</span>
                   <Switch
-                    checked={gptData.removeBranding}
-                    onCheckedChange={(checked) => setGptData(prev => ({ ...prev, removeBranding: checked }))}
+                    checked={gptData.remove_branding}
+                    onCheckedChange={(checked) => setGptData(prev => ({ ...prev, remove_branding: checked }))}
                   />
                 </div>
               </div>
@@ -760,8 +1088,8 @@ const CustomGPTPersonalize = () => {
               <div className="space-y-2">
                 <Label>Agent Title</Label>
                 <Input
-                  value={gptData.agentTitle}
-                  onChange={(e) => setGptData(prev => ({ ...prev, agentTitle: e.target.value }))}
+                  value={gptData.agent_title}
+                  onChange={(e) => setGptData(prev => ({ ...prev, agent_title: e.target.value }))}
                   placeholder="Leave blank if you don't want to use title"
                 />
               </div>
@@ -771,13 +1099,13 @@ const CustomGPTPersonalize = () => {
                 <div className="flex gap-2">
                   <Input
                     type="color"
-                    value={gptData.titleColor}
-                    onChange={(e) => setGptData(prev => ({ ...prev, titleColor: e.target.value }))}
+                    value={gptData.title_color}
+                    onChange={(e) => setGptData(prev => ({ ...prev, title_color: e.target.value }))}
                     className="w-16 h-10"
                   />
                   <Input
-                    value={gptData.titleColor}
-                    onChange={(e) => setGptData(prev => ({ ...prev, titleColor: e.target.value }))}
+                    value={gptData.title_color}
+                    onChange={(e) => setGptData(prev => ({ ...prev, title_color: e.target.value }))}
                     placeholder="#000000"
                   />
                 </div>
@@ -786,10 +1114,10 @@ const CustomGPTPersonalize = () => {
               <div>
                 <Label className="text-sm">Spotlight Avatar</Label>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm text-muted-foreground">Disabled</span>
+                  <span className="text-sm text-muted-foreground">Highlight the agent avatar</span>
                   <Switch
-                    checked={gptData.spotlightAvatar}
-                    onCheckedChange={(checked) => setGptData(prev => ({ ...prev, spotlightAvatar: checked }))}
+                    checked={gptData.spotlight_avatar}
+                    onCheckedChange={(checked) => setGptData(prev => ({ ...prev, spotlight_avatar: checked }))}
                   />
                 </div>
               </div>
@@ -797,17 +1125,17 @@ const CustomGPTPersonalize = () => {
               <div>
                 <Label className="text-sm">User Avatar</Label>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm text-muted-foreground">Disabled</span>
+                  <span className="text-sm text-muted-foreground">Show user profile pictures</span>
                   <Switch
-                    checked={gptData.userAvatar}
-                    onCheckedChange={(checked) => setGptData(prev => ({ ...prev, userAvatar: checked }))}
+                    checked={gptData.user_avatar}
+                    onCheckedChange={(checked) => setGptData(prev => ({ ...prev, user_avatar: checked }))}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label>Avatar Orientations</Label>
-                <Select value={gptData.avatarOrientations} onValueChange={(value) => setGptData(prev => ({ ...prev, avatarOrientations: value }))}>
+                <Select value={gptData.avatar_orientations} onValueChange={(value) => setGptData(prev => ({ ...prev, avatar_orientations: value }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -821,9 +1149,9 @@ const CustomGPTPersonalize = () => {
               <div className="space-y-2">
                 <Label>Terms of Service</Label>
                 <Textarea
-                  value={gptData.termsOfService}
-                  onChange={(e) => setGptData(prev => ({ ...prev, termsOfService: e.target.value }))}
-                  placeholder="Enter your text here"
+                  value={gptData.terms_of_service}
+                  onChange={(e) => setGptData(prev => ({ ...prev, terms_of_service: e.target.value }))}
+                  placeholder="Enter your terms of service text here"
                   rows={3}
                 />
               </div>
@@ -831,12 +1159,12 @@ const CustomGPTPersonalize = () => {
               <div className="space-y-2">
                 <Label>Affiliate ID</Label>
                 <Input
-                  value={gptData.affiliateId}
-                  onChange={(e) => setGptData(prev => ({ ...prev, affiliateId: e.target.value }))}
+                  value={gptData.affiliate_id}
+                  onChange={(e) => setGptData(prev => ({ ...prev, affiliate_id: e.target.value }))}
                   placeholder="Enter your Affiliate ID here"
                 />
                 <p className="text-sm text-muted-foreground">
-                  Don't have Affiliate ID? <span className="text-primary cursor-pointer">Become A Partner</span>
+                  Don't have an Affiliate ID? <span className="text-primary cursor-pointer">Become A Partner</span>
                 </p>
               </div>
             </CardContent>
@@ -850,15 +1178,18 @@ const CustomGPTPersonalize = () => {
                 <Shield className="h-5 w-5" />
                 Anti-Hallucination
               </CardTitle>
+              <CardDescription>
+                Reduces the AI's tendency to make up information when it doesn't know the answer.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={gptData.antiHallucination ? "enabled" : "disabled"}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, antiHallucination: value === "enabled" }))}
+                value={gptData.anti_hallucination ? "enabled" : "disabled"}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, anti_hallucination: value === "enabled" }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="enabled" id="anti-hallucination-enabled" />
-                  <Label htmlFor="anti-hallucination-enabled">Enabled</Label>
+                  <Label htmlFor="anti-hallucination-enabled">Enabled (Recommended)</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="disabled" id="anti-hallucination-disabled" />
@@ -874,19 +1205,22 @@ const CustomGPTPersonalize = () => {
                 <Shield className="h-5 w-5" />
                 Agent Visibility
               </CardTitle>
+              <CardDescription>
+                Control who can access your AI assistant.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={gptData.agentVisibility}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, agentVisibility: value }))}
+                value={gptData.agent_visibility}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, agent_visibility: value }))}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="private" id="visibility-private" />
-                  <Label htmlFor="visibility-private">Private</Label>
+                  <Label htmlFor="visibility-private">Private (Only you can access)</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="public" id="visibility-public" />
-                  <Label htmlFor="visibility-public">Public</Label>
+                  <Label htmlFor="visibility-public">Public (Anyone can access)</Label>
                 </div>
               </RadioGroup>
             </CardContent>
@@ -895,10 +1229,13 @@ const CustomGPTPersonalize = () => {
           <Card>
             <CardHeader>
               <CardTitle>Data Protection</CardTitle>
+              <CardDescription>
+                Your data security and privacy information.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                CustomGPT.ai is SOC 2 Type II certified and fully GDPR compliant. Your data and your users' data are safe with us.
+                UltriumGPT is SOC 2 Type II certified and fully GDPR compliant. Your data and your users' data are safe with us.
               </p>
               <p className="text-sm text-muted-foreground">
                 More details available at our <span className="text-primary cursor-pointer">Trust Center</span>.
@@ -912,6 +1249,9 @@ const CustomGPTPersonalize = () => {
                 <Shield className="h-5 w-5" />
                 Recaptcha
               </CardTitle>
+              <CardDescription>
+                Add bot protection to prevent automated abuse of your AI assistant.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
@@ -942,9 +1282,9 @@ const CustomGPTPersonalize = () => {
             </CardHeader>
             <CardContent>
               <Textarea
-                value={gptData.whitelistedDomains}
-                onChange={(e) => setGptData(prev => ({ ...prev, whitelistedDomains: e.target.value }))}
-                placeholder=""
+                value={gptData.whitelisted_domains}
+                onChange={(e) => setGptData(prev => ({ ...prev, whitelisted_domains: e.target.value }))}
+                placeholder="example.com&#10;*.mycompany.com&#10;app.example.org"
                 rows={4}
               />
             </CardContent>
@@ -955,16 +1295,22 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
                 Conversation Retention Period
-                <Badge variant="secondary">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Unlock Feature
-                </Badge>
+                {!isAdvancedFeatureAvailable("conversation_retention") && (
+                  <Badge variant="secondary">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Premium Feature
+                  </Badge>
+                )}
               </CardTitle>
+              <CardDescription>
+                How long conversation data is stored before automatic deletion.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={gptData.conversationRetention}
-                onValueChange={(value) => setGptData(prev => ({ ...prev, conversationRetention: value }))}
+                value={gptData.conversation_retention}
+                onValueChange={(value) => setGptData(prev => ({ ...prev, conversation_retention: value }))}
+                disabled={!isAdvancedFeatureAvailable("conversation_retention")}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="custom" id="retention-custom" />
@@ -976,7 +1322,7 @@ const CustomGPTPersonalize = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="never" id="retention-never" />
-                  <Label htmlFor="retention-never">Never</Label>
+                  <Label htmlFor="retention-never">Never delete</Label>
                 </div>
               </RadioGroup>
             </CardContent>
@@ -985,8 +1331,8 @@ const CustomGPTPersonalize = () => {
       </Tabs>
 
       <div className="flex justify-end">
-        <Button onClick={handleSave} size="lg">
-          Save Settings
+        <Button onClick={handleSave} size="lg" disabled={isLoading}>
+          {isLoading ? "Saving..." : "Save Settings"}
         </Button>
       </div>
     </div>
