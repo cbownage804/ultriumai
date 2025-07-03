@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Rocket, Globe, Code, Key, ExternalLink } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import IntegrationsManager from "./IntegrationsManager";
 
 const CustomGPTDeploy = () => {
   const { subscription } = useSubscription();
+  const { gpts, isLoading } = useCustomGPTs();
   const [deploySettings, setDeploySettings] = useState({
     apiEnabled: false,
     embedEnabled: false,
@@ -20,6 +22,9 @@ const CustomGPTDeploy = () => {
 
   const [apiKey] = useState("gpt_" + Math.random().toString(36).substr(2, 16));
 
+  // Get the first available GPT or null if none exist
+  const selectedGPT = gpts && gpts.length > 0 ? gpts[0] : null;
+
   // Check subscription tiers
   const canUsePremiumFeatures = subscription.subscription_tier === "premium" || subscription.subscription_tier === "enterprise";
   const canUseEnterpriseFeatures = subscription.subscription_tier === "enterprise";
@@ -28,12 +33,26 @@ const CustomGPTDeploy = () => {
     setDeploySettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Deploy Your GPT</h1>
+          <p className="text-muted-foreground mt-2">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Deploy Your GPT</h1>
         <p className="text-muted-foreground mt-2">
-          Configure deployment options and integrations
+          {selectedGPT 
+            ? `Configure deployment options and integrations for ${selectedGPT.name}`
+            : "Create a Custom GPT first to configure deployment options"
+          }
         </p>
       </div>
 
@@ -205,7 +224,23 @@ const CustomGPTDeploy = () => {
       </Card>
 
       {/* Integrations */}
-      <IntegrationsManager gptId="sample-gpt-id" gptName="My Custom GPT" />
+      {selectedGPT ? (
+        <IntegrationsManager gptId={selectedGPT.id} gptName={selectedGPT.name} />
+      ) : (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Key className="w-6 h-6 text-yellow-600" />
+              <div>
+                <h4 className="font-medium text-yellow-800">No GPT Selected</h4>
+                <p className="text-sm text-yellow-700">
+                  Create a Custom GPT first to configure integrations and deployment options.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button variant="outline">Save Draft</Button>
