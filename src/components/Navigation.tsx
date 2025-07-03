@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState } from "react";
-import ultraiumGptLogo from "@/assets/ultrium-gpt-logo.png";
+import ultraiumAiLogo from "@/assets/ultrium-ai-logo.png";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -12,7 +12,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center space-x-3">
-            <img src={ultraiumGptLogo} alt="UltriumGPT" className="h-10 w-10" />
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-10 w-auto" />
             <span className="text-xl font-bold text-foreground">UltriumGPT</span>
           </div>
           
