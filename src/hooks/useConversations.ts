@@ -81,6 +81,34 @@ export const useConversations = () => {
     }
   };
 
+  const deleteConversation = async (conversationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .delete()
+        .eq('id', conversationId);
+
+      if (error) throw error;
+
+      setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+
+      toast({
+        title: "Conversation deleted",
+        description: "The conversation has been permanently deleted.",
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete conversation.",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   const updateConversationTitle = async (conversationId: string, title: string) => {
     try {
       const { error } = await supabase
@@ -112,6 +140,7 @@ export const useConversations = () => {
     isLoadingConversations,
     loadConversations,
     createNewConversation,
-    updateConversationTitle
+    updateConversationTitle,
+    deleteConversation
   };
 };

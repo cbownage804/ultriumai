@@ -24,7 +24,8 @@ const ChatInterface = () => {
     isLoadingConversations,
     loadConversations,
     createNewConversation,
-    updateConversationTitle
+    updateConversationTitle,
+    deleteConversation
   } = useConversations();
   
   const { messages, setMessages, loadMessages, saveMessage } = useMessages();
@@ -172,6 +173,23 @@ const ChatInterface = () => {
     }
   };
 
+  const handleDeleteConversation = async (conversationId: string) => {
+    const success = await deleteConversation(conversationId);
+    if (success && conversationId === currentConversationId) {
+      // If we deleted the current conversation, clear it
+      setCurrentConversationId(null);
+      setMessages([]);
+      
+      // If there are other conversations, select the first one
+      if (conversations.length > 1) {
+        const remainingConversations = conversations.filter(c => c.id !== conversationId);
+        if (remainingConversations.length > 0) {
+          setCurrentConversationId(remainingConversations[0].id);
+        }
+      }
+    }
+  };
+
   if (isLoadingConversations) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -190,6 +208,7 @@ const ChatInterface = () => {
         currentConversationId={currentConversationId}
         onConversationClick={handleConversationClick}
         onNewConversation={handleNewConversation}
+        onDeleteConversation={handleDeleteConversation}
       />
 
       <div className="flex-1 flex flex-col">
