@@ -188,7 +188,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
                 Agent Avatar
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -327,7 +326,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Agent Language
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -350,7 +348,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Placeholder Prompt
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -367,7 +364,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Loading Indicator
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -400,7 +396,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Starter Questions
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -463,7 +458,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Custom Message Ending
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -480,7 +474,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Error Message
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -497,7 +490,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
                 Conversation Duration
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -524,7 +516,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Quote className="h-5 w-5" />
                 I don't know message
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -541,7 +532,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Quote className="h-5 w-5" />
                 Show Citations
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -562,7 +552,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Quote className="h-5 w-5" />
                 Should the agent mention source names?
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -625,7 +614,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
                 Generate Responses From
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -677,7 +665,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Sliders className="h-5 w-5" />
                 User Feedback
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -702,7 +689,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Sliders className="h-5 w-5" />
                 Conversation Sharing
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -843,10 +829,7 @@ const CustomGPTPersonalize = () => {
               </div>
 
               <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  Affiliate ID
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                </Label>
+                <Label>Affiliate ID</Label>
                 <Input
                   value={gptData.affiliateId}
                   onChange={(e) => setGptData(prev => ({ ...prev, affiliateId: e.target.value }))}
@@ -890,7 +873,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
                 Agent Visibility
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -929,7 +911,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
                 Recaptcha
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -954,7 +935,6 @@ const CustomGPTPersonalize = () => {
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
                 Whitelisted Domains
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
               <CardDescription>
                 Restrict access to embedding your agent only on allowed domains. Provide domains list separated by spaces, tabs, new lines or commas. Input domain without scheme (e.g. domain.com). You can use * mark as placeholder which mean any count of chars (e.g. *.domain.com will allow any subdomains in domain.com).
@@ -979,7 +959,6 @@ const CustomGPTPersonalize = () => {
                   <Crown className="w-3 h-3 mr-1" />
                   Unlock Feature
                 </Badge>
-                <Info className="h-4 w-4 text-muted-foreground" />
               </CardTitle>
             </CardHeader>
             <CardContent>
