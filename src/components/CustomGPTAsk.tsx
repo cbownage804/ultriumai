@@ -22,8 +22,30 @@ const CustomGPTAsk = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [knowledgeBase, setKnowledgeBase] = useState<Array<{id: string, file_name: string, processed_content: string}>>([]);
 
   const currentGPT = gpts[0]; // Use the first/latest GPT
+
+  // Load knowledge base documents for the current GPT
+  useEffect(() => {
+    const loadKnowledgeBase = async () => {
+      if (!currentGPT) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('gpt_documents')
+          .select('id, file_name, processed_content')
+          .eq('gpt_id', currentGPT.id);
+          
+        if (error) throw error;
+        setKnowledgeBase(data || []);
+      } catch (error) {
+        console.error('Error loading knowledge base:', error);
+      }
+    };
+    
+    loadKnowledgeBase();
+  }, [currentGPT]);
 
   useEffect(() => {
     if (currentGPT) {
@@ -53,13 +75,31 @@ const CustomGPTAsk = () => {
     setIsLoading(true);
 
     try {
-      // Call the chat completion API with the custom GPT's system prompt
+      // Build enhanced system prompt with knowledge base
+      let enhancedSystemPrompt = currentGPT.system_prompt;
+      
+      if (knowledgeBase.length > 0) {
+        const knowledgeBaseContent = knowledgeBase
+          .map(doc => `[Document: ${doc.file_name}]\n${doc.processed_content}`)
+          .join('\n\n---\n\n');
+        
+        enhancedSystemPrompt = `${currentGPT.system_prompt}
+
+KNOWLEDGE BASE:
+The following documents have been uploaded to your knowledge base. Use this information to answer questions when relevant:
+
+${knowledgeBaseContent}
+
+When referencing information from these documents, mention the source document name.`;
+      }
+
+      // Call the chat completion API with the enhanced system prompt
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           messages: [
             {
               role: 'system',
-              content: currentGPT.system_prompt
+              content: enhancedSystemPrompt
             },
             ...messages.map(msg => ({
               role: msg.role,
