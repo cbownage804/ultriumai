@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Bot, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -41,13 +42,23 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      // Simulate AI response for now
-      // TODO: Replace with actual AI API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      // Call the Supabase edge function for AI chat completion
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
+        body: {
+          messages: [...messages, userMessage].map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to get AI response');
+      }
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: `I understand you said: "${userMessage.content}". This is a placeholder response. The actual AI integration will be implemented next.`,
+        content: data.message,
         role: "assistant",
         timestamp: new Date(),
       };
