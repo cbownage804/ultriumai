@@ -134,7 +134,7 @@ export function AppSidebar() {
                 <Card className="mx-2 mb-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
                 <CardHeader className="p-3">
                   <CardTitle className="text-sm flex items-center gap-2 text-black">
-                    <Zap className="h-4 w-4 text-orange-500" />
+                    <Star className="h-4 w-4 text-orange-500" />
                     Go Premium
                   </CardTitle>
                   <CardDescription className="text-xs text-black/70">
@@ -165,7 +165,7 @@ export function AppSidebar() {
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white"
                     onClick={() => navigate('/pricing')}
                   >
-                    <Crown className="h-3 w-3 mr-2" />
+                    <Star className="h-3 w-3 mr-2" />
                     Upgrade Now
                   </Button>
                 </CardContent>
@@ -181,7 +181,7 @@ export function AppSidebar() {
               <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
                 <CardHeader className="p-3">
                   <CardTitle className="text-sm flex items-center gap-2 text-black">
-                    <Star className="h-4 w-4 text-purple-500" />
+                    <Crown className="h-4 w-4 text-purple-500" />
                     Go Enterprise
                   </CardTitle>
                   <CardDescription className="text-xs text-black/70">
@@ -212,7 +212,7 @@ export function AppSidebar() {
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                     onClick={() => navigate('/pricing')}
                   >
-                    <Star className="h-3 w-3 mr-2" />
+                    <Crown className="h-3 w-3 mr-2" />
                     Go Enterprise
                   </Button>
                 </CardContent>
