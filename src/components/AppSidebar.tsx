@@ -1,9 +1,11 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
 
 import {
@@ -124,6 +126,100 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Premium Upgrade Section */}
+        {subscription.subscription_tier === "free" && !isCollapsed && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <Card className="mx-2 mb-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
+                <CardHeader className="p-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-orange-500" />
+                    Go Premium
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Unlock advanced features
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="space-y-1 mb-3">
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Document Upload</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>API Access</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Custom Branding</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Export Conversations</span>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+                    onClick={() => navigate('/pricing')}
+                  >
+                    <Crown className="h-3 w-3 mr-2" />
+                    Upgrade Now
+                  </Button>
+                </CardContent>
+              </Card>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Enterprise Upgrade Section */}
+        {subscription.subscription_tier !== "enterprise" && !isCollapsed && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+                <CardHeader className="p-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Star className="h-4 w-4 text-purple-500" />
+                    Go Enterprise
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Maximum power & flexibility
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <div className="space-y-1 mb-3">
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Everything in Premium</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>AI Model Selection</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Priority Support</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Check className="h-3 w-3 text-green-500" />
+                      <span>Advanced Analytics</span>
+                    </div>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={() => navigate('/pricing')}
+                  >
+                    <Star className="h-3 w-3 mr-2" />
+                    Go Enterprise
+                  </Button>
+                </CardContent>
+              </Card>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel>Account</SidebarGroupLabel>
