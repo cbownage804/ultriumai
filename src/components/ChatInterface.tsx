@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, User, Plus, MessageSquare, Download, Share } from "lucide-react";
+import { Send, User, Plus, MessageSquare, Download, Share, Search, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,9 +32,13 @@ const botLogo = "/lovable-uploads/782bff71-19ad-4277-bed5-375d4114e0c5.png";
 
 const ChatInterface = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const { toast } = useToast();
@@ -53,6 +57,30 @@ const ChatInterface = () => {
       loadMessages(currentConversationId);
     }
   }, [currentConversationId]);
+
+  // Filter conversations based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredConversations(conversations);
+    } else {
+      const filtered = conversations.filter(conv =>
+        conv.title.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredConversations(filtered);
+    }
+  }, [conversations, searchQuery]);
+
+  // Filter messages based on search query
+  useEffect(() => {
+    if (!messageSearchQuery.trim()) {
+      setFilteredMessages(messages);
+    } else {
+      const filtered = messages.filter(msg =>
+        msg.content.toLowerCase().includes(messageSearchQuery.toLowerCase())
+      );
+      setFilteredMessages(filtered);
+    }
+  }, [messages, messageSearchQuery]);
 
   const loadConversations = async () => {
     try {
@@ -298,6 +326,22 @@ const ChatInterface = () => {
 
   const handleConversationClick = (conversation: Conversation) => {
     setCurrentConversationId(conversation.id);
+    // Clear message search when switching conversations
+    setMessageSearchQuery("");
+  };
+
+  // Helper function to highlight search terms
+  const highlightSearchTerm = (text: string, searchTerm: string) => {
+    if (!searchTerm.trim()) return text;
+    
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => 
+      regex.test(part) ? 
+        <mark key={index} className="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">{part}</mark> : 
+        part
+    );
   };
 
   const exportConversationAsJSON = () => {
@@ -412,16 +456,37 @@ const ChatInterface = () => {
     <div className="flex h-full">
       {/* Conversation Sidebar */}
       <div className="w-80 border-r bg-muted/30 flex flex-col">
-        <div className="p-4 border-b">
+        <div className="p-4 border-b space-y-3">
           <Button onClick={createNewConversation} className="w-full" variant="hero">
             <Plus className="w-4 h-4 mr-2" />
             New Chat
           </Button>
+          
+          {/* Search Conversations */}
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search conversations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1 h-8 w-8 p-0"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
         
         <ScrollArea className="flex-1">
           <div className="p-2">
-            {conversations.map((conversation) => (
+            {filteredConversations.map((conversation) => (
               <Card
                 key={conversation.id}
                 className={`p-3 mb-2 cursor-pointer hover:bg-muted/50 transition-colors ${
@@ -441,6 +506,14 @@ const ChatInterface = () => {
               </Card>
             ))}
             
+            {filteredConversations.length === 0 && conversations.length > 0 && (
+              <div className="text-center py-8">
+                <Search className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-muted-foreground text-sm">No conversations found</p>
+                <p className="text-muted-foreground text-xs">Try a different search term</p>
+              </div>
+            )}
+            
             {conversations.length === 0 && (
               <div className="text-center py-8">
                 <MessageSquare className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
@@ -457,45 +530,70 @@ const ChatInterface = () => {
         {currentConversationId ? (
           <>
             {/* Chat Header with Export Options */}
-            <div className="border-b p-4 flex items-center justify-between">
-              <div>
-                <h2 className="font-semibold">
-                  {conversations.find(c => c.id === currentConversationId)?.title || "Untitled"}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {messages.length} message{messages.length !== 1 ? 's' : ''}
-                </p>
+            <div className="border-b p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold">
+                    {conversations.find(c => c.id === currentConversationId)?.title || "Untitled"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {messageSearchQuery ? `${filteredMessages.length} of ${messages.length}` : messages.length} message{messages.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                
+                {messages.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Share className="w-4 h-4 mr-2" />
+                        Export
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={exportConversationAsJSON}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export as JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={exportConversationAsMarkdown}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export as Markdown
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={shareConversation}>
+                        <Share className="w-4 h-4 mr-2" />
+                        Share/Copy
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
-              
+
+              {/* Search Messages */}
               {messages.length > 0 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Share className="w-4 h-4 mr-2" />
-                      Export
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search messages..."
+                    value={messageSearchQuery}
+                    onChange={(e) => setMessageSearchQuery(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {messageSearchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1 h-8 w-8 p-0"
+                      onClick={() => setMessageSearchQuery("")}
+                    >
+                      <X className="h-4 w-4" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={exportConversationAsJSON}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as JSON
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={exportConversationAsMarkdown}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export as Markdown
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={shareConversation}>
-                      <Share className="w-4 h-4 mr-2" />
-                      Share/Copy
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  )}
+                </div>
               )}
             </div>
             
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {messages.map((message) => (
+                {(messageSearchQuery ? filteredMessages : messages).map((message) => (
                   <div
                     key={message.id}
                     className={`flex items-start gap-3 ${
@@ -520,7 +618,9 @@ const ChatInterface = () => {
                           : "bg-muted"
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {messageSearchQuery ? highlightSearchTerm(message.content, messageSearchQuery) : message.content}
+                      </p>
                       <p className="text-xs opacity-70 mt-1">
                         {new Date(message.created_at).toLocaleTimeString()}
                       </p>
