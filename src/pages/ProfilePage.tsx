@@ -5,10 +5,26 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Save, Upload, User, Mail, Calendar } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useUserCredits } from "@/hooks/useUserCredits";
+import { 
+  Save, 
+  Upload, 
+  User, 
+  Mail, 
+  Calendar, 
+  Crown, 
+  CreditCard, 
+  Zap, 
+  Settings,
+  RefreshCw,
+  TrendingUp
+} from "lucide-react";
 
 const ProfilePage = () => {
   const [profile, setProfile] = useState({
@@ -23,6 +39,8 @@ const ProfilePage = () => {
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const { subscription, createCheckout, openCustomerPortal, isLoading: isSubscriptionLoading } = useSubscription();
+  const { credits, isLoading: isCreditsLoading, refreshCredits, remainingCredits, usagePercentage } = useUserCredits();
 
   useEffect(() => {
     if (user) {
@@ -134,11 +152,133 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">Manage your personal information and preferences.</p>
+        <p className="text-muted-foreground">Manage your personal information, subscription, and AI credits.</p>
       </div>
+
+      {/* Subscription Status Card */}
+      <Card className="border-2 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-primary" />
+            Subscription Status
+          </CardTitle>
+          <CardDescription>
+            Current plan and billing information
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant={subscription.subscribed ? "default" : "secondary"} className="capitalize">
+                  {subscription.subscription_tier} Plan
+                </Badge>
+                {subscription.subscribed && (
+                  <Badge variant="outline" className="text-green-600">
+                    Active
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {subscription.subscribed 
+                  ? `Renews on ${subscription.subscription_end ? new Date(subscription.subscription_end).toLocaleDateString() : 'Unknown'}`
+                  : 'Upgrade to unlock premium features'
+                }
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {subscription.subscribed ? (
+                <Button 
+                  variant="outline" 
+                  onClick={openCustomerPortal}
+                  disabled={isSubscriptionLoading}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => createCheckout('premium', 'monthly')}
+                    disabled={isSubscriptionLoading}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Premium
+                  </Button>
+                  <Button 
+                    variant="hero" 
+                    onClick={() => createCheckout('enterprise', 'monthly')}
+                    disabled={isSubscriptionLoading}
+                  >
+                    <Crown className="w-4 h-4 mr-2" />
+                    Enterprise
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Credits Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-yellow-500" />
+            AI Credits
+          </CardTitle>
+          <CardDescription>
+            Track your monthly AI usage and limits
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-2xl font-bold">{remainingCredits.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Credits remaining</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={refreshCredits} disabled={isCreditsLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isCreditsLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Usage this month</span>
+              <span>{credits.credits_used.toLocaleString()} / {credits.credits_limit.toLocaleString()}</span>
+            </div>
+            <Progress value={usagePercentage} className="h-2" />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="text-center p-3 bg-muted/30 rounded-lg">
+              <TrendingUp className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+              <p className="text-sm font-medium">{credits.credits_used.toLocaleString()}</p>
+              <p className="text-xs text-muted-foreground">Used</p>
+            </div>
+            <div className="text-center p-3 bg-muted/30 rounded-lg">
+              <Calendar className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
+              <p className="text-sm font-medium">
+                {new Date(credits.reset_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </p>
+              <p className="text-xs text-muted-foreground">Resets</p>
+            </div>
+          </div>
+          
+          {usagePercentage > 80 && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ You're approaching your monthly limit. Consider upgrading for more credits.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
