@@ -129,7 +129,6 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-input border-border"
                     />
                   </div>
                   <div className="space-y-2">
@@ -141,7 +140,6 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="bg-input border-border"
                     />
                   </div>
                   <Button 
@@ -166,7 +164,6 @@ const Auth = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
-                      className="bg-input border-border"
                     />
                   </div>
                   <div className="space-y-2">
@@ -178,7 +175,6 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="bg-input border-border"
                     />
                   </div>
                   <div className="space-y-2">
@@ -190,7 +186,6 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="bg-input border-border"
                     />
                   </div>
                   <Button 
