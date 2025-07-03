@@ -196,6 +196,10 @@ export function AppSidebar() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
                       <Check className="h-3 w-3 text-green-500" />
+                      <span>GPT Integrations</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-black">
+                      <Check className="h-3 w-3 text-green-500" />
                       <span>AI Model Selection</span>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-black">
