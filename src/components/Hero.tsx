@@ -12,20 +12,20 @@ const Hero = () => {
       />
       
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/98 via-background/95 to-background/98" />
+      <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/85 to-black/90" />
       
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-primary to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-primary via-primary to-blue-400 bg-clip-text text-transparent drop-shadow-2xl">
             UltriumGPT
           </h1>
           
-          <p className="text-xl sm:text-2xl lg:text-3xl mb-4 text-foreground/90 font-semibold">
+          <p className="text-xl sm:text-2xl lg:text-3xl mb-4 text-foreground font-semibold drop-shadow-lg">
             AI Knowledge-Base Chat Assistant by UltriumAI
           </p>
           
-          <p className="text-lg sm:text-xl mb-8 text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl mb-8 text-muted-foreground max-w-3xl mx-auto leading-relaxed drop-shadow-md">
             The ultimate AI-powered knowledge management solution for MSPs and MSSPs. Reduce client support tickets by 20-30% 
             while delivering instant, accurate answers from internal documentation. White-label deployment with seamless 
             Microsoft Teams and Slack integration.
