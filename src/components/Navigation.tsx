@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState } from "react";
+import ultraiumGptLogo from "@/assets/ultrium-gpt-logo.png";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,8 +11,8 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="h-8 w-8 text-primary" />
+          <div className="flex items-center space-x-3">
+            <img src={ultraiumGptLogo} alt="UltriumGPT" className="h-10 w-10" />
             <span className="text-xl font-bold text-foreground">UltriumGPT</span>
           </div>
           
