@@ -83,6 +83,15 @@ const INTEGRATION_TYPES = [
     category: 'automation'
   },
   {
+    id: 'pipedream',
+    name: 'Pipedream',
+    description: 'Connect APIs and automate workflows with code',
+    icon: Settings,
+    color: 'text-blue-600',
+    tier: 'premium',
+    category: 'automation'
+  },
+  {
     id: 'webhook',
     name: 'Custom Webhooks',
     description: 'Send data to any HTTP endpoint',
@@ -364,6 +373,50 @@ const IntegrationsManager = ({ gptId, gptName }: IntegrationsManagerProps) => {
               <p className="text-xs text-muted-foreground">
                 Create a webhook trigger in Zapier and paste the URL here
               </p>
+            </div>
+          </div>
+        );
+
+      case 'pipedream':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Pipedream Webhook URL</Label>
+              <Input
+                placeholder="https://eoxxxxxxxxxxx.m.pipedream.net"
+                value={(newIntegration.config as any).webhook_url || ""}
+                onChange={(e) => setNewIntegration(prev => ({ 
+                  ...prev, 
+                  config: { ...prev.config, webhook_url: e.target.value }
+                }))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Create a HTTP/Webhook trigger in Pipedream and paste the URL here
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Authentication Token (Optional)</Label>
+              <Input
+                type="password"
+                placeholder="Bearer token for authentication"
+                value={(newIntegration.config as any).auth_token || ""}
+                onChange={(e) => setNewIntegration(prev => ({ 
+                  ...prev, 
+                  config: { ...prev.config, auth_token: e.target.value }
+                }))}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional: Add authentication token if your Pipedream workflow requires it
+              </p>
+            </div>
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-medium text-blue-800 mb-2">💡 Pipedream Setup Tips:</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Create a new workflow in Pipedream</li>
+                <li>• Add an HTTP/Webhook trigger as the first step</li>
+                <li>• Connect any apps or APIs in subsequent steps</li>
+                <li>• Copy the trigger URL and paste it above</li>
+              </ul>
             </div>
           </div>
         );
