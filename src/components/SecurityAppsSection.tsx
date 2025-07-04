@@ -1,21 +1,10 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap, ExternalLink } from "lucide-react";
 
 const SecurityAppsSection = () => {
-  const { toast } = useToast();
-  const [demoInput, setDemoInput] = useState("");
-  const [demoType, setDemoType] = useState<"safeemail" | "safelink" | "safedoc" | "safescan" | "safepass" | "safeweb">("safeemail");
-  const [demoResult, setDemoResult] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
   const securityApps = [
     {
       id: 'safeemail',
@@ -23,9 +12,9 @@ const SecurityAppsSection = () => {
       icon: Mail,
       description: 'AI-powered email analysis and threat detection',
       features: ['Real-time phishing detection', 'Malware scanning', 'Social engineering detection'],
-      demoPlaceholder: 'Enter an email address to analyze (e.g., user@domain.com)',
       riskTypes: ['Phishing', 'Malware', 'BEC'],
-      category: 'Email Security'
+      category: 'Email Security',
+      demoUrl: '/demos/safeemail'
     },
     {
       id: 'safelink',
@@ -33,9 +22,9 @@ const SecurityAppsSection = () => {
       icon: Link,
       description: 'Comprehensive URL analysis and safety verification',
       features: ['URL reputation analysis', 'Malware detection', 'SSL certificate validation'],
-      demoPlaceholder: 'Enter a URL to scan (e.g., https://example.com)',
       riskTypes: ['Phishing', 'Malware', 'Suspicious Sites'],
-      category: 'Link Security'
+      category: 'Link Security',
+      demoUrl: '/demos/safelink'
     },
     {
       id: 'safedoc',
@@ -43,9 +32,9 @@ const SecurityAppsSection = () => {
       icon: FileText,
       description: 'Secure document storage and knowledge management',
       features: ['Secure document storage', 'Version control', 'Advanced search'],
-      demoPlaceholder: 'Upload a file for security analysis',
       riskTypes: ['Malware', 'Data Leaks', 'Unauthorized Access'],
-      category: 'Document Management'
+      category: 'Document Management',
+      demoUrl: '/demos/safedoc'
     },
     {
       id: 'safescan',
@@ -53,9 +42,9 @@ const SecurityAppsSection = () => {
       icon: Shield,
       description: 'Document analysis and content safety verification',
       features: ['Multi-format scanning', 'Macro analysis', 'Embedded threat detection'],
-      demoPlaceholder: 'Upload a document for scanning',
       riskTypes: ['Malware', 'Trojans', 'Macros'],
-      category: 'Document Security'
+      category: 'Document Security',
+      demoUrl: '/demos/safedoc'
     },
     {
       id: 'safepass',
@@ -63,9 +52,9 @@ const SecurityAppsSection = () => {
       icon: Lock,
       description: 'Enterprise password management and security platform',
       features: ['Secure password generation', 'Breach monitoring', 'Team sharing'],
-      demoPlaceholder: 'Test password strength',
       riskTypes: ['Weak Passwords', 'Breached Credentials', 'Policy Violations'],
-      category: 'Password Security'
+      category: 'Password Security',
+      demoUrl: '/demos/safepass'
     },
     {
       id: 'safeweb',
@@ -73,9 +62,9 @@ const SecurityAppsSection = () => {
       icon: Search,
       description: 'Dark web monitoring and threat intelligence platform',
       features: ['Credential monitoring', 'Data breach detection', 'Threat actor tracking'],
-      demoPlaceholder: 'Enter email or domain to check for breaches',
       riskTypes: ['Data Breaches', 'Credential Theft', 'Identity Theft'],
-      category: 'Threat Intelligence'
+      category: 'Threat Intelligence',
+      demoUrl: '/demos/safeweb'
     }
   ];
 
@@ -151,25 +140,6 @@ const SecurityAppsSection = () => {
     }
   ];
 
-  const runDemo = (appId: string) => {
-    // Navigate to actual demo pages
-    const demoRoutes = {
-      safeemail: '/demos/safeemail',
-      safelink: '/demos/safelink',
-      safedoc: '/demos/safedoc',
-      safescan: '/demos/safedoc', // Use safedoc demo for scanning
-      safepass: '/demos/safepass',
-      safeweb: '/demos/safeweb'
-    };
-
-    const route = demoRoutes[appId as keyof typeof demoRoutes];
-    if (route) {
-      window.location.href = route;
-    }
-  };
-
-  const selectedApp = securityApps.find(app => app.id === demoType);
-
   return (
     <section id="security" className="py-20 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -206,7 +176,7 @@ const SecurityAppsSection = () => {
                   <CardDescription className="text-sm">{app.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="space-y-1">
                       {app.features.slice(0, 3).map((feature, index) => (
                         <div key={index} className="flex items-center gap-2 text-sm">
@@ -225,6 +195,16 @@ const SecurityAppsSection = () => {
                         ))}
                       </div>
                     </div>
+                    {/* Demo Button */}
+                    <Button
+                      onClick={() => window.location.href = app.demoUrl}
+                      className="w-full mt-4"
+                      variant="outline"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Try Live Demo
+                      <ExternalLink className="h-4 w-4 ml-2" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -318,76 +298,6 @@ const SecurityAppsSection = () => {
           </div>
         </div>
 
-        {/* Interactive Demo Section */}
-        <Card className="border-2 border-dashed border-red-200 bg-white/50">
-          <CardHeader className="text-center">
-            <CardTitle className="flex items-center justify-center gap-2">
-              <Play className="h-5 w-5 text-red-600" />
-              Try Interactive Demo
-            </CardTitle>
-            <CardDescription>
-              Experience our AI security scanning in action with live examples
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="max-w-2xl mx-auto space-y-6">
-              {/* Demo Type Selection */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-                {securityApps.map((app) => {
-                  const Icon = app.icon;
-                  return (
-                    <Button
-                      key={app.id}
-                      variant={demoType === app.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setDemoType(app.id as typeof demoType)}
-                      className="flex flex-col items-center gap-1 h-auto py-3"
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="text-xs">{app.name.split(' ')[1]}</span>
-                    </Button>
-                  );
-                })}
-              </div>
-
-              {/* Demo Input */}
-              {selectedApp && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="demo-input">
-                      {selectedApp.name} Demo
-                    </Label>
-                    {(selectedApp.id === 'safedoc' || selectedApp.id === 'safescan') ? (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                        <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-500">
-                          File upload demo - Click to simulate file analysis
-                        </p>
-                      </div>
-                    ) : (
-                      <Input
-                        id="demo-input"
-                        placeholder={selectedApp.demoPlaceholder}
-                        value={demoInput}
-                        onChange={(e) => setDemoInput(e.target.value)}
-                      />
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={() => runDemo(selectedApp.id)}
-                    className="w-full"
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    Try Live Demo
-                  </Button>
-
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* CTA Section */}
         <div className="text-center mt-12">
           <div className="bg-white rounded-lg p-8 shadow-lg max-w-2xl mx-auto">
@@ -418,19 +328,19 @@ const SecurityAppsSection = () => {
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        Individual apps at $20/month each
+                        Individual apps starting at $29/user/month
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        White label versions at $35/month each
+                        Bundle discounts save up to 43%
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        All apps included free with Enterprise plan
+                        14-day free trial for all apps
                       </li>
                     </ul>
                     <Button className="w-full" onClick={() => window.location.href = '/auth'}>
-                      Sign Up Now
+                      Start Free Trial
                     </Button>
                   </div>
                 </DialogContent>
