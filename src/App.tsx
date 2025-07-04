@@ -35,6 +35,11 @@ function AppRouter() {
           <Dashboard />
         </ProtectedRoute>
       } />
+      <Route path="/dashboard/*" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
       <Route path="/chat/:gptId" element={
         <ProtectedRoute>
           <GPTChat />
