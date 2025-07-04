@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,10 +24,12 @@ import {
   Zap, 
   Settings,
   RefreshCw,
-  TrendingUp
+  TrendingUp,
+  ArrowLeft
 } from "lucide-react";
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -91,16 +94,15 @@ const ProfilePage = () => {
 
     setIsLoading(true);
     try {
-      // Upsert profile data
+      // Update existing profile data
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: user.id,
-          email: user.email || "",
+        .update({
           full_name: profile.full_name,
           avatar_url: profile.avatar_url,
           bio: profile.bio
-        });
+        })
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -153,9 +155,20 @@ const ProfilePage = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">Manage your personal information, subscription, and AI credits.</p>
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate('/dashboard')}
+          className="hover:bg-muted"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold">Profile</h1>
+          <p className="text-muted-foreground">Manage your personal information, subscription, and AI credits.</p>
+        </div>
       </div>
 
       {/* Subscription Status Card */}
