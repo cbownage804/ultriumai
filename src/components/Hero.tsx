@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Shield, Play, Calendar, Users, Star } from "lucide-react";
-import VideoUpload from "./VideoUpload";
+import VideoPlayer from "./VideoPlayer";
 
 const Hero = () => {
   return (
@@ -59,7 +59,7 @@ const Hero = () => {
               <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-primary/20 to-secondary/20 p-1">
                 <div className="bg-background/95 backdrop-blur-sm rounded-xl p-8">
                   <h3 className="text-2xl font-bold mb-4 text-foreground">See UltriumAI in Action</h3>
-                  <VideoUpload />
+                  <VideoPlayer />
                 </div>
               </div>
             </div>
