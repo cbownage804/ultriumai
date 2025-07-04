@@ -56,7 +56,7 @@ const Navigation = () => {
         }
       }
     } else if (path === '/') {
-      // Handle home navigation - scroll to top
+      // Handle home navigation - scroll to top with nav offset
       navigate('/');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
