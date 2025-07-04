@@ -105,11 +105,11 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Premium',
-      price: '$29',
-      duration: 'per user/month',
+      price: '$20',
+      duration: 'per user/month per app',
       icon: Zap,
       features: [
-        'Unlimited scans across all apps',
+        'Up to 1,000 scans per app per month',
         'Advanced analytics & reporting',
         'Priority support',
         'API access',
@@ -120,10 +120,11 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Enterprise',
-      price: '$79',
-      duration: 'per user/month',
+      price: '$35',
+      duration: 'per user/month per app',
       icon: Users,
       features: [
+        'Unlimited scans across all apps',
         'Everything in Premium',
         'White-label customization',
         'SSO & SAML integration',
@@ -140,47 +141,47 @@ const SecurityAppsSection = () => {
     {
       name: 'Document & Password Bundle',
       apps: ['SafeDoc', 'SafePass'],
-      originalPrice: '$58',
-      bundlePrice: '$45',
-      enterprisePrice: '$35',
-      savings: '$13',
-      enterpriseSavings: '$23'
+      originalPrice: '$40',
+      bundlePrice: '$32',
+      enterprisePrice: '$56',
+      savings: '$8',
+      enterpriseSavings: '$14'
     },
     {
       name: 'Email & Link Security Bundle',
       apps: ['SafeEmail', 'SafeScan', 'SafeLink'],
-      originalPrice: '$87',
-      bundlePrice: '$65',
-      enterprisePrice: '$50',
-      savings: '$22',
-      enterpriseSavings: '$37'
+      originalPrice: '$60',
+      bundlePrice: '$48',
+      enterprisePrice: '$84',
+      savings: '$12',
+      enterpriseSavings: '$21'
     },
     {
       name: 'Network & Document Bundle',
       apps: ['SafeNet', 'SafeDoc', 'SafePass'],
-      originalPrice: '$87',
-      bundlePrice: '$65',
-      enterprisePrice: '$50',
-      savings: '$22',
-      enterpriseSavings: '$37'
+      originalPrice: '$60',
+      bundlePrice: '$48',
+      enterprisePrice: '$84',
+      savings: '$12',
+      enterpriseSavings: '$21'
     },
     {
       name: 'Compliance & Intelligence Bundle',
       apps: ['SafeComp', 'SafeWEB'],
-      originalPrice: '$58',
-      bundlePrice: '$45',
-      enterprisePrice: '$35',
-      savings: '$13',
-      enterpriseSavings: '$23'
+      originalPrice: '$40',
+      bundlePrice: '$32',
+      enterprisePrice: '$56',
+      savings: '$8',
+      enterpriseSavings: '$14'
     },
     {
       name: 'Complete Security Suite',
       apps: ['All 8 Apps'],
-      originalPrice: '$232',
-      bundlePrice: '$140',
-      enterprisePrice: '$99',
-      savings: '$92',
-      enterpriseSavings: '$133'
+      originalPrice: '$160',
+      bundlePrice: '$128',
+      enterprisePrice: '$224',
+      savings: '$32',
+      enterpriseSavings: '$56'
     }
   ];
 
@@ -387,11 +388,11 @@ const SecurityAppsSection = () => {
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        Individual apps starting at $29/user/month
+                        Individual apps starting at $20/user/month
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        Bundle discounts save up to 57%
+                        Bundle discounts save up to 35%
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
