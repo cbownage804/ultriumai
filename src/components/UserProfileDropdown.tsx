@@ -128,9 +128,14 @@ const UserProfileDropdown = () => {
                     Credits
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium">
-                      {credits?.credits_used || 0} / {credits?.credits_limit || 100}
-                    </span>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold text-foreground">
+                        {((credits?.credits_limit || 0) - (credits?.credits_used || 0)).toLocaleString()} left
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {credits?.credits_used || 0} / {credits?.credits_limit || 100} used
+                      </div>
+                    </div>
                     <Button
                       size="sm"
                       variant="ghost"
