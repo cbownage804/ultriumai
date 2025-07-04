@@ -40,7 +40,7 @@ const Hero = () => {
                   </div>
                   <h3 className="text-xl font-bold text-foreground">Build Your Own Custom GPTs</h3>
                   <p className="text-muted-foreground">
-                    Create powerful AI agents tailored to your business needs with our self-service platform
+                    Create powerful AI agents tailored to your business needs with <span className="font-semibold text-primary">Ultrium AI's custom-tailored platform</span>
                   </p>
                   <Button 
                     className="mt-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
