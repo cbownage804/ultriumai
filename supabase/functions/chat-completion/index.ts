@@ -22,7 +22,7 @@ serve(async (req) => {
     }
 
     // Build system prompt based on custom GPT or default
-    let systemPrompt = 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses. IMPORTANT: When users request image generation (asking to create, generate, or make images), simply respond with "Generating your image..." and nothing more - the image will be generated automatically.';
+    let systemPrompt = 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses. CRITICAL: When users request image generation (asking to create, generate, or make images), respond ONLY with "Generating your image..." and absolutely nothing else. Do not analyze, describe, or discuss generated images - the image speaks for itself.';
     
     if (customGPT && customGPT.system_prompt) {
       systemPrompt = customGPT.system_prompt;

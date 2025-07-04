@@ -14,26 +14,38 @@ const MediaAttachment = ({ mediaUrl, type, prompt }: MediaAttachmentProps) => {
       let blob;
       
       if (mediaUrl.startsWith('data:')) {
-        // Handle base64 data URLs
-        const response = await fetch(mediaUrl);
-        blob = await response.blob();
+        // Handle base64 data URLs - convert to blob
+        const base64Response = await fetch(mediaUrl);
+        blob = await base64Response.blob();
       } else {
-        // Handle regular URLs
-        const response = await fetch(mediaUrl);
+        // Handle regular URLs with CORS
+        const response = await fetch(mediaUrl, { mode: 'cors' });
         blob = await response.blob();
       }
       
-      const url = window.URL.createObjectURL(blob);
+      // Create download URL and trigger download
+      const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = url;
-      link.download = `generated-${type}-${Date.now()}.${type === 'image' ? 'webp' : 'mp4'}`;
+      link.href = downloadUrl;
+      link.download = `generated-${type}-${Date.now()}.${type === 'image' ? 'png' : 'mp4'}`;
+      
+      // Force download by setting attributes
+      link.setAttribute('download', link.download);
       link.style.display = 'none';
+      
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      }, 100);
+      
     } catch (error) {
       console.error('Download failed:', error);
+      // Fallback: open in new tab
+      window.open(mediaUrl, '_blank');
     }
   };
 
