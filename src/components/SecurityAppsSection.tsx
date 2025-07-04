@@ -6,52 +6,148 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight } from "lucide-react";
+import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const SecurityAppsSection = () => {
   const { toast } = useToast();
   const [demoInput, setDemoInput] = useState("");
-  const [demoType, setDemoType] = useState<"link" | "email" | "file" | "darkweb">("link");
+  const [demoType, setDemoType] = useState<"safeemail" | "safelink" | "safedoc" | "safescan" | "safepass" | "safeweb">("safeemail");
   const [demoResult, setDemoResult] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const securityApps = [
     {
-      id: 'safelink',
-      name: 'Ultrium SafeLink™',
-      icon: Link,
-      description: 'AI-powered link security scanning and threat detection',
-      features: ['Real-time URL scanning', 'Phishing detection AI', 'Malware analysis'],
-      demoPlaceholder: 'Enter a URL to scan (e.g., https://example.com)',
-      riskTypes: ['Phishing', 'Malware', 'Ransomware']
-    },
-    {
       id: 'safeemail',
       name: 'Ultrium SafeEmail™',
       icon: Mail,
-      description: 'Email security analysis and reputation checking',
-      features: ['Email header analysis', 'Sender reputation check', 'BEC detection'],
+      description: 'AI-powered email analysis and threat detection',
+      features: ['Real-time phishing detection', 'Malware scanning', 'Social engineering detection'],
       demoPlaceholder: 'Enter an email address to analyze (e.g., user@domain.com)',
-      riskTypes: ['Spam', 'Phishing', 'BEC']
+      riskTypes: ['Phishing', 'Malware', 'BEC'],
+      category: 'Email Security'
+    },
+    {
+      id: 'safelink',
+      name: 'Ultrium SafeLink™',
+      icon: Link,
+      description: 'Comprehensive URL analysis and safety verification',
+      features: ['URL reputation analysis', 'Malware detection', 'SSL certificate validation'],
+      demoPlaceholder: 'Enter a URL to scan (e.g., https://example.com)',
+      riskTypes: ['Phishing', 'Malware', 'Suspicious Sites'],
+      category: 'Link Security'
     },
     {
       id: 'safedoc',
       name: 'Ultrium SafeDoc™',
       icon: FileText,
-      description: 'Intelligent file analysis and malware detection',
-      features: ['Multi-format scanning', 'Behavioral analysis', 'Zero-day protection'],
+      description: 'Secure document storage and knowledge management',
+      features: ['Secure document storage', 'Version control', 'Advanced search'],
       demoPlaceholder: 'Upload a file for security analysis',
-      riskTypes: ['Malware', 'Trojans', 'Viruses']
+      riskTypes: ['Malware', 'Data Leaks', 'Unauthorized Access'],
+      category: 'Document Management'
     },
     {
-      id: 'darkweb',
-      name: 'Ultrium DarkWeb Scanner™',
+      id: 'safescan',
+      name: 'Ultrium SafeScan™',
+      icon: Shield,
+      description: 'Document analysis and content safety verification',
+      features: ['Multi-format scanning', 'Macro analysis', 'Embedded threat detection'],
+      demoPlaceholder: 'Upload a document for scanning',
+      riskTypes: ['Malware', 'Trojans', 'Macros'],
+      category: 'Document Security'
+    },
+    {
+      id: 'safepass',
+      name: 'Ultrium SafePass™',
+      icon: Lock,
+      description: 'Enterprise password management and security platform',
+      features: ['Secure password generation', 'Breach monitoring', 'Team sharing'],
+      demoPlaceholder: 'Test password strength',
+      riskTypes: ['Weak Passwords', 'Breached Credentials', 'Policy Violations'],
+      category: 'Password Security'
+    },
+    {
+      id: 'safeweb',
+      name: 'Ultrium SafeWEB™',
       icon: Search,
-      description: 'Dark web monitoring and breach detection',
-      features: ['Dark web monitoring', 'Breach detection', 'Credential monitoring'],
+      description: 'Dark web monitoring and threat intelligence platform',
+      features: ['Credential monitoring', 'Data breach detection', 'Threat actor tracking'],
       demoPlaceholder: 'Enter email or domain to check for breaches',
-      riskTypes: ['Data Breaches', 'Credential Theft', 'Identity Theft']
+      riskTypes: ['Data Breaches', 'Credential Theft', 'Identity Theft'],
+      category: 'Threat Intelligence'
+    }
+  ];
+
+  const pricingTiers = [
+    {
+      name: 'Free Trial',
+      price: '$0',
+      duration: '14 days',
+      icon: Star,
+      features: [
+        'Access to all security apps',
+        'Up to 100 scans per app',
+        'Basic reporting',
+        'Email support'
+      ],
+      popular: false,
+      cta: 'Start Free Trial'
+    },
+    {
+      name: 'Premium',
+      price: '$29',
+      duration: 'per user/month',
+      icon: Zap,
+      features: [
+        'Unlimited scans across all apps',
+        'Advanced analytics & reporting',
+        'Priority support',
+        'API access',
+        'Team collaboration tools'
+      ],
+      popular: true,
+      cta: 'Start Premium'
+    },
+    {
+      name: 'Enterprise',
+      price: '$79',
+      duration: 'per user/month',
+      icon: Users,
+      features: [
+        'Everything in Premium',
+        'White-label customization',
+        'SSO & SAML integration',
+        'Dedicated account manager',
+        'Custom integrations',
+        'SLA guarantees'
+      ],
+      popular: false,
+      cta: 'Contact Sales'
+    }
+  ];
+
+  const appBundles = [
+    {
+      name: 'Email Security Bundle',
+      apps: ['SafeEmail', 'SafeLink'],
+      originalPrice: '$58',
+      bundlePrice: '$45',
+      savings: '$13'
+    },
+    {
+      name: 'Document Security Bundle',
+      apps: ['SafeDoc', 'SafeScan'],
+      originalPrice: '$58',
+      bundlePrice: '$45',
+      savings: '$13'
+    },
+    {
+      name: 'Complete Security Suite',
+      apps: ['All 6 Apps'],
+      originalPrice: '$174',
+      bundlePrice: '$99',
+      savings: '$75'
     }
   ];
 
@@ -63,12 +159,6 @@ const SecurityAppsSection = () => {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     const mockResults = {
-      safelink: {
-        safe: false,
-        risk_level: 'medium',
-        threats: ['Suspicious redirect detected', 'Domain reputation warning'],
-        scan_time: '0.8s'
-      },
       safeemail: {
         safe: true,
         risk_level: 'low',
@@ -76,14 +166,34 @@ const SecurityAppsSection = () => {
         reputation_score: 85,
         scan_time: '1.2s'
       },
+      safelink: {
+        safe: false,
+        risk_level: 'medium',
+        threats: ['Suspicious redirect detected', 'Domain reputation warning'],
+        scan_time: '0.8s'
+      },
       safedoc: {
+        safe: true,
+        risk_level: 'low',
+        threats: [],
+        file_hash: 'safe123...',
+        scan_time: '2.1s'
+      },
+      safescan: {
         safe: false,
         risk_level: 'high',
-        threats: ['Potential malware signature found'],
+        threats: ['Potential malware signature found', 'Suspicious macro detected'],
         file_hash: 'abc123...',
         scan_time: '3.4s'
       },
-      darkweb: {
+      safepass: {
+        safe: false,
+        risk_level: 'medium',
+        threats: ['Password found in breach database', 'Weak password complexity'],
+        strength_score: 3,
+        scan_time: '0.5s'
+      },
+      safeweb: {
         safe: false,
         risk_level: 'high',
         breaches_found: ['LinkedIn (2021)', 'Adobe (2013)'],
@@ -119,14 +229,14 @@ const SecurityAppsSection = () => {
             Protect against cyber threats with real-time scanning and analysis.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <Badge variant="outline">$20/month per app</Badge>
-            <Badge variant="outline">$35/month white label</Badge>
-            <Badge className="bg-yellow-500 text-black">Free with Enterprise</Badge>
+            <Badge className="bg-green-500 text-white">14-Day Free Trial</Badge>
+            <Badge variant="outline">Monthly Billing Per User</Badge>
+            <Badge variant="outline">Bundle Discounts Available</Badge>
           </div>
         </div>
 
         {/* Security Apps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {securityApps.map((app) => {
             const Icon = app.icon;
             return (
@@ -165,6 +275,92 @@ const SecurityAppsSection = () => {
           })}
         </div>
 
+        {/* Pricing Tiers Section */}
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold mb-4">Choose Your Security Plan</h3>
+            <p className="text-muted-foreground mb-8">Start with a free trial, then choose the plan that fits your needs</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {pricingTiers.map((tier, index) => {
+              const Icon = tier.icon;
+              return (
+                <Card key={index} className={`relative ${tier.popular ? 'border-primary border-2' : ''} hover:shadow-lg transition-all duration-300`}>
+                  {tier.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                    </div>
+                  )}
+                  <CardHeader className="text-center">
+                    <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">{tier.name}</CardTitle>
+                    <div className="text-3xl font-bold text-primary">
+                      {tier.price}
+                      <span className="text-sm font-normal text-muted-foreground">/{tier.duration}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3 mb-6">
+                      {tier.features.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button 
+                      className="w-full" 
+                      variant={tier.popular ? "default" : "outline"}
+                    >
+                      {tier.cta}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* App Bundles Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg p-8 mb-12">
+            <div className="text-center mb-8">
+              <h4 className="text-2xl font-bold mb-3">Save with App Bundles</h4>
+              <p className="text-muted-foreground">Get multiple security apps together and save up to 43%</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {appBundles.map((bundle, index) => (
+                <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-lg">{bundle.name}</CardTitle>
+                    <div className="text-sm text-muted-foreground">
+                      {bundle.apps.join(' + ')}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <div className="mb-4">
+                      <div className="text-sm text-muted-foreground line-through">
+                        {bundle.originalPrice}/month
+                      </div>
+                      <div className="text-2xl font-bold text-primary">
+                        {bundle.bundlePrice}/month
+                      </div>
+                      <div className="text-sm text-green-600 font-medium">
+                        Save {bundle.savings}/month
+                      </div>
+                    </div>
+                    <Button className="w-full" variant="outline">
+                      Get Bundle
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Interactive Demo Section */}
         <Card className="border-2 border-dashed border-red-200 bg-white/50">
           <CardHeader className="text-center">
@@ -179,7 +375,7 @@ const SecurityAppsSection = () => {
           <CardContent>
             <div className="max-w-2xl mx-auto space-y-6">
               {/* Demo Type Selection */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
                 {securityApps.map((app) => {
                   const Icon = app.icon;
                   return (
@@ -204,7 +400,7 @@ const SecurityAppsSection = () => {
                     <Label htmlFor="demo-input">
                       {selectedApp.name} Demo
                     </Label>
-                    {selectedApp.id === 'safedoc' ? (
+                    {(selectedApp.id === 'safedoc' || selectedApp.id === 'safescan') ? (
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                         <FileText className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                         <p className="text-sm text-gray-500">
@@ -223,7 +419,7 @@ const SecurityAppsSection = () => {
 
                   <Button
                     onClick={() => runDemo(selectedApp.id)}
-                    disabled={isLoading || (!demoInput && selectedApp.id !== 'safedoc')}
+                    disabled={isLoading || (!demoInput && selectedApp.id !== 'safedoc' && selectedApp.id !== 'safescan')}
                     className="w-full"
                   >
                     {isLoading ? (
