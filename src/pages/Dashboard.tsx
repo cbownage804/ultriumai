@@ -76,10 +76,12 @@ const Dashboard = () => {
   const isAPIKeysPage = location.pathname.includes('/api-keys');
   const isTeamCollabPage = location.pathname.includes('/team-collaboration');
   const isKnowledgeBasePage = location.pathname.includes('/knowledge-base');
+  const isChatPage = location.pathname === '/dashboard/chat';
   const isDashboardOverview = location.pathname === '/dashboard';
   
   const getPageTitle = () => {
     if (isDashboardOverview) return "Dashboard";
+    if (isChatPage) return "Chat";
     if (isSettingsPage) return "Settings";
     if (isProfilePage) return "Profile"; 
     if (isHistoryPage) return "History";
@@ -106,6 +108,7 @@ const Dashboard = () => {
 
   const renderContent = () => {
     if (isDashboardOverview) return <DashboardOverview />;
+    if (isChatPage) return <ChatInterface />;
     if (isSettingsPage) return <SettingsPage />;
     if (isProfilePage) return <ProfilePage />;
     if (isHistoryPage) return <ConversationHistory />;
@@ -127,7 +130,7 @@ const Dashboard = () => {
     if (isAPIKeysPage) return <div className="p-6"><APIKeyManager /></div>;
     if (isTeamCollabPage) return <div className="p-6"><TeamCollaboration /></div>;
     if (isKnowledgeBasePage) return <div className="p-6"><KnowledgeBase /></div>;
-    return <ChatInterface />;
+    return <DashboardOverview />;
   };
 
   return (

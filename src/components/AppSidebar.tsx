@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const chatItems = [
-  { title: "Chat", url: "/dashboard", icon: MessageSquare },
+  { title: "Chat", url: "/dashboard/chat", icon: MessageSquare },
   { title: "History", url: "/dashboard/history", icon: History },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
 ];
