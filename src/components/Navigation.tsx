@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, User } from "lucide-react";
+import { Menu, LogOut, User, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb47
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSecurityDropdownOpen, setIsSecurityDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -86,10 +87,29 @@ const Navigation = () => {
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('#security')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              AI Security Apps
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsSecurityDropdownOpen(!isSecurityDropdownOpen)}
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+              >
+                AI Security Apps
+                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isSecurityDropdownOpen ? 'rotate-180' : ''}`} />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
+              {isSecurityDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
+                  <div className="py-2">
+                    <button onClick={() => { handleNavigation('/products/safeemail'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeEmail™</button>
+                    <button onClick={() => { handleNavigation('/products/safelink'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeLink™</button>
+                    <button onClick={() => { handleNavigation('/products/safedoc'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeDoc™</button>
+                    <button onClick={() => { handleNavigation('/products/safepass'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafePass™</button>
+                    <button onClick={() => { handleNavigation('/products/safeweb'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeWEB™</button>
+                    <button onClick={() => { handleNavigation('/products/safecomp'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeComp™</button>
+                    <button onClick={() => { handleNavigation('/products/safenet'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeNet™</button>
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={() => handleNavigation('/demos')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               AI Demos
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>

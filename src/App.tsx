@@ -21,6 +21,13 @@ import SafeCompDemoPage from '@/pages/demos/SafeCompDemoPage';
 import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
 import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
+import SafeEmailPage from '@/pages/products/SafeEmailPage';
+import SafeLinkPage from '@/pages/products/SafeLinkPage';
+import SafeDocPage from '@/pages/products/SafeDocPage';
+import SafePassPage from '@/pages/products/SafePassPage';
+import SafeWebPage from '@/pages/products/SafeWebPage';
+import SafeCompPage from '@/pages/products/SafeCompPage';
+import SafeNetPage from '@/pages/products/SafeNetPage';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -55,6 +62,15 @@ function AppRouter() {
       <Route path="/demos/safecomp" element={<SafeCompDemoPage />} />
       <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
       <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
+      
+      {/* Product Pages */}
+      <Route path="/products/safeemail" element={<SafeEmailPage />} />
+      <Route path="/products/safelink" element={<SafeLinkPage />} />
+      <Route path="/products/safedoc" element={<SafeDocPage />} />
+      <Route path="/products/safepass" element={<SafePassPage />} />
+      <Route path="/products/safeweb" element={<SafeWebPage />} />
+      <Route path="/products/safecomp" element={<SafeCompPage />} />
+      <Route path="/products/safenet" element={<SafeNetPage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={
