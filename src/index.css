@@ -8,7 +8,88 @@
 
 @layer base {
   :root {
-    /* Base Colors */
+    /* Light Mode - Default Colors with Optimized Contrast */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3%;
+
+    /* Primary Palette - Enhanced Blue with Better Contrast */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 217 91% 70%;
+    --primary-soft: 217 91% 95%;
+    --primary-dark: 217 91% 45%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+
+    /* Specialized Colors for Light Mode */
+    --hero: 217 91% 60%;
+    --hero-foreground: 0 0% 98%;
+    
+    --ai-message: 217 91% 95%;
+    --ai-message-foreground: 217 91% 20%;
+    
+    --user-message: 0 0% 96%;
+    --user-message-foreground: 0 0% 9%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 89%;
+    --input: 0 0% 96%;
+    --ring: 217 91% 60%;
+
+    --radius: 0.75rem;
+
+    /* Enhanced Gradients for Light Mode */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 96%), hsl(0 0% 100%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(262 83% 58%));
+    --gradient-glass: linear-gradient(135deg, hsl(217 91% 60% / 0.05), hsl(217 91% 70% / 0.02));
+    
+    /* Enhanced Shadows for Light Mode */
+    --shadow-elegant: 0 10px 30px -10px hsl(217 91% 60% / 0.15);
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.1);
+    --shadow-glow: 0 0 20px hsl(217 91% 60% / 0.2);
+    --shadow-card: 0 8px 25px -5px hsl(0 0% 0% / 0.08);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* Success & Status Colors with Better Contrast */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 98%;
+
+    /* Sidebar Variables for Light Mode */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 89%;
+    --sidebar-ring: 217 91% 60%;
+  }
+
+  .dark {
+    /* Dark Mode Colors with Enhanced Contrast */
     --background: 0 0% 3%;
     --foreground: 0 0% 98%;
 
@@ -18,11 +99,12 @@
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary Palette - Enhanced Blue */
+    /* Primary Palette - Enhanced for Dark Mode */
     --primary: 217 91% 60%;
     --primary-foreground: 0 0% 98%;
     --primary-glow: 217 91% 70%;
     --primary-soft: 217 91% 15%;
+    --primary-dark: 217 91% 45%;
 
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
@@ -33,7 +115,7 @@
     --accent: 0 0% 10%;
     --accent-foreground: 0 0% 98%;
 
-    /* Specialized Colors */
+    /* Specialized Colors for Dark Mode */
     --hero: 217 91% 60%;
     --hero-foreground: 0 0% 98%;
     
@@ -50,33 +132,19 @@
     --input: 0 0% 15%;
     --ring: 217 91% 60%;
 
-    --radius: 0.75rem;
-
-    /* Enhanced Gradients */
+    /* Enhanced Gradients for Dark Mode */
     --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(217 91% 70%));
     --gradient-secondary: linear-gradient(135deg, hsl(0 0% 3%), hsl(0 0% 8%));
     --gradient-hero: linear-gradient(135deg, hsl(217 91% 60%), hsl(262 83% 58%));
     --gradient-glass: linear-gradient(135deg, hsl(217 91% 60% / 0.1), hsl(217 91% 70% / 0.05));
     
-    /* Enhanced Shadows */
+    /* Enhanced Shadows for Dark Mode */
     --shadow-elegant: 0 10px 30px -10px hsl(217 91% 60% / 0.4);
     --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
     --shadow-glow: 0 0 20px hsl(217 91% 60% / 0.3);
     --shadow-card: 0 8px 25px -5px hsl(0 0% 0% / 0.2);
     
-    /* Transitions */
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-
-    /* Success & Status Colors */
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 98%;
-    --info: 199 89% 48%;
-    --info-foreground: 0 0% 98%;
-
-    /* Sidebar Variables */
+    /* Sidebar Variables for Dark Mode */
     --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 217 91% 60%;
@@ -87,47 +155,6 @@
     --sidebar-ring: 217 91% 60%;
   }
 
-  .dark {
-    --background: 0 0% 3%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 217 91% 70%;
-    --primary-soft: 217 91% 15%;
-
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 8%;
-    --muted-foreground: 0 0% 65%;
-
-    --accent: 0 0% 10%;
-    --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 217 91% 60%;
-    
-    --sidebar-background: 0 0% 6%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 217 91% 60%;
-  }
-}
 
 @layer base {
   * {
@@ -194,15 +221,15 @@
     background: var(--gradient-hero);
   }
   
-  /* Enhanced card styles */
+  /* Enhanced card styles with better contrast */
   .card-elevated {
     box-shadow: var(--shadow-card);
-    @apply hover:shadow-xl transition-shadow duration-300;
+    @apply hover:shadow-xl transition-shadow duration-300 bg-card text-card-foreground;
   }
   
   .card-glow {
     box-shadow: var(--shadow-elegant);
-    @apply transition-all duration-300;
+    @apply transition-all duration-300 bg-card text-card-foreground;
   }
   
   .card-glow:hover {
@@ -210,17 +237,23 @@
     transform: translateY(-2px);
   }
   
-  /* Focus styles */
+  /* Focus styles with proper contrast */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background;
   }
   
-  /* Text gradients */
+  /* Text gradients with enhanced visibility */
   .text-gradient {
     @apply bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent;
   }
   
-  /* Loading states */
+  /* High contrast text utility */
+  .text-high-contrast {
+    @apply text-foreground;
+    text-shadow: 0 1px 2px hsl(var(--background) / 0.8);
+  }
+  
+  /* Loading states with proper contrast */
   .loading-shimmer {
     background: linear-gradient(90deg, transparent, hsl(var(--muted)), transparent);
     background-size: 200% 100%;

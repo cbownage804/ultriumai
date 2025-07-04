@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import ThemeToggle from "./ThemeToggle";
 import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
 
 const Navigation = () => {
@@ -97,6 +98,7 @@ const Navigation = () => {
           
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+            <ThemeToggle />
             <Button variant="ghost" className="hover:scale-105 transition-all duration-300">
               804-821-1410
             </Button>
@@ -151,6 +153,7 @@ const Navigation = () => {
                 Contact
               </button>
               <div className="flex flex-col space-y-2 pt-4 px-3">
+                <ThemeToggle />
                 <Button variant="ghost" className="w-full">
                   804-821-1410
                 </Button>
