@@ -18,6 +18,12 @@ import GPTTemplatesMarketplace from "@/components/GPTTemplatesMarketplace";
 import TeamManagement from "@/components/TeamManagement";
 import TeamAnalytics from "@/components/TeamAnalytics";
 import SecuritySettings from "@/components/SecuritySettings";
+import { DashboardOverview } from "@/components/DashboardOverview";
+import { ConversationManager } from "@/components/ConversationManager";
+import { GPTDeploymentCenter } from "@/components/deployment/GPTDeploymentCenter";
+import { APIKeyManager } from "@/components/APIKeyManager";
+import { TeamCollaboration } from "@/components/TeamCollaboration";
+import KnowledgeBase from "@/components/KnowledgeBase";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -65,8 +71,15 @@ const Dashboard = () => {
   const isTeamManagementPage = location.pathname.includes('/teams');
   const isTeamAnalyticsPage = location.pathname.includes('/team-analytics');
   const isSecurityPage = location.pathname.includes('/security');
+  const isConversationsPage = location.pathname.includes('/conversations');
+  const isDeploymentPage = location.pathname.includes('/deployment');
+  const isAPIKeysPage = location.pathname.includes('/api-keys');
+  const isTeamCollabPage = location.pathname.includes('/team-collaboration');
+  const isKnowledgeBasePage = location.pathname.includes('/knowledge-base');
+  const isDashboardOverview = location.pathname === '/dashboard';
   
   const getPageTitle = () => {
+    if (isDashboardOverview) return "Dashboard";
     if (isSettingsPage) return "Settings";
     if (isProfilePage) return "Profile"; 
     if (isHistoryPage) return "History";
@@ -83,10 +96,16 @@ const Dashboard = () => {
     if (isTeamManagementPage) return "Team Management";
     if (isTeamAnalyticsPage) return "Team Analytics";
     if (isSecurityPage) return "Security Settings";
+    if (isConversationsPage) return "Conversation Manager";
+    if (isDeploymentPage) return "GPT Deployment";
+    if (isAPIKeysPage) return "API Keys";
+    if (isTeamCollabPage) return "Team Collaboration";
+    if (isKnowledgeBasePage) return "Knowledge Base";
     return "Chat";
   };
 
   const renderContent = () => {
+    if (isDashboardOverview) return <DashboardOverview />;
     if (isSettingsPage) return <SettingsPage />;
     if (isProfilePage) return <ProfilePage />;
     if (isHistoryPage) return <ConversationHistory />;
@@ -103,6 +122,11 @@ const Dashboard = () => {
     if (isTeamManagementPage) return <div className="p-6"><TeamManagement /></div>;
     if (isTeamAnalyticsPage) return <div className="p-6"><TeamAnalytics /></div>;
     if (isSecurityPage) return <div className="p-6"><SecuritySettings /></div>;
+    if (isConversationsPage) return <div className="p-6"><ConversationManager /></div>;
+    if (isDeploymentPage) return <div className="p-6"><GPTDeploymentCenter /></div>;
+    if (isAPIKeysPage) return <div className="p-6"><APIKeyManager /></div>;
+    if (isTeamCollabPage) return <div className="p-6"><TeamCollaboration /></div>;
+    if (isKnowledgeBasePage) return <div className="p-6"><KnowledgeBase /></div>;
     return <ChatInterface />;
   };
 
