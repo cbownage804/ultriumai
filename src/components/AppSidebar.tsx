@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,6 +41,7 @@ const customGPTItems = [
 const managementItems = [
   { title: "Security Apps", url: "/dashboard/security-apps", icon: Shield },
   { title: "API Management", url: "/dashboard/api-management", icon: Key },
+  { title: "Video Manager", url: "/dashboard/video-manager", icon: Video },
   { title: "White-label", url: "/dashboard/white-label", icon: Palette },
 ];
 
