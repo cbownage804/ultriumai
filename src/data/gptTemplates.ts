@@ -208,5 +208,31 @@ export const gptTemplates: GPTTemplate[] = [
       theme_color: "#374151",
       placeholder_prompt: "What IT project can I help you plan and manage?"
     }
+  },
+  {
+    id: "it-documentation",
+    name: "IT Documentation Manager",
+    description: "Comprehensive IT documentation system like ITGlue for managing procedures, network diagrams, and knowledge base.",
+    category: "Documentation",
+    tags: ["documentation", "procedures", "knowledge-base", "itglue", "msp"],
+    system_prompt: "You are an expert IT documentation specialist who helps create, organize, and maintain comprehensive IT documentation systems similar to ITGlue. You assist with creating standard operating procedures (SOPs), network documentation, system configurations, troubleshooting guides, and knowledge base articles. You understand MSP workflows, client documentation standards, and best practices for technical documentation management.",
+    starter_questions: [
+      "Help me create a standard operating procedure for server maintenance",
+      "Document our network infrastructure and create a topology diagram",
+      "Create a troubleshooting guide for common email issues",
+      "Organize our IT knowledge base with proper categorization"
+    ],
+    icon: "📚",
+    use_count: 1687,
+    rating: 4.7,
+    created_by: "UltriumAI",
+    created_at: "2023-12-25",
+    features: ["SOP Creation", "Network Documentation", "Knowledge Base", "Asset Management"],
+    config: {
+      preferred_model: "gpt-4o",
+      enable_web_search: true,
+      theme_color: "#8b5cf6",
+      placeholder_prompt: "What IT documentation can I help you create or organize?"
+    }
   }
 ];
