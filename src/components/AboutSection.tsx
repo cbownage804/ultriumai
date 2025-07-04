@@ -107,18 +107,18 @@ const AboutSection = () => {
           ].map((process, index) => {
             const Icon = process.icon;
             return (
-              <Card key={index} className="text-center hover:shadow-lg transition-all duration-300">
+              <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 hover:scale-105 card-glow animate-fade-in group" style={{animationDelay: `${index * 0.2}s`}}>
                 <CardHeader>
-                  <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center relative">
-                    <Icon className="h-8 w-8 text-primary" />
-                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center relative group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
+                    <Icon className="h-8 w-8 text-primary group-hover:animate-glow" />
+                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold group-hover:scale-110 transition-transform duration-300">
                       {process.step}
                     </div>
                   </div>
-                  <CardTitle className="text-lg">{process.title}</CardTitle>
+                  <CardTitle className="text-lg group-hover:text-gradient transition-all duration-300">{process.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
                     {process.description}
                   </p>
                 </CardContent>

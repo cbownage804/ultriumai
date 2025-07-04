@@ -15,24 +15,44 @@ const Hero = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="space-y-8">
           {/* Main heading */}
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
+          <div className="space-y-4 animate-fade-in">
+            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight animate-slide-up">
               Transform Your Business with Custom AI Agents
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in" style={{animationDelay: '0.2s'}}>
               From helpdesk GPTs to cybersecurity copilots—UltriumAI builds the tools to power your future.
             </p>
-            <div className="flex items-center justify-center gap-2 text-lg font-medium text-primary">
+            <div className="flex items-center justify-center gap-2 text-lg font-medium text-primary animate-bounce-gentle">
               <Shield className="h-6 w-6" />
               <span>Built for Business. Secure by Design</span>
             </div>
           </div>
 
+          {/* Video Section */}
+          <div className="animate-fade-in" style={{animationDelay: '0.4s'}}>
+            <div className="max-w-4xl mx-auto mb-8">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-primary/20 to-secondary/20 p-1">
+                <div className="bg-background/95 backdrop-blur-sm rounded-xl p-8">
+                  <h3 className="text-2xl font-bold mb-4 text-foreground">See UltriumAI in Action</h3>
+                  <div className="aspect-video bg-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-primary/30 hover:border-primary/60 transition-all duration-300">
+                    <div className="text-center space-y-2">
+                      <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Play className="h-8 w-8 text-primary" />
+                      </div>
+                      <p className="text-muted-foreground">Upload your video here</p>
+                      <p className="text-sm text-muted-foreground/70">We'll help you embed it perfectly</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{animationDelay: '0.6s'}}>
             <Button 
               size="lg" 
-              className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300"
+              className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow"
               onClick={() => window.location.href = '#security'}
             >
               <Play className="mr-2 h-5 w-5" />
@@ -41,7 +61,7 @@ const Hero = () => {
             <Button 
               variant="outline" 
               size="lg" 
-              className="text-lg px-8 py-6 h-auto border-2 hover:bg-primary/5"
+              className="text-lg px-8 py-6 h-auto border-2 hover:bg-primary/5 hover:border-primary transition-all duration-300 hover:scale-105"
               onClick={() => window.location.href = '#contact'}
             >
               <Calendar className="mr-2 h-5 w-5" />
@@ -50,19 +70,19 @@ const Hero = () => {
           </div>
 
           {/* Trust indicators */}
-          <div className="pt-8 border-t border-border/50">
+          <div className="pt-8 border-t border-border/50 animate-fade-in" style={{animationDelay: '0.8s'}}>
             <p className="text-sm text-muted-foreground mb-4">Proudly developed by Ultrium LLC - Veteran-owned IT solutions</p>
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-green-500" />
+              <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
+                <Shield className="h-4 w-4 text-success animate-glow" />
                 <span>Security-First Design</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-blue-500" />
+              <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
+                <Users className="h-4 w-4 text-info animate-glow" style={{animationDelay: '0.5s'}} />
                 <span>15+ Years IT Experience</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-yellow-500" />
+              <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
+                <Star className="h-4 w-4 text-warning animate-glow" style={{animationDelay: '1s'}} />
                 <span>Custom-Built Solutions</span>
               </div>
             </div>

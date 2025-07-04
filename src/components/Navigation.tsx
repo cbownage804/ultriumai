@@ -35,49 +35,55 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-3">
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-10 w-auto" />
-            <span className="text-xl font-bold text-foreground">UltriumGPT</span>
+          <div className="flex items-center space-x-3 animate-fade-in">
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-10 w-auto transition-transform duration-300 hover:scale-110" />
+            <span className="text-xl font-bold text-foreground hover:text-gradient transition-all duration-300">UltriumAI</span>
           </div>
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#about" className="text-foreground/80 hover:text-foreground transition-colors">
+            <a href="#about" className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
               About
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </a>
-            <a href="/ultriumgpt" className="text-foreground/80 hover:text-foreground transition-colors">
+            <a href="/ultriumgpt" className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
               UltriumGPT
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </a>
-            <a href="#features" className="text-foreground/80 hover:text-foreground transition-colors">
+            <a href="#features" className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
               Solutions
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </a>
-            <a href="#security" className="text-foreground/80 hover:text-foreground transition-colors">
+            <a href="#security" className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
               AI Security Apps
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </a>
-            <a href="#demo" className="text-foreground/80 hover:text-foreground transition-colors">
+            <a href="#demo" className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
               Live Demos
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </a>
-            <a href="#contact" className="text-foreground/80 hover:text-foreground transition-colors">
+            <a href="#contact" className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
               Contact
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </a>
           </div>
           
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="ghost">
+            <Button variant="ghost" className="hover:scale-105 transition-all duration-300">
               804-821-1410
             </Button>
             {user ? (
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-300">
                   <User className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={handleSignOut}>
+                <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:scale-110 transition-all duration-300 hover:text-destructive">
                   <LogOut className="h-5 w-5" />
                 </Button>
               </div>
             ) : (
-              <Button variant="hero" onClick={() => navigate('/auth')}>
+              <Button variant="hero" onClick={() => navigate('/auth')} className="btn-glow hover:scale-105 transition-all duration-300">
                 Sign In
               </Button>
             )}

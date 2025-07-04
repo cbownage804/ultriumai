@@ -114,22 +114,22 @@ const WhoWeHelp = () => {
           {industries.map((industry, index) => {
             const Icon = industry.icon;
             return (
-              <Card key={index} className={`hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20 bg-gradient-to-br ${industry.gradient}`}>
+              <Card key={index} className={`hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20 bg-gradient-to-br ${industry.gradient} hover:scale-105 card-glow animate-fade-in group`} style={{animationDelay: `${index * 0.1}s`}}>
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-white/80 shadow-sm">
-                      <Icon className="h-6 w-6 text-primary" />
+                    <div className="p-2 rounded-lg bg-white/80 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                      <Icon className="h-6 w-6 text-primary group-hover:animate-glow" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{industry.title}</CardTitle>
+                      <CardTitle className="text-lg group-hover:text-gradient transition-all duration-300">{industry.title}</CardTitle>
                     </div>
                   </div>
-                  <CardDescription className="text-primary font-medium">
+                  <CardDescription className="text-primary font-medium group-hover:text-primary-glow transition-colors duration-300">
                     {industry.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
                     {industry.details}
                   </p>
                 </CardContent>
@@ -151,15 +151,15 @@ const WhoWeHelp = () => {
           {whyChooseUs.map((reason, index) => {
             const Icon = reason.icon;
             return (
-              <Card key={index} className="hover:shadow-lg transition-all duration-300 text-center">
+              <Card key={index} className="hover:shadow-lg transition-all duration-300 text-center hover:scale-105 card-glow animate-fade-in group" style={{animationDelay: `${index * 0.1}s`}}>
                 <CardHeader>
-                  <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Icon className="h-8 w-8 text-primary" />
+                  <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
+                    <Icon className="h-8 w-8 text-primary group-hover:animate-glow" />
                   </div>
-                  <CardTitle className="text-lg">{reason.title}</CardTitle>
+                  <CardTitle className="text-lg group-hover:text-gradient transition-all duration-300">{reason.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
                     {reason.description}
                   </p>
                 </CardContent>

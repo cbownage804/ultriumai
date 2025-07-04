@@ -75,18 +75,18 @@ const Features = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+            <Card key={index} className="p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 card-glow animate-fade-in group" style={{animationDelay: `${index * 0.1}s`}}>
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <feature.icon className="w-6 h-6 text-primary" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
+                    <feature.icon className="w-6 h-6 text-primary group-hover:animate-glow" />
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2 text-foreground">
+                  <h3 className="text-lg font-semibold mb-2 text-foreground group-hover:text-gradient transition-all duration-300">
                     {feature.title}
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground group-hover:text-foreground/80 transition-colors duration-300">
                     {feature.description}
                   </p>
                 </div>
