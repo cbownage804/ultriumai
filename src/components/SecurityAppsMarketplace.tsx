@@ -238,7 +238,7 @@ const SecurityAppsMarketplace = () => {
               Enterprise: All apps included
             </Badge>
             <Badge variant="outline" className="text-xs">
-              Individual: $20/month per app
+              Standard: $20/month | White Label: $35/month
             </Badge>
           </div>
         </div>
@@ -386,7 +386,7 @@ const SecurityAppsMarketplace = () => {
                           Embed Widget
                         </Button>
                         <Button variant="outline" size="sm" className="flex-1">
-                          White Label (+$35)
+                          White Label - $35/mo
                         </Button>
                       </div>
                     </div>
@@ -486,10 +486,14 @@ const SecurityAppsMarketplace = () => {
                               <CardContent className="p-6">
                                 <div className="text-center space-y-4">
                                   <div>
-                                    <div className="text-2xl font-bold">+$35</div>
-                                    <div className="text-muted-foreground">White Label Add-on</div>
+                                    <div className="text-2xl font-bold">$35</div>
+                                    <div className="text-muted-foreground">White Label Version</div>
                                   </div>
                                   <div className="space-y-2 text-sm">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500" />
+                                      <span>All standard features</span>
+                                    </div>
                                     <div className="flex items-center justify-center gap-2">
                                       <Check className="h-4 w-4 text-green-500" />
                                       <span>Remove Ultrium branding</span>
