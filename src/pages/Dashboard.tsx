@@ -10,6 +10,7 @@ import CustomGPTAsk from "@/components/CustomGPTAsk";
 import CustomGPTActions from "@/components/CustomGPTActions";
 import CustomGPTAnalyze from "@/components/CustomGPTAnalyze";
 import ConversationHistory from "@/components/ConversationHistory";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -50,6 +51,7 @@ const Dashboard = () => {
   const isCustomGPTAskPage = location.pathname.includes('/custom-gpts/ask');
   const isCustomGPTDeployPage = location.pathname.includes('/custom-gpts/deploy');
   const isCustomGPTAnalyzePage = location.pathname.includes('/custom-gpts/analyze');
+  const isAnalyticsPage = location.pathname.includes('/analytics');
   
   const getPageTitle = () => {
     if (isSettingsPage) return "Settings";
@@ -61,6 +63,7 @@ const Dashboard = () => {
     if (isCustomGPTAskPage) return "Ask";
     if (isCustomGPTDeployPage) return "Deploy";
     if (isCustomGPTAnalyzePage) return "Analyze";
+    if (isAnalyticsPage) return "Analytics";
     return "Chat";
   };
 
@@ -74,6 +77,7 @@ const Dashboard = () => {
     if (isCustomGPTAskPage) return <div className="p-6"><CustomGPTAsk /></div>;
     if (isCustomGPTDeployPage) return <div className="p-6"><CustomGPTDeploy /></div>;
     if (isCustomGPTAnalyzePage) return <div className="p-6"><CustomGPTAnalyze /></div>;
+    if (isAnalyticsPage) return <div className="p-6"><AnalyticsDashboard /></div>;
     return <ChatInterface />;
   };
 

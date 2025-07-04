@@ -107,14 +107,35 @@ export const useFileUpload = () => {
 
       if (error) throw error;
 
-      // Only process text-based files
+      // Enhanced file type processing
       if (file.mime_type.startsWith('text/') || 
           file.mime_type === 'application/json' ||
-          file.mime_type === 'application/xml') {
+          file.mime_type === 'application/xml' ||
+          file.mime_type === 'application/javascript' ||
+          file.mime_type === 'application/typescript') {
         return await data.text();
       }
 
-      return `[${file.file_name}] - File content available for AI analysis`;
+      // Handle CSV files
+      if (file.mime_type === 'text/csv' || file.file_name.endsWith('.csv')) {
+        const csvContent = await data.text();
+        const lines = csvContent.split('\n').slice(0, 50); // Limit to first 50 rows
+        return `CSV File: ${file.file_name}\nPreview (first 50 rows):\n${lines.join('\n')}`;
+      }
+
+      // Handle code files by extension
+      const codeExtensions = ['.js', '.ts', '.jsx', '.tsx', '.py', '.java', '.cpp', '.c', '.h', '.php', '.rb', '.go', '.rs', '.sql', '.css', '.html', '.md'];
+      const fileExt = '.' + file.file_name.split('.').pop()?.toLowerCase();
+      
+      if (codeExtensions.includes(fileExt)) {
+        const content = await data.text();
+        return `Code File: ${file.file_name} (${fileExt})\n\`\`\`${fileExt.slice(1)}\n${content}\n\`\`\``;
+      }
+
+      // For other files, provide metadata
+      return `File: ${file.file_name} (${(file.file_size / 1024).toFixed(2)} KB)
+Type: ${file.mime_type}
+Note: This file has been uploaded for AI analysis. The AI can discuss the file's purpose, contents, and provide insights based on its type and context.`;
     } catch (error) {
       console.error('Error reading file:', error);
       return null;

@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,6 +25,7 @@ import {
 const chatItems = [
   { title: "Chat", url: "/dashboard", icon: MessageSquare },
   { title: "History", url: "/dashboard/history", icon: History },
+  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
 ];
 
 const customGPTItems = [

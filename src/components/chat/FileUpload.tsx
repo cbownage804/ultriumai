@@ -14,7 +14,8 @@ interface FileUploadProps {
 
 const ACCEPTED_FILE_TYPES = [
   '.txt', '.md', '.json', '.csv', '.xml', '.html', '.css', '.js', '.ts', '.jsx', '.tsx',
-  '.py', '.java', '.cpp', '.c', '.h', '.php', '.rb', '.go', '.rs', '.sql'
+  '.py', '.java', '.cpp', '.c', '.h', '.php', '.rb', '.go', '.rs', '.sql', '.yml', '.yaml',
+  '.log', '.conf', '.config', '.ini', '.properties', '.env', '.gitignore', '.dockerfile'
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -109,7 +110,7 @@ const FileUpload = ({ conversationId, onFileUploaded, disabled }: FileUploadProp
                 Drag and drop or click to select files (max 10MB)
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Supports: Text, Code, JSON, CSV, Markdown files
+                Supports: Text, Code, JSON, CSV, Markdown, Config files
               </p>
             </div>
           </div>
