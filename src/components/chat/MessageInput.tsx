@@ -16,15 +16,22 @@ interface MessageInputProps {
   onSendMessage: (attachments?: ConversationFile[], generatedMedia?: { url: string; type: 'image' | 'video'; prompt: string }[], aiModel?: string, webSearchEnabled?: boolean) => void;
   isLoading: boolean;
   conversationId: string | null;
+  allowWebSearch?: boolean;
+  customGPTName?: string;
 }
 
-const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationId }: MessageInputProps) => {
+const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationId, allowWebSearch = true, customGPTName }: MessageInputProps) => {
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showMediaGeneration, setShowMediaGeneration] = useState(false);
   const [attachments, setAttachments] = useState<ConversationFile[]>([]);
   const [generatedMedia, setGeneratedMedia] = useState<{ url: string; type: 'image' | 'video'; prompt: string }[]>([]);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+
+  // Reset web search when not allowed
+  if (!allowWebSearch && webSearchEnabled) {
+    setWebSearchEnabled(false);
+  }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -165,16 +172,25 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
               </Select>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Search className={`w-4 h-4 ${webSearchEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
-            <Label htmlFor="web-search" className="text-sm">Web Search</Label>
-            <Switch
-              id="web-search"
-              checked={webSearchEnabled}
-              onCheckedChange={setWebSearchEnabled}
-              disabled={isLoading}
-            />
-          </div>
+          {allowWebSearch ? (
+            <div className="flex items-center gap-2">
+              <Search className={`w-4 h-4 ${webSearchEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+              <Label htmlFor="web-search" className="text-sm">Web Search</Label>
+              <Switch
+                id="web-search"
+                checked={webSearchEnabled}
+                onCheckedChange={setWebSearchEnabled}
+                disabled={isLoading}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 opacity-50">
+              <Search className="w-4 h-4 text-muted-foreground" />
+              <Label className="text-sm text-muted-foreground">
+                Web Search (Disabled for {customGPTName || "this GPT"})
+              </Label>
+            </div>
+          )}
         </div>
       </div>
       

@@ -291,6 +291,8 @@ const ChatInterface = () => {
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
               conversationId={currentConversationId}
+              allowWebSearch={selectedGPT === "default" || gpts.find(g => g.id === selectedGPT)?.enable_web_search !== false}
+              customGPTName={selectedGPT === "default" ? undefined : gpts.find(g => g.id === selectedGPT)?.name}
             />
           </>
         ) : (
