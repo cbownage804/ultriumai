@@ -15,7 +15,8 @@ import {
   Zap,
   ArrowRight,
   ExternalLink,
-  Play
+  Play,
+  Network
 } from "lucide-react";
 
 interface DemoApp {
@@ -35,7 +36,7 @@ interface DemoApp {
 const demoApps: DemoApp[] = [
   {
     id: "ultrium-safeemail",
-    name: "Ultrium SafeMail",
+    name: "Ultrium SafeEmail™",
     category: "Email Security",
     description: "AI-powered email analysis and threat detection",
     longDescription: "Advanced email security solution that uses AI to analyze incoming emails for phishing attempts, malware, suspicious links, and social engineering attacks. Provides real-time threat assessment with detailed risk scoring.",
@@ -60,7 +61,7 @@ const demoApps: DemoApp[] = [
   },
   {
     id: "ultrium-safelink",
-    name: "Ultrium SafeLink",
+    name: "Ultrium SafeLink™",
     category: "Link Security",
     description: "Comprehensive URL analysis and safety verification",
     longDescription: "Intelligent link analysis tool that scans URLs for malicious content, phishing sites, malware distribution, and reputation issues. Provides comprehensive safety reports with risk assessments.",
@@ -85,7 +86,7 @@ const demoApps: DemoApp[] = [
   },
   {
     id: "ultrium-safescan",
-    name: "Ultrium SafeScan",
+    name: "Ultrium SafeScan™",
     category: "Document Security",
     description: "Document analysis and content safety verification",
     longDescription: "Advanced document scanner that analyzes files for malicious content, embedded threats, suspicious macros, and data security issues. Supports multiple file formats with detailed security assessments.",
@@ -110,7 +111,7 @@ const demoApps: DemoApp[] = [
   },
   {
     id: "ultrium-safepass",
-    name: "Ultrium SafePass",
+    name: "Ultrium SafePass™",
     category: "Password Security",
     description: "Enterprise password management and security platform",
     longDescription: "Comprehensive password management solution with enterprise-grade security, automated password generation, breach monitoring, and team collaboration features for secure credential management.",
@@ -135,7 +136,7 @@ const demoApps: DemoApp[] = [
   },
   {
     id: "ultrium-safedoc",
-    name: "Ultrium SafeDoc", 
+    name: "Ultrium SafeDoc™", 
     category: "Document Management",
     description: "Secure document storage and knowledge management platform",
     longDescription: "Enterprise document management system with advanced security, version control, collaboration tools, and intelligent organization. Built for IT teams and MSPs who need secure, searchable document storage.",
@@ -159,8 +160,58 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
+    id: "ultrium-safenet",
+    name: "Ultrium SafeNet™",
+    category: "Network Security",
+    description: "Advanced network discovery and topology mapping platform",
+    longDescription: "Comprehensive network security tool that discovers devices, maps network topology, monitors performance, and identifies security vulnerabilities across your infrastructure with real-time scanning capabilities.",
+    icon: Network,
+    features: [
+      "Network topology mapping",
+      "Device discovery",
+      "Performance monitoring",
+      "Vulnerability assessment",
+      "Real-time security scanning",
+      "Meraki integration support"
+    ],
+    demoUrl: "/demos/safenet",
+    isLive: true,
+    tags: ["Network Security", "Infrastructure", "Monitoring"],
+    useCases: [
+      "Network asset discovery",
+      "Security vulnerability assessment",
+      "Performance monitoring",
+      "Compliance network auditing"
+    ]
+  },
+  {
+    id: "ultrium-safecomp",
+    name: "Ultrium SafeComp™",
+    category: "Compliance Management",
+    description: "Comprehensive compliance management and audit platform",
+    longDescription: "Enterprise compliance management solution that automates compliance monitoring, conducts security audits, tracks regulatory requirements, and provides detailed reporting for various frameworks including SOC 2, HIPAA, and GDPR.",
+    icon: Users,
+    features: [
+      "Compliance monitoring",
+      "Audit automation",
+      "Risk assessment",
+      "Multi-framework support",
+      "Automated reporting",
+      "Remediation tracking"
+    ],
+    demoUrl: "/demos/safecomp",
+    isLive: true,
+    tags: ["Compliance", "Audit", "Risk Management"],
+    useCases: [
+      "SOC 2 compliance monitoring",
+      "HIPAA compliance tracking",
+      "GDPR compliance management",
+      "Internal security audits"
+    ]
+  },
+  {
     id: "ultrium-safeweb",
-    name: "Ultrium SafeWEB",
+    name: "Ultrium SafeWEB™",
     category: "Threat Intelligence",
     description: "Dark web monitoring and threat intelligence platform",
     longDescription: "Comprehensive dark web monitoring solution that scans for compromised credentials, corporate data breaches, threat actor discussions, and emerging cyber threats targeting your organization.",
@@ -213,7 +264,7 @@ const demoApps: DemoApp[] = [
 const LiveDemos = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Threat Intelligence", "AI Assistant"];
+  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Network Security", "Compliance Management", "Threat Intelligence", "AI Assistant"];
   
   const filteredApps = selectedCategory === "all" 
     ? demoApps 
