@@ -22,7 +22,8 @@ const SecurityAppsSection = () => {
       features: ['Real-time phishing detection', 'Malware scanning', 'Social engineering detection'],
       riskTypes: ['Phishing', 'Malware', 'BEC'],
       category: 'Email Security',
-      demoUrl: '/demos/safeemail'
+      demoUrl: '/demos/safeemail',
+      productUrl: '/products/safeemail'
     },
     {
       id: 'safelink',
@@ -32,7 +33,8 @@ const SecurityAppsSection = () => {
       features: ['URL reputation analysis', 'Malware detection', 'SSL certificate validation'],
       riskTypes: ['Phishing', 'Malware', 'Suspicious Sites'],
       category: 'Link Security',
-      demoUrl: '/demos/safelink'
+      demoUrl: '/demos/safelink',
+      productUrl: '/products/safelink'
     },
     {
       id: 'safedoc',
@@ -42,7 +44,8 @@ const SecurityAppsSection = () => {
       features: ['Secure document storage', 'Version control', 'Advanced search'],
       riskTypes: ['Malware', 'Data Leaks', 'Unauthorized Access'],
       category: 'Document Management',
-      demoUrl: '/demos/safedoc'
+      demoUrl: '/demos/safedoc',
+      productUrl: '/products/safedoc'
     },
     {
       id: 'safescan',
@@ -52,7 +55,8 @@ const SecurityAppsSection = () => {
       features: ['Multi-format scanning', 'Macro analysis', 'Embedded threat detection'],
       riskTypes: ['Malware', 'Trojans', 'Macros'],
       category: 'Document Security',
-      demoUrl: '/demos/safedoc'
+      demoUrl: '/demos/safedoc',
+      productUrl: '/products/safedoc'
     },
     {
       id: 'safepass',
@@ -62,7 +66,8 @@ const SecurityAppsSection = () => {
       features: ['Secure password generation', 'Breach monitoring', 'Team sharing'],
       riskTypes: ['Weak Passwords', 'Breached Credentials', 'Policy Violations'],
       category: 'Password Security',
-      demoUrl: '/demos/safepass'
+      demoUrl: '/demos/safepass',
+      productUrl: '/products/safepass'
     },
     {
       id: 'safeweb',
@@ -72,7 +77,8 @@ const SecurityAppsSection = () => {
       features: ['Credential monitoring', 'Data breach detection', 'Threat actor tracking'],
       riskTypes: ['Data Breaches', 'Credential Theft', 'Identity Theft'],
       category: 'Threat Intelligence',
-      demoUrl: '/demos/safeweb'
+      demoUrl: '/demos/safeweb',
+      productUrl: '/products/safeweb'
     },
     {
       id: 'safecomp',
@@ -82,7 +88,8 @@ const SecurityAppsSection = () => {
       features: ['Compliance monitoring', 'Audit automation', 'Risk assessment'],
       riskTypes: ['Compliance Violations', 'Audit Failures', 'Regulatory Risks'],
       category: 'Compliance Management',
-      demoUrl: '/demos/safecomp'
+      demoUrl: '/demos/safecomp',
+      productUrl: '/products/safecomp'
     },
     {
       id: 'safenet',
@@ -92,7 +99,8 @@ const SecurityAppsSection = () => {
       features: ['Network topology mapping', 'Device discovery', 'Performance monitoring'],
       riskTypes: ['Network Vulnerabilities', 'Unauthorized Devices', 'Performance Issues'],
       category: 'Network Security',
-      demoUrl: '/demos/safenet'
+      demoUrl: '/demos/safenet',
+      productUrl: '/products/safenet'
     }
   ];
 
@@ -227,7 +235,7 @@ const SecurityAppsSection = () => {
             return (
               <Card 
                 key={app.id} 
-                className={`hover:shadow-lg transition-all duration-500 border-2 hover:border-primary/20 card-elevated animate-scale-on-hover transform-gpu ${
+                className={`hover:shadow-lg transition-all duration-500 border-2 hover:border-primary/20 card-elevated animate-scale-on-hover transform-gpu cursor-pointer ${
                   visibleCards[index] 
                     ? 'opacity-100 translate-y-0 scale-100' 
                     : 'opacity-0 translate-y-8 scale-95'
@@ -236,6 +244,7 @@ const SecurityAppsSection = () => {
                   transitionDelay: `${index * 150}ms`,
                   transform: visibleCards[index] ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)'
                 }}
+                onClick={() => window.location.href = app.productUrl}
               >
                 <CardHeader className="text-center">
                   <div className="mx-auto mb-4 w-16 h-16 bg-primary-soft rounded-full flex items-center justify-center animate-float">
@@ -266,7 +275,10 @@ const SecurityAppsSection = () => {
                     </div>
                     {/* Demo Button */}
                     <Button
-                      onClick={() => window.location.href = app.demoUrl}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card click when button is clicked
+                        window.location.href = app.demoUrl;
+                      }}
                       className="w-full mt-4 btn-glow hover:scale-105 transition-all duration-300"
                       variant="outline"
                     >
