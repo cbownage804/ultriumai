@@ -97,10 +97,6 @@ When referencing information from these documents, mention the source document n
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           messages: [
-            {
-              role: 'system',
-              content: enhancedSystemPrompt
-            },
             ...messages.map(msg => ({
               role: msg.role,
               content: msg.content
@@ -109,7 +105,12 @@ When referencing information from these documents, mention the source document n
               role: 'user',
               content: inputMessage
             }
-          ]
+          ],
+          customGPT: {
+            system_prompt: enhancedSystemPrompt,
+            id: currentGPT.id,
+            name: currentGPT.name
+          }
         }
       });
 
