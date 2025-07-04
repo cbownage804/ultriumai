@@ -298,7 +298,11 @@ const CustomGPTManager = () => {
                   <p className="line-clamp-3">{gpt.system_prompt}</p>
                 </div>
                 
-                <Button className="w-full" size="sm">
+                <Button 
+                  className="w-full" 
+                  size="sm"
+                  onClick={() => window.location.href = `/chat/${gpt.id}`}
+                >
                   Chat with {gpt.name}
                 </Button>
               </div>
