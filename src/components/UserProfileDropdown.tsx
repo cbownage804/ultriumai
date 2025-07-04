@@ -35,8 +35,6 @@ const UserProfileDropdown = () => {
     switch (tier?.toLowerCase()) {
       case 'enterprise':
         return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white';
-      case 'pro':
-        return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white';
       case 'premium':
         return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white';
       default:
