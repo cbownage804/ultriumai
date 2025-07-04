@@ -27,11 +27,8 @@ serve(async (req) => {
 
     console.log('Generating image with prompt:', prompt);
 
-    // DALL-E 3 supported sizes: "1024x1024", "1792x1024", "1024x1792"
-    const validSizes = ["1024x1024", "1792x1024", "1024x1792"];
-    const dalleSize = validSizes.includes(size) ? size : "1024x1024";
-
-    console.log('Image generation request:', { prompt, size: dalleSize, quality });
+    // Use DALL-E 2 for more reliable generation
+    console.log('Image generation request:', { prompt, size, quality });
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -40,10 +37,9 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
+        model: 'dall-e-2',
         prompt: prompt,
-        size: dalleSize,
-        quality: quality === "high" ? "hd" : "standard",
+        size: "1024x1024", // DALL-E 2 only supports 1024x1024, 512x512, 256x256
         n: 1
       }),
     });
