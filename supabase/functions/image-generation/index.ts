@@ -1,53 +1,65 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { HfInference } from 'https://esm.sh/@huggingface/inference@2.3.2'
+import Replicate from "https://esm.sh/replicate@0.25.2"
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { prompt, quality = "high" } = await req.json()
 
-    const huggingFaceToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN')
-    if (!huggingFaceToken) {
-      throw new Error('Hugging Face access token not configured')
+    const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY')
+    if (!REPLICATE_API_KEY) {
+      throw new Error('REPLICATE_API_KEY is not set')
     }
 
     if (!prompt) {
       throw new Error('Prompt is required')
     }
 
-    console.log('Generating image with prompt:', prompt)
+    console.log("Generating image with prompt:", prompt)
 
-    const hf = new HfInference(huggingFaceToken)
-
-    const image = await hf.textToImage({
-      inputs: prompt,
-      model: 'black-forest-labs/FLUX.1-schnell',
+    const replicate = new Replicate({
+      auth: REPLICATE_API_KEY,
     })
 
-    // Convert the blob to a base64 string
-    const arrayBuffer = await image.arrayBuffer()
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-
-    console.log('Image generated successfully')
-
-    return new Response(
-      JSON.stringify({ image: `data:image/png;base64,${base64}` }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    const output = await replicate.run(
+      "black-forest-labs/flux-schnell",
+      {
+        input: {
+          prompt: prompt,
+          go_fast: true,
+          megapixels: "1",
+          num_outputs: 1,
+          aspect_ratio: "1:1",
+          output_format: "webp",
+          output_quality: 80,
+          num_inference_steps: 4
+        }
+      }
     )
+
+    console.log("Generation response:", output)
+    
+    // Replicate returns an array of URLs
+    const imageUrl = Array.isArray(output) ? output[0] : output
+
+    return new Response(JSON.stringify({ image: imageUrl }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    })
   } catch (error) {
-    console.error('Error in image-generation function:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    )
+    console.error("Error in image generation function:", error)
+    return new Response(JSON.stringify({ error: error.message }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
+    })
   }
 })
