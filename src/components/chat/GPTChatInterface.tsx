@@ -142,20 +142,23 @@ export const GPTChatInterface = () => {
 
       const enhancedContent = messageContent + knowledgeContext;
 
-      // Mock AI response for now (replace with actual AI API call)
-      const mockResponses = [
-        "I understand you're asking about " + inputMessage.trim() + ". Let me help you with that.",
-        "That's an interesting question. Based on what you've shared, I think...",
-        "I can help you with that. Here's what I recommend...",
-        "Let me break this down for you step by step.",
-        "I see what you're looking for. The best approach would be..."
-      ];
-      
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-      
-      const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-      const data = { message: randomResponse, tokensUsed: Math.floor(Math.random() * 100) + 50 };
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
+        body: {
+          gptId: gpt.id,
+          messages: [...messages, { 
+            role: userMessage.role, 
+            content: enhancedContent  // Use enhanced content with file context and knowledge
+          }].map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          systemPrompt: gpt.system_prompt,
+          sessionId,
+          customGPT: gpt
+        }
+      });
+
+      if (error) throw error;
 
       const responseTime = Date.now() - startTime;
       
