@@ -121,15 +121,15 @@ const WhoWeHelp = () => {
                       <Icon className="h-6 w-6 text-primary group-hover:animate-glow" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-foreground group-hover:text-gradient transition-all duration-300">{industry.title}</CardTitle>
+                      <CardTitle className="text-lg text-gray-900 group-hover:text-gradient transition-all duration-300">{industry.title}</CardTitle>
                     </div>
                   </div>
-                  <CardDescription className="text-foreground/80 font-medium group-hover:text-primary transition-colors duration-300">
+                  <CardDescription className="text-gray-800 font-medium group-hover:text-primary transition-colors duration-300">
                     {industry.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-foreground/70 leading-relaxed group-hover:text-foreground transition-colors duration-300">
+                  <p className="text-sm text-gray-700 leading-relaxed group-hover:text-gray-900 transition-colors duration-300">
                     {industry.details}
                   </p>
                 </CardContent>
