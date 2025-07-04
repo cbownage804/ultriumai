@@ -114,7 +114,7 @@ const WhoWeHelp = () => {
           {industries.map((industry, index) => {
             const Icon = industry.icon;
             return (
-              <Card key={index} className={`hover:shadow-xl hover:-translate-y-2 transition-all duration-200 border-2 hover:border-primary/20 bg-gradient-to-br ${industry.gradient} hover:scale-105 card-glow animate-fade-in group`} style={{animationDelay: `${index * 0.1}s`}}>
+              <Card key={index} className={`hover:shadow-xl hover:-translate-y-2 transition-all duration-200 border-2 hover:border-primary/20 bg-gradient-to-br ${industry.gradient} hover:scale-105 animate-fade-in group`} style={{animationDelay: `${index * 0.1}s`}}>
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-white/80 shadow-sm group-hover:scale-110 transition-transform duration-300">
@@ -151,7 +151,7 @@ const WhoWeHelp = () => {
           {whyChooseUs.map((reason, index) => {
             const Icon = reason.icon;
             return (
-              <Card key={index} className="hover:shadow-xl hover:-translate-y-2 transition-all duration-200 text-center hover:scale-105 card-glow animate-fade-in group" style={{animationDelay: `${index * 0.1}s`}}>
+              <Card key={index} className="hover:shadow-xl hover:-translate-y-2 transition-all duration-200 text-center hover:scale-105 animate-fade-in group" style={{animationDelay: `${index * 0.1}s`}}>
                 <CardHeader>
                   <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
                     <Icon className="h-8 w-8 text-primary group-hover:animate-glow" />
