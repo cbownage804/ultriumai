@@ -171,6 +171,11 @@ const ChatInterface = () => {
         model: aiModel || 'gpt-4o-mini'
       });
       
+      console.log('Actual customGPT being sent:', currentGPT ? {
+        ...currentGPT,
+        id: selectedGPT
+      } : null);
+      
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           messages: [...messages, { 
