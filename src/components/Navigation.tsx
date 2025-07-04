@@ -136,6 +136,9 @@ const Navigation = () => {
             </Button>
             {user ? (
               <div className="flex items-center space-x-2">
+                <Button variant="outline" onClick={() => navigate('/dashboard')} className="hover:scale-105 transition-all duration-300">
+                  Dashboard
+                </Button>
                 <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-300">
                   <User className="h-5 w-5" />
                 </Button>
@@ -193,6 +196,9 @@ const Navigation = () => {
                 </Button>
                 {user ? (
                   <div className="flex flex-col space-y-2">
+                    <Button variant="outline" className="w-full" onClick={() => navigate('/dashboard')}>
+                      Dashboard
+                    </Button>
                     <Button variant="ghost" className="w-full justify-start">
                       <User className="h-4 w-4 mr-2" />
                       Profile
