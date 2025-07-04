@@ -17,6 +17,7 @@ import { ColorResult, SketchPicker } from 'react-color';
 
 interface WhiteLabelConfig {
   id?: string;
+  user_id?: string;
   company_name: string;
   company_logo: string;
   primary_color: string;
@@ -34,6 +35,8 @@ interface WhiteLabelConfig {
     password_reset: string;
     invitation: string;
   };
+  created_at?: string;
+  updated_at?: string;
 }
 
 const WhiteLabelCustomization = () => {
@@ -72,18 +75,19 @@ const WhiteLabelCustomization = () => {
 
     try {
       const { data, error } = await supabase
-        .from('whitelabel_configs')
+        .from('whitelabel_configs' as any)
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
 
       if (data) {
+        const configData = data as unknown as WhiteLabelConfig;
         setConfig({
           ...config,
-          ...data,
-          email_templates: data.email_templates || config.email_templates
+          ...configData,
+          email_templates: configData.email_templates || config.email_templates
         });
       }
     } catch (error) {
@@ -97,7 +101,7 @@ const WhiteLabelCustomization = () => {
     try {
       setLoading(true);
       const { error } = await supabase
-        .from('whitelabel_configs')
+        .from('whitelabel_configs' as any)
         .upsert({
           user_id: user.id,
           ...config
