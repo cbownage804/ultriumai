@@ -267,73 +267,55 @@
 }
 
 @layer utilities {
-  /* 3D Folding Effects */
-  .fold-container {
-    perspective: 1200px;
-    perspective-origin: center top;
+  /* 3D Rotation Effects */
+  .rotation-container {
+    perspective: 1500px;
+    perspective-origin: center center;
     transform-style: preserve-3d;
   }
   
-  .fold-section {
+  .rotation-section {
     transform-style: preserve-3d;
-    transform-origin: center top;
-    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.6s ease;
+    will-change: transform, opacity;
+    transform-origin: center center;
   }
   
-  .fold-section.folding {
-    transform: rotateX(-15deg) translateZ(-100px);
-  }
-  
-  .fold-section.folded {
-    transform: rotateX(-45deg) translateZ(-200px) scale(0.95);
-    opacity: 0.7;
-  }
-  
-  /* Paper fold effect */
-  .paper-fold {
-    position: relative;
-    transform-style: preserve-3d;
-    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  }
-  
-  .paper-fold::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 20px;
-    background: linear-gradient(to bottom, 
-      hsl(var(--background)) 0%, 
-      hsl(var(--background) / 0.8) 50%, 
-      hsl(var(--background) / 0.3) 100%);
-    transform: rotateX(90deg);
-    transform-origin: top;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.6s ease;
-  }
-  
-  .paper-fold.active::before {
+  /* Smooth rotation utilities */
+  .rotate-in-view {
+    transform: perspective(1500px) rotateX(0deg) rotateY(0deg);
     opacity: 1;
   }
   
-  /* Accordion fold effect */
-  .accordion-fold {
-    transform-origin: top center;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease;
-    will-change: transform, opacity;
-  }
-  
-  .accordion-fold.fold-up {
-    transform: perspective(1000px) rotateX(-20deg) translateZ(-50px);
-    opacity: 0.8;
-  }
-  
-  .accordion-fold.fold-down {
-    transform: perspective(1000px) rotateX(20deg) translateZ(-100px);
+  .rotate-out-up {
+    transform: perspective(1500px) rotateX(-20deg) translateZ(-100px);
     opacity: 0.6;
+  }
+  
+  .rotate-out-down {
+    transform: perspective(1500px) rotateX(20deg) translateZ(-100px);
+    opacity: 0.6;
+  }
+  
+  .rotate-out-left {
+    transform: perspective(1500px) rotateY(-25deg) translateZ(-80px);
+    opacity: 0.7;
+  }
+  
+  .rotate-out-right {
+    transform: perspective(1500px) rotateY(25deg) translateZ(-80px);
+    opacity: 0.7;
+  }
+  
+  /* Section entrance animations */
+  .section-enter {
+    transform: perspective(1500px) rotateX(15deg) translateY(50px);
+    opacity: 0.3;
+  }
+  
+  .section-exit {
+    transform: perspective(1500px) rotateX(-15deg) translateY(-50px);
+    opacity: 0.3;
   }
 
   /* Animation utilities */

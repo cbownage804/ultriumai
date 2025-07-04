@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
-export const useFoldAnimation = () => {
-  const [foldState, setFoldState] = useState<'normal' | 'folding' | 'folded'>('normal');
+export const useScrollRotation = () => {
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -13,17 +14,22 @@ export const useFoldAnimation = () => {
       const elementTop = rect.top;
       const elementHeight = rect.height;
       
-      // Calculate fold progress based on scroll position
-      const foldStart = viewportHeight * 0.3; // Start folding when 30% visible
-      const foldComplete = -elementHeight * 0.3; // Complete fold when 30% past viewport
+      // Calculate visibility and rotation progress
+      const elementCenter = elementTop + elementHeight / 2;
+      const viewportCenter = viewportHeight / 2;
       
-      if (elementTop > foldStart) {
-        setFoldState('normal');
-      } else if (elementTop > foldComplete) {
-        setFoldState('folding');
-      } else {
-        setFoldState('folded');
-      }
+      // Calculate rotation based on position relative to viewport center
+      const distanceFromCenter = elementCenter - viewportCenter;
+      const maxDistance = viewportHeight / 2 + elementHeight / 2;
+      
+      // Normalize to -1 to 1 range
+      const normalizedDistance = Math.max(-1, Math.min(1, distanceFromCenter / maxDistance));
+      
+      // Convert to rotation angle (max 45 degrees)
+      const rotationAngle = normalizedDistance * 45;
+      
+      setScrollProgress(rotationAngle);
+      setIsVisible(Math.abs(normalizedDistance) < 1.2); // Slightly more forgiving visibility
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -32,58 +38,12 @@ export const useFoldAnimation = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  return { ref, foldState };
+  return { ref, scrollProgress, isVisible };
 };
 
-export const useAccordionFold = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [foldDirection, setFoldDirection] = useState<'up' | 'down' | 'normal'>('normal');
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const rect = entry.boundingClientRect;
-        const viewportHeight = window.innerHeight;
-        
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          
-          // Determine fold direction based on position
-          if (rect.top < viewportHeight * 0.2) {
-            setFoldDirection('up');
-          } else if (rect.bottom > viewportHeight * 0.8) {
-            setFoldDirection('down');
-          } else {
-            setFoldDirection('normal');
-          }
-        } else {
-          setIsVisible(false);
-          if (rect.top < 0) {
-            setFoldDirection('up');
-          } else {
-            setFoldDirection('down');
-          }
-        }
-      },
-      { 
-        threshold: [0, 0.1, 0.5, 0.9, 1],
-        rootMargin: '-10% 0px -10% 0px'
-      }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  return { ref, isVisible, foldDirection };
-};
-
-export const usePaperFold = () => {
-  const [isActive, setIsActive] = useState(false);
+export const useAccordionRotation = () => {
+  const [rotationY, setRotationY] = useState(0);
+  const [opacity, setOpacity] = useState(1);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,9 +53,36 @@ export const usePaperFold = () => {
       const rect = ref.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
       
-      // Activate paper fold when element is about to leave viewport
-      const shouldActivate = rect.top < viewportHeight * 0.1 && rect.bottom > 0;
-      setIsActive(shouldActivate);
+      // Calculate rotation based on element position
+      const elementTop = rect.top;
+      const elementBottom = rect.bottom;
+      
+      let rotation = 0;
+      let opacityValue = 1;
+      
+      // Element is above viewport (scrolled past)
+      if (elementBottom < 0) {
+        rotation = -30; // Rotate left when scrolled past
+        opacityValue = 0.7;
+      }
+      // Element is below viewport (not reached yet)
+      else if (elementTop > viewportHeight) {
+        rotation = 30; // Rotate right when approaching
+        opacityValue = 0.7;
+      }
+      // Element is in viewport
+      else {
+        // Calculate smooth transition based on position in viewport
+        const visibleHeight = Math.min(elementBottom, viewportHeight) - Math.max(elementTop, 0);
+        const elementHeight = rect.height;
+        const visibilityRatio = visibleHeight / elementHeight;
+        
+        rotation = 0;
+        opacityValue = 0.7 + (visibilityRatio * 0.3); // 0.7 to 1.0 opacity
+      }
+      
+      setRotationY(rotation);
+      setOpacity(opacityValue);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -104,5 +91,49 @@ export const usePaperFold = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  return { ref, isActive };
+  return { ref, rotationY, opacity };
+};
+
+export const useSectionRotation = () => {
+  const [transform, setTransform] = useState({ rotateX: 0, rotateY: 0, opacity: 1 });
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!ref.current) return;
+
+      const rect = ref.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const elementTop = rect.top;
+      const elementHeight = rect.height;
+      
+      // Calculate progress through viewport
+      const enterProgress = Math.max(0, Math.min(1, (viewportHeight - elementTop) / viewportHeight));
+      const exitProgress = Math.max(0, Math.min(1, (elementTop + elementHeight) / viewportHeight));
+      
+      let rotateX = 0;
+      let rotateY = 0;
+      let opacity = 1;
+      
+      // Element entering from bottom
+      if (elementTop > viewportHeight * 0.2) {
+        rotateX = (1 - enterProgress) * 20; // Rotate from 20deg to 0deg
+        opacity = 0.5 + (enterProgress * 0.5); // Fade from 0.5 to 1
+      }
+      // Element exiting from top
+      else if (elementTop < -elementHeight * 0.2) {
+        rotateX = -exitProgress * 20; // Rotate from 0deg to -20deg
+        opacity = exitProgress * 0.5 + 0.5; // Fade from 1 to 0.5
+      }
+      
+      setTransform({ rotateX, rotateY, opacity });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return { ref, transform };
 };

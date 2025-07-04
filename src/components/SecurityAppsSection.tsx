@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap, ExternalLink, Network } from "lucide-react";
 import { useScrollAnimation, useStaggeredScrollAnimation } from "@/hooks/useScrollAnimation";
-import { useFoldAnimation, useAccordionFold } from "@/hooks/useFoldAnimation";
+import { useScrollRotation, useAccordionRotation, useSectionRotation } from "@/hooks/useFoldAnimation";
 
 const SecurityAppsSection = () => {
   const headerAnimation = useScrollAnimation();
   const { ref: cardsRef, visibleItems: visibleCards } = useStaggeredScrollAnimation(8, 150);
-  const pricingFold = useFoldAnimation();
-  const bundlesFold = useAccordionFold();
-  const ctaFold = useFoldAnimation();
+  const pricingRotation = useScrollRotation();
+  const bundlesRotation = useAccordionRotation();
+  const ctaRotation = useSectionRotation();
 
   const securityApps = [
     {
@@ -194,7 +194,7 @@ const SecurityAppsSection = () => {
   ];
 
   return (
-    <section id="security" className="py-20 bg-gradient-secondary overflow-hidden fold-container">
+    <section id="security" className="py-20 bg-gradient-secondary overflow-hidden rotation-container">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div 
           ref={headerAnimation.ref}
@@ -283,8 +283,13 @@ const SecurityAppsSection = () => {
 
         {/* Pricing Tiers Section */}
         <div 
-          ref={pricingFold.ref}
-          className={`mb-16 fold-section ${pricingFold.foldState === 'folding' ? 'folding' : ''} ${pricingFold.foldState === 'folded' ? 'folded' : ''} transition-all duration-1000`}
+          ref={pricingRotation.ref}
+          className="mb-16 rotation-section"
+          style={{
+            transform: `perspective(1500px) rotateX(${pricingRotation.scrollProgress * 0.3}deg) translateZ(${Math.abs(pricingRotation.scrollProgress) * -2}px)`,
+            opacity: pricingRotation.isVisible ? 1 : 0.4,
+            transition: 'transform 0.3s ease-out, opacity 0.3s ease-out'
+          }}
         >
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold mb-4 animate-fade-in-up">Choose Your Security Plan</h3>
@@ -297,16 +302,12 @@ const SecurityAppsSection = () => {
               return (
                 <Card 
                   key={index} 
-                  className={`relative ${tier.popular ? 'border-primary border-2 animate-pulse-glow' : ''} hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu ${
-                    pricingFold.foldState === 'normal' 
-                      ? 'opacity-100 translate-y-0 rotate-x-0' 
-                      : pricingFold.foldState === 'folding'
-                      ? 'opacity-90 translate-y-2 -rotate-x-3'
-                      : 'opacity-70 translate-y-4 -rotate-x-6'
-                  }`}
+                  className={`relative ${tier.popular ? 'border-primary border-2 animate-pulse-glow' : ''} hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu`}
                   style={{ 
                     transitionDelay: `${index * 200}ms`,
-                    transformStyle: 'preserve-3d'
+                    transformStyle: 'preserve-3d',
+                    transform: `perspective(1500px) rotateY(${pricingRotation.scrollProgress * 0.2}deg)`,
+                    opacity: pricingRotation.isVisible ? 1 : 0.6
                   }}
                 >
                   {tier.popular && (
@@ -347,10 +348,13 @@ const SecurityAppsSection = () => {
 
           {/* App Bundles Section */}
           <div 
-            ref={bundlesFold.ref}
-            className={`bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated accordion-fold transition-all duration-1000 ${
-              bundlesFold.foldDirection === 'up' ? 'fold-up' : bundlesFold.foldDirection === 'down' ? 'fold-down' : ''
-            }`}
+            ref={bundlesRotation.ref}
+            className="bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated rotation-section"
+            style={{
+              transform: `perspective(1500px) rotateY(${bundlesRotation.rotationY}deg) translateZ(${Math.abs(bundlesRotation.rotationY) * -3}px)`,
+              opacity: bundlesRotation.opacity,
+              transition: 'transform 0.6s ease-out, opacity 0.6s ease-out'
+            }}
           >
             <div className="text-center mb-8">
               <h4 className="text-2xl font-bold mb-3 animate-fade-in-up">Save with App Bundles</h4>
@@ -361,16 +365,12 @@ const SecurityAppsSection = () => {
               {appBundles.map((bundle, index) => (
                 <Card 
                   key={index} 
-                  className={`hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu ${
-                    bundlesFold.isVisible 
-                      ? 'opacity-100 translate-y-0 rotate-x-0' 
-                      : bundlesFold.foldDirection === 'up'
-                      ? 'opacity-70 translate-y-4 rotate-x-12'
-                      : 'opacity-70 translate-y-8 -rotate-x-12'
-                  }`}
+                  className="hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu"
                   style={{ 
                     transitionDelay: `${index * 150}ms`,
-                    transformStyle: 'preserve-3d'
+                    transformStyle: 'preserve-3d',
+                    transform: `perspective(1500px) rotateX(${bundlesRotation.rotationY * 0.2}deg)`,
+                    opacity: bundlesRotation.opacity
                   }}
                 >
                   <CardHeader className="text-center">
@@ -418,10 +418,15 @@ const SecurityAppsSection = () => {
 
         {/* CTA Section */}
         <div 
-          ref={ctaFold.ref}
-          className={`text-center mt-12 fold-section ${ctaFold.foldState === 'folding' ? 'folding' : ''} ${ctaFold.foldState === 'folded' ? 'folded' : ''}`}
+          ref={ctaRotation.ref}
+          className="text-center mt-12 rotation-section"
+          style={{
+            transform: `perspective(1500px) rotateX(${ctaRotation.transform.rotateX}deg) rotateY(${ctaRotation.transform.rotateY}deg)`,
+            opacity: ctaRotation.transform.opacity,
+            transition: 'transform 0.6s ease-out, opacity 0.6s ease-out'
+          }}
         >
-          <div className="bg-card rounded-lg p-8 shadow-lg max-w-2xl mx-auto card-elevated animate-scale-on-hover paper-fold ${ctaFold.foldState !== 'normal' ? 'active' : ''}">
+          <div className="bg-card rounded-lg p-8 shadow-lg max-w-2xl mx-auto card-elevated animate-scale-on-hover">
             <h3 className="text-2xl font-bold mb-4 animate-fade-in-up">Ready to Secure Your Custom GPTs?</h3>
             <p className="text-muted-foreground mb-6 animate-fade-in-up delay-200">
               Add enterprise-grade security scanning to your AI agents. Protect your users from cyber threats with real-time analysis.
