@@ -24,6 +24,7 @@ import { GPTDeploymentCenter } from "@/components/deployment/GPTDeploymentCenter
 import { APIKeyManager } from "@/components/APIKeyManager";
 import { TeamCollaboration } from "@/components/TeamCollaboration";
 import KnowledgeBase from "@/components/KnowledgeBase";
+import SecurityAppsMarketplace from "@/components/SecurityAppsMarketplace";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -76,6 +77,7 @@ const Dashboard = () => {
   const isAPIKeysPage = location.pathname.includes('/api-keys');
   const isTeamCollabPage = location.pathname.includes('/team-collaboration');
   const isKnowledgeBasePage = location.pathname.includes('/knowledge-base');
+  const isSecurityAppsPage = location.pathname.includes('/security-apps');
   const isChatPage = location.pathname === '/dashboard/chat';
   const isDashboardOverview = location.pathname === '/dashboard';
   
@@ -103,6 +105,7 @@ const Dashboard = () => {
     if (isAPIKeysPage) return "API Keys";
     if (isTeamCollabPage) return "Team Collaboration";
     if (isKnowledgeBasePage) return "Knowledge Base";
+    if (isSecurityAppsPage) return "Security Apps";
     return "Dashboard";
   };
 
@@ -130,6 +133,7 @@ const Dashboard = () => {
     if (isAPIKeysPage) return <div className="p-6"><APIKeyManager /></div>;
     if (isTeamCollabPage) return <div className="p-6"><TeamCollaboration /></div>;
     if (isKnowledgeBasePage) return <div className="p-6"><KnowledgeBase /></div>;
+    if (isSecurityAppsPage) return <div className="p-6"><SecurityAppsMarketplace /></div>;
     return <DashboardOverview />;
   };
 

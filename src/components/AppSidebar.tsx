@@ -39,6 +39,7 @@ const customGPTItems = [
 ];
 
 const managementItems = [
+  { title: "Security Apps", url: "/dashboard/security-apps", icon: Shield },
   { title: "API Management", url: "/dashboard/api-management", icon: Key },
   { title: "White-label", url: "/dashboard/white-label", icon: Palette },
 ];

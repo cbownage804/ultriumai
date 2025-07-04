@@ -999,6 +999,48 @@ export type Database = {
         }
         Relationships: []
       }
+      security_app_subscriptions: {
+        Row: {
+          app_id: string
+          app_name: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          usage_current: number | null
+          usage_limit: number | null
+          user_id: string
+        }
+        Insert: {
+          app_id: string
+          app_name: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          usage_current?: number | null
+          usage_limit?: number | null
+          user_id: string
+        }
+        Update: {
+          app_id?: string
+          app_name?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          usage_current?: number | null
+          usage_limit?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_settings: {
         Row: {
           account_locked_until: string | null
