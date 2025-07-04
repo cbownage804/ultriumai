@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -88,11 +88,25 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-3">
-          <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
-          {!isCollapsed && (
-            <span className="text-lg font-bold text-foreground">UltriumGPT</span>
-          )}
+          <NavLink to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
+            {!isCollapsed && (
+              <span className="text-lg font-bold text-foreground">UltriumGPT</span>
+            )}
+          </NavLink>
         </div>
+        {/* Back to Marketing Link */}
+        {!isCollapsed && (
+          <div className="mt-2">
+            <NavLink 
+              to="/" 
+              className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3 w-3" />
+              Back to Marketing
+            </NavLink>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
