@@ -32,9 +32,9 @@ const Hero = () => {
       </div>
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="space-y-8">
+        <div className="space-y-12 py-8">
           {/* Main heading */}
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-6 animate-fade-in">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight animate-slide-up px-4">
               Transform Your Business with Custom AI Agents
             </h1>
