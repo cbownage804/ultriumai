@@ -63,6 +63,8 @@ const Navigation = () => {
     } else {
       // Handle regular page navigation
       navigate(path);
+      // Scroll to top for all page navigations
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setIsMenuOpen(false);
   };
