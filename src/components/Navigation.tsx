@@ -45,6 +45,9 @@ const Navigation = () => {
             <a href="#features" className="text-foreground/80 hover:text-foreground transition-colors">
               Features
             </a>
+            <a href="#security" className="text-foreground/80 hover:text-foreground transition-colors">
+              Security Apps
+            </a>
             <a href="/pricing" className="text-foreground/80 hover:text-foreground transition-colors">
               Pricing
             </a>
@@ -95,6 +98,9 @@ const Navigation = () => {
             <div className="px-2 pt-2 pb-3 space-y-1">
               <a href="#features" className="block px-3 py-2 text-foreground/80 hover:text-foreground">
                 Features
+              </a>
+              <a href="#security" className="block px-3 py-2 text-foreground/80 hover:text-foreground">
+                Security Apps
               </a>
               <a href="/pricing" className="block px-3 py-2 text-foreground/80 hover:text-foreground">
                 Pricing
