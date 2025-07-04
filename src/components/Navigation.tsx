@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Menu, LogOut, User, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { createNavigationHandler } from "@/hooks/useScrollToTop";
 import ThemeToggle from "./ThemeToggle";
 import UserProfileDropdown from "./UserProfileDropdown";
 import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
@@ -13,9 +14,18 @@ const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSecurityDropdownOpen, setIsSecurityDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Use the navigation utility for consistent scroll behavior
+  const handleNavigation = createNavigationHandler(navigate);
+  
+  // Close menu when navigating
+  const handleNavigationWithMenuClose = (path: string) => {
+    handleNavigation(path);
+    setIsMenuOpen(false);
+    setIsSecurityDropdownOpen(false);
+  };
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -30,52 +40,18 @@ const Navigation = () => {
         title: "Signed out",
         description: "You have been successfully signed out.",
       });
-      navigate('/');
+      handleNavigation('/');
     }
   };
 
-  const handleNavigation = (path: string) => {
-    if (path.startsWith('#')) {
-      // Handle anchor links - navigate to home first if not already there
-      if (location.pathname !== '/') {
-        navigate('/');
-        // Wait for navigation to complete, then scroll
-        setTimeout(() => {
-          const element = document.querySelector(path);
-          if (element) {
-            const navHeight = 64; // h-16 = 64px
-            const elementTop = element.getBoundingClientRect().top + window.pageYOffset - navHeight;
-            window.scrollTo({ top: elementTop, behavior: 'smooth' });
-          }
-        }, 100);
-      } else {
-        // Already on home page, just scroll
-        const element = document.querySelector(path);
-        if (element) {
-          const navHeight = 64; // h-16 = 64px
-          const elementTop = element.getBoundingClientRect().top + window.pageYOffset - navHeight;
-          window.scrollTo({ top: elementTop, behavior: 'smooth' });
-        }
-      }
-    } else if (path === '/') {
-      // Handle home navigation - scroll to top with nav offset
-      navigate('/');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      // Handle regular page navigation
-      navigate(path);
-      // Scroll to top for all page navigations
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    setIsMenuOpen(false);
-  };
+  // Remove the old handleNavigation function since we're using the utility now
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigation('/')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigationWithMenuClose('/')}>
             <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto transition-transform duration-300 hover:scale-110" />
             <span className="text-lg font-bold text-foreground transition-colors duration-300">UltriumAI</span>
           </div>
@@ -102,13 +78,13 @@ const Navigation = () => {
               {isSecurityDropdownOpen && (
                 <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
                   <div className="py-2">
-                    <button onClick={() => { handleNavigation('/products/safeemail'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeEmail™</button>
-                    <button onClick={() => { handleNavigation('/products/safelink'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeLink™</button>
-                    <button onClick={() => { handleNavigation('/products/safedoc'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeDoc™</button>
-                    <button onClick={() => { handleNavigation('/products/safepass'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafePass™</button>
-                    <button onClick={() => { handleNavigation('/products/safeweb'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeWEB™</button>
-                    <button onClick={() => { handleNavigation('/products/safecomp'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeComp™</button>
-                    <button onClick={() => { handleNavigation('/products/safenet'); setIsSecurityDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeNet™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safeemail'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeEmail™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safelink'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeLink™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safedoc'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeDoc™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safepass'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafePass™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safeweb'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeWEB™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safecomp'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeComp™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safenet'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeNet™</button>
                   </div>
                 </div>
               )}
@@ -137,7 +113,7 @@ const Navigation = () => {
             </Button>
             {user ? (
               <div className="flex items-center space-x-2">
-                <Button variant="outline" onClick={() => navigate('/dashboard')} className="hover:scale-105 transition-all duration-300">
+                <Button variant="outline" onClick={() => handleNavigation('/dashboard')} className="hover:scale-105 transition-all duration-300">
                   Dashboard
                 </Button>
                 <UserProfileDropdown />
@@ -146,7 +122,7 @@ const Navigation = () => {
                 </Button>
               </div>
             ) : (
-              <Button variant="hero" onClick={() => navigate('/auth')} className="btn-glow hover:scale-105 transition-all duration-300">
+              <Button variant="hero" onClick={() => handleNavigation('/auth')} className="btn-glow hover:scale-105 transition-all duration-300">
                 Sign In
               </Button>
             )}
@@ -168,23 +144,23 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden bg-background/95 backdrop-blur-md border-t border-border/50">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <button onClick={() => handleNavigation('/ultriumgpt')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+              <button onClick={() => handleNavigationWithMenuClose('/ultriumgpt')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 UltriumGPT
               </button>
-              <button onClick={() => handleNavigation('#features')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+              <button onClick={() => handleNavigationWithMenuClose('#features')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Solutions
               </button>
-              <button onClick={() => handleNavigation('#security')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+              <button onClick={() => handleNavigationWithMenuClose('#security')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 AI Security Apps
               </button>
-              <button onClick={() => handleNavigation('/demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+              <button onClick={() => handleNavigationWithMenuClose('/demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 AI Demos
               </button>
-              <button onClick={() => handleNavigation('#contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+              <button onClick={() => handleNavigationWithMenuClose('#contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Contact
               </button>
               {user ? (
-                <button onClick={() => handleNavigation('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                <button onClick={() => handleNavigationWithMenuClose('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                   KB
                 </button>
               ) : null}
@@ -195,7 +171,7 @@ const Navigation = () => {
                 </Button>
                 {user ? (
                   <div className="flex flex-col space-y-2">
-                    <Button variant="outline" className="w-full" onClick={() => navigate('/dashboard')}>
+                    <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/dashboard')}>
                       Dashboard
                     </Button>
                     <Button variant="ghost" className="w-full justify-start">
@@ -208,7 +184,7 @@ const Navigation = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Button variant="hero" className="w-full" onClick={() => navigate('/auth')}>
+                  <Button variant="hero" className="w-full" onClick={() => handleNavigationWithMenuClose('/auth')}>
                     Sign In
                   </Button>
                 )}

@@ -1,8 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Shield, Play, Calendar, Users, Star } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import VideoPlayer from "./VideoPlayer";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
+  const handleNavigation = (path: string) => {
+    if (path.startsWith('#')) {
+      // Scroll to section with nav offset
+      const element = document.querySelector(path);
+      if (element) {
+        const navHeight = 64; // h-16 = 64px
+        const elementTop = element.getBoundingClientRect().top + window.pageYOffset - navHeight;
+        window.scrollTo({ top: elementTop, behavior: 'smooth' });
+      }
+    } else {
+      // Navigate to page and scroll to top
+      navigate(path);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background with gradient overlay */}
@@ -44,7 +62,7 @@ const Hero = () => {
                   </p>
                   <Button 
                     className="mt-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                    onClick={() => window.location.href = '/auth'}
+                    onClick={() => handleNavigation('/auth')}
                   >
                     Start Building Now
                   </Button>
@@ -70,7 +88,7 @@ const Hero = () => {
             <Button 
               size="lg" 
               className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow"
-              onClick={() => window.location.href = '#security'}
+              onClick={() => handleNavigation('#security')}
             >
               <Play className="mr-2 h-5 w-5" />
               See Our GPT Agents In Action
@@ -79,7 +97,7 @@ const Hero = () => {
               variant="outline" 
               size="lg" 
               className="text-lg px-8 py-6 h-auto border-2 hover:bg-primary/5 hover:border-primary transition-all duration-300 hover:scale-105"
-              onClick={() => window.location.href = '#contact'}
+              onClick={() => handleNavigation('#contact')}
             >
               <Calendar className="mr-2 h-5 w-5" />
               Book a Demo

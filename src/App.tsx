@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from '@/hooks/useAuth';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Index from '@/pages/Index';
 import Auth from '@/pages/Auth';
@@ -37,6 +38,9 @@ import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
   const { user, loading } = useAuth();
+  
+  // Automatically scroll to top on route changes
+  useScrollToTop();
 
   if (loading) {
     return (
