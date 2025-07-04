@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from '@/hooks/useAuth';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -105,6 +106,17 @@ function AppRouter() {
 }
 
 export default function App() {
+  // Initialize dark mode as default on app startup
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    
+    if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
   return (
     <Router>
       <AppRouter />
