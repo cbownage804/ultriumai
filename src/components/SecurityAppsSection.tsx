@@ -142,46 +142,46 @@ const SecurityAppsSection = () => {
       name: 'Document & Password Bundle',
       apps: ['SafeDoc', 'SafePass'],
       originalPrice: '$40',
-      bundlePrice: '$32',
-      enterprisePrice: '$56',
-      savings: '$8',
-      enterpriseSavings: '$14'
+      bundlePrice: '$35',
+      enterprisePrice: '$62',
+      savings: '$5',
+      enterpriseSavings: '$22'
     },
     {
       name: 'Email & Link Security Bundle',
       apps: ['SafeEmail', 'SafeScan', 'SafeLink'],
       originalPrice: '$60',
-      bundlePrice: '$48',
-      enterprisePrice: '$84',
-      savings: '$12',
-      enterpriseSavings: '$21'
+      bundlePrice: '$53',
+      enterprisePrice: '$92',
+      savings: '$7',
+      enterpriseSavings: '$32'
     },
     {
       name: 'Network & Document Bundle',
       apps: ['SafeNet', 'SafeDoc', 'SafePass'],
       originalPrice: '$60',
-      bundlePrice: '$48',
-      enterprisePrice: '$84',
-      savings: '$12',
-      enterpriseSavings: '$21'
+      bundlePrice: '$53',
+      enterprisePrice: '$92',
+      savings: '$7',
+      enterpriseSavings: '$32'
     },
     {
       name: 'Compliance & Intelligence Bundle',
       apps: ['SafeComp', 'SafeWEB'],
       originalPrice: '$40',
-      bundlePrice: '$32',
-      enterprisePrice: '$56',
-      savings: '$8',
-      enterpriseSavings: '$14'
+      bundlePrice: '$35',
+      enterprisePrice: '$62',
+      savings: '$5',
+      enterpriseSavings: '$22'
     },
     {
       name: 'Complete Security Suite',
       apps: ['All 8 Apps'],
       originalPrice: '$160',
-      bundlePrice: '$128',
-      enterprisePrice: '$224',
-      savings: '$32',
-      enterpriseSavings: '$56'
+      bundlePrice: '$141',
+      enterprisePrice: '$246',
+      savings: '$19',
+      enterpriseSavings: '$86'
     }
   ];
 
