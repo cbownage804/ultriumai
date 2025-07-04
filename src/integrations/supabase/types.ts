@@ -254,6 +254,90 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_analytics: {
+        Row: {
+          average_response_time_ms: number | null
+          average_satisfaction: number | null
+          created_at: string
+          date: string
+          gpt_id: string
+          id: string
+          total_conversations: number | null
+          total_messages: number | null
+          total_tokens: number | null
+          unique_users: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          average_response_time_ms?: number | null
+          average_satisfaction?: number | null
+          created_at?: string
+          date: string
+          gpt_id: string
+          id?: string
+          total_conversations?: number | null
+          total_messages?: number | null
+          total_tokens?: number | null
+          unique_users?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          average_response_time_ms?: number | null
+          average_satisfaction?: number | null
+          created_at?: string
+          date?: string
+          gpt_id?: string
+          id?: string
+          total_conversations?: number | null
+          total_messages?: number | null
+          total_tokens?: number | null
+          unique_users?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      gpt_analytics: {
+        Row: {
+          created_at: string
+          gpt_id: string
+          id: string
+          interaction_type: string
+          metadata: Json | null
+          response_time_ms: number | null
+          satisfaction_rating: number | null
+          session_id: string | null
+          tokens_used: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          gpt_id: string
+          id?: string
+          interaction_type: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          satisfaction_rating?: number | null
+          session_id?: string | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          gpt_id?: string
+          id?: string
+          interaction_type?: string
+          metadata?: Json | null
+          response_time_ms?: number | null
+          satisfaction_rating?: number | null
+          session_id?: string | null
+          tokens_used?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       gpt_documents: {
         Row: {
           file_name: string
@@ -497,6 +581,45 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          gpt_id: string | null
+          id: string
+          ip_address: unknown | null
+          session_end: string | null
+          session_start: string
+          total_messages: number | null
+          total_tokens: number | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          gpt_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          session_end?: string | null
+          session_start?: string
+          total_messages?: number | null
+          total_tokens?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          gpt_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          session_end?: string | null
+          session_start?: string
+          total_messages?: number | null
+          total_tokens?: number | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

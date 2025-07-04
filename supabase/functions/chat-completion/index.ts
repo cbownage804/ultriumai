@@ -15,7 +15,8 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, customGPT } = await req.json();
+    const { messages, customGPT, sessionId } = await req.json();
+    const startTime = Date.now();
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
@@ -58,8 +59,68 @@ serve(async (req) => {
 
     const data = await response.json();
     const generatedText = data.choices[0].message.content;
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
 
-    return new Response(JSON.stringify({ message: generatedText }), {
+    // Track analytics if custom GPT is being used
+    if (customGPT?.id && sessionId) {
+      try {
+        // Get user ID from authorization header
+        const authHeader = req.headers.get('authorization');
+        if (authHeader?.startsWith('Bearer ')) {
+          const token = authHeader.substring(7);
+          
+          // Create a temporary supabase client to get user info
+          const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2.7.1');
+          const supabase = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+            {
+              global: {
+                headers: {
+                  Authorization: authHeader,
+                },
+              },
+            }
+          );
+          
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            // Track the message exchange
+            await supabase.from('gpt_analytics').insert({
+              gpt_id: customGPT.id,
+              user_id: user.id,
+              session_id: sessionId,
+              interaction_type: 'message',
+              response_time_ms: responseTime,
+              tokens_used: data.usage?.total_tokens || 0,
+              metadata: {
+                model: 'gpt-4.1-2025-04-14',
+                prompt_tokens: data.usage?.prompt_tokens || 0,
+                completion_tokens: data.usage?.completion_tokens || 0
+              }
+            });
+            
+            // Update chat count for the GPT
+            await supabase
+              .from('custom_gpts')
+              .update({ 
+                chat_count: customGPT.chat_count ? customGPT.chat_count + 1 : 1 
+              })
+              .eq('id', customGPT.id);
+          }
+        }
+      } catch (analyticsError) {
+        console.error('Analytics tracking error:', analyticsError);
+        // Continue without failing the main request
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      message: generatedText,
+      usage: data.usage
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

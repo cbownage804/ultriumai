@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { useMessages } from "@/hooks/useMessages";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
+import { useAnalyticsTracking } from "@/hooks/useAnalyticsTracking";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
 import ChatArea from "@/components/chat/ChatArea";
 import MessageInput from "@/components/chat/MessageInput";
@@ -25,6 +26,7 @@ const ChatInterface = () => {
   const [selectedGPT, setSelectedGPT] = useState<string>("default");
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -40,6 +42,12 @@ const ChatInterface = () => {
   const { messages, setMessages, loadMessages, saveMessage } = useMessages();
   const { gpts } = useCustomGPTs();
   const { getFileContent } = useFileUpload();
+  const {
+    startSession,
+    endSession,
+    trackMessageExchange,
+    trackFileUpload
+  } = useAnalyticsTracking();
 
   // Load messages when conversation changes
   useEffect(() => {
@@ -47,6 +55,28 @@ const ChatInterface = () => {
       loadMessages(currentConversationId);
     }
   }, [currentConversationId]);
+
+  // Start analytics session when GPT changes (for custom GPTs)
+  useEffect(() => {
+    const initializeSession = async () => {
+      if (selectedGPT !== "default" && user) {
+        // End current session if exists
+        if (sessionId) {
+          await endSession(sessionId, messages.length);
+        }
+        
+        // Start new session for custom GPT
+        const newSessionId = await startSession(selectedGPT);
+        setSessionId(newSessionId);
+      } else if (selectedGPT === "default" && sessionId) {
+        // End session when switching back to default
+        await endSession(sessionId, messages.length);
+        setSessionId(null);
+      }
+    };
+
+    initializeSession();
+  }, [selectedGPT, user]);
 
   // Auto-select first conversation if none selected
   useEffect(() => {
@@ -132,6 +162,7 @@ const ChatInterface = () => {
 
       // Get selected GPT's system prompt
       const currentGPT = gpts.find(gpt => gpt.id === selectedGPT);
+      const startTime = Date.now();
       
       // Call AI API with custom GPT context or default
       const { data, error } = await supabase.functions.invoke('chat-completion', {
@@ -144,13 +175,17 @@ const ChatInterface = () => {
             content: msg.content
           })),
           customGPT: currentGPT ? {
-            system_prompt: currentGPT.system_prompt,
-            name: currentGPT.name
+            ...currentGPT,
+            id: selectedGPT // Ensure ID is included for analytics
           } : null,
+          sessionId: sessionId, // Include session ID for analytics
           model: aiModel || 'gpt-4o-mini',
           webSearchEnabled: webSearchEnabled || false
         }
       });
+
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
 
       if (error) {
         throw new Error(error.message || 'Failed to get AI response');
@@ -167,6 +202,23 @@ const ChatInterface = () => {
 
       // Save AI message to database
       await saveMessage(conversationId, aiMessage.content, "assistant");
+
+      // Track analytics for custom GPTs
+      if (selectedGPT !== "default" && sessionId) {
+        await trackMessageExchange(
+          selectedGPT, 
+          responseTime, 
+          data.usage?.total_tokens, 
+          sessionId
+        );
+        
+        // Track file uploads if any
+        if (attachments && attachments.length > 0) {
+          for (const file of attachments) {
+            await trackFileUpload(selectedGPT, file.file_name, file.file_size, sessionId);
+          }
+        }
+      }
 
       // Refresh conversations to update the timestamp
       loadConversations();
