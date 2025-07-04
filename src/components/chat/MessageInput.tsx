@@ -62,7 +62,8 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
   };
 
   const handleMediaGenerated = (mediaUrl: string, type: 'image' | 'video', prompt: string) => {
-    setGeneratedMedia(prev => [...prev, { url: mediaUrl, type, prompt }]);
+    // Automatically send the generated media as a message
+    onSendMessage(undefined, [{ url: mediaUrl, type, prompt }]);
   };
 
   const handleRemoveGeneratedMedia = (index: number) => {

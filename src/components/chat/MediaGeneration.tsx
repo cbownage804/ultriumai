@@ -48,9 +48,10 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
       }
 
       onMediaGenerated(data.image, 'image', prompt);
+      setPrompt(""); // Clear the prompt after successful generation
       toast({
         title: "Image generated",
-        description: "Your image has been created successfully",
+        description: "Your image has been sent to the chat",
       });
       
     } catch (error) {
