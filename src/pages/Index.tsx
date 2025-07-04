@@ -10,6 +10,7 @@ import SecurityAppsSection from "@/components/SecurityAppsSection";
 import DemoSection from "@/components/DemoSection";
 import Integrations from "@/components/Integrations";
 import ContactSection from "@/components/ContactSection";
+import InteractiveSecurityWidget from "@/components/InteractiveSecurityWidget";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -33,6 +34,14 @@ const Index = () => {
       <Navigation />
       <main>
         <Hero />
+        
+        {/* Interactive Security Scanner Widget */}
+        <section className="py-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <InteractiveSecurityWidget />
+          </div>
+        </section>
+        
         <AboutSection />
         <WhoWeHelp />
         <Features />
