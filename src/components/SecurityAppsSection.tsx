@@ -151,64 +151,21 @@ const SecurityAppsSection = () => {
     }
   ];
 
-  const runDemo = async (appId: string) => {
-    setIsLoading(true);
-    setDemoResult(null);
-
-    // Simulate demo results
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    const mockResults = {
-      safeemail: {
-        safe: true,
-        risk_level: 'low',
-        threats: [],
-        reputation_score: 85,
-        scan_time: '1.2s'
-      },
-      safelink: {
-        safe: false,
-        risk_level: 'medium',
-        threats: ['Suspicious redirect detected', 'Domain reputation warning'],
-        scan_time: '0.8s'
-      },
-      safedoc: {
-        safe: true,
-        risk_level: 'low',
-        threats: [],
-        file_hash: 'safe123...',
-        scan_time: '2.1s'
-      },
-      safescan: {
-        safe: false,
-        risk_level: 'high',
-        threats: ['Potential malware signature found', 'Suspicious macro detected'],
-        file_hash: 'abc123...',
-        scan_time: '3.4s'
-      },
-      safepass: {
-        safe: false,
-        risk_level: 'medium',
-        threats: ['Password found in breach database', 'Weak password complexity'],
-        strength_score: 3,
-        scan_time: '0.5s'
-      },
-      safeweb: {
-        safe: false,
-        risk_level: 'high',
-        breaches_found: ['LinkedIn (2021)', 'Adobe (2013)'],
-        compromised_records: 245,
-        scan_time: '2.1s'
-      }
+  const runDemo = (appId: string) => {
+    // Navigate to actual demo pages
+    const demoRoutes = {
+      safeemail: '/demos/safeemail',
+      safelink: '/demos/safelink',
+      safedoc: '/demos/safedoc',
+      safescan: '/demos/safedoc', // Use safedoc demo for scanning
+      safepass: '/demos/safepass',
+      safeweb: '/demos/safeweb'
     };
 
-    setDemoResult(mockResults[appId as keyof typeof mockResults]);
-    setIsLoading(false);
-
-    toast({
-      title: "Demo Complete",
-      description: `Security scan completed in ${mockResults[appId as keyof typeof mockResults].scan_time}`,
-    });
+    const route = demoRoutes[appId as keyof typeof demoRoutes];
+    if (route) {
+      window.location.href = route;
+    }
   };
 
   const selectedApp = securityApps.find(app => app.id === demoType);
@@ -419,67 +376,12 @@ const SecurityAppsSection = () => {
 
                   <Button
                     onClick={() => runDemo(selectedApp.id)}
-                    disabled={isLoading || (!demoInput && selectedApp.id !== 'safedoc' && selectedApp.id !== 'safescan')}
                     className="w-full"
                   >
-                    {isLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Scanning...
-                      </>
-                    ) : (
-                      <>
-                        <Shield className="h-4 w-4 mr-2" />
-                        Run Security Scan
-                      </>
-                    )}
+                    <Play className="h-4 w-4 mr-2" />
+                    Try Live Demo
                   </Button>
 
-                  {/* Demo Results */}
-                  {demoResult && (
-                    <Card className={`border-2 ${demoResult.safe ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <Shield className={`h-5 w-5 ${demoResult.safe ? 'text-green-600' : 'text-red-600'}`} />
-                            <span className="font-medium">
-                              {demoResult.safe ? 'Safe' : 'Threats Detected'}
-                            </span>
-                          </div>
-                          <Badge variant={demoResult.risk_level === 'low' ? 'secondary' : 'destructive'}>
-                            Risk: {demoResult.risk_level}
-                          </Badge>
-                        </div>
-                        
-                        {demoResult.threats && demoResult.threats.length > 0 && (
-                          <div className="space-y-1">
-                            {demoResult.threats.map((threat: string, index: number) => (
-                              <div key={index} className="text-sm text-red-700 flex items-center gap-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                {threat}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {demoResult.breaches_found && (
-                          <div className="space-y-1">
-                            <div className="text-sm font-medium">Breaches Found:</div>
-                            {demoResult.breaches_found.map((breach: string, index: number) => (
-                              <div key={index} className="text-sm text-red-700">• {breach}</div>
-                            ))}
-                            <div className="text-sm text-muted-foreground mt-2">
-                              {demoResult.compromised_records} compromised records found
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="text-xs text-muted-foreground mt-3">
-                          Scan completed in {demoResult.scan_time}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
                 </div>
               )}
             </div>
