@@ -3,8 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap, ExternalLink, Network } from "lucide-react";
+import { useScrollAnimation, useStaggeredScrollAnimation } from "@/hooks/useScrollAnimation";
 
 const SecurityAppsSection = () => {
+  const headerAnimation = useScrollAnimation();
+  const { ref: cardsRef, visibleItems: visibleCards } = useStaggeredScrollAnimation(8, 150);
+  const pricingAnimation = useScrollAnimation();
+  const bundlesAnimation = useScrollAnimation();
+
   const securityApps = [
     {
       id: 'safeemail',
@@ -186,21 +192,26 @@ const SecurityAppsSection = () => {
   ];
 
   return (
-    <section id="security" className="py-20 bg-gradient-secondary">
+    <section id="security" className="py-20 bg-gradient-secondary overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <Badge variant="secondary" className="mb-4">
-            <Shield className="h-4 w-4 mr-2" />
+        <div 
+          ref={headerAnimation.ref}
+          className={`text-center mb-16 transition-all duration-1000 ${
+            headerAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          }`}
+        >
+          <Badge variant="secondary" className="mb-4 animate-pulse-glow">
+            <Shield className="h-4 w-4 mr-2 animate-bounce-gentle" />
             AI-Powered Security Suite
           </Badge>
-          <h2 className="text-4xl font-bold mb-6 text-foreground">
+          <h2 className="text-4xl font-bold mb-6 text-foreground animate-fade-in-up">
             Ultrium Security Apps
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8 animate-fade-in-up delay-200">
             Enterprise-grade AI security tools that integrate seamlessly with your Custom GPTs. 
             Protect against cyber threats with real-time scanning and analysis.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <div className="flex flex-wrap justify-center gap-4 mb-8 animate-fade-in-up delay-400">
             <Badge className="bg-success text-success-foreground">14-Day Free Trial</Badge>
             <Badge variant="outline">Monthly Billing Per User</Badge>
             <Badge variant="outline">Bundle Discounts Available</Badge>
@@ -208,14 +219,25 @@ const SecurityAppsSection = () => {
         </div>
 
         {/* Security Apps Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {securityApps.map((app) => {
+        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {securityApps.map((app, index) => {
             const Icon = app.icon;
             return (
-              <Card key={app.id} className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20 card-elevated">
+              <Card 
+                key={app.id} 
+                className={`hover:shadow-lg transition-all duration-500 border-2 hover:border-primary/20 card-elevated animate-scale-on-hover transform-gpu ${
+                  visibleCards[index] 
+                    ? 'opacity-100 translate-y-0 scale-100' 
+                    : 'opacity-0 translate-y-8 scale-95'
+                }`}
+                style={{ 
+                  transitionDelay: `${index * 150}ms`,
+                  transform: visibleCards[index] ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)'
+                }}
+              >
                 <CardHeader className="text-center">
-                  <div className="mx-auto mb-4 w-16 h-16 bg-primary-soft rounded-full flex items-center justify-center">
-                    <Icon className="h-8 w-8 text-primary" />
+                  <div className="mx-auto mb-4 w-16 h-16 bg-primary-soft rounded-full flex items-center justify-center animate-float">
+                    <Icon className="h-8 w-8 text-primary animate-glow" />
                   </div>
                   <CardTitle className="text-lg">{app.name}</CardTitle>
                   <CardDescription className="text-sm">{app.description}</CardDescription>
@@ -223,9 +245,9 @@ const SecurityAppsSection = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="space-y-1">
-                      {app.features.slice(0, 3).map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2 text-sm">
-                          <Check className="h-3 w-3 text-success" />
+                      {app.features.slice(0, 3).map((feature, featureIndex) => (
+                        <div key={featureIndex} className="flex items-center gap-2 text-sm animate-fade-in" style={{ animationDelay: `${(index * 150) + (featureIndex * 50)}ms` }}>
+                          <Check className="h-3 w-3 text-success animate-pulse" />
                           <span>{feature}</span>
                         </div>
                       ))}
@@ -243,7 +265,7 @@ const SecurityAppsSection = () => {
                     {/* Demo Button */}
                     <Button
                       onClick={() => window.location.href = app.demoUrl}
-                      className="w-full mt-4"
+                      className="w-full mt-4 btn-glow hover:scale-105 transition-all duration-300"
                       variant="outline"
                     >
                       <Play className="h-4 w-4 mr-2" />
@@ -258,25 +280,40 @@ const SecurityAppsSection = () => {
         </div>
 
         {/* Pricing Tiers Section */}
-        <div className="mb-16">
+        <div 
+          ref={pricingAnimation.ref}
+          className={`mb-16 transition-all duration-1000 ${
+            pricingAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+          }`}
+        >
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">Choose Your Security Plan</h3>
-            <p className="text-muted-foreground mb-8">Start with a free trial, then choose the plan that fits your needs</p>
+            <h3 className="text-3xl font-bold mb-4 animate-fade-in-up">Choose Your Security Plan</h3>
+            <p className="text-muted-foreground mb-8 animate-fade-in-up delay-200">Start with a free trial, then choose the plan that fits your needs</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             {pricingTiers.map((tier, index) => {
               const Icon = tier.icon;
               return (
-                <Card key={index} className={`relative ${tier.popular ? 'border-primary border-2' : ''} hover:shadow-lg transition-all duration-300 card-elevated`}>
+                <Card 
+                  key={index} 
+                  className={`relative ${tier.popular ? 'border-primary border-2 animate-pulse-glow' : ''} hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover ${
+                    pricingAnimation.isVisible 
+                      ? 'opacity-100 translate-y-0' 
+                      : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ 
+                    transitionDelay: `${index * 200}ms`
+                  }}
+                >
                   {tier.popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 animate-bounce-gentle">
+                      <Badge className="bg-primary text-primary-foreground animate-glow">Most Popular</Badge>
                     </div>
                   )}
                   <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center">
-                      <Icon className="h-6 w-6 text-primary" />
+                    <div className="mx-auto mb-4 w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center animate-float">
+                      <Icon className="h-6 w-6 text-primary animate-pulse" />
                     </div>
                     <CardTitle className="text-xl">{tier.name}</CardTitle>
                     <div className="text-3xl font-bold text-primary">
@@ -306,15 +343,30 @@ const SecurityAppsSection = () => {
           </div>
 
           {/* App Bundles Section */}
-          <div className="bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated">
+          <div 
+            ref={bundlesAnimation.ref}
+            className={`bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated transition-all duration-1000 ${
+              bundlesAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+            }`}
+          >
             <div className="text-center mb-8">
-              <h4 className="text-2xl font-bold mb-3">Save with App Bundles</h4>
-              <p className="text-muted-foreground">Get multiple security apps together and save up to 57%</p>
+              <h4 className="text-2xl font-bold mb-3 animate-fade-in-up">Save with App Bundles</h4>
+              <p className="text-muted-foreground animate-fade-in-up delay-200">Get multiple security apps together and save up to 35%</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {appBundles.map((bundle, index) => (
-                <Card key={index} className="hover:shadow-lg transition-all duration-300 card-elevated">
+                <Card 
+                  key={index} 
+                  className={`hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover ${
+                    bundlesAnimation.isVisible 
+                      ? 'opacity-100 translate-y-0' 
+                      : 'opacity-0 translate-y-8'
+                  }`}
+                  style={{ 
+                    transitionDelay: `${index * 150}ms`
+                  }}
+                >
                   <CardHeader className="text-center">
                     <CardTitle className="text-lg">{bundle.name}</CardTitle>
                     <div className="text-sm text-muted-foreground">
@@ -360,16 +412,16 @@ const SecurityAppsSection = () => {
 
         {/* CTA Section */}
         <div className="text-center mt-12">
-          <div className="bg-card rounded-lg p-8 shadow-lg max-w-2xl mx-auto card-elevated">
-            <h3 className="text-2xl font-bold mb-4">Ready to Secure Your Custom GPTs?</h3>
-            <p className="text-muted-foreground mb-6">
+          <div className="bg-card rounded-lg p-8 shadow-lg max-w-2xl mx-auto card-elevated animate-scale-on-hover">
+            <h3 className="text-2xl font-bold mb-4 animate-fade-in-up">Ready to Secure Your Custom GPTs?</h3>
+            <p className="text-muted-foreground mb-6 animate-fade-in-up delay-200">
               Add enterprise-grade security scanning to your AI agents. Protect your users from cyber threats with real-time analysis.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-400">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button size="lg" className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
+                  <Button size="lg" className="flex items-center gap-2 btn-glow animate-pulse-glow">
+                    <Shield className="h-5 w-5 animate-bounce-gentle" />
                     View All Security Apps
                     <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -405,7 +457,7 @@ const SecurityAppsSection = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="lg" className="animate-scale-on-hover">
                 Schedule Demo Call
               </Button>
             </div>
