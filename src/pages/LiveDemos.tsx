@@ -211,7 +211,7 @@ const demoApps: DemoApp[] = [
   },
   {
     id: "ultrium-safeweb",
-    name: "Ultrium SafeWEB™",
+    name: "Ultrium SafeWeb™",
     category: "Threat Intelligence",
     description: "Dark web monitoring and threat intelligence platform",
     longDescription: "Comprehensive dark web monitoring solution that scans for compromised credentials, corporate data breaches, threat actor discussions, and emerging cyber threats targeting your organization.",

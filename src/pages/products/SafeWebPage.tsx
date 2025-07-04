@@ -81,7 +81,7 @@ const SafeWebPage = () => {
                   <Search className="h-8 w-8 text-primary" />
                 </div>
                 <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  Ultrium SafeWEB™
+                  Ultrium SafeWeb™
                 </h1>
               </div>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
@@ -129,7 +129,7 @@ const SafeWebPage = () => {
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Try SafeWEB Live</h2>
+              <h2 className="text-3xl font-bold mb-4">Try SafeWeb Live</h2>
               <p className="text-muted-foreground">
                 Experience our dark web monitoring platform with sample threat intelligence data
               </p>
@@ -142,7 +142,7 @@ const SafeWebPage = () => {
         <section className="py-20 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Choose Your SafeWEB Plan</h2>
+              <h2 className="text-3xl font-bold mb-4">Choose Your SafeWeb Plan</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Start with a free trial, then choose the plan that fits your organization's needs
               </p>
@@ -202,7 +202,7 @@ const SafeWebPage = () => {
               <CardContent>
                 <h3 className="text-2xl font-bold mb-4">Ready to Monitor the Dark Web?</h3>
                 <p className="text-muted-foreground mb-6">
-                  Join thousands of organizations protecting themselves with SafeWEB threat intelligence
+                  Join thousands of organizations protecting themselves with SafeWeb threat intelligence
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" className="btn-glow">

@@ -71,7 +71,7 @@ const SecurityAppsSection = () => {
     },
     {
       id: 'safeweb',
-      name: 'Ultrium SafeWEB™',
+      name: 'Ultrium SafeWeb™',
       icon: Search,
       description: 'Dark web monitoring and threat intelligence platform',
       features: ['Credential monitoring', 'Data breach detection', 'Threat actor tracking'],
@@ -183,7 +183,7 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Compliance & Intelligence Bundle',
-      apps: ['SafeComp', 'SafeWEB'],
+      apps: ['SafeComp', 'SafeWeb'],
       originalPrice: '$40',
       bundlePrice: '$35',
       enterprisePrice: '$62',

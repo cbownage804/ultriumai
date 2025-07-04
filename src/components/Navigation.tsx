@@ -82,7 +82,7 @@ const Navigation = () => {
                     <button onClick={() => { handleNavigationWithMenuClose('/products/safelink'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeLink™</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/products/safedoc'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeDoc™</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/products/safepass'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafePass™</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safeweb'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeWEB™</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/products/safeweb'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeWeb™</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/products/safecomp'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeComp™</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/products/safenet'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeNet™</button>
                   </div>
