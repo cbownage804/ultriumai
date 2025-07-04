@@ -228,11 +228,11 @@ const Solutions = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/demos'}>
                 <Play className="mr-2 h-5 w-5" />
                 Try Live Demos
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '#contact'}>
                 <Shield className="mr-2 h-5 w-5" />
                 Schedule Security Assessment
               </Button>
@@ -429,11 +429,11 @@ const Solutions = () => {
                 Let's discuss which solutions are right for your business.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow">
+                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '#contact'}>
                   <Shield className="mr-2 h-5 w-5" />
                   Get Security Assessment
                 </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos'}>
                   <Play className="mr-2 h-5 w-5" />
                   Try All Demos
                 </Button>
