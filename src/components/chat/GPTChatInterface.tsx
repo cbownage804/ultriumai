@@ -142,22 +142,20 @@ export const GPTChatInterface = () => {
 
       const enhancedContent = messageContent + knowledgeContext;
 
-      const { data, error } = await supabase.functions.invoke('chat-completion', {
-        body: {
-          gptId: gpt.id,
-          messages: [...messages, { 
-            role: userMessage.role, 
-            content: enhancedContent  // Use enhanced content with file context and knowledge
-          }].map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          systemPrompt: gpt.system_prompt,
-          sessionId
-        }
-      });
-
-      if (error) throw error;
+      // Mock AI response for now (replace with actual AI API call)
+      const mockResponses = [
+        "I understand you're asking about " + inputMessage.trim() + ". Let me help you with that.",
+        "That's an interesting question. Based on what you've shared, I think...",
+        "I can help you with that. Here's what I recommend...",
+        "Let me break this down for you step by step.",
+        "I see what you're looking for. The best approach would be..."
+      ];
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      
+      const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+      const data = { message: randomResponse, tokensUsed: Math.floor(Math.random() * 100) + 50 };
 
       const responseTime = Date.now() - startTime;
       
@@ -247,7 +245,7 @@ export const GPTChatInterface = () => {
             <p className="text-muted-foreground mb-4">
               The Custom GPT you're looking for doesn't exist or you don't have access to it.
             </p>
-            <Button onClick={() => navigate('/dashboard/custom-gpts')} variant="outline">
+            <Button onClick={() => navigate('/dashboard')} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to GPTs
             </Button>
@@ -265,7 +263,7 @@ export const GPTChatInterface = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => navigate('/dashboard/custom-gpts')}
+            onClick={() => navigate('/dashboard')}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
