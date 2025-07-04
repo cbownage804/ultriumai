@@ -200,7 +200,7 @@ export const SafeCompDemo = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -264,11 +264,11 @@ export const SafeCompDemo = () => {
                       variant={selectedFramework === framework.id ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedFramework(framework.id)}
-                      className="text-left h-auto p-3"
+                      className="text-left h-auto p-3 whitespace-normal"
                     >
-                      <div>
-                        <div className="font-medium">{framework.name}</div>
-                        <div className="text-xs opacity-70">{framework.description}</div>
+                      <div className="w-full">
+                        <div className="font-medium text-sm break-words">{framework.name}</div>
+                        <div className="text-xs opacity-70 break-words leading-tight">{framework.description}</div>
                       </div>
                     </Button>
                   ))}
@@ -367,20 +367,20 @@ export const SafeCompDemo = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {results.categories.slice(0, 4).map((category, index) => (
                         <div key={index} className="flex items-center justify-between p-3 border rounded">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
                             {category.status === 'pass' ? (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
                             ) : category.status === 'fail' ? (
-                              <XCircle className="h-4 w-4 text-red-500" />
+                              <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
                             ) : (
-                              <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                              <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
                             )}
-                            <span className="text-sm font-medium">{category.name}</span>
+                            <span className="text-sm font-medium truncate">{category.name}</span>
                           </div>
-                          <span className={`text-sm font-bold ${getScoreColor(category.score)}`}>
+                          <span className={`text-sm font-bold flex-shrink-0 ml-2 ${getScoreColor(category.score)}`}>
                             {category.score}%
                           </span>
                         </div>
