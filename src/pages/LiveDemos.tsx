@@ -198,7 +198,7 @@ const demoApps: DemoApp[] = [
       "Multi-language support",
       "Integration ready"
     ],
-    demoUrl: "/ultriumgpt",
+    demoUrl: "/demos/ultriumgpt",
     isLive: true,
     tags: ["AI Assistant", "MSP", "IT Support"],
     useCases: [
