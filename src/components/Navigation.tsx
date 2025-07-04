@@ -95,7 +95,7 @@ const Navigation = () => {
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
             <button onClick={() => handleNavigation('/docs')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
-              Documentation
+              KB
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
             <button onClick={() => handleNavigation('#contact')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
@@ -155,7 +155,7 @@ const Navigation = () => {
                 AI Demos
               </button>
               <button onClick={() => handleNavigation('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                Documentation
+                KB
               </button>
               <button onClick={() => handleNavigation('#contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Contact
