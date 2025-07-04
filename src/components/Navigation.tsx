@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import ThemeToggle from "./ThemeToggle";
+import UserProfileDropdown from "./UserProfileDropdown";
 import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
 
 const Navigation = () => {
@@ -139,9 +140,7 @@ const Navigation = () => {
                 <Button variant="outline" onClick={() => navigate('/dashboard')} className="hover:scale-105 transition-all duration-300">
                   Dashboard
                 </Button>
-                <Button variant="ghost" size="icon" className="hover:scale-110 transition-all duration-300">
-                  <User className="h-5 w-5" />
-                </Button>
+                <UserProfileDropdown />
                 <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:scale-110 transition-all duration-300 hover:text-destructive">
                   <LogOut className="h-5 w-5" />
                 </Button>

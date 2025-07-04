@@ -125,6 +125,16 @@ export default {
 						transform: 'translateY(0)'
 					}
 				},
+				'scale-in': {
+					'0%': {
+						transform: 'scale(0.95)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'scale(1)',
+						opacity: '1'
+					}
+				},
 				'slide-up': {
 					'0%': {
 						opacity: '0',
@@ -188,6 +198,7 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.6s ease-out forwards',
 				'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+				'scale-in': 'scale-in 0.2s ease-out',
 				'slide-up': 'slide-up 0.6s ease-out forwards',
 				'slide-in-left': 'slideInLeft 0.8s ease-out forwards',
 				'slide-in-right': 'slideInRight 0.8s ease-out forwards',
