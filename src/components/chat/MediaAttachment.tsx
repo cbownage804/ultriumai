@@ -11,32 +11,36 @@ interface MediaAttachmentProps {
 const MediaAttachment = ({ mediaUrl, type, prompt }: MediaAttachmentProps) => {
   const handleDownload = () => {
     try {
+      const link = document.createElement('a');
+      
       if (mediaUrl.startsWith('data:')) {
-        // For data URLs, create blob and download
-        const byteCharacters = atob(mediaUrl.split(',')[1]);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'image/png' });
-        
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `generated-image-${Date.now()}.png`;
-        link.click();
-        URL.revokeObjectURL(url);
-      } else {
-        // For regular URLs, direct download
-        const link = document.createElement('a');
+        // For data URLs, use the data directly
         link.href = mediaUrl;
         link.download = `generated-image-${Date.now()}.png`;
-        link.target = '_self';
+        
+        // Force download attributes
+        link.setAttribute('download', link.download);
+        link.setAttribute('target', '_blank');
+        
+        // Temporarily add to DOM and click
+        document.body.appendChild(link);
+        link.style.display = 'none';
         link.click();
+        
+        // Remove after a short delay
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link);
+          }
+        }, 100);
+      } else {
+        // For regular URLs
+        window.open(mediaUrl, '_blank');
       }
     } catch (error) {
       console.error('Download failed:', error);
+      // Fallback to opening in new tab
+      window.open(mediaUrl, '_blank');
     }
   };
 
