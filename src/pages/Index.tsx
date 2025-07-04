@@ -11,6 +11,7 @@ import DemoSection from "@/components/DemoSection";
 import Integrations from "@/components/Integrations";
 import ContactSection from "@/components/ContactSection";
 import InteractiveSecurityWidget from "@/components/InteractiveSecurityWidget";
+import AnimatedStatsSection from "@/components/AnimatedStatsSection";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -41,6 +42,9 @@ const Index = () => {
             <InteractiveSecurityWidget />
           </div>
         </section>
+        
+        {/* Animated Statistics Section */}
+        <AnimatedStatsSection />
         
         <AboutSection />
         <WhoWeHelp />
