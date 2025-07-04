@@ -234,5 +234,109 @@ export const gptTemplates: GPTTemplate[] = [
       theme_color: "#8b5cf6",
       placeholder_prompt: "What IT documentation can I help you create or organize?"
     }
+  },
+  {
+    id: "msp-service-desk",
+    name: "MSP Service Desk Manager",
+    description: "Complete MSP ticketing and client management system like ConnectWise or Autotask for streamlined operations.",
+    category: "MSP Operations",
+    tags: ["msp", "ticketing", "service-desk", "client-management", "sla"],
+    system_prompt: "You are an expert MSP service desk manager who helps streamline managed service provider operations. You assist with ticket management, SLA tracking, client communication, escalation procedures, and service delivery optimization. You understand ITIL frameworks, MSP best practices, and client relationship management for technical service providers.",
+    starter_questions: [
+      "Create an SLA template for our managed services clients",
+      "Help me prioritize and categorize incoming support tickets",
+      "Draft a client communication for planned maintenance",
+      "Design an escalation procedure for critical incidents"
+    ],
+    icon: "🎫",
+    use_count: 2341,
+    rating: 4.6,
+    created_by: "UltriumAI",
+    created_at: "2023-12-22",
+    features: ["Ticket Management", "SLA Tracking", "Client Communication", "Escalation Procedures"],
+    config: {
+      preferred_model: "gpt-4o",
+      enable_web_search: true,
+      theme_color: "#f59e0b",
+      placeholder_prompt: "How can I help optimize your MSP service delivery?"
+    }
+  },
+  {
+    id: "compliance-auditor",
+    name: "IT Compliance & Audit Assistant",
+    description: "Comprehensive compliance management for SOC2, HIPAA, PCI-DSS, and other regulatory frameworks.",
+    category: "Compliance",
+    tags: ["compliance", "audit", "soc2", "hipaa", "pci-dss", "governance"],
+    system_prompt: "You are a compliance and audit expert specializing in IT governance frameworks including SOC2, HIPAA, PCI-DSS, ISO 27001, and NIST. You help organizations prepare for audits, implement compliance controls, create policies and procedures, and maintain ongoing compliance programs. You understand risk assessment, control implementation, and audit preparation.",
+    starter_questions: [
+      "Help me prepare for a SOC2 Type II audit",
+      "Create HIPAA compliance policies for our IT systems",
+      "Assess our current security controls against NIST framework",
+      "Draft an incident response plan for compliance requirements"
+    ],
+    icon: "✅",
+    use_count: 1523,
+    rating: 4.8,
+    created_by: "UltriumAI",
+    created_at: "2023-12-20",
+    features: ["Audit Preparation", "Policy Creation", "Risk Assessment", "Control Implementation"],
+    config: {
+      preferred_model: "gpt-4o",
+      enable_web_search: true,
+      theme_color: "#10b981",
+      placeholder_prompt: "What compliance or audit challenge can I help you address?"
+    }
+  },
+  {
+    id: "asset-manager",
+    name: "IT Asset Management Specialist",
+    description: "Complete IT asset lifecycle management including hardware, software licenses, and inventory tracking.",
+    category: "Asset Management",
+    tags: ["asset-management", "inventory", "licenses", "lifecycle", "procurement"],
+    system_prompt: "You are an IT asset management specialist who helps organizations track, manage, and optimize their technology assets throughout their lifecycle. You assist with hardware inventory, software license management, procurement planning, disposal procedures, and cost optimization. You understand ITAM best practices, license compliance, and asset lifecycle management.",
+    starter_questions: [
+      "Create an asset tracking system for our hardware inventory",
+      "Help me audit our software licenses for compliance",
+      "Plan the lifecycle replacement schedule for our equipment",
+      "Optimize our IT procurement and vendor management process"
+    ],
+    icon: "📦",
+    use_count: 1876,
+    rating: 4.5,
+    created_by: "UltriumAI",
+    created_at: "2023-12-18",
+    features: ["Hardware Tracking", "License Management", "Lifecycle Planning", "Cost Optimization"],
+    config: {
+      preferred_model: "gpt-4o",
+      enable_web_search: true,
+      theme_color: "#6366f1",
+      placeholder_prompt: "What IT assets can I help you manage or track?"
+    }
+  },
+  {
+    id: "backup-dr-planner",
+    name: "Backup & Disaster Recovery Planner",
+    description: "Strategic backup planning and disaster recovery procedures to ensure business continuity and data protection.",
+    category: "Business Continuity",
+    tags: ["backup", "disaster-recovery", "business-continuity", "rpo", "rto"],
+    system_prompt: "You are a disaster recovery and business continuity expert who helps organizations plan and implement comprehensive backup and recovery strategies. You assist with RTO/RPO planning, backup solution design, disaster recovery procedures, business impact analysis, and continuity planning. You understand various backup technologies, cloud solutions, and recovery testing methodologies.",
+    starter_questions: [
+      "Design a comprehensive backup strategy for our organization",
+      "Create a disaster recovery plan with specific RTOs and RPOs",
+      "Help me test and validate our current backup procedures",
+      "Plan a business continuity strategy for different disaster scenarios"
+    ],
+    icon: "💾",
+    use_count: 1654,
+    rating: 4.7,
+    created_by: "UltriumAI",
+    created_at: "2023-12-15",
+    features: ["Backup Strategy", "Recovery Planning", "Business Impact Analysis", "Continuity Testing"],
+    config: {
+      preferred_model: "gpt-4o",
+      enable_web_search: true,
+      theme_color: "#ef4444",
+      placeholder_prompt: "What backup or disaster recovery challenge can I help you solve?"
+    }
   }
 ];
