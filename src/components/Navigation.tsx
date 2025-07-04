@@ -70,10 +70,6 @@ const Navigation = () => {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <button onClick={() => handleNavigation('#about')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
-              About
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
             <button onClick={() => handleNavigation('/ultriumgpt')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
               UltriumGPT
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -134,9 +130,6 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden bg-background/95 backdrop-blur-md border-t border-border/50">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <button onClick={() => handleNavigation('#about')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                About
-              </button>
               <button onClick={() => handleNavigation('/ultriumgpt')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 UltriumGPT
               </button>
