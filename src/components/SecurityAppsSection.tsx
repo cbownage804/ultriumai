@@ -293,18 +293,10 @@ const SecurityAppsSection = () => {
         </div>
 
         {/* Pricing Tiers Section */}
-        <div 
-          ref={pricingRotation.ref}
-          className="mb-16 rotation-section"
-          style={{
-            transform: `perspective(1500px) rotateX(${pricingRotation.scrollProgress * 0.3}deg) translateZ(${Math.abs(pricingRotation.scrollProgress) * -2}px)`,
-            opacity: pricingRotation.isVisible ? 1 : 0.4,
-            transition: 'transform 0.3s ease-out, opacity 0.3s ease-out'
-          }}
-        >
+        <div className="mb-16">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4 animate-fade-in-up">Choose Your Security Plan</h3>
-            <p className="text-muted-foreground mb-8 animate-fade-in-up delay-200">Start with a free trial, then choose the plan that fits your needs</p>
+            <h3 className="text-3xl font-bold mb-4">Choose Your Security Plan</h3>
+            <p className="text-muted-foreground mb-8">Start with a free trial, then choose the plan that fits your needs</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -313,22 +305,16 @@ const SecurityAppsSection = () => {
               return (
                 <Card 
                   key={index} 
-                  className={`relative ${tier.popular ? 'border-primary border-2 animate-pulse-glow' : ''} hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu`}
-                  style={{ 
-                    transitionDelay: `${index * 200}ms`,
-                    transformStyle: 'preserve-3d',
-                    transform: `perspective(1500px) rotateY(${pricingRotation.scrollProgress * 0.2}deg)`,
-                    opacity: pricingRotation.isVisible ? 1 : 0.6
-                  }}
+                  className={`relative ${tier.popular ? 'border-primary border-2' : ''} hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105`}
                 >
                   {tier.popular && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 animate-bounce-gentle">
-                      <Badge className="bg-primary text-primary-foreground animate-glow">Most Popular</Badge>
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
                     </div>
                   )}
                   <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center animate-float">
-                      <Icon className="h-6 w-6 text-primary animate-pulse" />
+                    <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Icon className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">{tier.name}</CardTitle>
                     <div className="text-3xl font-bold text-primary">
@@ -358,31 +344,17 @@ const SecurityAppsSection = () => {
           </div>
 
           {/* App Bundles Section */}
-          <div 
-            ref={bundlesRotation.ref}
-            className="bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated rotation-section"
-            style={{
-              transform: `perspective(1500px) rotateY(${bundlesRotation.rotationY}deg) translateZ(${Math.abs(bundlesRotation.rotationY) * -3}px)`,
-              opacity: bundlesRotation.opacity,
-              transition: 'transform 0.6s ease-out, opacity 0.6s ease-out'
-            }}
-          >
+          <div className="bg-muted/30 rounded-lg p-8 mb-12">
             <div className="text-center mb-8">
-              <h4 className="text-2xl font-bold mb-3 animate-fade-in-up">Save with App Bundles</h4>
-              <p className="text-muted-foreground animate-fade-in-up delay-200">Get multiple security apps together and save up to 35%</p>
+              <h4 className="text-2xl font-bold mb-3">Save with App Bundles</h4>
+              <p className="text-muted-foreground">Get multiple security apps together and save up to 35%</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {appBundles.map((bundle, index) => (
                 <Card 
                   key={index} 
-                  className="hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu"
-                  style={{ 
-                    transitionDelay: `${index * 150}ms`,
-                    transformStyle: 'preserve-3d',
-                    transform: `perspective(1500px) rotateX(${bundlesRotation.rotationY * 0.2}deg)`,
-                    opacity: bundlesRotation.opacity
-                  }}
+                  className="hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105"
                 >
                   <CardHeader className="text-center">
                     <CardTitle className="text-lg">{bundle.name}</CardTitle>
