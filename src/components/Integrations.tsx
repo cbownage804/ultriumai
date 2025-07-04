@@ -101,7 +101,7 @@ const Integrations = () => {
           {integrations.map((integration, index) => (
             <Card 
               key={index} 
-              className={`p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 group ${getAnimationClasses(cardsVisible[index], 'fadeUp')}`}
+              className={`p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 group ${getAnimationClasses(cardsVisible[index], 'fadeUp')}`}
             >
               <div className="flex items-start justify-between mb-4">
                 <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
@@ -130,10 +130,10 @@ const Integrations = () => {
 
         <div ref={ctaRef} className={getAnimationClasses(ctaVisible, 'fadeUp')}>
           <div className="mt-16 text-center">
-            <div className="bg-card border rounded-lg p-8 max-w-2xl mx-auto hover:shadow-lg transition-all duration-300 hover:border-primary/20">
-              <h3 className="text-xl font-semibold mb-4 text-foreground">
-                Need a Custom Integration?
-              </h3>
+              <div className="bg-card border rounded-lg p-8 max-w-2xl mx-auto hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 hover:border-primary/20">
+                <h3 className="text-xl font-semibold mb-4 text-foreground">
+                  Need a Custom Integration?
+                </h3>
               <p className="text-muted-foreground mb-6">
                 Our team can help you build custom integrations for your specific workflow needs.
               </p>

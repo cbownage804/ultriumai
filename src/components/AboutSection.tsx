@@ -122,7 +122,7 @@ const AboutSection = () => {
             return (
               <Card 
                 key={index} 
-                className={`text-center hover:shadow-lg transition-all duration-300 hover:scale-105 card-glow group ${getAnimationClasses(processCardsVisible[index], 'fadeUp')}`}
+                className={`text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 card-glow group ${getAnimationClasses(processCardsVisible[index], 'fadeUp')}`}
               >
                 <CardHeader>
                   <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center relative group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">

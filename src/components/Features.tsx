@@ -83,7 +83,7 @@ const Features = () => {
           {features.map((feature, index) => (
             <Card 
               key={index} 
-              className={`p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 card-glow group ${getAnimationClasses(cardsVisible[index], 'fadeUp')}`}
+              className={`p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 card-glow group ${getAnimationClasses(cardsVisible[index], 'fadeUp')}`}
             >
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">

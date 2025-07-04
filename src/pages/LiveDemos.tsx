@@ -322,7 +322,7 @@ const LiveDemos = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredApps.map((app) => (
-                <Card key={app.id} className="card-glow hover:scale-105 transition-all duration-300">
+                <Card key={app.id} className="card-glow hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">

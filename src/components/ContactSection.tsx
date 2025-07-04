@@ -35,7 +35,7 @@ const ContactSection = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Information */}
           <div ref={contactInfoRef} className={`space-y-8 ${getAnimationClasses(contactInfoVisible, 'slideRight')}`}>
-            <Card className="hover:shadow-lg transition-all duration-300">
+            <Card className="hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Phone className="h-5 w-5 text-primary" />
@@ -74,7 +74,7 @@ const ContactSection = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20 hover:shadow-lg transition-all duration-300 hover:border-primary/30">
+            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20 hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 hover:border-primary/30">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Why Choose UltriumAI?</h3>
                 <ul className="space-y-2 text-sm">
@@ -105,7 +105,7 @@ const ContactSection = () => {
 
           {/* Contact Form */}
           <div ref={formRef} className={getAnimationClasses(formVisible, 'slideLeft')}>
-            <Card className="hover:shadow-lg transition-all duration-300">
+            <Card className="hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105">
             <CardHeader>
               <CardTitle>Schedule Your Free Discovery Call</CardTitle>
             </CardHeader>
