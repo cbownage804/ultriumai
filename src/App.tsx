@@ -12,6 +12,7 @@ import SettingsPage from '@/pages/SettingsPage';
 import Pricing from '@/pages/Pricing';
 import UltriumGPT from '@/pages/UltriumGPT';
 import LiveDemos from '@/pages/LiveDemos';
+import Docs from '@/pages/Docs';
 import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
 import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
 import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
@@ -40,6 +41,7 @@ function AppRouter() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/ultriumgpt" element={<UltriumGPT />} />
       <Route path="/demos" element={<LiveDemos />} />
+      <Route path="/docs" element={<Docs />} />
       <Route path="/demos/safeemail" element={<SafeEmailDemoPage />} />
       <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
       <Route path="/demos/safescan" element={<SafeDocDemoPage />} />
