@@ -50,15 +50,51 @@ function AppRouter() {
           <Docs />
         </ProtectedRoute>
       } />
-      <Route path="/demos/safeemail" element={<SafeEmailDemoPage />} />
-      <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
-      <Route path="/demos/safescan" element={<SafeDocDemoPage />} />
-      <Route path="/demos/safepass" element={<SafePassDemoPage />} />
-      <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
-      <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
-      <Route path="/demos/safecomp" element={<SafeCompDemoPage />} />
-      <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
-      <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
+      <Route path="/demos/safeemail" element={
+        <ProtectedRoute>
+          <SafeEmailDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/safelink" element={
+        <ProtectedRoute>
+          <SafeLinkDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/safescan" element={
+        <ProtectedRoute>
+          <SafeDocDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/safepass" element={
+        <ProtectedRoute>
+          <SafePassDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/safedoc" element={
+        <ProtectedRoute>
+          <SafeDocDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/ultriumgpt" element={
+        <ProtectedRoute>
+          <UltriumGPTDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/safecomp" element={
+        <ProtectedRoute>
+          <SafeCompDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/safenet" element={
+        <ProtectedRoute>
+          <SafeNetDemoPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/demos/safeweb" element={
+        <ProtectedRoute>
+          <DarkWebDemoPage />
+        </ProtectedRoute>
+      } />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={

@@ -91,21 +91,21 @@ const Navigation = () => {
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
             {user ? (
-              <>
-                <button onClick={() => handleNavigation('/demos')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-                  AI Demos
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-                </button>
-                <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-                  KB
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-                </button>
-              </>
+              <button onClick={() => handleNavigation('/demos')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+                AI Demos
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
             ) : null}
             <button onClick={() => handleNavigation('#contact')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Contact
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
+            {user ? (
+              <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+                KB
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
+            ) : null}
           </div>
           
           {/* Desktop Auth Buttons */}
@@ -156,18 +156,18 @@ const Navigation = () => {
                 AI Security Apps
               </button>
               {user ? (
-                <>
-                  <button onClick={() => handleNavigation('/demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                    AI Demos
-                  </button>
-                  <button onClick={() => handleNavigation('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                    KB
-                  </button>
-                </>
+                <button onClick={() => handleNavigation('/demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                  AI Demos
+                </button>
               ) : null}
               <button onClick={() => handleNavigation('#contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Contact
               </button>
+              {user ? (
+                <button onClick={() => handleNavigation('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                  KB
+                </button>
+              ) : null}
               <div className="flex flex-col space-y-2 pt-4 px-3">
                 <ThemeToggle />
                 <Button variant="ghost" className="w-full">
