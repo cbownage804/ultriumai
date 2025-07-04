@@ -41,16 +41,20 @@ const Navigation = () => {
         setTimeout(() => {
           const element = document.querySelector(path);
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         }, 100);
       } else {
         // Already on home page, just scroll
         const element = document.querySelector(path);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
+    } else if (path === '/') {
+      // Handle home navigation - scroll to top
+      navigate('/');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       // Handle regular page navigation
       navigate(path);
