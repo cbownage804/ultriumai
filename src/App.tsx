@@ -16,6 +16,7 @@ import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
 import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
 import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
+import SafeCompDemoPage from '@/pages/demos/SafeCompDemoPage';
 import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
 import { Loader2 } from 'lucide-react';
@@ -44,6 +45,7 @@ function AppRouter() {
       <Route path="/demos/safepass" element={<SafePassDemoPage />} />
       <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
       <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
+      <Route path="/demos/safecomp" element={<SafeCompDemoPage />} />
       <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
       
       {/* Protected Routes */}

@@ -65,6 +65,16 @@ const SecurityAppsSection = () => {
       riskTypes: ['Data Breaches', 'Credential Theft', 'Identity Theft'],
       category: 'Threat Intelligence',
       demoUrl: '/demos/safeweb'
+    },
+    {
+      id: 'safecomp',
+      name: 'Ultrium SafeComp™',
+      icon: Users,
+      description: 'Comprehensive compliance management and audit platform',
+      features: ['Compliance monitoring', 'Audit automation', 'Risk assessment'],
+      riskTypes: ['Compliance Violations', 'Audit Failures', 'Regulatory Risks'],
+      category: 'Compliance Management',
+      demoUrl: '/demos/safecomp'
     }
   ];
 
@@ -118,25 +128,40 @@ const SecurityAppsSection = () => {
 
   const appBundles = [
     {
-      name: 'Email Security Bundle',
-      apps: ['SafeEmail', 'SafeLink'],
+      name: 'Document & Password Bundle',
+      apps: ['SafeDoc', 'SafePass'],
       originalPrice: '$58',
       bundlePrice: '$45',
-      savings: '$13'
+      enterprisePrice: '$35',
+      savings: '$13',
+      enterpriseSavings: '$23'
     },
     {
-      name: 'Document Security Bundle',
-      apps: ['SafeDoc', 'SafeScan'],
+      name: 'Email & Link Security Bundle',
+      apps: ['SafeEmail', 'SafeScan', 'SafeLink'],
+      originalPrice: '$87',
+      bundlePrice: '$65',
+      enterprisePrice: '$50',
+      savings: '$22',
+      enterpriseSavings: '$37'
+    },
+    {
+      name: 'Compliance & Intelligence Bundle',
+      apps: ['SafeComp', 'SafeWEB'],
       originalPrice: '$58',
       bundlePrice: '$45',
-      savings: '$13'
+      enterprisePrice: '$35',
+      savings: '$13',
+      enterpriseSavings: '$23'
     },
     {
       name: 'Complete Security Suite',
-      apps: ['All 6 Apps'],
-      originalPrice: '$174',
-      bundlePrice: '$99',
-      savings: '$75'
+      apps: ['All 7 Apps'],
+      originalPrice: '$203',
+      bundlePrice: '$120',
+      enterprisePrice: '$89',
+      savings: '$83',
+      enterpriseSavings: '$114'
     }
   ];
 
@@ -277,20 +302,35 @@ const SecurityAppsSection = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="text-center">
-                    <div className="mb-4">
+                    <div className="mb-4 space-y-2">
                       <div className="text-sm text-muted-foreground line-through">
                         {bundle.originalPrice}/month
                       </div>
-                      <div className="text-2xl font-bold text-primary">
-                        {bundle.bundlePrice}/month
+                      <div className="space-y-1">
+                        <div className="text-lg font-bold text-primary">
+                          Premium: {bundle.bundlePrice}/month
+                        </div>
+                        <div className="text-sm text-green-600 font-medium">
+                          Save {bundle.savings}/month
+                        </div>
                       </div>
-                      <div className="text-sm text-green-600 font-medium">
-                        Save {bundle.savings}/month
+                      <div className="space-y-1">
+                        <div className="text-lg font-bold text-orange-600">
+                          Enterprise: {bundle.enterprisePrice}/month
+                        </div>
+                        <div className="text-sm text-green-600 font-medium">
+                          Save {bundle.enterpriseSavings}/month
+                        </div>
                       </div>
                     </div>
-                    <Button className="w-full" variant="outline">
-                      Get Bundle
-                    </Button>
+                    <div className="space-y-2">
+                      <Button className="w-full" variant="outline">
+                        Get Premium Bundle
+                      </Button>
+                      <Button className="w-full" variant="secondary">
+                        Get Enterprise Bundle
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -332,11 +372,11 @@ const SecurityAppsSection = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        Bundle discounts save up to 43%
+                        Bundle discounts save up to 56%
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        14-day free trial for all apps
+                        14-day free trial for all 7 apps
                       </li>
                     </ul>
                     <Button className="w-full" onClick={() => window.location.href = '/auth'}>
