@@ -71,41 +71,45 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-3 animate-fade-in cursor-pointer" onClick={() => handleNavigation('/')}>
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-10 w-auto transition-transform duration-300 hover:scale-110" />
-            <span className="text-xl font-bold text-foreground hover:text-gradient transition-all duration-300">UltriumAI</span>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigation('/')}>
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto transition-transform duration-300 hover:scale-110" />
+            <span className="text-lg font-bold text-foreground transition-colors duration-300">UltriumAI</span>
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            <button onClick={() => handleNavigation('/ultriumgpt')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
+          <div className="hidden md:flex items-center gap-6">
+            <button onClick={() => handleNavigation('/ultriumgpt')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               UltriumGPT
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('#features')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
+            <button onClick={() => handleNavigation('#features')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('#security')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
+            <button onClick={() => handleNavigation('#security')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               AI Security Apps
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('/demos')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
-              AI Demos
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
-            <button onClick={() => handleNavigation('/docs')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
-              KB
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
-            <button onClick={() => handleNavigation('#contact')} className="text-foreground/80 hover:text-foreground transition-all duration-300 hover:scale-105 relative group">
+            {user ? (
+              <>
+                <button onClick={() => handleNavigation('/demos')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+                  AI Demos
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </button>
+                <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+                  KB
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </button>
+              </>
+            ) : null}
+            <button onClick={() => handleNavigation('#contact')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Contact
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
           </div>
           
           {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
             <Button variant="ghost" className="hover:scale-105 transition-all duration-300">
               804-821-1410
@@ -151,12 +155,16 @@ const Navigation = () => {
               <button onClick={() => handleNavigation('#security')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 AI Security Apps
               </button>
-              <button onClick={() => handleNavigation('/demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                AI Demos
-              </button>
-              <button onClick={() => handleNavigation('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                KB
-              </button>
+              {user ? (
+                <>
+                  <button onClick={() => handleNavigation('/demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                    AI Demos
+                  </button>
+                  <button onClick={() => handleNavigation('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                    KB
+                  </button>
+                </>
+              ) : null}
               <button onClick={() => handleNavigation('#contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Contact
               </button>

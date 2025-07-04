@@ -40,8 +40,16 @@ function AppRouter() {
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/ultriumgpt" element={<UltriumGPT />} />
-      <Route path="/demos" element={<LiveDemos />} />
-      <Route path="/docs" element={<Docs />} />
+      <Route path="/demos" element={
+        <ProtectedRoute>
+          <LiveDemos />
+        </ProtectedRoute>
+      } />
+      <Route path="/docs" element={
+        <ProtectedRoute>
+          <Docs />
+        </ProtectedRoute>
+      } />
       <Route path="/demos/safeemail" element={<SafeEmailDemoPage />} />
       <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
       <Route path="/demos/safescan" element={<SafeDocDemoPage />} />
