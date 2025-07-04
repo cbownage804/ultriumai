@@ -22,11 +22,14 @@ serve(async (req) => {
     }
 
     // Build system prompt based on custom GPT or default
-    let systemPrompt = 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses. CRITICAL: When users request image generation (asking to create, generate, or make images), respond ONLY with "Generating your image..." and absolutely nothing else. Do not analyze, describe, or discuss generated images - the image speaks for itself.';
+    let systemPrompt = 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses.';
     
     if (customGPT && customGPT.system_prompt) {
       systemPrompt = customGPT.system_prompt;
     }
+    
+    // Always append image generation instruction regardless of custom GPT
+    systemPrompt += ' CRITICAL: When users request image generation (asking to create, generate, or make images), respond ONLY with "Generating your image..." and absolutely nothing else. Do not analyze, describe, or discuss generated images.';
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',

@@ -9,43 +9,34 @@ interface MediaAttachmentProps {
 }
 
 const MediaAttachment = ({ mediaUrl, type, prompt }: MediaAttachmentProps) => {
-  const handleDownload = async () => {
+  const handleDownload = () => {
     try {
-      let blob;
-      
       if (mediaUrl.startsWith('data:')) {
-        // Handle base64 data URLs - convert to blob
-        const base64Response = await fetch(mediaUrl);
-        blob = await base64Response.blob();
+        // For data URLs, create blob and download
+        const byteCharacters = atob(mediaUrl.split(',')[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/png' });
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `generated-image-${Date.now()}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
       } else {
-        // Handle regular URLs with CORS
-        const response = await fetch(mediaUrl, { mode: 'cors' });
-        blob = await response.blob();
+        // For regular URLs, direct download
+        const link = document.createElement('a');
+        link.href = mediaUrl;
+        link.download = `generated-image-${Date.now()}.png`;
+        link.target = '_self';
+        link.click();
       }
-      
-      // Create download URL and trigger download
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `generated-${type}-${Date.now()}.${type === 'image' ? 'png' : 'mp4'}`;
-      
-      // Force download by setting attributes
-      link.setAttribute('download', link.download);
-      link.style.display = 'none';
-      
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      }, 100);
-      
     } catch (error) {
       console.error('Download failed:', error);
-      // Fallback: open in new tab
-      window.open(mediaUrl, '_blank');
     }
   };
 
