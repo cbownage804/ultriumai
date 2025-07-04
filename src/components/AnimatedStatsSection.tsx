@@ -201,10 +201,16 @@ const AnimatedStatsSection = () => {
             Join thousands of organizations protecting their digital assets with UltriumAI
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors duration-200 hover:transform hover:scale-105">
+            <button 
+              className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors duration-200 hover:transform hover:scale-105"
+              onClick={() => window.location.href = '/auth'}
+            >
               Start Free Trial
             </button>
-            <button className="px-8 py-3 border border-border rounded-lg font-medium hover:bg-muted transition-colors duration-200">
+            <button 
+              className="px-8 py-3 border border-border rounded-lg font-medium hover:bg-muted transition-colors duration-200"
+              onClick={() => window.location.href = '/pricing'}
+            >
               View Pricing
             </button>
           </div>
