@@ -975,11 +975,9 @@ const CustomGPTPersonalize = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Latest & Most Advanced)</SelectItem>
                   <SelectItem value="gpt-4o">GPT-4o (Advanced with Vision)</SelectItem>
                   <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Efficient)</SelectItem>
-                  <SelectItem value="claude-opus-4-20250514">Claude Opus 4 (Superior Reasoning)</SelectItem>
-                  <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 (High Performance)</SelectItem>
+                  <SelectItem value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Superior Reasoning)</SelectItem>
                   <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fastest)</SelectItem>
                 </SelectContent>
               </Select>

@@ -26,25 +26,15 @@ interface ModelConfig {
 }
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
-  'gpt-4.1-2025-04-14': {
-    name: 'GPT-4.1 (Latest)',
-    maxTokens: 4096,
-    inputCostPer1kTokens: 0.01,
-    outputCostPer1kTokens: 0.03,
-    contextWindow: 128000,
-    description: 'The flagship model with superior performance',
-    icon: Brain,
-    category: 'flagship'
-  },
   'gpt-4o': {
     name: 'GPT-4o',
     maxTokens: 4096,
     inputCostPer1kTokens: 0.005,
     outputCostPer1kTokens: 0.015,
     contextWindow: 128000,
-    description: 'Multimodal model with vision capabilities',
+    description: 'Advanced multimodal model with vision capabilities',
     icon: Brain,
-    category: 'standard'
+    category: 'flagship'
   },
   'gpt-4o-mini': {
     name: 'GPT-4o Mini',
@@ -56,23 +46,23 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     icon: Zap,
     category: 'fast'
   },
-  'o3-2025-04-16': {
-    name: 'O3 (Reasoning)',
-    maxTokens: 4096,
-    inputCostPer1kTokens: 0.06,
-    outputCostPer1kTokens: 0.24,
-    contextWindow: 128000,
-    description: 'Advanced reasoning for complex problems',
-    icon: Brain,
-    category: 'reasoning'
-  },
-  'o4-mini-2025-04-16': {
-    name: 'O4 Mini (Fast Reasoning)',
+  'claude-3-5-sonnet-20241022': {
+    name: 'Claude 3.5 Sonnet',
     maxTokens: 4096,
     inputCostPer1kTokens: 0.003,
-    outputCostPer1kTokens: 0.012,
-    contextWindow: 128000,
-    description: 'Fast reasoning with efficient performance',
+    outputCostPer1kTokens: 0.015,
+    contextWindow: 200000,
+    description: 'Anthropic\'s most capable model for complex reasoning',
+    icon: Brain,
+    category: 'standard'
+  },
+  'claude-3-5-haiku-20241022': {
+    name: 'Claude 3.5 Haiku',
+    maxTokens: 4096,
+    inputCostPer1kTokens: 0.001,
+    outputCostPer1kTokens: 0.005,
+    contextWindow: 200000,
+    description: 'Fast and efficient Claude model',
     icon: Gauge,
     category: 'fast'
   }
@@ -94,7 +84,7 @@ interface ModelSettingsProps {
 }
 
 export const ModelSettings = ({ modelParams, onChange, disabled = false }: ModelSettingsProps) => {
-  const currentModel = MODEL_CONFIGS[modelParams.model] || MODEL_CONFIGS['gpt-4.1-2025-04-14'];
+  const currentModel = MODEL_CONFIGS[modelParams.model] || MODEL_CONFIGS['gpt-4o-mini'];
   const Icon = currentModel.icon;
 
   const updateParam = (key: keyof ModelParams, value: any) => {
