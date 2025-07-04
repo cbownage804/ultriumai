@@ -11,6 +11,7 @@ import ProfilePage from '@/pages/ProfilePage';
 import SettingsPage from '@/pages/SettingsPage';
 import Pricing from '@/pages/Pricing';
 import UltriumGPT from '@/pages/UltriumGPT';
+import LiveDemos from '@/pages/LiveDemos';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -30,6 +31,7 @@ function AppRouter() {
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/ultriumgpt" element={<UltriumGPT />} />
+      <Route path="/demos" element={<LiveDemos />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={
