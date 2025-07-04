@@ -28,7 +28,7 @@ export const CREDIT_PACKAGES = [
   {
     id: 'starter',
     name: 'Starter Pack',
-    credits: 1000,
+    credits: 250,
     price: 999, // $9.99 in cents
     popular: false,
     description: 'Perfect for getting started'
@@ -36,7 +36,7 @@ export const CREDIT_PACKAGES = [
   {
     id: 'popular',
     name: 'Popular Pack', 
-    credits: 5000,
+    credits: 1250,
     price: 3999, // $39.99 in cents
     popular: true,
     description: 'Most popular choice'
@@ -44,7 +44,7 @@ export const CREDIT_PACKAGES = [
   {
     id: 'power',
     name: 'Power Pack',
-    credits: 15000,
+    credits: 3750,
     price: 9999, // $99.99 in cents
     popular: false,
     description: 'For power users'
@@ -52,7 +52,7 @@ export const CREDIT_PACKAGES = [
   {
     id: 'business',
     name: 'Business Pack',
-    credits: 50000,
+    credits: 12500,
     price: 29999, // $299.99 in cents
     popular: false,
     description: 'For businesses and teams'

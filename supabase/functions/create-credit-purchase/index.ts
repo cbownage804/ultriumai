@@ -11,22 +11,22 @@ const corsHeaders = {
 const CREDIT_PACKAGES = {
   'starter': {
     name: 'Starter Pack',
-    credits: 1000,
+    credits: 250,
     price: 999, // $9.99 in cents
   },
   'popular': {
     name: 'Popular Pack', 
-    credits: 5000,
+    credits: 1250,
     price: 3999, // $39.99 in cents
   },
   'power': {
     name: 'Power Pack',
-    credits: 15000,
+    credits: 3750,
     price: 9999, // $99.99 in cents
   },
   'business': {
     name: 'Business Pack',
-    credits: 50000,
+    credits: 12500,
     price: 29999, // $299.99 in cents
   }
 } as const;
