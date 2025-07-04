@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -54,6 +54,17 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
       e.preventDefault();
       handleSend();
     }
+  };
+
+  // Auto-resize textarea
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    
+    // Reset height to get accurate scrollHeight
+    e.target.style.height = 'auto';
+    // Set height based on content, with limits
+    const newHeight = Math.min(Math.max(e.target.scrollHeight, 40), 120);
+    e.target.style.height = `${newHeight}px`;
   };
 
   const handleSend = () => {
@@ -235,13 +246,14 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
           >
             <Image className="w-4 h-4" />
           </Button>
-          <Input
+          <Textarea
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none overflow-hidden"
+            rows={1}
           />
           <Button
             onClick={handleSend}
