@@ -101,7 +101,7 @@ const Dashboard = () => {
     if (isAPIKeysPage) return "API Keys";
     if (isTeamCollabPage) return "Team Collaboration";
     if (isKnowledgeBasePage) return "Knowledge Base";
-    return "Chat";
+    return "Dashboard";
   };
 
   const renderContent = () => {
