@@ -84,8 +84,8 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
-    id: "ultrium-safedoc",
-    name: "Ultrium SafeDoc",
+    id: "ultrium-safescan",
+    name: "Ultrium SafeScan",
     category: "Document Security",
     description: "Document analysis and content safety verification",
     longDescription: "Advanced document scanner that analyzes files for malicious content, embedded threats, suspicious macros, and data security issues. Supports multiple file formats with detailed security assessments.",
@@ -109,8 +109,8 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
-    id: "ultrium-darkweb",
-    name: "Ultrium DarkWeb Scanner",
+    id: "ultrium-safeweb",
+    name: "Ultrium SafeWEB",
     category: "Threat Intelligence",
     description: "Dark web monitoring and threat intelligence platform",
     longDescription: "Comprehensive dark web monitoring solution that scans for compromised credentials, corporate data breaches, threat actor discussions, and emerging cyber threats targeting your organization.",
@@ -186,7 +186,7 @@ const LiveDemos = () => {
         <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-6">
-              Live AI Security Demos
+              AI Security Demos
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
               Experience our AI-powered security applications in action. Each demo showcases real capabilities you can integrate into your business today.
