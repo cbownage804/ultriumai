@@ -337,6 +337,61 @@ serve(async (req) => {
         presence_penalty = 0
       } = body.modelParams || {};
 
+      // Handle web search if enabled
+      let webSearchContext = '';
+      if (body.webSearchEnabled) {
+        try {
+          const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+          
+          if (perplexityApiKey) {
+            const lastUserMessage = messages[messages.length - 1];
+            console.log('Performing web search for:', lastUserMessage?.content);
+            
+            const searchResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${perplexityApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'llama-3.1-sonar-small-128k-online',
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are a helpful assistant that provides current, factual information from the web. Be concise and focus on the most relevant information.'
+                  },
+                  {
+                    role: 'user',
+                    content: `Search for current information about: ${lastUserMessage?.content}`
+                  }
+                ],
+                temperature: 0.2,
+                max_tokens: 500,
+                return_images: false,
+                return_related_questions: false
+              }),
+            });
+
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              const searchResult = searchData.choices[0]?.message?.content;
+              
+              if (searchResult) {
+                webSearchContext = '\n\nCurrent web information:\n' + searchResult;
+                console.log('Web search context added');
+              }
+            } else {
+              console.error('Web search failed:', searchResponse.statusText);
+            }
+          } else {
+            console.log('Perplexity API key not configured');
+          }
+        } catch (error) {
+          console.error('Web search error:', error);
+          // Continue without web search
+        }
+      }
+
       // Model configuration for cost calculation
       const MODEL_CONFIGS: Record<string, any> = {
         'gpt-4o': {
@@ -388,6 +443,11 @@ serve(async (req) => {
       
       // Always append image generation instruction regardless of custom GPT
       finalSystemPrompt += ' CRITICAL: When users request image generation (asking to create, generate, or make images), respond ONLY with "Generating your image..." and absolutely nothing else. Do not analyze, describe, or discuss generated images.';
+
+      // Add web search context to system prompt if available
+      if (webSearchContext) {
+        finalSystemPrompt += webSearchContext;
+      }
 
       console.log(`Using model: ${model} with temperature: ${temperature}, max_tokens: ${actualMaxTokens}`);
 
