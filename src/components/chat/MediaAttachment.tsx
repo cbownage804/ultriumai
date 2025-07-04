@@ -9,13 +9,32 @@ interface MediaAttachmentProps {
 }
 
 const MediaAttachment = ({ mediaUrl, type, prompt }: MediaAttachmentProps) => {
-  const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = mediaUrl;
-    link.download = `generated-${type}-${Date.now()}.${type === 'image' ? 'webp' : 'mp4'}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async () => {
+    try {
+      let blob;
+      
+      if (mediaUrl.startsWith('data:')) {
+        // Handle base64 data URLs
+        const response = await fetch(mediaUrl);
+        blob = await response.blob();
+      } else {
+        // Handle regular URLs
+        const response = await fetch(mediaUrl);
+        blob = await response.blob();
+      }
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `generated-${type}-${Date.now()}.${type === 'image' ? 'webp' : 'mp4'}`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
   };
 
   const handleOpenInNewTab = () => {
