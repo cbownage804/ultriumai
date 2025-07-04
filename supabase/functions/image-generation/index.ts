@@ -27,15 +27,11 @@ serve(async (req) => {
 
     console.log('Generating image with prompt:', prompt);
 
-    // Map size options to DALL-E 3 supported sizes
-    let dalleSize = "1024x1024"; // default
-    if (size === "1536x1024" || size === "1792x1024") {
-      dalleSize = "1792x1024";
-    } else if (size === "1024x1536" || size === "1024x1792") {
-      dalleSize = "1024x1792";
-    } else {
-      dalleSize = "1024x1024";
-    }
+    // DALL-E 3 supported sizes: "1024x1024", "1792x1024", "1024x1792"
+    const validSizes = ["1024x1024", "1792x1024", "1024x1792"];
+    const dalleSize = validSizes.includes(size) ? size : "1024x1024";
+
+    console.log('Image generation request:', { prompt, size: dalleSize, quality });
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
