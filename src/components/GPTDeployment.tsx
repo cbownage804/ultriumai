@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useSubscription } from "@/hooks/useSubscription";
 
 const GPTDeployment = () => {
-  const { gpts: customGPTs } = useCustomGPTs();
+  const { gpts: customGPTs, updateGPT } = useCustomGPTs();
   const { subscription } = useSubscription();
   const { toast } = useToast();
   const [selectedGPT, setSelectedGPT] = useState<string>("");
@@ -32,6 +32,13 @@ const GPTDeployment = () => {
   });
 
   const selectedGPTData = customGPTs.find(gpt => gpt.id === selectedGPT);
+
+  // Update isPublic when selectedGPT changes
+  useEffect(() => {
+    if (selectedGPTData) {
+      setIsPublic(selectedGPTData.agent_visibility === 'public');
+    }
+  }, [selectedGPTData]);
   const publicUrl = selectedGPTData ? `https://gpt.ultriumai.com/${selectedGPTData.id}` : "";
   const apiEndpoint = selectedGPTData ? `https://api.ultriumai.com/v1/gpt/${selectedGPTData.id}/chat` : "";
 
@@ -84,10 +91,19 @@ fetch('${apiEndpoint}', {
     if (!selectedGPTData) return;
 
     try {
-      // Here you would make an API call to deploy the GPT
+      // Update the GPT's visibility in the database
+      await updateGPT(selectedGPT, {
+        agent_visibility: isPublic ? 'public' : 'private',
+        is_active: isPublic,
+        embed_enabled: isPublic && !isPremiumFeature('embed'),
+        api_enabled: isPublic && !isPremiumFeature('api')
+      });
+      
       toast({
-        title: "GPT Deployed!",
-        description: `${selectedGPTData.name} is now live and accessible`,
+        title: isPublic ? "GPT Published!" : "GPT Made Private",
+        description: isPublic 
+          ? `${selectedGPTData.name} is now live and accessible at ${publicUrl}`
+          : `${selectedGPTData.name} is now private`,
       });
     } catch (error) {
       toast({
@@ -146,6 +162,12 @@ fetch('${apiEndpoint}', {
                       <Badge variant="outline" className="text-xs">
                         {gpt.chat_count} chats
                       </Badge>
+                      {gpt.agent_visibility === 'public' && (
+                        <Badge variant="default" className="text-xs">
+                          <Globe className="h-3 w-3 mr-1" />
+                          Public
+                        </Badge>
+                      )}
                     </div>
                   </SelectItem>
                 ))}
@@ -173,9 +195,9 @@ fetch('${apiEndpoint}', {
                 </Alert>
               )}
 
-              <Button onClick={handleDeploy} className="w-full" disabled={!isPublic}>
+              <Button onClick={handleDeploy} className="w-full">
                 <Zap className="h-4 w-4 mr-2" />
-                Deploy GPT
+                {isPublic ? "Deploy GPT" : "Make Private"}
               </Button>
             </div>
           )}
