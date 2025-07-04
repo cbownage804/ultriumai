@@ -13,6 +13,7 @@ import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsTracking } from "@/hooks/useAnalyticsTracking";
+import { KnowledgeSearchService } from "@/services/KnowledgeSearchService";
 import ChatFileUploader from "./ChatFileUploader";
 
 interface AttachedFile {
@@ -125,12 +126,28 @@ export const GPTChatInterface = () => {
     const startTime = Date.now();
 
     try {
+      // Search knowledge base if the query suggests it would be helpful
+      let knowledgeContext = '';
+      if (KnowledgeSearchService.shouldUseKnowledgeSearch(inputMessage.trim())) {
+        const searchResult = await KnowledgeSearchService.searchKnowledge({
+          query: inputMessage.trim(),
+          gptId: gpt.id,
+          limit: 3
+        });
+        
+        if (searchResult.success && searchResult.results.length > 0) {
+          knowledgeContext = KnowledgeSearchService.formatSearchResultsForContext(searchResult.results);
+        }
+      }
+
+      const enhancedContent = messageContent + knowledgeContext;
+
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           gptId: gpt.id,
           messages: [...messages, { 
             role: userMessage.role, 
-            content: messageContent  // Use enhanced content with file context
+            content: enhancedContent  // Use enhanced content with file context and knowledge
           }].map(m => ({
             role: m.role,
             content: m.content

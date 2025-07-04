@@ -104,6 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
             chunk_index,
             token_count,
             metadata,
+            embedding,
             knowledge_documents!inner(
               id,
               file_name,
@@ -141,7 +142,16 @@ const handler = async (req: Request): Promise<Response> => {
           const chunksWithSimilarity = chunks
             .map(chunk => {
               try {
-                const embedding = JSON.parse(chunk.embedding || '[]');
+                // Handle embedding stored as string (JSON) rather than vector type
+                let embedding;
+                if (typeof chunk.embedding === 'string') {
+                  embedding = JSON.parse(chunk.embedding);
+                } else if (Array.isArray(chunk.embedding)) {
+                  embedding = chunk.embedding;
+                } else {
+                  return null;
+                }
+
                 if (!Array.isArray(embedding) || embedding.length === 0) {
                   return null;
                 }
