@@ -7,6 +7,14 @@ export interface Message {
   generated_media?: { url: string; type: 'image' | 'video'; prompt: string }[];
 }
 
+export interface ChatMessage {
+  id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  timestamp: Date;
+  status?: 'sending' | 'sent' | 'error';
+}
+
 export interface Conversation {
   id: string;
   title: string;
