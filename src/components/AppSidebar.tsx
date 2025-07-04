@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,6 +50,7 @@ const teamItems = [
 
 const settingsItems = [
   { title: "Profile", url: "/dashboard/profile", icon: User },
+  { title: "Security", url: "/dashboard/security", icon: Shield },
   { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 

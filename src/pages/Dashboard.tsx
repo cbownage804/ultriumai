@@ -17,6 +17,7 @@ import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import GPTTemplatesMarketplace from "@/components/GPTTemplatesMarketplace";
 import TeamManagement from "@/components/TeamManagement";
 import TeamAnalytics from "@/components/TeamAnalytics";
+import SecuritySettings from "@/components/SecuritySettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -63,6 +64,7 @@ const Dashboard = () => {
   const isWhiteLabelPage = location.pathname.includes('/white-label');
   const isTeamManagementPage = location.pathname.includes('/teams');
   const isTeamAnalyticsPage = location.pathname.includes('/team-analytics');
+  const isSecurityPage = location.pathname.includes('/security');
   
   const getPageTitle = () => {
     if (isSettingsPage) return "Settings";
@@ -80,6 +82,7 @@ const Dashboard = () => {
     if (isWhiteLabelPage) return "White-label Customization";
     if (isTeamManagementPage) return "Team Management";
     if (isTeamAnalyticsPage) return "Team Analytics";
+    if (isSecurityPage) return "Security Settings";
     return "Chat";
   };
 
@@ -99,6 +102,7 @@ const Dashboard = () => {
     if (isWhiteLabelPage) return <div className="p-6"><WhiteLabelCustomization /></div>;
     if (isTeamManagementPage) return <div className="p-6"><TeamManagement /></div>;
     if (isTeamAnalyticsPage) return <div className="p-6"><TeamAnalytics /></div>;
+    if (isSecurityPage) return <div className="p-6"><SecuritySettings /></div>;
     return <ChatInterface />;
   };
 

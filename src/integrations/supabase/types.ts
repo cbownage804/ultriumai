@@ -131,6 +131,42 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          resource_id: string | null
+          resource_type: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          resource_id?: string | null
+          resource_type?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       conversation_files: {
         Row: {
           conversation_id: string
@@ -625,6 +661,54 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      security_settings: {
+        Row: {
+          account_locked_until: string | null
+          backup_codes: string[] | null
+          created_at: string
+          failed_login_attempts: number | null
+          id: string
+          ip_whitelist: string[] | null
+          last_failed_login_at: string | null
+          login_notifications: boolean | null
+          session_timeout_minutes: number | null
+          two_factor_enabled: boolean | null
+          two_factor_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_locked_until?: string | null
+          backup_codes?: string[] | null
+          created_at?: string
+          failed_login_attempts?: number | null
+          id?: string
+          ip_whitelist?: string[] | null
+          last_failed_login_at?: string | null
+          login_notifications?: boolean | null
+          session_timeout_minutes?: number | null
+          two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_locked_until?: string | null
+          backup_codes?: string[] | null
+          created_at?: string
+          failed_login_attempts?: number | null
+          id?: string
+          ip_whitelist?: string[] | null
+          last_failed_login_at?: string | null
+          login_notifications?: boolean | null
+          session_timeout_minutes?: number | null
+          two_factor_enabled?: boolean | null
+          two_factor_secret?: string | null
           updated_at?: string
           user_id?: string
         }
