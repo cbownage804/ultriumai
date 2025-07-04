@@ -113,7 +113,6 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    console.log('Received request body:', JSON.stringify(body, null, 2));
     const { gptId, messages, systemPrompt, sessionId, prompt, customGPT, gpt_id } = body;
     
     // Get OpenAI API key

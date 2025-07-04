@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -25,8 +25,24 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
   const [showMediaGeneration, setShowMediaGeneration] = useState(false);
   const [attachments, setAttachments] = useState<ConversationFile[]>([]);
   const [generatedMedia, setGeneratedMedia] = useState<{ url: string; type: 'image' | 'video'; prompt: string }[]>([]);
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+  const [webSearchEnabled, setWebSearchEnabled] = useState(() => {
+    const saved = localStorage.getItem('ultriumgpt-web-search-enabled');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const saved = localStorage.getItem('ultriumgpt-selected-model');
+    return saved || "gpt-4o-mini";
+  });
+
+  // Persist web search setting
+  useEffect(() => {
+    localStorage.setItem('ultriumgpt-web-search-enabled', JSON.stringify(webSearchEnabled));
+  }, [webSearchEnabled]);
+
+  // Persist model selection
+  useEffect(() => {
+    localStorage.setItem('ultriumgpt-selected-model', selectedModel);
+  }, [selectedModel]);
 
   // Reset web search when not allowed
   if (!allowWebSearch && webSearchEnabled) {

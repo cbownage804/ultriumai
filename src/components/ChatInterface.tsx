@@ -165,17 +165,6 @@ const ChatInterface = () => {
       const startTime = Date.now();
       
       // Call AI API with custom GPT context or default
-      console.log('Calling chat-completion with:', {
-        messagesCount: [...messages, userMessage].length,
-        customGPT: currentGPT ? currentGPT.name : 'default',
-        model: aiModel || 'gpt-4o-mini'
-      });
-      
-      console.log('Actual customGPT being sent:', currentGPT ? {
-        ...currentGPT,
-        id: selectedGPT
-      } : null);
-      
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           messages: [...messages, { 
@@ -195,8 +184,6 @@ const ChatInterface = () => {
         }
       });
       
-      console.log('Chat completion response:', { data, error });
-
       const endTime = Date.now();
       const responseTime = endTime - startTime;
 
