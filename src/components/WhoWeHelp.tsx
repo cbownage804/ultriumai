@@ -121,10 +121,10 @@ const WhoWeHelp = () => {
                       <Icon className="h-6 w-6 text-primary group-hover:animate-glow" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg group-hover:text-gradient transition-all duration-300">{industry.title}</CardTitle>
+                      <CardTitle className="text-lg text-foreground group-hover:text-gradient transition-all duration-300">{industry.title}</CardTitle>
                     </div>
                   </div>
-                  <CardDescription className="text-primary font-medium group-hover:text-primary-glow transition-colors duration-300">
+                  <CardDescription className="text-foreground/80 font-medium group-hover:text-primary transition-colors duration-300">
                     {industry.description}
                   </CardDescription>
                 </CardHeader>
@@ -156,10 +156,10 @@ const WhoWeHelp = () => {
                   <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
                     <Icon className="h-8 w-8 text-primary group-hover:animate-glow" />
                   </div>
-                  <CardTitle className="text-lg group-hover:text-gradient transition-all duration-300">{reason.title}</CardTitle>
+                  <CardTitle className="text-lg text-foreground group-hover:text-gradient transition-all duration-300">{reason.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
+                  <p className="text-sm text-foreground/70 leading-relaxed group-hover:text-foreground transition-colors duration-300">
                     {reason.description}
                   </p>
                 </CardContent>
