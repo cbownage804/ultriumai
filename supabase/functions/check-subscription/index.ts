@@ -40,6 +40,27 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
+    // Skip Brandon's test account - preserve enterprise status
+    if (user.email === 'brandon.howard@kwccpa.com') {
+      logStep("Skipping Brandon's test account - preserving enterprise status");
+      
+      // Get current subscription status
+      const { data: currentSub } = await supabaseClient
+        .from("subscribers")
+        .select("*")
+        .eq("email", user.email)
+        .single();
+      
+      return new Response(JSON.stringify({
+        subscribed: currentSub?.subscribed || true,
+        subscription_tier: currentSub?.subscription_tier || "enterprise",
+        subscription_end: currentSub?.subscription_end
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
