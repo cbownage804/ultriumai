@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,15 @@ const ChatArea = ({ currentConversationId, conversations, messages, isLoading }:
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current && !messageSearchQuery) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isLoading, messageSearchQuery]);
 
   useEffect(() => {
     if (!messageSearchQuery.trim()) {
@@ -143,7 +152,7 @@ const ChatArea = ({ currentConversationId, conversations, messages, isLoading }:
         )}
       </div>
       
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
         <div className="space-y-4">
           {(messageSearchQuery ? filteredMessages : messages).map((message) => (
             <div
@@ -221,6 +230,8 @@ const ChatArea = ({ currentConversationId, conversations, messages, isLoading }:
               </Card>
             </div>
           )}
+          {/* Invisible div to scroll to */}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
     </>
