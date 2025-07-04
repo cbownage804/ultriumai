@@ -161,6 +161,26 @@ export default {
 					'100%': {
 						backgroundPosition: '-200% 0'
 					}
+				},
+				'fold-in': {
+					'0%': {
+						transform: 'perspective(1000px) rotateX(0deg)',
+						opacity: '1'
+					},
+					'100%': {
+						transform: 'perspective(1000px) rotateX(-90deg)',
+						opacity: '0'
+					}
+				},
+				'unfold': {
+					'0%': {
+						transform: 'perspective(1000px) rotateX(-90deg)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'perspective(1000px) rotateX(0deg)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
@@ -176,7 +196,8 @@ export default {
 				'pulse-glow': 'pulseGlow 3s ease-in-out infinite',
 				'float': 'float 6s ease-in-out infinite',
 				'rotate-slow': 'rotateSlow 20s linear infinite',
-				'shimmer': 'shimmer 2s infinite linear',
+				'fold-in': 'fold-in 0.8s ease-in-out',
+				'unfold': 'unfold 0.8s ease-in-out',
 			},
 			backdropBlur: {
 				xs: '2px',

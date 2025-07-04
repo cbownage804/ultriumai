@@ -4,12 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap, ExternalLink, Network } from "lucide-react";
 import { useScrollAnimation, useStaggeredScrollAnimation } from "@/hooks/useScrollAnimation";
+import { useFoldAnimation, useAccordionFold } from "@/hooks/useFoldAnimation";
 
 const SecurityAppsSection = () => {
   const headerAnimation = useScrollAnimation();
   const { ref: cardsRef, visibleItems: visibleCards } = useStaggeredScrollAnimation(8, 150);
-  const pricingAnimation = useScrollAnimation();
-  const bundlesAnimation = useScrollAnimation();
+  const pricingFold = useFoldAnimation();
+  const bundlesFold = useAccordionFold();
+  const ctaFold = useFoldAnimation();
 
   const securityApps = [
     {
@@ -192,7 +194,7 @@ const SecurityAppsSection = () => {
   ];
 
   return (
-    <section id="security" className="py-20 bg-gradient-secondary overflow-hidden">
+    <section id="security" className="py-20 bg-gradient-secondary overflow-hidden fold-container">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div 
           ref={headerAnimation.ref}
@@ -281,10 +283,8 @@ const SecurityAppsSection = () => {
 
         {/* Pricing Tiers Section */}
         <div 
-          ref={pricingAnimation.ref}
-          className={`mb-16 transition-all duration-1000 ${
-            pricingAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-          }`}
+          ref={pricingFold.ref}
+          className={`mb-16 fold-section ${pricingFold.foldState === 'folding' ? 'folding' : ''} ${pricingFold.foldState === 'folded' ? 'folded' : ''} transition-all duration-1000`}
         >
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold mb-4 animate-fade-in-up">Choose Your Security Plan</h3>
@@ -297,13 +297,16 @@ const SecurityAppsSection = () => {
               return (
                 <Card 
                   key={index} 
-                  className={`relative ${tier.popular ? 'border-primary border-2 animate-pulse-glow' : ''} hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover ${
-                    pricingAnimation.isVisible 
-                      ? 'opacity-100 translate-y-0' 
-                      : 'opacity-0 translate-y-8'
+                  className={`relative ${tier.popular ? 'border-primary border-2 animate-pulse-glow' : ''} hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu ${
+                    pricingFold.foldState === 'normal' 
+                      ? 'opacity-100 translate-y-0 rotate-x-0' 
+                      : pricingFold.foldState === 'folding'
+                      ? 'opacity-90 translate-y-2 -rotate-x-3'
+                      : 'opacity-70 translate-y-4 -rotate-x-6'
                   }`}
                   style={{ 
-                    transitionDelay: `${index * 200}ms`
+                    transitionDelay: `${index * 200}ms`,
+                    transformStyle: 'preserve-3d'
                   }}
                 >
                   {tier.popular && (
@@ -344,9 +347,9 @@ const SecurityAppsSection = () => {
 
           {/* App Bundles Section */}
           <div 
-            ref={bundlesAnimation.ref}
-            className={`bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated transition-all duration-1000 ${
-              bundlesAnimation.isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+            ref={bundlesFold.ref}
+            className={`bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated accordion-fold transition-all duration-1000 ${
+              bundlesFold.foldDirection === 'up' ? 'fold-up' : bundlesFold.foldDirection === 'down' ? 'fold-down' : ''
             }`}
           >
             <div className="text-center mb-8">
@@ -358,13 +361,16 @@ const SecurityAppsSection = () => {
               {appBundles.map((bundle, index) => (
                 <Card 
                   key={index} 
-                  className={`hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover ${
-                    bundlesAnimation.isVisible 
-                      ? 'opacity-100 translate-y-0' 
-                      : 'opacity-0 translate-y-8'
+                  className={`hover:shadow-lg transition-all duration-500 card-elevated animate-scale-on-hover transform-gpu ${
+                    bundlesFold.isVisible 
+                      ? 'opacity-100 translate-y-0 rotate-x-0' 
+                      : bundlesFold.foldDirection === 'up'
+                      ? 'opacity-70 translate-y-4 rotate-x-12'
+                      : 'opacity-70 translate-y-8 -rotate-x-12'
                   }`}
                   style={{ 
-                    transitionDelay: `${index * 150}ms`
+                    transitionDelay: `${index * 150}ms`,
+                    transformStyle: 'preserve-3d'
                   }}
                 >
                   <CardHeader className="text-center">
@@ -411,8 +417,11 @@ const SecurityAppsSection = () => {
         </div>
 
         {/* CTA Section */}
-        <div className="text-center mt-12">
-          <div className="bg-card rounded-lg p-8 shadow-lg max-w-2xl mx-auto card-elevated animate-scale-on-hover">
+        <div 
+          ref={ctaFold.ref}
+          className={`text-center mt-12 fold-section ${ctaFold.foldState === 'folding' ? 'folding' : ''} ${ctaFold.foldState === 'folded' ? 'folded' : ''}`}
+        >
+          <div className="bg-card rounded-lg p-8 shadow-lg max-w-2xl mx-auto card-elevated animate-scale-on-hover paper-fold ${ctaFold.foldState !== 'normal' ? 'active' : ''}">
             <h3 className="text-2xl font-bold mb-4 animate-fade-in-up">Ready to Secure Your Custom GPTs?</h3>
             <p className="text-muted-foreground mb-6 animate-fade-in-up delay-200">
               Add enterprise-grade security scanning to your AI agents. Protect your users from cyber threats with real-time analysis.
