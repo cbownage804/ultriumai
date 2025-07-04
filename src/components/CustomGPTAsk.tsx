@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, Copy, Check, Clock, AlertTriangle } from "lucide-react";
 import { useCustomGPTs, CustomGPT } from "@/hooks/useCustomGPTs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +14,7 @@ interface Message {
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
+  status?: 'sending' | 'sent' | 'error';
 }
 
 const CustomGPTAsk = () => {
@@ -23,6 +24,7 @@ const CustomGPTAsk = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [knowledgeBase, setKnowledgeBase] = useState<Array<{id: string, file_name: string, processed_content: string}>>([]);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
   const currentGPT = gpts[0]; // Use the first/latest GPT
 
@@ -60,6 +62,24 @@ const CustomGPTAsk = () => {
     }
   }, [currentGPT]);
 
+  const copyMessage = async (content: string, messageId: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+      toast({
+        title: "Copied!",
+        description: "Message copied to clipboard",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to copy",
+        description: "Unable to copy message to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || !currentGPT) return;
 
@@ -67,12 +87,18 @@ const CustomGPTAsk = () => {
       id: Date.now().toString(),
       content: inputMessage,
       role: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      status: 'sending'
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage("");
     setIsLoading(true);
+
+    // Update message status to sent
+    setMessages(prev => prev.map(msg => 
+      msg.id === userMessage.id ? { ...msg, status: 'sent' } : msg
+    ));
 
     try {
       // Build enhanced system prompt with knowledge base
@@ -228,15 +254,38 @@ When referencing information from these documents, mention the source document n
                     </Avatar>
                   )}
                   
-                  <div className={`max-w-[80%] rounded-lg p-3 ${
+                  <div className={`max-w-[80%] rounded-lg p-3 relative group ${
                     message.role === 'user' 
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-muted'
                   }`}>
                     <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                    <p className={`text-xs mt-1 opacity-70`}>
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs opacity-70">
+                          {message.timestamp.toLocaleTimeString()}
+                        </p>
+                        {message.status && message.role === 'user' && (
+                          <div className="flex items-center gap-1">
+                            {message.status === 'sending' && <Clock className="h-3 w-3 opacity-70" />}
+                            {message.status === 'sent' && <Check className="h-3 w-3 opacity-70" />}
+                            {message.status === 'error' && <AlertTriangle className="h-3 w-3 opacity-70 text-destructive" />}
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                        onClick={() => copyMessage(message.content, message.id)}
+                      >
+                        {copiedMessageId === message.id ? (
+                          <Check className="h-3 w-3" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   
                   {message.role === 'user' && (
