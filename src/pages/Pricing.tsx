@@ -1,7 +1,8 @@
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { 
   Check, 
   ArrowRight, 
@@ -14,107 +15,103 @@ import {
   BarChart3,
   Settings,
   Globe,
-  Phone
+  Phone,
+  Crown,
+  X
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Pricing = () => {
-  const { createCheckout } = useSubscription();
+  const [isYearly, setIsYearly] = useState(false);
+  const { subscription, createCheckout, openCustomerPortal, isLoading } = useSubscription();
+  const { user } = useAuth();
+
   const plans = [
     {
-      name: "Small Business",
-      description: "Perfect for growing teams and startups",
-      price: "$100",
-      period: "/month",
-      icon: Users,
-      popular: false,
+      name: "Free",
+      description: "Perfect for trying out UltriumGPT",
+      price: { monthly: 0, yearly: 0 },
+      icon: Check,
       features: [
-        "Up to 5 team members",
-        "1 knowledge base",
-        "5,000 AI queries/month",
-        "Basic integrations (Slack, Teams)",
-        "Email support",
-        "Standard security",
-        "Basic analytics",
-        "Web widget embedding"
+        "1 Custom GPT",
+        "500 character prompts",
+        "Basic chat interface",
+        "Community support",
+        "UltriumGPT branding"
       ],
-      targetAudience: "Startups, small teams, consultants",
-      painPoints: "Reduce repetitive questions, improve customer support efficiency"
+      limitations: [
+        "No API access",
+        "No embedding",
+        "No custom branding",
+        "No document uploads"
+      ],
+      current: subscription.subscription_tier === "free",
+      popular: false
     },
     {
-      name: "Medium Business",
-      description: "Ideal for growing companies with multiple departments",
-      price: "$100",
-      period: "/month",
-      icon: Building2,
-      popular: true,
+      name: "Premium",
+      description: "Best for small teams and professionals",
+      price: { monthly: 100, yearly: 1000 },
+      icon: Crown,
       features: [
-        "Up to 50 team members",
-        "5 knowledge bases",
-        "25,000 AI queries/month",
-        "Advanced integrations (Zendesk, ServiceNow)",
-        "Priority support",
-        "Advanced security & SSO",
-        "Detailed analytics & reporting",
-        "Custom branding",
+        "5 Custom GPTs",
+        "2,000 character prompts",
+        "Document uploads & knowledge base",
+        "Custom branding & theming",
+        "Embed widgets",
         "API access",
-        "Multi-department setup"
+        "Priority support",
+        "Advanced analytics"
       ],
-      targetAudience: "Mid-size companies, SaaS businesses, professional services",
-      painPoints: "Scale support operations, reduce training time, improve consistency"
+      current: subscription.subscription_tier === "premium",
+      popular: true
     },
     {
       name: "Enterprise",
-      description: "For large organizations with complex needs",
-      price: "$500",
-      period: "pricing",
-      icon: Factory,
-      popular: false,
+      description: "Unlimited power for growing businesses",
+      price: { monthly: 500, yearly: 5000 },
+      icon: Building2,
       features: [
-        "Unlimited team members",
-        "Unlimited knowledge bases",
-        "Unlimited AI queries",
-        "All integrations included",
-        "24/7 dedicated support",
-        "Enterprise security & compliance",
-        "Advanced analytics & BI",
-        "Full white-label solution",
-        "Custom API development",
-        "Dedicated success manager",
-        "On-premise deployment option",
-        "Custom training & onboarding"
+        "Unlimited Custom GPTs",
+        "5,000 character prompts",
+        "Everything in Premium",
+        "White-label solutions",
+        "Custom integrations",
+        "Dedicated support",
+        "SLA guarantees",
+        "Custom deployment options"
       ],
-      targetAudience: "Large enterprises, government, healthcare, financial services",
-      painPoints: "Enterprise compliance, global deployment, advanced security requirements"
+      current: subscription.subscription_tier === "enterprise",
+      popular: false
     }
   ];
 
-  const addOnServices = [
-    {
-      name: "MSP/MSSP Package",
-      description: "Multi-tenant architecture for managed service providers",
-      features: [
-        "Unlimited client tenants",
-        "White-label client portals",
-        "RMM/PSA integrations",
-        "Client-specific branding",
-        "Tenant isolation & security"
-      ],
-      price: "Starting at $299/month"
-    },
-    {
-      name: "Professional Services",
-      description: "Get expert help with setup and optimization",
-      features: [
-        "Custom knowledge base setup",
-        "Integration configuration",
-        "Team training sessions",
-        "Content optimization",
-        "Ongoing consultation"
-      ],
-      price: "Starting at $2,500"
+  const handleSubscribe = async (planName: string) => {
+    if (!user) {
+      window.location.href = "/auth";
+      return;
     }
-  ];
+
+    if (planName === "Free") return;
+
+    const interval = isYearly ? "yearly" : "monthly";
+    await createCheckout(planName.toLowerCase(), interval);
+  };
+
+  const formatPrice = (price: number) => {
+    if (price === 0) return "Free";
+    return `$${price}`;
+  };
+
+  const getSavings = (plan: any) => {
+    if (plan.price.yearly === 0) return null;
+    const monthlyCost = plan.price.monthly * 12;
+    const savings = monthlyCost - plan.price.yearly;
+    return savings;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,19 +121,28 @@ const Pricing = () => {
       <section className="pt-24 pb-16 bg-gradient-to-br from-background via-background to-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-primary to-blue-400 bg-clip-text text-transparent">
-            Simple, Transparent Pricing
+            Choose Your <span className="text-primary">AI Power</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Choose the perfect plan for your business size and needs. From startups to enterprises, 
-            UltriumGPT scales with your organization.
+            Transform your business with custom AI assistants. Start free, scale as you grow.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button variant="hero" size="lg">
-              Start Free 14-Day Trial
-            </Button>
-            <Button variant="outline" size="lg">
-              Schedule Demo
-            </Button>
+          
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <span className={`text-sm ${!isYearly ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+              Monthly
+            </span>
+            <Switch
+              checked={isYearly}
+              onCheckedChange={setIsYearly}
+              className="data-[state=checked]:bg-primary"
+            />
+            <span className={`text-sm ${isYearly ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+              Yearly
+            </span>
+            <Badge variant="secondary" className="text-xs">
+              Save 2 months
+            </Badge>
           </div>
         </div>
       </section>
@@ -145,200 +151,109 @@ const Pricing = () => {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {plans.map((plan, index) => (
-              <Card key={index} className={`relative p-8 ${plan.popular ? 'border-2 border-primary shadow-lg scale-105' : ''}`}>
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground">
-                    Most Popular
-                  </Badge>
-                )}
-                
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <plan.icon className="w-8 h-8 text-primary" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                  <p className="text-muted-foreground mb-4">{plan.description}</p>
-                  <div className="flex items-baseline justify-center">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground ml-1">{plan.period}</span>
-                  </div>
-                </div>
-
-                <div className="mb-8">
-                  <h4 className="font-semibold mb-3">Perfect for:</h4>
-                  <p className="text-sm text-muted-foreground mb-4">{plan.targetAudience}</p>
-                  <p className="text-sm text-primary font-medium">{plan.painPoints}</p>
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start">
-                      <Check className="w-5 h-5 text-primary mt-0.5 mr-3 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="space-y-3">
-                  {plan.name === "Small Business" ? (
-                    <div className="space-y-2">
-                      <Button 
-                        variant={plan.popular ? "hero" : "outline"} 
-                        className="w-full"
-                        size="lg"
-                        onClick={() => createCheckout('premium', 'monthly')}
-                      >
-                        $100/month
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        size="lg"
-                        onClick={() => createCheckout('premium', 'yearly')}
-                      >
-                        $1,000/year (Save $200)
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  ) : plan.name === "Medium Business" ? (
-                    <div className="space-y-2">
-                      <Button 
-                        variant={plan.popular ? "hero" : "outline"} 
-                        className="w-full"
-                        size="lg"
-                        onClick={() => createCheckout('premium', 'monthly')}
-                      >
-                        $100/month
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        size="lg"
-                        onClick={() => createCheckout('premium', 'yearly')}
-                      >
-                        $1,000/year (Save $200)
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Button 
-                        variant={plan.popular ? "hero" : "outline"} 
-                        className="w-full"
-                        size="lg"
-                        onClick={() => createCheckout('enterprise', 'monthly')}
-                      >
-                        $500/month
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        size="lg"
-                        onClick={() => createCheckout('enterprise', 'yearly')}
-                      >
-                        $5,000/year (Save $1,000)
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
+            {plans.map((plan, index) => {
+              const PlanIcon = plan.icon;
+              const savings = getSavings(plan);
+              
+              return (
+                <Card 
+                  key={index}
+                  className={`relative ${plan.popular ? 'border-primary shadow-lg scale-105' : ''} ${plan.current ? 'ring-2 ring-primary' : ''}`}
+                >
+                  {plan.popular && (
+                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary">
+                      Most Popular
+                    </Badge>
                   )}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                  
+                  {plan.current && (
+                    <Badge variant="outline" className="absolute -top-3 right-4 border-primary text-primary">
+                      Current Plan
+                    </Badge>
+                  )}
 
-      {/* Add-on Services */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Additional Services & Packages</h2>
-            <p className="text-xl text-muted-foreground">
-              Specialized solutions and professional services to maximize your success
-            </p>
-          </div>
+                  <CardHeader className="text-center pb-8">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <PlanIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <CardDescription className="text-base">{plan.description}</CardDescription>
+                    
+                    <div className="mt-4">
+                      <div className="text-4xl font-bold">
+                        {formatPrice(isYearly ? plan.price.yearly : plan.price.monthly)}
+                      </div>
+                      {plan.price.monthly > 0 && (
+                        <div className="text-sm text-muted-foreground">
+                          per {isYearly ? 'year' : 'month'}
+                        </div>
+                      )}
+                      {isYearly && savings && (
+                        <div className="text-sm text-green-600 font-medium mt-1">
+                          Save ${savings}/year
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {addOnServices.map((service, index) => (
-              <Card key={index} className="p-8">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold mb-2">{service.name}</h3>
-                    <p className="text-muted-foreground">{service.description}</p>
-                  </div>
-                  <Badge variant="outline" className="ml-4">
-                    {service.price}
-                  </Badge>
-                </div>
+                  <CardContent className="space-y-6">
+                    {/* Features */}
+                    <div className="space-y-3">
+                      {plan.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} className="flex items-center gap-3">
+                          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
 
-                <ul className="space-y-2 mb-6">
-                  {service.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start">
-                      <Check className="w-4 h-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                    {/* Limitations for Free plan */}
+                    {plan.limitations && (
+                      <div className="space-y-3 pt-4 border-t">
+                        <div className="text-sm font-medium text-muted-foreground">Not included:</div>
+                        {plan.limitations.map((limitation, limitationIndex) => (
+                          <div key={limitationIndex} className="flex items-center gap-3">
+                            <X className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm text-muted-foreground">{limitation}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                <Button variant="outline" className="w-full">
-                  Learn More
-                </Button>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Business Size Comparison */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Businesses Choose UltriumGPT</h2>
-            <p className="text-xl text-muted-foreground">
-              Different challenges, one powerful solution
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="p-6 text-center">
-              <Users className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-4">Small Businesses</h3>
-              <ul className="text-left space-y-2 text-sm text-muted-foreground">
-                <li>• Reduce repetitive customer questions</li>
-                <li>• Enable 24/7 support without hiring</li>
-                <li>• Onboard new team members faster</li>
-                <li>• Maintain consistent messaging</li>
-                <li>• Scale support as you grow</li>
-              </ul>
-            </Card>
-
-            <Card className="p-6 text-center">
-              <Building2 className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-4">Medium Businesses</h3>
-              <ul className="text-left space-y-2 text-sm text-muted-foreground">
-                <li>• Standardize knowledge across departments</li>
-                <li>• Reduce training time for new hires</li>
-                <li>• Improve support team efficiency</li>
-                <li>• Enable self-service for employees</li>
-                <li>• Scale operations without headcount</li>
-              </ul>
-            </Card>
-
-            <Card className="p-6 text-center">
-              <Factory className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-4">Large Enterprises</h3>
-              <ul className="text-left space-y-2 text-sm text-muted-foreground">
-                <li>• Global knowledge standardization</li>
-                <li>• Compliance and security requirements</li>
-                <li>• Multi-department coordination</li>
-                <li>• Advanced analytics and insights</li>
-                <li>• Custom integrations and workflows</li>
-              </ul>
-            </Card>
+                    {/* Action Button */}
+                    <div className="pt-4">
+                      {plan.current ? (
+                        <div className="space-y-2">
+                          <Button variant="outline" className="w-full" disabled>
+                            Current Plan
+                          </Button>
+                          {plan.name !== "Free" && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="w-full"
+                              onClick={openCustomerPortal}
+                            >
+                              Manage Subscription
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <Button 
+                          className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
+                          variant={plan.popular ? "default" : "outline"}
+                          onClick={() => handleSubscribe(plan.name)}
+                          disabled={isLoading}
+                        >
+                          {plan.name === "Free" ? "Get Started" : `Upgrade to ${plan.name}`}
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -351,22 +266,22 @@ const Pricing = () => {
           <div className="space-y-6">
             <Card className="p-6">
               <h3 className="font-semibold mb-2">Can I change plans anytime?</h3>
-              <p className="text-muted-foreground">Yes, you can upgrade or downgrade your plan at any time. Changes take effect at your next billing cycle.</p>
+              <p className="text-muted-foreground">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.</p>
             </Card>
             
             <Card className="p-6">
-              <h3 className="font-semibold mb-2">What happens if I exceed my query limit?</h3>
-              <p className="text-muted-foreground">We'll notify you when you approach your limit. You can either upgrade your plan or purchase additional queries for $0.10 each.</p>
+              <h3 className="font-semibold mb-2">What happens to my GPTs if I downgrade?</h3>
+              <p className="text-muted-foreground">Your GPTs remain accessible, but you may need to deactivate some to meet your plan's limits.</p>
             </Card>
             
             <Card className="p-6">
-              <h3 className="font-semibold mb-2">Do you offer custom integrations?</h3>
-              <p className="text-muted-foreground">Yes, Enterprise customers can request custom integrations. Our team will work with you to build connections to your specific tools and workflows.</p>
+              <h3 className="font-semibold mb-2">Is there a free trial?</h3>
+              <p className="text-muted-foreground">Yes! Start with our free plan and upgrade when you're ready for more features.</p>
             </Card>
             
             <Card className="p-6">
-              <h3 className="font-semibold mb-2">Is there a setup fee?</h3>
-              <p className="text-muted-foreground">No setup fees for Small and Medium Business plans. Enterprise customers receive dedicated onboarding included in their custom pricing.</p>
+              <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
+              <p className="text-muted-foreground">We offer a 30-day money-back guarantee for all paid plans. No questions asked.</p>
             </Card>
           </div>
         </div>
@@ -374,22 +289,29 @@ const Pricing = () => {
 
       {/* CTA Section */}
       <section className="py-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of businesses already reducing support costs with UltriumGPT
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="lg">
-              Start Your Free Trial
-            </Button>
-            <Button variant="outline" size="lg">
-              <Phone className="w-4 h-4 mr-2" />
-              Talk to Sales
-            </Button>
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="bg-primary/5 rounded-2xl p-8">
+            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Business?</h2>
+            <p className="text-muted-foreground mb-6">
+              Join thousands of businesses already using UltriumGPT to create powerful AI assistants.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" asChild>
+                <Link to="/auth">
+                  Start Free Today
+                  <Zap className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link to="/dashboard">
+                  View Live Demo
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
+
     </div>
   );
 };
