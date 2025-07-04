@@ -5,16 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Star, Search, Filter, Sparkles, Download, Users, TrendingUp, Zap } from "lucide-react";
+import { Star, Search, Filter, Sparkles, Download, Users, TrendingUp, Zap, Lock, Crown, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { gptTemplates } from "@/data/gptTemplates";
 import { GPTTemplate } from "@/types/templates";
 
 const GPTTemplatesMarketplace = () => {
   const { user } = useAuth();
-  const { createGPT, canCreateMore } = useCustomGPTs();
+  const { createGPT, canCreateMore, gpts, limits } = useCustomGPTs();
+  const { subscription, createCheckout } = useSubscription();
   const { toast } = useToast();
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,17 +108,70 @@ const GPTTemplatesMarketplace = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Sparkles className="h-6 w-6 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Sparkles className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">GPT Templates</h1>
+            <p className="text-muted-foreground mt-1">
+              Discover and install pre-built GPT templates to get started quickly
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold">GPT Templates</h1>
-          <p className="text-muted-foreground mt-1">
-            Discover and install pre-built GPT templates to get started quickly
+        
+        {/* Subscription Status */}
+        <div className="text-right">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant={subscription.subscription_tier === 'free' ? 'secondary' : 'default'} className="capitalize">
+              {subscription.subscription_tier === 'free' ? (
+                <>
+                  <Lock className="h-3 w-3 mr-1" />
+                  Free Plan
+                </>
+              ) : (
+                <>
+                  <Crown className="h-3 w-3 mr-1" />
+                  {subscription.subscription_tier} Plan
+                </>
+              )}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            GPTs: {gpts.length}/{limits.maxGPTs === -1 ? '∞' : limits.maxGPTs}
+            {!canCreateMore && (
+              <span className="text-destructive font-medium ml-2">Limit reached</span>
+            )}
           </p>
         </div>
       </div>
+
+      {/* Upgrade Prompt for Free Users */}
+      {subscription.subscription_tier === 'free' && !canCreateMore && (
+        <Card className="border-warning bg-warning/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warning/10">
+                  <Lock className="h-5 w-5 text-warning" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Template Installation Locked</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You've reached your free plan limit of {limits.maxGPTs} GPT. Upgrade to install templates and create more custom GPTs.
+                  </p>
+                </div>
+              </div>
+              <Button onClick={() => createCheckout('premium', 'monthly')} className="shrink-0">
+                <Crown className="h-4 w-4 mr-2" />
+                Upgrade Plan
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters & Search */}
       <div className="flex gap-4 items-center flex-wrap">
@@ -279,13 +334,45 @@ const GPTTemplatesMarketplace = () => {
                             ))}
                           </div>
                         </div>
-                        <Button 
-                          onClick={() => handleInstallTemplate(template)}
-                          disabled={!canCreateMore || isInstalling}
-                          className="w-full"
-                        >
-                          {isInstalling ? "Installing..." : "Install Template"}
-                        </Button>
+                        <div className="space-y-3">
+                          {!canCreateMore && (
+                            <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                              <div className="flex items-center gap-2 text-warning mb-2">
+                                <Lock className="h-4 w-4" />
+                                <span className="font-medium text-sm">Premium Feature</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mb-2">
+                                You've reached your {subscription.subscription_tier} plan limit of {limits.maxGPTs} GPT{limits.maxGPTs > 1 ? 's' : ''}. 
+                                Upgrade to install templates and create unlimited GPTs.
+                              </p>
+                              <Button 
+                                onClick={() => createCheckout('premium', 'monthly')}
+                                size="sm"
+                                className="w-full"
+                              >
+                                <Crown className="h-3 w-3 mr-1" />
+                                Upgrade to Premium
+                              </Button>
+                            </div>
+                          )}
+                          <Button 
+                            onClick={() => handleInstallTemplate(template)}
+                            disabled={!canCreateMore || isInstalling}
+                            className="w-full"
+                            variant={!canCreateMore ? "secondary" : "default"}
+                          >
+                            {!canCreateMore ? (
+                              <>
+                                <Lock className="h-4 w-4 mr-2" />
+                                Locked - Upgrade Required
+                              </>
+                            ) : isInstalling ? (
+                              "Installing..."
+                            ) : (
+                              "Install Template"
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
@@ -295,9 +382,19 @@ const GPTTemplatesMarketplace = () => {
                     className="flex-1"
                     onClick={() => handleInstallTemplate(template)}
                     disabled={!canCreateMore || isInstalling}
+                    variant={!canCreateMore ? "secondary" : "default"}
                   >
-                    <Download className="w-3 h-3 mr-1" />
-                    Install
+                    {!canCreateMore ? (
+                      <>
+                        <Lock className="w-3 h-3 mr-1" />
+                        Locked
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-3 h-3 mr-1" />
+                        Install
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
