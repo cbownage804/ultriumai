@@ -173,7 +173,7 @@ const demoApps: DemoApp[] = [
       "Executive protection",
       "Automated alerts"
     ],
-    demoUrl: "/demos/darkweb",
+    demoUrl: "/demos/safeweb",
     isLive: true,
     tags: ["Dark Web", "Threat Intelligence", "Monitoring"],
     useCases: [
