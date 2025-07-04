@@ -232,6 +232,81 @@ export type Database = {
         }
         Relationships: []
       }
+      crawled_pages: {
+        Row: {
+          content: string | null
+          content_length: number | null
+          content_type: string | null
+          crawl_job_id: string
+          crawled_at: string
+          created_at: string
+          depth: number | null
+          document_id: string | null
+          id: string
+          links_found: string[] | null
+          metadata: Json | null
+          parent_url: string | null
+          raw_html: string | null
+          status_code: number | null
+          title: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          content_length?: number | null
+          content_type?: string | null
+          crawl_job_id: string
+          crawled_at?: string
+          created_at?: string
+          depth?: number | null
+          document_id?: string | null
+          id?: string
+          links_found?: string[] | null
+          metadata?: Json | null
+          parent_url?: string | null
+          raw_html?: string | null
+          status_code?: number | null
+          title?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          content_length?: number | null
+          content_type?: string | null
+          crawl_job_id?: string
+          crawled_at?: string
+          created_at?: string
+          depth?: number | null
+          document_id?: string | null
+          id?: string
+          links_found?: string[] | null
+          metadata?: Json | null
+          parent_url?: string | null
+          raw_html?: string | null
+          status_code?: number | null
+          title?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crawled_pages_crawl_job_id_fkey"
+            columns: ["crawl_job_id"]
+            isOneToOne: false
+            referencedRelation: "web_crawl_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crawled_pages_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_gpts: {
         Row: {
           affiliate_id: string | null
@@ -594,6 +669,264 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gpt_integrations_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          content_type: string | null
+          created_at: string
+          document_id: string
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          source_id: string
+          token_count: number | null
+          user_id: string
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          content_type?: string | null
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id: string
+          token_count?: number | null
+          user_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          content_type?: string | null
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string
+          token_count?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_chunks_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_chunks_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_documents: {
+        Row: {
+          chunk_count: number | null
+          content_hash: string | null
+          created_at: string
+          error_message: string | null
+          file_name: string
+          file_path: string | null
+          file_size: number
+          file_url: string | null
+          id: string
+          metadata: Json | null
+          mime_type: string
+          page_count: number | null
+          processed_at: string | null
+          processed_content: string | null
+          processing_settings: Json | null
+          raw_content: string | null
+          source_id: string
+          status: string
+          updated_at: string
+          uploaded_at: string
+          user_id: string
+          word_count: number | null
+        }
+        Insert: {
+          chunk_count?: number | null
+          content_hash?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_name: string
+          file_path?: string | null
+          file_size: number
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          mime_type: string
+          page_count?: number | null
+          processed_at?: string | null
+          processed_content?: string | null
+          processing_settings?: Json | null
+          raw_content?: string | null
+          source_id: string
+          status?: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id: string
+          word_count?: number | null
+        }
+        Update: {
+          chunk_count?: number | null
+          content_hash?: string | null
+          created_at?: string
+          error_message?: string | null
+          file_name?: string
+          file_path?: string | null
+          file_size?: number
+          file_url?: string | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string
+          page_count?: number | null
+          processed_at?: string | null
+          processed_content?: string | null
+          processing_settings?: Json | null
+          raw_content?: string | null
+          source_id?: string
+          status?: string
+          updated_at?: string
+          uploaded_at?: string
+          user_id?: string
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_documents_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_searches: {
+        Row: {
+          created_at: string
+          gpt_id: string | null
+          id: string
+          metadata: Json | null
+          query: string
+          response_time_ms: number | null
+          results_count: number | null
+          search_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gpt_id?: string | null
+          id?: string
+          metadata?: Json | null
+          query: string
+          response_time_ms?: number | null
+          results_count?: number | null
+          search_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gpt_id?: string | null
+          id?: string
+          metadata?: Json | null
+          query?: string
+          response_time_ms?: number | null
+          results_count?: number | null
+          search_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_searches_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_sources: {
+        Row: {
+          auto_sync: boolean | null
+          created_at: string
+          description: string | null
+          error_message: string | null
+          file_count: number | null
+          gpt_id: string | null
+          id: string
+          last_synced_at: string | null
+          metadata: Json | null
+          name: string
+          next_sync_at: string | null
+          source_type: string
+          source_url: string | null
+          status: string
+          sync_frequency: string | null
+          sync_settings: Json | null
+          total_size_bytes: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_sync?: boolean | null
+          created_at?: string
+          description?: string | null
+          error_message?: string | null
+          file_count?: number | null
+          gpt_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json | null
+          name: string
+          next_sync_at?: string | null
+          source_type: string
+          source_url?: string | null
+          status?: string
+          sync_frequency?: string | null
+          sync_settings?: Json | null
+          total_size_bytes?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_sync?: boolean | null
+          created_at?: string
+          description?: string | null
+          error_message?: string | null
+          file_count?: number | null
+          gpt_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          metadata?: Json | null
+          name?: string
+          next_sync_at?: string | null
+          source_type?: string
+          source_url?: string | null
+          status?: string
+          sync_frequency?: string | null
+          sync_settings?: Json | null
+          total_size_bytes?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_sources_gpt_id_fkey"
             columns: ["gpt_id"]
             isOneToOne: false
             referencedRelation: "custom_gpts"
@@ -964,16 +1297,107 @@ export type Database = {
         }
         Relationships: []
       }
+      web_crawl_jobs: {
+        Row: {
+          allowed_domains: string[] | null
+          completed_at: string | null
+          crawl_settings: Json | null
+          created_at: string
+          error_message: string | null
+          exclude_patterns: string[] | null
+          id: string
+          max_depth: number | null
+          max_pages: number | null
+          pages_crawled: number | null
+          pages_found: number | null
+          pages_processed: number | null
+          source_id: string
+          start_url: string
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allowed_domains?: string[] | null
+          completed_at?: string | null
+          crawl_settings?: Json | null
+          created_at?: string
+          error_message?: string | null
+          exclude_patterns?: string[] | null
+          id?: string
+          max_depth?: number | null
+          max_pages?: number | null
+          pages_crawled?: number | null
+          pages_found?: number | null
+          pages_processed?: number | null
+          source_id: string
+          start_url: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allowed_domains?: string[] | null
+          completed_at?: string | null
+          crawl_settings?: Json | null
+          created_at?: string
+          error_message?: string | null
+          exclude_patterns?: string[] | null
+          id?: string
+          max_depth?: number | null
+          max_pages?: number | null
+          pages_crawled?: number | null
+          pages_found?: number | null
+          pages_processed?: number | null
+          source_id?: string
+          start_url?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_crawl_jobs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
           role: Database["public"]["Enums"]["app_role"]
         }[]
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
       has_role: {
         Args: {
@@ -981,6 +1405,78 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {
