@@ -41,14 +41,18 @@ const Navigation = () => {
         setTimeout(() => {
           const element = document.querySelector(path);
           if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const navHeight = 64; // h-16 = 64px
+            const elementTop = element.getBoundingClientRect().top + window.pageYOffset - navHeight;
+            window.scrollTo({ top: elementTop, behavior: 'smooth' });
           }
         }, 100);
       } else {
         // Already on home page, just scroll
         const element = document.querySelector(path);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          const navHeight = 64; // h-16 = 64px
+          const elementTop = element.getBoundingClientRect().top + window.pageYOffset - navHeight;
+          window.scrollTo({ top: elementTop, behavior: 'smooth' });
         }
       }
     } else if (path === '/') {
