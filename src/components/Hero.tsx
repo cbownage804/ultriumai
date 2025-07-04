@@ -35,14 +35,14 @@ const Hero = () => {
         <div className="space-y-8">
           {/* Main heading */}
           <div className="space-y-4 animate-fade-in">
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight animate-slide-up">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight animate-slide-up px-4">
               Transform Your Business with Custom AI Agents
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in" style={{animationDelay: '0.2s'}}>
+            <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in px-4" style={{animationDelay: '0.2s'}}>
               From helpdesk GPTs to cybersecurity copilots—UltriumAI builds the tools to power your future.
             </p>
-            <div className="flex items-center justify-center gap-2 text-lg font-medium text-primary animate-bounce-gentle">
-              <Shield className="h-6 w-6" />
+            <div className="flex items-center justify-center gap-2 text-base md:text-lg font-medium text-primary animate-bounce-gentle px-4">
+              <Shield className="h-5 w-5 md:h-6 md:w-6" />
               <span>Built for Business. Secure by Design</span>
             </div>
           </div>
