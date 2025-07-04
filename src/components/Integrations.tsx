@@ -87,7 +87,7 @@ const Integrations = () => {
             Integrate with Your Existing Tools
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            UltraKB works seamlessly with the tools your team already uses. 
+            UltriumGPT works seamlessly with the tools your team already uses. 
             Deploy anywhere from chat platforms to custom applications.
           </p>
         </div>
