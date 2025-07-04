@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, quality = "high" } = await req.json()
+    const { prompt, size = "1024x1024", quality = "high" } = await req.json()
 
     const huggingFaceToken = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN')
     if (!huggingFaceToken) {
@@ -24,12 +24,22 @@ serve(async (req) => {
       throw new Error('Prompt is required')
     }
 
-    console.log('Generating image with prompt:', prompt)
+    console.log('Generating image with prompt:', prompt, 'size:', size)
+
+    // Determine aspect ratio description for the prompt
+    let aspectRatioPrompt = ""
+    if (size === "1536x1024") {
+      aspectRatioPrompt = " --ar 3:2 landscape orientation"
+    } else if (size === "1024x1536") {
+      aspectRatioPrompt = " --ar 2:3 portrait orientation"
+    } else {
+      aspectRatioPrompt = " --ar 1:1 square format"
+    }
 
     const hf = new HfInference(huggingFaceToken)
 
     const image = await hf.textToImage({
-      inputs: prompt,
+      inputs: prompt + aspectRatioPrompt,
       model: 'black-forest-labs/FLUX.1-schnell',
     })
 
