@@ -334,6 +334,13 @@ const SecurityAppsSection = () => {
                     <Button 
                       className="w-full" 
                       variant={tier.popular ? "default" : "outline"}
+                      onClick={() => {
+                        if (tier.cta === 'Start Free Trial' || tier.cta === 'Start Premium') {
+                          window.location.href = '/auth';
+                        } else if (tier.cta === 'Contact Sales') {
+                          window.location.href = '#contact';
+                        }
+                      }}
                     >
                       {tier.cta}
                     </Button>
