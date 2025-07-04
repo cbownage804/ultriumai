@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   FileText, 
   Folder,
@@ -16,7 +18,8 @@ import {
   Share,
   Lock,
   Eye,
-  Filter
+  Filter,
+  X
 } from "lucide-react";
 
 interface Document {
@@ -31,6 +34,7 @@ interface Document {
   favorite: boolean;
   shared: boolean;
   version: string;
+  content: string;
 }
 
 interface Folder {
@@ -53,7 +57,42 @@ const mockDocuments: Document[] = [
     tags: ["Security", "Policy", "Compliance"],
     favorite: true,
     shared: true,
-    version: "v2.1"
+    version: "v2.1",
+    content: `# IT Security Policy 2024
+
+## Overview
+This document outlines the comprehensive security policies and procedures for our organization to ensure the protection of digital assets, data, and infrastructure.
+
+## Password Requirements
+- Minimum 12 characters in length
+- Must include uppercase, lowercase, numbers, and special characters
+- Password rotation every 90 days
+- No reuse of last 12 passwords
+
+## Access Control
+- Role-based access control (RBAC) implementation
+- Multi-factor authentication required for all systems
+- Regular access reviews every quarter
+
+## Network Security
+- Firewall configuration and monitoring
+- VPN access for remote employees
+- Network segmentation for critical systems
+
+## Data Protection
+- Encryption at rest and in transit
+- Regular backup procedures
+- Data retention and disposal policies
+
+## Incident Response
+- 24/7 monitoring and alerting
+- Escalation procedures
+- Recovery time objectives (RTO) and recovery point objectives (RPO)
+
+## Compliance
+- SOC 2 Type II compliance
+- GDPR compliance for EU customers
+- Regular security audits and assessments`
   },
   {
     id: "2",
@@ -66,7 +105,44 @@ const mockDocuments: Document[] = [
     tags: ["Network", "Infrastructure", "Diagram"],
     favorite: false,
     shared: false,
-    version: "v1.3"
+    version: "v1.3",
+    content: `# Network Diagram - Main Office
+
+## Network Architecture Overview
+This document provides a comprehensive view of our main office network infrastructure.
+
+## Core Components
+- **Core Switch**: Cisco Catalyst 9300 (192.168.1.1)
+- **Firewall**: SonicWall TZ570 (192.168.1.254)
+- **WiFi Controllers**: Ubiquiti Dream Machine Pro
+
+## Network Segments
+### Management VLAN (VLAN 10)
+- Subnet: 192.168.10.0/24
+- Network devices management
+- SNMP monitoring
+
+### User VLAN (VLAN 20)
+- Subnet: 192.168.20.0/24
+- Employee workstations
+- Printers and shared resources
+
+### Server VLAN (VLAN 30)
+- Subnet: 192.168.30.0/24
+- Domain controllers
+- File servers
+- Application servers
+
+### Guest VLAN (VLAN 40)
+- Subnet: 192.168.40.0/24
+- Guest WiFi access
+- Isolated from internal networks
+
+## Security Measures
+- Port security enabled on all access ports
+- DHCP snooping configured
+- Dynamic ARP inspection
+- Storm control thresholds set`
   },
   {
     id: "3",
@@ -79,7 +155,54 @@ const mockDocuments: Document[] = [
     tags: ["Backup", "Procedure", "DR"],
     favorite: true,
     shared: true,
-    version: "v1.0"
+    version: "v1.0",
+    content: `# Backup Procedures
+
+## Backup Strategy
+Our organization implements a comprehensive 3-2-1 backup strategy to ensure data protection and business continuity.
+
+## Daily Backup Procedures
+
+### 1. Database Backups
+- **Time**: 2:00 AM daily
+- **Location**: Local NAS and cloud storage
+- **Retention**: 30 days local, 1 year cloud
+- **Verification**: Automated integrity checks
+
+### 2. File Server Backups
+- **Time**: 12:00 AM daily
+- **Location**: Offsite datacenter
+- **Retention**: 90 days
+- **Verification**: Weekly restore tests
+
+### 3. Virtual Machine Backups
+- **Time**: 3:00 AM daily
+- **Location**: Veeam repository
+- **Retention**: 14 days
+- **Verification**: Monthly disaster recovery tests
+
+## Weekly Procedures
+- Full system image backups
+- Configuration backup verification
+- Backup log review and reporting
+
+## Monthly Procedures
+- Disaster recovery testing
+- Backup storage capacity planning
+- Documentation updates
+
+## Recovery Procedures
+1. Identify scope of data loss
+2. Locate appropriate backup
+3. Verify backup integrity
+4. Perform restoration
+5. Validate restored data
+6. Document lessons learned
+
+## Contact Information
+- Primary: Mike Davis (ext. 1234)
+- Secondary: IT Help Desk (ext. 5555)
+- Emergency: On-call rotation`
   },
   {
     id: "4",
@@ -92,7 +215,57 @@ const mockDocuments: Document[] = [
     tags: ["Onboarding", "Checklist", "Client"],
     favorite: false,
     shared: true,
-    version: "v3.2"
+    version: "v3.2",
+    content: `# Client Onboarding Checklist
+
+## Pre-Onboarding (1-2 weeks before start)
+- [ ] Send welcome email with next steps
+- [ ] Schedule kickoff call
+- [ ] Prepare account setup documentation
+- [ ] Create client folder structure
+- [ ] Order necessary hardware/licenses
+
+## Day 1 - Initial Setup
+- [ ] Welcome call and introductions
+- [ ] Review MSA and technical requirements
+- [ ] Gather network credentials and access
+- [ ] Document current infrastructure
+- [ ] Install monitoring tools
+
+## Week 1 - Assessment Phase
+- [ ] Complete network assessment
+- [ ] Security audit and vulnerability scan
+- [ ] Backup verification and testing
+- [ ] Documentation review and updates
+- [ ] Establish communication protocols
+
+## Week 2-4 - Implementation
+- [ ] Deploy standardized configurations
+- [ ] Implement security improvements
+- [ ] Set up monitoring and alerting
+- [ ] Train end users on new procedures
+- [ ] Create maintenance schedule
+
+## Ongoing - Monthly Reviews
+- [ ] Performance and security review
+- [ ] Update documentation
+- [ ] Review SLA compliance
+- [ ] Plan upcoming projects
+- [ ] Client satisfaction survey
+
+## Required Documentation
+- Network topology diagram
+- Asset inventory
+- Contact information
+- Emergency procedures
+- Service level agreements
+
+## Tools and Systems
+- RMM tool deployment
+- PSA ticket integration
+- Documentation platform access
+- Remote access setup
+- Backup validation`
   }
 ];
 
@@ -108,6 +281,7 @@ export const SafeDocDemo = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [documents] = useState<Document[]>(mockDocuments);
   const [folders] = useState<Folder[]>(mockFolders);
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
 
   const categories = ["all", "Policies", "Infrastructure", "Procedures", "Templates"];
   
@@ -126,6 +300,10 @@ export const SafeDocDemo = () => {
       case 'visio': return '🗺️';
       default: return '📄';
     }
+  };
+
+  const openDocument = (doc: Document) => {
+    setViewingDocument(doc);
   };
 
   return (
@@ -228,7 +406,12 @@ export const SafeDocDemo = () => {
                       </div>
                       
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={() => openDocument(doc)}
+                        >
                           <Eye className="h-3 w-3 mr-1" />
                           View
                         </Button>
@@ -284,7 +467,11 @@ export const SafeDocDemo = () => {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openDocument(doc)}
+                        >
                           <Eye className="h-3 w-3 mr-1" />
                           View
                         </Button>
@@ -300,6 +487,55 @@ export const SafeDocDemo = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Document Viewer Dialog */}
+        <Dialog open={!!viewingDocument} onOpenChange={() => setViewingDocument(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh]">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">{viewingDocument && getFileIcon(viewingDocument.type)}</div>
+                  <div>
+                    <DialogTitle>{viewingDocument?.title}</DialogTitle>
+                    <DialogDescription>
+                      {viewingDocument?.category} • {viewingDocument?.type} • Version {viewingDocument?.version}
+                    </DialogDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {viewingDocument?.favorite && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
+                  {viewingDocument?.shared && <Share className="h-4 w-4 text-blue-500" />}
+                </div>
+              </div>
+            </DialogHeader>
+            
+            <ScrollArea className="h-[60vh] w-full">
+              <div className="p-4 bg-muted/20 rounded-lg">
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-mono">
+                  {viewingDocument?.content}
+                </pre>
+              </div>
+            </ScrollArea>
+            
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                <span>By {viewingDocument?.author} • </span>
+                <span>Modified {viewingDocument?.lastModified} • </span>
+                <span>{viewingDocument?.size}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Share className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
