@@ -127,9 +127,19 @@ const UserProfileDropdown = () => {
                     <Coins className="h-3 w-3" />
                     Credits
                   </span>
-                  <span className="text-xs font-medium">
-                    {credits?.credits_used || 0} / {credits?.credits_limit || 100}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium">
+                      {credits?.credits_used || 0} / {credits?.credits_limit || 100}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-5 px-2 text-xs hover:bg-primary/10 hover:text-primary"
+                      onClick={() => window.open('/pricing', '_blank')}
+                    >
+                      Buy More
+                    </Button>
+                  </div>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div 
