@@ -6,8 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useUserCredits } from "@/hooks/useUserCredits";
-import { Bot, MessageSquare, Users, TrendingUp, Star, Zap, Clock, Database } from "lucide-react";
+import { Bot, MessageSquare, Users, TrendingUp, Star, Zap, Clock, Database, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ChatInterface from "@/components/ChatInterface";
 
 export const DashboardOverview = () => {
   const { user } = useAuth();
@@ -161,6 +162,26 @@ export const DashboardOverview = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Chat Interface for Active GPT */}
+      {gpts.length > 0 && gpts[0].is_active && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Chat with {gpts[0].name}
+            </CardTitle>
+            <CardDescription>
+              Quick access to your AI assistant
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px]">
+              <ChatInterface />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent GPTs */}
