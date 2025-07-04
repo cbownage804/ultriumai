@@ -158,24 +158,54 @@ serve(async (req) => {
           ...messages
         ];
 
-        // Call OpenAI API
-        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: gpt.preferred_model || 'gpt-4o-mini',
-            messages: fullMessages,
-            stream: body.stream || false,
-            max_tokens: body.max_tokens || 1000,
-            temperature: body.temperature || 0.7,
-          }),
-        });
+        // Determine which API to use based on model
+        const model = gpt.preferred_model || 'gpt-4o-mini';
+        const isClaudeModel = model.startsWith('claude-');
+        
+        let apiResponse;
+        
+        if (isClaudeModel) {
+          // Use Anthropic API for Claude models
+          const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+          if (!anthropicApiKey) {
+            throw new Error('Anthropic API key not configured for Claude models');
+          }
+          
+          apiResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': anthropicApiKey,
+              'Content-Type': 'application/json',
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: model,
+              max_tokens: body.max_tokens || 1000,
+              temperature: body.temperature || 0.7,
+              messages: fullMessages.filter(m => m.role !== 'system'),
+              system: fullMessages.find(m => m.role === 'system')?.content || ''
+            }),
+          });
+        } else {
+          // Use OpenAI API for GPT models
+          apiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openAIApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: fullMessages,
+              stream: body.stream || false,
+              max_tokens: body.max_tokens || 1000,
+              temperature: body.temperature || 0.7,
+            }),
+          });
+        }
 
-        if (!openAIResponse.ok) {
-          throw new Error(`OpenAI API error: ${openAIResponse.statusText}`);
+        if (!apiResponse.ok) {
+          throw new Error(`AI API error: ${apiResponse.statusText}`);
         }
 
         const responseTime = Date.now() - startTime;
@@ -197,7 +227,7 @@ serve(async (req) => {
           );
 
           // Return streaming response
-          return new Response(openAIResponse.body, {
+          return new Response(apiResponse.body, {
             headers: {
               ...corsHeaders,
               'Content-Type': 'text/event-stream',
@@ -207,7 +237,26 @@ serve(async (req) => {
           });
         } else {
           // Handle non-streaming response
-          const data = await openAIResponse.json();
+          const data = await apiResponse.json();
+          
+          // Parse response based on API type
+          let responseData;
+          if (isClaudeModel) {
+            responseData = {
+              choices: [{
+                message: {
+                  content: data.content[0]?.text || ''
+                }
+              }],
+              usage: {
+                total_tokens: data.usage?.input_tokens + data.usage?.output_tokens || 0,
+                prompt_tokens: data.usage?.input_tokens || 0,
+                completion_tokens: data.usage?.output_tokens || 0
+              }
+            };
+          } else {
+            responseData = data;
+          }
           
           // Log API usage
           await logApiUsage(
@@ -218,13 +267,13 @@ serve(async (req) => {
             'POST',
             200,
             responseTime,
-            data.usage?.total_tokens,
+            responseData.usage?.total_tokens,
             undefined,
             req.headers.get('User-Agent'),
             req.headers.get('X-Forwarded-For')
           );
 
-          return new Response(JSON.stringify(data), {
+          return new Response(JSON.stringify(responseData), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
@@ -418,6 +467,60 @@ serve(async (req) => {
         });
       }
 
+      // Web search integration
+      let webSearchContext = '';
+      const lastUserMessage = messages[messages.length - 1];
+      
+      if (gpt.enable_web_search && lastUserMessage?.role === 'user') {
+        try {
+          const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+          
+          if (perplexityApiKey) {
+            console.log('Performing web search for:', lastUserMessage.content);
+            
+            const searchResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${perplexityApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'llama-3.1-sonar-small-128k-online',
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are a helpful assistant that provides current, factual information from the web. Be concise and focus on the most relevant information.'
+                  },
+                  {
+                    role: 'user',
+                    content: `Search for current information about: ${lastUserMessage.content}`
+                  }
+                ],
+                temperature: 0.2,
+                max_tokens: 500,
+                return_images: false,
+                return_related_questions: false
+              }),
+            });
+
+            if (searchResponse.ok) {
+              const searchData = await searchResponse.json();
+              const searchResult = searchData.choices[0]?.message?.content;
+              
+              if (searchResult) {
+                webSearchContext = '\n\nCurrent web information:\n' + searchResult;
+                console.log('Web search successful, added context');
+              }
+            } else {
+              console.error('Web search failed:', await searchResponse.text());
+            }
+          }
+        } catch (searchError) {
+          console.error('Web search error:', searchError);
+          // Continue without web search if it fails
+        }
+      }
+
       // Build context from knowledge base
       let knowledgeContext = '';
       if (gpt.gpt_documents && gpt.gpt_documents.length > 0) {
@@ -437,7 +540,7 @@ serve(async (req) => {
       const openAIMessages: ChatMessage[] = [
         {
           role: 'system',
-          content: systemPrompt + knowledgeContext
+          content: systemPrompt + knowledgeContext + webSearchContext
         },
         ...messages
       ];

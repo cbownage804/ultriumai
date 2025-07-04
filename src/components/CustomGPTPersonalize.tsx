@@ -106,7 +106,7 @@ const CustomGPTPersonalize = () => {
     should_mention_sources: true,
     agent_capability: "optimal",
     generate_responses_from: "my_data_llm",
-    ai_model: "gpt-4o",
+    ai_model: "gpt-4o-mini",
     user_feedback: true,
     conversation_sharing: true,
     conversation_exporting: false,
@@ -185,7 +185,7 @@ const CustomGPTPersonalize = () => {
           should_mention_sources: data.should_mention_sources ?? true,
           agent_capability: data.agent_capability || "optimal",
           generate_responses_from: data.generate_responses_from || "my_data_llm",
-          ai_model: data.ai_model || "gpt-4o",
+          ai_model: data.ai_model || "gpt-4o-mini",
           user_feedback: data.user_feedback ?? true,
           conversation_sharing: data.conversation_sharing ?? true,
           conversation_exporting: data.conversation_exporting ?? false,
@@ -265,7 +265,7 @@ const CustomGPTPersonalize = () => {
         should_mention_sources: gptData.should_mention_sources,
         agent_capability: gptData.agent_capability,
         generate_responses_from: gptData.generate_responses_from,
-        ai_model: gptData.ai_model,
+        preferred_model: gptData.ai_model,
         user_feedback: gptData.user_feedback,
         conversation_sharing: gptData.conversation_sharing,
         conversation_exporting: gptData.conversation_exporting,
@@ -975,9 +975,12 @@ const CustomGPTPersonalize = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="gpt-4o">GPT-4o (Most Advanced)</SelectItem>
-                  <SelectItem value="gpt-4">GPT-4 (High Quality)</SelectItem>
-                  <SelectItem value="gpt-3.5">GPT-3.5 (Fast & Efficient)</SelectItem>
+                  <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Latest & Most Advanced)</SelectItem>
+                  <SelectItem value="gpt-4o">GPT-4o (Advanced with Vision)</SelectItem>
+                  <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Efficient)</SelectItem>
+                  <SelectItem value="claude-opus-4-20250514">Claude Opus 4 (Superior Reasoning)</SelectItem>
+                  <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 (High Performance)</SelectItem>
+                  <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fastest)</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>
