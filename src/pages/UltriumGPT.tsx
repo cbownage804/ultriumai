@@ -14,126 +14,138 @@ import {
   MessageSquare,
   Settings,
   BarChart3,
-  Globe
+  Globe,
+  Wrench,
+  Lightbulb,
+  Rocket,
+  Target,
+  Code,
+  Brain,
+  Play,
+  Star
 } from "lucide-react";
 
 const UltriumGPT = () => {
-  const businessTiers = [
+  const creationPaths = [
     {
-      title: "Small-Medium Businesses",
-      employeeRange: "5-100 employees",
-      description: "Perfect for growing businesses that need intelligent automation without the complexity.",
+      title: "Build It Yourself",
+      subtitle: "DIY GPT Builder Platform",
+      description: "Our intuitive platform empowers you to create custom GPTs without coding expertise.",
+      icon: Wrench,
+      gradient: "from-blue-100 to-indigo-100",
       features: [
-        "Basic helpdesk automation",
-        "Employee onboarding assistance", 
-        "FAQ and policy guidance",
-        "Simple workflow automation",
-        "Basic security awareness training"
+        "Drag-and-drop GPT builder",
+        "Pre-built templates for common use cases", 
+        "Step-by-step guided setup",
+        "Real-time testing and refinement",
+        "Knowledge base integration tools",
+        "Client-specific customization options"
       ],
       benefits: [
-        "Reduce helpdesk tickets by 25-40%",
-        "Faster employee onboarding",
-        "24/7 support availability",
-        "Lower IT support costs"
+        "Complete control over your GPT",
+        "Learn and iterate at your own pace",
+        "Cost-effective for multiple GPTs",
+        "Immediate deployment capability"
       ],
-      gradient: "from-blue-50 to-indigo-50",
-      icon: Building
+      cta: "Start Building Free",
+      audience: "Perfect for tech-savvy MSPs and SMBs who want hands-on control"
     },
     {
-      title: "Large Enterprises",
-      employeeRange: "100-5000+ employees",
-      description: "Comprehensive AI solutions for complex organizational structures and advanced security needs.",
+      title: "We Build It For You",
+      subtitle: "Full-Service GPT Development",
+      description: "Our expert team creates custom GPTs tailored to your exact specifications and business needs.",
+      icon: Rocket,
+      gradient: "from-purple-100 to-violet-100",
       features: [
-        "Advanced workflow automation",
-        "Multi-department GPT agents",
-        "Complex integration capabilities",
-        "Advanced analytics and reporting",
-        "Enterprise-grade security protocols",
-        "Custom training on company data"
+        "Dedicated development team",
+        "Custom training on your data",
+        "Advanced integrations and workflows",
+        "White-label branding options",
+        "Ongoing optimization and updates",
+        "Enterprise-grade security implementation"
       ],
       benefits: [
-        "Reduce support volume by 40-60%",
-        "Streamline cross-department workflows",
-        "Enhanced security compliance",
-        "Scalable across all business units"
+        "Professional, polished results",
+        "Faster time to deployment",
+        "Expert optimization for performance",
+        "Comprehensive support and maintenance"
       ],
-      gradient: "from-purple-50 to-violet-50",
-      icon: Globe
-    },
-    {
-      title: "Managed Service Providers (MSPs)",
-      employeeRange: "10-500 employees",
-      description: "Purpose-built for MSPs managing multiple client environments with security at the forefront.",
-      features: [
-        "Multi-tenant client management",
-        "RMM and PSA integrations",
-        "Client-specific knowledge bases",
-        "Automated ticket triage",
-        "Security incident response",
-        "Client portal integration"
-      ],
-      benefits: [
-        "Scale support across multiple clients",
-        "Reduce L1 support burden",
-        "Improve client satisfaction",
-        "Standardize service delivery"
-      ],
-      gradient: "from-green-50 to-emerald-50",
-      icon: Settings
-    },
-    {
-      title: "Managed Security Service Providers (MSSPs)",
-      employeeRange: "25-1000+ employees",
-      description: "Advanced security-focused AI agents for organizations providing cybersecurity services.",
-      features: [
-        "Security event analysis",
-        "Threat intelligence integration",
-        "Incident response automation",
-        "Compliance reporting",
-        "Security awareness training",
-        "SOC analyst assistance"
-      ],
-      benefits: [
-        "Faster threat detection and response",
-        "Enhanced security monitoring",
-        "Automated compliance reporting",
-        "Improved analyst efficiency"
-      ],
-      gradient: "from-red-50 to-orange-50",
-      icon: Shield
+      cta: "Get Custom Quote",
+      audience: "Ideal for busy MSPs and SMBs who want professional results without the learning curve"
     }
   ];
 
-  const coreCapabilities = [
+  const useCases = [
     {
-      icon: MessageSquare,
-      title: "Intelligent Conversation",
-      description: "Natural language processing trained on your specific business context and terminology."
+      title: "For MSPs",
+      icon: Settings,
+      subtitle: "Multiply Your Service Capacity",
+      scenarios: [
+        {
+          name: "Client Support GPTs",
+          description: "Create dedicated GPTs for each client with their specific IT environment, policies, and procedures"
+        },
+        {
+          name: "Internal Operations GPT", 
+          description: "Automate your own help desk, onboarding, and standard operating procedures"
+        },
+        {
+          name: "White-Label GPTs",
+          description: "Offer GPT services to clients under your brand as a new revenue stream"
+        }
+      ]
+    },
+    {
+      title: "For SMBs",
+      icon: Building,
+      subtitle: "Get Enterprise-Level AI Without the Enterprise Cost",
+      scenarios: [
+        {
+          name: "Employee Assistant GPT",
+          description: "Handle HR questions, IT support, and company policy guidance 24/7"
+        },
+        {
+          name: "Customer Service GPT",
+          description: "Provide instant support to customers with your specific product knowledge"
+        },
+        {
+          name: "Process Automation GPT",
+          description: "Streamline workflows, approvals, and routine business processes"
+        }
+      ]
+    }
+  ];
+
+  const platformFeatures = [
+    {
+      icon: Brain,
+      title: "Smart Knowledge Training",
+      description: "Upload your documents, policies, and procedures. Our platform intelligently processes and trains your GPT."
     },
     {
       icon: Shield,
-      title: "Security-First Architecture",
-      description: "Built-in cybersecurity features including threat detection and secure data handling."
+      title: "Security-First Design", 
+      description: "Built-in data protection, access controls, and compliance features for business-grade security."
     },
     {
-      icon: Settings,
-      title: "Seamless Integrations",
-      description: "Connect with existing tools, RMM platforms, PSA systems, and business applications."
+      icon: Code,
+      title: "No-Code Integration",
+      description: "Connect to your existing tools and systems without writing a single line of code."
     },
     {
       icon: BarChart3,
-      title: "Advanced Analytics",
-      description: "Comprehensive reporting and insights to measure ROI and optimize performance."
+      title: "Performance Analytics",
+      description: "Track usage, measure ROI, and optimize your GPT's performance with detailed insights."
     },
     {
       icon: Users,
       title: "Multi-User Management",
-      description: "Role-based access controls and user management for teams of any size."
+      description: "Set up different access levels for employees, clients, and administrators."
     },
     {
-      icon: Zap,
-      title: "Workflow Automation",
-      description: "Automate repetitive tasks and complex business processes with intelligent decision making."
+      icon: Target,
+      title: "Continuous Learning",
+      description: "Your GPT gets smarter over time, learning from interactions and feedback."
     }
   ];
 
@@ -143,93 +155,109 @@ const UltriumGPT = () => {
       
       {/* Hero Section */}
       <section className="pt-20 pb-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="space-y-8">
-            <div className="space-y-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-8">
+            <div className="space-y-6">
               <Badge variant="secondary" className="mb-4">
-                <MessageSquare className="h-4 w-4 mr-2" />
+                <Brain className="h-4 w-4 mr-2" />
                 UltriumGPT Platform
               </Badge>
-              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
-                AI Agents Built for Your Business Size & Industry
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
+                Create Custom GPTs That Actually Work for Your Business
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                From SMBs to enterprises, MSPs to MSSPs—UltriumGPT scales with your organization and delivers 
-                intelligent automation tailored to your specific needs.
+                Whether you're an MSP looking to scale your services or an SMB wanting to automate operations—
+                build intelligent AI assistants trained on YOUR data, YOUR processes, YOUR way.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto">
-                <Calendar className="mr-2 h-5 w-5" />
-                Schedule a Demo
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 max-w-3xl mx-auto">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Star className="h-5 w-5 text-yellow-500" />
+                <span className="font-semibold text-primary">Two Paths to Success</span>
+                <Star className="h-5 w-5 text-yellow-500" />
+              </div>
+              <p className="text-lg font-medium text-foreground">
+                Build it yourself with our platform, or let our experts build it for you. Either way, you get GPTs that know your business inside and out.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow">
+                <Play className="mr-2 h-5 w-5" />
+                See Live Demo
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
-                <Phone className="mr-2 h-5 w-5" />
-                Call 804-821-1410
+                <Calendar className="mr-2 h-5 w-5" />
+                Schedule Consultation
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Business Tiers Section */}
-      <section className="py-20 bg-muted/30">
+      {/* Creation Paths Section */}
+      <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-6 text-foreground">
-              Tailored Solutions for Every Business Type
+              Choose Your GPT Creation Path
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              UltriumGPT adapts to your organization's size, industry, and specific requirements—delivering 
-              the right level of automation and intelligence for your business.
+              Two distinct approaches to get you the custom GPT your business needs—both designed to deliver professional, 
+              security-focused results that integrate seamlessly with your operations.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {businessTiers.map((tier, index) => {
-              const Icon = tier.icon;
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {creationPaths.map((path, index) => {
+              const Icon = path.icon;
               return (
-                <Card key={index} className={`hover:shadow-lg transition-all duration-300 bg-gradient-to-br ${tier.gradient} border-2 hover:border-primary/20`}>
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-3 rounded-lg bg-white/80 shadow-sm">
-                        <Icon className="h-8 w-8 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl">{tier.title}</CardTitle>
-                        <Badge variant="outline" className="mt-1">
-                          {tier.employeeRange}
-                        </Badge>
-                      </div>
+                <Card key={index} className={`hover:shadow-xl transition-all duration-300 bg-gradient-to-br ${path.gradient} border-2 hover:border-primary/20 hover:scale-105`}>
+                  <CardHeader className="text-center">
+                    <div className="mx-auto mb-4 w-16 h-16 bg-white/80 rounded-full flex items-center justify-center shadow-lg">
+                      <Icon className="h-8 w-8 text-primary" />
                     </div>
-                    <CardDescription className="text-base font-medium text-primary">
-                      {tier.description}
+                    <CardTitle className="text-2xl text-black">{path.title}</CardTitle>
+                    <CardDescription className="text-lg font-semibold text-black/80">
+                      {path.subtitle}
                     </CardDescription>
+                    <p className="text-black/70 mt-2">
+                      {path.description}
+                    </p>
                   </CardHeader>
+                  
                   <CardContent className="space-y-6">
                     <div>
-                      <h4 className="font-semibold mb-3 text-foreground">Key Features:</h4>
+                      <h4 className="font-semibold mb-3 text-black">What You Get:</h4>
                       <ul className="space-y-2">
-                        {tier.features.map((feature, idx) => (
+                        {path.features.map((feature, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm">
-                            <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                            <span className="text-muted-foreground">{feature}</span>
+                            <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                            <span className="text-black/70">{feature}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                     
                     <div>
-                      <h4 className="font-semibold mb-3 text-foreground">Expected Benefits:</h4>
+                      <h4 className="font-semibold mb-3 text-black">Key Benefits:</h4>
                       <ul className="space-y-2">
-                        {tier.benefits.map((benefit, idx) => (
+                        {path.benefits.map((benefit, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm">
                             <ArrowRight className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                            <span className="text-muted-foreground">{benefit}</span>
+                            <span className="text-black/70">{benefit}</span>
                           </li>
                         ))}
                       </ul>
+                    </div>
+
+                    <div className="pt-4 border-t border-black/10">
+                      <p className="text-sm text-black/60 font-medium mb-4">{path.audience}</p>
+                      <Button className="w-full" size="lg">
+                        {path.cta}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -239,33 +267,82 @@ const UltriumGPT = () => {
         </div>
       </section>
 
-      {/* Core Capabilities */}
+      {/* Use Cases Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6 text-foreground">
+              Real-World GPT Applications
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              See how businesses like yours are using custom GPTs to transform their operations, 
+              reduce costs, and deliver better service to their customers.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {useCases.map((useCase, index) => {
+              const Icon = useCase.icon;
+              return (
+                <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                  <CardHeader>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 rounded-lg bg-primary/10">
+                        <Icon className="h-8 w-8 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-2xl">{useCase.title}</CardTitle>
+                        <CardDescription className="text-lg font-medium text-primary">
+                          {useCase.subtitle}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    <div className="space-y-4">
+                      {useCase.scenarios.map((scenario, idx) => (
+                        <div key={idx} className="border border-border/50 rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                          <h5 className="font-semibold text-foreground mb-2">{scenario.name}</h5>
+                          <p className="text-sm text-muted-foreground">{scenario.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-6 text-foreground">
-              Core UltriumGPT Capabilities
+              Built for Business. Designed for Success.
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Every UltriumGPT deployment includes these foundational capabilities, 
-              customized to your organization's specific needs and scale.
+              Every UltriumGPT comes with enterprise-grade features that ensure your AI assistant 
+              is secure, scalable, and perfectly integrated with your business operations.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {coreCapabilities.map((capability, index) => {
-              const Icon = capability.icon;
+            {platformFeatures.map((feature, index) => {
+              const Icon = feature.icon;
               return (
-                <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
                   <CardHeader>
                     <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                       <Icon className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-lg">{capability.title}</CardTitle>
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {capability.description}
+                      {feature.description}
                     </p>
                   </CardContent>
                 </Card>
@@ -275,78 +352,20 @@ const UltriumGPT = () => {
         </div>
       </section>
 
-      {/* Implementation Process */}
-      <section className="py-20 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-foreground">
-              Implementation Tailored to Your Scale
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Our implementation process scales with your organization—from rapid SMB deployments 
-              to comprehensive enterprise rollouts.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                step: "01",
-                title: "Discovery & Planning",
-                description: "We assess your organization size, current workflows, and specific requirements to design the optimal UltriumGPT configuration.",
-                timeframe: "1-2 weeks for SMBs, 2-4 weeks for enterprises"
-              },
-              {
-                step: "02", 
-                title: "Custom Development & Training",
-                description: "Build and train your UltriumGPT using your actual policies, procedures, and data—with security protocols appropriate for your organization.",
-                timeframe: "2-4 weeks for SMBs, 4-8 weeks for enterprises"
-              },
-              {
-                step: "03",
-                title: "Deployment & Support",
-                description: "Phased rollout with comprehensive training and ongoing support to ensure successful adoption across your organization.",
-                timeframe: "1-2 weeks rollout, ongoing support"
-              }
-            ].map((phase, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-all duration-300">
-                <CardHeader>
-                  <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center relative">
-                    <MessageSquare className="h-8 w-8 text-primary" />
-                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold">
-                      {phase.step}
-                    </div>
-                  </div>
-                  <CardTitle className="text-lg">{phase.title}</CardTitle>
-                  <CardDescription className="text-primary font-medium">
-                    {phase.timeframe}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {phase.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
-      <section className="py-20">
+      <section className="py-20 bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/20">
+          <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20">
             <CardContent className="p-12 text-center">
-              <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Business Operations?</h2>
+              <h2 className="text-3xl font-bold mb-6">Ready to Build Your Custom GPT?</h2>
               <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-                Let's discuss how UltriumGPT can be configured for your specific organization size, 
-                industry requirements, and business objectives.
+                Whether you want to build it yourself or have us create it for you, let's discuss how a custom GPT 
+                can transform your business operations and deliver real ROI.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto">
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Schedule Your Consultation
+                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow">
+                  <Lightbulb className="mr-2 h-5 w-5" />
+                  Start Your GPT Journey
                 </Button>
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
                   <Phone className="mr-2 h-5 w-5" />
