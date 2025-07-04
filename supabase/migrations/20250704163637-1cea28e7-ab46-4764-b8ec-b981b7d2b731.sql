@@ -16,11 +16,4 @@ SET
   updated_at = NOW()
 WHERE user_id = '453c6d29-34db-4b1a-9f29-3ff7170ae765';
 
--- Verify the updates
-SELECT 'Subscription:' as type, subscription_tier, subscribed, subscription_end 
-FROM subscribers 
-WHERE email = 'brandon.howard@kwccpa.com'
-UNION ALL
-SELECT 'Credits:' as type, credits_limit::text, credits_used::text, updated_at::text 
-FROM user_credits 
-WHERE user_id = '453c6d29-34db-4b1a-9f29-3ff7170ae765';
+-- Verify the updates (removed problematic UNION query with type mismatch)
