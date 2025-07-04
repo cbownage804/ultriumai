@@ -13,11 +13,7 @@ const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/dashboard');
-    }
-  }, [user, loading, navigate]);
+  // Remove automatic redirect to dashboard - let users view marketing page even when logged in
 
   if (loading) {
     return (
