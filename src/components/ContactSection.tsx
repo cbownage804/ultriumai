@@ -6,29 +6,36 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Mail, Clock, MessageSquare, Calendar } from "lucide-react";
+import { useScrollAnimation, getAnimationClasses } from "@/hooks/useScrollAnimation";
 
 const ContactSection = () => {
+  const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation();
+  const { ref: contactInfoRef, isVisible: contactInfoVisible } = useScrollAnimation({ delay: 200 });
+  const { ref: formRef, isVisible: formVisible } = useScrollAnimation({ delay: 400 });
+
   return (
     <section id="contact" className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <Badge variant="secondary" className="mb-4">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Get In Touch
-          </Badge>
-          <h2 className="text-4xl font-bold mb-6 text-foreground">
-            Ready to Transform Your Business with AI?
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Let's discuss how custom AI agents can streamline your operations while keeping security at the forefront.
-            Book a free discovery call or reach out directly.
-          </p>
+        <div ref={headerRef} className={getAnimationClasses(headerVisible, 'fadeUp')}>
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Get In Touch
+            </Badge>
+            <h2 className="text-4xl font-bold mb-6 text-foreground">
+              Ready to Transform Your Business with AI?
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Let's discuss how custom AI agents can streamline your operations while keeping security at the forefront.
+              Book a free discovery call or reach out directly.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Information */}
-          <div className="space-y-8">
-            <Card>
+          <div ref={contactInfoRef} className={`space-y-8 ${getAnimationClasses(contactInfoVisible, 'slideRight')}`}>
+            <Card className="hover:shadow-lg transition-all duration-300">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Phone className="h-5 w-5 text-primary" />
@@ -36,28 +43,28 @@ const ContactSection = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
                   <Phone className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Phone</p>
                     <p className="text-primary font-semibold text-lg">804-821-1410</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
                   <Mail className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Email</p>
                     <p className="text-muted-foreground">info@ultriumai.com</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
                   <MapPin className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Location</p>
                     <p className="text-muted-foreground">Virginia, USA</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
                   <Clock className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="font-medium">Business Hours</p>
@@ -67,27 +74,27 @@ const ContactSection = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
+            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20 hover:shadow-lg transition-all duration-300 hover:border-primary/30">
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Why Choose UltriumAI?</h3>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
                     <div className="w-2 h-2 bg-primary rounded-full"></div>
                     <span>15+ years of IT and cybersecurity experience</span>
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
                     <div className="w-2 h-2 bg-primary rounded-full"></div>
                     <span>Veteran-owned and operated business</span>
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
                     <div className="w-2 h-2 bg-primary rounded-full"></div>
                     <span>Security-first approach to AI development</span>
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
                     <div className="w-2 h-2 bg-primary rounded-full"></div>
                     <span>Custom solutions, not one-size-fits-all</span>
                   </li>
-                  <li className="flex items-center gap-2">
+                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
                     <div className="w-2 h-2 bg-primary rounded-full"></div>
                     <span>White-glove setup and ongoing support</span>
                   </li>
@@ -97,7 +104,8 @@ const ContactSection = () => {
           </div>
 
           {/* Contact Form */}
-          <Card>
+          <div ref={formRef} className={getAnimationClasses(formVisible, 'slideLeft')}>
+            <Card className="hover:shadow-lg transition-all duration-300">
             <CardHeader>
               <CardTitle>Schedule Your Free Discovery Call</CardTitle>
             </CardHeader>
@@ -184,6 +192,7 @@ const ContactSection = () => {
               </form>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
     </section>
