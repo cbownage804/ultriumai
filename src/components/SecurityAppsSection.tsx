@@ -385,10 +385,10 @@ const SecurityAppsSection = () => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Button className="w-full" variant="outline">
+                      <Button className="w-full" variant="outline" onClick={() => window.location.href = '/pricing'}>
                         Get Premium Bundle
                       </Button>
-                      <Button className="w-full" variant="secondary">
+                      <Button className="w-full" variant="secondary" onClick={() => window.location.href = '#contact'}>
                         Get Enterprise Bundle
                       </Button>
                     </div>
