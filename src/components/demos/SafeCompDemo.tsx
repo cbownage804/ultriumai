@@ -69,6 +69,12 @@ const frameworks: ComplianceFramework[] = [
     name: 'GDPR',
     description: 'General Data Protection Regulation for European data protection',
     categories: ['Lawful Processing', 'Data Subject Rights', 'Data Protection by Design', 'Breach Notification', 'DPO Requirements']
+  },
+  {
+    id: 'wisp',
+    name: 'WISP (Written Information Security Program)',
+    description: 'Required cybersecurity program for CPA firms and financial services under state and federal regulations',
+    categories: ['Risk Assessment', 'Employee Training', 'Access Controls', 'Data Encryption', 'Incident Response', 'Vendor Management']
   }
 ];
 
@@ -121,6 +127,63 @@ const mockResults: Record<string, ComplianceResult> = {
       'Conduct quarterly compliance reviews',
       'Update incident response procedures',
       'Enhance employee training program'
+    ]
+  },
+  'CPA Firm Associates': {
+    framework: 'WISP (Written Information Security Program)',
+    overallScore: 92,
+    status: 'compliant',
+    lastAudit: '2024-02-01',
+    nextAudit: '2025-02-01',
+    categories: [
+      {
+        name: 'Risk Assessment',
+        score: 95,
+        status: 'pass',
+        findings: ['Annual risk assessment completed', 'Client data risks identified and documented'],
+        recommendations: ['Update risk assessment for new cloud services']
+      },
+      {
+        name: 'Employee Training',
+        score: 88,
+        status: 'pass',
+        findings: ['All staff completed cybersecurity training', 'Phishing simulation tests conducted'],
+        recommendations: ['Implement monthly security awareness sessions']
+      },
+      {
+        name: 'Access Controls',
+        score: 94,
+        status: 'pass',
+        findings: ['Multi-factor authentication implemented', 'Regular access reviews conducted'],
+        recommendations: ['Consider implementing privileged access management']
+      },
+      {
+        name: 'Data Encryption',
+        score: 90,
+        status: 'pass',
+        findings: ['Client data encrypted at rest and in transit', 'Secure communication channels established'],
+        recommendations: ['Review encryption key rotation policies']
+      },
+      {
+        name: 'Incident Response',
+        score: 85,
+        status: 'warning',
+        findings: ['Incident response plan documented', 'Contact information current'],
+        recommendations: ['Conduct incident response tabletop exercise', 'Update notification procedures']
+      },
+      {
+        name: 'Vendor Management',
+        score: 93,
+        status: 'pass',
+        findings: ['Vendor security assessments completed', 'Data processing agreements in place'],
+        recommendations: ['Implement continuous vendor monitoring']
+      }
+    ],
+    recommendations: [
+      'Schedule quarterly WISP policy reviews',
+      'Implement automated compliance monitoring',
+      'Enhance client data classification procedures',
+      'Update business continuity planning'
     ]
   }
 };
@@ -239,6 +302,14 @@ export const SafeCompDemo = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
+                    onClick={() => loadSampleOrganization('CPA Firm Associates')}
+                    className="w-full justify-start text-xs"
+                  >
+                    🏦 CPA Firm Associates
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
                     onClick={() => loadSampleOrganization('Tech Innovations LLC')}
                     className="w-full justify-start text-xs"
                   >
@@ -294,12 +365,18 @@ export const SafeCompDemo = () => {
               </Button>
 
               {isScanning && (
-                <div className="text-center space-y-2">
+                <div className="text-center space-y-3">
                   <div className="text-sm text-muted-foreground">
-                    Analyzing compliance controls...
+                    🔍 Scanning policy documents...
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    This may take several minutes
+                  <div className="text-sm text-muted-foreground">
+                    🛡️ Verifying technical controls...
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    📊 Analyzing compliance gaps...
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-2">
+                    This process typically takes 3-5 minutes
                   </div>
                 </div>
               )}
@@ -316,10 +393,17 @@ export const SafeCompDemo = () => {
             </CardHeader>
             <CardContent>
               {!results ? (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-8 text-muted-foreground">
                   <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Select an organization and framework to begin compliance audit</p>
-                  <p className="text-sm mt-2">We analyze policies, procedures, and technical controls</p>
+                  <p className="mb-2">Select an organization and compliance framework to begin audit</p>
+                  <div className="text-sm space-y-1">
+                    <p><strong>How it works:</strong></p>
+                    <p>• Automated policy document analysis</p>
+                    <p>• Technical control verification</p>
+                    <p>• Employee training record review</p>
+                    <p>• Vulnerability assessment integration</p>
+                    <p>• Continuous monitoring and reporting</p>
+                  </div>
                 </div>
               ) : (
                 <Tabs value={selectedTab} onValueChange={setSelectedTab}>
