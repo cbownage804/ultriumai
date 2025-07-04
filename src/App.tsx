@@ -12,6 +12,10 @@ import SettingsPage from '@/pages/SettingsPage';
 import Pricing from '@/pages/Pricing';
 import UltriumGPT from '@/pages/UltriumGPT';
 import LiveDemos from '@/pages/LiveDemos';
+import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
+import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
+import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
+import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -32,6 +36,10 @@ function AppRouter() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/ultriumgpt" element={<UltriumGPT />} />
       <Route path="/demos" element={<LiveDemos />} />
+      <Route path="/demos/safeemail" element={<SafeEmailDemoPage />} />
+      <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
+      <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
+      <Route path="/demos/darkweb" element={<DarkWebDemoPage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={

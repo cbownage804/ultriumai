@@ -48,7 +48,7 @@ const demoApps: DemoApp[] = [
       "Detailed threat reports",
       "API integration ready"
     ],
-    demoUrl: "https://safeemail-demo.ultriumai.com",
+    demoUrl: "/demos/safeemail",
     isLive: true,
     tags: ["Email Security", "AI Detection", "Threat Analysis"],
     useCases: [
@@ -73,7 +73,7 @@ const demoApps: DemoApp[] = [
       "Domain age and history check",
       "Real-time scanning results"
     ],
-    demoUrl: "https://safelink-demo.ultriumai.com",
+    demoUrl: "/demos/safelink",
     isLive: true,
     tags: ["URL Security", "Link Analysis", "Web Safety"],
     useCases: [
@@ -98,7 +98,7 @@ const demoApps: DemoApp[] = [
       "Metadata analysis",
       "Quarantine recommendations"
     ],
-    demoUrl: "https://safedoc-demo.ultriumai.com",
+    demoUrl: "/demos/safedoc",
     isLive: true,
     tags: ["Document Security", "File Analysis", "Content Safety"],
     useCases: [
@@ -123,7 +123,7 @@ const demoApps: DemoApp[] = [
       "Executive protection",
       "Automated alerts"
     ],
-    demoUrl: "https://darkweb-demo.ultriumai.com",
+    demoUrl: "/demos/darkweb",
     isLive: true,
     tags: ["Dark Web", "Threat Intelligence", "Monitoring"],
     useCases: [
@@ -170,10 +170,10 @@ const LiveDemos = () => {
     : demoApps.filter(app => app.category === selectedCategory);
 
   const handleDemoClick = (app: DemoApp) => {
-    if (app.demoUrl.startsWith('http')) {
-      window.open(app.demoUrl, '_blank');
-    } else {
+    if (app.demoUrl.startsWith('/')) {
       window.location.href = app.demoUrl;
+    } else {
+      window.open(app.demoUrl, '_blank');
     }
   };
 
