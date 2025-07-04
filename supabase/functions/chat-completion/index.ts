@@ -327,6 +327,58 @@ serve(async (req) => {
     if (messages && customGPT) {
       const startTime = Date.now();
 
+      // Extract model parameters with defaults
+      const {
+        model = 'gpt-4.1-2025-04-14',
+        temperature = 0.7,
+        max_tokens = 1000,
+        top_p = 1.0,
+        frequency_penalty = 0,
+        presence_penalty = 0
+      } = body.modelParams || {};
+
+      // Model configuration for cost calculation
+      const MODEL_CONFIGS: Record<string, any> = {
+        'gpt-4o': {
+          name: 'GPT-4o',
+          maxTokens: 4096,
+          inputCostPer1kTokens: 0.005,
+          outputCostPer1kTokens: 0.015,
+          contextWindow: 128000
+        },
+        'gpt-4o-mini': {
+          name: 'GPT-4o Mini',
+          maxTokens: 16384,
+          inputCostPer1kTokens: 0.00015,
+          outputCostPer1kTokens: 0.0006,
+          contextWindow: 128000
+        },
+        'gpt-4.1-2025-04-14': {
+          name: 'GPT-4.1 (Latest)',
+          maxTokens: 4096,
+          inputCostPer1kTokens: 0.01,
+          outputCostPer1kTokens: 0.03,
+          contextWindow: 128000
+        },
+        'o3-2025-04-16': {
+          name: 'O3 (Reasoning)',
+          maxTokens: 4096,
+          inputCostPer1kTokens: 0.06,
+          outputCostPer1kTokens: 0.24,
+          contextWindow: 128000
+        },
+        'o4-mini-2025-04-16': {
+          name: 'O4 Mini (Fast Reasoning)',
+          maxTokens: 4096,
+          inputCostPer1kTokens: 0.003,
+          outputCostPer1kTokens: 0.012,
+          contextWindow: 128000
+        }
+      };
+
+      const modelConfig = MODEL_CONFIGS[model] || MODEL_CONFIGS['gpt-4.1-2025-04-14'];
+      const actualMaxTokens = Math.min(max_tokens, modelConfig.maxTokens);
+
       // Build system prompt based on custom GPT or default
       let finalSystemPrompt = 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses.';
       
@@ -337,6 +389,8 @@ serve(async (req) => {
       // Always append image generation instruction regardless of custom GPT
       finalSystemPrompt += ' CRITICAL: When users request image generation (asking to create, generate, or make images), respond ONLY with "Generating your image..." and absolutely nothing else. Do not analyze, describe, or discuss generated images.';
 
+      console.log(`Using model: ${model} with temperature: ${temperature}, max_tokens: ${actualMaxTokens}`);
+
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -344,7 +398,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4.1-2025-04-14',
+          model: model,
           messages: [
             { 
               role: 'system', 
@@ -352,8 +406,11 @@ serve(async (req) => {
             },
             ...messages
           ],
-          max_tokens: 4000,
-          temperature: 0.7,
+          max_tokens: actualMaxTokens,
+          temperature: Number(temperature),
+          top_p: Number(top_p),
+          frequency_penalty: Number(frequency_penalty),
+          presence_penalty: Number(presence_penalty),
         }),
       });
 
@@ -366,6 +423,16 @@ serve(async (req) => {
       const generatedText = data.choices[0].message.content;
       const endTime = Date.now();
       const responseTime = endTime - startTime;
+
+      // Calculate usage costs
+      const usage = data.usage || {};
+      const inputTokens = usage.prompt_tokens || 0;
+      const outputTokens = usage.completion_tokens || 0;
+      const totalTokens = usage.total_tokens || 0;
+
+      const inputCost = (inputTokens / 1000) * modelConfig.inputCostPer1kTokens;
+      const outputCost = (outputTokens / 1000) * modelConfig.outputCostPer1kTokens;
+      const totalCost = inputCost + outputCost;
 
       // Track analytics if custom GPT is being used
       if (customGPT?.id && sessionId) {
@@ -398,11 +465,17 @@ serve(async (req) => {
                 session_id: sessionId,
                 interaction_type: 'message',
                 response_time_ms: responseTime,
-                tokens_used: data.usage?.total_tokens || 0,
+                tokens_used: totalTokens,
                 metadata: {
-                  model: 'gpt-4.1-2025-04-14',
-                  prompt_tokens: data.usage?.prompt_tokens || 0,
-                  completion_tokens: data.usage?.completion_tokens || 0
+                  model: model,
+                  model_name: modelConfig.name,
+                  prompt_tokens: inputTokens,
+                  completion_tokens: outputTokens,
+                  input_cost: inputCost,
+                  output_cost: outputCost,
+                  total_cost: totalCost,
+                  temperature: temperature,
+                  max_tokens: actualMaxTokens
                 }
               });
               
@@ -421,9 +494,25 @@ serve(async (req) => {
         }
       }
 
+      console.log('Response generated:', {
+        model: modelConfig.name,
+        inputTokens,
+        outputTokens,
+        totalTokens,
+        totalCost: totalCost.toFixed(6)
+      });
+
       return new Response(JSON.stringify({ 
         message: generatedText,
-        usage: data.usage
+        usage: {
+          inputTokens,
+          outputTokens,
+          totalTokens,
+          inputCost,
+          outputCost,
+          totalCost,
+          model: modelConfig.name
+        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

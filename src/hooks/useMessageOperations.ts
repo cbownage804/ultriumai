@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ChatMessage } from "@/types/chat";
 import { CustomGPT } from "@/hooks/useCustomGPTs";
+import { ModelParams } from "@/components/chat/ModelSettings";
 
 export const useMessageOperations = () => {
   const { toast } = useToast();
@@ -33,7 +34,8 @@ export const useMessageOperations = () => {
     messages: ChatMessage[],
     knowledgeBase: Array<{id: string, file_name: string, processed_content: string}>,
     setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-    setInputMessage: React.Dispatch<React.SetStateAction<string>>
+    setInputMessage: React.Dispatch<React.SetStateAction<string>>,
+    modelParams?: ModelParams
   ) => {
     if (!inputMessage.trim() || !currentGPT) return;
 
@@ -73,7 +75,7 @@ ${knowledgeBaseContent}
 When referencing information from these documents, mention the source document name.`;
       }
 
-      // Call the chat completion API with the enhanced system prompt
+      // Call the chat completion API with the enhanced system prompt and model parameters
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           messages: [
@@ -89,7 +91,16 @@ When referencing information from these documents, mention the source document n
           customGPT: {
             system_prompt: enhancedSystemPrompt,
             id: currentGPT.id,
-            name: currentGPT.name
+            name: currentGPT.name,
+            chat_count: currentGPT.chat_count
+          },
+          modelParams: modelParams || {
+            model: 'gpt-4.1-2025-04-14',
+            temperature: 0.7,
+            max_tokens: 1000,
+            top_p: 1.0,
+            frequency_penalty: 0,
+            presence_penalty: 0
           }
         }
       });
@@ -106,6 +117,9 @@ When referencing information from these documents, mention the source document n
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+      
+      // Return usage data if available
+      return data.usage ? { usage: data.usage } : null;
     } catch (error) {
       console.error('Error getting AI response:', error);
       toast({
