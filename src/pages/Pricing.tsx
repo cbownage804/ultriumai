@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { 
@@ -220,37 +220,37 @@ const Pricing = () => {
                       </div>
                     )}
 
-                    {/* Action Button */}
-                    <div className="pt-4">
-                      {plan.current ? (
-                        <div className="space-y-2">
-                          <Button variant="outline" className="w-full" disabled>
-                            Current Plan
-                          </Button>
-                          {plan.name !== "Free" && (
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              className="w-full"
-                              onClick={openCustomerPortal}
-                            >
-                              Manage Subscription
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        <Button 
-                          className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
-                          variant={plan.popular ? "default" : "outline"}
-                          onClick={() => handleSubscribe(plan.name)}
-                          disabled={isLoading}
-                        >
-                          {plan.name === "Free" ? "Get Started" : `Upgrade to ${plan.name}`}
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      )}
-                    </div>
                   </CardContent>
+
+                  <CardFooter>
+                    {plan.current ? (
+                      <div className="w-full space-y-2">
+                        <Button variant="outline" className="w-full" disabled>
+                          Current Plan
+                        </Button>
+                        {plan.name !== "Free" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="w-full"
+                            onClick={openCustomerPortal}
+                          >
+                            Manage Subscription
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Button 
+                        className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
+                        variant={plan.popular ? "default" : "outline"}
+                        onClick={() => handleSubscribe(plan.name)}
+                        disabled={isLoading}
+                      >
+                        {plan.name === "Free" ? "Get Started" : `Upgrade to ${plan.name}`}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    )}
+                  </CardFooter>
                 </Card>
               );
             })}
