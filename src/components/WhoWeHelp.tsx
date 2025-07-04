@@ -24,35 +24,35 @@ const WhoWeHelp = () => {
       title: "Internal IT Teams",
       description: "Your smartest new hire is virtual—and security-certified.",
       details: "Automate password resets, guide users through common fixes, and flag risky behavior before it becomes a ticket. Your GPT becomes a frontline assistant and a security-first filter.",
-      gradient: "from-blue-50 to-indigo-50"
+      gradient: "from-blue-100 to-indigo-100"
     },
     {
       icon: Settings,
       title: "IT Service Providers", 
       description: "AI that scales your service desk and strengthens your stack.",
       details: "Handle repetitive tickets, support requests, and client communications while embedding cyber hygiene—like MFA reminders, secure link checks, and access policy reinforcement.",
-      gradient: "from-green-50 to-emerald-50"
+      gradient: "from-green-100 to-emerald-100"
     },
     {
       icon: Calculator,
       title: "Accounting & CPA Firms",
       description: "Automate with accuracy—without compromising compliance.",
       details: "From tax Q&A to secure client interactions, our GPTs reduce the burden on your staff while staying aligned with data privacy, retention rules, and firm-level security policies.",
-      gradient: "from-purple-50 to-violet-50"
+      gradient: "from-purple-100 to-violet-100"
     },
     {
       icon: Car,
       title: "Automotive Shops",
       description: "AI at the front desk—minus the security risk.",
       details: "Schedule appointments, answer questions, and confirm services with a GPT that protects customer data and avoids the risks of open inboxes and unfiltered web forms.",
-      gradient: "from-orange-50 to-red-50"
+      gradient: "from-orange-100 to-red-100"
     },
     {
       icon: Building,
       title: "Small & Mid-Sized Businesses",
       description: "Big automation meets built-in security.",
       details: "Let a GPT handle onboarding, HR questions, and team support—all while scanning for phishing attempts, reinforcing policies, and keeping your data locked down.",
-      gradient: "from-teal-50 to-cyan-50"
+      gradient: "from-teal-100 to-cyan-100"
     }
   ];
 
