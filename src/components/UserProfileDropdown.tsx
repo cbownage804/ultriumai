@@ -135,7 +135,7 @@ const UserProfileDropdown = () => {
                       size="sm"
                       variant="ghost"
                       className="h-5 px-2 text-xs hover:bg-primary/10 hover:text-primary"
-                      onClick={() => window.open('/pricing', '_blank')}
+                      onClick={() => navigate('/credits')}
                     >
                       Buy More
                     </Button>

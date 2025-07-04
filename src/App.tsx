@@ -16,6 +16,7 @@ import LiveDemos from '@/pages/LiveDemos';
 import Docs from '@/pages/Docs';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
+import CreditsPurchase from '@/pages/CreditsPurchase';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
 import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
@@ -50,6 +51,7 @@ function AppRouter() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/credits" element={<CreditsPurchase />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/onboarding" element={
