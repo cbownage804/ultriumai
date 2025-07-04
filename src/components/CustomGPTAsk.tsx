@@ -200,7 +200,7 @@ When referencing information from these documents, mention the source document n
       </div>
 
       <Card className="h-[600px] flex flex-col">
-        <CardHeader className="border-b">
+        <CardHeader className="border-b flex-shrink-0">
           <CardTitle className="flex items-center gap-2">
             <Bot className="h-5 w-5" />
             {currentGPT.name || 'My Custom GPT'}
@@ -210,9 +210,9 @@ When referencing information from these documents, mention the source document n
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col p-0">
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+        <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+          <ScrollArea className="flex-1 p-4 min-h-0">
+            <div className="space-y-4 pb-4">
               {messages.map((message) => (
                 <div
                   key={message.id}
@@ -221,7 +221,7 @@ When referencing information from these documents, mention the source document n
                   }`}
                 >
                   {message.role === 'assistant' && (
-                    <Avatar className="h-8 w-8 mt-1">
+                    <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
                       <AvatarFallback>
                         <Bot className="h-4 w-4" />
                       </AvatarFallback>
@@ -233,14 +233,14 @@ When referencing information from these documents, mention the source document n
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-muted'
                   }`}>
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                     <p className={`text-xs mt-1 opacity-70`}>
                       {message.timestamp.toLocaleTimeString()}
                     </p>
                   </div>
                   
                   {message.role === 'user' && (
-                    <Avatar className="h-8 w-8 mt-1">
+                    <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
                       <AvatarFallback>
                         <User className="h-4 w-4" />
                       </AvatarFallback>
@@ -251,7 +251,7 @@ When referencing information from these documents, mention the source document n
               
               {isLoading && (
                 <div className="flex gap-3 justify-start">
-                  <Avatar className="h-8 w-8 mt-1">
+                  <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
                     <AvatarFallback>
                       <Bot className="h-4 w-4" />
                     </AvatarFallback>
@@ -268,7 +268,7 @@ When referencing information from these documents, mention the source document n
             </div>
           </ScrollArea>
           
-          <div className="p-4 border-t">
+          <div className="p-4 border-t flex-shrink-0 bg-card">
             <div className="flex gap-2">
               <Input
                 placeholder="Ask your Custom GPT anything..."
