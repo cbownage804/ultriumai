@@ -7,12 +7,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Send, Loader2, ArrowLeft, Bot, User, Paperclip, Brain } from "lucide-react";
+import { Send, Loader2, ArrowLeft, Bot, User, Brain, FileText, Image, File } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsTracking } from "@/hooks/useAnalyticsTracking";
+import ChatFileUploader from "./ChatFileUploader";
+
+interface AttachedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  file: File;
+  uploading?: boolean;
+  url?: string;
+  content?: string;
+}
 
 interface Message {
   id: string;
@@ -20,6 +32,7 @@ interface Message {
   content: string;
   timestamp: Date;
   loading?: boolean;
+  attachments?: AttachedFile[];
 }
 
 export const GPTChatInterface = () => {
@@ -34,6 +47,7 @@ export const GPTChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const gpt = gpts.find(g => g.id === gptId);
@@ -64,13 +78,35 @@ export const GPTChatInterface = () => {
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || !gpt || !user || isLoading) return;
+    if ((!inputMessage.trim() && attachedFiles.length === 0) || !gpt || !user || isLoading) return;
+
+    // Build message content with file context
+    let messageContent = inputMessage.trim();
+    const messageAttachments = [...attachedFiles];
+    
+    // Add file context to message if files are attached
+    if (attachedFiles.length > 0) {
+      const fileContext = attachedFiles
+        .map(file => {
+          let context = `File: ${file.name} (${file.type})`;
+          if (file.content) {
+            context += `\nContent:\n${file.content.substring(0, 2000)}${file.content.length > 2000 ? '...' : ''}`;
+          }
+          return context;
+        })
+        .join('\n\n');
+      
+      messageContent = messageContent ? 
+        `${messageContent}\n\nAttached files:\n${fileContext}` : 
+        `Attached files:\n${fileContext}`;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: inputMessage.trim(),
-      timestamp: new Date()
+      content: inputMessage.trim() || `[${attachedFiles.length} file(s) attached]`,
+      timestamp: new Date(),
+      attachments: messageAttachments
     };
 
     const loadingMessage: Message = {
@@ -83,6 +119,7 @@ export const GPTChatInterface = () => {
 
     setMessages(prev => [...prev, userMessage, loadingMessage]);
     setInputMessage('');
+    setAttachedFiles([]);
     setIsLoading(true);
 
     const startTime = Date.now();
@@ -91,7 +128,10 @@ export const GPTChatInterface = () => {
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           gptId: gpt.id,
-          messages: [...messages, userMessage].map(m => ({
+          messages: [...messages, { 
+            role: userMessage.role, 
+            content: messageContent  // Use enhanced content with file context
+          }].map(m => ({
             role: m.role,
             content: m.content
           })),
@@ -145,6 +185,39 @@ export const GPTChatInterface = () => {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const handleFileAttached = (file: AttachedFile) => {
+    setAttachedFiles(prev => {
+      const existingIndex = prev.findIndex(f => f.id === file.id);
+      if (existingIndex >= 0) {
+        // Update existing file
+        const updated = [...prev];
+        updated[existingIndex] = file;
+        return updated;
+      } else {
+        // Add new file
+        return [...prev, file];
+      }
+    });
+  };
+
+  const handleFileRemoved = (fileId: string) => {
+    setAttachedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return Image;
+    if (type.includes('text') || type.includes('json') || type.includes('csv')) return FileText;
+    return File;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (!gpt) {
@@ -308,7 +381,23 @@ export const GPTChatInterface = () => {
                         <span className="text-sm">Thinking...</span>
                       </div>
                     ) : (
-                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <>
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        {message.attachments && message.attachments.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {message.attachments.map((file) => {
+                              const IconComponent = getFileIcon(file.type);
+                              return (
+                                <div key={file.id} className="flex items-center gap-2 text-xs bg-background/50 rounded p-2">
+                                  <IconComponent className="w-3 h-3" />
+                                  <span className="truncate">{file.name}</span>
+                                  <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                   <div className={`text-xs text-muted-foreground mt-1 ${
@@ -334,10 +423,37 @@ export const GPTChatInterface = () => {
         {/* Input Area */}
         <div className="border-t p-4 bg-background/95 backdrop-blur">
           <div className="max-w-4xl mx-auto">
+            {/* Show attached files */}
+            {attachedFiles.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {attachedFiles.map((file) => {
+                  const IconComponent = getFileIcon(file.type);
+                  return (
+                    <div key={file.id} className="flex items-center gap-2 bg-muted rounded-lg px-2 py-1 text-xs">
+                      <IconComponent className="w-3 h-3" />
+                      <span className="truncate max-w-24">{file.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleFileRemoved(file.id)}
+                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        ×
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            
             <div className="flex gap-2 items-end">
-              <Button variant="outline" size="icon" className="flex-shrink-0">
-                <Paperclip className="w-4 h-4" />
-              </Button>
+              <ChatFileUploader
+                sessionId={sessionId}
+                gptId={gpt.id}
+                onFileAttached={handleFileAttached}
+                onFileRemoved={handleFileRemoved}
+                attachedFiles={attachedFiles}
+              />
               <div className="flex-1 relative">
                 <Input
                   value={inputMessage}
@@ -349,7 +465,7 @@ export const GPTChatInterface = () => {
                 />
                 <Button
                   onClick={sendMessage}
-                  disabled={!inputMessage.trim() || isLoading}
+                  disabled={(!inputMessage.trim() && attachedFiles.length === 0) || isLoading}
                   size="icon"
                   className="absolute right-1 top-1 h-8 w-8"
                 >
@@ -362,7 +478,7 @@ export const GPTChatInterface = () => {
               </div>
             </div>
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Press Enter to send, Shift+Enter for new line
+              Press Enter to send, Shift+Enter for new line • Attach files up to 10MB
             </p>
           </div>
         </div>

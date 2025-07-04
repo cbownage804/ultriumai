@@ -1,8 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { File, X, Download } from "lucide-react";
+import { FileText, Image, File, X } from "lucide-react";
 import { ConversationFile } from "@/types/chat";
-import { useFileUpload } from "@/hooks/useFileUpload";
 
 interface FileAttachmentProps {
   file: ConversationFile;
@@ -11,15 +9,10 @@ interface FileAttachmentProps {
 }
 
 const FileAttachment = ({ file, onRemove, showRemove = true }: FileAttachmentProps) => {
-  const { deleteFile } = useFileUpload();
-
-  const handleRemove = async () => {
-    if (onRemove) {
-      const success = await deleteFile(file);
-      if (success) {
-        onRemove(file);
-      }
-    }
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return Image;
+    if (mimeType.includes('text') || mimeType.includes('json') || mimeType.includes('csv')) return FileText;
+    return File;
   };
 
   const formatFileSize = (bytes: number) => {
@@ -30,35 +23,28 @@ const FileAttachment = ({ file, onRemove, showRemove = true }: FileAttachmentPro
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getFileIcon = () => {
-    if (file.mime_type.startsWith('text/')) return File;
-    if (file.mime_type.includes('json')) return File;
-    if (file.mime_type.includes('csv')) return File;
-    return File;
-  };
-
-  const FileIcon = getFileIcon();
+  const IconComponent = getFileIcon(file.mime_type);
 
   return (
-    <Card className="p-3 flex items-center gap-3 bg-muted/50">
-      <FileIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+    <div className="flex items-center gap-2 p-2 bg-muted/30 rounded text-sm">
+      <IconComponent className="w-4 h-4 text-muted-foreground flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{file.file_name}</p>
+        <p className="font-medium truncate">{file.file_name}</p>
         <p className="text-xs text-muted-foreground">
-          {formatFileSize(file.file_size)} • {new Date(file.uploaded_at).toLocaleDateString()}
+          {formatFileSize(file.file_size)}
         </p>
       </div>
       {showRemove && onRemove && (
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleRemove}
-          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+          onClick={() => onRemove(file)}
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
         >
-          <X className="h-4 w-4" />
+          <X className="w-3 h-3" />
         </Button>
       )}
-    </Card>
+    </div>
   );
 };
 
