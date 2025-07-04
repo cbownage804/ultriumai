@@ -1,23 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import Replicate from "https://esm.sh/replicate@0.25.2"
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { prompt, quality = "high" } = await req.json()
 
-    const REPLICATE_API_KEY = Deno.env.get('REPLICATE_API_KEY')
-    if (!REPLICATE_API_KEY) {
-      throw new Error('REPLICATE_API_KEY is not set')
+    const RUNWARE_API_KEY = Deno.env.get('RUNWARE_API_KEY')
+    if (!RUNWARE_API_KEY) {
+      throw new Error('RUNWARE_API_KEY is not set')
     }
 
     if (!prompt) {
@@ -26,40 +25,58 @@ serve(async (req) => {
 
     console.log("Generating image with prompt:", prompt)
 
-    const replicate = new Replicate({
-      auth: REPLICATE_API_KEY,
+    // First authenticate, then generate image
+    const response = await fetch('https://api.runware.ai/v1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([
+        {
+          "taskType": "authentication",
+          "apiKey": RUNWARE_API_KEY
+        },
+        {
+          "taskType": "imageInference",
+          "taskUUID": crypto.randomUUID(),
+          "positivePrompt": prompt,
+          "width": 1024,
+          "height": 1024,
+          "model": "runware:100@1",
+          "numberResults": 1,
+          "outputFormat": "WEBP",
+          "CFGScale": 1,
+          "scheduler": "FlowMatchEulerDiscreteScheduler",
+          "strength": 0.8
+        }
+      ])
     })
 
-    const output = await replicate.run(
-      "black-forest-labs/flux-schnell",
-      {
-        input: {
-          prompt: prompt,
-          go_fast: true,
-          megapixels: "1",
-          num_outputs: 1,
-          aspect_ratio: "1:1",
-          output_format: "webp",
-          output_quality: 80,
-          num_inference_steps: 4
-        }
-      }
-    )
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
 
-    console.log("Generation response:", output)
+    const data = await response.json()
+    console.log("Runware response:", data)
+
+    // Find the image inference result
+    const imageResult = data.data?.find((item: any) => item.taskType === "imageInference")
     
-    // Replicate returns an array of URLs
-    const imageUrl = Array.isArray(output) ? output[0] : output
+    if (!imageResult || !imageResult.imageURL) {
+      throw new Error('No image URL returned from Runware')
+    }
 
-    return new Response(JSON.stringify({ image: imageUrl }), {
+    return new Response(JSON.stringify({ 
+      image: imageResult.imageURL,
+      prompt: prompt 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
     })
   } catch (error) {
-    console.error("Error in image generation function:", error)
+    console.error('Error in image-generation function:', error)
     return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })
