@@ -57,7 +57,7 @@ const SecurityAppsMarketplace = () => {
         'Sub-second response time',
         'API access included',
         'Custom rule engine',
-        'White-label deployment'
+        'Embeddable widgets'
       ],
       integrations: ['Custom GPTs', 'Email Systems', 'Web Browsers', 'Slack', 'Teams', 'API'],
       threatTypes: ['Phishing', 'Malware', 'Ransomware', 'APTs', 'Scams', 'Spam'],
@@ -88,7 +88,7 @@ const SecurityAppsMarketplace = () => {
         'Advanced BEC protection',
         'Multi-language support',
         'Custom policies',
-        'Forensic reporting'
+        'Embeddable widgets'
       ],
       integrations: ['Custom GPTs', 'Office 365', 'Google Workspace', 'Exchange', 'API'],
       threatTypes: ['Spam', 'Phishing', 'BEC', 'Malware', 'Spoofing', 'Social Engineering'],
@@ -119,7 +119,7 @@ const SecurityAppsMarketplace = () => {
         'Support 100+ file types',
         'Quarantine system',
         'Detailed forensics',
-        'Custom signatures'
+        'Embeddable widgets'
       ],
       integrations: ['Custom GPTs', 'File Servers', 'Cloud Storage', 'Email Gateways', 'API'],
       threatTypes: ['Malware', 'Trojans', 'Ransomware', 'Viruses', 'Rootkits', 'Zero-day'],
@@ -127,6 +127,37 @@ const SecurityAppsMarketplace = () => {
       enterprise_included: true,
       enabled: false,
       usage_limit: 1000,
+      usage_current: 0
+    },
+    {
+      id: 'darkweb',
+      name: 'Ultrium DarkWeb Scanner™',
+      description: 'Advanced dark web monitoring and breach detection system',
+      longDescription: 'Comprehensive dark web monitoring using AI-powered crawling, breach database analysis, and threat intelligence to detect compromised credentials, data leaks, and emerging threats targeting your organization.',
+      icon: Shield,
+      price: 20,
+      features: [
+        'Dark web monitoring',
+        'Breach database scanning',
+        'Credential compromise detection',
+        'Personal info monitoring',
+        'Real-time alerts',
+        'Historical breach analysis'
+      ],
+      capabilities: [
+        'Monitor 500 entities/month',
+        '99.5% breach detection rate',
+        '847 dark web sources',
+        'Real-time notifications',
+        'Executive reporting',
+        'Embeddable widgets'
+      ],
+      integrations: ['Custom GPTs', 'SIEM Systems', 'Security Dashboards', 'Email Alerts', 'API'],
+      threatTypes: ['Data Breaches', 'Credential Theft', 'Identity Theft', 'Corporate Espionage', 'Financial Fraud', 'Personal Data Leaks'],
+      subscription_required: true,
+      enterprise_included: true,
+      enabled: false,
+      usage_limit: 500,
       usage_current: 0
     }
   ];
@@ -340,15 +371,25 @@ const SecurityAppsMarketplace = () => {
                       </Button>
                     </div>
                   ) : (
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubscribe(app)}
-                      disabled={isLoading}
-                    >
-                      <Zap className="h-4 w-4 mr-2" />
-                      {subscription.subscription_tier === 'enterprise' ? 'Activate' : 'Subscribe'} 
-                      {subscription.subscription_tier !== 'enterprise' && ` - $${app.price}/mo`}
-                    </Button>
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full" 
+                        onClick={() => handleSubscribe(app)}
+                        disabled={isLoading}
+                      >
+                        <Zap className="h-4 w-4 mr-2" />
+                        {subscription.subscription_tier === 'enterprise' ? 'Activate' : 'Subscribe'} 
+                        {subscription.subscription_tier !== 'enterprise' && ` - $${app.price}/mo`}
+                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1">
+                          Embed Widget
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1">
+                          White Label (+$35)
+                        </Button>
+                      </div>
+                    </div>
                   )}
 
                   <Dialog>
@@ -430,7 +471,40 @@ const SecurityAppsMarketplace = () => {
                                     </div>
                                     <div className="flex items-center justify-center gap-2">
                                       <Check className="h-4 w-4 text-green-500" />
+                                      <span>Embeddable widgets</span>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500" />
                                       <span>24/7 support</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+
+                            <Card className="border-blue-200 bg-blue-50">
+                              <CardContent className="p-6">
+                                <div className="text-center space-y-4">
+                                  <div>
+                                    <div className="text-2xl font-bold">+$35</div>
+                                    <div className="text-muted-foreground">White Label Add-on</div>
+                                  </div>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex items-center justify-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500" />
+                                      <span>Remove Ultrium branding</span>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500" />
+                                      <span>Custom company branding</span>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500" />
+                                      <span>Reseller capabilities</span>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-2">
+                                      <Check className="h-4 w-4 text-green-500" />
+                                      <span>Internal deployment rights</span>
                                     </div>
                                   </div>
                                 </div>
@@ -445,7 +519,7 @@ const SecurityAppsMarketplace = () => {
                                     <span className="font-semibold">Enterprise Plan</span>
                                   </div>
                                   <p className="text-sm text-muted-foreground">
-                                    All security apps included at no additional cost
+                                    All security apps + white label included at no additional cost
                                   </p>
                                 </div>
                               </CardContent>
