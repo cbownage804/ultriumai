@@ -38,30 +38,30 @@ const mockScenarios: ChatScenario[] = [
     title: "Help Desk Automation",
     description: "Employee requesting password reset assistance",
     icon: Users,
-    category: "IT Support",
+    category: "IT Security",
     messages: [
       {
         id: "1",
         role: "user",
-        content: "Hi, I'm locked out of my email account and need to reset my password. Can you help?",
+        content: "Hi, I'm locked out of my domain admin account and need urgent access to resolve a critical server issue. The primary DC is showing authentication errors and users can't log in.",
         timestamp: "10:30 AM"
       },
       {
         id: "2", 
         role: "assistant",
-        content: "I can definitely help you with that password reset! Let me walk you through our secure process:\n\n1. **Identity Verification**: I'll need to verify your identity first\n   - What's your employee ID?\n   - What department do you work in?\n\n2. **Password Reset Options**:\n   - Self-service portal reset\n   - IT admin assisted reset\n   - Temporary password generation\n\n3. **Security Requirements**:\n   - New password must be 12+ characters\n   - Include uppercase, lowercase, numbers, and symbols\n   - Cannot reuse last 12 passwords\n\nCould you provide your employee ID to get started?",
+        content: "I understand this is a critical situation affecting domain authentication. Let me help you regain access safely while maintaining security protocols.\n\n**🚨 CRITICAL DOMAIN ISSUE - EMERGENCY RESPONSE**\n\n**📋 IMMEDIATE VERIFICATION REQUIRED:**\n1. **Identity Confirmation**:\n   - Employee ID and department\n   - Manager's name for emergency approval\n   - Last 4 digits of your badge number\n\n2. **Incident Validation**:\n   - Affected server name/IP\n   - Error codes observed\n   - Number of affected users\n\n**🔐 EMERGENCY ACCESS OPTIONS:**\n- **Option A**: Secondary admin account activation\n- **Option B**: Emergency break-glass account\n- **Option C**: Local server console access\n\n**⚠️ SECURITY MEASURES:**\n- All emergency access logged and monitored\n- Session recording enabled\n- 2-hour time limit with extension approval\n- Post-incident security review required\n\n**Current Domain Status**: 347 users affected, authentication services degraded\n\nPlease provide your employee ID so I can initiate emergency access procedures.",
         timestamp: "10:30 AM"
       },
       {
         id: "3",
         role: "user", 
-        content: "My employee ID is EMP-4521 and I work in the Marketing department.",
+        content: "My employee ID is IT-7841, I'm the Senior Systems Administrator, and my manager is David Chen. Badge number ends in 2847. The affected server is DC02 (192.168.1.10) with error 'The trust relationship between this workstation and the primary domain failed.'",
         timestamp: "10:31 AM"
       },
       {
         id: "4",
         role: "assistant",
-        content: "Perfect! I've verified your identity in our system. I can see you're Sarah Johnson from the Marketing department.\n\n**Password Reset Process:**\n\n✅ **Identity Verified**\n📧 **Account Found**: sarah.johnson@company.com\n🔒 **Security Check**: No recent failed login attempts\n\n**Next Steps:**\n1. I'm generating a secure temporary password\n2. You'll receive an email with reset instructions\n3. You'll be required to change the password on first login\n\n**Temporary Password**: `TempSecure2024!`\n\nPlease check your personal email (ending in gmail.com) for the reset link. The temporary password expires in 24 hours.\n\n**Need anything else?** I can also help with:\n- Setting up 2FA\n- Password manager recommendations\n- Security best practices",
+        content: "**✅ IDENTITY VERIFIED & EMERGENCY ACCESS GRANTED**\n\n**👤 Confirmed**: Michael Torres, Senior Systems Administrator\n**📞 Manager Approval**: David Chen contacted and approved (Emergency Protocol 7)\n**🔓 Access Granted**: Break-glass account EMER-ADMIN-02\n\n**🔐 EMERGENCY CREDENTIALS:**\n- **Username**: `EMER-ADMIN-02@domain.local`\n- **Password**: `EmergDS2024!Temp` (expires in 2 hours)\n- **Session ID**: EMR-20240704-1031\n\n**📊 SYSTEM ANALYSIS:**\n✅ **Issue Identified**: Computer account password mismatch\n✅ **Root Cause**: DC02 missed automated password rotation\n✅ **Impact**: 347 users, 23 servers affected\n✅ **Resolution Steps**: Initiated computer account reset\n\n**🛠️ AUTOMATED REMEDIATION IN PROGRESS:**\n1. Computer account password reset ✅\n2. Kerberos ticket cache flush ✅\n3. Replication sync between DCs ✅\n4. Service restart sequence initiated...\n\n**📈 RECOVERY STATUS**: 89% complete\n**⏱️ ETA**: 3 minutes to full service restoration\n\n**📋 POST-INCIDENT ACTIONS QUEUED:**\n- Security incident ticket #SEC-2024-0342 created\n- Change management process initiated\n- Root cause analysis scheduled\n- Password rotation schedule review\n\nDomain services should be fully restored shortly. I'll continue monitoring and provide updates.",
         timestamp: "10:32 AM"
       }
     ]
@@ -133,23 +133,35 @@ const mockScenarios: ChatScenario[] = [
     ]
   },
   {
-    id: "policy-guidance",
-    title: "Policy & Procedure Guidance",
-    description: "Employee asking about company policies",
+    id: "security-compliance",
+    title: "Security Compliance & Audit",
+    description: "IT admin requesting compliance checklist and audit preparation",
     icon: Settings,
-    category: "HR & Compliance", 
+    category: "Security Compliance",
     messages: [
       {
         id: "1",
         role: "user",
-        content: "What's our policy on working from home? I'd like to work remotely 2 days a week but want to make sure I follow the correct process.",
+        content: "We have a SOC 2 Type II audit coming up next month. Can you help me prepare a security compliance checklist and identify any gaps in our current security posture?",
         timestamp: "9:15 AM"
       },
       {
         id: "2",
         role: "assistant",
-        content: "I'd be happy to help you understand our remote work policy! Let me pull up the current guidelines for you.\n\n**🏠 REMOTE WORK POLICY SUMMARY:**\n\n**📋 ELIGIBILITY:**\n✅ Employees with 90+ days tenure\n✅ Satisfactory performance reviews\n✅ Role suitable for remote work\n✅ Manager approval required\n\n**📅 FREQUENCY OPTIONS:**\n- **Hybrid**: 1-3 days per week (most common)\n- **Full Remote**: 4-5 days per week (special approval)\n- **Occasional**: As-needed basis\n\n**📝 APPROVAL PROCESS:**\n1. **Submit Request**: Use HR portal or email manager\n2. **Manager Review**: 5 business day response\n3. **HR Approval**: For 3+ days per week\n4. **IT Setup**: Equipment and security setup\n5. **Trial Period**: 30-day evaluation\n\n**💻 REQUIREMENTS:**\n- Secure home office setup\n- Reliable internet (25+ Mbps)\n- Company laptop with VPN\n- Compliance with security policies\n\nWould you like me to help you start the request process?",
+        content: "Absolutely! I'll help you prepare for your SOC 2 Type II audit. Let me generate a comprehensive compliance checklist and review your current security controls.\n\n**🔍 SOC 2 TYPE II AUDIT PREPARATION**\n\n**📋 TRUST SERVICES CRITERIA CHECKLIST:**\n\n**🔒 SECURITY (CC6):**\n✅ **Access Controls**:\n   - Multi-factor authentication implemented\n   - Role-based access control (RBAC) configured\n   - Privileged access management (PAM) in place\n   - Regular access reviews documented\n\n✅ **Network Security**:\n   - Firewall rules documented and reviewed\n   - Network segmentation implemented\n   - VPN access controls configured\n   - Intrusion detection/prevention systems active\n\n⚠️ **Vulnerability Management**:\n   - Quarterly vulnerability scans completed\n   - Patch management process documented\n   - Critical vulnerabilities remediated within 30 days\n   - Penetration testing conducted annually\n\n**📊 CURRENT GAPS IDENTIFIED:**\n🔴 **High Priority**:\n   - Incident response plan needs annual review (last updated 18 months ago)\n   - Backup restoration testing overdue (last test 8 months ago)\n   - Security awareness training completion at 78% (target: 95%)\n\n🟡 **Medium Priority**:\n   - Data classification policy implementation\n   - Vendor risk assessment updates\n   - Security metrics reporting automation\n\nWould you like me to detail the remediation steps for the high-priority gaps?",
         timestamp: "9:16 AM"
+      },
+      {
+        id: "3",
+        role: "user",
+        content: "Yes, please provide the remediation steps for the high-priority gaps. Also, what documentation will the auditors expect to see?",
+        timestamp: "9:18 AM"
+      },
+      {
+        id: "4",
+        role: "assistant",
+        content: "**🚨 HIGH-PRIORITY REMEDIATION PLAN:**\n\n**1️⃣ INCIDENT RESPONSE PLAN UPDATE**\n**Timeline**: 1 week\n**Actions Required**:\n✅ Review current IRP against NIST 800-61 framework\n✅ Update contact lists and escalation procedures\n✅ Add new threat vectors (cloud, remote work, supply chain)\n✅ Conduct tabletop exercise with key stakeholders\n✅ Document lessons learned and plan updates\n\n**2️⃣ BACKUP RESTORATION TESTING**\n**Timeline**: 2 weeks\n**Actions Required**:\n✅ Schedule quarterly restoration tests for critical systems\n✅ Test both file-level and full system restoration\n✅ Verify RTO/RPO objectives are met\n✅ Document test results and any issues found\n✅ Update backup procedures based on findings\n\n**3️⃣ SECURITY AWARENESS TRAINING**\n**Timeline**: 3 weeks\n**Actions Required**:\n✅ Identify 22% of staff who haven't completed training\n✅ Send automated reminders with deadline\n✅ Schedule make-up sessions for non-completers\n✅ Implement phishing simulation testing\n✅ Track completion rates in real-time dashboard\n\n**📋 REQUIRED AUDIT DOCUMENTATION:**\n\n**Security Policies & Procedures**:\n• Information Security Policy (updated annually)\n• Access Control Procedures\n• Incident Response Plan\n• Data Classification & Handling Procedures\n• Vendor Management Policy\n\n**Evidence of Implementation**:\n• Access review logs (quarterly)\n• Security training completion records\n• Vulnerability scan reports (quarterly)\n• Penetration test results (annual)\n• Backup test results (quarterly)\n• Security incident logs and responses\n\n**Monitoring & Metrics**:\n• Security dashboard screenshots\n• SIEM alert summaries\n• Compliance metrics reports\n• Risk assessment documentation\n\nI can help you generate templates for any missing documentation. Which would you like me to prioritize?",
+        timestamp: "9:19 AM"
       }
     ]
   }
