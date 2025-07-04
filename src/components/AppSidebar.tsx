@@ -36,6 +36,7 @@ const customGPTItems = [
   { title: "Ask", url: "/dashboard/custom-gpts/ask", icon: MessageSquare },
   { title: "Deploy", url: "/dashboard/custom-gpts/deploy", icon: Settings },
   { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings },
+  { title: "API Access", url: "/dashboard/api-access", icon: Settings },
 ];
 
 const settingsItems = [

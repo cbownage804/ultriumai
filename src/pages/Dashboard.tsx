@@ -4,6 +4,7 @@ import ChatInterface from "@/components/ChatInterface";
 import SettingsPage from "@/pages/SettingsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import CustomGPTBuild from "@/components/CustomGPTBuild";
+import APIAccessConfig from "@/components/APIAccessConfig";
 import CustomGPTPersonalize from "@/components/CustomGPTPersonalize";
 import CustomGPTDeploy from "@/components/CustomGPTDeploy";
 import CustomGPTAsk from "@/components/CustomGPTAsk";
@@ -54,6 +55,7 @@ const Dashboard = () => {
   const isCustomGPTDeployPage = location.pathname.includes('/custom-gpts/deploy');
   const isAnalyticsPage = location.pathname.includes('/analytics');
   const isTemplatesPage = location.pathname.includes('/templates');
+  const isAPIAccessPage = location.pathname.includes('/api-access');
   
   const getPageTitle = () => {
     if (isSettingsPage) return "Settings";
@@ -67,6 +69,7 @@ const Dashboard = () => {
     if (isCustomGPTAnalyzePage) return "Analyze";
     if (isAnalyticsPage) return "Analytics";
     if (isTemplatesPage) return "GPT Templates";
+    if (isAPIAccessPage) return "API Access";
     return "Chat";
   };
 
@@ -82,6 +85,7 @@ const Dashboard = () => {
     if (isCustomGPTAnalyzePage) return <div className="p-6"><CustomGPTAnalyze /></div>;
     if (isAnalyticsPage) return <div className="p-6"><AnalyticsDashboard /></div>;
     if (isTemplatesPage) return <div className="p-6"><GPTTemplatesMarketplace /></div>;
+    if (isAPIAccessPage) return <div className="p-6"><APIAccessConfig /></div>;
     return <ChatInterface />;
   };
 
