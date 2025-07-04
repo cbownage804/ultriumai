@@ -15,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, size = "1024x1024", quality = "high", style = "auto" } = await req.json();
+    const { prompt, quality = "high", style = "auto" } = await req.json();
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
@@ -36,7 +36,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'dall-e-3',
         prompt: prompt,
-        size: size, // DALL-E 3 supports 1024x1024, 1792x1024, 1024x1792
+        size: "1024x1024", // Fixed to square images only
         quality: quality === "high" ? "hd" : "standard",
         n: 1
       }),

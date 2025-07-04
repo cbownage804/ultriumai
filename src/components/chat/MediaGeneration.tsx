@@ -18,7 +18,6 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
   const [prompt, setPrompt] = useState("");
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
-  const [imageSize, setImageSize] = useState("1024x1024");
   const [imageQuality, setImageQuality] = useState("high");
   const { toast } = useToast();
 
@@ -38,7 +37,6 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
       const { data, error } = await supabase.functions.invoke('image-generation', {
         body: {
           prompt: prompt.trim(),
-          size: imageSize,
           quality: imageQuality
         }
       });
@@ -117,20 +115,6 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
             <Image className="w-4 h-4" />
             Image Generation
           </h3>
-          
-          <div className="space-y-2">
-            <Label htmlFor="size">Size</Label>
-            <Select value={imageSize} onValueChange={setImageSize}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
-                <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
-                <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="quality">Quality</Label>
