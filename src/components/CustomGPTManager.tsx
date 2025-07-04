@@ -87,7 +87,7 @@ const CustomGPTManager = () => {
               Create GPT
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Custom GPT</DialogTitle>
               <DialogDescription>
@@ -95,56 +95,92 @@ const CustomGPTManager = () => {
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="gpt-name">GPT Name</Label>
-                <Input
-                  id="gpt-name"
-                  placeholder="e.g., Writing Assistant, Code Helper"
-                  value={newGPT.name}
-                  onChange={(e) => setNewGPT(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="gpt-description">Description (Optional)</Label>
-                <Input
-                  id="gpt-description"
-                  placeholder="Brief description of what this GPT does"
-                  value={newGPT.description}
-                  onChange={(e) => setNewGPT(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="gpt-prompt">System Prompt</Label>
-                <Textarea
-                  id="gpt-prompt"
-                  placeholder="You are a helpful assistant that..."
-                  value={newGPT.system_prompt}
-                  onChange={(e) => setNewGPT(prev => ({ ...prev, system_prompt: e.target.value }))}
-                  className="min-h-32"
-                  maxLength={limits.maxPromptLength}
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{newGPT.system_prompt.length}/{limits.maxPromptLength} characters</span>
-                  <Badge variant="outline" className="text-xs">
-                    {subscription.subscription_tier} limit
-                  </Badge>
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gpt-name">GPT Name *</Label>
+                    <Input
+                      id="gpt-name"
+                      placeholder="e.g., Writing Assistant, Code Helper"
+                      value={newGPT.name}
+                      onChange={(e) => setNewGPT(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="gpt-description">Description</Label>
+                    <Input
+                      id="gpt-description"
+                      placeholder="Brief description of what this GPT does"
+                      value={newGPT.description}
+                      onChange={(e) => setNewGPT(prev => ({ ...prev, description: e.target.value }))}
+                    />
+                  </div>
                 </div>
+              </div>
+
+              {/* System Prompt */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Instructions</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="gpt-prompt">System Prompt *</Label>
+                  <Textarea
+                    id="gpt-prompt"
+                    placeholder="You are a helpful assistant that..."
+                    value={newGPT.system_prompt}
+                    onChange={(e) => setNewGPT(prev => ({ ...prev, system_prompt: e.target.value }))}
+                    className="min-h-32"
+                    maxLength={limits.maxPromptLength}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>Give your GPT clear instructions about its role, behavior, and capabilities</span>
+                    <div className="flex items-center gap-2">
+                      <span>{newGPT.system_prompt.length}/{limits.maxPromptLength} characters</span>
+                      <Badge variant="outline" className="text-xs">
+                        {subscription.subscription_tier} limit
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Setup Tips */}
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <h4 className="font-medium mb-2">💡 Quick Setup Tips</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Be specific about your GPT's role and expertise area</li>
+                  <li>• Include any special formatting or response style preferences</li>
+                  <li>• Mention if it should ask clarifying questions</li>
+                  <li>• You can always edit and enhance your GPT after creation</li>
+                </ul>
+              </div>
+
+              {/* Next Steps Preview */}
+              <div className="p-4 border border-primary/20 rounded-lg bg-primary/5">
+                <h4 className="font-medium text-primary mb-2">🚀 After Creation</h4>
+                <p className="text-sm text-muted-foreground">
+                  Once created, you'll be able to customize appearance, add documents, configure integrations, and deploy your GPT.
+                </p>
               </div>
             </div>
             
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-between items-center pt-6 border-t">
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleCreateGPT}
-                disabled={!newGPT.name || !newGPT.system_prompt}
-              >
-                Create GPT
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleCreateGPT}
+                  disabled={!newGPT.name || !newGPT.system_prompt}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Create GPT
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
