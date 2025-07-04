@@ -29,8 +29,32 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Video Section */}
+          {/* Custom GPT Builder Call-out */}
           <div className="animate-fade-in" style={{animationDelay: '0.4s'}}>
+            <div className="max-w-3xl mx-auto mb-8">
+              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="text-center space-y-3">
+                  <div className="flex items-center justify-center gap-2">
+                    <Shield className="h-6 w-6 text-primary animate-glow" />
+                    <span className="text-lg font-bold text-primary">Now Available</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">Build Your Own Custom GPTs</h3>
+                  <p className="text-muted-foreground">
+                    Create powerful AI agents tailored to your business needs with our self-service platform
+                  </p>
+                  <Button 
+                    className="mt-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    onClick={() => window.location.href = '/auth'}
+                  >
+                    Start Building Now
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Video Section */}
+          <div className="animate-fade-in" style={{animationDelay: '0.6s'}}>
             <div className="max-w-4xl mx-auto mb-8">
               <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-primary/20 to-secondary/20 p-1">
                 <div className="bg-background/95 backdrop-blur-sm rounded-xl p-8">
