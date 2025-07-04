@@ -26,7 +26,10 @@ import {
   Zap,
   Eye,
   Globe,
-  MapPin
+  MapPin,
+  Settings,
+  Plug,
+  Star
 } from "lucide-react";
 
 interface NetworkDevice {
@@ -273,9 +276,65 @@ export const SafeNetDemo = () => {
             <Network className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold">Ultrium SafeNet Demo</h1>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-6">
             Advanced network discovery and topology mapping platform
           </p>
+          
+          {/* Meraki Integration Banner */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <Plug className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                    Cisco Meraki Integration
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Seamlessly connect to your Meraki dashboard
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-green-100 text-green-800 border-green-300">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Production Ready
+                </Badge>
+                <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                  <Star className="h-3 w-3 mr-1" />
+                  Enterprise Grade
+                </Badge>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4 text-blue-600" />
+                <span className="text-blue-800 dark:text-blue-200">
+                  Live network topology from your Meraki dashboard
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-blue-600" />
+                <span className="text-blue-800 dark:text-blue-200">
+                  Real-time device performance and health metrics
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-blue-600" />
+                <span className="text-blue-800 dark:text-blue-200">
+                  Security events and threat intelligence
+                </span>
+              </div>
+            </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                Contact us to enable Meraki integration for your organization
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -288,6 +347,8 @@ export const SafeNetDemo = () => {
               </CardTitle>
               <CardDescription>
                 Discover and map your network topology
+                <br />
+                <span className="text-xs text-blue-600 font-medium">🔌 Meraki integration available for live data</span>
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
