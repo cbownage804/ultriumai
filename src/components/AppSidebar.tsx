@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,7 +36,11 @@ const customGPTItems = [
   { title: "Ask", url: "/dashboard/custom-gpts/ask", icon: MessageSquare },
   { title: "Deploy", url: "/dashboard/custom-gpts/deploy", icon: Settings },
   { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings },
-  { title: "API Access", url: "/dashboard/api-access", icon: Settings },
+];
+
+const managementItems = [
+  { title: "API Management", url: "/dashboard/api-management", icon: Key },
+  { title: "White-label", url: "/dashboard/white-label", icon: Palette },
 ];
 
 const teamItems = [
@@ -127,6 +131,24 @@ export function AppSidebar() {
                           )}
                         </span>
                       )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {managementItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavClass}>
+                      <item.icon className="h-4 w-4" />
+                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

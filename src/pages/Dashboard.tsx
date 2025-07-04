@@ -10,6 +10,8 @@ import CustomGPTDeploy from "@/components/CustomGPTDeploy";
 import CustomGPTAsk from "@/components/CustomGPTAsk";
 import CustomGPTActions from "@/components/CustomGPTActions";
 import CustomGPTAnalyze from "@/components/CustomGPTAnalyze";
+import WhiteLabelCustomization from "@/components/WhiteLabelCustomization";
+import APIManager from "@/components/APIManager";
 import ConversationHistory from "@/components/ConversationHistory";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import GPTTemplatesMarketplace from "@/components/GPTTemplatesMarketplace";
@@ -57,7 +59,8 @@ const Dashboard = () => {
   const isCustomGPTDeployPage = location.pathname.includes('/custom-gpts/deploy');
   const isAnalyticsPage = location.pathname.includes('/analytics');
   const isTemplatesPage = location.pathname.includes('/templates');
-  const isAPIAccessPage = location.pathname.includes('/api-access');
+  const isAPIManagementPage = location.pathname.includes('/api-management');
+  const isWhiteLabelPage = location.pathname.includes('/white-label');
   const isTeamManagementPage = location.pathname.includes('/teams');
   const isTeamAnalyticsPage = location.pathname.includes('/team-analytics');
   
@@ -73,7 +76,8 @@ const Dashboard = () => {
     if (isCustomGPTAnalyzePage) return "Analyze";
     if (isAnalyticsPage) return "Analytics";
     if (isTemplatesPage) return "GPT Templates";
-    if (isAPIAccessPage) return "API Access";
+    if (isAPIManagementPage) return "API Management";
+    if (isWhiteLabelPage) return "White-label Customization";
     if (isTeamManagementPage) return "Team Management";
     if (isTeamAnalyticsPage) return "Team Analytics";
     return "Chat";
@@ -91,7 +95,8 @@ const Dashboard = () => {
     if (isCustomGPTAnalyzePage) return <div className="p-6"><CustomGPTAnalyze /></div>;
     if (isAnalyticsPage) return <div className="p-6"><AnalyticsDashboard /></div>;
     if (isTemplatesPage) return <div className="p-6"><GPTTemplatesMarketplace /></div>;
-    if (isAPIAccessPage) return <div className="p-6"><APIAccessConfig /></div>;
+    if (isAPIManagementPage) return <div className="p-6"><APIManager /></div>;
+    if (isWhiteLabelPage) return <div className="p-6"><WhiteLabelCustomization /></div>;
     if (isTeamManagementPage) return <div className="p-6"><TeamManagement /></div>;
     if (isTeamAnalyticsPage) return <div className="p-6"><TeamAnalytics /></div>;
     return <ChatInterface />;

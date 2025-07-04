@@ -12,15 +12,108 @@ interface ChatMessage {
   content: string;
 }
 
+// New API Key Authentication
+const authenticateApiKey = async (supabase: any, apiKey: string) => {
+  // Hash the provided API key to compare with stored hash
+  const encoder = new TextEncoder();
+  const data = encoder.encode(apiKey);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const { data: apiKeyData, error } = await supabase
+    .from('api_keys')
+    .select(`
+      *,
+      custom_gpts (
+        id,
+        name,
+        system_prompt,
+        is_active,
+        user_id,
+        preferred_model
+      )
+    `)
+    .eq('key_hash', hash)
+    .eq('is_active', true)
+    .single();
+
+  if (error || !apiKeyData) {
+    throw new Error('Invalid API key');
+  }
+
+  // Check if key is expired
+  if (apiKeyData.expires_at && new Date(apiKeyData.expires_at) < new Date()) {
+    throw new Error('API key expired');
+  }
+
+  return apiKeyData;
+};
+
+const checkRateLimit = async (supabase: any, apiKeyId: string, rateLimitRpm: number) => {
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
+  
+  const { data, error } = await supabase
+    .from('api_usage_logs')
+    .select('id')
+    .eq('api_key_id', apiKeyId)
+    .gte('created_at', oneMinuteAgo);
+
+  if (error) throw error;
+
+  if (data && data.length >= rateLimitRpm) {
+    throw new Error('Rate limit exceeded');
+  }
+};
+
+const logApiUsage = async (
+  supabase: any, 
+  apiKeyId: string, 
+  gptId: string, 
+  endpoint: string, 
+  method: string, 
+  statusCode: number, 
+  responseTime: number,
+  tokensUsed?: number,
+  errorMessage?: string,
+  userAgent?: string,
+  ipAddress?: string
+) => {
+  await supabase
+    .from('api_usage_logs')
+    .insert({
+      api_key_id: apiKeyId,
+      gpt_id: gptId,
+      endpoint,
+      method,
+      status_code: statusCode,
+      response_time_ms: responseTime,
+      tokens_used: tokensUsed,
+      error_message: errorMessage,
+      user_agent: userAgent,
+      ip_address: ipAddress
+    });
+
+  // Update usage count on API key
+  await supabase.rpc('increment_api_key_usage', { key_id: apiKeyId });
+};
+
 serve(async (req) => {
+  const startTime = Date.now();
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const body = await req.json();
-    const { gptId, messages, systemPrompt, sessionId, prompt, customGPT } = body;
+    const { gptId, messages, systemPrompt, sessionId, prompt, customGPT, gpt_id } = body;
     
     // Get OpenAI API key
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -34,7 +127,129 @@ serve(async (req) => {
       });
     }
 
-    // Handle legacy prompt-based requests (backward compatibility)
+    // NEW: Check for API key authentication (new format)
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ') && (gpt_id || body.gpt_id)) {
+      const apiKey = authHeader.substring(7);
+      
+      try {
+        // Authenticate API key and get GPT info
+        const apiKeyData = await authenticateApiKey(supabase, apiKey);
+        
+        // Check rate limits
+        await checkRateLimit(supabase, apiKeyData.id, apiKeyData.rate_limit_rpm);
+
+        const targetGptId = gpt_id || body.gpt_id;
+        
+        // Verify GPT access
+        const gpt = apiKeyData.custom_gpts;
+        if (!gpt || (apiKeyData.gpt_id && gpt.id !== targetGptId) || !gpt.is_active) {
+          throw new Error('GPT not found or access denied');
+        }
+
+        // Check permissions
+        if (!apiKeyData.permissions.chat) {
+          throw new Error('Chat permission not granted for this API key');
+        }
+
+        // Prepare messages with system prompt
+        const fullMessages: ChatMessage[] = [
+          { role: 'system', content: gpt.system_prompt },
+          ...messages
+        ];
+
+        // Call OpenAI API
+        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: gpt.preferred_model || 'gpt-4o-mini',
+            messages: fullMessages,
+            stream: body.stream || false,
+            max_tokens: body.max_tokens || 1000,
+            temperature: body.temperature || 0.7,
+          }),
+        });
+
+        if (!openAIResponse.ok) {
+          throw new Error(`OpenAI API error: ${openAIResponse.statusText}`);
+        }
+
+        const responseTime = Date.now() - startTime;
+        
+        if (body.stream) {
+          // Log API usage for streaming
+          logApiUsage(
+            supabase,
+            apiKeyData.id,
+            targetGptId,
+            '/chat-completion',
+            'POST',
+            200,
+            responseTime,
+            undefined,
+            undefined,
+            req.headers.get('User-Agent'),
+            req.headers.get('X-Forwarded-For')
+          );
+
+          // Return streaming response
+          return new Response(openAIResponse.body, {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          });
+        } else {
+          // Handle non-streaming response
+          const data = await openAIResponse.json();
+          
+          // Log API usage
+          await logApiUsage(
+            supabase,
+            apiKeyData.id,
+            targetGptId,
+            '/chat-completion',
+            'POST',
+            200,
+            responseTime,
+            data.usage?.total_tokens,
+            undefined,
+            req.headers.get('User-Agent'),
+            req.headers.get('X-Forwarded-For')
+          );
+
+          return new Response(JSON.stringify(data), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } catch (apiError: any) {
+        const responseTime = Date.now() - startTime;
+        console.error('API key authentication error:', apiError);
+        
+        const statusCode = apiError.message.includes('Rate limit') ? 429 :
+                          apiError.message.includes('Invalid API key') ? 401 :
+                          apiError.message.includes('not found') ? 404 : 500;
+
+        return new Response(JSON.stringify({ 
+          error: {
+            type: 'api_error',
+            message: apiError.message,
+            code: apiError.message.toLowerCase().replace(/\s+/g, '_')
+          }
+        }), {
+          status: statusCode,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    // EXISTING: Handle legacy prompt-based requests (backward compatibility)
     if (prompt && !gptId) {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -59,7 +274,7 @@ serve(async (req) => {
       });
     }
 
-    // Handle legacy ChatInterface format (existing chat functionality)
+    // EXISTING: Handle legacy ChatInterface format (existing chat functionality)
     if (messages && customGPT) {
       const startTime = Date.now();
 
@@ -165,7 +380,7 @@ serve(async (req) => {
       });
     }
 
-    // Handle new GPT Chat Interface format
+    // EXISTING: Handle new GPT Chat Interface format
     if (gptId && messages && systemPrompt) {
       // Initialize Supabase client
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
