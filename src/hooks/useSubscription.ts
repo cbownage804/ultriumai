@@ -32,6 +32,8 @@ export const useSubscription = () => {
 
     try {
       setIsLoading(true);
+      console.log('Checking subscription for user:', user.email);
+      
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -39,15 +41,38 @@ export const useSubscription = () => {
       });
 
       if (error) throw error;
-
+      
+      console.log('Subscription data received:', data);
       setSubscription(data);
     } catch (error) {
       console.error('Error checking subscription:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check subscription status.",
-        variant: "destructive",
-      });
+      
+      // Fallback: try to get subscription data directly from database
+      try {
+        const { data: dbData, error: dbError } = await supabase
+          .from('subscribers')
+          .select('subscribed, subscription_tier, subscription_end')
+          .eq('email', user.email)
+          .single();
+          
+        if (!dbError && dbData) {
+          console.log('Using database fallback:', dbData);
+          setSubscription({
+            subscribed: dbData.subscribed,
+            subscription_tier: dbData.subscription_tier || 'free',
+            subscription_end: dbData.subscription_end
+          });
+        } else {
+          throw error;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        toast({
+          title: "Error",
+          description: "Failed to check subscription status.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
