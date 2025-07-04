@@ -235,7 +235,7 @@ const SecurityAppsSection = () => {
             return (
               <Card 
                 key={app.id} 
-                className={`hover:shadow-lg transition-all duration-500 border-2 hover:border-primary/20 card-elevated animate-scale-on-hover transform-gpu cursor-pointer ${
+                className={`hover:shadow-xl hover:-translate-y-2 transition-all duration-500 border-2 hover:border-primary/20 card-elevated animate-scale-on-hover transform-gpu cursor-pointer hover:scale-105 ${
                   visibleCards[index] 
                     ? 'opacity-100 translate-y-0 scale-100' 
                     : 'opacity-0 translate-y-8 scale-95'
