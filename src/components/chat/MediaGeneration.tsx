@@ -126,8 +126,8 @@ const MediaGeneration = ({ onMediaGenerated, disabled }: MediaGenerationProps) =
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="1024x1024">Square (1024×1024)</SelectItem>
-                <SelectItem value="1792x1024">Landscape (1792×1024)</SelectItem>
-                <SelectItem value="1024x1792">Portrait (1024×1792)</SelectItem>
+                <SelectItem value="1536x1024">Landscape (1536×1024)</SelectItem>
+                <SelectItem value="1024x1536">Portrait (1024×1536)</SelectItem>
               </SelectContent>
             </Select>
           </div>

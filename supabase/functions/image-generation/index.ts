@@ -27,9 +27,6 @@ serve(async (req) => {
 
     console.log('Generating image with prompt:', prompt);
 
-    // Use DALL-E 2 for more reliable generation
-    console.log('Image generation request:', { prompt, size, quality });
-
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -37,17 +34,17 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'dall-e-2',
+        model: 'dall-e-3',
         prompt: prompt,
-        size: "1024x1024", // DALL-E 2 only supports 1024x1024, 512x512, 256x256
+        size: size === "1024x1024" ? "1024x1024" : "1024x1024", // DALL-E 3 supports 1024x1024, 1792x1024, 1024x1792
+        quality: quality === "high" ? "hd" : "standard",
         n: 1
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('OpenAI API Error:', error);
-      throw new Error(error.error?.message || `OpenAI API request failed with status: ${response.status}`);
+      throw new Error(error.error?.message || 'OpenAI API request failed');
     }
 
     const data = await response.json();
