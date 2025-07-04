@@ -29,6 +29,7 @@ const chatItems = [
 ];
 
 const customGPTItems = [
+  { title: "Templates", url: "/dashboard/templates", icon: Star },
   { title: "Build", url: "/dashboard/custom-gpts/build", icon: Bot },
   { title: "Personalize", url: "/dashboard/custom-gpts/personalize", icon: User },
   { title: "Actions", url: "/dashboard/custom-gpts/actions", icon: Settings, badge: "Beta" },
