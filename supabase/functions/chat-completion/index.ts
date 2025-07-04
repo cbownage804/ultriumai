@@ -15,10 +15,17 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, customGPT } = await req.json();
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
+    }
+
+    // Build system prompt based on custom GPT or default
+    let systemPrompt = 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses.';
+    
+    if (customGPT && customGPT.system_prompt) {
+      systemPrompt = customGPT.system_prompt;
     }
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -32,7 +39,7 @@ serve(async (req) => {
         messages: [
           { 
             role: 'system', 
-            content: 'You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. When users upload files, carefully analyze their content and provide insights, summaries, or answer questions about the files. You can work with various file types including text files, code files, JSON, CSV, and more. Be concise but thorough in your responses.' 
+            content: systemPrompt
           },
           ...messages
         ],

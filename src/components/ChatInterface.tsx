@@ -1,19 +1,28 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, MessageSquare } from "lucide-react";
+import { Plus, MessageSquare, Bot } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { useMessages } from "@/hooks/useMessages";
+import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
 import ChatArea from "@/components/chat/ChatArea";
 import MessageInput from "@/components/chat/MessageInput";
 import { Conversation, ConversationFile } from "@/types/chat";
 import { useFileUpload } from "@/hooks/useFileUpload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ChatInterface = () => {
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [selectedGPT, setSelectedGPT] = useState<string>("default");
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -29,6 +38,7 @@ const ChatInterface = () => {
   } = useConversations();
   
   const { messages, setMessages, loadMessages, saveMessage } = useMessages();
+  const { gpts } = useCustomGPTs();
   const { getFileContent } = useFileUpload();
 
   // Load messages when conversation changes
@@ -118,7 +128,10 @@ const ChatInterface = () => {
         await updateConversationTitle(conversationId, title);
       }
 
-      // Call AI API with file content
+      // Get selected GPT's system prompt
+      const currentGPT = gpts.find(gpt => gpt.id === selectedGPT);
+      
+      // Call AI API with custom GPT context or default
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           messages: [...messages, { 
@@ -127,7 +140,11 @@ const ChatInterface = () => {
           }].map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          customGPT: currentGPT ? {
+            system_prompt: currentGPT.system_prompt,
+            name: currentGPT.name
+          } : null
         }
       });
 
@@ -214,6 +231,50 @@ const ChatInterface = () => {
       <div className="flex-1 flex flex-col">
         {currentConversationId ? (
           <>
+            {/* GPT Selector Header */}
+            <div className="border-b p-4 bg-muted/30">
+              <div className="flex items-center gap-3">
+                <Bot className="w-5 h-5 text-primary" />
+                <div className="flex-1">
+                  <Select value={selectedGPT} onValueChange={setSelectedGPT}>
+                    <SelectTrigger className="w-full max-w-xs">
+                      <SelectValue placeholder="Select GPT" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded bg-primary/20 flex items-center justify-center">
+                            <Bot className="w-3 h-3 text-primary" />
+                          </div>
+                          Default UltriumGPT
+                        </div>
+                      </SelectItem>
+                      {gpts.map((gpt) => (
+                        <SelectItem key={gpt.id} value={gpt.id}>
+                          <div className="flex items-center gap-2">
+                            {gpt.logo_url ? (
+                              <img src={gpt.logo_url} alt={gpt.name} className="w-4 h-4 rounded object-cover" />
+                            ) : (
+                              <div 
+                                className="w-4 h-4 rounded flex items-center justify-center text-white text-xs font-medium"
+                                style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}
+                              >
+                                {gpt.name.charAt(0)}
+                              </div>
+                            )}
+                            {gpt.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {selectedGPT === "default" ? "General AI Assistant" : gpts.find(g => g.id === selectedGPT)?.description}
+                </div>
+              </div>
+            </div>
+            
             <ChatArea
               currentConversationId={currentConversationId}
               conversations={conversations}
