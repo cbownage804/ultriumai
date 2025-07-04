@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap, ExternalLink } from "lucide-react";
+import { Shield, Link, Mail, FileText, Search, Check, Play, ArrowRight, Lock, Users, Star, Zap, ExternalLink, Network } from "lucide-react";
 
 const SecurityAppsSection = () => {
   const securityApps = [
@@ -75,6 +75,16 @@ const SecurityAppsSection = () => {
       riskTypes: ['Compliance Violations', 'Audit Failures', 'Regulatory Risks'],
       category: 'Compliance Management',
       demoUrl: '/demos/safecomp'
+    },
+    {
+      id: 'safenet',
+      name: 'Ultrium SafeNet™',
+      icon: Network,
+      description: 'Advanced network discovery and topology mapping platform',
+      features: ['Network topology mapping', 'Device discovery', 'Performance monitoring'],
+      riskTypes: ['Network Vulnerabilities', 'Unauthorized Devices', 'Performance Issues'],
+      category: 'Network Security',
+      demoUrl: '/demos/safenet'
     }
   ];
 
@@ -146,6 +156,15 @@ const SecurityAppsSection = () => {
       enterpriseSavings: '$37'
     },
     {
+      name: 'Network & Document Bundle',
+      apps: ['SafeNet', 'SafeDoc', 'SafePass'],
+      originalPrice: '$87',
+      bundlePrice: '$65',
+      enterprisePrice: '$50',
+      savings: '$22',
+      enterpriseSavings: '$37'
+    },
+    {
       name: 'Compliance & Intelligence Bundle',
       apps: ['SafeComp', 'SafeWEB'],
       originalPrice: '$58',
@@ -156,12 +175,12 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Complete Security Suite',
-      apps: ['All 7 Apps'],
-      originalPrice: '$203',
-      bundlePrice: '$120',
-      enterprisePrice: '$89',
-      savings: '$83',
-      enterpriseSavings: '$114'
+      apps: ['All 8 Apps'],
+      originalPrice: '$232',
+      bundlePrice: '$140',
+      enterprisePrice: '$99',
+      savings: '$92',
+      enterpriseSavings: '$133'
     }
   ];
 
@@ -289,7 +308,7 @@ const SecurityAppsSection = () => {
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg p-8 mb-12">
             <div className="text-center mb-8">
               <h4 className="text-2xl font-bold mb-3">Save with App Bundles</h4>
-              <p className="text-muted-foreground">Get multiple security apps together and save up to 43%</p>
+              <p className="text-muted-foreground">Get multiple security apps together and save up to 57%</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -372,11 +391,11 @@ const SecurityAppsSection = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        Bundle discounts save up to 56%
+                        Bundle discounts save up to 57%
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
-                        14-day free trial for all 7 apps
+                        14-day free trial for all 8 apps
                       </li>
                     </ul>
                     <Button className="w-full" onClick={() => window.location.href = '/auth'}>
