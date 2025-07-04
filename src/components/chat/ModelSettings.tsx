@@ -26,6 +26,16 @@ interface ModelConfig {
 }
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  'gpt-4.1-2025-04-14': {
+    name: 'GPT-4.1 (Latest)',
+    maxTokens: 4096,
+    inputCostPer1kTokens: 0.01,
+    outputCostPer1kTokens: 0.03,
+    contextWindow: 128000,
+    description: 'The flagship model with superior performance',
+    icon: Brain,
+    category: 'flagship'
+  },
   'gpt-4o': {
     name: 'GPT-4o',
     maxTokens: 4096,
@@ -34,7 +44,7 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     contextWindow: 128000,
     description: 'Advanced multimodal model with vision capabilities',
     icon: Brain,
-    category: 'flagship'
+    category: 'standard'
   },
   'gpt-4o-mini': {
     name: 'GPT-4o Mini',
@@ -46,13 +56,23 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     icon: Zap,
     category: 'fast'
   },
-  'claude-3-5-sonnet-20241022': {
-    name: 'Claude 3.5 Sonnet',
+  'claude-opus-4-20250514': {
+    name: 'Claude Opus 4',
+    maxTokens: 4096,
+    inputCostPer1kTokens: 0.015,
+    outputCostPer1kTokens: 0.075,
+    contextWindow: 200000,
+    description: 'Most capable Claude model with superior reasoning',
+    icon: Brain,
+    category: 'flagship'
+  },
+  'claude-sonnet-4-20250514': {
+    name: 'Claude Sonnet 4',
     maxTokens: 4096,
     inputCostPer1kTokens: 0.003,
     outputCostPer1kTokens: 0.015,
     contextWindow: 200000,
-    description: 'Anthropic\'s most capable model for complex reasoning',
+    description: 'High-performance Claude model with exceptional efficiency',
     icon: Brain,
     category: 'standard'
   },
@@ -84,7 +104,7 @@ interface ModelSettingsProps {
 }
 
 export const ModelSettings = ({ modelParams, onChange, disabled = false }: ModelSettingsProps) => {
-  const currentModel = MODEL_CONFIGS[modelParams.model] || MODEL_CONFIGS['gpt-4o-mini'];
+  const currentModel = MODEL_CONFIGS[modelParams.model] || MODEL_CONFIGS['gpt-4.1-2025-04-14'];
   const Icon = currentModel.icon;
 
   const updateParam = (key: keyof ModelParams, value: any) => {

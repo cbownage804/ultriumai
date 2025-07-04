@@ -23,7 +23,7 @@ interface UserSettings {
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState<UserSettings>({
-    preferred_model: "gpt-4o-mini",
+    preferred_model: "gpt-4.1-2025-04-14",
     temperature: 0.7,
     max_tokens: 1500,
     system_prompt: "You are UltriumGPT, a helpful AI assistant created by UltriumAI. You help users with various tasks including answering questions, providing information, and assisting with problem-solving. Be concise but thorough in your responses.",
@@ -247,7 +247,8 @@ const SettingsPage = () => {
                     <SelectValue placeholder="Select AI model" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="gpt-4o-mini">GPT-4o Mini (Recommended)</SelectItem>
+                    <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Recommended)</SelectItem>
+                    <SelectItem value="gpt-4o-mini">GPT-4o Mini (Faster)</SelectItem>
                     <SelectItem value="gpt-4o">GPT-4o (Advanced)</SelectItem>
                   </SelectContent>
                 </Select>

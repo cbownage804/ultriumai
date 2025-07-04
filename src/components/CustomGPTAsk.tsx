@@ -23,7 +23,7 @@ const CustomGPTAsk = () => {
   
   // Model parameters state
   const [modelParams, setModelParams] = useState<ModelParams>({
-    model: 'gpt-4o-mini',
+    model: 'gpt-4.1-2025-04-14',
     temperature: 0.7,
     max_tokens: 1000,
     top_p: 1.0,
