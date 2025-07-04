@@ -34,12 +34,10 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
+        model: 'dall-e-3',
         prompt: prompt,
-        size: size,
-        quality: quality,
-        output_format: 'webp',
-        output_compression: 80,
+        size: size === "1024x1024" ? "1024x1024" : "1024x1024", // DALL-E 3 supports 1024x1024, 1792x1024, 1024x1792
+        quality: quality === "high" ? "hd" : "standard",
         n: 1
       }),
     });
