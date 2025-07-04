@@ -183,7 +183,7 @@ export const SafeEmailDemo = () => {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Ultrium SafeEmail Demo</h1>
+            <h1 className="text-3xl font-bold">Ultrium SafeMail Demo</h1>
           </div>
           <p className="text-muted-foreground">
             Analyze emails for phishing, malware, and security threats using AI-powered detection
