@@ -38,8 +38,10 @@ function AppRouter() {
       <Route path="/demos" element={<LiveDemos />} />
       <Route path="/demos/safeemail" element={<SafeEmailDemoPage />} />
       <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
-      <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
-      <Route path="/demos/darkweb" element={<DarkWebDemoPage />} />
+      <Route path="/demos/safescan" element={<SafeDocDemoPage />} />
+      <Route path="/demos/safepass" element={<SafeEmailDemoPage />} />
+      <Route path="/demos/safedoc" element={<SafeEmailDemoPage />} />
+      <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={

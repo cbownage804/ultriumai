@@ -92,20 +92,70 @@ const demoApps: DemoApp[] = [
     icon: FileText,
     features: [
       "Multi-format document scanning",
-      "Macro analysis",
+      "Macro analysis", 
       "Embedded threat detection",
       "Content safety verification",
       "Metadata analysis",
       "Quarantine recommendations"
     ],
-    demoUrl: "/demos/safedoc",
+    demoUrl: "/demos/safescan",
     isLive: true,
     tags: ["Document Security", "File Analysis", "Content Safety"],
     useCases: [
       "Email attachment screening",
-      "File upload protection",
+      "File upload protection", 
       "Document workflow security",
       "Compliance verification"
+    ]
+  },
+  {
+    id: "ultrium-safepass",
+    name: "Ultrium SafePass",
+    category: "Password Security",
+    description: "Enterprise password management and security platform",
+    longDescription: "Comprehensive password management solution with enterprise-grade security, automated password generation, breach monitoring, and team collaboration features for secure credential management.",
+    icon: Lock,
+    features: [
+      "Secure password generation",
+      "Breach monitoring",
+      "Team password sharing",
+      "Multi-factor authentication",
+      "Password health scoring",
+      "Compliance reporting"
+    ],
+    demoUrl: "/demos/safepass",
+    isLive: true,
+    tags: ["Password Security", "Credential Management", "Enterprise"],
+    useCases: [
+      "Corporate password management",
+      "Team credential sharing",
+      "Compliance requirements",
+      "Security auditing"
+    ]
+  },
+  {
+    id: "ultrium-safedoc",
+    name: "Ultrium SafeDoc", 
+    category: "Document Management",
+    description: "Secure document storage and knowledge management platform",
+    longDescription: "Enterprise document management system with advanced security, version control, collaboration tools, and intelligent organization. Built for IT teams and MSPs who need secure, searchable document storage.",
+    icon: FileText,
+    features: [
+      "Secure document storage",
+      "Version control",
+      "Advanced search",
+      "Team collaboration",
+      "Access controls",
+      "Audit trails"
+    ],
+    demoUrl: "/demos/safedoc",
+    isLive: true,
+    tags: ["Document Management", "Knowledge Base", "Collaboration"],
+    useCases: [
+      "IT documentation storage",
+      "Client knowledge base",
+      "Procedure management", 
+      "Compliance documentation"
     ]
   },
   {
@@ -163,7 +213,7 @@ const demoApps: DemoApp[] = [
 const LiveDemos = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = ["all", "Email Security", "Link Security", "Document Security", "Threat Intelligence", "AI Assistant"];
+  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Threat Intelligence", "AI Assistant"];
   
   const filteredApps = selectedCategory === "all" 
     ? demoApps 
