@@ -186,7 +186,7 @@ const SecurityAppsSection = () => {
   ];
 
   return (
-    <section id="security" className="py-20 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20">
+    <section id="security" className="py-20 bg-gradient-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <Badge variant="secondary" className="mb-4">
@@ -201,7 +201,7 @@ const SecurityAppsSection = () => {
             Protect against cyber threats with real-time scanning and analysis.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <Badge className="bg-green-500 text-white">14-Day Free Trial</Badge>
+            <Badge className="bg-success text-success-foreground">14-Day Free Trial</Badge>
             <Badge variant="outline">Monthly Billing Per User</Badge>
             <Badge variant="outline">Bundle Discounts Available</Badge>
           </div>
@@ -212,10 +212,10 @@ const SecurityAppsSection = () => {
           {securityApps.map((app) => {
             const Icon = app.icon;
             return (
-              <Card key={app.id} className="hover:shadow-lg transition-all duration-300 border-2 hover:border-red-200">
+              <Card key={app.id} className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20 card-elevated">
                 <CardHeader className="text-center">
-                  <div className="mx-auto mb-4 w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                    <Icon className="h-8 w-8 text-red-600" />
+                  <div className="mx-auto mb-4 w-16 h-16 bg-primary-soft rounded-full flex items-center justify-center">
+                    <Icon className="h-8 w-8 text-primary" />
                   </div>
                   <CardTitle className="text-lg">{app.name}</CardTitle>
                   <CardDescription className="text-sm">{app.description}</CardDescription>
@@ -225,7 +225,7 @@ const SecurityAppsSection = () => {
                     <div className="space-y-1">
                       {app.features.slice(0, 3).map((feature, index) => (
                         <div key={index} className="flex items-center gap-2 text-sm">
-                          <Check className="h-3 w-3 text-green-500" />
+                          <Check className="h-3 w-3 text-success" />
                           <span>{feature}</span>
                         </div>
                       ))}
@@ -268,14 +268,14 @@ const SecurityAppsSection = () => {
             {pricingTiers.map((tier, index) => {
               const Icon = tier.icon;
               return (
-                <Card key={index} className={`relative ${tier.popular ? 'border-primary border-2' : ''} hover:shadow-lg transition-all duration-300`}>
+                <Card key={index} className={`relative ${tier.popular ? 'border-primary border-2' : ''} hover:shadow-lg transition-all duration-300 card-elevated`}>
                   {tier.popular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                       <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
                     </div>
                   )}
                   <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <div className="mx-auto mb-4 w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
                     <CardTitle className="text-xl">{tier.name}</CardTitle>
@@ -288,7 +288,7 @@ const SecurityAppsSection = () => {
                     <ul className="space-y-3 mb-6">
                       {tier.features.map((feature, featureIndex) => (
                         <li key={featureIndex} className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          <Check className="h-4 w-4 text-success flex-shrink-0" />
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -306,7 +306,7 @@ const SecurityAppsSection = () => {
           </div>
 
           {/* App Bundles Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg p-8 mb-12">
+          <div className="bg-gradient-secondary rounded-lg p-8 mb-12 card-elevated">
             <div className="text-center mb-8">
               <h4 className="text-2xl font-bold mb-3">Save with App Bundles</h4>
               <p className="text-muted-foreground">Get multiple security apps together and save up to 57%</p>
@@ -314,7 +314,7 @@ const SecurityAppsSection = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {appBundles.map((bundle, index) => (
-                <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                <Card key={index} className="hover:shadow-lg transition-all duration-300 card-elevated">
                   <CardHeader className="text-center">
                     <CardTitle className="text-lg">{bundle.name}</CardTitle>
                     <div className="text-sm text-muted-foreground">
@@ -330,15 +330,15 @@ const SecurityAppsSection = () => {
                         <div className="text-lg font-bold text-primary">
                           Premium: {bundle.bundlePrice}/month
                         </div>
-                        <div className="text-sm text-green-600 font-medium">
+                        <div className="text-sm text-success font-medium">
                           Save {bundle.savings}/month
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <div className="text-lg font-bold text-orange-600">
+                        <div className="text-lg font-bold text-warning">
                           Enterprise: {bundle.enterprisePrice}/month
                         </div>
-                        <div className="text-sm text-green-600 font-medium">
+                        <div className="text-sm text-success font-medium">
                           Save {bundle.enterpriseSavings}/month
                         </div>
                       </div>
@@ -360,7 +360,7 @@ const SecurityAppsSection = () => {
 
         {/* CTA Section */}
         <div className="text-center mt-12">
-          <div className="bg-white rounded-lg p-8 shadow-lg max-w-2xl mx-auto">
+          <div className="bg-card rounded-lg p-8 shadow-lg max-w-2xl mx-auto card-elevated">
             <h3 className="text-2xl font-bold mb-4">Ready to Secure Your Custom GPTs?</h3>
             <p className="text-muted-foreground mb-6">
               Add enterprise-grade security scanning to your AI agents. Protect your users from cyber threats with real-time analysis.
@@ -387,15 +387,15 @@ const SecurityAppsSection = () => {
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4 text-success" />
                         Individual apps starting at $20/user/month
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4 text-success" />
                         Bundle discounts save up to 35%
                       </li>
                       <li className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4 text-success" />
                         14-day free trial for all 8 apps
                       </li>
                     </ul>
