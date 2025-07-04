@@ -235,14 +235,13 @@ const SecurityAppsSection = () => {
             return (
               <Card 
                 key={app.id} 
-                className={`hover:shadow-xl hover:-translate-y-2 transition-all duration-500 border-2 hover:border-primary/20 card-elevated animate-scale-on-hover transform-gpu cursor-pointer hover:scale-105 ${
+                className={`hover:shadow-xl hover:-translate-y-2 transition-all duration-500 border-2 hover:border-primary/20 card-elevated cursor-pointer hover:scale-105 ${
                   visibleCards[index] 
                     ? 'opacity-100 translate-y-0 scale-100' 
                     : 'opacity-0 translate-y-8 scale-95'
                 }`}
                 style={{ 
-                  transitionDelay: `${index * 150}ms`,
-                  transform: visibleCards[index] ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)'
+                  transitionDelay: `${index * 150}ms`
                 }}
                 onClick={() => window.location.href = app.productUrl}
               >
