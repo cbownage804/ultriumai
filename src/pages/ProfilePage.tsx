@@ -190,6 +190,16 @@ const ProfilePage = () => {
               </p>
             </div>
             <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  window.location.reload();
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Refresh
+              </Button>
               {subscription.subscribed ? (
                 <Button 
                   variant="outline" 
