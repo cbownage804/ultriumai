@@ -9,6 +9,60 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      action_execution_logs: {
+        Row: {
+          action_id: string | null
+          created_at: string
+          error_message: string | null
+          execution_status: string
+          execution_time_ms: number | null
+          gpt_id: string | null
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          action_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_status: string
+          execution_time_ms?: number | null
+          gpt_id?: string | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          action_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          execution_time_ms?: number | null
+          gpt_id?: string | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_execution_logs_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "gpt_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "action_execution_logs_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -545,6 +599,56 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      gpt_actions: {
+        Row: {
+          action_type: string
+          config: Json
+          created_at: string
+          description: string | null
+          gpt_id: string | null
+          id: string
+          is_beta: boolean
+          is_enabled: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          gpt_id?: string | null
+          id?: string
+          is_beta?: boolean
+          is_enabled?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          gpt_id?: string | null
+          id?: string
+          is_beta?: boolean
+          is_enabled?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gpt_actions_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gpt_analytics: {
         Row: {
