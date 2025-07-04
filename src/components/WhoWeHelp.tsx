@@ -129,7 +129,7 @@ const WhoWeHelp = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
+                  <p className="text-sm text-foreground/70 leading-relaxed group-hover:text-foreground transition-colors duration-300">
                     {industry.details}
                   </p>
                 </CardContent>
