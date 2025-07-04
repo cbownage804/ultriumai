@@ -15,48 +15,48 @@ const Features = () => {
   const features = [
     {
       icon: MessageSquare,
-      title: "Multi-Platform Embedding",
-      description: "Seamlessly embed in Microsoft Teams, Slack, or any custom application with our widget SDK."
-    },
-    {
-      icon: Users,
-      title: "MSP Multi-Tenant Architecture", 
-      description: "Isolated knowledge bases for each client with complete data separation and privacy controls."
-    },
-    {
-      icon: Palette,
-      title: "White-Label Client Portals",
-      description: "Fully branded experience with your MSP's colors, logos, and custom domain integration."
-    },
-    {
-      icon: Zap,
-      title: "Instant Client Support",
-      description: "Deliver accurate answers from client documentation in seconds. Reduce tier-1 tickets by 20-30%."
+      title: "Custom AI Agents",
+      description: "Built specifically for your business workflows, trained on your actual policies and procedures."
     },
     {
       icon: Shield,
-      title: "MSP-Grade Security",
-      description: "SOC 2 Type II compliant with encryption, role-based access, and comprehensive audit trails."
+      title: "Security-First Design", 
+      description: "Every GPT comes with built-in cybersecurity features, threat detection, and data protection protocols."
     },
     {
-      icon: BarChart3,
-      title: "MSP Performance Analytics",
-      description: "Track client usage, ticket reduction metrics, and ROI reporting across all tenants."
+      icon: Users,
+      title: "Multi-Industry Expertise",
+      description: "Specialized solutions for IT teams, MSPs, accounting firms, automotive shops, and SMBs."
+    },
+    {
+      icon: Zap,
+      title: "Automated Support",
+      description: "Reduce helpdesk tickets by 20-30% with intelligent automation that handles common requests instantly."
     },
     {
       icon: Settings,
-      title: "Streamlined Knowledge Ops",
-      description: "Bulk upload client documentation, runbooks, and procedures. AI handles indexing automatically."
+      title: "Seamless Integration",
+      description: "Connect with your existing tools, RMM platforms, PSA systems, and business applications."
+    },
+    {
+      icon: BarChart3,
+      title: "Real-Time Analytics",
+      description: "Track performance, measure ROI, and optimize your AI agents with comprehensive reporting."
     },
     {
       icon: Globe,
-      title: "RMM & PSA Integration",
-      description: "Connect with ConnectWise, Autotask, Kaseya, and other MSP platforms via REST API."
+      title: "White-Glove Setup",
+      description: "Our team handles everything from initial setup to ongoing support and optimization."
+    },
+    {
+      icon: Palette,
+      title: "Custom Branding",
+      description: "Your AI agents reflect your brand with custom colors, logos, and messaging."
     },
     {
       icon: FileText,
-      title: "Smart Documentation Processing",
-      description: "AI automatically extracts knowledge from client SOPs, network diagrams, and troubleshooting guides."
+      title: "Document Intelligence",
+      description: "Transform your existing documentation into interactive, searchable knowledge bases."
     }
   ];
 
@@ -65,11 +65,11 @@ const Features = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold mb-6 text-foreground">
-            From Custom AI Agents to Ready-to-Deploy Solutions
+            Comprehensive AI Solutions for Modern Business
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Leveraging our proven expertise in building custom AI agents, UltriumGPT delivers enterprise-grade 
-            knowledge management that's ready to deploy today. Built for Business. Secure by Design.
+            From custom GPT development to AI-powered security scanning, UltriumAI delivers enterprise-grade 
+            solutions that are secure, scalable, and tailored to your specific business needs.
           </p>
         </div>
         

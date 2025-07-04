@@ -1,129 +1,189 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { CheckCircle, ArrowRight, Phone, Calendar, Users, Building } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Phone, Mail, Clock, MessageSquare, Calendar } from "lucide-react";
 
 const ContactSection = () => {
   return (
-    <section className="py-20 bg-primary/5">
+    <section id="contact" className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
+          <Badge variant="secondary" className="mb-4">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Get In Touch
+          </Badge>
           <h2 className="text-4xl font-bold mb-6 text-foreground">
-            Ready to Power Your Future with UltriumGPT?
+            Ready to Transform Your Business with AI?
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            From our proven track record building custom AI agents comes our most accessible solution yet. 
-            Call 804-821-1410 to discuss your knowledge management needs or schedule a personalized demo.
+            Let's discuss how custom AI agents can streamline your operations while keeping security at the forefront.
+            Book a free discovery call or reach out directly.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Contact Information */}
           <div className="space-y-8">
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <CheckCircle className="w-6 h-6 text-primary mt-1" />
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Custom Deployment on UltriumAI Platform</h3>
-                  <p className="text-muted-foreground">Deploy on our secure infrastructure or get your own branded subdomain with full customization.</p>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-primary" />
+                  Direct Contact
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Phone</p>
+                    <p className="text-primary font-semibold text-lg">804-821-1410</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <CheckCircle className="w-6 h-6 text-primary mt-1" />
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Dedicated Setup & Training</h3>
-                  <p className="text-muted-foreground">Personal onboarding with UltriumAI specialists to configure your knowledge bases and integrations.</p>
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Email</p>
+                    <p className="text-muted-foreground">info@ultriumai.com</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <CheckCircle className="w-6 h-6 text-primary mt-1" />
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Built on Proven AI Expertise</h3>
-                  <p className="text-muted-foreground">Backed by UltriumAI's track record in custom AI agent development, security-first design, and business solutions.</p>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Location</p>
+                    <p className="text-muted-foreground">Virginia, USA</p>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <CheckCircle className="w-6 h-6 text-primary mt-1" />
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Ongoing Support & Updates</h3>
-                  <p className="text-muted-foreground">Continuous platform improvements, new integrations, and dedicated customer success management.</p>
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Business Hours</p>
+                    <p className="text-muted-foreground">Mon-Fri: 9:00 AM - 6:00 PM EST</p>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <Card className="p-8 text-center bg-card border-2 border-primary/20">
-              <div className="mb-6">
-                <Building className="w-12 h-12 text-primary mx-auto mb-4" />
-                <h3 className="text-2xl font-bold mb-2">Enterprise MSP Solution</h3>
-                <p className="text-muted-foreground">Custom pricing based on client count and usage</p>
-              </div>
-              
-              <div className="space-y-4 mb-8">
-                <div className="flex items-center space-x-3">
-                  <Users className="w-5 h-5 text-primary" />
-                  <span className="text-sm">Unlimited client tenants</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  <span className="text-sm">White-label branding</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-primary" />
-                  <span className="text-sm">Priority support & training</span>
-                </div>
-              </div>
-              
-              <Button variant="hero" size="lg" className="w-full text-lg">
-                Call 804-821-1410
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
+              </CardContent>
             </Card>
-            
-            <div className="text-center space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Questions about implementation or pricing?
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button variant="outline">
-                  Schedule Live Demo
-                </Button>
-                <Button variant="ghost">
-                  View Our AI Agents
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="mt-16 text-center">
-          <div className="bg-muted/50 rounded-lg p-8 max-w-4xl mx-auto">
-            <h3 className="text-xl font-semibold mb-4">Deployment Process</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-3 font-bold">1</div>
-                <h4 className="font-semibold mb-2">Initial Consultation</h4>
-                <p className="text-sm text-muted-foreground">Assess your MSP needs and requirements</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-3 font-bold">2</div>
-                <h4 className="font-semibold mb-2">Custom Setup</h4>
-                <p className="text-sm text-muted-foreground">Configure subdomain and branding</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-3 font-bold">3</div>
-                <h4 className="font-semibold mb-2">Knowledge Import</h4>
-                <p className="text-sm text-muted-foreground">Upload and organize documentation</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center mx-auto mb-3 font-bold">4</div>
-                <h4 className="font-semibold mb-2">Go Live</h4>
-                <p className="text-sm text-muted-foreground">Deploy to clients with full support</p>
-              </div>
-            </div>
+            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Why Choose UltriumAI?</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span>15+ years of IT and cybersecurity experience</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span>Veteran-owned and operated business</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span>Security-first approach to AI development</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span>Custom solutions, not one-size-fits-all</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    <span>White-glove setup and ongoing support</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Contact Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Schedule Your Free Discovery Call</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name *</Label>
+                    <Input id="firstName" placeholder="Enter your first name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name *</Label>
+                    <Input id="lastName" placeholder="Enter your last name" />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address *</Label>
+                  <Input id="email" type="email" placeholder="Enter your email address" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input id="phone" type="tel" placeholder="Enter your phone number" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="company">Company Name</Label>
+                  <Input id="company" placeholder="Enter your company name" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="industry">Industry</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your industry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="it-internal">Internal IT Team</SelectItem>
+                      <SelectItem value="msp">IT Service Provider/MSP</SelectItem>
+                      <SelectItem value="accounting">Accounting/CPA Firm</SelectItem>
+                      <SelectItem value="automotive">Automotive Shop</SelectItem>
+                      <SelectItem value="smb">Small/Mid-Sized Business</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="projectType">What are you interested in?</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="helpdesk">Helpdesk/Support GPT</SelectItem>
+                      <SelectItem value="cybersecurity">Cybersecurity Copilot</SelectItem>
+                      <SelectItem value="client-facing">Client-Facing Bot</SelectItem>
+                      <SelectItem value="automation">Workflow Automation</SelectItem>
+                      <SelectItem value="consultation">General Consultation</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="message">Tell us about your project</Label>
+                  <Textarea 
+                    id="message" 
+                    placeholder="Describe your current challenges and how you'd like AI to help your business..."
+                    rows={4}
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button type="submit" className="flex-1">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Schedule Discovery Call
+                  </Button>
+                  <Button type="button" variant="outline" className="flex-1">
+                    <Phone className="mr-2 h-4 w-4" />
+                    Call 804-821-1410
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>

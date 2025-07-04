@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import Features from "@/components/Features";
+import AboutSection from "@/components/AboutSection";
+import WhoWeHelp from "@/components/WhoWeHelp";
 import SecurityAppsSection from "@/components/SecurityAppsSection";
 import DemoSection from "@/components/DemoSection";
 import Integrations from "@/components/Integrations";
@@ -31,6 +33,8 @@ const Index = () => {
       <Navigation />
       <main>
         <Hero />
+        <AboutSection />
+        <WhoWeHelp />
         <Features />
         <SecurityAppsSection />
         <DemoSection />
