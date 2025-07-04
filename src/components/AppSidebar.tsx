@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3 } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,6 +37,11 @@ const customGPTItems = [
   { title: "Deploy", url: "/dashboard/custom-gpts/deploy", icon: Settings },
   { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings },
   { title: "API Access", url: "/dashboard/api-access", icon: Settings },
+];
+
+const teamItems = [
+  { title: "Team Management", url: "/dashboard/teams", icon: Users },
+  { title: "Team Analytics", url: "/dashboard/team-analytics", icon: TrendingUp },
 ];
 
 const settingsItems = [
@@ -258,6 +263,24 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Team</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {teamItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavClass}>
+                      <item.icon className="h-4 w-4" />
+                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         <SidebarGroup>
           <SidebarGroupLabel>Account</SidebarGroupLabel>

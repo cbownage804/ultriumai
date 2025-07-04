@@ -116,6 +116,7 @@ export type Database = {
           remove_branding: boolean | null
           search_provider: string | null
           secondary_color: string | null
+          sharing_level: string | null
           should_mention_sources: boolean | null
           show_citations: string | null
           spotlight_avatar: boolean | null
@@ -124,6 +125,7 @@ export type Database = {
           starter_questions_expand: string | null
           starter_questions_header: string | null
           system_prompt: string
+          team_id: string | null
           terms_of_service: string | null
           theme_color: string | null
           title_color: string | null
@@ -175,6 +177,7 @@ export type Database = {
           remove_branding?: boolean | null
           search_provider?: string | null
           secondary_color?: string | null
+          sharing_level?: string | null
           should_mention_sources?: boolean | null
           show_citations?: string | null
           spotlight_avatar?: boolean | null
@@ -183,6 +186,7 @@ export type Database = {
           starter_questions_expand?: string | null
           starter_questions_header?: string | null
           system_prompt: string
+          team_id?: string | null
           terms_of_service?: string | null
           theme_color?: string | null
           title_color?: string | null
@@ -234,6 +238,7 @@ export type Database = {
           remove_branding?: boolean | null
           search_provider?: string | null
           secondary_color?: string | null
+          sharing_level?: string | null
           should_mention_sources?: boolean | null
           show_citations?: string | null
           spotlight_avatar?: boolean | null
@@ -242,6 +247,7 @@ export type Database = {
           starter_questions_expand?: string | null
           starter_questions_header?: string | null
           system_prompt?: string
+          team_id?: string | null
           terms_of_service?: string | null
           theme_color?: string | null
           title_color?: string | null
@@ -252,7 +258,15 @@ export type Database = {
           user_id?: string | null
           whitelisted_domains?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_gpts_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_analytics: {
         Row: {
@@ -527,6 +541,127 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          is_active: boolean | null
+          role: string
+          team_id: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          is_active?: boolean | null
+          role?: string
+          team_id: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          is_active?: boolean | null
+          role?: string
+          team_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          invited_by: string | null
+          is_active: boolean | null
+          joined_at: string | null
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          role?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_memberships_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_members: number | null
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_members?: number | null
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_members?: number | null
+          name?: string
+          owner_id?: string
+          updated_at?: string
         }
         Relationships: []
       }

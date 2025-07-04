@@ -13,6 +13,8 @@ import CustomGPTAnalyze from "@/components/CustomGPTAnalyze";
 import ConversationHistory from "@/components/ConversationHistory";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import GPTTemplatesMarketplace from "@/components/GPTTemplatesMarketplace";
+import TeamManagement from "@/components/TeamManagement";
+import TeamAnalytics from "@/components/TeamAnalytics";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -56,6 +58,8 @@ const Dashboard = () => {
   const isAnalyticsPage = location.pathname.includes('/analytics');
   const isTemplatesPage = location.pathname.includes('/templates');
   const isAPIAccessPage = location.pathname.includes('/api-access');
+  const isTeamManagementPage = location.pathname.includes('/teams');
+  const isTeamAnalyticsPage = location.pathname.includes('/team-analytics');
   
   const getPageTitle = () => {
     if (isSettingsPage) return "Settings";
@@ -70,6 +74,8 @@ const Dashboard = () => {
     if (isAnalyticsPage) return "Analytics";
     if (isTemplatesPage) return "GPT Templates";
     if (isAPIAccessPage) return "API Access";
+    if (isTeamManagementPage) return "Team Management";
+    if (isTeamAnalyticsPage) return "Team Analytics";
     return "Chat";
   };
 
@@ -86,6 +92,8 @@ const Dashboard = () => {
     if (isAnalyticsPage) return <div className="p-6"><AnalyticsDashboard /></div>;
     if (isTemplatesPage) return <div className="p-6"><GPTTemplatesMarketplace /></div>;
     if (isAPIAccessPage) return <div className="p-6"><APIAccessConfig /></div>;
+    if (isTeamManagementPage) return <div className="p-6"><TeamManagement /></div>;
+    if (isTeamAnalyticsPage) return <div className="p-6"><TeamAnalytics /></div>;
     return <ChatInterface />;
   };
 
