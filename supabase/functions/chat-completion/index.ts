@@ -324,7 +324,7 @@ serve(async (req) => {
     }
 
     // EXISTING: Handle legacy ChatInterface format (existing chat functionality)
-    if (messages && customGPT) {
+    if (messages) {
       const startTime = Date.now();
 
       // Extract model parameters with defaults
