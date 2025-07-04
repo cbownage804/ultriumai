@@ -98,6 +98,7 @@ export type Database = {
           custom_message_ending: string | null
           description: string | null
           embed_enabled: boolean
+          enable_web_search: boolean | null
           error_message: string | null
           generate_responses_from: string | null
           id: string
@@ -109,9 +110,11 @@ export type Database = {
           max_integrations: number | null
           name: string
           placeholder_prompt: string | null
+          preferred_model: string | null
           primary_color: string | null
           recaptcha: boolean | null
           remove_branding: boolean | null
+          search_provider: string | null
           secondary_color: string | null
           should_mention_sources: boolean | null
           show_citations: string | null
@@ -154,6 +157,7 @@ export type Database = {
           custom_message_ending?: string | null
           description?: string | null
           embed_enabled?: boolean
+          enable_web_search?: boolean | null
           error_message?: string | null
           generate_responses_from?: string | null
           id?: string
@@ -165,9 +169,11 @@ export type Database = {
           max_integrations?: number | null
           name: string
           placeholder_prompt?: string | null
+          preferred_model?: string | null
           primary_color?: string | null
           recaptcha?: boolean | null
           remove_branding?: boolean | null
+          search_provider?: string | null
           secondary_color?: string | null
           should_mention_sources?: boolean | null
           show_citations?: string | null
@@ -210,6 +216,7 @@ export type Database = {
           custom_message_ending?: string | null
           description?: string | null
           embed_enabled?: boolean
+          enable_web_search?: boolean | null
           error_message?: string | null
           generate_responses_from?: string | null
           id?: string
@@ -221,9 +228,11 @@ export type Database = {
           max_integrations?: number | null
           name?: string
           placeholder_prompt?: string | null
+          preferred_model?: string | null
           primary_color?: string | null
           recaptcha?: boolean | null
           remove_branding?: boolean | null
+          search_provider?: string | null
           secondary_color?: string | null
           should_mention_sources?: boolean | null
           show_citations?: string | null
@@ -467,15 +476,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_roles: {
+        Args: { _user_id: string }
+        Returns: {
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -590,6 +635,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

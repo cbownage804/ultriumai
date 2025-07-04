@@ -57,7 +57,9 @@ const ChatInterface = () => {
 
   const handleSendMessage = async (
     attachments?: ConversationFile[], 
-    generatedMedia?: { url: string; type: 'image' | 'video'; prompt: string }[]
+    generatedMedia?: { url: string; type: 'image' | 'video'; prompt: string }[],
+    aiModel?: string,
+    webSearchEnabled?: boolean
   ) => {
     if ((!input.trim() && !attachments?.length && !generatedMedia?.length) || isLoading || !user) return;
 
@@ -144,7 +146,9 @@ const ChatInterface = () => {
           customGPT: currentGPT ? {
             system_prompt: currentGPT.system_prompt,
             name: currentGPT.name
-          } : null
+          } : null,
+          model: aiModel || 'gpt-4o-mini',
+          webSearchEnabled: webSearchEnabled || false
         }
       });
 

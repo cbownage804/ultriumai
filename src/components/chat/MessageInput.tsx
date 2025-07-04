@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Paperclip, Image } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Send, Paperclip, Image, Search, Brain } from "lucide-react";
 import { ConversationFile } from "@/types/chat";
 import FileUpload from "./FileUpload";
 import FileAttachment from "./FileAttachment";
@@ -10,7 +13,7 @@ import MediaGeneration from "./MediaGeneration";
 interface MessageInputProps {
   input: string;
   setInput: (value: string) => void;
-  onSendMessage: (attachments?: ConversationFile[], generatedMedia?: { url: string; type: 'image' | 'video'; prompt: string }[]) => void;
+  onSendMessage: (attachments?: ConversationFile[], generatedMedia?: { url: string; type: 'image' | 'video'; prompt: string }[], aiModel?: string, webSearchEnabled?: boolean) => void;
   isLoading: boolean;
   conversationId: string | null;
 }
@@ -20,6 +23,8 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
   const [showMediaGeneration, setShowMediaGeneration] = useState(false);
   const [attachments, setAttachments] = useState<ConversationFile[]>([]);
   const [generatedMedia, setGeneratedMedia] = useState<{ url: string; type: 'image' | 'video'; prompt: string }[]>([]);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -31,7 +36,9 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
   const handleSend = () => {
     onSendMessage(
       attachments.length > 0 ? attachments : undefined,
-      generatedMedia.length > 0 ? generatedMedia : undefined
+      generatedMedia.length > 0 ? generatedMedia : undefined,
+      selectedModel,
+      webSearchEnabled
     );
     setAttachments([]);
     setGeneratedMedia([]);
@@ -137,6 +144,39 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
           />
         </div>
       )}
+      
+      {/* AI Settings */}
+      <div className="px-4 py-2 border-b bg-muted/20">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Brain className="w-4 h-4 text-muted-foreground" />
+              <Label htmlFor="model-select" className="text-sm">Model:</Label>
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger className="w-[140px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
+                  <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                  <SelectItem value="claude-3-5-sonnet">Claude 3.5 Sonnet</SelectItem>
+                  <SelectItem value="claude-3-5-haiku">Claude 3.5 Haiku</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Search className={`w-4 h-4 ${webSearchEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+            <Label htmlFor="web-search" className="text-sm">Web Search</Label>
+            <Switch
+              id="web-search"
+              checked={webSearchEnabled}
+              onCheckedChange={setWebSearchEnabled}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+      </div>
       
       <div className="p-4">
         <div className="flex gap-2">
