@@ -13,6 +13,7 @@ import ProfilePage from '@/pages/ProfilePage';
 import SettingsPage from '@/pages/SettingsPage';
 import Pricing from '@/pages/Pricing';
 import UltriumGPT from '@/pages/UltriumGPT';
+import Solutions from '@/pages/Solutions';
 import LiveDemos from '@/pages/LiveDemos';
 import Docs from '@/pages/Docs';
 import Terms from '@/pages/Terms';
@@ -64,6 +65,7 @@ function AppRouter() {
         </ProtectedRoute>
       } />
       <Route path="/ultriumgpt" element={<UltriumGPT />} />
+      <Route path="/solutions" element={<Solutions />} />
       <Route path="/demos" element={<LiveDemos />} />
       <Route path="/docs" element={
         <ProtectedRoute>
