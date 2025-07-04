@@ -11,35 +11,48 @@ interface MediaAttachmentProps {
 const MediaAttachment = ({ mediaUrl, type, prompt }: MediaAttachmentProps) => {
   const handleDownload = () => {
     try {
-      const link = document.createElement('a');
-      
       if (mediaUrl.startsWith('data:')) {
-        // For data URLs, use the data directly
-        link.href = mediaUrl;
+        // Firefox-compatible download for data URLs
+        const mimeType = mediaUrl.split(',')[0].split(':')[1].split(';')[0];
+        const byteCharacters = atob(mediaUrl.split(',')[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType });
+        
+        // Use Firefox-compatible download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
         link.download = `generated-image-${Date.now()}.png`;
-        
-        // Force download attributes
-        link.setAttribute('download', link.download);
-        link.setAttribute('target', '_blank');
-        
-        // Temporarily add to DOM and click
-        document.body.appendChild(link);
         link.style.display = 'none';
-        link.click();
         
-        // Remove after a short delay
+        document.body.appendChild(link);
+        
+        // Trigger download with user gesture
+        link.dispatchEvent(new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        }));
+        
+        // Cleanup
         setTimeout(() => {
-          if (document.body.contains(link)) {
-            document.body.removeChild(link);
-          }
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
         }, 100);
       } else {
-        // For regular URLs
-        window.open(mediaUrl, '_blank');
+        // For regular URLs, try to force download in Firefox
+        const link = document.createElement('a');
+        link.href = mediaUrl;
+        link.download = `generated-image-${Date.now()}.png`;
+        link.rel = 'noopener';
+        link.click();
       }
     } catch (error) {
       console.error('Download failed:', error);
-      // Fallback to opening in new tab
       window.open(mediaUrl, '_blank');
     }
   };
