@@ -9,8 +9,13 @@ export const useScrollToTop = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    // Scroll to top whenever the pathname changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Immediate scroll to top for better UX
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
+    // Small delay to ensure DOM is ready, then smooth scroll
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
   }, [pathname]);
 };
 

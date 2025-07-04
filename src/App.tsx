@@ -131,6 +131,9 @@ export default function App() {
     } else {
       document.documentElement.classList.add('dark');
     }
+
+    // Ensure page starts at top on initial load
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   return (
