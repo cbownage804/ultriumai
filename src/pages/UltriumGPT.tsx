@@ -187,7 +187,14 @@ const UltriumGPT = () => {
                 <Play className="mr-2 h-5 w-5" />
                 See Live Demo
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '#contact'}>
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => {
+                const contactSection = document.querySelector('#contact');
+                if (contactSection) {
+                  const navHeight = 80; // Account for fixed navigation
+                  const elementTop = contactSection.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                  window.scrollTo({ top: elementTop, behavior: 'smooth' });
+                }
+              }}>
                 <Calendar className="mr-2 h-5 w-5" />
                 Schedule Consultation
               </Button>
@@ -363,7 +370,14 @@ const UltriumGPT = () => {
                 can transform your business operations and deliver real ROI.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '#contact'}>
+                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => {
+                  const contactSection = document.querySelector('#contact');
+                  if (contactSection) {
+                    const navHeight = 80; // Account for fixed navigation
+                    const elementTop = contactSection.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                    window.scrollTo({ top: elementTop, behavior: 'smooth' });
+                  }
+                }}>
                   <Lightbulb className="mr-2 h-5 w-5" />
                   Start Your GPT Journey
                 </Button>

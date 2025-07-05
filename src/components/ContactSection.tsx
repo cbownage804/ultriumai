@@ -7,11 +7,70 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Mail, Clock, MessageSquare, Calendar } from "lucide-react";
 import { useScrollAnimation, getAnimationClasses } from "@/hooks/useScrollAnimation";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const ContactSection = () => {
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation();
   const { ref: contactInfoRef, isVisible: contactInfoVisible } = useScrollAnimation({ delay: 200 });
   const { ref: formRef, isVisible: formVisible } = useScrollAnimation({ delay: 400 });
+  const { toast } = useToast();
+  
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    company: '',
+    industry: '',
+    projectType: '',
+    message: ''
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Simulate form submission - you can replace this with actual submission logic
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Message Sent!",
+        description: "Thank you for your interest. We'll get back to you within 24 hours.",
+      });
+      
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        company: '',
+        industry: '',
+        projectType: '',
+        message: ''
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again or call us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleCallButton = () => {
+    window.open('tel:804-821-1410', '_self');
+  };
 
   return (
     <section id="contact" className="py-20 bg-background">
@@ -110,36 +169,66 @@ const ContactSection = () => {
               <CardTitle>Schedule Your Free Discovery Call</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="space-y-6">
+              <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name *</Label>
-                    <Input id="firstName" placeholder="Enter your first name" />
+                    <Input 
+                      id="firstName" 
+                      placeholder="Enter your first name" 
+                      value={formData.firstName}
+                      onChange={(e) => handleInputChange('firstName', e.target.value)}
+                      required
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name *</Label>
-                    <Input id="lastName" placeholder="Enter your last name" />
+                    <Input 
+                      id="lastName" 
+                      placeholder="Enter your last name" 
+                      value={formData.lastName}
+                      onChange={(e) => handleInputChange('lastName', e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address *</Label>
-                  <Input id="email" type="email" placeholder="Enter your email address" />
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="Enter your email address" 
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="Enter your phone number" />
+                  <Input 
+                    id="phone" 
+                    type="tel" 
+                    placeholder="Enter your phone number" 
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="company">Company Name</Label>
-                  <Input id="company" placeholder="Enter your company name" />
+                  <Input 
+                    id="company" 
+                    placeholder="Enter your company name" 
+                    value={formData.company}
+                    onChange={(e) => handleInputChange('company', e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="industry">Industry</Label>
-                  <Select>
+                  <Select value={formData.industry} onValueChange={(value) => handleInputChange('industry', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your industry" />
                     </SelectTrigger>
@@ -156,7 +245,7 @@ const ContactSection = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="projectType">What are you interested in?</Label>
-                  <Select>
+                  <Select value={formData.projectType} onValueChange={(value) => handleInputChange('projectType', value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select project type" />
                     </SelectTrigger>
@@ -176,15 +265,17 @@ const ContactSection = () => {
                     id="message" 
                     placeholder="Describe your current challenges and how you'd like AI to help your business..."
                     rows={4}
+                    value={formData.message}
+                    onChange={(e) => handleInputChange('message', e.target.value)}
                   />
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button type="submit" className="flex-1">
+                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
                     <Calendar className="mr-2 h-4 w-4" />
-                    Schedule Discovery Call
+                    {isSubmitting ? 'Sending...' : 'Schedule Discovery Call'}
                   </Button>
-                  <Button type="button" variant="outline" className="flex-1">
+                  <Button type="button" variant="outline" className="flex-1" onClick={handleCallButton}>
                     <Phone className="mr-2 h-4 w-4" />
                     Call 804-821-1410
                   </Button>
