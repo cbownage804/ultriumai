@@ -82,7 +82,7 @@ const AboutSection = () => {
                       className="h-24 w-24 hidden dark:block"
                     />
                   </div>
-                  <h3 className="text-xl font-bold">Veteran-Owned Excellence</h3>
+                  <h3 className="text-xl font-bold">Comprehensive IT & Cybersecurity Services</h3>
                   <p className="text-muted-foreground">
                     <strong>UltriumAI is proudly developed by Ultrium</strong>, a veteran-owned IT solutions company based in Virginia. While UltriumAI focuses on AI-powered cybersecurity, automation, and business intelligence tools, Ultrium delivers full-service IT support, managed services, cloud infrastructure, and compliance solutions to businesses of all sizes.
                   </p>
