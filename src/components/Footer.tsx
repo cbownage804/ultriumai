@@ -31,7 +31,19 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform" className="h-12 w-auto" />
-              <span className="text-xl font-bold text-foreground">UltriumAI</span>
+              <div>
+                <span className="text-xl font-bold text-foreground">UltriumAI</span>
+                <div className="text-xs text-muted-foreground">
+                  A Division of <a 
+                    href="https://ultriumllc.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-primary hover:text-primary/80 transition-colors font-medium"
+                  >
+                    Ultrium LLC
+                  </a>
+                </div>
+              </div>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Veteran-owned AI solutions company specializing in custom GPT development, cybersecurity automation, and knowledge management for MSPs and businesses.
