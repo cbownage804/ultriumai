@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MapPin, Phone, Mail, Clock, MessageSquare, Calendar } from "lucide-react";
 import { useScrollAnimation, getAnimationClasses } from "@/hooks/useScrollAnimation";
 import { useState } from "react";
@@ -24,13 +25,41 @@ const ContactSection = () => {
     company: '',
     industry: '',
     projectType: '',
-    message: ''
+    message: '',
+    productInterests: [] as string[]
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  const products = [
+    { id: 'ultriumgpt', name: 'UltriumGPT Platform' },
+    { id: 'safeemail', name: 'SafeEmail™' },
+    { id: 'safelink', name: 'SafeLink™' },
+    { id: 'safedoc', name: 'SafeDoc™' },
+    { id: 'safepass', name: 'SafePass™' },
+    { id: 'safenet', name: 'SafeNet™' },
+    { id: 'safecomp', name: 'SafeComp™' },
+    { id: 'safeweb', name: 'SafeWeb™' }
+  ];
+  
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const handleProductInterestChange = (productId: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      productInterests: checked 
+        ? [...prev.productInterests, productId]
+        : prev.productInterests.filter(id => id !== productId)
+    }));
+  };
+  
+  const handleSelectAllProducts = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      productInterests: checked ? products.map(p => p.id) : []
+    }));
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,6 +69,16 @@ const ContactSection = () => {
     try {
       // Simulate form submission - you can replace this with actual submission logic
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Include product interests in the submission
+      const submissionData = {
+        ...formData,
+        productInterests: formData.productInterests.length > 0 
+          ? products.filter(p => formData.productInterests.includes(p.id)).map(p => p.name).join(', ')
+          : 'No specific products selected'
+      };
+      
+      console.log('Form submission data:', submissionData);
       
       toast({
         title: "Message Sent!",
@@ -55,7 +94,8 @@ const ContactSection = () => {
         company: '',
         industry: '',
         projectType: '',
-        message: ''
+        message: '',
+        productInterests: []
       });
     } catch (error) {
       toast({
@@ -257,6 +297,44 @@ const ContactSection = () => {
                       <SelectItem value="consultation">General Consultation</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-4">
+                  <Label>Product Interest (select all that apply)</Label>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="select-all"
+                        checked={formData.productInterests.length === products.length}
+                        onCheckedChange={handleSelectAllProducts}
+                      />
+                      <Label 
+                        htmlFor="select-all" 
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Select All Products
+                      </Label>
+                    </div>
+                    <div className="border-t pt-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {products.map((product) => (
+                          <div key={product.id} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={product.id}
+                              checked={formData.productInterests.includes(product.id)}
+                              onCheckedChange={(checked) => handleProductInterestChange(product.id, checked === true)}
+                            />
+                            <Label 
+                              htmlFor={product.id} 
+                              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {product.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
