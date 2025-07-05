@@ -33,8 +33,20 @@ const Hero = () => {
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="space-y-12 py-8">
-          {/* Main heading */}
+          {/* Main heading with centered logo */}
           <div className="space-y-6 animate-fade-in">
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
+                alt="Ultrium Logo" 
+                className="h-20 w-20 dark:hidden"
+              />
+              <img 
+                src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
+                alt="Ultrium Logo" 
+                className="h-20 w-20 hidden dark:block"
+              />
+            </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
               AI-Powered Knowledge Management for Business Success
             </h1>
@@ -42,7 +54,6 @@ const Hero = () => {
               Transform your operations with custom AI agents. Reduce support tickets, automate responses, and deploy intelligent solutions that scale with your business - from growing companies to enterprise service providers.
             </p>
             <div className="flex items-center justify-center gap-2 text-base md:text-lg font-medium text-primary animate-bounce-gentle px-4">
-              <Shield className="h-5 w-5 md:h-6 md:w-6" />
               <span>Built for Business. Secure by Design</span>
             </div>
           </div>
@@ -53,7 +64,6 @@ const Hero = () => {
               <div className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="text-center space-y-3">
                   <div className="flex items-center justify-center gap-2">
-                    <Shield className="h-6 w-6 text-primary animate-glow" />
                     <span className="text-lg font-bold text-primary">Now Available</span>
                   </div>
                   <h3 className="text-xl font-bold text-foreground">Build Your Own Custom GPTs</h3>
@@ -130,7 +140,7 @@ const Hero = () => {
                   className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
                   onClick={() => handleNavigation('/msps')}
                 >
-                  <Shield className="h-6 w-6" />
+                  <Users className="h-6 w-6" />
                   <span>MSPs</span>
                   <span className="text-sm opacity-80">Managed Service Providers</span>
                 </Button>
@@ -172,18 +182,17 @@ const Hero = () => {
           <div className="pt-8 border-t border-border/50 animate-fade-in" style={{animationDelay: '0.8s'}}>
             <div className="max-w-2xl mx-auto bg-gradient-to-br from-primary/5 to-secondary/5 border border-primary/20 rounded-xl p-8 mb-8">
               <div className="text-center space-y-4">
-                <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="flex items-center justify-center mb-4">
                   <img 
                     src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
                     alt="Ultrium Logo" 
-                    className="h-12 w-12 dark:hidden"
+                    className="h-16 w-16 dark:hidden"
                   />
                   <img 
                     src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
                     alt="Ultrium Logo" 
-                    className="h-12 w-12 hidden dark:block"
+                    className="h-16 w-16 hidden dark:block"
                   />
-                  <Shield className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Veteran-Owned Excellence</h3>
                 <p className="text-muted-foreground leading-relaxed">
@@ -201,7 +210,7 @@ const Hero = () => {
 
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
               <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
-                <Shield className="h-4 w-4 text-success animate-glow" />
+                <Star className="h-4 w-4 text-success animate-glow" />
                 <span>Security-First Design</span>
               </div>
               <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
