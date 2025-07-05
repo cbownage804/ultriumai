@@ -11,44 +11,44 @@ const SmallBusiness = () => {
 
   const benefits = [
     {
-      icon: Shield,
-      title: "Cybersecurity Protection",
-      description: "AI-powered threat detection and email security for small businesses"
+      icon: Brain,
+      title: "Instant Knowledge Access",
+      description: "AI searches your company documents to answer employee questions instantly"
     },
     {
       icon: Server,
-      title: "IT Support Automation",
-      description: "Automate common IT helpdesk tasks and reduce response times"
+      title: "Self-Service Support",
+      description: "Employees get immediate answers without waiting for IT help"
     },
     {
       icon: Lock,
-      title: "Data Security & Compliance",
-      description: "Protect sensitive business data with enterprise-grade security"
+      title: "Basic Security Scanning",
+      description: "Simple AI-powered checks for emails, links, and documents"
     },
     {
-      icon: AlertTriangle,
-      title: "Proactive Threat Monitoring",
-      description: "24/7 AI monitoring for security threats and vulnerabilities"
+      icon: Shield,
+      title: "Custom AI Assistant",
+      description: "Branded chatbot trained on your specific business content"
     }
   ];
 
   const solutions = [
     {
-      title: "AI Email Security",
-      description: "Advanced email threat detection and phishing protection powered by AI",
-      features: ["Phishing detection", "Malware scanning", "Link analysis", "Threat reporting"],
+      title: "AI Knowledge Assistant",
+      description: "Train AI on your company documents to provide instant answers to employee questions",
+      features: ["Document search", "Policy Q&A", "Procedure guidance", "Employee self-service"],
       price: "Starting at $100/month"
     },
     {
-      title: "IT Helpdesk Automation",
-      description: "Automate common IT support tasks with AI-powered helpdesk assistant",
-      features: ["Password resets", "Software troubleshooting", "Hardware guidance", "Ticket routing"],
+      title: "Basic Security Scanning",
+      description: "Simple security checks for emails, links, and documents using AI-powered detection",
+      features: ["Email scanning", "Link checking", "Document analysis", "Security tips"],
       price: "Starting at $100/month"
     },
     {
-      title: "Security Monitoring & Compliance",
-      description: "24/7 security monitoring with automated compliance reporting",
-      features: ["Threat monitoring", "Compliance tracking", "Security alerts", "Audit reports"],
+      title: "Custom Business Chatbot",
+      description: "Deploy a branded AI assistant for your website or internal use with your content",
+      features: ["Custom branding", "Website integration", "Knowledge training", "Usage analytics"],
       price: "Starting at $500/month"
     }
   ];
@@ -62,14 +62,14 @@ const SmallBusiness = () => {
         <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <Badge variant="secondary" className="mb-6 text-primary">
-              <Shield className="h-4 w-4 mr-2" />
-              IT & Cybersecurity Solutions
+              <Brain className="h-4 w-4 mr-2" />
+              AI Knowledge Solutions
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-              AI-Powered IT Security for Small Business
+              AI-Powered Knowledge Assistant for Small Business
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Protect your business with AI-driven cybersecurity solutions. Automate IT support, detect threats, and secure your data with enterprise-grade protection designed for small businesses.
+              Transform your business operations with AI that learns from your documents and procedures. Provide instant answers to employees and basic security scanning for your digital content.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300">
@@ -87,9 +87,9 @@ const SmallBusiness = () => {
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Why Small Businesses Choose UltriumAI for IT Security</h2>
+              <h2 className="text-3xl font-bold mb-4">Why Small Businesses Choose UltriumAI</h2>
               <p className="text-xl text-muted-foreground">
-                Enterprise-grade cybersecurity and IT automation designed for small business budgets and needs
+                AI-powered knowledge management and basic security tools designed for growing businesses
               </p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -114,9 +114,9 @@ const SmallBusiness = () => {
         <section className="py-20 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">IT & Cybersecurity Solutions for Small Business</h2>
+              <h2 className="text-3xl font-bold mb-4">AI Knowledge Solutions for Small Business</h2>
               <p className="text-xl text-muted-foreground">
-                Comprehensive AI-powered IT and security services designed to protect and support your business
+                Simple AI tools to help your business access information faster and add basic security checking
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
@@ -151,9 +151,9 @@ const SmallBusiness = () => {
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-r from-primary/10 to-secondary/10">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to Secure Your Business?</h2>
+            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Business Knowledge?</h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Join hundreds of small businesses already protecting their operations with AI-powered IT security solutions
+              Join small businesses already using AI to make their company information instantly accessible to employees
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80">

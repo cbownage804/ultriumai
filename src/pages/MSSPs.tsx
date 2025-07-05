@@ -12,45 +12,45 @@ const MSSPs = () => {
   const benefits = [
     {
       icon: Shield,
-      title: "Advanced Threat Detection",
-      description: "AI-powered security scanning with real-time threat intelligence"
+      title: "Security Knowledge Hub",
+      description: "Centralize your security documentation and procedures with AI-powered search"
     },
     {
       icon: Eye,
-      title: "24/7 Security Monitoring",
-      description: "Continuous monitoring and automated incident response"
+      title: "Threat Intelligence Guide",
+      description: "AI trained on security best practices to guide your team's response"
     },
     {
       icon: Zap,
-      title: "Automated Response",
-      description: "Instant containment and mitigation of security threats"
+      title: "Quick Response Guidance",
+      description: "Instant access to incident playbooks and security procedures"
     },
     {
       icon: BarChart3,
-      title: "Security Analytics",
-      description: "Comprehensive security reporting and compliance tracking"
+      title: "Security Reporting",
+      description: "Basic security scanning results and client-ready reports"
     }
   ];
 
   const securitySolutions = [
     {
-      title: "SafeEmail™ Enterprise",
-      description: "Advanced email threat detection and phishing protection for enterprise clients",
-      features: ["Advanced phishing detection", "Malware scanning", "Link analysis", "Client reporting"],
+      title: "Security Knowledge Base",
+      description: "Train AI on your security documentation and procedures for instant threat response guidance",
+      features: ["Incident playbooks", "Threat identification", "Response procedures", "Documentation search"],
       price: "Starting at $100/month",
       popular: true
     },
     {
-      title: "Integrated Security Suite",
-      description: "Complete security automation platform with all security apps included",
-      features: ["All SafeSuite apps", "Custom integrations", "White-label deployment", "SOC integration"],
+      title: "Security Apps Suite",
+      description: "Collection of AI-powered security scanning tools for basic threat detection",
+      features: ["Email scanning", "URL analysis", "Document checks", "Basic reporting"],
       price: "Starting at $500/month",
       popular: false
     },
     {
-      title: "Security Operations AI",
-      description: "AI-powered SOC automation and incident response platform",
-      features: ["Threat hunting", "Incident analysis", "Response automation", "Compliance reporting"],
+      title: "Client Security Portal",
+      description: "White-label security dashboard for your clients with basic security insights",
+      features: ["Branded interface", "Security tips", "Basic monitoring", "Client reporting"],
       price: "Starting at $500/month",
       popular: false
     }
@@ -82,7 +82,7 @@ const MSSPs = () => {
               AI-Powered Security for MSSPs
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Advanced AI security solutions designed for Managed Security Service Providers. Automate threat detection, enhance SOC operations, and deliver premium security services at scale.
+              AI-powered security knowledge management for MSSPs. Centralize your security documentation, provide instant response guidance, and offer clients basic security scanning services.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300">
@@ -198,23 +198,23 @@ const MSSPs = () => {
         {/* Security Stats */}
         <section className="py-20 bg-gradient-to-r from-primary/10 to-secondary/10">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-4">Security Performance Metrics</h2>
+            <h2 className="text-3xl font-bold mb-4">Security Knowledge Benefits</h2>
             <div className="grid md:grid-cols-4 gap-8 mb-12">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">99.7%</div>
-                <p className="text-muted-foreground">Threat detection accuracy</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">&lt;30s</div>
-                <p className="text-muted-foreground">Average response time</p>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">85%</div>
-                <p className="text-muted-foreground">Reduction in false positives</p>
+                <div className="text-3xl font-bold text-primary mb-2">Instant</div>
+                <p className="text-muted-foreground">Access to security playbooks</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary mb-2">24/7</div>
-                <p className="text-muted-foreground">Continuous monitoring</p>
+                <p className="text-muted-foreground">AI-powered documentation search</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary mb-2">Custom</div>
+                <p className="text-muted-foreground">Trained on your procedures</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary mb-2">White-Label</div>
+                <p className="text-muted-foreground">Your brand and messaging</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

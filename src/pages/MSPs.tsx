@@ -12,13 +12,13 @@ const MSPs = () => {
   const benefits = [
     {
       icon: Headphones,
-      title: "Reduce Tickets by 30%",
-      description: "Automated first-line support handles common client requests instantly"
+      title: "Instant Knowledge Access",
+      description: "AI searches your documentation to provide instant answers to common questions"
     },
     {
       icon: Clock,
-      title: "24/7 Client Support",
-      description: "Your AI agents work around the clock, improving client satisfaction"
+      title: "24/7 Self-Service",
+      description: "Your clients get immediate answers from your knowledge base anytime"
     },
     {
       icon: Settings,
@@ -27,30 +27,30 @@ const MSPs = () => {
     },
     {
       icon: BarChart3,
-      title: "Scalable Revenue",
-      description: "Package AI services as premium offerings for higher margins"
+      title: "Premium Service Offering",
+      description: "Add AI-powered support as a new revenue stream for your MSP"
     }
   ];
 
   const solutions = [
     {
-      title: "Client Helpdesk AI",
-      description: "Automate Tier 1 support with AI trained on your documentation and procedures",
-      features: ["Password resets", "Common IT issues", "Software guidance", "Escalation workflows"],
+      title: "AI Knowledge Assistant",
+      description: "Train AI on your documentation to instantly answer client questions about procedures and policies",
+      features: ["Document-based Q&A", "Procedure guidance", "Policy lookups", "Smart escalation"],
       price: "Starting at $100/month",
       popular: true
     },
     {
-      title: "White-Label Platform",
-      description: "Offer AI-powered support as a premium service to your clients",
-      features: ["Your branding", "Client segregation", "Custom workflows", "Revenue sharing"],
+      title: "White-Label AI Platform",
+      description: "Deploy branded AI assistants for your clients with your company colors and branding",
+      features: ["Custom branding", "Client segregation", "Multi-tenant access", "Usage analytics"],
       price: "Starting at $500/month",
       popular: false
     },
     {
-      title: "Internal Operations AI",
-      description: "Streamline your internal processes with AI-powered automation",
-      features: ["Documentation search", "Procedure guidance", "Staff training", "Knowledge base"],
+      title: "IT Documentation Hub",
+      description: "Centralize your IT knowledge base with AI-powered search and instant answers",
+      features: ["Document management", "Smart search", "Staff training", "Quick lookups"],
       price: "Starting at $100/month",
       popular: false
     }
@@ -76,7 +76,7 @@ const MSPs = () => {
               AI-Powered Support for MSPs
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Reduce support tickets by 30%, scale your operations efficiently, and offer premium AI services to your clients with our white-label platform.
+              Transform your MSP with AI-powered knowledge management. Deploy white-label AI assistants trained on your documentation to provide instant answers and premium client services.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300">
@@ -163,9 +163,9 @@ const MSPs = () => {
         {/* Integrations Section */}
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-4">Seamless PSA & RMM Integration</h2>
+            <h2 className="text-3xl font-bold mb-4">Popular MSP Tools</h2>
             <p className="text-xl text-muted-foreground mb-12">
-              Works with your existing MSP tools and workflows
+              Familiar tools your team already uses daily
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               {integrations.map((integration, index) => (
@@ -180,19 +180,19 @@ const MSPs = () => {
         {/* ROI Section */}
         <section className="py-20 bg-gradient-to-r from-primary/10 to-secondary/10">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-4">Proven MSP ROI</h2>
+            <h2 className="text-3xl font-bold mb-4">MSP Benefits</h2>
             <div className="grid md:grid-cols-3 gap-8 mb-12">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">30%</div>
-                <p className="text-muted-foreground">Reduction in support tickets</p>
+                <div className="text-3xl font-bold text-primary mb-2">Instant</div>
+                <p className="text-muted-foreground">Answers from your knowledge base</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">$50k</div>
-                <p className="text-muted-foreground">Average annual savings</p>
+                <div className="text-3xl font-bold text-primary mb-2">24/7</div>
+                <p className="text-muted-foreground">Self-service for your clients</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">90%</div>
-                <p className="text-muted-foreground">Client satisfaction improvement</p>
+                <div className="text-3xl font-bold text-primary mb-2">100%</div>
+                <p className="text-muted-foreground">Your branding and content</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
