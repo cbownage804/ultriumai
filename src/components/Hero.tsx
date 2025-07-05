@@ -179,17 +179,14 @@ const Hero = () => {
                     <img 
                       src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
                       alt="Ultrium Logo" 
-                      className="h-8 w-8 dark:hidden"
+                      className="h-12 w-12 dark:hidden"
                     />
                     <img 
                       src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
                       alt="Ultrium Logo" 
-                      className="h-8 w-8 hidden dark:block"
+                      className="h-12 w-12 hidden dark:block"
                     />
-                    <div className="flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-                      <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Cyber-Focused MSP</span>
-                    </div>
+                    <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Cyber-Focused MSP</span>
                   </div>
                   <h3 className="text-lg font-bold text-foreground">Need Traditional IT & Cybersecurity Services?</h3>
                   <p className="text-muted-foreground text-sm">
