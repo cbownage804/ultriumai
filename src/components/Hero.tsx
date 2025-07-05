@@ -37,14 +37,9 @@ const Hero = () => {
           <div className="space-y-6 animate-fade-in">
             <div className="flex justify-center mb-6">
               <img 
-                src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
+                src="/lovable-uploads/fa964d61-610b-4cea-bba4-2ede43a5f4d4.png" 
                 alt="Ultrium Logo" 
-                className="h-48 w-48 dark:hidden"
-              />
-              <img 
-                src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
-                alt="Ultrium Logo" 
-                className="h-48 w-48 hidden dark:block"
+                className="h-48 w-48"
               />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
