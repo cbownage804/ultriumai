@@ -33,6 +33,8 @@ export const VideoPlayer = ({
     <div className="relative rounded-xl overflow-hidden bg-black shadow-2xl">
       <video 
         controls 
+        autoPlay
+        muted
         className="w-full h-auto max-h-96 object-contain"
         preload="metadata"
         poster="/path/to/video-thumbnail.jpg" // Optional: Add a poster image
