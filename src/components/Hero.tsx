@@ -205,7 +205,7 @@ const Hero = () => {
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-4">Proudly developed by Ultrium - Veteran-owned IT solutions</p>
+            <p className="text-sm text-muted-foreground mb-4">UltriumAI was Proudly developed by Ultrium - Veteran-owned Cyber-focused IT solutions</p>
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
               <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
                 <Shield className="h-4 w-4 text-success animate-glow" />
