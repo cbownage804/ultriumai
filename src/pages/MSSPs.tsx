@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { SolutionPurchaseButton } from "@/components/SolutionPurchaseButton";
 
 const MSSPs = () => {
   const navigate = useNavigate();
@@ -34,24 +35,27 @@ const MSSPs = () => {
 
   const securitySolutions = [
     {
+      id: "security-knowledge",
       title: "Security Knowledge Base",
       description: "Train AI on your security documentation and procedures for instant threat response guidance",
       features: ["Incident playbooks", "Threat identification", "Response procedures", "Documentation search"],
-      price: "Starting at $100/month",
+      price: "$100/month",
       popular: true
     },
     {
+      id: "security-apps",
       title: "Security Apps Suite",
       description: "Collection of AI-powered security scanning tools for basic threat detection",
       features: ["Email scanning", "URL analysis", "Document checks", "Basic reporting"],
-      price: "Starting at $500/month",
+      price: "$500/month",
       popular: false
     },
     {
+      id: "security-portal",
       title: "Client Security Portal",
       description: "White-label security dashboard for your clients with basic security insights",
       features: ["Branded interface", "Security tips", "Basic monitoring", "Client reporting"],
-      price: "Starting at $500/month",
+      price: "$500/month",
       popular: false
     }
   ];
@@ -236,9 +240,13 @@ const MSSPs = () => {
                     </ul>
                     <div className="pt-4 border-t">
                       <p className="font-semibold text-primary text-lg">{solution.price}</p>
-                      <Button className="w-full mt-3" variant={solution.popular ? "default" : "outline"}>
+                      <SolutionPurchaseButton 
+                        solutionType={solution.id}
+                        variant={solution.popular ? "default" : "outline"}
+                        className="w-full mt-3"
+                      >
                         Get Started
-                      </Button>
+                      </SolutionPurchaseButton>
                     </div>
                   </CardContent>
                 </Card>

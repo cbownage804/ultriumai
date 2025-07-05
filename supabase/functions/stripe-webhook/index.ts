@@ -57,14 +57,33 @@ serve(async (req) => {
           break;
         }
 
-        // Determine subscription tier
+        // Determine subscription tier based on amount and plan type
         const priceId = subscription.items.data[0].price.id;
         const price = await stripe.prices.retrieve(priceId);
         const amount = price.unit_amount || 0;
         
         let subscriptionTier = "free";
-        if (amount >= 40000) subscriptionTier = "enterprise";
-        else if (amount >= 8000) subscriptionTier = "premium";
+        
+        // Determine tier based on amount and metadata
+        const metadata = subscription.metadata || {};
+        const planType = metadata.plan_type;
+        
+        if (planType) {
+          // Use plan type from metadata for specific solution identification
+          if (planType === "ai-knowledge") subscriptionTier = "ai-knowledge";
+          else if (planType === "basic-security") subscriptionTier = "basic-security";
+          else if (planType === "custom-chatbot") subscriptionTier = "custom-chatbot";
+          else if (planType === "white-label") subscriptionTier = "white-label";
+          else if (planType === "security-knowledge") subscriptionTier = "security-knowledge";
+          else if (planType === "security-apps") subscriptionTier = "security-apps";
+          else if (planType === "security-portal") subscriptionTier = "security-portal";
+          else if (planType === "premium") subscriptionTier = "premium";
+          else if (planType === "enterprise") subscriptionTier = "enterprise";
+        } else {
+          // Fallback to amount-based determination for legacy subscriptions
+          if (amount >= 40000) subscriptionTier = "enterprise";
+          else if (amount >= 8000) subscriptionTier = "premium";
+        }
         
         const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
         

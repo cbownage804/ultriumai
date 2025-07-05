@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { SolutionPurchaseButton } from "@/components/SolutionPurchaseButton";
 
 const SmallBusiness = () => {
   const navigate = useNavigate();
@@ -34,22 +35,25 @@ const SmallBusiness = () => {
 
   const solutions = [
     {
+      id: "ai-knowledge",
       title: "AI Knowledge Assistant",
       description: "Train AI on your company documents to provide instant answers to employee questions",
       features: ["Document search", "Policy Q&A", "Procedure guidance", "Employee self-service"],
-      price: "Starting at $100/month"
+      price: "$100/month"
     },
     {
+      id: "basic-security",
       title: "Basic Security Scanning",
       description: "Simple security checks for emails, links, and documents using AI-powered detection",
       features: ["Email scanning", "Link checking", "Document analysis", "Security tips"],
-      price: "Starting at $100/month"
+      price: "$100/month"
     },
     {
+      id: "custom-chatbot",
       title: "Custom Business Chatbot",
       description: "Deploy a branded AI assistant for your website or internal use with your content",
       features: ["Custom branding", "Website integration", "Knowledge training", "Usage analytics"],
-      price: "Starting at $500/month"
+      price: "$500/month"
     }
   ];
 
@@ -137,9 +141,12 @@ const SmallBusiness = () => {
                     </ul>
                     <div className="pt-4 border-t">
                       <p className="font-semibold text-primary text-lg">{solution.price}</p>
-                      <Button className="w-full mt-3" variant="outline">
-                        Learn More
-                      </Button>
+                      <SolutionPurchaseButton 
+                        solutionType={solution.id}
+                        className="w-full mt-3"
+                      >
+                        Get Started
+                      </SolutionPurchaseButton>
                     </div>
                   </CardContent>
                 </Card>

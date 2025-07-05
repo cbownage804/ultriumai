@@ -47,8 +47,9 @@ serve(async (req) => {
       logStep("No existing customer found");
     }
 
-    // Define pricing
+    // Define pricing for solutions
     const pricing = {
+      // Main platform plans
       premium: {
         monthly: 10000, // $100.00
         yearly: 100000 // $1,000.00 (2 months free)
@@ -56,7 +57,49 @@ serve(async (req) => {
       enterprise: {
         monthly: 50000, // $500.00
         yearly: 500000 // $5,000.00 (2 months free)
+      },
+      // Standalone solutions
+      "ai-knowledge": {
+        monthly: 10000, // $100.00
+        yearly: 100000 // $1,000.00 (2 months free)
+      },
+      "basic-security": {
+        monthly: 10000, // $100.00
+        yearly: 100000 // $1,000.00 (2 months free)
+      },
+      "custom-chatbot": {
+        monthly: 50000, // $500.00
+        yearly: 500000 // $5,000.00 (2 months free)
+      },
+      "white-label": {
+        monthly: 50000, // $500.00
+        yearly: 500000 // $5,000.00 (2 months free)
+      },
+      "security-knowledge": {
+        monthly: 10000, // $100.00
+        yearly: 100000 // $1,000.00 (2 months free)
+      },
+      "security-apps": {
+        monthly: 50000, // $500.00
+        yearly: 500000 // $5,000.00 (2 months free)
+      },
+      "security-portal": {
+        monthly: 50000, // $500.00
+        yearly: 500000 // $5,000.00 (2 months free)
       }
+    };
+
+    // Define product names
+    const productNames = {
+      premium: "UltriumGPT Premium Plan",
+      enterprise: "UltriumGPT Enterprise Plan",
+      "ai-knowledge": "AI Knowledge Assistant",
+      "basic-security": "Basic Security Scanning",
+      "custom-chatbot": "Custom Business Chatbot",
+      "white-label": "White-Label AI Platform",
+      "security-knowledge": "Security Knowledge Base",
+      "security-apps": "Security Apps Suite",
+      "security-portal": "Client Security Portal"
     };
 
     const priceAmount = pricing[planType as keyof typeof pricing][interval as keyof typeof pricing.premium];
@@ -70,8 +113,8 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: `UltriumGPT ${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan`,
-              description: `${planType.charAt(0).toUpperCase() + planType.slice(1)} subscription - ${interval} billing`
+              name: productNames[planType as keyof typeof productNames] || `UltriumGPT ${planType}`,
+              description: `${productNames[planType as keyof typeof productNames] || planType} - ${interval} billing`
             },
             unit_amount: priceAmount,
             recurring: { interval: interval === "yearly" ? "year" : "month" },
