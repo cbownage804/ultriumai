@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ const InteractiveSecurityWidget = () => {
   const [emailInput, setEmailInput] = useState("");
   const [textInput, setTextInput] = useState("");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const simulateScan = async (type: 'url' | 'email' | 'text', input: string): Promise<ScanResult> => {
     // Simulate AI analysis with realistic delay
@@ -330,7 +332,11 @@ const InteractiveSecurityWidget = () => {
                   <p className="text-sm text-muted-foreground mb-3">
                     Want more detailed analysis and full platform access?
                   </p>
-                  <Button className="w-full" variant="default">
+                  <Button 
+                    className="w-full" 
+                    variant="default"
+                    onClick={() => navigate('/contact')}
+                  >
                     Sign Up for Full Security Suite
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
