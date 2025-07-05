@@ -86,7 +86,7 @@ const Hero = () => {
           {/* Target Audience Buttons */}
           <div className="animate-fade-in mb-8" style={{animationDelay: '0.6s'}}>
             <p className="text-lg font-medium text-foreground mb-6">Choose Your Solution:</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
               <Button 
                 size="lg" 
                 className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
@@ -94,7 +94,16 @@ const Hero = () => {
               >
                 <Users className="h-6 w-6" />
                 <span>Small Business</span>
-                <span className="text-sm opacity-80">AI Solutions for Growing Companies</span>
+                <span className="text-sm opacity-80">1-25 Employees</span>
+              </Button>
+              <Button 
+                size="lg" 
+                className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
+                onClick={() => handleNavigation('/medium-business')}
+              >
+                <Users className="h-6 w-6" />
+                <span>Medium Business</span>
+                <span className="text-sm opacity-80">25-250 Employees</span>
               </Button>
               <Button 
                 size="lg" 
