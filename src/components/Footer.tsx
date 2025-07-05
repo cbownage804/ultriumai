@@ -40,7 +40,7 @@ const Footer = () => {
                     rel="noopener noreferrer" 
                     className="text-primary hover:text-primary/80 transition-colors font-medium"
                   >
-                    Ultrium LLC
+                    Ultrium
                   </a>
                 </div>
               </div>
