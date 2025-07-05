@@ -182,24 +182,26 @@ const Hero = () => {
                   <p className="text-muted-foreground text-sm">
                     Ultrium provides comprehensive managed IT services, cybersecurity solutions, and compliance support for businesses of all sizes.
                   </p>
-                  <Button 
-                    variant="outline"
-                    size="lg"
-                    className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 px-6 py-4 text-lg flex flex-col items-center gap-2 h-auto"
-                    onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
-                  >
-                    <span>Visit Ultrium</span>
-                    <img 
-                      src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
-                      alt="Ultrium Logo" 
-                      className="h-8 w-8 dark:hidden"
-                    />
-                    <img 
-                      src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
-                      alt="Ultrium Logo" 
-                      className="h-8 w-8 hidden dark:block"
-                    />
-                  </Button>
+                  <div className="flex justify-center">
+                    <Button 
+                      variant="outline"
+                      size="lg"
+                      className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 px-6 py-4 text-lg flex flex-col items-center gap-2 h-auto"
+                      onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
+                    >
+                      <span>Visit Ultrium</span>
+                      <img 
+                        src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
+                        alt="Ultrium Logo" 
+                        className="h-8 w-8 dark:hidden"
+                      />
+                      <img 
+                        src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
+                        alt="Ultrium Logo" 
+                        className="h-8 w-8 hidden dark:block"
+                      />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
