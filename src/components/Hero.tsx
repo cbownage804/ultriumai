@@ -175,9 +175,21 @@ const Hero = () => {
             <div className="mb-8">
               <div className="max-w-2xl mx-auto bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border border-cyan-200 dark:border-cyan-800 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center gap-2">
-                    <Shield className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-                    <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Cyber-Focused MSP</span>
+                  <div className="flex items-center justify-center gap-3">
+                    <img 
+                      src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
+                      alt="Ultrium Logo" 
+                      className="h-8 w-8 dark:hidden"
+                    />
+                    <img 
+                      src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
+                      alt="Ultrium Logo" 
+                      className="h-8 w-8 hidden dark:block"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                      <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Cyber-Focused MSP</span>
+                    </div>
                   </div>
                   <h3 className="text-lg font-bold text-foreground">Need Traditional IT & Cybersecurity Services?</h3>
                   <p className="text-muted-foreground text-sm">
