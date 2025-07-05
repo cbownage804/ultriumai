@@ -170,6 +170,31 @@ const Hero = () => {
 
           {/* Trust indicators */}
           <div className="pt-8 border-t border-border/50 animate-fade-in" style={{animationDelay: '0.8s'}}>
+            
+            {/* Ultrium MSP Call to Action */}
+            <div className="mb-8">
+              <div className="max-w-2xl mx-auto bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border border-cyan-200 dark:border-cyan-800 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <div className="text-center space-y-3">
+                  <div className="flex items-center justify-center gap-2">
+                    <Shield className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                    <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Cyber-Focused MSP</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-foreground">Need Traditional IT & Cybersecurity Services?</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Ultrium LLC provides comprehensive managed IT services, cybersecurity solutions, and compliance support for businesses of all sizes.
+                  </p>
+                  <Button 
+                    variant="outline"
+                    className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300"
+                    onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
+                  >
+                    <Lock className="mr-2 h-4 w-4" />
+                    Visit Ultrium LLC
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <p className="text-sm text-muted-foreground mb-4">Proudly developed by Ultrium LLC - Veteran-owned IT solutions</p>
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
               <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
