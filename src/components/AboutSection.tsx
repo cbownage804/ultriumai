@@ -72,9 +72,14 @@ const AboutSection = () => {
                 <div className="text-center space-y-4">
                   <div className="flex items-center justify-center mb-4">
                     <img 
-                      src="/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png" 
+                      src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
                       alt="Ultrium Logo" 
-                      className="h-24 w-24"
+                      className="h-24 w-24 dark:hidden"
+                    />
+                    <img 
+                      src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
+                      alt="Ultrium Logo" 
+                      className="h-24 w-24 hidden dark:block"
                     />
                   </div>
                   <h3 className="text-xl font-bold">Comprehensive IT & Cybersecurity Services</h3>
