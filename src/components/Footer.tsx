@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Copyright, Shield, Mail, Phone, MapPin, Globe, Facebook, Instagram, Youtube, Music } from "lucide-react";
+import { Copyright, Shield, Mail, Phone, MapPin, Globe, Facebook, Instagram, Youtube, Music, Linkedin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
@@ -133,6 +133,12 @@ const Footer = () => {
               </Button>
               <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10">
                 <Music className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10">
+                <Linkedin className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10">
+                <Star className="h-4 w-4" />
               </Button>
             </div>
           </div>
