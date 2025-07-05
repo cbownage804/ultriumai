@@ -36,10 +36,10 @@ const Hero = () => {
           {/* Main heading */}
           <div className="space-y-6 animate-fade-in">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
-              AI-Powered Knowledge Management for MSPs & MSSPs
+              AI-Powered Knowledge Management for Business Success
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in px-4" style={{animationDelay: '0.2s'}}>
-              Transform your IT support operations with custom GPT agents. Reduce client tickets by 20-30%, automate helpdesk responses, and deploy white-label AI solutions with seamless Teams and Slack integration.
+              Transform your operations with custom AI agents. Reduce support tickets, automate responses, and deploy intelligent solutions that scale with your business - from growing companies to enterprise service providers.
             </p>
             <div className="flex items-center justify-center gap-2 text-base md:text-lg font-medium text-primary animate-bounce-gentle px-4">
               <Shield className="h-5 w-5 md:h-6 md:w-6" />
