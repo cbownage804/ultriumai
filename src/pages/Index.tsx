@@ -12,6 +12,7 @@ import Integrations from "@/components/Integrations";
 import ContactSection from "@/components/ContactSection";
 import InteractiveSecurityWidget from "@/components/InteractiveSecurityWidget";
 import AnimatedStatsSection from "@/components/AnimatedStatsSection";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -54,6 +55,7 @@ const Index = () => {
         <Integrations />
         <ContactSection />
       </main>
+      <Footer />
     </div>
   );
 };
