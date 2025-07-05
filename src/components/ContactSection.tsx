@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { MapPin, Phone, Mail, Clock, MessageSquare, Calendar } from "lucide-react";
 import { useScrollAnimation, getAnimationClasses } from "@/hooks/useScrollAnimation";
 import { useState } from "react";
@@ -23,6 +24,9 @@ const ContactSection = () => {
     email: '',
     phone: '',
     company: '',
+    businessType: '',
+    serviceProviderType: '',
+    businessSize: '',
     industry: '',
     projectType: '',
     message: '',
@@ -44,6 +48,16 @@ const ContactSection = () => {
   
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+  
+  const handleBusinessTypeChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      businessType: value,
+      // Clear conditional fields when switching business type
+      serviceProviderType: '',
+      businessSize: ''
+    }));
   };
   
   const handleProductInterestChange = (productId: string, checked: boolean) => {
@@ -92,6 +106,9 @@ const ContactSection = () => {
         email: '',
         phone: '',
         company: '',
+        businessType: '',
+        serviceProviderType: '',
+        businessSize: '',
         industry: '',
         projectType: '',
         message: '',
@@ -265,6 +282,55 @@ const ContactSection = () => {
                     onChange={(e) => handleInputChange('company', e.target.value)}
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label>Business Type *</Label>
+                  <RadioGroup 
+                    value={formData.businessType} 
+                    onValueChange={handleBusinessTypeChange}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="business" id="business" />
+                      <Label htmlFor="business">Business</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="service-provider" id="service-provider" />
+                      <Label htmlFor="service-provider">Service Provider</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {formData.businessType === 'service-provider' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="serviceProviderType">Service Provider Type *</Label>
+                    <Select value={formData.serviceProviderType} onValueChange={(value) => handleInputChange('serviceProviderType', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select service provider type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="msp">MSP (Managed Service Provider)</SelectItem>
+                        <SelectItem value="mssp">MSSP (Managed Security Service Provider)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {formData.businessType === 'business' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="businessSize">Business Size *</Label>
+                    <Select value={formData.businessSize} onValueChange={(value) => handleInputChange('businessSize', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select business size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="small">Small Business</SelectItem>
+                        <SelectItem value="medium">Medium Business</SelectItem>
+                        <SelectItem value="enterprise">Enterprise</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="industry">Industry</Label>
