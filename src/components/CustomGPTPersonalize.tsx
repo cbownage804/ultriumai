@@ -221,8 +221,6 @@ const CustomGPTPersonalize = () => {
       case "branding":
       case "ai_model":
         return subscription.subscription_tier === "enterprise";
-      case "ai_model":
-        return subscription.subscription_tier === "enterprise";
       default:
         return true;
     }
