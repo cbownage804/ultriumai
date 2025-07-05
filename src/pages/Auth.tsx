@@ -94,8 +94,8 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center space-x-3 mb-8">
-          <img src={ultraiumAiLogo} alt="UltriumAI" className="h-12 w-auto" />
-          <span className="text-2xl font-bold text-foreground">UltriumGPT</span>
+          <img src={ultraiumAiLogo} alt="UltriumAI" className="h-16 w-auto" />
+          <span className="text-3xl font-bold text-foreground">UltriumGPT</span>
         </div>
 
         <Card className="border-border bg-card">

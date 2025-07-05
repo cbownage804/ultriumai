@@ -60,7 +60,7 @@ const SmallBusiness = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="pt-16">
+      <div className="pt-20">
         
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">

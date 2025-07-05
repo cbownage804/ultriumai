@@ -30,8 +30,8 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform" className="h-8 w-auto" />
-              <span className="text-lg font-bold text-foreground">UltriumAI</span>
+              <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform" className="h-12 w-auto" />
+              <span className="text-xl font-bold text-foreground">UltriumAI</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Veteran-owned AI solutions company specializing in custom GPT development, cybersecurity automation, and knowledge management for MSPs and businesses.

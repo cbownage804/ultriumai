@@ -51,11 +51,11 @@ const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigationWithMenuClose('/')}>
-            <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform for MSPs and MSSPs" className="h-8 w-auto transition-transform duration-300 hover:scale-110" />
-            <span className="text-lg font-bold text-foreground transition-colors duration-300">UltriumAI</span>
+            <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform for MSPs and MSSPs" className="h-12 w-auto transition-transform duration-300 hover:scale-110" />
+            <span className="text-xl font-bold text-foreground transition-colors duration-300">UltriumAI</span>
           </div>
           
           {/* Desktop Navigation */}
@@ -63,7 +63,7 @@ const Navigation = () => {
             <div className="relative">
               <button 
                 onClick={() => setIsSecurityDropdownOpen(!isSecurityDropdownOpen)}
-                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+                className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
               >
                 MSPs
                 <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isSecurityDropdownOpen ? 'rotate-180' : ''}`} />
@@ -81,7 +81,7 @@ const Navigation = () => {
             <div className="relative">
               <button 
                 onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
-                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+                className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
               >
                 Business
                 <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isBusinessDropdownOpen ? 'rotate-180' : ''}`} />
@@ -97,24 +97,24 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => handleNavigation('/ultriumgpt')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+            <button onClick={() => handleNavigation('/ultriumgpt')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               UltriumGPT
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('/solutions')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+            <button onClick={() => handleNavigation('/solutions')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('/demos')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+            <button onClick={() => handleNavigation('/demos')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               AI Demos
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('/contact')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+            <button onClick={() => handleNavigation('/contact')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Contact
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
             {user ? (
-              <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+              <button onClick={() => handleNavigation('/docs')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
                 KB
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </button>

@@ -90,7 +90,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-3">
           <NavLink to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-12 w-auto" />
             {!isCollapsed && (
               <span className="text-lg font-bold text-foreground">UltriumGPT</span>
             )}
