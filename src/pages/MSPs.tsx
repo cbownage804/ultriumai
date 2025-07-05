@@ -37,21 +37,21 @@ const MSPs = () => {
       title: "Client Helpdesk AI",
       description: "Automate Tier 1 support with AI trained on your documentation and procedures",
       features: ["Password resets", "Common IT issues", "Software guidance", "Escalation workflows"],
-      price: "Starting at $199/month",
+      price: "Starting at $100/month",
       popular: true
     },
     {
       title: "White-Label Platform",
       description: "Offer AI-powered support as a premium service to your clients",
       features: ["Your branding", "Client segregation", "Custom workflows", "Revenue sharing"],
-      price: "Starting at $399/month",
+      price: "Starting at $500/month",
       popular: false
     },
     {
       title: "Internal Operations AI",
       description: "Streamline your internal processes with AI-powered automation",
       features: ["Documentation search", "Procedure guidance", "Staff training", "Knowledge base"],
-      price: "Starting at $299/month",
+      price: "Starting at $100/month",
       popular: false
     }
   ];

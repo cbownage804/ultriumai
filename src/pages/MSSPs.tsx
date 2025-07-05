@@ -37,21 +37,21 @@ const MSSPs = () => {
       title: "SafeEmail™ Enterprise",
       description: "Advanced email threat detection and phishing protection for enterprise clients",
       features: ["Advanced phishing detection", "Malware scanning", "Link analysis", "Client reporting"],
-      price: "Starting at $299/month",
+      price: "Starting at $100/month",
       popular: true
     },
     {
       title: "Integrated Security Suite",
       description: "Complete security automation platform with all security apps included",
       features: ["All SafeSuite apps", "Custom integrations", "White-label deployment", "SOC integration"],
-      price: "Starting at $599/month",
+      price: "Starting at $500/month",
       popular: false
     },
     {
       title: "Security Operations AI",
       description: "AI-powered SOC automation and incident response platform",
       features: ["Threat hunting", "Incident analysis", "Response automation", "Compliance reporting"],
-      price: "Starting at $899/month",
+      price: "Starting at $500/month",
       popular: false
     }
   ];

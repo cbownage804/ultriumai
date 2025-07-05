@@ -37,19 +37,19 @@ const SmallBusiness = () => {
       title: "AI Email Security",
       description: "Advanced email threat detection and phishing protection powered by AI",
       features: ["Phishing detection", "Malware scanning", "Link analysis", "Threat reporting"],
-      price: "Starting at $79/month"
+      price: "Starting at $100/month"
     },
     {
       title: "IT Helpdesk Automation",
       description: "Automate common IT support tasks with AI-powered helpdesk assistant",
       features: ["Password resets", "Software troubleshooting", "Hardware guidance", "Ticket routing"],
-      price: "Starting at $99/month"
+      price: "Starting at $100/month"
     },
     {
       title: "Security Monitoring & Compliance",
       description: "24/7 security monitoring with automated compliance reporting",
       features: ["Threat monitoring", "Compliance tracking", "Security alerts", "Audit reports"],
-      price: "Starting at $149/month"
+      price: "Starting at $500/month"
     }
   ];
 
