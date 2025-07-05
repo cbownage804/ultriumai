@@ -25,8 +25,11 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
-    const { planType, interval } = await req.json();
-    logStep("Request data", { planType, interval });
+    // Define minimum users
+    const minimumUsers = 5;
+    
+    const { planType, interval, userCount = minimumUsers } = await req.json();
+    logStep("Request data", { planType, interval, userCount });
 
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
@@ -47,46 +50,25 @@ serve(async (req) => {
       logStep("No existing customer found");
     }
 
-    // Define pricing for solutions
-    const pricing = {
-      // Main platform plans
-      premium: {
-        monthly: 10000, // $100.00
-        yearly: 100000 // $1,000.00 (2 months free)
-      },
-      enterprise: {
-        monthly: 50000, // $500.00
-        yearly: 500000 // $5,000.00 (2 months free)
-      },
-      // Standalone solutions
-      "ai-knowledge": {
-        monthly: 10000, // $100.00
-        yearly: 100000 // $1,000.00 (2 months free)
-      },
-      "basic-security": {
-        monthly: 10000, // $100.00
-        yearly: 100000 // $1,000.00 (2 months free)
-      },
-      "custom-chatbot": {
-        monthly: 50000, // $500.00
-        yearly: 500000 // $5,000.00 (2 months free)
-      },
-      "white-label": {
-        monthly: 50000, // $500.00
-        yearly: 500000 // $5,000.00 (2 months free)
-      },
-      "security-knowledge": {
-        monthly: 10000, // $100.00
-        yearly: 100000 // $1,000.00 (2 months free)
-      },
-      "security-apps": {
-        monthly: 50000, // $500.00
-        yearly: 500000 // $5,000.00 (2 months free)
-      },
-      "security-portal": {
-        monthly: 50000, // $500.00
-        yearly: 500000 // $5,000.00 (2 months free)
-      }
+    // Define per-user pricing with 5 user minimum
+    const pricingPerUser = {
+      // Premium solutions: $20/user/month (min 5 users = $100/month)
+      "ai-knowledge": { monthly: 2000, yearly: 20000 }, // $20/user, $200/user/year (2 months free)
+      "basic-security": { monthly: 2000, yearly: 20000 },
+      "security-knowledge": { monthly: 2000, yearly: 20000 },
+      
+      // Enterprise solutions: $35/user/month (min 5 users = $175/month)
+      "custom-chatbot": { monthly: 3500, yearly: 35000 }, // $35/user, $350/user/year (2 months free)
+      "white-label": { monthly: 3500, yearly: 35000 },
+      "security-apps": { monthly: 3500, yearly: 35000 },
+      "security-portal": { monthly: 3500, yearly: 35000 },
+      
+      // Main platform plans (keep existing)
+      "premium": { monthly: 10000, yearly: 100000 },
+      "enterprise": { monthly: 50000, yearly: 500000 },
+      
+      // IT solutions
+      "it-documentation": { monthly: 2000, yearly: 20000 }
     };
 
     // Define product names
@@ -99,11 +81,15 @@ serve(async (req) => {
       "white-label": "White-Label AI Platform",
       "security-knowledge": "Security Knowledge Base",
       "security-apps": "Security Apps Suite",
-      "security-portal": "Client Security Portal"
+      "security-portal": "Client Security Portal",
+      "it-documentation": "IT Documentation Hub"
     };
 
-    const priceAmount = pricing[planType as keyof typeof pricing][interval as keyof typeof pricing.premium];
-    logStep("Price calculated", { planType, interval, priceAmount });
+    const pricePerUser = pricingPerUser[planType as keyof typeof pricingPerUser][interval as keyof typeof pricingPerUser["ai-knowledge"]];
+    const totalUsers = Math.max(userCount, minimumUsers);
+    const totalAmount = pricePerUser * totalUsers;
+    
+    logStep("Price calculated", { planType, interval, userCount: totalUsers, pricePerUser, totalAmount });
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -114,9 +100,9 @@ serve(async (req) => {
             currency: "usd",
             product_data: { 
               name: productNames[planType as keyof typeof productNames] || `UltriumGPT ${planType}`,
-              description: `${productNames[planType as keyof typeof productNames] || planType} - ${interval} billing`
+              description: `${productNames[planType as keyof typeof productNames] || planType} - ${totalUsers} users - ${interval} billing`
             },
-            unit_amount: priceAmount,
+            unit_amount: totalAmount,
             recurring: { interval: interval === "yearly" ? "year" : "month" },
           },
           quantity: 1,
@@ -128,7 +114,8 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         plan_type: planType,
-        interval: interval
+        interval: interval,
+        user_count: totalUsers
       }
     });
 

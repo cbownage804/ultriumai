@@ -39,21 +39,21 @@ const SmallBusiness = () => {
       title: "AI Knowledge Assistant",
       description: "Train AI on your company documents to provide instant answers to employee questions",
       features: ["Document search", "Policy Q&A", "Procedure guidance", "Employee self-service"],
-      price: "$100/month"
+      price: "Starting at $100/month (5 users)"
     },
     {
       id: "basic-security",
       title: "Basic Security Scanning",
       description: "Simple security checks for emails, links, and documents using AI-powered detection",
       features: ["Email scanning", "Link checking", "Document analysis", "Security tips"],
-      price: "$100/month"
+      price: "Starting at $100/month (5 users)"
     },
     {
       id: "custom-chatbot",
       title: "Custom Business Chatbot",
       description: "Deploy a branded AI assistant for your website or internal use with your content",
       features: ["Custom branding", "Website integration", "Knowledge training", "Usage analytics"],
-      price: "$500/month"
+      price: "Starting at $175/month (5 users)"
     }
   ];
 
@@ -143,6 +143,7 @@ const SmallBusiness = () => {
                       <p className="font-semibold text-primary text-lg">{solution.price}</p>
                       <SolutionPurchaseButton 
                         solutionType={solution.id}
+                        solutionName={solution.title}
                         className="w-full mt-3"
                       >
                         Get Started

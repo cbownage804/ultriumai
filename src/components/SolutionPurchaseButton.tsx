@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { UserCountSelector } from "./UserCountSelector";
 
 interface SolutionPurchaseButtonProps {
   solutionType: string;
+  solutionName: string;
   variant?: "default" | "outline";
   className?: string;
   children: React.ReactNode;
@@ -13,14 +16,16 @@ interface SolutionPurchaseButtonProps {
 
 export const SolutionPurchaseButton = ({ 
   solutionType, 
+  solutionName,
   variant = "default", 
   className = "",
   children 
 }: SolutionPurchaseButtonProps) => {
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (userCount: number, interval: 'monthly' | 'yearly') => {
     try {
       setLoading(true);
       
@@ -37,7 +42,8 @@ export const SolutionPurchaseButton = ({
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           planType: solutionType,
-          interval: 'monthly'
+          interval: interval,
+          userCount: userCount
         }
       });
 
@@ -45,6 +51,7 @@ export const SolutionPurchaseButton = ({
 
       if (data?.url) {
         window.open(data.url, '_blank');
+        setOpen(false);
       }
     } catch (error) {
       console.error('Purchase error:', error);
@@ -59,20 +66,23 @@ export const SolutionPurchaseButton = ({
   };
 
   return (
-    <Button 
-      variant={variant} 
-      className={className}
-      onClick={handlePurchase}
-      disabled={loading}
-    >
-      {loading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Processing...
-        </>
-      ) : (
-        children
-      )}
-    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button 
+          variant={variant} 
+          className={className}
+        >
+          {children}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <UserCountSelector
+          solutionType={solutionType}
+          solutionName={solutionName}
+          onPurchase={handlePurchase}
+          isLoading={loading}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -39,7 +39,7 @@ const MSPs = () => {
       title: "AI Knowledge Assistant",
       description: "Train AI on your documentation to instantly answer client questions about procedures and policies",
       features: ["Document-based Q&A", "Procedure guidance", "Policy lookups", "Smart escalation"],
-      price: "$100/month",
+      price: "Starting at $100/month (5 users)",
       popular: true
     },
     {
@@ -47,15 +47,15 @@ const MSPs = () => {
       title: "White-Label AI Platform",
       description: "Deploy branded AI assistants for your clients with your company colors and branding",
       features: ["Custom branding", "Client segregation", "Multi-tenant access", "Usage analytics"],
-      price: "$500/month",
+      price: "Starting at $175/month (5 users)",
       popular: false
     },
     {
-      id: "ai-knowledge",
+      id: "it-documentation",
       title: "IT Documentation Hub",
       description: "Centralize your IT knowledge base with AI-powered search and instant answers",
       features: ["Document management", "Smart search", "Staff training", "Quick lookups"],
-      price: "$100/month",
+      price: "Starting at $100/month (5 users)",
       popular: false
     }
   ];
@@ -155,6 +155,7 @@ const MSPs = () => {
                       <p className="font-semibold text-primary text-lg">{solution.price}</p>
                       <SolutionPurchaseButton 
                         solutionType={solution.id}
+                        solutionName={solution.title}
                         variant={solution.popular ? "default" : "outline"}
                         className="w-full mt-3"
                       >
