@@ -168,44 +168,37 @@ const Hero = () => {
             </Button>
           </div>
 
-          {/* Trust indicators */}
+          {/* Veteran-Owned Excellence Section */}
           <div className="pt-8 border-t border-border/50 animate-fade-in" style={{animationDelay: '0.8s'}}>
-            
-            {/* Ultrium MSP Call to Action */}
-            <div className="mb-8">
-              <div className="max-w-2xl mx-auto bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border border-cyan-200 dark:border-cyan-800 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105">
-                <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center">
-                    <img 
-                      src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
-                      alt="Ultrium Logo" 
-                      className="h-24 w-24 dark:hidden"
-                    />
-                    <img 
-                      src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
-                      alt="Ultrium Logo" 
-                      className="h-24 w-24 hidden dark:block"
-                    />
-                  </div>
-                  <h3 className="text-lg font-bold text-foreground">Need Traditional IT & Cybersecurity Services?</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Ultrium provides comprehensive managed IT services, cybersecurity solutions, and compliance support for businesses of all sizes.
-                  </p>
-                  <div className="flex justify-center">
-                    <Button 
-                      variant="outline"
-                      size="lg"
-                      className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 px-6 py-3 text-lg"
-                      onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
-                    >
-                      Visit Ultrium
-                    </Button>
-                  </div>
+            <div className="max-w-2xl mx-auto bg-gradient-to-br from-primary/5 to-secondary/5 border border-primary/20 rounded-xl p-8 mb-8">
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <img 
+                    src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
+                    alt="Ultrium Logo" 
+                    className="h-12 w-12 dark:hidden"
+                  />
+                  <img 
+                    src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
+                    alt="Ultrium Logo" 
+                    className="h-12 w-12 hidden dark:block"
+                  />
+                  <Shield className="h-8 w-8 text-primary" />
                 </div>
+                <h3 className="text-xl font-bold text-foreground">Veteran-Owned Excellence</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  UltriumAI is proudly developed by Ultrium, a veteran-owned IT solutions company based in Virginia. While UltriumAI focuses on AI-powered cybersecurity, automation, and business intelligence tools, Ultrium delivers full-service IT support, managed services, cloud infrastructure, and compliance solutions to businesses of all sizes.
+                </p>
+                <Button 
+                  variant="outline"
+                  className="mt-4 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300"
+                  onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
+                >
+                  Learn more at Ultrium.com
+                </Button>
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-4">UltriumAI was Proudly developed by Ultrium - Veteran-owned Cyber-focused IT solutions</p>
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
               <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
                 <Shield className="h-4 w-4 text-success animate-glow" />
