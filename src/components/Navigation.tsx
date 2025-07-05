@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { createNavigationHandler } from "@/hooks/useScrollToTop";
 import ThemeToggle from "./ThemeToggle";
 import UserProfileDropdown from "./UserProfileDropdown";
-import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
+import ultraiumAiLogo from "/lovable-uploads/0b57b7c9-df58-4212-bbf7-7d517cce963d.png";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

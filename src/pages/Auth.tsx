@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb472.png";
+import ultraiumAiLogo from "/lovable-uploads/0b57b7c9-df58-4212-bbf7-7d517cce963d.png";
 
 const Auth = () => {
   const [email, setEmail] = useState('');
