@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Play, Calendar, Users, Star, Lock } from "lucide-react";
+import { Shield, Play, Calendar, Users, Star, Lock, Building } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import VideoPlayer from "./VideoPlayer";
 
@@ -86,7 +86,7 @@ const Hero = () => {
           {/* Target Audience Buttons */}
           <div className="animate-fade-in mb-8" style={{animationDelay: '0.6s'}}>
             <p className="text-lg font-medium text-foreground mb-6">Choose Your Solution:</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 max-w-7xl mx-auto">
               <Button 
                 size="lg" 
                 className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
@@ -122,6 +122,15 @@ const Hero = () => {
                 <Lock className="h-6 w-6" />
                 <span>MSSPs</span>
                 <span className="text-sm opacity-80">Managed Security Service Providers</span>
+              </Button>
+              <Button 
+                size="lg" 
+                className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
+                onClick={() => handleNavigation('/enterprise')}
+              >
+                <Building className="h-6 w-6" />
+                <span>Enterprise</span>
+                <span className="text-sm opacity-80">250+ Employees</span>
               </Button>
             </div>
           </div>

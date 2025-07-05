@@ -63,6 +63,11 @@ serve(async (req) => {
       "security-apps": { monthly: 3500, yearly: 35000 },
       "security-portal": { monthly: 3500, yearly: 35000 },
       
+      // True Enterprise solutions: $50-100/user/month
+      "enterprise-ai": { monthly: 5000, yearly: 50000 }, // $50/user, $500/user/year (2 months free)
+      "enterprise-security": { monthly: 9000, yearly: 90000 }, // $90/user, $900/user/year (2 months free)
+      "custom-enterprise": { monthly: 10000, yearly: 100000 }, // $100/user, $1000/user/year (2 months free)
+      
       // Main platform plans (keep existing)
       "premium": { monthly: 10000, yearly: 100000 },
       "enterprise": { monthly: 50000, yearly: 500000 },
@@ -82,7 +87,10 @@ serve(async (req) => {
       "security-knowledge": "Security Knowledge Base",
       "security-apps": "Security Apps Suite",
       "security-portal": "Client Security Portal",
-      "it-documentation": "IT Documentation Hub"
+      "it-documentation": "IT Documentation Hub",
+      "enterprise-ai": "Enterprise AI Command Center",
+      "enterprise-security": "Enterprise Security Intelligence",
+      "custom-enterprise": "Custom Enterprise Platform"
     };
 
     const pricePerUser = pricingPerUser[planType as keyof typeof pricingPerUser][interval as keyof typeof pricingPerUser["ai-knowledge"]];

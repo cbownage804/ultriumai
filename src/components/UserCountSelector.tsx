@@ -23,7 +23,12 @@ const PRICING_TIERS = {
   "custom-chatbot": { price: 35, tier: "enterprise" },
   "white-label": { price: 35, tier: "enterprise" },
   "security-apps": { price: 35, tier: "enterprise" },
-  "security-portal": { price: 35, tier: "enterprise" }
+  "security-portal": { price: 35, tier: "enterprise" },
+  
+  // True Enterprise solutions: $50/user/month
+  "enterprise-ai": { price: 50, tier: "enterprise" },
+  "enterprise-security": { price: 90, tier: "enterprise" },
+  "custom-enterprise": { price: 100, tier: "enterprise" }
 };
 
 export const UserCountSelector = ({ 

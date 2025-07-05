@@ -21,6 +21,7 @@ import Privacy from '@/pages/Privacy';
 import Security from '@/pages/Security';
 import SmallBusiness from '@/pages/SmallBusiness';
 import MediumBusiness from '@/pages/MediumBusiness';
+import Enterprise from '@/pages/Enterprise';
 import MSPs from '@/pages/MSPs';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
@@ -73,6 +74,7 @@ function AppRouter() {
       <Route path="/ultriumgpt" element={<UltriumGPT />} />
       <Route path="/small-business" element={<SmallBusiness />} />
       <Route path="/medium-business" element={<MediumBusiness />} />
+      <Route path="/enterprise" element={<Enterprise />} />
       <Route path="/msps" element={<MSPs />} />
       <Route path="/mssps" element={<MSSPs />} />
       <Route path="/solutions" element={<Solutions />} />
