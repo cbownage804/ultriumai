@@ -194,16 +194,22 @@ const Hero = () => {
                     className="h-16 w-16 hidden dark:block"
                   />
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Veteran-Owned Excellence</h3>
+                <h3 className="text-xl font-bold text-foreground">Need More Than AI? Get Full IT Support</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  UltriumAI is proudly developed by Ultrium, a veteran-owned IT solutions company based in Virginia. While UltriumAI focuses on AI-powered cybersecurity, automation, and business intelligence tools, Ultrium delivers full-service IT support, managed services, cloud infrastructure, and compliance solutions to businesses of all sizes.
+                  While you're exploring AI solutions with UltriumAI, don't forget that our parent company, Ultrium, is your go-to partner for comprehensive IT services. From 24/7 managed support and advanced cybersecurity to seamless cloud migrations and compliance management - we've got your complete technology stack covered.
                 </p>
+                <div className="bg-primary/10 rounded-lg p-4 my-4">
+                  <p className="text-sm font-medium text-primary mb-2">✓ 15+ Years Protecting Virginia Businesses</p>
+                  <p className="text-sm font-medium text-primary mb-2">✓ Veteran-Owned & Operated Since Day One</p>
+                  <p className="text-sm font-medium text-primary">✓ Your AI Strategy + Complete IT Infrastructure</p>
+                </div>
                 <Button 
                   variant="outline"
-                  className="mt-4 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300"
+                  className="mt-4 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 text-lg px-6 py-3"
                   onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
                 >
-                  Learn more at Ultrium.com
+                  <Building className="mr-2 h-5 w-5" />
+                  Get Your Complete IT Solution →
                 </Button>
               </div>
             </div>
