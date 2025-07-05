@@ -175,7 +175,17 @@ const Hero = () => {
             <div className="mb-8">
               <div className="max-w-2xl mx-auto bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 border border-cyan-200 dark:border-cyan-800 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <div className="text-center space-y-3">
-                  <div className="flex items-center justify-center">
+                  <div className="flex items-center justify-center gap-4">
+                    <img 
+                      src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
+                      alt="Ultrium Logo" 
+                      className="h-24 w-24 dark:hidden"
+                    />
+                    <img 
+                      src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
+                      alt="Ultrium Logo" 
+                      className="h-24 w-24 hidden dark:block"
+                    />
                     <span className="text-sm font-semibold text-cyan-600 dark:text-cyan-400 uppercase tracking-wide">Cyber-Focused MSP</span>
                   </div>
                   <h3 className="text-lg font-bold text-foreground">Need Traditional IT & Cybersecurity Services?</h3>
@@ -186,20 +196,10 @@ const Hero = () => {
                     <Button 
                       variant="outline"
                       size="lg"
-                      className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 px-6 py-4 text-lg flex flex-col items-center gap-2 h-auto"
+                      className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 px-6 py-3 text-lg"
                       onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
                     >
-                      <span>Visit Ultrium</span>
-                      <img 
-                        src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
-                        alt="Ultrium Logo" 
-                        className="h-12 w-12 dark:hidden"
-                      />
-                      <img 
-                        src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
-                        alt="Ultrium Logo" 
-                        className="h-12 w-12 hidden dark:block"
-                      />
+                      Visit Ultrium
                     </Button>
                   </div>
                 </div>
