@@ -181,7 +181,7 @@ const Hero = () => {
                   </div>
                   <h3 className="text-lg font-bold text-foreground">Need Traditional IT & Cybersecurity Services?</h3>
                   <p className="text-muted-foreground text-sm">
-                    Ultrium LLC provides comprehensive managed IT services, cybersecurity solutions, and compliance support for businesses of all sizes.
+                    Ultrium provides comprehensive managed IT services, cybersecurity solutions, and compliance support for businesses of all sizes.
                   </p>
                   <Button 
                     variant="outline"
@@ -189,13 +189,13 @@ const Hero = () => {
                     onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
                   >
                     <Lock className="mr-2 h-4 w-4" />
-                    Visit Ultrium LLC
+                    Visit Ultrium
                   </Button>
                 </div>
               </div>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-4">Proudly developed by Ultrium LLC - Veteran-owned IT solutions</p>
+            <p className="text-sm text-muted-foreground mb-4">Proudly developed by Ultrium - Veteran-owned IT solutions</p>
             <div className="flex flex-wrap justify-center items-center gap-6 text-sm">
               <div className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
                 <Shield className="h-4 w-4 text-success animate-glow" />
