@@ -109,7 +109,7 @@ const Navigation = () => {
               AI Demos
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('#contact')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+            <button onClick={() => handleNavigation('/contact')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Contact
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
@@ -187,7 +187,7 @@ const Navigation = () => {
               <button onClick={() => handleNavigationWithMenuClose('/demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 AI Demos
               </button>
-              <button onClick={() => handleNavigationWithMenuClose('#contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+              <button onClick={() => handleNavigationWithMenuClose('/contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Contact
               </button>
               {user ? (
