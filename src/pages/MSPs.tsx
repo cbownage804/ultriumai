@@ -160,6 +160,67 @@ const MSPs = () => {
           </div>
         </section>
 
+        {/* Coming Soon Section */}
+        <section className="py-16 bg-muted/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary">
+                Coming Soon
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Advanced MSP Features in Development</h2>
+              <p className="text-xl text-muted-foreground">
+                Advanced integrations and automation features coming in 2025
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q2 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Settings className="h-5 w-5 text-muted-foreground" />
+                    PSA/RMM Integration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Direct integration with ConnectWise, Autotask, and other major PSA/RMM platforms for automated ticket creation and client management.</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q3 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-muted-foreground" />
+                    Automated Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">AI that can actually perform password resets, account unlocks, and basic IT tasks through secure integrations with your systems.</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q4 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                    Advanced Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Deep client insights, predictive maintenance alerts, and comprehensive MSP performance dashboards with ROI tracking.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* Integrations Section */}
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

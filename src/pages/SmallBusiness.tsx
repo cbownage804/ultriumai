@@ -148,6 +148,67 @@ const SmallBusiness = () => {
           </div>
         </section>
 
+        {/* Coming Soon Section */}
+        <section className="py-16 bg-muted/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary">
+                Coming Soon
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Advanced Business Features in Development</h2>
+              <p className="text-xl text-muted-foreground">
+                Enterprise-level automation and integrations coming in 2025
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q2 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Server className="h-5 w-5 text-muted-foreground" />
+                    System Integrations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Direct integration with Microsoft 365, Google Workspace, Slack, and other popular business platforms for automated workflows and data sync.</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q3 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-muted-foreground" />
+                    Advanced Security
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Real-time threat detection, automated security responses, and comprehensive security monitoring with detailed threat intelligence reporting.</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q4 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-muted-foreground" />
+                    Workflow Automation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Advanced AI workflows that can perform complex business tasks, automate processes, and integrate with your existing business management systems.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="py-20 bg-gradient-to-r from-primary/10 to-secondary/10">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

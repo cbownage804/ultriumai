@@ -152,6 +152,67 @@ const MSSPs = () => {
           </div>
         </section>
 
+        {/* Coming Soon Section */}
+        <section className="py-16 bg-muted/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 text-primary border-primary">
+                Coming Soon
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Advanced Security Features in Development</h2>
+              <p className="text-xl text-muted-foreground">
+                Enterprise-grade security automation coming in 2025
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q2 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-muted-foreground" />
+                    Real-Time Threat Detection
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Advanced AI-powered threat detection with real-time monitoring, automated incident response, and integration with major SIEM platforms.</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q3 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-muted-foreground" />
+                    SOC Automation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Full Security Operations Center automation with threat hunting, incident analysis, and automated containment and remediation workflows.</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="relative overflow-hidden">
+                <div className="absolute top-4 right-4">
+                  <Badge variant="secondary" className="text-xs">Q4 2025</Badge>
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                    Compliance Automation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">Automated compliance monitoring and reporting for HIPAA, SOC 2, PCI DSS, and other major frameworks with continuous audit readiness.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
         {/* Solutions Section */}
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
