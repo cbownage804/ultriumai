@@ -25,6 +25,7 @@ import Enterprise from '@/pages/Enterprise';
 import MSPs from '@/pages/MSPs';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
+import Contact from '@/pages/Contact';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
 import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
@@ -62,6 +63,7 @@ function AppRouter() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/contact" element={<Contact />} />
       <Route path="/credits" element={<CreditsPurchase />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
