@@ -13,6 +13,7 @@ import ultraiumAiLogo from "/lovable-uploads/cc68d96a-bf0b-43b8-9da8-995a765fb47
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSecurityDropdownOpen, setIsSecurityDropdownOpen] = useState(false);
+  const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -25,6 +26,7 @@ const Navigation = () => {
     handleNavigation(path);
     setIsMenuOpen(false);
     setIsSecurityDropdownOpen(false);
+    setIsBusinessDropdownOpen(false);
   };
 
   const handleSignOut = async () => {
@@ -76,10 +78,25 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => handleNavigation('/small-business')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              Business
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+              >
+                Business
+                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isBusinessDropdownOpen ? 'rotate-180' : ''}`} />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
+              {isBusinessDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
+                  <div className="py-2">
+                    <button onClick={() => { handleNavigationWithMenuClose('/small-business'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">Small Business</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/medium-business'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">Medium Business</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/enterprise'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">Enterprise</button>
+                  </div>
+                </div>
+              )}
+            </div>
             <button onClick={() => handleNavigation('/ultriumgpt')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               UltriumGPT
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -151,6 +168,12 @@ const Navigation = () => {
               </button>
               <button onClick={() => handleNavigationWithMenuClose('/small-business')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Small Business
+              </button>
+              <button onClick={() => handleNavigationWithMenuClose('/medium-business')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                Medium Business
+              </button>
+              <button onClick={() => handleNavigationWithMenuClose('/enterprise')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                Enterprise
               </button>
               <button onClick={() => handleNavigationWithMenuClose('/ultriumgpt')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 UltriumGPT
