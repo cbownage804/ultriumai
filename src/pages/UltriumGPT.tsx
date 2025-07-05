@@ -261,7 +261,22 @@ const UltriumGPT = () => {
 
                     <div className="pt-4 border-t border-black/10">
                       <p className="text-sm text-black/60 font-medium mb-4">{path.audience}</p>
-                      <Button className="w-full" size="lg">
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={() => {
+                          if (path.cta === "Start Building Free") {
+                            window.location.href = '/auth';
+                          } else if (path.cta === "Get Custom Quote") {
+                            const contactSection = document.querySelector('#contact');
+                            if (contactSection) {
+                              const navHeight = 80;
+                              const elementTop = contactSection.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                              window.scrollTo({ top: elementTop, behavior: 'smooth' });
+                            }
+                          }
+                        }}
+                      >
                         {path.cta}
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Button>
