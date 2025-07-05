@@ -1,471 +1,81 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { MapPin, Phone, Mail, Clock, MessageSquare, Calendar } from "lucide-react";
+import { Calendar, Phone } from "lucide-react";
 import { useScrollAnimation, getAnimationClasses } from "@/hooks/useScrollAnimation";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useContactForm } from "@/hooks/useContactForm";
+import { ContactHeader } from "@/components/contact/ContactHeader";
+import { ContactInfo } from "@/components/contact/ContactInfo";
+import { ContactFormFields } from "@/components/contact/ContactFormFields";
+import { ProductInterests } from "@/components/contact/ProductInterests";
 
 const ContactSection = () => {
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation();
   const { ref: contactInfoRef, isVisible: contactInfoVisible } = useScrollAnimation({ delay: 200 });
   const { ref: formRef, isVisible: formVisible } = useScrollAnimation({ delay: 400 });
-  const { toast } = useToast();
   
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    company: '',
-    businessType: '',
-    serviceProviderType: '',
-    businessSize: '',
-    industry: '',
-    projectType: '',
-    productType: '',
-    whiteLabeled: '',
-    message: '',
-    productInterests: [] as string[]
-  });
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const products = [
-    { id: 'ultriumgpt', name: 'UltriumGPT Platform' },
-    { id: 'safeemail', name: 'SafeEmail™' },
-    { id: 'safelink', name: 'SafeLink™' },
-    { id: 'safedoc', name: 'SafeDoc™' },
-    { id: 'safepass', name: 'SafePass™' },
-    { id: 'safenet', name: 'SafeNet™' },
-    { id: 'safecomp', name: 'SafeComp™' },
-    { id: 'safeweb', name: 'SafeWeb™' }
-  ];
-  
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-  
-  const handleBusinessTypeChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      businessType: value,
-      // Clear conditional fields when switching business type
-      serviceProviderType: '',
-      businessSize: ''
-    }));
-  };
-  
-  const handleProductInterestChange = (productId: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      productInterests: checked 
-        ? [...prev.productInterests, productId]
-        : prev.productInterests.filter(id => id !== productId)
-    }));
-  };
-  
-  const handleSelectAllProducts = (checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      productInterests: checked ? products.map(p => p.id) : []
-    }));
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('send-contact-form', {
-        body: formData
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      console.log('Contact form submitted successfully:', data);
-      
-      toast({
-        title: "Message Sent!",
-        description: "Thank you for your interest. We'll get back to you within 24 hours.",
-      });
-      
-      // Reset form
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        company: '',
-        businessType: '',
-        serviceProviderType: '',
-        businessSize: '',
-        industry: '',
-        projectType: '',
-        productType: '',
-        whiteLabeled: '',
-        message: '',
-        productInterests: []
-      });
-    } catch (error) {
-      console.error('Error submitting contact form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again or call us directly.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const handleCallButton = () => {
-    window.open('tel:804-821-1410', '_self');
-  };
+  const {
+    formData,
+    isSubmitting,
+    handleInputChange,
+    handleBusinessTypeChange,
+    handleProductInterestChange,
+    handleSelectAllProducts,
+    handleSubmit,
+    handleCallButton
+  } = useContactForm();
 
   return (
     <section id="contact" className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div ref={headerRef} className={getAnimationClasses(headerVisible, 'fadeUp')}>
-          <div className="text-center mb-16">
-            <Badge variant="secondary" className="mb-4">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Get In Touch
-            </Badge>
-            <h2 className="text-4xl font-bold mb-6 text-foreground">
-              Ready to Transform Your Business with AI?
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Let's discuss how custom AI agents can streamline your operations while keeping security at the forefront.
-              Book a free discovery call or reach out directly.
-            </p>
-          </div>
+        <div ref={headerRef}>
+          <ContactHeader 
+            isVisible={headerVisible}
+            animationClasses={getAnimationClasses(headerVisible, 'fadeUp')}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Information */}
-          <div ref={contactInfoRef} className={`space-y-8 ${getAnimationClasses(contactInfoVisible, 'slideRight')}`}>
-            <Card className="hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-5 w-5 text-primary" />
-                  Direct Contact
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Phone</p>
-                    <p className="text-primary font-semibold text-lg">804-821-1410</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
-                  <Mail className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Email</p>
-                    <p className="text-muted-foreground">info@ultriumai.com</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
-                  <MapPin className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Location</p>
-                    <p className="text-muted-foreground">Virginia, USA</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">Business Hours</p>
-                    <p className="text-muted-foreground">Mon-Fri: 9:00 AM - 6:00 PM EST</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20 hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 hover:border-primary/30">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Why Choose UltriumAI?</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span>15+ years of IT and cybersecurity experience</span>
-                  </li>
-                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span>Veteran-owned and operated business</span>
-                  </li>
-                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span>Security-first approach to AI development</span>
-                  </li>
-                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span>Custom solutions, not one-size-fits-all</span>
-                  </li>
-                  <li className="flex items-center gap-2 hover:text-foreground transition-colors duration-200">
-                    <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    <span>White-glove setup and ongoing support</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+          <div ref={contactInfoRef}>
+            <ContactInfo 
+              isVisible={contactInfoVisible}
+              animationClasses={getAnimationClasses(contactInfoVisible, 'slideRight')}
+            />
           </div>
 
           {/* Contact Form */}
           <div ref={formRef} className={getAnimationClasses(formVisible, 'slideLeft')}>
             <Card className="hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105">
-            <CardHeader>
-              <CardTitle>Schedule Your Free Discovery Call</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input 
-                      id="firstName" 
-                      placeholder="Enter your first name" 
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input 
-                      id="lastName" 
-                      placeholder="Enter your last name" 
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address *</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="Enter your email address" 
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    required
+              <CardHeader>
+                <CardTitle>Schedule Your Free Discovery Call</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-6" onSubmit={handleSubmit}>
+                  <ContactFormFields
+                    formData={formData}
+                    onInputChange={handleInputChange}
+                    onBusinessTypeChange={handleBusinessTypeChange}
                   />
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input 
-                    id="phone" 
-                    type="tel" 
-                    placeholder="Enter your phone number" 
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                  <ProductInterests
+                    selectedProducts={formData.productInterests}
+                    onProductChange={handleProductInterestChange}
+                    onSelectAll={handleSelectAllProducts}
                   />
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company Name</Label>
-                  <Input 
-                    id="company" 
-                    placeholder="Enter your company name" 
-                    value={formData.company}
-                    onChange={(e) => handleInputChange('company', e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Business Type *</Label>
-                  <RadioGroup 
-                    value={formData.businessType} 
-                    onValueChange={handleBusinessTypeChange}
-                    className="flex flex-col space-y-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="business" id="business" />
-                      <Label htmlFor="business">Business</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="service-provider" id="service-provider" />
-                      <Label htmlFor="service-provider">Service Provider</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {formData.businessType === 'service-provider' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="serviceProviderType">Service Provider Type *</Label>
-                    <Select value={formData.serviceProviderType} onValueChange={(value) => handleInputChange('serviceProviderType', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select service provider type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="msp">MSP (Managed Service Provider)</SelectItem>
-                        <SelectItem value="mssp">MSSP (Managed Security Service Provider)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {isSubmitting ? 'Sending...' : 'Schedule Discovery Call'}
+                    </Button>
+                    <Button type="button" variant="outline" className="flex-1" onClick={handleCallButton}>
+                      <Phone className="mr-2 h-4 w-4" />
+                      Call 804-821-1410
+                    </Button>
                   </div>
-                )}
-
-                {formData.businessType === 'business' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="businessSize">Business Size *</Label>
-                    <Select value={formData.businessSize} onValueChange={(value) => handleInputChange('businessSize', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select business size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small">Small Business</SelectItem>
-                        <SelectItem value="medium">Medium Business</SelectItem>
-                        <SelectItem value="enterprise">Enterprise</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="industry">Industry</Label>
-                  <Select value={formData.industry} onValueChange={(value) => handleInputChange('industry', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your industry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="it-internal">Internal IT Team</SelectItem>
-                      <SelectItem value="msp">IT Service Provider/MSP</SelectItem>
-                      <SelectItem value="accounting">Accounting/CPA Firm</SelectItem>
-                      <SelectItem value="automotive">Automotive Shop</SelectItem>
-                      <SelectItem value="smb">Small/Mid-Sized Business</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="projectType">What are you interested in?</Label>
-                  <Select value={formData.projectType} onValueChange={(value) => handleInputChange('projectType', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select project type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="helpdesk">Helpdesk/Support GPT</SelectItem>
-                      <SelectItem value="cybersecurity">Cybersecurity Copilot</SelectItem>
-                      <SelectItem value="client-facing">Client-Facing Bot</SelectItem>
-                      <SelectItem value="automation">Workflow Automation</SelectItem>
-                      <SelectItem value="consultation">General Consultation</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Product Type *</Label>
-                  <RadioGroup 
-                    value={formData.productType} 
-                    onValueChange={(value) => handleInputChange('productType', value)}
-                    className="flex flex-col space-y-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="custom" id="custom" />
-                      <Label htmlFor="custom">Custom Solution</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="prebuilt" id="prebuilt" />
-                      <Label htmlFor="prebuilt">Prebuilt Solution</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>White Labeling *</Label>
-                  <RadioGroup 
-                    value={formData.whiteLabeled} 
-                    onValueChange={(value) => handleInputChange('whiteLabeled', value)}
-                    className="flex flex-col space-y-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="yes" id="white-labeled-yes" />
-                      <Label htmlFor="white-labeled-yes">Yes, I want it white-labeled</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="no" id="white-labeled-no" />
-                      <Label htmlFor="white-labeled-no">No, UltriumAI branding is fine</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-4">
-                  <Label>Product Interest (select all that apply)</Label>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="select-all"
-                        checked={formData.productInterests.length === products.length}
-                        onCheckedChange={handleSelectAllProducts}
-                      />
-                      <Label 
-                        htmlFor="select-all" 
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Select All Products
-                      </Label>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {products.map((product) => (
-                          <div key={product.id} className="flex items-center space-x-2">
-                            <Checkbox 
-                              id={product.id}
-                              checked={formData.productInterests.includes(product.id)}
-                              onCheckedChange={(checked) => handleProductInterestChange(product.id, checked === true)}
-                            />
-                            <Label 
-                              htmlFor={product.id} 
-                              className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {product.name}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="message">Tell us about your project</Label>
-                  <Textarea 
-                    id="message" 
-                    placeholder="Describe your current challenges and how you'd like AI to help your business..."
-                    rows={4}
-                    value={formData.message}
-                    onChange={(e) => handleInputChange('message', e.target.value)}
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {isSubmitting ? 'Sending...' : 'Schedule Discovery Call'}
-                  </Button>
-                  <Button type="button" variant="outline" className="flex-1" onClick={handleCallButton}>
-                    <Phone className="mr-2 h-4 w-4" />
-                    Call 804-821-1410
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+                </form>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
