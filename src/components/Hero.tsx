@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Shield, Play, Calendar, Users, Star } from "lucide-react";
+import { Shield, Play, Calendar, Users, Star, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import VideoPlayer from "./VideoPlayer";
 
@@ -83,8 +83,42 @@ const Hero = () => {
             </div>
           </div>
 
+          {/* Target Audience Buttons */}
+          <div className="animate-fade-in mb-8" style={{animationDelay: '0.6s'}}>
+            <p className="text-lg font-medium text-foreground mb-6">Choose Your Solution:</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <Button 
+                size="lg" 
+                className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
+                onClick={() => handleNavigation('/small-business')}
+              >
+                <Users className="h-6 w-6" />
+                <span>Small Business</span>
+                <span className="text-sm opacity-80">AI Solutions for Growing Companies</span>
+              </Button>
+              <Button 
+                size="lg" 
+                className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
+                onClick={() => handleNavigation('/msps')}
+              >
+                <Shield className="h-6 w-6" />
+                <span>MSPs</span>
+                <span className="text-sm opacity-80">Managed Service Providers</span>
+              </Button>
+              <Button 
+                size="lg" 
+                className="text-lg px-6 py-8 h-auto bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow flex flex-col items-center gap-2"
+                onClick={() => handleNavigation('/mssps')}
+              >
+                <Lock className="h-6 w-6" />
+                <span>MSSPs</span>
+                <span className="text-sm opacity-80">Managed Security Service Providers</span>
+              </Button>
+            </div>
+          </div>
+
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{animationDelay: '0.6s'}}>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in" style={{animationDelay: '0.8s'}}>
             <Button 
               size="lg" 
               className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow"

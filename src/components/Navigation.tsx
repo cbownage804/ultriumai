@@ -58,6 +58,28 @@ const Navigation = () => {
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
+            <div className="relative">
+              <button 
+                onClick={() => setIsSecurityDropdownOpen(!isSecurityDropdownOpen)}
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+              >
+                MSPs
+                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isSecurityDropdownOpen ? 'rotate-180' : ''}`} />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
+              {isSecurityDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
+                  <div className="py-2">
+                    <button onClick={() => { handleNavigationWithMenuClose('/msps'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">MSPs</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/mssps'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">MSSPs</button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <button onClick={() => handleNavigation('/small-business')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+              Business
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </button>
             <button onClick={() => handleNavigation('/ultriumgpt')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               UltriumGPT
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -66,29 +88,6 @@ const Navigation = () => {
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <div className="relative">
-              <button 
-                onClick={() => setIsSecurityDropdownOpen(!isSecurityDropdownOpen)}
-                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
-              >
-                AI Security Apps
-                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isSecurityDropdownOpen ? 'rotate-180' : ''}`} />
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </button>
-              {isSecurityDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
-                  <div className="py-2">
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safeemail'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeEmail™</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safelink'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeLink™</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safedoc'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeDoc™</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safepass'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafePass™</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safeweb'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeWeb™</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safecomp'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeComp™</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/products/safenet'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">SafeNet™</button>
-                  </div>
-                </div>
-              )}
-            </div>
             <button onClick={() => handleNavigation('/demos')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               AI Demos
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -144,6 +143,15 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden bg-background/95 backdrop-blur-md border-t border-border/50">
             <div className="px-2 pt-2 pb-3 space-y-1">
+              <button onClick={() => handleNavigationWithMenuClose('/msps')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                MSPs
+              </button>
+              <button onClick={() => handleNavigationWithMenuClose('/mssps')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                MSSPs
+              </button>
+              <button onClick={() => handleNavigationWithMenuClose('/small-business')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                Small Business
+              </button>
               <button onClick={() => handleNavigationWithMenuClose('/ultriumgpt')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 UltriumGPT
               </button>

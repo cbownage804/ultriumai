@@ -19,6 +19,9 @@ import Docs from '@/pages/Docs';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
 import Security from '@/pages/Security';
+import SmallBusiness from '@/pages/SmallBusiness';
+import MSPs from '@/pages/MSPs';
+import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
@@ -67,6 +70,9 @@ function AppRouter() {
         </ProtectedRoute>
       } />
       <Route path="/ultriumgpt" element={<UltriumGPT />} />
+      <Route path="/small-business" element={<SmallBusiness />} />
+      <Route path="/msps" element={<MSPs />} />
+      <Route path="/mssps" element={<MSSPs />} />
       <Route path="/solutions" element={<Solutions />} />
       <Route path="/demos" element={<LiveDemos />} />
       <Route path="/docs" element={
