@@ -1,4 +1,5 @@
 import { Play } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface VideoPlayerProps {
   videoUrl?: string;
@@ -9,6 +10,37 @@ export const VideoPlayer = ({
   videoUrl = "/path/to/your/demo-video.mp4", // Replace with your actual video URL
   title = "UltriumAI Demo Video" 
 }: VideoPlayerProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (videoRef.current) {
+            videoRef.current.play().catch(console.error);
+          }
+        } else {
+          setIsVisible(false);
+          if (videoRef.current) {
+            videoRef.current.pause();
+          }
+        }
+      },
+      { threshold: 0.5 } // Video starts playing when 50% visible
+    );
+
+    if (videoRef.current) {
+      observer.observe(videoRef.current);
+    }
+
+    return () => {
+      if (videoRef.current) {
+        observer.unobserve(videoRef.current);
+      }
+    };
+  }, []);
   if (!videoUrl) {
     return (
       <div className="relative rounded-xl overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20">
@@ -32,8 +64,8 @@ export const VideoPlayer = ({
   return (
     <div className="relative rounded-xl overflow-hidden bg-black shadow-2xl">
       <video 
+        ref={videoRef}
         controls 
-        autoPlay
         muted
         className="w-full h-auto max-h-96 object-contain"
         preload="metadata"
