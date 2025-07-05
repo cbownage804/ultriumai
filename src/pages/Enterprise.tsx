@@ -216,7 +216,7 @@ const Enterprise = () => {
               Join Fortune 500 companies using AI to drive innovation and competitive advantage
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80">
+              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80" onClick={() => navigate('/contact')}>
                 Schedule Enterprise Consultation
               </Button>
               <Button size="lg" variant="outline" onClick={() => navigate('/demos')}>

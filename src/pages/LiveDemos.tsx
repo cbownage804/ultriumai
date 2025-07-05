@@ -406,7 +406,7 @@ const LiveDemos = () => {
               All demos are backed by production-ready APIs. Contact us to discuss custom implementations, white-label solutions, or enterprise deployments.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="btn-glow" onClick={() => window.location.href = '#contact'}>
+              <Button size="lg" className="btn-glow" onClick={() => window.location.href = '/contact'}>
                 <Users className="mr-2 h-5 w-5" />
                 Schedule Demo Call
               </Button>

@@ -209,7 +209,7 @@ const SafeNetPage = () => {
                   <Button size="lg" className="btn-glow">
                     Start Free Trial
                   </Button>
-                  <Button variant="outline" size="lg">
+                  <Button variant="outline" size="lg" onClick={() => window.location.href = '/contact'}>
                     Schedule Demo Call
                   </Button>
                 </div>
