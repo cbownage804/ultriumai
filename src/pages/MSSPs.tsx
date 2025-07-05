@@ -166,9 +166,6 @@ const MSSPs = () => {
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               <Card className="relative overflow-hidden">
-                <div className="absolute top-4 right-4">
-                  <Badge variant="secondary" className="text-xs">Q2 2025</Badge>
-                </div>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Shield className="h-5 w-5 text-muted-foreground" />
@@ -181,9 +178,6 @@ const MSSPs = () => {
               </Card>
               
               <Card className="relative overflow-hidden">
-                <div className="absolute top-4 right-4">
-                  <Badge variant="secondary" className="text-xs">Q3 2025</Badge>
-                </div>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Eye className="h-5 w-5 text-muted-foreground" />
@@ -196,9 +190,6 @@ const MSSPs = () => {
               </Card>
               
               <Card className="relative overflow-hidden">
-                <div className="absolute top-4 right-4">
-                  <Badge variant="secondary" className="text-xs">Q4 2025</Badge>
-                </div>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-muted-foreground" />
