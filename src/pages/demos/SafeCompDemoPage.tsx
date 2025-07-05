@@ -1,5 +1,6 @@
 import Navigation from "@/components/Navigation";
 import { SafeCompDemo } from "@/components/demos/SafeCompDemo";
+import Footer from "@/components/Footer";
 
 const SafeCompDemoPage = () => {
   return (
@@ -8,6 +9,7 @@ const SafeCompDemoPage = () => {
       <div className="pt-16">
         <SafeCompDemo />
       </div>
+      <Footer />
     </div>
   );
 };

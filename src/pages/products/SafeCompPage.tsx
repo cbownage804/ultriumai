@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Users, Check, Star, Zap, Shield, ArrowRight, Play } from "lucide-react";
+import Footer from "@/components/Footer";
 
 const SafeCompPage = () => {
   const features = [
@@ -217,6 +218,7 @@ const SafeCompPage = () => {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };

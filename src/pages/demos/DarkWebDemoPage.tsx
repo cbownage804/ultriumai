@@ -1,5 +1,6 @@
 import Navigation from "@/components/Navigation";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
+import Footer from "@/components/Footer";
 
 const DarkWebDemoPage = () => {
   return (
@@ -8,6 +9,7 @@ const DarkWebDemoPage = () => {
       <div className="pt-16">
         <DarkWebDemo />
       </div>
+      <Footer />
     </div>
   );
 };

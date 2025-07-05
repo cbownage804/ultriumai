@@ -1,5 +1,6 @@
 import Navigation from "@/components/Navigation";
 import { SafeLinkDemo } from "@/components/demos/SafeLinkDemo";
+import Footer from "@/components/Footer";
 
 const SafeLinkDemoPage = () => {
   return (
@@ -8,6 +9,7 @@ const SafeLinkDemoPage = () => {
       <div className="pt-16">
         <SafeLinkDemo />
       </div>
+      <Footer />
     </div>
   );
 };
