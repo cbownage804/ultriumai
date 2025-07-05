@@ -23,6 +23,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import Footer from "@/components/Footer";
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -312,6 +313,7 @@ const Pricing = () => {
         </div>
       </section>
 
+      <Footer />
     </div>
   );
 };

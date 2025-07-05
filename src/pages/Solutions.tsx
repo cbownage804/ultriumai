@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import { 
   Shield, 
   Lock, 
@@ -442,6 +443,7 @@ const Solutions = () => {
           </Card>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };

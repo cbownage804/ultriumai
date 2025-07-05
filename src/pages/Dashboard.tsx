@@ -29,6 +29,7 @@ import { VideoUploadManager } from "@/components/VideoUploadManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import Footer from "@/components/Footer";
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -155,6 +156,7 @@ const Dashboard = () => {
           <div className={`flex flex-1 flex-col ${!isSettingsPage ? 'h-[calc(100vh-4rem)]' : ''}`}>
             {renderContent()}
           </div>
+          <Footer />
         </SidebarInset>
       </div>
     </SidebarProvider>

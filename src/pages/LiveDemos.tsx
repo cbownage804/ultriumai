@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import { 
   Shield, 
   Lock, 
@@ -417,6 +418,7 @@ const LiveDemos = () => {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 };
