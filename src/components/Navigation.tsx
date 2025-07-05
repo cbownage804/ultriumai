@@ -52,7 +52,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigationWithMenuClose('/')}>
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto transition-transform duration-300 hover:scale-110" />
+            <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform for MSPs and MSSPs" className="h-8 w-auto transition-transform duration-300 hover:scale-110" />
             <span className="text-lg font-bold text-foreground transition-colors duration-300">UltriumAI</span>
           </div>
           

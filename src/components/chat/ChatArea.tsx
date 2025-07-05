@@ -164,7 +164,7 @@ const ChatArea = ({ currentConversationId, conversations, messages, isLoading }:
               <div className="flex-shrink-0">
                 {message.role === "assistant" ? (
                   <div className="w-8 h-8 rounded-full overflow-hidden">
-                    <img src={botLogo} alt="UltriumGPT" className="w-full h-full object-cover" />
+                    <img src={botLogo} alt="UltriumGPT AI assistant chatbot" className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
@@ -219,7 +219,7 @@ const ChatArea = ({ currentConversationId, conversations, messages, isLoading }:
           {isLoading && (
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full overflow-hidden">
-                <img src={botLogo} alt="UltriumGPT" className="w-full h-full object-cover" />
+                <img src={botLogo} alt="UltriumGPT AI assistant chatbot" className="w-full h-full object-cover" />
               </div>
               <Card className="bg-muted p-3">
                 <div className="flex items-center gap-1">

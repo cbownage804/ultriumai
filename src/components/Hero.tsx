@@ -36,10 +36,10 @@ const Hero = () => {
           {/* Main heading */}
           <div className="space-y-6 animate-fade-in">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
-              Transform Your Business with Custom AI Agents
+              AI-Powered Knowledge Management for MSPs & MSSPs
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in px-4" style={{animationDelay: '0.2s'}}>
-              From helpdesk GPTs to cybersecurity copilots—UltriumAI builds the tools to power your future.
+              Transform your IT support operations with custom GPT agents. Reduce client tickets by 20-30%, automate helpdesk responses, and deploy white-label AI solutions with seamless Teams and Slack integration.
             </p>
             <div className="flex items-center justify-center gap-2 text-base md:text-lg font-medium text-primary animate-bounce-gentle px-4">
               <Shield className="h-5 w-5 md:h-6 md:w-6" />
