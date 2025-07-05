@@ -79,7 +79,7 @@ const AboutSection = () => {
                   </p>
                   <Button variant="outline" className="w-full">
                     <Building className="mr-2 h-4 w-4" />
-                    Learn more at Ultrium.com
+                    Learn more at UltriumLLC.com
                   </Button>
                 </div>
               </CardContent>
