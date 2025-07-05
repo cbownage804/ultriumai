@@ -75,11 +75,11 @@ const AboutSection = () => {
                   </div>
                   <h3 className="text-xl font-bold">Veteran-Owned Excellence</h3>
                   <p className="text-muted-foreground">
-                    <strong>UltriumAI is proudly developed by Ultrium LLC</strong>, a veteran-owned IT solutions company based in Virginia. While UltriumAI focuses on AI-powered cybersecurity, automation, and business intelligence tools, Ultrium LLC delivers full-service IT support, managed services, cloud infrastructure, and compliance solutions to businesses of all sizes.
+                    <strong>UltriumAI is proudly developed by Ultrium</strong>, a veteran-owned IT solutions company based in Virginia. While UltriumAI focuses on AI-powered cybersecurity, automation, and business intelligence tools, Ultrium delivers full-service IT support, managed services, cloud infrastructure, and compliance solutions to businesses of all sizes.
                   </p>
                   <Button variant="outline" className="w-full">
                     <Building className="mr-2 h-4 w-4" />
-                    Learn more at UltriumLLC.com
+                    Learn more at Ultrium.com
                   </Button>
                 </div>
               </CardContent>
