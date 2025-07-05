@@ -39,12 +39,12 @@ const Hero = () => {
               <img 
                 src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
                 alt="Ultrium Logo" 
-                className="h-32 w-32 dark:hidden"
+                className="h-48 w-48 dark:hidden"
               />
               <img 
                 src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
                 alt="Ultrium Logo" 
-                className="h-32 w-32 hidden dark:block"
+                className="h-48 w-48 hidden dark:block"
               />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
