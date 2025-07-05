@@ -121,15 +121,15 @@ const WhoWeHelp = () => {
                       <Icon className="h-6 w-6 text-primary group-hover:animate-glow" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg text-black dark:text-white group-hover:text-gradient transition-all duration-300">{industry.title}</CardTitle>
+                      <CardTitle className="text-lg text-black group-hover:text-gradient transition-all duration-300">{industry.title}</CardTitle>
                     </div>
                   </div>
-                  <CardDescription className="text-black dark:text-gray-300 font-medium group-hover:text-primary transition-colors duration-300">
+                  <CardDescription className="text-black font-medium group-hover:text-primary transition-colors duration-300">
                     {industry.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-black dark:text-gray-300 leading-relaxed group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
+                  <p className="text-sm text-black leading-relaxed group-hover:text-gray-900 transition-colors duration-300">
                     {industry.details}
                   </p>
                 </CardContent>
@@ -156,10 +156,10 @@ const WhoWeHelp = () => {
                   <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 group-hover:scale-110">
                     <Icon className="h-8 w-8 text-primary group-hover:animate-glow" />
                   </div>
-                  <CardTitle className="text-lg text-black dark:text-white group-hover:text-gradient transition-all duration-300">{reason.title}</CardTitle>
+                  <CardTitle className="text-lg text-black group-hover:text-gradient transition-all duration-300">{reason.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-black dark:text-gray-300 leading-relaxed group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-300">
+                  <p className="text-sm text-black leading-relaxed group-hover:text-gray-900 transition-colors duration-300">
                     {reason.description}
                   </p>
                 </CardContent>
