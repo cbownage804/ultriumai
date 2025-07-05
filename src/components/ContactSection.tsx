@@ -29,6 +29,8 @@ const ContactSection = () => {
     businessSize: '',
     industry: '',
     projectType: '',
+    productType: '',
+    whiteLabeled: '',
     message: '',
     productInterests: [] as string[]
   });
@@ -111,6 +113,8 @@ const ContactSection = () => {
         businessSize: '',
         industry: '',
         projectType: '',
+        productType: '',
+        whiteLabeled: '',
         message: '',
         productInterests: []
       });
@@ -363,6 +367,42 @@ const ContactSection = () => {
                       <SelectItem value="consultation">General Consultation</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Product Type *</Label>
+                  <RadioGroup 
+                    value={formData.productType} 
+                    onValueChange={(value) => handleInputChange('productType', value)}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="custom" id="custom" />
+                      <Label htmlFor="custom">Custom Solution</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="prebuilt" id="prebuilt" />
+                      <Label htmlFor="prebuilt">Prebuilt Solution</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>White Labeling *</Label>
+                  <RadioGroup 
+                    value={formData.whiteLabeled} 
+                    onValueChange={(value) => handleInputChange('whiteLabeled', value)}
+                    className="flex flex-col space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="white-labeled-yes" />
+                      <Label htmlFor="white-labeled-yes">Yes, I want it white-labeled</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="white-labeled-no" />
+                      <Label htmlFor="white-labeled-no">No, UltriumAI branding is fine</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
 
                 <div className="space-y-4">
