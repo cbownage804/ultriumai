@@ -1,146 +1,138 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Shield, Eye, Lock, Database, Users, Globe, FileText, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const Privacy = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button variant="ghost" asChild>
-              <Link to="/" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
-              </Link>
-            </Button>
+      <Navigation />
+      <div className="pt-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Shield className="h-8 w-8 text-primary" />
+              <h1 className="text-4xl font-bold text-foreground">Privacy Policy</h1>
+            </div>
+            <p className="text-lg text-muted-foreground">
+              Your privacy and data security are fundamental to our mission
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Last updated: January 5, 2025
+            </p>
           </div>
 
-          <Card>
+          {/* Introduction */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Privacy Policy</CardTitle>
-              <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" />
+                Our Commitment to Privacy
+              </CardTitle>
             </CardHeader>
-            <CardContent className="prose prose-slate max-w-none space-y-6">
-              <section>
-                <h2 className="text-xl font-semibold mb-3">1. Information We Collect</h2>
-                <p>We collect information you provide directly to us, such as:</p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Account information (name, email address, password)</li>
-                  <li>Profile information and preferences</li>
-                  <li>Content you create using our service</li>
-                  <li>Communications with our support team</li>
-                  <li>Usage data and analytics</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">2. How We Use Your Information</h2>
-                <p>We use the information we collect to:</p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Provide, maintain, and improve our service</li>
-                  <li>Process transactions and manage subscriptions</li>
-                  <li>Send you service-related communications</li>
-                  <li>Provide customer support</li>
-                  <li>Analyze usage patterns to improve our service</li>
-                  <li>Ensure security and prevent fraud</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">3. Information Sharing</h2>
-                <p>We do not sell, trade, or rent your personal information to third parties. We may share your information only in these circumstances:</p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>With your explicit consent</li>
-                  <li>To comply with legal obligations</li>
-                  <li>To protect our rights and safety</li>
-                  <li>With service providers who assist in operating our platform</li>
-                  <li>In connection with a merger, acquisition, or sale of assets</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">4. Data Security</h2>
-                <p>
-                  We implement appropriate technical and organizational security measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. This includes:
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                At UltriumAI, a division of Ultrium LLC, we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered knowledge management platform and related services.
+              </p>
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                <p className="text-sm font-medium text-primary">
+                  <AlertTriangle className="h-4 w-4 inline mr-2" />
+                  Key Principle: We never sell your personal data or use it for advertising purposes.
                 </p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Encryption of data in transit and at rest</li>
-                  <li>Regular security audits and monitoring</li>
-                  <li>Access controls and authentication measures</li>
-                  <li>Employee training on data protection</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">5. Data Retention</h2>
-                <p>
-                  We retain your personal information for as long as necessary to provide our services, comply with legal obligations, 
-                  resolve disputes, and enforce our agreements. You can request deletion of your account and associated data at any time.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">6. Your Rights</h2>
-                <p>You have the right to:</p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Access and review your personal information</li>
-                  <li>Correct inaccurate or incomplete information</li>
-                  <li>Delete your account and personal information</li>
-                  <li>Export your data in a portable format</li>
-                  <li>Opt out of marketing communications</li>
-                  <li>File a complaint with relevant authorities</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">7. Cookies and Tracking</h2>
-                <p>
-                  We use cookies and similar technologies to enhance your experience, analyze usage patterns, and provide personalized content. 
-                  You can manage cookie preferences through your browser settings.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">8. Third-Party Services</h2>
-                <p>
-                  Our service may integrate with third-party platforms and services (such as OpenAI, Stripe, etc.). 
-                  These services have their own privacy policies, and we encourage you to review them.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">9. International Data Transfers</h2>
-                <p>
-                  Your information may be transferred to and processed in countries other than your own. 
-                  We ensure appropriate safeguards are in place to protect your information in accordance with applicable laws.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">10. Changes to This Policy</h2>
-                <p>
-                  We may update this Privacy Policy from time to time. We will notify you of any material changes by email or through our service. 
-                  The updated policy will be effective when posted.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">11. Contact Us</h2>
-                <p>
-                  If you have any questions about this Privacy Policy or our data practices, please contact us at:
-                </p>
-                <div className="ml-4">
-                  <p>Email: privacy@ultriumai.com</p>
-                  <p>Phone: (804) 821-1410</p>
-                  <p>Address: UltriumAI, Inc.</p>
-                </div>
-              </section>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Information We Collect */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-primary" />
+                Information We Collect
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="font-semibold mb-3">Personal Information</h3>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                  <li>Account registration information (name, email address, company details)</li>
+                  <li>Contact information for support and billing purposes</li>
+                  <li>Profile information you choose to provide</li>
+                  <li>Communication preferences and subscription settings</li>
+                </ul>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-3">Usage Information</h3>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                  <li>Platform usage patterns and feature interactions</li>
+                  <li>Chat conversations and AI interactions (anonymized for improvement)</li>
+                  <li>System performance and error logs</li>
+                  <li>Device and browser information</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3">Business Data</h3>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                  <li>Documents and files uploaded to your knowledge base</li>
+                  <li>Custom GPT configurations and training data</li>
+                  <li>Team collaboration and sharing preferences</li>
+                  <li>API usage and integration data</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contact Information */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Contact Us</CardTitle>
+              <CardDescription>
+                Questions about this Privacy Policy or our data practices?
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-2">Privacy Team</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Email: privacy@ultriumai.com<br />
+                    Phone: (804) 821-1410<br />
+                    Response Time: 48 hours
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Mailing Address</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Ultrium LLC<br />
+                    Privacy Officer<br />
+                    Richmond, Virginia<br />
+                    United States
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Back to Home */}
+          <div className="text-center">
+            <Button onClick={() => navigate('/')} variant="outline" className="mr-4">
+              Back to Home
+            </Button>
+            <Button onClick={() => navigate('/terms')} variant="hero">
+              Terms of Service
+            </Button>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -1,128 +1,126 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { FileText, Scale, Shield, AlertTriangle, Users, Zap, Lock, Gavel } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const Terms = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <Button variant="ghost" asChild>
-              <Link to="/" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Home
-              </Link>
-            </Button>
+      <Navigation />
+      <div className="pt-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Scale className="h-8 w-8 text-primary" />
+              <h1 className="text-4xl font-bold text-foreground">Terms of Service</h1>
+            </div>
+            <p className="text-lg text-muted-foreground">
+              Legal agreement governing your use of UltriumAI services
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Last updated: January 5, 2025
+            </p>
           </div>
 
-          <Card>
+          {/* Acceptance */}
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Terms of Service</CardTitle>
-              <p className="text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Acceptance of Terms
+              </CardTitle>
             </CardHeader>
-            <CardContent className="prose prose-slate max-w-none space-y-6">
-              <section>
-                <h2 className="text-xl font-semibold mb-3">1. Acceptance of Terms</h2>
-                <p>
-                  By accessing and using UltriumGPT ("Service"), you accept and agree to be bound by the terms and provision of this agreement.
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                By accessing or using UltriumAI services, operated by Ultrium LLC, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not access or use our services.
+              </p>
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                <p className="text-sm font-medium text-primary">
+                  <AlertTriangle className="h-4 w-4 inline mr-2" />
+                  These Terms constitute a legally binding agreement between you and Ultrium LLC.
                 </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">2. Service Description</h2>
-                <p>
-                  UltriumGPT is a platform that allows users to create, customize, and deploy AI-powered chatbots and assistants. Our service includes:
-                </p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Custom GPT creation and management tools</li>
-                  <li>Knowledge base integration</li>
-                  <li>Analytics and monitoring dashboards</li>
-                  <li>API access and embedding capabilities</li>
-                  <li>Team collaboration features</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">3. User Accounts</h2>
-                <p>
-                  You are responsible for safeguarding your account credentials and for all activities that occur under your account. You must:
-                </p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Provide accurate and complete information when creating an account</li>
-                  <li>Maintain the security of your login credentials</li>
-                  <li>Notify us immediately of any unauthorized access</li>
-                  <li>Use the service in compliance with all applicable laws</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">4. Acceptable Use</h2>
-                <p>You agree not to use the service to:</p>
-                <ul className="list-disc list-inside ml-4 space-y-1">
-                  <li>Generate harmful, abusive, or illegal content</li>
-                  <li>Violate any person's intellectual property rights</li>
-                  <li>Attempt to reverse engineer our systems</li>
-                  <li>Share offensive, discriminatory, or misleading content</li>
-                  <li>Use the service for any unauthorized commercial purpose</li>
-                </ul>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">5. Subscription and Billing</h2>
-                <p>
-                  Paid subscriptions are billed in advance on a monthly or yearly basis. Subscriptions automatically renew unless cancelled. 
-                  You may cancel your subscription at any time through your account settings.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">6. Data and Privacy</h2>
-                <p>
-                  Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and protect your information.
-                  We use industry-standard security measures to protect your data.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">7. Intellectual Property</h2>
-                <p>
-                  The service and all content, features, and functionality are owned by UltriumAI and are protected by copyright, trademark, and other laws.
-                  You retain ownership of content you create using our service.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">8. Limitation of Liability</h2>
-                <p>
-                  In no event shall UltriumAI be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">9. Changes to Terms</h2>
-                <p>
-                  We reserve the right to modify these terms at any time. We will notify users of any material changes via email or through the service.
-                  Continued use of the service after changes constitutes acceptance of the new terms.
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-xl font-semibold mb-3">10. Contact Information</h2>
-                <p>
-                  If you have any questions about these Terms of Service, please contact us at:
-                </p>
-                <div className="ml-4">
-                  <p>Email: legal@ultriumai.com</p>
-                  <p>Phone: (804) 821-1410</p>
-                  <p>Address: UltriumAI, Inc.</p>
-                </div>
-              </section>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Services Description */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Description of Services
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                UltriumAI provides AI-powered knowledge management, custom GPT development, and cybersecurity solutions including:
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Core Platform</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Custom GPT creation and management</li>
+                    <li>Knowledge base integration</li>
+                    <li>Team collaboration tools</li>
+                    <li>API access and integrations</li>
+                  </ul>
+                </div>
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Security Applications</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <li>SafeEmail™ threat detection</li>
+                    <li>SafeLink™ URL scanning</li>
+                    <li>SafeDoc™ document analysis</li>
+                    <li>Additional security tools</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contact & Updates */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Contact & Terms Updates</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-2">Legal Contact</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Email: legal@ultriumai.com<br />
+                    Phone: (804) 821-1410<br />
+                    Address: Richmond, Virginia
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Terms Updates</h4>
+                  <p className="text-sm text-muted-foreground">
+                    We may update these Terms periodically. Material changes will be communicated via email or platform notification 30 days in advance.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Navigation */}
+          <div className="text-center">
+            <Button onClick={() => navigate('/')} variant="outline" className="mr-4">
+              Back to Home
+            </Button>
+            <Button onClick={() => navigate('/privacy')} variant="hero">
+              Privacy Policy
+            </Button>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

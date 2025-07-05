@@ -18,6 +18,7 @@ import LiveDemos from '@/pages/LiveDemos';
 import Docs from '@/pages/Docs';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
+import Security from '@/pages/Security';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
@@ -59,6 +60,7 @@ function AppRouter() {
       <Route path="/credits" element={<CreditsPurchase />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/security" element={<Security />} />
       <Route path="/onboarding" element={
         <ProtectedRoute>
           <OnboardingFlow />
