@@ -6,7 +6,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ultraiumAiLogo from "/lovable-uploads/0b57b7c9-df58-4212-bbf7-7d517cce963d.png";
+import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 
 import {
   Sidebar,

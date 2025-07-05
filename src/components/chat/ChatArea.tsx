@@ -23,7 +23,7 @@ interface ChatAreaProps {
   isLoading: boolean;
 }
 
-const botLogo = "/lovable-uploads/782bff71-19ad-4277-bed5-375d4114e0c5.png";
+const botLogo = "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 
 const ChatArea = ({ currentConversationId, conversations, messages, isLoading }: ChatAreaProps) => {
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
