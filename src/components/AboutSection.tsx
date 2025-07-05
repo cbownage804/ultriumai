@@ -70,8 +70,20 @@ const AboutSection = () => {
             <Card className="bg-gradient-to-br from-primary/5 to-secondary/5 border-2 border-primary/20">
               <CardContent className="p-8">
                 <div className="text-center space-y-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                    <Award className="h-8 w-8 text-primary" />
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    <img 
+                      src="/lovable-uploads/02f7e99b-8906-4251-9a57-f75e6583ca85.png" 
+                      alt="Ultrium Logo" 
+                      className="h-12 w-12 dark:hidden"
+                    />
+                    <img 
+                      src="/lovable-uploads/4745e6e2-a12b-4699-9738-1cd529a09e00.png" 
+                      alt="Ultrium Logo" 
+                      className="h-12 w-12 hidden dark:block"
+                    />
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Award className="h-8 w-8 text-primary" />
+                    </div>
                   </div>
                   <h3 className="text-xl font-bold">Veteran-Owned Excellence</h3>
                   <p className="text-muted-foreground">
