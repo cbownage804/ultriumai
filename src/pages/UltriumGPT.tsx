@@ -48,7 +48,7 @@ const UltriumGPT = () => {
         "Immediate deployment capability"
       ],
       cta: "Start Building Free",
-      audience: "Perfect for tech-savvy MSPs and SMBs who want hands-on control"
+      audience: "Perfect for tech-savvy MSPs and businesses who want hands-on control"
     },
     {
       title: "We Build It For You",
@@ -71,7 +71,7 @@ const UltriumGPT = () => {
         "Comprehensive support and maintenance"
       ],
       cta: "Get Custom Quote",
-      audience: "Ideal for busy MSPs and SMBs who want professional results without the learning curve"
+      audience: "Ideal for busy MSPs and businesses who want professional results without the learning curve"
     }
   ];
 
@@ -96,7 +96,7 @@ const UltriumGPT = () => {
       ]
     },
     {
-      title: "For SMBs",
+      title: "For Businesses",
       icon: Building,
       subtitle: "Get Enterprise-Level AI Without the Enterprise Cost",
       scenarios: [
@@ -166,7 +166,7 @@ const UltriumGPT = () => {
                 Create Custom GPTs That Actually Work for Your Business
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                Whether you're an MSP looking to scale your services or an SMB wanting to automate operations—
+                Whether you're an MSP looking to scale your services or a business wanting to automate operations—
                 build intelligent AI assistants trained on YOUR data, YOUR processes, YOUR way.
               </p>
             </div>
