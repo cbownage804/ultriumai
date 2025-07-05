@@ -197,7 +197,16 @@ const Hero = () => {
                     className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300"
                     onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
                   >
-                    <Lock className="mr-2 h-4 w-4" />
+                    <img 
+                      src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
+                      alt="Ultrium Logo" 
+                      className="mr-2 h-4 w-4 dark:hidden"
+                    />
+                    <img 
+                      src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
+                      alt="Ultrium Logo" 
+                      className="mr-2 h-4 w-4 hidden dark:block"
+                    />
                     Visit Ultrium
                   </Button>
                 </div>
