@@ -128,9 +128,6 @@ const Navigation = () => {
             </Button>
             {user ? (
               <div className="flex items-center space-x-2">
-                <Button variant="outline" onClick={() => handleNavigation('/dashboard')} className="hover:scale-105 transition-all duration-300">
-                  Dashboard
-                </Button>
                 <UserProfileDropdown />
                 <ThemeToggle />
                 <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:scale-110 transition-all duration-300 hover:text-destructive">
