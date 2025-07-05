@@ -193,12 +193,12 @@ const Hero = () => {
                       <img 
                         src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
                         alt="Ultrium Logo" 
-                        className="h-8 w-8 dark:hidden"
+                        className="h-12 w-12 dark:hidden"
                       />
                       <img 
                         src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
                         alt="Ultrium Logo" 
-                        className="h-8 w-8 hidden dark:block"
+                        className="h-12 w-12 hidden dark:block"
                       />
                     </Button>
                   </div>
