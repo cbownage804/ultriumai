@@ -123,7 +123,6 @@ const Navigation = () => {
           
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <ThemeToggle />
             <Button variant="ghost" className="hover:scale-105 transition-all duration-300">
               804-821-1410
             </Button>
@@ -133,14 +132,18 @@ const Navigation = () => {
                   Dashboard
                 </Button>
                 <UserProfileDropdown />
+                <ThemeToggle />
                 <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:scale-110 transition-all duration-300 hover:text-destructive">
                   <LogOut className="h-5 w-5" />
                 </Button>
               </div>
             ) : (
-              <Button variant="hero" onClick={() => handleNavigation('/auth')} className="btn-glow hover:scale-105 transition-all duration-300">
-                Sign In
-              </Button>
+              <div className="flex items-center space-x-2">
+                <ThemeToggle />
+                <Button variant="hero" onClick={() => handleNavigation('/auth')} className="btn-glow hover:scale-105 transition-all duration-300">
+                  Sign In
+                </Button>
+              </div>
             )}
           </div>
           
@@ -196,7 +199,6 @@ const Navigation = () => {
                 </button>
               ) : null}
               <div className="flex flex-col space-y-2 pt-4 px-3">
-                <ThemeToggle />
                 <Button variant="ghost" className="w-full">
                   804-821-1410
                 </Button>
@@ -209,15 +211,23 @@ const Navigation = () => {
                       <User className="h-4 w-4 mr-2" />
                       Profile
                     </Button>
+                    <div className="flex items-center justify-center py-2">
+                      <ThemeToggle />
+                    </div>
                     <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
                       <LogOut className="h-4 w-4 mr-2" />
                       Sign Out
                     </Button>
                   </div>
                 ) : (
-                  <Button variant="hero" className="w-full" onClick={() => handleNavigationWithMenuClose('/auth')}>
-                    Sign In
-                  </Button>
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex items-center justify-center py-2">
+                      <ThemeToggle />
+                    </div>
+                    <Button variant="hero" className="w-full" onClick={() => handleNavigationWithMenuClose('/auth')}>
+                      Sign In
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
