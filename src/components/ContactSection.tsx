@@ -11,6 +11,7 @@ import { MapPin, Phone, Mail, Clock, MessageSquare, Calendar } from "lucide-reac
 import { useScrollAnimation, getAnimationClasses } from "@/hooks/useScrollAnimation";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const ContactSection = () => {
   const { ref: headerRef, isVisible: headerVisible } = useScrollAnimation();
@@ -83,18 +84,15 @@ const ContactSection = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate form submission - you can replace this with actual submission logic
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Include product interests in the submission
-      const submissionData = {
-        ...formData,
-        productInterests: formData.productInterests.length > 0 
-          ? products.filter(p => formData.productInterests.includes(p.id)).map(p => p.name).join(', ')
-          : 'No specific products selected'
-      };
-      
-      console.log('Form submission data:', submissionData);
+      const { data, error } = await supabase.functions.invoke('send-contact-form', {
+        body: formData
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Contact form submitted successfully:', data);
       
       toast({
         title: "Message Sent!",
@@ -119,6 +117,7 @@ const ContactSection = () => {
         productInterests: []
       });
     } catch (error) {
+      console.error('Error submitting contact form:', error);
       toast({
         title: "Error",
         description: "Failed to send message. Please try again or call us directly.",
