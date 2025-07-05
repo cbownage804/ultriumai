@@ -195,18 +195,18 @@ const Hero = () => {
                   <Button 
                     variant="outline"
                     size="lg"
-                    className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 px-6 py-3"
+                    className="mt-3 border-cyan-300 dark:border-cyan-700 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/50 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all duration-300 px-8 py-6 text-lg"
                     onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
                   >
                     <img 
                       src="/lovable-uploads/4c07c97c-1f89-4a11-b3f2-ed9f86118834.png" 
                       alt="Ultrium Logo" 
-                      className="mr-3 h-6 w-6 dark:hidden"
+                      className="mr-4 h-18 w-18 dark:hidden"
                     />
                     <img 
                       src="/lovable-uploads/377dbc83-5d32-4888-92b3-19996bb3890d.png" 
                       alt="Ultrium Logo" 
-                      className="mr-3 h-6 w-6 hidden dark:block"
+                      className="mr-4 h-18 w-18 hidden dark:block"
                     />
                     Visit Ultrium
                   </Button>
