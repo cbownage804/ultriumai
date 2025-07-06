@@ -165,6 +165,42 @@ export type Database = {
           },
         ]
       }
+      alert_patterns: {
+        Row: {
+          alert_types: string[]
+          auto_resolve: boolean | null
+          confidence_threshold: number
+          created_at: string
+          id: string
+          pattern_name: string
+          resolution_action: string | null
+          success_rate: number | null
+          total_matches: number | null
+        }
+        Insert: {
+          alert_types: string[]
+          auto_resolve?: boolean | null
+          confidence_threshold?: number
+          created_at?: string
+          id?: string
+          pattern_name: string
+          resolution_action?: string | null
+          success_rate?: number | null
+          total_matches?: number | null
+        }
+        Update: {
+          alert_types?: string[]
+          auto_resolve?: boolean | null
+          confidence_threshold?: number
+          created_at?: string
+          id?: string
+          pattern_name?: string
+          resolution_action?: string | null
+          success_rate?: number | null
+          total_matches?: number | null
+        }
+        Relationships: []
+      }
       alert_rules: {
         Row: {
           conditions: Json
@@ -2187,6 +2223,42 @@ export type Database = {
           },
         ]
       }
+      patching_policies: {
+        Row: {
+          ai_risk_assessment: boolean | null
+          auto_patch_third_party: boolean | null
+          auto_patch_windows: boolean | null
+          client_id: string
+          created_at: string
+          critical_patch_immediate: boolean | null
+          id: string
+          maintenance_window_end: string | null
+          maintenance_window_start: string | null
+        }
+        Insert: {
+          ai_risk_assessment?: boolean | null
+          auto_patch_third_party?: boolean | null
+          auto_patch_windows?: boolean | null
+          client_id: string
+          created_at?: string
+          critical_patch_immediate?: boolean | null
+          id?: string
+          maintenance_window_end?: string | null
+          maintenance_window_start?: string | null
+        }
+        Update: {
+          ai_risk_assessment?: boolean | null
+          auto_patch_third_party?: boolean | null
+          auto_patch_windows?: boolean | null
+          client_id?: string
+          created_at?: string
+          critical_patch_immediate?: boolean | null
+          id?: string
+          maintenance_window_end?: string | null
+          maintenance_window_start?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"] | null
@@ -3117,14 +3189,19 @@ export type Database = {
       }
       support_tickets: {
         Row: {
+          ai_confidence_score: number | null
+          ai_suggested_solution: string | null
           assigned_to: string | null
+          auto_resolved: boolean | null
           category: string
+          client_id: string | null
           connector_id: string | null
           created_at: string
           description: string | null
           id: string
           priority: string
           resolution_notes: string | null
+          resolution_time_minutes: number | null
           resolved_at: string | null
           status: string
           title: string
@@ -3132,14 +3209,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_confidence_score?: number | null
+          ai_suggested_solution?: string | null
           assigned_to?: string | null
+          auto_resolved?: boolean | null
           category?: string
+          client_id?: string | null
           connector_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           priority?: string
           resolution_notes?: string | null
+          resolution_time_minutes?: number | null
           resolved_at?: string | null
           status?: string
           title: string
@@ -3147,14 +3229,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_confidence_score?: number | null
+          ai_suggested_solution?: string | null
           assigned_to?: string | null
+          auto_resolved?: boolean | null
           category?: string
+          client_id?: string | null
           connector_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           priority?: string
           resolution_notes?: string | null
+          resolution_time_minutes?: number | null
           resolved_at?: string | null
           status?: string
           title?: string
