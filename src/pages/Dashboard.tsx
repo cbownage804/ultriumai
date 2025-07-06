@@ -41,6 +41,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Footer from "@/components/Footer";
+import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -105,9 +106,11 @@ const Dashboard = () => {
   const isMDRPage = location.pathname.includes('/mdr');
   const isHelpdeskPage = location.pathname.includes('/helpdesk');
   const isDashboardOverview = location.pathname === '/dashboard';
+  const isUltriumGPTPage = location.pathname === '/dashboard/ultrium-gpt';
   
   const getPageTitle = () => {
     if (isDashboardOverview) return "Dashboard";
+    if (isUltriumGPTPage) return "UltriumGPT";
     if (isChatPage) return "Chat";
     if (isSettingsPage) return "Settings";
     if (isProfilePage) return "Profile"; 
@@ -143,6 +146,7 @@ const Dashboard = () => {
 
   const renderContent = () => {
     if (isDashboardOverview) return <DashboardOverview />;
+    if (isUltriumGPTPage) return <div className="p-6"><UltriumGPTAssistant /></div>;
     if (isGPTDashboard) return <GPTDashboard />;
     if (isRMMPage) return <RMMDashboard />;
     if (isAntivirusPage) return <AntivirusDashboard />;
