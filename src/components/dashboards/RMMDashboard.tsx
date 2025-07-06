@@ -17,6 +17,7 @@ import { WorkstationManager } from "@/components/rmm/WorkstationManager";
 import { PatchManager } from "@/components/rmm/PatchManager";
 import { PolicyManager } from "@/components/rmm/PolicyManager";
 import { AutomationManager } from "@/components/rmm/AutomationManager";
+import { AddDeviceDialog } from "@/components/rmm/AddDeviceDialog";
 
 export const RMMDashboard = () => {
   // Mock data - replace with real data from your RMM service
@@ -176,10 +177,7 @@ export const RMMDashboard = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh All
           </Button>
-          <Button className="bg-gradient-to-r from-primary to-primary/90">
-            <Server className="h-4 w-4 mr-2" />
-            Add Device
-          </Button>
+          <AddDeviceDialog />
         </div>
       </div>
 
