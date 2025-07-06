@@ -18,6 +18,9 @@ import { PatchManager } from "@/components/rmm/PatchManager";
 import { PolicyManager } from "@/components/rmm/PolicyManager";
 import { AutomationManager } from "@/components/rmm/AutomationManager";
 import { AddDeviceDialog } from "@/components/rmm/AddDeviceDialog";
+import { RealTimeMonitor } from "@/components/rmm/RealTimeMonitor";
+import { AlertCenter } from "@/components/rmm/AlertCenter";
+import { RemoteAccess } from "@/components/rmm/RemoteAccess";
 
 export const RMMDashboard = () => {
   // Mock data - replace with real data from your RMM service
@@ -184,33 +187,60 @@ export const RMMDashboard = () => {
       <RMMOverview stats={stats} />
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 bg-muted/50">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Overview
+      <Tabs defaultValue="monitor" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-9 bg-muted/50 text-xs">
+          <TabsTrigger value="monitor" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+            <BarChart3 className="h-3 w-3 mr-1" />
+            Monitor
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Shield className="h-3 w-3 mr-1" />
+            Alerts
+          </TabsTrigger>
+          <TabsTrigger value="remote" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Monitor className="h-3 w-3 mr-1" />
+            Remote
           </TabsTrigger>
           <TabsTrigger value="servers" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Server className="h-4 w-4 mr-2" />
+            <Server className="h-3 w-3 mr-1" />
             Servers
           </TabsTrigger>
           <TabsTrigger value="workstations" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Monitor className="h-4 w-4 mr-2" />
-            Workstations
+            <Monitor className="h-3 w-3 mr-1" />
+            Stations
           </TabsTrigger>
           <TabsTrigger value="patching" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Download className="h-4 w-4 mr-2" />
-            Patching
+            <Download className="h-3 w-3 mr-1" />
+            Patches
           </TabsTrigger>
           <TabsTrigger value="policies" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Shield className="h-4 w-4 mr-2" />
+            <Shield className="h-3 w-3 mr-1" />
             Policies
           </TabsTrigger>
           <TabsTrigger value="automation" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <Zap className="h-4 w-4 mr-2" />
-            Automation
+            <Zap className="h-3 w-3 mr-1" />
+            Scripts
+          </TabsTrigger>
+          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+            <BarChart3 className="h-3 w-3 mr-1" />
+            Legacy
           </TabsTrigger>
         </TabsList>
+
+        {/* Real-Time Monitoring Tab */}
+        <TabsContent value="monitor" className="space-y-6">
+          <RealTimeMonitor />
+        </TabsContent>
+
+        {/* Alert Center Tab */}
+        <TabsContent value="alerts" className="space-y-6">
+          <AlertCenter />
+        </TabsContent>
+
+        {/* Remote Access Tab */}
+        <TabsContent value="remote" className="space-y-6">
+          <RemoteAccess />
+        </TabsContent>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
