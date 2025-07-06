@@ -86,10 +86,10 @@ export const SafePassDemo = () => {
   };
 
   const getStrengthColor = (strength: number) => {
-    if (strength >= 80) return "text-green-500";
-    if (strength >= 60) return "text-yellow-500";
-    if (strength >= 40) return "text-orange-500";
-    return "text-red-500";
+    if (strength >= 80) return "text-success";
+    if (strength >= 60) return "text-warning";
+    if (strength >= 40) return "text-warning";
+    return "text-destructive";
   };
 
   const getStrengthLabel = (strength: number) => {
@@ -151,7 +151,7 @@ export const SafePassDemo = () => {
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <div className="text-3xl font-bold text-red-500">
+                <div className="text-3xl font-bold text-destructive">
                   {weakPasswords}
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
@@ -179,7 +179,7 @@ export const SafePassDemo = () => {
             </CardHeader>
             <CardContent>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-500">
+                <div className="text-3xl font-bold text-primary">
                   {passwords.filter(p => p.shared).length}
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
