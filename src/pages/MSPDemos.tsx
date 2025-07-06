@@ -50,18 +50,18 @@ const MSPDemos = () => {
     },
     {
       id: 'safedoc',
-      name: 'SafeDoc Scanner',
-      description: 'Document security scanning and threat detection',
+      name: 'SafeDoc Embeddable',
+      description: 'White-label document security scanning for your clients',
       monthlyRevenue: '$8/user',
       setupTime: '3 minutes',
       marketSize: 'Every business handling documents',
       demoUrl: '/demos/safedoc',
       features: [
-        'Real-time document scanning',
-        'Malware detection',
-        'VirusTotal integration',
-        'Secure document storage',
-        'White-label deployment'
+        'One-line website integration',
+        'Complete white-label branding',
+        'Real-time malware detection',
+        'VirusTotal API integration',
+        'Recurring monthly revenue'
       ],
       revenueModel: {
         charge: 12,
