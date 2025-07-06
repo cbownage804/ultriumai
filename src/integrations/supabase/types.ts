@@ -3694,6 +3694,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      get_helpdesk_role: {
+        Args: { _user_id: string; _context_id?: string }
+        Returns: Database["public"]["Enums"]["helpdesk_role"]
+      }
       get_user_account_type: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["account_type"]
