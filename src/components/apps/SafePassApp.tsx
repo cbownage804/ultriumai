@@ -156,7 +156,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     
     if (entry) {
       setEntryForm({
-        vault_id: '',
+        vault_id: selectedVault || '',
         name: '',
         username: '',
         password: '',
@@ -175,6 +175,13 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
       setSelectedVault(vaults[0].id);
     }
   }, [vaults, selectedVault, setSelectedVault]);
+
+  // Set vault_id in entry form when selectedVault changes
+  useEffect(() => {
+    if (selectedVault) {
+      setEntryForm(prev => ({ ...prev, vault_id: selectedVault }));
+    }
+  }, [selectedVault]);
 
   // Filter entries
   const filteredEntries = entries.filter(entry => {
@@ -362,8 +369,6 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                   />
                 </div>
 
-                <input type="hidden" value={selectedVault || ''} onChange={(e) => setEntryForm(prev => ({ ...prev, vault_id: e.target.value }))} />
-                
                 <Button 
                   onClick={handleCreateEntry} 
                   className="w-full"
