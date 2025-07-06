@@ -43,7 +43,7 @@ serve(async (req) => {
         .from('safeweb_assets')
         .select(`
           *,
-          safeweb_threats!safeweb_threats_asset_id_fkey(
+          safeweb_threats(
             id,
             severity,
             status,

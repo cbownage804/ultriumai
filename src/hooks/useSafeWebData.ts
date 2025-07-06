@@ -79,7 +79,6 @@ export const useSafeWebData = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase.functions.invoke('safeweb-assets', {
-        body: {},
         method: 'GET'
       });
 
