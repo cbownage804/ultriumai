@@ -550,23 +550,23 @@ const ThreatIntelTable = ({ threats, getThreatLevelColor }: any) => {
             <tr key={threat.id} className="border-b hover:bg-muted/50">
               <td className="p-2">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className={`h-4 w-4 ${getThreatLevelColor(threat.threat_level)}`} />
-                  <span className="capitalize">{threat.threat_type}</span>
+                  <AlertTriangle className={`h-4 w-4 text-orange-600`} />
+                  <span className="capitalize">{threat.threat_types.join(', ')}</span>
                 </div>
               </td>
               <td className="p-2">
                 <div>
-                  <div className="font-mono text-sm">{threat.ioc_value}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{threat.ioc_type}</div>
+                  <div className="font-mono text-sm">{threat.indicator_value}</div>
+                  <div className="text-xs text-muted-foreground capitalize">{threat.indicator_type}</div>
                 </div>
               </td>
               <td className="p-2">
-                <Badge variant="outline" className={getThreatLevelColor(threat.threat_level)}>
-                  {threat.threat_level}
+                <Badge variant="outline" className="text-orange-600">
+                  Medium
                 </Badge>
               </td>
               <td className="p-2">
-                <span className="text-sm">{threat.confidence_score}%</span>
+                <span className="text-sm">{threat.confidence}%</span>
               </td>
               <td className="p-2">
                 <span className="text-sm">{threat.source}</span>

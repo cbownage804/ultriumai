@@ -39,7 +39,7 @@ interface SafeNetNetwork {
 interface SafeNetDevice {
   id: string;
   device_name: string;
-  ip_address: unknown;
+  ip_address: string;
   mac_address: string;
   device_type: string;
   os_version: string;
@@ -125,7 +125,14 @@ export const SafeNetAdvanced = () => {
         .order('device_name');
 
       if (error) throw error;
-      setDevices(devicesData || []);
+      
+      // Transform data to match interface
+      const transformedDevices = devicesData?.map(device => ({
+        ...device,
+        ip_address: String(device.ip_address || '')
+      })) || [];
+      
+      setDevices(transformedDevices);
     } catch (error) {
       console.error('Error loading devices:', error);
       toast({
@@ -256,7 +263,7 @@ export const SafeNetAdvanced = () => {
 
   const filteredDevices = devices.filter(device =>
     device.device_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    device.ip_address.toLowerCase().includes(searchTerm.toLowerCase())
+    String(device.ip_address).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
