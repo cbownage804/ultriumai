@@ -54,6 +54,7 @@ import SafeSIEM from '@/pages/SafeSIEM';
 import SafeSIEMAlertRules from '@/pages/SafeSIEMAlertRules';
 import SafeSIEMIncidents from '@/pages/SafeSIEMIncidents';
 import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
+import SecurityDashboard from '@/pages/SecurityDashboard';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -147,6 +148,11 @@ function AppRouter() {
       <Route path="/safesiem/analytics" element={
         <ProtectedRoute>
           <SafeSIEMAnalytics />
+        </ProtectedRoute>
+      } />
+      <Route path="/security-dashboard" element={
+        <ProtectedRoute>
+          <SecurityDashboard />
         </ProtectedRoute>
       } />
       

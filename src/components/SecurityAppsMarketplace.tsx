@@ -273,6 +273,22 @@ const SecurityAppsMarketplace = () => {
             </Badge>
           </div>
         </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="hero" 
+            onClick={() => window.location.href = '/security-dashboard'}
+            className="flex items-center gap-2"
+          >
+            <Shield className="h-4 w-4" />
+            Security Command Center
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => window.location.href = '/safesiem'}
+          >
+            Open SIEM
+          </Button>
+        </div>
       </div>
 
       {/* Current Subscription Status */}

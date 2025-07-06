@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useUserCredits } from "@/hooks/useUserCredits";
-import { Bot, MessageSquare, Users, TrendingUp, Star, Zap, Clock, Database, Send } from "lucide-react";
+import { Bot, MessageSquare, Users, TrendingUp, Star, Zap, Clock, Database, Send, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/ChatInterface";
 
@@ -51,6 +51,13 @@ export const DashboardOverview = () => {
       icon: TrendingUp,
       action: () => navigate("/dashboard/analytics"),
       color: "bg-orange-500",
+    },
+    {
+      title: "Security Center",
+      description: "Monitor security status",
+      icon: Shield,
+      action: () => navigate("/security-dashboard"),
+      color: "bg-red-500",
     },
   ];
 
