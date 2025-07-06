@@ -31,6 +31,10 @@ const gptItems = [
   { title: "GPT Dashboard", url: "/dashboard/gpt", icon: Bot, tooltip: "Custom GPT overview and analytics" },
   { title: "Templates", url: "/dashboard/gpt/templates", icon: Star, tooltip: "Browse pre-built GPT templates for common use cases" },
   { title: "Build", url: "/dashboard/gpt/build", icon: Bot, tooltip: "Create and configure custom AI assistants" },
+  { title: "Personalize", url: "/dashboard/gpt/personalize", icon: User, tooltip: "Customize GPT appearance, behavior, and branding" },
+  { title: "Actions", url: "/dashboard/gpt/actions", icon: Zap, tooltip: "Add custom actions and integrations" },
+  { title: "Ask", url: "/dashboard/gpt/ask", icon: MessageSquare, tooltip: "Test and refine your GPT responses" },
+  { title: "Analyze", url: "/dashboard/gpt/analyze", icon: BarChart3, tooltip: "View GPT performance and analytics" },
   { title: "Chat", url: "/dashboard/gpt/chat", icon: MessageSquare, tooltip: "Test and interact with your custom GPTs" },
   { title: "Deploy", url: "/dashboard/gpt/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
 ];
