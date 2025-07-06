@@ -55,6 +55,8 @@ import SafeSIEMAlertRules from '@/pages/SafeSIEMAlertRules';
 import SafeSIEMIncidents from '@/pages/SafeSIEMIncidents';
 import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
 import SecurityDashboard from '@/pages/SecurityDashboard';
+import SafeWebDashboard from '@/pages/SafeWebDashboard';
+import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -153,6 +155,16 @@ function AppRouter() {
       <Route path="/security-dashboard" element={
         <ProtectedRoute>
           <SecurityDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/safeweb-dashboard" element={
+        <ProtectedRoute>
+          <SafeWebDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/safeweb-msp-dashboard" element={
+        <ProtectedRoute>
+          <SafeWebMSPDashboard />
         </ProtectedRoute>
       } />
       
