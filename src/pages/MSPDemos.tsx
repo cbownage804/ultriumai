@@ -15,7 +15,8 @@ import {
   Star,
   TrendingUp,
   Target,
-  Crown
+  Crown,
+  FileText
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -46,6 +47,29 @@ const MSPDemos = () => {
       },
       icon: Shield,
       color: 'blue'
+    },
+    {
+      id: 'safedoc',
+      name: 'SafeDoc Scanner',
+      description: 'Document security scanning and threat detection',
+      monthlyRevenue: '$8/user',
+      setupTime: '3 minutes',
+      marketSize: 'Every business handling documents',
+      demoUrl: '/demos/safedoc',
+      features: [
+        'Real-time document scanning',
+        'Malware detection',
+        'VirusTotal integration',
+        'Secure document storage',
+        'White-label deployment'
+      ],
+      revenueModel: {
+        charge: 12,
+        pay: 4,
+        profit: 8
+      },
+      icon: FileText,
+      color: 'green'
     },
     {
       id: 'security-suite',
