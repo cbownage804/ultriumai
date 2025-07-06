@@ -181,12 +181,12 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
   };
 
   const checkConnectorStatus = () => {
-    // Simulate connector status - in real app this would check actual connector
+    // Set connector as installed and connected for cloud-based scanning
     setConnectorStatus({
-      installed: Math.random() > 0.3, // 70% chance of being installed
+      installed: true,
       version: '2.1.4',
-      last_checkin: new Date(Date.now() - Math.random() * 300000).toISOString(), // Within 5 minutes
-      status: Math.random() > 0.2 ? 'connected' : 'disconnected',
+      last_checkin: new Date().toISOString(),
+      status: 'connected',
       network_access: true
     });
   };
@@ -201,60 +201,34 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
       return;
     }
 
-    if (!connectorStatus.installed) {
-      toast({
-        title: "Connector Required",
-        description: "Please install the SafeNet connector to perform network scans",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsScanning(true);
     try {
-      // Simulate network scan
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const mockResult: NetworkScanResult = {
-        network_range: networkRange,
-        scan_type: scanType,
-        devices_found: Math.floor(Math.random() * 20) + 5,
-        vulnerabilities_detected: Math.floor(Math.random() * 5),
-        scan_duration: Math.floor(Math.random() * 30) + 10,
-        timestamp: new Date().toISOString(),
-        devices: generateMockDevices(),
-        network_topology: {
-          subnets: [networkRange],
-          gateways: ['192.168.1.1'],
-          dns_servers: ['8.8.8.8', '1.1.1.1']
-        }
-      };
-      
-      setScanResult(mockResult);
-      
-      // Log to analytics
-      await supabase.from('gpt_analytics').insert({
-        user_id: user?.id,
-        gpt_id: 'safenet-app',
-        interaction_type: 'security_scan',
-        metadata: {
-          scan_type: 'network',
+      toast({
+        title: "Starting Network Scan",
+        description: `Scanning ${networkRange}... This may take a few minutes.`,
+      });
+
+      const { data, error } = await supabase.functions.invoke('ultrium-safenet-scanner', {
+        body: {
           network_range: networkRange,
-          devices_found: mockResult.devices_found,
-          vulnerabilities_count: mockResult.vulnerabilities_detected,
-          scan_duration: mockResult.scan_duration
+          scan_type: scanType,
+          user_id: user?.id
         }
       });
+
+      if (error) throw error;
       
+      setScanResult(data as NetworkScanResult);
       await loadScanHistory();
       await loadStats();
       
       toast({
         title: "Network Scan Complete",
-        description: `Found ${mockResult.devices_found} devices with ${mockResult.vulnerabilities_detected} vulnerabilities`,
-        variant: mockResult.vulnerabilities_detected > 0 ? "destructive" : "default"
+        description: `Found ${data.devices_found} devices with ${data.vulnerabilities_detected} vulnerabilities`,
+        variant: data.vulnerabilities_detected > 0 ? "destructive" : "default"
       });
     } catch (error: any) {
+      console.error('Network scan error:', error);
       toast({
         title: "Scan Failed",
         description: error.message || "Failed to perform network scan",
@@ -263,33 +237,6 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
     } finally {
       setIsScanning(false);
     }
-  };
-
-  const generateMockDevices = (): NetworkDevice[] => {
-    const deviceTypes: NetworkDevice['device_type'][] = ['router', 'switch', 'server', 'workstation', 'printer', 'mobile', 'iot'];
-    const devices: NetworkDevice[] = [];
-    
-    for (let i = 0; i < Math.floor(Math.random() * 15) + 5; i++) {
-      const deviceType = deviceTypes[Math.floor(Math.random() * deviceTypes.length)];
-      const riskLevel = Math.random() > 0.7 ? 'high' : Math.random() > 0.5 ? 'medium' : 'safe';
-      
-      devices.push({
-        id: `device-${i}`,
-        ip_address: `192.168.1.${100 + i}`,
-        hostname: `${deviceType}-${i}`,
-        device_type: deviceType,
-        mac_address: `00:1B:44:11:3A:${(i + 10).toString(16).padStart(2, '0')}`,
-        manufacturer: ['Cisco', 'HP', 'Dell', 'Apple', 'Samsung'][Math.floor(Math.random() * 5)],
-        os_info: `${deviceType === 'workstation' ? 'Windows 11' : 'Linux'} v${Math.floor(Math.random() * 3) + 1}.0`,
-        open_ports: Array.from({length: Math.floor(Math.random() * 5)}, () => Math.floor(Math.random() * 9000) + 1000),
-        last_seen: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-        status: Math.random() > 0.1 ? 'online' : 'offline',
-        vulnerabilities: riskLevel === 'high' ? ['CVE-2023-1234', 'CVE-2023-5678'] : [],
-        risk_level: riskLevel as any
-      });
-    }
-    
-    return devices;
   };
 
   const downloadConnector = () => {
@@ -410,16 +357,12 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
         </Card>
       </div>
 
-      {/* Connector Status Alert */}
-      {!connectorStatus.installed && (
+      {/* Cloud-based scanning status */}
+      {connectorStatus.status === 'connected' && (
         <Alert>
-          <Download className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>SafeNet connector not installed. Download and install to enable network scanning.</span>
-            <Button size="sm" onClick={downloadConnector}>
-              <Download className="h-4 w-4 mr-2" />
-              Download Connector
-            </Button>
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>
+            SafeNet cloud scanner is active and ready for network discovery. No additional software installation required.
           </AlertDescription>
         </Alert>
       )}
@@ -473,7 +416,7 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
                 
                 <Button 
                   onClick={startNetworkScan}
-                  disabled={!networkRange.trim() || isScanning || !connectorStatus.installed}
+                  disabled={!networkRange.trim() || isScanning}
                   className="w-full"
                   variant="hero"
                 >
@@ -667,11 +610,11 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Download className="h-5 w-5" />
-                SafeNet Connector
+                <Activity className="h-5 w-5" />
+                SafeNet Cloud Scanner
               </CardTitle>
               <CardDescription>
-                Network discovery agent for comprehensive network mapping
+                Cloud-based network discovery and security assessment
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -680,61 +623,45 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
                   <div className={`w-3 h-3 rounded-full ${connectorStatus.status === 'connected' ? 'bg-green-500' : 'bg-red-500'}`} />
                   <div>
                     <div className="font-medium">
-                      Connector Status: {connectorStatus.installed ? 'Installed' : 'Not Installed'}
+                      Scanner Status: Cloud-Based Active
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {connectorStatus.installed 
-                        ? `Version ${connectorStatus.version} • Last seen ${new Date(connectorStatus.last_checkin).toLocaleTimeString()}`
-                        : 'Download and install to enable network scanning'
-                      }
+                      Version {connectorStatus.version} • Ready for network scanning
                     </div>
                   </div>
                 </div>
-                {!connectorStatus.installed ? (
-                  <Button onClick={downloadConnector}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
-                ) : (
-                  <Badge variant={connectorStatus.status === 'connected' ? 'default' : 'destructive'}>
-                    {connectorStatus.status}
-                  </Badge>
-                )}
+                <Badge variant={connectorStatus.status === 'connected' ? 'default' : 'destructive'}>
+                  {connectorStatus.status}
+                </Badge>
               </div>
 
-              {connectorStatus.installed && (
-                <div className="space-y-3">
-                  <h4 className="font-medium">Connector Features</h4>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2">
-                      {connectorStatus.network_access ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      )}
-                      Network Access
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Device Discovery
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Port Scanning
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Vulnerability Detection
-                    </div>
+              <div className="space-y-3">
+                <h4 className="font-medium">Scanner Capabilities</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Device Discovery
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Port Scanning
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Vulnerability Detection
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Risk Assessment
                   </div>
                 </div>
-              )}
+              </div>
 
               <Alert>
                 <Shield className="h-4 w-4" />
                 <AlertDescription>
-                  The SafeNet connector runs securely on your network to discover devices and assess security. 
-                  All data is encrypted and transmitted securely to the SafeNet cloud platform.
+                  SafeNet uses cloud-based scanning to discover network devices and assess security risks. 
+                  Network ranges are scanned remotely and results are securely stored in your dashboard.
                 </AlertDescription>
               </Alert>
             </CardContent>
