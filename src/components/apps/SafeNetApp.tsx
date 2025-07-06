@@ -414,6 +414,20 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
             <Globe className="h-4 w-4 mr-2" />
             Embeddable Widget Demo
           </Button>
+          <Button 
+            variant="outline"
+            onClick={() => window.open('/safenet-connector', '_blank')}
+          >
+            <Server className="h-4 w-4 mr-2" />
+            Connector Management
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={() => window.open('/safenet-mobile', '_blank')}
+          >
+            <Smartphone className="h-4 w-4 mr-2" />
+            Mobile App
+          </Button>
         </div>
       </div>
 
