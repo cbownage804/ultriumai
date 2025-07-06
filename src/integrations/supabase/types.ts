@@ -1831,6 +1831,63 @@ export type Database = {
           },
         ]
       }
+      msp_billing_records: {
+        Row: {
+          additional_charges: number | null
+          base_amount: number | null
+          billing_period_end: string
+          billing_period_start: string
+          client_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          paid_date: string | null
+          payment_method: string | null
+          service_type: string
+          status: string
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_charges?: number | null
+          base_amount?: number | null
+          billing_period_end: string
+          billing_period_start: string
+          client_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          service_type: string
+          status?: string
+          total_amount: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_charges?: number | null
+          base_amount?: number | null
+          billing_period_end?: string
+          billing_period_start?: string
+          client_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          service_type?: string
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       msp_clients: {
         Row: {
           api_enabled: boolean | null
@@ -1970,6 +2027,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      msp_service_agreements: {
+        Row: {
+          availability_percentage: number | null
+          client_id: string
+          created_at: string
+          effective_date: string
+          expiry_date: string | null
+          id: string
+          is_active: boolean | null
+          monthly_fee: number | null
+          resolution_time_hours: number | null
+          response_time_minutes: number | null
+          service_type: string
+          terms: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability_percentage?: number | null
+          client_id: string
+          created_at?: string
+          effective_date: string
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          monthly_fee?: number | null
+          resolution_time_hours?: number | null
+          response_time_minutes?: number | null
+          service_type: string
+          terms?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability_percentage?: number | null
+          client_id?: string
+          created_at?: string
+          effective_date?: string
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          monthly_fee?: number | null
+          resolution_time_hours?: number | null
+          response_time_minutes?: number | null
+          service_type?: string
+          terms?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       msp_staff: {
         Row: {
@@ -3296,6 +3404,60 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_mdr_investigations: {
+        Row: {
+          alert_id: string
+          closed_at: string | null
+          created_at: string
+          evidence_collected: Json | null
+          findings: string | null
+          id: string
+          investigation_status: string
+          investigation_type: string
+          investigator_id: string | null
+          priority: string
+          recommendations: string | null
+          time_spent_minutes: number | null
+          tools_used: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_id: string
+          closed_at?: string | null
+          created_at?: string
+          evidence_collected?: Json | null
+          findings?: string | null
+          id?: string
+          investigation_status?: string
+          investigation_type: string
+          investigator_id?: string | null
+          priority?: string
+          recommendations?: string | null
+          time_spent_minutes?: number | null
+          tools_used?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_id?: string
+          closed_at?: string | null
+          created_at?: string
+          evidence_collected?: Json | null
+          findings?: string | null
+          id?: string
+          investigation_status?: string
+          investigation_type?: string
+          investigator_id?: string | null
+          priority?: string
+          recommendations?: string | null
+          time_spent_minutes?: number | null
+          tools_used?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       safe_shield_actions: {
         Row: {
           action_details: Json | null
@@ -3367,6 +3529,39 @@ export type Database = {
           os_version?: string
           status?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safe_shield_monitoring: {
+        Row: {
+          alert_threshold_exceeded: boolean | null
+          endpoint_id: string | null
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: Json
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          alert_threshold_exceeded?: boolean | null
+          endpoint_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value: Json
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          alert_threshold_exceeded?: boolean | null
+          endpoint_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: Json
+          timestamp?: string
           user_id?: string
         }
         Relationships: []
@@ -4456,6 +4651,42 @@ export type Database = {
           source?: string
           threat_types?: string[]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      threat_intelligence_feeds: {
+        Row: {
+          campaigns: Json | null
+          confidence_score: number | null
+          feed_name: string
+          feed_type: string
+          id: string
+          indicators: Json | null
+          is_active: boolean | null
+          last_updated: string
+          threat_actors: Json | null
+        }
+        Insert: {
+          campaigns?: Json | null
+          confidence_score?: number | null
+          feed_name: string
+          feed_type: string
+          id?: string
+          indicators?: Json | null
+          is_active?: boolean | null
+          last_updated?: string
+          threat_actors?: Json | null
+        }
+        Update: {
+          campaigns?: Json | null
+          confidence_score?: number | null
+          feed_name?: string
+          feed_type?: string
+          id?: string
+          indicators?: Json | null
+          is_active?: boolean | null
+          last_updated?: string
+          threat_actors?: Json | null
         }
         Relationships: []
       }
