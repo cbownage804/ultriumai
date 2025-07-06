@@ -30,7 +30,10 @@ import {
   Terminal,
   Palette,
   Plus,
-  RefreshCw
+  RefreshCw,
+  Bot,
+  Zap,
+  Brain
 } from "lucide-react";
 
 interface MSPClient {
@@ -503,7 +506,7 @@ export const MSPDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="clients" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="clients" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Clients
@@ -512,13 +515,25 @@ export const MSPDashboard = () => {
             <Monitor className="w-4 h-4" />
             Monitoring
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            Security
+          <TabsTrigger value="ai-helpdesk" className="flex items-center gap-2">
+            <Bot className="w-4 h-4" />
+            AI Helpdesk
           </TabsTrigger>
-          <TabsTrigger value="tickets" className="flex items-center gap-2">
-            <Ticket className="w-4 h-4" />
-            Tickets
+          <TabsTrigger value="ai-patching" className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            AI Patching
+          </TabsTrigger>
+          <TabsTrigger value="ai-alerts" className="flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            AI Alerts
+          </TabsTrigger>
+          <TabsTrigger value="ai-mdr" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            AI MDR
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Bug className="w-4 h-4" />
+            Security
           </TabsTrigger>
           <TabsTrigger value="branding" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
@@ -680,6 +695,513 @@ export const MSPDashboard = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="ai-helpdesk">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">AI-Powered Helpdesk</h3>
+                <p className="text-muted-foreground">Co-managed support with AI chat assistants</p>
+              </div>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                <Bot className="w-3 h-3 mr-1" />
+                AI Enhanced
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">AI Resolved</CardTitle>
+                  <Bot className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">24</div>
+                  <p className="text-xs text-muted-foreground">Tickets auto-resolved</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Avg Resolution</CardTitle>
+                  <Zap className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">12m</div>
+                  <p className="text-xs text-muted-foreground">AI-assisted response</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">AI Confidence</CardTitle>
+                  <Brain className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">87%</div>
+                  <p className="text-xs text-muted-foreground">Solution accuracy</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Co-Managed</CardTitle>
+                  <Users className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">45</div>
+                  <p className="text-xs text-muted-foreground">Human + AI support</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent AI Resolutions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    { title: "Password Reset Request", client: "Acme Corp", time: "2m ago", confidence: 95 },
+                    { title: "VPN Connection Issue", client: "TechStart", time: "15m ago", confidence: 88 },
+                    { title: "Email Configuration", client: "LocalBiz", time: "1h ago", confidence: 92 }
+                  ].map((ticket, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{ticket.title}</p>
+                        <p className="text-xs text-muted-foreground">{ticket.client} • {ticket.time}</p>
+                      </div>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        {ticket.confidence}% AI
+                      </Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>AI Chat Assistant</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="text-sm">
+                        <strong>AI:</strong> I've analyzed the network connectivity issue for TechStart. 
+                        The problem appears to be DNS-related. I've automatically applied the standard DNS fix 
+                        and notified the client. Resolution confidence: 88%
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input placeholder="Ask the AI assistant..." />
+                      <Button size="sm">Send</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ai-patching">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">AI Patch Management</h3>
+                <p className="text-muted-foreground">Automated Windows & third-party patching with AI risk assessment</p>
+              </div>
+              <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                <Zap className="w-3 h-3 mr-1" />
+                AI Powered
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Patches Deployed</CardTitle>
+                  <Download className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">156</div>
+                  <p className="text-xs text-muted-foreground">This month</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">AI Risk Score</CardTitle>
+                  <Brain className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">Low</div>
+                  <p className="text-xs text-muted-foreground">Current deployment risk</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Auto-Approved</CardTitle>
+                  <Zap className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">89%</div>
+                  <p className="text-xs text-muted-foreground">AI confidence rate</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                  <Shield className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">98.7%</div>
+                  <p className="text-xs text-muted-foreground">Deployment success</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pending Patches</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    { update: "Windows Security Update KB5034441", risk: "Low", priority: "High", clients: 12 },
+                    { update: "Chrome Browser Update 120.0", risk: "Very Low", priority: "Medium", clients: 8 },
+                    { update: "Office 365 Security Patch", risk: "Low", priority: "High", clients: 15 }
+                  ].map((patch, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{patch.update}</p>
+                        <p className="text-xs text-muted-foreground">{patch.clients} clients affected</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          Risk: {patch.risk}
+                        </Badge>
+                        <Badge className={
+                          patch.priority === 'High' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                        }>
+                          {patch.priority}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>AI Patch Policies</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Auto-patch Windows Updates</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">Enabled</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Third-party Auto-patching</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">Enabled</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">AI Risk Assessment</span>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Critical Patch Immediate Deploy</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">Yes</Badge>
+                    </div>
+                  </div>
+                  <Button className="w-full mt-4">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Configure Policies
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ai-alerts">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">AI Alert Management</h3>
+                <p className="text-muted-foreground">Intelligent alert correlation and auto-resolution</p>
+              </div>
+              <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                <Brain className="w-3 h-3 mr-1" />
+                AI Learning
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Auto-Resolved</CardTitle>
+                  <Zap className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">67</div>
+                  <p className="text-xs text-muted-foreground">Alerts resolved by AI</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pattern Match</CardTitle>
+                  <Brain className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">94%</div>
+                  <p className="text-xs text-muted-foreground">Pattern recognition rate</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">False Positives</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">3%</div>
+                  <p className="text-xs text-muted-foreground">AI accuracy improving</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Resolution Time</CardTitle>
+                  <Activity className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">45s</div>
+                  <p className="text-xs text-muted-foreground">Average AI response</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent AI Alert Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    { 
+                      alert: "High CPU Usage - Server01", 
+                      client: "TechCorp", 
+                      action: "Process restarted", 
+                      confidence: 92,
+                      time: "3m ago"
+                    },
+                    { 
+                      alert: "Disk Space Low - DB-Server", 
+                      client: "DataFlow", 
+                      action: "Cleanup scheduled", 
+                      confidence: 88,
+                      time: "12m ago"
+                    },
+                    { 
+                      alert: "Service Down - Email Server", 
+                      client: "Communications Inc", 
+                      action: "Service restarted", 
+                      confidence: 95,
+                      time: "25m ago"
+                    }
+                  ].map((alert, idx) => (
+                    <div key={idx} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium text-sm">{alert.alert}</p>
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          Auto-Resolved
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {alert.client} • {alert.time}
+                      </p>
+                      <p className="text-xs">
+                        <strong>Action:</strong> {alert.action} (Confidence: {alert.confidence}%)
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Alert Patterns Learned</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    { pattern: "High CPU + Memory Leak", matches: 23, success: 96 },
+                    { pattern: "Disk Space Cleanup", matches: 18, success: 94 },
+                    { pattern: "Service Recovery", matches: 31, success: 98 },
+                    { pattern: "Network Connectivity", matches: 15, success: 89 }
+                  ].map((pattern, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-sm">{pattern.pattern}</p>
+                        <p className="text-xs text-muted-foreground">{pattern.matches} matches</p>
+                      </div>
+                      <Badge variant="outline" className="text-green-700">
+                        {pattern.success}% success
+                      </Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ai-mdr">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">AI-Powered MDR & Antivirus</h3>
+                <p className="text-muted-foreground">Complete managed detection, response, and endpoint protection</p>
+              </div>
+              <Badge variant="secondary" className="bg-red-100 text-red-800">
+                <Shield className="w-3 h-3 mr-1" />
+                24/7 Protection
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Threats Blocked</CardTitle>
+                  <Shield className="h-4 w-4 text-red-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">142</div>
+                  <p className="text-xs text-muted-foreground">Last 30 days</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">AI Detection Rate</CardTitle>
+                  <Brain className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">99.8%</div>
+                  <p className="text-xs text-muted-foreground">Zero-day protection</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+                  <Zap className="h-4 w-4 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">1.2s</div>
+                  <p className="text-xs text-muted-foreground">Average AI response</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Quarantined</CardTitle>
+                  <Bug className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">34</div>
+                  <p className="text-xs text-muted-foreground">Files isolated</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Threat Activity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    { 
+                      threat: "Trojan.Win32.Malware", 
+                      client: "SecureCorp", 
+                      action: "Quarantined & Removed", 
+                      severity: "High",
+                      time: "5m ago"
+                    },
+                    { 
+                      threat: "Phishing Email Detected", 
+                      client: "BusinessFlow", 
+                      action: "Blocked & User Alerted", 
+                      severity: "Medium",
+                      time: "18m ago"
+                    },
+                    { 
+                      threat: "Suspicious Network Activity", 
+                      client: "DataSystems", 
+                      action: "Connection Blocked", 
+                      severity: "High",
+                      time: "1h ago"
+                    }
+                  ].map((threat, idx) => (
+                    <div key={idx} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium text-sm">{threat.threat}</p>
+                        <Badge className={
+                          threat.severity === 'High' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                        }>
+                          {threat.severity}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        {threat.client} • {threat.time}
+                      </p>
+                      <p className="text-xs">
+                        <strong>Action:</strong> {threat.action}
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Protection Status</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Real-time Protection</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">AI Behavioral Analysis</span>
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">Learning</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Threat Intelligence Feed</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">Updated</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Endpoint Coverage</span>
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">100%</Badge>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Protection Score</span>
+                      <span className="font-medium">98/100</span>
+                    </div>
+                    <Progress value={98} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
         <TabsContent value="security">
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Security Overview</h3>
@@ -725,14 +1247,6 @@ export const MSPDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="tickets">
-          <div className="text-center py-8">
-            <Ticket className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">Integrated ticketing system</p>
-            <p className="text-sm text-muted-foreground">Manage support requests across all clients</p>
           </div>
         </TabsContent>
 
