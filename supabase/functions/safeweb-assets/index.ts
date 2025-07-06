@@ -202,14 +202,20 @@ serve(async (req) => {
 
     if (method === 'DELETE') {
       // Delete asset
+      console.log('DELETE request received');
       const { id: assetId } = await req.json();
+      console.log('Asset ID from request:', assetId);
+      console.log('User ID:', user.id);
+      
       if (!assetId) {
+        console.log('No asset ID provided');
         return new Response(
           JSON.stringify({ error: 'Asset ID is required' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log('Attempting to delete asset:', assetId, 'for user:', user.id);
       const { error } = await supabaseClient
         .from('safeweb_assets')
         .delete()
@@ -219,11 +225,12 @@ serve(async (req) => {
       if (error) {
         console.error('Error deleting asset:', error);
         return new Response(
-          JSON.stringify({ error: 'Failed to delete asset' }),
+          JSON.stringify({ error: 'Failed to delete asset', details: error.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
+      console.log('Asset deleted successfully');
       return new Response(
         JSON.stringify({ message: 'Asset deleted successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
