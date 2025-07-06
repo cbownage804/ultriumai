@@ -202,7 +202,7 @@ serve(async (req) => {
 
     if (method === 'DELETE') {
       // Delete asset
-      const assetId = url.searchParams.get('id');
+      const { id: assetId } = await req.json();
       if (!assetId) {
         return new Response(
           JSON.stringify({ error: 'Asset ID is required' }),

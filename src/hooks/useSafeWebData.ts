@@ -176,7 +176,8 @@ export const useSafeWebData = () => {
   const deleteAsset = async (assetId: string) => {
     try {
       const { error } = await supabase.functions.invoke('safeweb-assets', {
-        method: 'DELETE'
+        method: 'DELETE',
+        body: { id: assetId }
       });
 
       if (error) throw error;
