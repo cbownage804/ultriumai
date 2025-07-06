@@ -17,8 +17,10 @@ import {
   Target,
   Crown,
   FileText,
-  Mail
+  Mail,
+  Network
 } from 'lucide-react';
+import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -94,6 +96,29 @@ const MSPDemos = () => {
       },
       icon: Mail,
       color: 'blue'
+    },
+    {
+      id: 'safenet',
+      name: 'SafeNet Network Security',
+      description: 'White-label network scanning and vulnerability assessment',
+      monthlyRevenue: '$25/client',
+      setupTime: '10 minutes',
+      marketSize: 'Every business with a network',
+      demoUrl: '/demos/safenet',
+      features: [
+        'Installable network connector',
+        'Complete white-label branding',
+        'Device discovery & mapping',
+        'Vulnerability scanning',
+        'MSP multi-client dashboard'
+      ],
+      revenueModel: {
+        charge: 40,
+        pay: 15,
+        profit: 25
+      },
+      icon: Network,
+      color: 'purple'
     },
     {
       id: 'security-suite',
@@ -336,23 +361,27 @@ const MSPDemos = () => {
                   </TabsContent>
 
                   <TabsContent value="demo" className="space-y-4">
-                    <Card className="border-2 border-primary/20">
-                      <CardContent className="p-6 text-center space-y-4">
-                        <h3 className="text-xl font-semibold">Ready to see it in action?</h3>
-                        <p className="text-muted-foreground">
-                          Experience the full interactive demo and see how easy it is to deploy
-                        </p>
-                        <Button 
-                          size="lg" 
-                          onClick={() => window.open(currentSolution.demoUrl, '_blank')}
-                          variant="hero"
-                        >
-                          <Globe className="h-5 w-5 mr-2" />
-                          Launch Interactive Demo
-                          <ArrowRight className="h-5 w-5 ml-2" />
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    {selectedDemo === 'safenet' ? (
+                      <SafeNetDemo />
+                    ) : (
+                      <Card className="border-2 border-primary/20">
+                        <CardContent className="p-6 text-center space-y-4">
+                          <h3 className="text-xl font-semibold">Ready to see it in action?</h3>
+                          <p className="text-muted-foreground">
+                            Experience the full interactive demo and see how easy it is to deploy
+                          </p>
+                          <Button 
+                            size="lg" 
+                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
+                            variant="hero"
+                          >
+                            <Globe className="h-5 w-5 mr-2" />
+                            Launch Interactive Demo
+                            <ArrowRight className="h-5 w-5 ml-2" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
                   </TabsContent>
                 </Tabs>
               </CardContent>
