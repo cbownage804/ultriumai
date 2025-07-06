@@ -154,6 +154,103 @@ async function scanWithHaveIBeenPwned(email: string): Promise<ScanResult[]> {
   }
 }
 
+async function scanWithIntelligenceX(email: string, apiKey: string): Promise<ScanResult[]> {
+  try {
+    logStep('Scanning with Intelligence X', { email });
+    
+    // Step 1: Submit search query
+    const searchResponse = await fetch('https://2.intelx.io/phonebook/search', {
+      method: 'POST',
+      headers: {
+        'x-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        term: email,
+        buckets: ['databreach', 'leaks', 'pastes'],
+        lookuplevel: 0,
+        maxresults: 100,
+        timeout: 30,
+        datefrom: '',
+        dateto: '',
+        sort: 4,
+        media: 0,
+        terminate: []
+      })
+    });
+
+    if (!searchResponse.ok) {
+      logStep('Intelligence X search failed', { status: searchResponse.status });
+      return [];
+    }
+
+    const searchData = await searchResponse.json();
+    const searchId = searchData.id;
+
+    if (!searchId) {
+      logStep('No search ID returned from Intelligence X');
+      return [];
+    }
+
+    // Step 2: Wait and retrieve results
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+
+    const resultsResponse = await fetch(`https://2.intelx.io/phonebook/search/result?id=${searchId}`, {
+      headers: {
+        'x-key': apiKey
+      }
+    });
+
+    if (!resultsResponse.ok) {
+      logStep('Intelligence X results failed', { status: resultsResponse.status });
+      return [];
+    }
+
+    const resultsData = await resultsResponse.json();
+    const records = resultsData.records || [];
+
+    const threats: ScanResult[] = records.map((record: any) => {
+      const bucketName = record.bucket || 'Unknown';
+      const source = record.name || bucketName;
+      const date = record.date || 'Unknown';
+      
+      // Determine severity based on bucket type and data
+      let severity: 'low' | 'medium' | 'high' | 'critical' = 'medium';
+      if (bucketName.toLowerCase().includes('breach') || bucketName.toLowerCase().includes('leak')) {
+        severity = 'high';
+      }
+      if (record.systemid === 'databreach' || bucketName.toLowerCase().includes('password')) {
+        severity = 'critical';
+      }
+
+      return {
+        threat_type: bucketName === 'databreach' ? 'data_breach' : 'credential',
+        title: `Email found in ${source} data exposure`,
+        description: `Email address discovered in ${source} data exposure from ${date}. This indicates potential credential compromise.`,
+        severity,
+        confidence_score: 95,
+        source_name: 'Intelligence X',
+        source_url: `https://intelx.io/`,
+        raw_data: record,
+        threat_indicators: {
+          exposure_date: date,
+          source_type: bucketName,
+          systemid: record.systemid,
+          bucket: record.bucket,
+          media_type: record.media
+        }
+      };
+    });
+
+    logStep('Intelligence X scan completed', { threats_found: threats.length });
+    return threats;
+
+  } catch (error) {
+    logStep('Intelligence X scan error', error.message);
+    return [];
+  }
+}
+
 async function scanDomainReputation(domain: string): Promise<ScanResult[]> {
   try {
     logStep('Scanning domain reputation', { domain });
@@ -227,8 +324,18 @@ async function performRealScan(asset: Asset): Promise<ScanResult[]> {
         break;
         
       case 'email':
+        // Use both HIBP and Intelligence X for comprehensive breach detection
         const breachThreats = await scanWithHaveIBeenPwned(asset.asset_value);
         threats.push(...breachThreats);
+        
+        // Add Intelligence X scanning if API key is available
+        const intelXKey = Deno.env.get('INTELX_API_KEY');
+        if (intelXKey) {
+          const intelXThreats = await scanWithIntelligenceX(asset.asset_value, intelXKey);
+          threats.push(...intelXThreats);
+        } else {
+          logStep('Intelligence X API key not configured');
+        }
         break;
         
       case 'brand':
@@ -311,7 +418,7 @@ serve(async (req) => {
         job_type: scan_type,
         status: 'running',
         started_at: new Date().toISOString(),
-        scan_sources: ['VirusTotal', 'Have I Been Pwned', 'Domain Analysis']
+        scan_sources: ['VirusTotal', 'Have I Been Pwned', 'Intelligence X', 'Domain Analysis']
       })
       .select()
       .single();
