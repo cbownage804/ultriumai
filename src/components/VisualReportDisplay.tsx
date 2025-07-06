@@ -32,8 +32,11 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Zap
+  Zap,
+  Loader2
 } from "lucide-react";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ReportData {
   type: 'security' | 'rmm' | 'system_health' | 'threat_status';
@@ -77,6 +80,124 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 export const VisualReportDisplay = ({ reportData, onDownload, onRefresh }: VisualReportDisplayProps) => {
   const [activeTab, setActiveTab] = useState("overview");
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+  const generatePDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      // Create a temporary element with white background for PDF
+      const reportElement = document.getElementById('visual-report-container');
+      if (!reportElement) return;
+
+      // Temporarily change background to white for PDF
+      const originalBg = reportElement.style.background;
+      reportElement.style.background = 'white';
+      
+      // Update text colors for PDF (temporarily)
+      const textElements = reportElement.querySelectorAll('.text-white, .text-blue-200, .text-blue-100');
+      const originalColors: string[] = [];
+      textElements.forEach((el: any, index) => {
+        originalColors[index] = el.style.color;
+        el.style.color = '#1f2937'; // Dark gray for readability
+      });
+
+      // Capture the visual report
+      const canvas = await html2canvas(reportElement, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        height: reportElement.scrollHeight,
+        width: reportElement.scrollWidth,
+        useCORS: true,
+        logging: false
+      });
+
+      // Restore original styles
+      reportElement.style.background = originalBg;
+      textElements.forEach((el: any, index) => {
+        el.style.color = originalColors[index] || '';
+      });
+
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Add title page
+      pdf.setFontSize(24);
+      pdf.setTextColor(30, 58, 138); // Blue color
+      pdf.text(reportData.title, 20, 30);
+      
+      pdf.setFontSize(12);
+      pdf.setTextColor(75, 85, 99); // Gray color
+      pdf.text(`Generated: ${new Date(reportData.timestamp).toLocaleString()}`, 20, 45);
+      pdf.text(`Report Type: ${reportData.type.toUpperCase()}`, 20, 55);
+      
+      // Add visual report image
+      if (imgHeight > 280) { // If too tall, add new page
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 20, imgWidth, Math.min(imgHeight, 250));
+      } else {
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 70, imgWidth, imgHeight);
+      }
+
+      // Add summary data page
+      pdf.addPage();
+      pdf.setFontSize(18);
+      pdf.setTextColor(30, 58, 138);
+      pdf.text('Executive Summary', 20, 30);
+      
+      let yPosition = 50;
+      pdf.setFontSize(12);
+      pdf.setTextColor(0, 0, 0);
+      
+      if (reportData.type === 'rmm') {
+        pdf.text(`Total Devices: ${reportData.summary?.total_devices || 'N/A'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`Online Devices: ${reportData.summary?.online_devices || 'N/A'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`Offline Devices: ${reportData.summary?.offline_devices || 'N/A'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`Active Alerts: ${reportData.summary?.alerts_count || 'N/A'}`, 20, yPosition);
+      } else if (reportData.type === 'security') {
+        pdf.text(`Total Security Events: ${reportData.summary?.total_events || 'N/A'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`Critical Events: ${reportData.summary?.critical_events || 'N/A'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`High Severity Events: ${reportData.summary?.high_severity_events || 'N/A'}`, 20, yPosition);
+        yPosition += 10;
+        pdf.text(`Open Incidents: ${reportData.summary?.open_incidents || 'N/A'}`, 20, yPosition);
+      }
+
+      // Add recommendations
+      if (reportData.summary?.recommendations?.length > 0) {
+        yPosition += 20;
+        pdf.setFontSize(14);
+        pdf.setTextColor(30, 58, 138);
+        pdf.text('Recommendations:', 20, yPosition);
+        yPosition += 15;
+        
+        pdf.setFontSize(11);
+        pdf.setTextColor(0, 0, 0);
+        reportData.summary.recommendations.forEach((rec: string, index: number) => {
+          const lines = pdf.splitTextToSize(`${index + 1}. ${rec}`, 170);
+          lines.forEach((line: string) => {
+            pdf.text(line, 25, yPosition);
+            yPosition += 6;
+          });
+          yPosition += 3;
+        });
+      }
+
+      // Save the PDF
+      const timestamp = new Date().toISOString().split('T')[0];
+      pdf.save(`${reportData.title.toLowerCase().replace(/\s+/g, '-')}-${timestamp}.pdf`);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
   // Parse and transform report data for visualizations
   const getChartData = () => {
@@ -141,7 +262,7 @@ export const VisualReportDisplay = ({ reportData, onDownload, onRefresh }: Visua
   };
 
   return (
-    <div className="w-full space-y-6 bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900 p-6 rounded-xl border border-blue-500/20">
+    <div id="visual-report-container" className="w-full space-y-6 bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900 p-6 rounded-xl border border-blue-500/20">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
@@ -167,11 +288,21 @@ export const VisualReportDisplay = ({ reportData, onDownload, onRefresh }: Visua
             Refresh
           </Button>
           <Button
-            onClick={onDownload}
-            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white"
+            onClick={generatePDF}
+            disabled={isGeneratingPDF}
+            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white disabled:opacity-50"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Download Report
+            {isGeneratingPDF ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </>
+            )}
           </Button>
         </div>
       </div>
