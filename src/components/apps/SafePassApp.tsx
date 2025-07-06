@@ -539,6 +539,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                           size="sm"
                           onClick={() => copyToClipboard(entry.username || '', 'Username')}
                           disabled={!entry.username}
+                          title="Copy username"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -546,6 +547,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                           variant="ghost"
                           size="sm"
                           onClick={() => setShowPassword(showPassword === entry.id ? null : entry.id)}
+                          title={showPassword === entry.id ? "Hide password" : "Show password"}
                         >
                           {showPassword === entry.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -553,6 +555,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                           variant="ghost"
                           size="sm"
                           onClick={() => copyToClipboard(atob(entry.password_encrypted), 'Password')}
+                          title="Copy password"
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
