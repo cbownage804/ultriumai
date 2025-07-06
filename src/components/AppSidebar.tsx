@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,49 +17,49 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarHeader,
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 
-const chatItems = [
-  { title: "Chat", url: "/dashboard/chat", icon: MessageSquare, tooltip: "Start new conversations with AI" },
-  { title: "History", url: "/dashboard/history", icon: History, tooltip: "View and manage past conversations" },
-  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3, tooltip: "View chat usage statistics and insights" },
+const gptItems = [
+  { title: "GPT Dashboard", url: "/dashboard/gpt", icon: Bot, tooltip: "Custom GPT overview and analytics" },
+  { title: "Templates", url: "/dashboard/gpt/templates", icon: Star, tooltip: "Browse pre-built GPT templates for common use cases" },
+  { title: "Build", url: "/dashboard/gpt/build", icon: Bot, tooltip: "Create and configure custom AI assistants" },
+  { title: "Chat", url: "/dashboard/gpt/chat", icon: MessageSquare, tooltip: "Test and interact with your custom GPTs" },
+  { title: "Deploy", url: "/dashboard/gpt/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
 ];
 
-const customGPTItems = [
-  { title: "Templates", url: "/dashboard/templates", icon: Star, tooltip: "Browse pre-built GPT templates for common use cases" },
-  { title: "Build", url: "/dashboard/custom-gpts/build", icon: Bot, tooltip: "Create and configure custom AI assistants" },
-  { title: "Personalize", url: "/dashboard/custom-gpts/personalize", icon: User, tooltip: "Customize appearance and branding of your GPTs" },
-  { title: "Actions", url: "/dashboard/custom-gpts/actions", icon: Settings, badge: "Beta", tooltip: "Add custom actions and integrations to your GPTs" },
-  { title: "Ask", url: "/dashboard/custom-gpts/ask", icon: MessageSquare, tooltip: "Test and interact with your custom GPTs" },
-  { title: "Deploy", url: "/dashboard/custom-gpts/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
-  { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings, tooltip: "View performance analytics for your GPTs" },
-];
-
-const safeSuiteItems = [
+const securityItems = [
   { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Password security analysis and breach detection" },
   { title: "SafeMail", url: "/dashboard/safemail", icon: Mail, tooltip: "Email security scanning and threat detection" },
   { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText, tooltip: "Document security analysis and malware scanning" },
   { title: "SafeLink", url: "/dashboard/safelink", icon: Link, tooltip: "URL safety checking and phishing protection" },
-  { title: "SafeNet", url: "/dashboard/safenet", icon: Network, tooltip: "Network security monitoring and threat analysis" },
   { title: "SafeWeb", url: "/dashboard/safeweb", icon: Shield, tooltip: "Dark web monitoring and threat intelligence" },
   { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
 ];
 
+const managedServicesItems = [
+  { title: "RMM", url: "/dashboard/rmm", icon: Server, tooltip: "Remote Monitoring and Management" },
+  { title: "Antivirus", url: "/dashboard/antivirus", icon: Shield, tooltip: "AI-powered antivirus protection and threat detection" },
+  { title: "MDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
+  { title: "Helpdesk", url: "/dashboard/helpdesk", icon: HeadphonesIcon, tooltip: "AI-powered helpdesk and ticketing system" },
+  { title: "Network Monitoring", url: "/dashboard/safenet", icon: Network, tooltip: "Network security monitoring and analysis" },
+];
+
 const managementItems = [
   { title: "API Management", url: "/dashboard/api-management", icon: Key, tooltip: "Manage API keys, usage limits, and access permissions" },
-  { title: "Video Manager", url: "/dashboard/video-manager", icon: Video, tooltip: "Upload and manage training videos for your GPTs" },
-  { title: "White-label", url: "/dashboard/white-label", icon: Palette, tooltip: "Customize branding and white-label your GPT solutions" },
-];
-
-const teamItems = [
+  { title: "White-label", url: "/dashboard/white-label", icon: Palette, tooltip: "Customize branding and white-label your solutions" },
   { title: "Team Management", url: "/dashboard/teams", icon: Users, tooltip: "Manage team members, roles, and permissions" },
-  { title: "Team Analytics", url: "/dashboard/team-analytics", icon: TrendingUp, tooltip: "View team usage statistics and performance metrics" },
+  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3, tooltip: "View usage statistics and performance metrics" },
 ];
 
-const settingsItems = [
+const accountItems = [
   { title: "Profile", url: "/dashboard/profile", icon: User, tooltip: "Manage your account profile and personal information" },
   { title: "Security", url: "/dashboard/security", icon: Shield, tooltip: "Configure security settings and two-factor authentication" },
   { title: "Settings", url: "/dashboard/settings", icon: Settings, tooltip: "General application settings and preferences" },
@@ -72,7 +72,18 @@ export function AppSidebar() {
   const { subscription } = useSubscription();
   const { toast } = useToast();
   
+  const [openSections, setOpenSections] = useState({
+    gpt: true,
+    security: true,
+    managed: true,
+    management: false
+  });
+  
   const isCollapsed = state === "collapsed";
+
+  const toggleSection = (section: keyof typeof openSections) => {
+    setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -101,7 +112,7 @@ export function AppSidebar() {
           <NavLink to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <img src={ultraiumAiLogo} alt="UltriumAI" className="h-12 w-auto" />
             {!isCollapsed && (
-              <span className="text-lg font-bold text-foreground">UltriumGPT</span>
+              <span className="text-lg font-bold text-foreground">Ultrium AI</span>
             )}
           </NavLink>
         </div>
@@ -135,86 +146,137 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Chat</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {chatItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.tooltip}>
-                    <NavLink to={item.url} end className={getNavClass}>
-                      <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Ultrium GPT Section */}
+        <Collapsible open={openSections.gpt} onOpenChange={() => toggleSection('gpt')}>
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
+                <span className="flex items-center gap-2">
+                  <Bot className="h-4 w-4" />
+                  {!isCollapsed && "Ultrium GPT"}
+                </span>
+                {!isCollapsed && (
+                  openSections.gpt ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {gptItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild tooltip={item.tooltip}>
+                        <NavLink to={item.url} className={getNavClass}>
+                          <item.icon className="h-4 w-4" />
+                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Custom GPTs</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {customGPTItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.tooltip}>
-                    <NavLink to={item.url} className={getNavClass}>
-                      <item.icon className="h-4 w-4" />
-                      {!isCollapsed && (
-                        <span className="ml-2 flex items-center gap-2">
-                          {item.title}
-                          {item.badge && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
-                              {item.badge}
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Security Tools Section */}
+        <Collapsible open={openSections.security} onOpenChange={() => toggleSection('security')}>
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
+                <span className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  {!isCollapsed && "Security Tools"}
+                </span>
+                {!isCollapsed && (
+                  openSections.security ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {securityItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild tooltip={item.tooltip}>
+                        <NavLink to={item.url} className={getNavClass}>
+                          <item.icon className="h-4 w-4" />
+                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>SafeSuite</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {safeSuiteItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.tooltip}>
-                    <NavLink to={item.url} className={getNavClass}>
-                      <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Managed Services Section */}
+        <Collapsible open={openSections.managed} onOpenChange={() => toggleSection('managed')}>
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
+                <span className="flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  {!isCollapsed && "Managed Services"}
+                </span>
+                {!isCollapsed && (
+                  openSections.managed ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {managedServicesItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild tooltip={item.tooltip}>
+                        <NavLink to={item.url} className={getNavClass}>
+                          <item.icon className="h-4 w-4" />
+                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {managementItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.tooltip}>
-                    <NavLink to={item.url} className={getNavClass}>
-                      <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Management & Analytics Section */}
+        <Collapsible open={openSections.management} onOpenChange={() => toggleSection('management')}>
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
+                <span className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  {!isCollapsed && "Management"}
+                </span>
+                {!isCollapsed && (
+                  openSections.management ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {managementItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild tooltip={item.tooltip}>
+                        <NavLink to={item.url} className={getNavClass}>
+                          <item.icon className="h-4 w-4" />
+                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
 
         {/* Premium Upgrade Section */}
         {subscription.subscription_tier === "free" && !isCollapsed && (
@@ -346,28 +408,10 @@ export function AppSidebar() {
         )}
 
         <SidebarGroup>
-          <SidebarGroupLabel>Team</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {teamItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.tooltip}>
-                    <NavLink to={item.url} className={getNavClass}>
-                      <item.icon className="h-4 w-4" />
-                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
           <SidebarGroupLabel>Account</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {settingsItems.map((item) => (
+              {accountItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild tooltip={item.tooltip}>
                     <NavLink to={item.url} className={getNavClass}>

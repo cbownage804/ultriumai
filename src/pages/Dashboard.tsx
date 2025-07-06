@@ -19,6 +19,11 @@ import TeamManagement from "@/components/TeamManagement";
 import TeamAnalytics from "@/components/TeamAnalytics";
 import SecuritySettings from "@/components/SecuritySettings";
 import { DashboardOverview } from "@/components/DashboardOverview";
+import { GPTDashboard } from "@/components/dashboards/GPTDashboard";
+import { RMMDashboard } from "@/components/dashboards/RMMDashboard";
+import { AntivirusDashboard } from "@/components/dashboards/AntivirusDashboard";
+import { MDRDashboard } from "@/components/dashboards/MDRDashboard";
+import { HelpdeskDashboard } from "@/components/dashboards/HelpdeskDashboard";
 import { ConversationManager } from "@/components/ConversationManager";
 import { GPTDeploymentCenter } from "@/components/deployment/GPTDeploymentCenter";
 import { APIKeyManager } from "@/components/APIKeyManager";
@@ -94,6 +99,11 @@ const Dashboard = () => {
   const isSafeNetPage = location.pathname.includes('/safenet');
   const isSafeWebPage = location.pathname.includes('/safeweb');
   const isChatPage = location.pathname === '/dashboard/chat';
+  const isGPTDashboard = location.pathname === '/dashboard/gpt';
+  const isRMMPage = location.pathname.includes('/rmm');
+  const isAntivirusPage = location.pathname.includes('/antivirus');
+  const isMDRPage = location.pathname.includes('/mdr');
+  const isHelpdeskPage = location.pathname.includes('/helpdesk');
   const isDashboardOverview = location.pathname === '/dashboard';
   
   const getPageTitle = () => {
@@ -133,6 +143,11 @@ const Dashboard = () => {
 
   const renderContent = () => {
     if (isDashboardOverview) return <DashboardOverview />;
+    if (isGPTDashboard) return <GPTDashboard />;
+    if (isRMMPage) return <RMMDashboard />;
+    if (isAntivirusPage) return <AntivirusDashboard />;
+    if (isMDRPage) return <MDRDashboard />;
+    if (isHelpdeskPage) return <HelpdeskDashboard />;
     if (isChatPage) return <ChatInterface />;
     if (isSettingsPage) return <SettingsPage />;
     if (isProfilePage) return <ProfilePage />;
