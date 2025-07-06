@@ -2364,6 +2364,201 @@ export type Database = {
         }
         Relationships: []
       }
+      rmm_agent_commands: {
+        Row: {
+          agent_id: string
+          command_data: Json
+          command_type: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          exit_code: number | null
+          id: string
+          output: string | null
+          priority: number | null
+          started_at: string | null
+          status: string
+          timeout_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          command_data: Json
+          command_type: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          priority?: number | null
+          started_at?: string | null
+          status?: string
+          timeout_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          command_data?: Json
+          command_type?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          priority?: number | null
+          started_at?: string | null
+          status?: string
+          timeout_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rmm_agent_commands_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rmm_agent_system_info: {
+        Row: {
+          agent_id: string
+          collected_at: string
+          cpu_usage_percent: number | null
+          disk_usage_percent: number | null
+          id: string
+          installed_software: Json | null
+          last_boot_time: string | null
+          logged_in_users: Json | null
+          memory_usage_percent: number | null
+          network_interfaces: Json | null
+          running_processes: number | null
+          security_patches: Json | null
+          system_services: Json | null
+          uptime_seconds: number | null
+        }
+        Insert: {
+          agent_id: string
+          collected_at?: string
+          cpu_usage_percent?: number | null
+          disk_usage_percent?: number | null
+          id?: string
+          installed_software?: Json | null
+          last_boot_time?: string | null
+          logged_in_users?: Json | null
+          memory_usage_percent?: number | null
+          network_interfaces?: Json | null
+          running_processes?: number | null
+          security_patches?: Json | null
+          system_services?: Json | null
+          uptime_seconds?: number | null
+        }
+        Update: {
+          agent_id?: string
+          collected_at?: string
+          cpu_usage_percent?: number | null
+          disk_usage_percent?: number | null
+          id?: string
+          installed_software?: Json | null
+          last_boot_time?: string | null
+          logged_in_users?: Json | null
+          memory_usage_percent?: number | null
+          network_interfaces?: Json | null
+          running_processes?: number | null
+          security_patches?: Json | null
+          system_services?: Json | null
+          uptime_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rmm_agent_system_info_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rmm_agents: {
+        Row: {
+          agent_capabilities: Json | null
+          agent_version: string
+          client_id: string
+          configuration: Json | null
+          cpu_cores: number | null
+          created_at: string
+          domain_joined: boolean | null
+          hostname: string
+          id: string
+          installed_at: string
+          ip_address: unknown | null
+          last_heartbeat: string | null
+          last_seen_at: string | null
+          mac_address: string | null
+          operating_system: string
+          os_version: string | null
+          status: string
+          total_disk_gb: number | null
+          total_memory_gb: number | null
+          updated_at: string
+        }
+        Insert: {
+          agent_capabilities?: Json | null
+          agent_version?: string
+          client_id: string
+          configuration?: Json | null
+          cpu_cores?: number | null
+          created_at?: string
+          domain_joined?: boolean | null
+          hostname: string
+          id?: string
+          installed_at?: string
+          ip_address?: unknown | null
+          last_heartbeat?: string | null
+          last_seen_at?: string | null
+          mac_address?: string | null
+          operating_system: string
+          os_version?: string | null
+          status?: string
+          total_disk_gb?: number | null
+          total_memory_gb?: number | null
+          updated_at?: string
+        }
+        Update: {
+          agent_capabilities?: Json | null
+          agent_version?: string
+          client_id?: string
+          configuration?: Json | null
+          cpu_cores?: number | null
+          created_at?: string
+          domain_joined?: boolean | null
+          hostname?: string
+          id?: string
+          installed_at?: string
+          ip_address?: unknown | null
+          last_heartbeat?: string | null
+          last_seen_at?: string | null
+          mac_address?: string | null
+          operating_system?: string
+          os_version?: string | null
+          status?: string
+          total_disk_gb?: number | null
+          total_memory_gb?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rmm_agents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rmm_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -2535,6 +2730,130 @@ export type Database = {
           network_io?: number | null
           processes_count?: number | null
           services_count?: number | null
+        }
+        Relationships: []
+      }
+      rmm_script_executions: {
+        Row: {
+          agent_id: string
+          command_id: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          execution_time_ms: number | null
+          exit_code: number | null
+          id: string
+          output: string | null
+          parameters: Json | null
+          script_id: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          command_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          parameters?: Json | null
+          script_id: string
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          command_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          execution_time_ms?: number | null
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          parameters?: Json | null
+          script_id?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rmm_script_executions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rmm_script_executions_command_id_fkey"
+            columns: ["command_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_agent_commands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rmm_script_executions_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rmm_scripts: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          execution_timeout: number | null
+          id: string
+          is_template: boolean | null
+          name: string
+          parameters: Json | null
+          requires_elevation: boolean | null
+          script_content: string
+          script_type: string
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          execution_timeout?: number | null
+          id?: string
+          is_template?: boolean | null
+          name: string
+          parameters?: Json | null
+          requires_elevation?: boolean | null
+          script_content: string
+          script_type: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          execution_timeout?: number | null
+          id?: string
+          is_template?: boolean | null
+          name?: string
+          parameters?: Json | null
+          requires_elevation?: boolean | null
+          script_content?: string
+          script_type?: string
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
