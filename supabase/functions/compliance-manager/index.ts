@@ -115,6 +115,24 @@ serve(async (req) => {
             });
             break;
           
+          case 'aws':
+            syncResult = await supabaseClient.functions.invoke('compliance-aws-connector', {
+              body: { action: 'sync_data', connectorId }
+            });
+            break;
+          
+          case 'google_workspace':
+            syncResult = await supabaseClient.functions.invoke('compliance-google-workspace-connector', {
+              body: { action: 'sync_data', connectorId }
+            });
+            break;
+          
+          case 'security_tools':
+            syncResult = await supabaseClient.functions.invoke('compliance-security-tools-connector', {
+              body: { action: 'sync_data', connectorId }
+            });
+            break;
+          
           default:
             throw new Error(`Unsupported connector type: ${connector.connector_type}`);
         }
