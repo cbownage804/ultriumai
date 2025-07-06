@@ -47,6 +47,9 @@ import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
 import MSPControlCenter from '@/pages/MSPDashboard';
+import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
+import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
+import SafeNetMobilePage from '@/pages/SafeNetMobilePage';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -109,6 +112,19 @@ function AppRouter() {
       <Route path="/embed-demo" element={<EmbedDemo />} />
       <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
       <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
+      
+      {/* SafeNet App Routes */}
+      <Route path="/safenet-connector" element={
+        <ProtectedRoute>
+          <SafeNetConnectorPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/safenet-msp-dashboard" element={
+        <ProtectedRoute>
+          <SafeNetMSPPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/safenet-mobile" element={<SafeNetMobilePage />} />
       
       {/* Product Pages */}
       <Route path="/products/safemail" element={<SafeMailPage />} />

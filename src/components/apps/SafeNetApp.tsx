@@ -46,6 +46,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Link } from "react-router-dom";
 
 interface NetworkDevice {
   id: string;
@@ -414,20 +415,24 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
             <Globe className="h-4 w-4 mr-2" />
             Embeddable Widget Demo
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => window.open('/safenet-connector', '_blank')}
-          >
-            <Server className="h-4 w-4 mr-2" />
-            Connector Management
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={() => window.open('/safenet-mobile', '_blank')}
-          >
-            <Smartphone className="h-4 w-4 mr-2" />
-            Mobile App
-          </Button>
+          <Link to="/safenet-connector">
+            <Button variant="outline">
+              <Server className="h-4 w-4 mr-2" />
+              Connector Management
+            </Button>
+          </Link>
+          <Link to="/safenet-msp-dashboard">
+            <Button variant="outline">
+              <Users className="h-4 w-4 mr-2" />
+              MSP Dashboard
+            </Button>
+          </Link>
+          <Link to="/safenet-mobile">
+            <Button variant="outline">
+              <Smartphone className="h-4 w-4 mr-2" />
+              Mobile App
+            </Button>
+          </Link>
         </div>
       </div>
 
