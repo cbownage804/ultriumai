@@ -12,6 +12,7 @@ import {
   BarChart3, Calendar, FileText, Bell, Globe
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { MSPClientBrandingManager } from '@/components/MSPClientBrandingManager'
 
 export default function MSPPartnerPortal() {
   const [partnerStats, setPartnerStats] = useState({
@@ -118,9 +119,10 @@ export default function MSPPartnerPortal() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:grid-cols-7">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="clients">Clients</TabsTrigger>
+            <TabsTrigger value="branding">Branding</TabsTrigger>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="automation">Automation</TabsTrigger>
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
@@ -219,6 +221,10 @@ export default function MSPPartnerPortal() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="branding" className="space-y-6">
+            <MSPClientBrandingManager />
           </TabsContent>
 
           <TabsContent value="clients" className="space-y-6">

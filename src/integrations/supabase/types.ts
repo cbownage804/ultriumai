@@ -2113,6 +2113,84 @@ export type Database = {
           },
         ]
       }
+      msp_client_whitelabel_configs: {
+        Row: {
+          background_color: string
+          client_can_edit: boolean
+          client_id: string
+          client_name: string
+          co_management_enabled: boolean
+          company_logo: string
+          company_name: string
+          created_at: string
+          custom_css: string
+          custom_domain: string
+          custom_login_page: boolean
+          email_templates: Json
+          favicon_url: string
+          footer_text: string
+          hide_powered_by: boolean
+          id: string
+          is_active: boolean
+          msp_approval_required: boolean
+          msp_user_id: string
+          primary_color: string
+          secondary_color: string
+          text_color: string
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string
+          client_can_edit?: boolean
+          client_id: string
+          client_name: string
+          co_management_enabled?: boolean
+          company_logo?: string
+          company_name?: string
+          created_at?: string
+          custom_css?: string
+          custom_domain?: string
+          custom_login_page?: boolean
+          email_templates?: Json
+          favicon_url?: string
+          footer_text?: string
+          hide_powered_by?: boolean
+          id?: string
+          is_active?: boolean
+          msp_approval_required?: boolean
+          msp_user_id: string
+          primary_color?: string
+          secondary_color?: string
+          text_color?: string
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string
+          client_can_edit?: boolean
+          client_id?: string
+          client_name?: string
+          co_management_enabled?: boolean
+          company_logo?: string
+          company_name?: string
+          created_at?: string
+          custom_css?: string
+          custom_domain?: string
+          custom_login_page?: boolean
+          email_templates?: Json
+          favicon_url?: string
+          footer_text?: string
+          hide_powered_by?: boolean
+          id?: string
+          is_active?: boolean
+          msp_approval_required?: boolean
+          msp_user_id?: string
+          primary_color?: string
+          secondary_color?: string
+          text_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       msp_clients: {
         Row: {
           api_enabled: boolean | null
@@ -5846,6 +5924,56 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "knowledge_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whitelabel_change_requests: {
+        Row: {
+          changes: Json
+          config_id: string
+          created_at: string
+          id: string
+          request_type: string
+          requested_by: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          changes: Json
+          config_id: string
+          created_at?: string
+          id?: string
+          request_type: string
+          requested_by: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          changes?: Json
+          config_id?: string
+          created_at?: string
+          id?: string
+          request_type?: string
+          requested_by?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whitelabel_change_requests_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "msp_client_whitelabel_configs"
             referencedColumns: ["id"]
           },
         ]
