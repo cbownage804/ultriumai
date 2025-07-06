@@ -35,7 +35,9 @@ import {
   BarChart3,
   Globe,
   Server,
-  Lock
+  Lock,
+  ArrowLeft,
+  Home
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -359,16 +361,33 @@ const SafeSIEM = () => {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
-            SafeSIEM
-          </h1>
-          <p className="text-muted-foreground">
-            Unified Security Information and Event Management Platform
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/dashboard')}
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Shield className="h-8 w-8 text-primary" />
+              SafeSIEM
+            </h1>
+            <p className="text-muted-foreground">
+              Unified Security Information and Event Management Platform
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Dashboard
+          </Button>
           <Button
             variant="outline"
             onClick={() => setRealTimeEnabled(!realTimeEnabled)}

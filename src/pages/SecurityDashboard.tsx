@@ -31,7 +31,9 @@ import {
   AlertCircle,
   Info,
   Play,
-  Pause
+  Pause,
+  ArrowLeft,
+  Home
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -254,16 +256,33 @@ const SecurityDashboard = () => {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8 text-primary" />
-            Security Command Center
-          </h1>
-          <p className="text-muted-foreground">
-            Real-time security monitoring and threat response
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/dashboard')}
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Shield className="h-8 w-8 text-primary" />
+              Security Command Center
+            </h1>
+            <p className="text-muted-foreground">
+              Real-time security monitoring and threat response
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Dashboard
+          </Button>
           <Button
             variant="outline"
             onClick={() => setRealTimeEnabled(!realTimeEnabled)}
@@ -273,7 +292,7 @@ const SecurityDashboard = () => {
             ) : (
               <Play className="h-4 w-4 mr-2" />
             )}
-            {realTimeEnabled ? 'Pause' : 'Start'} Real-time
+            {realTimeEnabled ? 'Pause' : 'Resume'}
           </Button>
           <Button
             variant="outline"

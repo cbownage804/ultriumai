@@ -18,7 +18,8 @@ import {
   ArrowLeft,
   Download,
   Calendar,
-  Filter
+  Filter,
+  Home
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -263,7 +264,8 @@ const SafeSIEMAnalytics = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/safesiem')}
+            onClick={() => navigate('/dashboard')}
+            className="shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -278,6 +280,19 @@ const SafeSIEMAnalytics = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Dashboard
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/safesiem')}
+          >
+            Back to SIEM
+          </Button>
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-32">
               <SelectValue />

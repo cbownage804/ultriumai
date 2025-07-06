@@ -330,7 +330,8 @@ const SafeSIEMAlertRules = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/safesiem')}
+            onClick={() => navigate('/dashboard')}
+            className="shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -344,19 +345,32 @@ const SafeSIEMAlertRules = () => {
             </p>
           </div>
         </div>
-        <Dialog open={isCreateDialogOpen || !!editingRule} onOpenChange={(open) => {
-          if (!open) {
-            setIsCreateDialogOpen(false);
-            setEditingRule(null);
-            resetForm();
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Alert Rule
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/dashboard')}
+          >
+            Dashboard
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/safesiem')}
+          >
+            Back to SIEM
+          </Button>
+          <Dialog open={isCreateDialogOpen || !!editingRule} onOpenChange={(open) => {
+            if (!open) {
+              setIsCreateDialogOpen(false);
+              setEditingRule(null);
+              resetForm();
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Alert Rule
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -547,7 +561,8 @@ const SafeSIEMAlertRules = () => {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* Search */}
