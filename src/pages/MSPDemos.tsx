@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
+import { SafeCompDemo } from "@/components/demos/SafeCompDemo";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -53,6 +54,29 @@ const MSPDemos = () => {
       },
       icon: Shield,
       color: 'blue'
+    },
+    {
+      id: 'safecomp',
+      name: 'SafeComp Compliance Suite',
+      description: 'White-label compliance management and risk assessment platform',
+      monthlyRevenue: '$35/user',
+      setupTime: '15 minutes',
+      marketSize: 'Every business with compliance requirements',
+      demoUrl: '/demos/safecomp',
+      features: [
+        'Multi-framework compliance tracking',
+        'Complete white-label branding',
+        'Automated compliance scanning',
+        'Gap analysis and remediation',
+        'Evidence collection and reporting'
+      ],
+      revenueModel: {
+        charge: 50,
+        pay: 15,
+        profit: 35
+      },
+      icon: Shield,
+      color: 'green'
     },
     {
       id: 'safedoc',
@@ -401,6 +425,19 @@ const MSPDemos = () => {
                           </p>
                         </div>
                         <DarkWebDemo />
+                      </div>
+                    ) : selectedDemo === 'safecomp' ? (
+                      <div className="space-y-4">
+                        <div className="text-center space-y-2 mb-6">
+                          <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
+                            <Shield className="h-6 w-6 text-primary" />
+                            MSP Compliance Management Demo
+                          </h3>
+                          <p className="text-muted-foreground">
+                            Show clients comprehensive compliance tracking and risk management
+                          </p>
+                        </div>
+                        <SafeCompDemo />
                       </div>
                     ) : (
                       <Card className="border-2 border-primary/20">

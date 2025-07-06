@@ -3,243 +3,141 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { 
-  Users, 
   Shield, 
-  AlertTriangle, 
   CheckCircle, 
-  XCircle,
-  FileText,
-  Calendar,
+  XCircle, 
+  AlertTriangle, 
+  FileText, 
+  Users,
   Building,
-  Clock,
   Loader2,
-  Search,
   TrendingUp,
-  Award
+  Clock,
+  Target
 } from "lucide-react";
-
-interface ComplianceResult {
-  framework: string;
-  overallScore: number;
-  status: 'compliant' | 'non-compliant' | 'needs-attention';
-  lastAudit: string;
-  nextAudit: string;
-  categories: {
-    name: string;
-    score: number;
-    status: 'pass' | 'fail' | 'warning';
-    findings: string[];
-    recommendations: string[];
-  }[];
-  recommendations: string[];
-}
 
 interface ComplianceFramework {
   id: string;
   name: string;
   description: string;
-  categories: string[];
+  controlsTotal: number;
+  controlsImplemented: number;
+  lastAudit: string;
+  status: 'compliant' | 'non-compliant' | 'in-progress';
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
 }
 
-const frameworks: ComplianceFramework[] = [
+interface ComplianceGap {
+  id: string;
+  framework: string;
+  control: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  dueDate: string;
+  assignedTo: string;
+  status: 'open' | 'in-progress' | 'completed';
+}
+
+const mockFrameworks: ComplianceFramework[] = [
   {
-    id: 'soc2',
+    id: '1',
     name: 'SOC 2 Type II',
-    description: 'Service Organization Control 2 audit for security, availability, processing integrity, confidentiality, and privacy',
-    categories: ['Security', 'Availability', 'Processing Integrity', 'Confidentiality', 'Privacy']
+    description: 'Service Organization Control 2 - Security, Availability, Processing Integrity',
+    controlsTotal: 64,
+    controlsImplemented: 58,
+    lastAudit: '2024-01-15',
+    status: 'in-progress',
+    riskLevel: 'medium'
   },
   {
-    id: 'iso27001',
-    name: 'ISO 27001',
-    description: 'International standard for information security management systems',
-    categories: ['Information Security Policy', 'Risk Management', 'Asset Management', 'Access Control', 'Incident Management']
-  },
-  {
-    id: 'hipaa',
+    id: '2',
     name: 'HIPAA',
-    description: 'Health Insurance Portability and Accountability Act compliance for healthcare data',
-    categories: ['Administrative Safeguards', 'Physical Safeguards', 'Technical Safeguards', 'Breach Notification']
+    description: 'Health Insurance Portability and Accountability Act',
+    controlsTotal: 18,
+    controlsImplemented: 16,
+    lastAudit: '2024-02-20',
+    status: 'compliant',
+    riskLevel: 'low'
   },
   {
-    id: 'gdpr',
+    id: '3',
+    name: 'PCI DSS',
+    description: 'Payment Card Industry Data Security Standard',
+    controlsTotal: 12,
+    controlsImplemented: 8,
+    lastAudit: '2023-12-10',
+    status: 'non-compliant',
+    riskLevel: 'high'
+  },
+  {
+    id: '4',
     name: 'GDPR',
-    description: 'General Data Protection Regulation for European data protection',
-    categories: ['Lawful Processing', 'Data Subject Rights', 'Data Protection by Design', 'Breach Notification', 'DPO Requirements']
-  },
-  {
-    id: 'wisp',
-    name: 'WISP (Written Information Security Program)',
-    description: 'Required cybersecurity program for CPA firms and financial services under state and federal regulations',
-    categories: ['Risk Assessment', 'Employee Training', 'Access Controls', 'Data Encryption', 'Incident Response', 'Vendor Management']
+    description: 'General Data Protection Regulation',
+    controlsTotal: 25,
+    controlsImplemented: 22,
+    lastAudit: '2024-01-30',
+    status: 'in-progress',
+    riskLevel: 'medium'
   }
 ];
 
-const mockResults: Record<string, ComplianceResult> = {
-  'Acme Corporation': {
-    framework: 'SOC 2 Type II',
-    overallScore: 87,
-    status: 'compliant',
-    lastAudit: '2024-01-15',
-    nextAudit: '2025-01-15',
-    categories: [
-      {
-        name: 'Security',
-        score: 95,
-        status: 'pass',
-        findings: ['Strong access controls implemented', 'Multi-factor authentication enforced'],
-        recommendations: ['Implement additional network segmentation']
-      },
-      {
-        name: 'Availability',
-        score: 88,
-        status: 'pass',
-        findings: ['99.9% uptime achieved', 'Backup systems tested monthly'],
-        recommendations: ['Consider additional redundancy for critical systems']
-      },
-      {
-        name: 'Processing Integrity',
-        score: 82,
-        status: 'warning',
-        findings: ['Data validation controls in place', 'Some manual processes identified'],
-        recommendations: ['Automate manual data processing steps', 'Implement additional data validation']
-      },
-      {
-        name: 'Confidentiality',
-        score: 90,
-        status: 'pass',
-        findings: ['Encryption at rest and in transit', 'Proper data classification'],
-        recommendations: ['Review encryption key management procedures']
-      },
-      {
-        name: 'Privacy',
-        score: 85,
-        status: 'pass',
-        findings: ['Privacy controls documented', 'Data retention policies enforced'],
-        recommendations: ['Update privacy notices for new regulations']
-      }
-    ],
-    recommendations: [
-      'Implement automated compliance monitoring dashboard',
-      'Conduct quarterly compliance reviews',
-      'Update incident response procedures',
-      'Enhance employee training program'
-    ]
+const mockGaps: ComplianceGap[] = [
+  {
+    id: '1',
+    framework: 'SOC 2',
+    control: 'CC6.1',
+    description: 'Logical and physical access controls need multi-factor authentication',
+    priority: 'high',
+    dueDate: '2024-08-15',
+    assignedTo: 'IT Security Team',
+    status: 'in-progress'
   },
-  'CPA Firm Associates': {
-    framework: 'WISP (Written Information Security Program)',
-    overallScore: 92,
-    status: 'compliant',
-    lastAudit: '2024-02-01',
-    nextAudit: '2025-02-01',
-    categories: [
-      {
-        name: 'Risk Assessment',
-        score: 95,
-        status: 'pass',
-        findings: ['Annual risk assessment completed', 'Client data risks identified and documented'],
-        recommendations: ['Update risk assessment for new cloud services']
-      },
-      {
-        name: 'Employee Training',
-        score: 88,
-        status: 'pass',
-        findings: ['All staff completed cybersecurity training', 'Phishing simulation tests conducted'],
-        recommendations: ['Implement monthly security awareness sessions']
-      },
-      {
-        name: 'Access Controls',
-        score: 94,
-        status: 'pass',
-        findings: ['Multi-factor authentication implemented', 'Regular access reviews conducted'],
-        recommendations: ['Consider implementing privileged access management']
-      },
-      {
-        name: 'Data Encryption',
-        score: 90,
-        status: 'pass',
-        findings: ['Client data encrypted at rest and in transit', 'Secure communication channels established'],
-        recommendations: ['Review encryption key rotation policies']
-      },
-      {
-        name: 'Incident Response',
-        score: 85,
-        status: 'warning',
-        findings: ['Incident response plan documented', 'Contact information current'],
-        recommendations: ['Conduct incident response tabletop exercise', 'Update notification procedures']
-      },
-      {
-        name: 'Vendor Management',
-        score: 93,
-        status: 'pass',
-        findings: ['Vendor security assessments completed', 'Data processing agreements in place'],
-        recommendations: ['Implement continuous vendor monitoring']
-      }
-    ],
-    recommendations: [
-      'Schedule quarterly WISP policy reviews',
-      'Implement automated compliance monitoring',
-      'Enhance client data classification procedures',
-      'Update business continuity planning'
-    ]
+  {
+    id: '2',
+    framework: 'PCI DSS',
+    control: 'Req 8.2',
+    description: 'Password complexity requirements not enforced',
+    priority: 'critical',
+    dueDate: '2024-07-20',
+    assignedTo: 'System Admin',
+    status: 'open'
+  },
+  {
+    id: '3',
+    framework: 'GDPR',
+    control: 'Art 32',
+    description: 'Data encryption at rest not implemented for all databases',
+    priority: 'high',
+    dueDate: '2024-09-01',
+    assignedTo: 'DevOps Team',
+    status: 'open'
   }
-};
+];
 
 export const SafeCompDemo = () => {
-  const [organization, setOrganization] = useState('');
-  const [selectedFramework, setSelectedFramework] = useState('soc2');
-  const [results, setResults] = useState<ComplianceResult | null>(null);
+  const [selectedFramework, setSelectedFramework] = useState<string>('');
   const [isScanning, setIsScanning] = useState(false);
-  const [selectedTab, setSelectedTab] = useState('overview');
+  const [showResults, setShowResults] = useState(false);
 
-  const runComplianceAudit = async () => {
-    if (!organization.trim()) return;
-    
+  const runComplianceScan = async () => {
     setIsScanning(true);
     
-    // Simulate audit delay
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    // Simulate scan delay
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Use mock results if available, otherwise generate basic results
-    const mockResult = mockResults[organization] || {
-      framework: frameworks.find(f => f.id === selectedFramework)?.name || 'SOC 2',
-      overallScore: Math.floor(Math.random() * 30) + 70,
-      status: Math.random() > 0.3 ? 'compliant' : 'needs-attention',
-      lastAudit: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      nextAudit: new Date(Date.now() + 335 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      categories: frameworks.find(f => f.id === selectedFramework)?.categories.map(cat => ({
-        name: cat,
-        score: Math.floor(Math.random() * 40) + 60,
-        status: Math.random() > 0.2 ? 'pass' : 'warning' as 'pass' | 'warning',
-        findings: [`${cat} controls reviewed`, 'Documentation verified'],
-        recommendations: [`Enhance ${cat.toLowerCase()} procedures`]
-      })) || [],
-      recommendations: [
-        'Review and update compliance policies',
-        'Conduct regular internal audits',
-        'Implement continuous monitoring'
-      ]
-    };
-    
-    setResults(mockResult as ComplianceResult);
     setIsScanning(false);
-  };
-
-  const loadSampleOrganization = (name: string) => {
-    setOrganization(name);
+    setShowResults(true);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'compliant': return 'text-green-600';
-      case 'pass': return 'text-green-600';
       case 'non-compliant': return 'text-red-600';
-      case 'fail': return 'text-red-600';
-      case 'needs-attention': return 'text-yellow-600';
-      case 'warning': return 'text-yellow-600';
+      case 'in-progress': return 'text-yellow-600';
       default: return 'text-muted-foreground';
     }
   };
@@ -247,376 +145,343 @@ export const SafeCompDemo = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'compliant': return 'default';
-      case 'pass': return 'default';
       case 'non-compliant': return 'destructive';
-      case 'fail': return 'destructive';
-      case 'needs-attention': return 'secondary';
-      case 'warning': return 'secondary';
+      case 'in-progress': return 'secondary';
       default: return 'outline';
     }
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-green-600';
-    if (score >= 80) return 'text-yellow-600';
-    return 'text-red-600';
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'critical': return 'text-red-600';
+      case 'high': return 'text-orange-600';
+      case 'medium': return 'text-yellow-600';
+      case 'low': return 'text-green-600';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'critical': return 'destructive';
+      case 'high': return 'destructive';
+      case 'medium': return 'secondary';
+      case 'low': return 'outline';
+      default: return 'outline';
+    }
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Users className="h-8 w-8 text-primary" />
+            <Shield className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold">Ultrium SafeComp Demo</h1>
           </div>
           <p className="text-muted-foreground">
-            Comprehensive compliance management and audit automation platform
+            Comprehensive compliance management and risk assessment platform
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Audit Configuration */}
-          <Card className="lg:col-span-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                Compliance Audit
-              </CardTitle>
-              <CardDescription>
-                Enter organization details and select compliance framework
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Sample Organizations:</label>
-                <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => loadSampleOrganization('Acme Corporation')}
-                    className="w-full justify-start text-xs"
-                  >
-                    🏢 Acme Corporation
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => loadSampleOrganization('CPA Firm Associates')}
-                    className="w-full justify-start text-xs"
-                  >
-                    🏦 CPA Firm Associates
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => loadSampleOrganization('Tech Innovations LLC')}
-                    className="w-full justify-start text-xs"
-                  >
-                    💻 Tech Innovations LLC
-                  </Button>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Quick Stats */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-center text-green-600">
+                67%
               </div>
-              
-              <div className="space-y-2">
-                <Input
-                  placeholder="Organization name"
-                  value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
-                />
+              <div className="text-sm text-muted-foreground text-center">
+                Overall Compliance
               </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Compliance Framework:</label>
-                <div className="grid grid-cols-1 gap-2">
-                  {frameworks.map((framework) => (
-                    <Button
-                      key={framework.id}
-                      variant={selectedFramework === framework.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedFramework(framework.id)}
-                      className="text-left h-auto p-3 whitespace-normal"
-                    >
-                      <div className="w-full">
-                        <div className="font-medium text-sm break-words">{framework.name}</div>
-                        <div className="text-xs opacity-70 break-words leading-tight">{framework.description}</div>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              
-              <Button 
-                onClick={runComplianceAudit}
-                disabled={!organization.trim() || isScanning}
-                className="w-full"
-              >
-                {isScanning ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Running Audit...
-                  </>
-                ) : (
-                  <>
-                    <Shield className="mr-2 h-4 w-4" />
-                    Run Compliance Audit
-                  </>
-                )}
-              </Button>
-
-              {isScanning && (
-                <div className="text-center space-y-3">
-                  <div className="text-sm text-muted-foreground">
-                    🔍 Scanning policy documents...
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    🛡️ Verifying technical controls...
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    📊 Analyzing compliance gaps...
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-2">
-                    This process typically takes 3-5 minutes
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
-
-          {/* Results Section */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                Compliance Results
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!results ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="mb-2">Select an organization and compliance framework to begin audit</p>
-                  <div className="text-sm space-y-1">
-                    <p><strong>How it works:</strong></p>
-                    <p>• Automated policy document analysis</p>
-                    <p>• Technical control verification</p>
-                    <p>• Employee training record review</p>
-                    <p>• Vulnerability assessment integration</p>
-                    <p>• Continuous monitoring and reporting</p>
-                  </div>
-                </div>
-              ) : (
-                <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="categories">Categories</TabsTrigger>
-                    <TabsTrigger value="findings">Findings</TabsTrigger>
-                    <TabsTrigger value="actions">Actions</TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="overview" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className={`text-3xl font-bold text-center ${getScoreColor(results.overallScore)}`}>
-                            {results.overallScore}%
-                          </div>
-                          <div className="text-sm text-muted-foreground text-center">
-                            Overall Score
-                          </div>
-                          <Progress value={results.overallScore} className="mt-2" />
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6">
-                          <div className="text-center">
-                            <Badge variant={getStatusBadge(results.status)} className="text-xs">
-                              {results.status.replace('-', ' ').toUpperCase()}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground text-center mt-2">
-                            Compliance Status
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h4 className="font-medium">Audit Summary</h4>
-                      <div className="text-sm space-y-1">
-                        <div><strong>Framework:</strong> {results.framework}</div>
-                        <div><strong>Organization:</strong> {organization}</div>
-                        <div><strong>Last Audit:</strong> {results.lastAudit}</div>
-                        <div><strong>Next Audit:</strong> {results.nextAudit}</div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {results.categories.slice(0, 4).map((category, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border rounded">
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            {category.status === 'pass' ? (
-                              <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            ) : category.status === 'fail' ? (
-                              <XCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                            ) : (
-                              <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
-                            )}
-                            <span className="text-sm font-medium truncate">{category.name}</span>
-                          </div>
-                          <span className={`text-sm font-bold flex-shrink-0 ml-2 ${getScoreColor(category.score)}`}>
-                            {category.score}%
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="categories" className="space-y-4">
-                    <div className="space-y-4">
-                      {results.categories.map((category, index) => (
-                        <Card key={index}>
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                              <CardTitle className="text-base flex items-center gap-2">
-                                {category.status === 'pass' ? (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                ) : category.status === 'fail' ? (
-                                  <XCircle className="h-4 w-4 text-red-500" />
-                                ) : (
-                                  <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                                )}
-                                {category.name}
-                              </CardTitle>
-                              <div className="flex items-center gap-2">
-                                <span className={`font-bold ${getScoreColor(category.score)}`}>
-                                  {category.score}%
-                                </span>
-                                <Badge variant={getStatusBadge(category.status)}>
-                                  {category.status.toUpperCase()}
-                                </Badge>
-                              </div>
-                            </div>
-                            <Progress value={category.score} className="mt-2" />
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="space-y-2">
-                              <div>
-                                <strong className="text-sm">Key Findings:</strong>
-                                <ul className="text-sm text-muted-foreground ml-4 mt-1">
-                                  {category.findings.map((finding, fidx) => (
-                                    <li key={fidx} className="list-disc">{finding}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div>
-                                <strong className="text-sm">Recommendations:</strong>
-                                <ul className="text-sm text-muted-foreground ml-4 mt-1">
-                                  {category.recommendations.map((rec, ridx) => (
-                                    <li key={ridx} className="list-disc">{rec}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="findings" className="space-y-4">
-                    <Alert>
-                      <TrendingUp className="h-4 w-4" />
-                      <AlertDescription>
-                        <div className="space-y-2">
-                          <strong>Compliance Analysis Summary:</strong>
-                          <div className="text-sm">
-                            <p>Based on our automated analysis of your organization&apos;s policies, procedures, and technical controls, we&apos;ve identified key areas for improvement.</p>
-                          </div>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-base">Detailed Findings</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {results.categories.map((category, index) => (
-                            <div key={index} className="border-l-4 border-l-primary pl-4">
-                              <h5 className="font-medium">{category.name}</h5>
-                              <div className="space-y-1 mt-2">
-                                {category.findings.map((finding, fidx) => (
-                                  <div key={fidx} className="text-sm flex items-start gap-2">
-                                    <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
-                                    <span>{finding}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  <TabsContent value="actions" className="space-y-4">
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        <div className="space-y-2">
-                          <strong>Recommended Actions:</strong>
-                          <ul className="list-disc pl-5 space-y-1">
-                            {results.recommendations.map((rec, index) => (
-                              <li key={index} className="text-sm">{rec}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            Immediate Actions
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2 text-sm">
-                            <p>• Review and update security policies</p>
-                            <p>• Implement missing technical controls</p>
-                            <p>• Document existing procedures</p>
-                            <p>• Train staff on compliance requirements</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <Calendar className="h-4 w-4" />
-                            Ongoing Monitoring
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2 text-sm">
-                            <p>• Schedule quarterly compliance reviews</p>
-                            <p>• Set up automated monitoring dashboards</p>
-                            <p>• Establish incident response procedures</p>
-                            <p>• Plan annual external audits</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              )}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-center text-orange-600">
+                15
+              </div>
+              <div className="text-sm text-muted-foreground text-center">
+                Open Issues
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold text-center text-blue-600">
+                4
+              </div>
+              <div className="text-sm text-muted-foreground text-center">
+                Active Frameworks
+              </div>
             </CardContent>
           </Card>
         </div>
+
+        <Tabs defaultValue="frameworks" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="frameworks">Frameworks</TabsTrigger>
+            <TabsTrigger value="gaps">Compliance Gaps</TabsTrigger>
+            <TabsTrigger value="scanner">Quick Scan</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="frameworks" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Compliance Frameworks
+                </CardTitle>
+                <CardDescription>
+                  Track implementation status across multiple compliance standards
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockFrameworks.map((framework) => (
+                    <Card key={framework.id} className="border-l-4 border-l-primary">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold">{framework.name}</h4>
+                            <p className="text-sm text-muted-foreground">{framework.description}</p>
+                          </div>
+                          <Badge variant={getStatusBadge(framework.status)}>
+                            {framework.status.replace('-', ' ').toUpperCase()}
+                          </Badge>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex items-center justify-between text-sm mb-1">
+                              <span>Implementation Progress</span>
+                              <span>{framework.controlsImplemented}/{framework.controlsTotal} controls</span>
+                            </div>
+                            <Progress 
+                              value={(framework.controlsImplemented / framework.controlsTotal) * 100} 
+                              className="h-2"
+                            />
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              <span>Last Audit: {framework.lastAudit}</span>
+                            </div>
+                            <div className={`flex items-center gap-1 ${getPriorityColor(framework.riskLevel)}`}>
+                              <AlertTriangle className="h-3 w-3" />
+                              <span className="capitalize">{framework.riskLevel} Risk</span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="gaps" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Compliance Gaps & Action Items
+                </CardTitle>
+                <CardDescription>
+                  Critical issues requiring immediate attention
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockGaps.map((gap) => (
+                    <Card key={gap.id} className="border-l-4 border-l-orange-500">
+                      <CardContent className="pt-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold">{gap.framework}</span>
+                              <span className="text-sm text-muted-foreground">({gap.control})</span>
+                            </div>
+                            <p className="text-sm">{gap.description}</p>
+                          </div>
+                          <Badge variant={getPriorityBadge(gap.priority)}>
+                            {gap.priority.toUpperCase()}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              <span>{gap.assignedTo}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              <span>Due: {gap.dueDate}</span>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="capitalize">
+                            {gap.status.replace('-', ' ')}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="scanner" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Compliance Scanner
+                </CardTitle>
+                <CardDescription>
+                  Run automated compliance checks against your infrastructure
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Select Framework:</label>
+                  <Input
+                    placeholder="Enter domain or IP range to scan"
+                    value={selectedFramework}
+                    onChange={(e) => setSelectedFramework(e.target.value)}
+                  />
+                </div>
+                
+                <Button 
+                  onClick={runComplianceScan}
+                  disabled={isScanning}
+                  className="w-full"
+                >
+                  {isScanning ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scanning Infrastructure...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="mr-2 h-4 w-4" />
+                      Run Compliance Scan
+                    </>
+                  )}
+                </Button>
+
+                {isScanning && (
+                  <div className="text-center space-y-2">
+                    <div className="text-sm text-muted-foreground">
+                      Analyzing security controls and configurations...
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      This may take several minutes
+                    </div>
+                  </div>
+                )}
+
+                {showResults && !isScanning && (
+                  <Alert>
+                    <CheckCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <div className="space-y-2">
+                        <strong>Scan Complete</strong>
+                        <ul className="list-disc pl-5 space-y-1">
+                          <li className="text-sm">Found 3 configuration issues</li>
+                          <li className="text-sm">2 critical security gaps identified</li>
+                          <li className="text-sm">5 policy violations detected</li>
+                          <li className="text-sm">Remediation plan generated</li>
+                        </ul>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Compliance Reports
+                </CardTitle>
+                <CardDescription>
+                  Generate detailed compliance and audit reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Executive Summary</span>
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        High-level compliance overview for leadership
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Generate Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Technical Audit</span>
+                        <Building className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Detailed technical findings and recommendations
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Generate Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Gap Analysis</span>
+                        <Target className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Compliance gaps and remediation roadmap
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Generate Report
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Evidence Package</span>
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Complete audit evidence documentation
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">
+                        Generate Package
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
