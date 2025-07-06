@@ -50,6 +50,7 @@ import MSPControlCenter from '@/pages/MSPDashboard';
 import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
 import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
 import SafeNetMobilePage from '@/pages/SafeNetMobilePage';
+import SafeSIEM from '@/pages/SafeSIEM';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -125,6 +126,11 @@ function AppRouter() {
         </ProtectedRoute>
       } />
       <Route path="/safenet-mobile" element={<SafeNetMobilePage />} />
+      <Route path="/safesiem" element={
+        <ProtectedRoute>
+          <SafeSIEM />
+        </ProtectedRoute>
+      } />
       
       {/* Product Pages */}
       <Route path="/products/safemail" element={<SafeMailPage />} />

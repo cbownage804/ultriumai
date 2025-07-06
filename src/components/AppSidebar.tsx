@@ -44,6 +44,7 @@ const safeSuiteItems = [
   { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText },
   { title: "SafeLink", url: "/dashboard/safelink", icon: Link },
   { title: "SafeNet", url: "/dashboard/safenet", icon: Network },
+  { title: "SafeSIEM", url: "/safesiem", icon: Shield },
 ];
 
 const managementItems = [
