@@ -162,7 +162,7 @@ export const MSPWhiteLabelConfig = () => {
             White Label Configuration
           </h2>
           <p className="text-muted-foreground">
-            Customize UltriumShield with your MSP branding
+            Customize SafeShield with your MSP branding
           </p>
         </div>
         <div className="flex gap-2">
@@ -220,7 +220,7 @@ export const MSPWhiteLabelConfig = () => {
                 </div>
               </div>
               <p className="text-muted-foreground">
-                Preview of your white-labeled UltriumShield portal
+                Preview of your white-labeled SafeShield portal
               </p>
             </div>
           </CardContent>

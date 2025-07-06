@@ -23,7 +23,8 @@ import {
 } from "lucide-react";
 import { ThreatMonitor } from "./ThreatMonitor";
 import { EndpointManager } from "./EndpointManager";
-import { AIResponseGuide } from "./AIResponseGuide";
+import { SafeAVDashboard } from "./SafeAVDashboard";
+import { SafeMDRDashboard } from "./SafeMDRDashboard";
 import { EndpointAgentDownloads } from "./EndpointAgentDownloads";
 import { MSPWhiteLabelConfig } from "./MSPWhiteLabelConfig";
 
@@ -57,7 +58,7 @@ interface Threat {
   ai_analysis: any;
 }
 
-export const UltriumShieldDashboard = () => {
+export const SafeShieldDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
     total_threats: 0,
     threats_24h: 0,
@@ -68,7 +69,7 @@ export const UltriumShieldDashboard = () => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [threats, setThreats] = useState<Threat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide' | 'downloads' | 'white-label'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide' | 'downloads' | 'white-label' | 'safe-av' | 'safe-mdr'>('overview');
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const { toast } = useToast();
 
@@ -84,7 +85,7 @@ export const UltriumShieldDashboard = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      const response = await supabase.functions.invoke('ultrium-shield-agent', {
+      const response = await supabase.functions.invoke('safe-shield-agent', {
         body: { 
           action: 'get_dashboard_data',
           user_id: user.user.id
@@ -102,7 +103,7 @@ export const UltriumShieldDashboard = () => {
       console.error('Error loading dashboard data:', error);
       toast({
         title: "Error",
-        description: "Failed to load UltriumShield data",
+        description: "Failed to load SafeShield data",
         variant: "destructive",
       });
     } finally {
@@ -117,7 +118,7 @@ export const UltriumShieldDashboard = () => {
 
       const targetHost = hostname || endpoints[Math.floor(Math.random() * endpoints.length)]?.hostname || 'DEMO-PC';
 
-      const response = await supabase.functions.invoke('ultrium-shield-agent', {
+      const response = await supabase.functions.invoke('safe-shield-agent', {
         body: { 
           action: 'simulate_threat',
           hostname: targetHost,
@@ -158,7 +159,7 @@ export const UltriumShieldDashboard = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      const response = await supabase.functions.invoke('ultrium-shield-agent', {
+      const response = await supabase.functions.invoke('safe-shield-agent', {
         body: { 
           action: 'register_endpoint',
           user_id: user.user.id
@@ -169,7 +170,7 @@ export const UltriumShieldDashboard = () => {
 
       toast({
         title: "Endpoint Registered",
-        description: `${response.data.endpoint.hostname} added to UltriumShield`,
+        description: `${response.data.endpoint.hostname} added to SafeShield`,
       });
 
       await loadDashboardData();
@@ -218,7 +219,7 @@ export const UltriumShieldDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Shield className="h-8 w-8 text-primary" />
-            UltriumShield EDR
+            SafeShield EDR
           </h1>
           <p className="text-muted-foreground">
             AI-Powered Endpoint Detection & Response Platform
@@ -278,11 +279,18 @@ export const UltriumShieldDashboard = () => {
           Agent Downloads
         </Button>
         <Button 
-          variant={activeView === 'white-label' ? 'default' : 'outline'}
-          onClick={() => setActiveView('white-label')}
+          variant={activeView === 'safe-av' ? 'default' : 'outline'}
+          onClick={() => setActiveView('safe-av')}
         >
-          <Palette className="h-4 w-4 mr-2" />
-          White Label
+          <ShieldCheck className="h-4 w-4 mr-2" />
+          SafeAV
+        </Button>
+        <Button 
+          variant={activeView === 'safe-mdr' ? 'default' : 'outline'}
+          onClick={() => setActiveView('safe-mdr')}
+        >
+          <Search className="h-4 w-4 mr-2" />
+          SafeMDR
         </Button>
       </div>
 
@@ -299,9 +307,9 @@ export const UltriumShieldDashboard = () => {
 
       {/* Overview Dashboard */}
       {activeView === 'overview' && (
-        <div className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Active Endpoints</CardTitle>
@@ -451,6 +459,16 @@ export const UltriumShieldDashboard = () => {
       {/* Agent Downloads */}
       {activeView === 'downloads' && (
         <EndpointAgentDownloads />
+      )}
+
+      {/* SafeAV Dashboard */}
+      {activeView === 'safe-av' && (
+        <SafeAVDashboard />
+      )}
+
+      {/* SafeMDR Dashboard */}
+      {activeView === 'safe-mdr' && (
+        <SafeMDRDashboard />
       )}
 
       {/* White Label Configuration */}

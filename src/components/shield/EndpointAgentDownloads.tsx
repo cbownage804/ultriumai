@@ -44,7 +44,7 @@ export const EndpointAgentDownloads = () => {
         {
           platform: 'windows',
           version: '1.0.0',
-          download_url: '/downloads/UltriumShield-Windows-v1.0.0.msi',
+          download_url: '/downloads/SafeShield-Windows-v1.0.0.msi',
           file_size: 45678912,
           checksum: 'sha256:a1b2c3d4e5f6...',
           download_count: 127
@@ -52,7 +52,7 @@ export const EndpointAgentDownloads = () => {
         {
           platform: 'mac',
           version: '1.0.0',
-          download_url: '/downloads/UltriumShield-macOS-v1.0.0.pkg',
+          download_url: '/downloads/SafeShield-macOS-v1.0.0.pkg',
           file_size: 52341856,
           checksum: 'sha256:f6e5d4c3b2a1...',
           download_count: 89
@@ -60,7 +60,7 @@ export const EndpointAgentDownloads = () => {
         {
           platform: 'linux',
           version: '1.0.0',
-          download_url: '/downloads/UltriumShield-Linux-v1.0.0.deb',
+          download_url: '/downloads/SafeShield-Linux-v1.0.0.deb',
           file_size: 38945123,
           checksum: 'sha256:123456789abc...',
           download_count: 34
@@ -119,7 +119,7 @@ export const EndpointAgentDownloads = () => {
       // In production, this would be a real download
       toast({
         title: "Download Started",
-        description: `UltriumShield agent for ${platform} is downloading...`,
+        description: `SafeShield agent for ${platform} is downloading...`,
       });
 
       // Simulate download tracking
@@ -186,7 +186,7 @@ export const EndpointAgentDownloads = () => {
           Endpoint Agent Downloads
         </h2>
         <p className="text-muted-foreground">
-          Deploy UltriumShield agents to protect your client endpoints
+          Deploy SafeShield agents to protect your client endpoints
         </p>
       </div>
 

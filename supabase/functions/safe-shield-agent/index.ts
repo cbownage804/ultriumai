@@ -176,7 +176,7 @@ function generateThreatEvent(hostname: string): ThreatEvent {
     process_name: randomThreat === 'suspicious_process' ? 'svchost.exe' : undefined,
     command_line: randomThreat === 'suspicious_process' ? 'svchost.exe -k netsvcs -p -s Schedule' : undefined,
     network_connection: randomThreat === 'network_anomaly' ? '192.168.1.100:443 -> 185.159.157.13:8080' : undefined,
-    threat_signature: `UltriumShield.${randomThreat}.${Math.floor(Math.random() * 1000)}`,
+    threat_signature: `SafeShield.${randomThreat}.${Math.floor(Math.random() * 1000)}`,
     behavioral_indicators,
     ai_confidence_score,
     timestamp: new Date().toISOString(),
@@ -200,7 +200,7 @@ serve(async (req) => {
 
     switch (action) {
       case 'register_endpoint': {
-        // Register new endpoint with UltriumShield
+        // Register new endpoint with SafeShield
         const endpointData: EndpointData = {
           hostname: hostname || `DESKTOP-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
           ip_address: `192.168.1.${100 + Math.floor(Math.random() * 50)}`,
@@ -212,7 +212,7 @@ serve(async (req) => {
 
         // Store endpoint in database
         const { error } = await supabase
-          .from('ultrium_shield_endpoints')
+          .from('safe_shield_endpoints')
           .upsert({
             user_id,
             hostname: endpointData.hostname,
@@ -229,7 +229,7 @@ serve(async (req) => {
         return new Response(JSON.stringify({ 
           success: true, 
           endpoint: endpointData,
-          message: `Endpoint ${endpointData.hostname} registered with UltriumShield`
+          message: `Endpoint ${endpointData.hostname} registered with SafeShield`
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -242,7 +242,7 @@ serve(async (req) => {
 
         // Store threat event
         const { error } = await supabase
-          .from('ultrium_shield_threats')
+          .from('safe_shield_threats')
           .insert({
             user_id,
             event_id: threatEvent.event_id,
@@ -266,7 +266,7 @@ serve(async (req) => {
         // If critical threat, update endpoint status
         if (aiAnalysis.isolation_required) {
           await supabase
-            .from('ultrium_shield_endpoints')
+            .from('safe_shield_endpoints')
             .update({ status: 'isolated' })
             .eq('hostname', hostname)
             .eq('user_id', user_id);
@@ -286,12 +286,12 @@ serve(async (req) => {
         // Get all endpoints and recent threats for dashboard
         const [endpointsResult, threatsResult] = await Promise.all([
           supabase
-            .from('ultrium_shield_endpoints')
+            .from('safe_shield_endpoints')
             .select('*')
             .eq('user_id', user_id)
             .order('last_seen', { ascending: false }),
           supabase
-            .from('ultrium_shield_threats')
+            .from('safe_shield_threats')
             .select('*')
             .eq('user_id', user_id)
             .order('detected_at', { ascending: false })
@@ -327,7 +327,7 @@ serve(async (req) => {
       case 'isolate_endpoint': {
         // Isolate endpoint from network
         const { error } = await supabase
-          .from('ultrium_shield_endpoints')
+          .from('safe_shield_endpoints')
           .update({ status: 'isolated' })
           .eq('hostname', hostname)
           .eq('user_id', user_id);
@@ -336,7 +336,7 @@ serve(async (req) => {
 
         // Log the isolation action
         await supabase
-          .from('ultrium_shield_actions')
+          .from('safe_shield_actions')
           .insert({
             user_id,
             hostname,
