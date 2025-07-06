@@ -388,6 +388,10 @@ const SafeSIEM = () => {
             <Bell className="h-4 w-4 mr-2" />
             Alert Rules
           </Button>
+          <Button variant="outline" onClick={() => navigate('/safesiem/incidents')}>
+            <Target className="h-4 w-4 mr-2" />
+            Incidents
+          </Button>
           <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
             Configure
@@ -541,9 +545,9 @@ const SafeSIEM = () => {
       <Tabs defaultValue="events" className="space-y-4">
         <TabsList>
           <TabsTrigger value="events">Security Events</TabsTrigger>
+          <TabsTrigger value="incidents">Active Incidents</TabsTrigger>
           <TabsTrigger value="threats">Threat Intelligence</TabsTrigger>
           <TabsTrigger value="analytics">Analytics & Reports</TabsTrigger>
-          <TabsTrigger value="investigations">Investigations</TabsTrigger>
         </TabsList>
 
         <TabsContent value="events" className="space-y-4">
@@ -648,6 +652,39 @@ const SafeSIEM = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="incidents" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Active Incidents</CardTitle>
+                  <CardDescription>
+                    Security incidents requiring immediate attention
+                  </CardDescription>
+                </div>
+                <Button onClick={() => navigate('/safesiem/incidents')}>
+                  View All Incidents
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Target className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  Incident management dashboard with automated workflows, SLA tracking, and team collaboration
+                </p>
+                <Button 
+                  className="mt-4" 
+                  onClick={() => navigate('/safesiem/incidents')}
+                >
+                  <Target className="h-4 w-4 mr-2" />
+                  Manage Incidents
+                </Button>
               </div>
             </CardContent>
           </Card>

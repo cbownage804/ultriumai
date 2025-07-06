@@ -918,6 +918,178 @@ export type Database = {
           },
         ]
       }
+      incident_activities: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string
+          id: string
+          incident_id: string
+          metadata: Json | null
+          new_value: string | null
+          old_value: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description: string
+          id?: string
+          incident_id: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string
+          id?: string
+          incident_id?: string
+          metadata?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_activities_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          incident_id: string
+          is_internal: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          incident_id: string
+          is_internal?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          incident_id?: string
+          is_internal?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_comments_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          affected_systems: string[] | null
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_to: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          escalated_at: string | null
+          escalated_to: string | null
+          escalation_level: number | null
+          escalation_reason: string | null
+          first_response_at: string | null
+          id: string
+          impact_assessment: string | null
+          priority: string
+          related_events: string[] | null
+          resolution_sla_minutes: number | null
+          resolved_at: string | null
+          response_sla_minutes: number | null
+          severity: string
+          sla_deadline: string | null
+          source_event_id: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_systems?: string[] | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          escalated_at?: string | null
+          escalated_to?: string | null
+          escalation_level?: number | null
+          escalation_reason?: string | null
+          first_response_at?: string | null
+          id?: string
+          impact_assessment?: string | null
+          priority?: string
+          related_events?: string[] | null
+          resolution_sla_minutes?: number | null
+          resolved_at?: string | null
+          response_sla_minutes?: number | null
+          severity?: string
+          sla_deadline?: string | null
+          source_event_id?: string | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_systems?: string[] | null
+          assigned_at?: string | null
+          assigned_by?: string | null
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          escalated_at?: string | null
+          escalated_to?: string | null
+          escalation_level?: number | null
+          escalation_reason?: string | null
+          first_response_at?: string | null
+          id?: string
+          impact_assessment?: string | null
+          priority?: string
+          related_events?: string[] | null
+          resolution_sla_minutes?: number | null
+          resolved_at?: string | null
+          response_sla_minutes?: number | null
+          severity?: string
+          sla_deadline?: string | null
+          source_event_id?: string | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       knowledge_chunks: {
         Row: {
           chunk_index: number
