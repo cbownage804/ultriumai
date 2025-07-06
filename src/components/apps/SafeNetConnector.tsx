@@ -24,9 +24,11 @@ import {
   Lock,
   Cpu,
   HardDrive,
-  MemoryStick
+  MemoryStick,
+  ArrowLeft
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface ConnectorInstance {
   id: string;
@@ -181,16 +183,24 @@ export const SafeNetConnector = () => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
+      {/* Back Button and Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Server className="h-8 w-8 text-primary" />
-            Network Connector Management
-          </h1>
-          <p className="text-muted-foreground">
-            Deploy and manage SafeNet connectors across client networks
-          </p>
+        <div className="flex items-center gap-4">
+          <Link to="/products/safenet">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to SafeNet
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Server className="h-8 w-8 text-primary" />
+              Network Connector Management
+            </h1>
+            <p className="text-muted-foreground">
+              Deploy and manage SafeNet connectors across client networks
+            </p>
+          </div>
         </div>
       </div>
 
