@@ -36,8 +36,37 @@ const SecurityAppsMarketplace = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const securityApps: SecurityApp[] = [
+      id: 'safepass',
+      name: 'Ultrium SafePass™',
+      description: 'Enterprise password management with security monitoring',
+      longDescription: 'Comprehensive password management solution with team collaboration, security monitoring, password generation, and audit logging. Includes advanced features like password strength analysis, breach monitoring, and white-label deployment options.',
+      icon: Shield,
+      price: 20,
+      features: [
+        'Secure password vaults',
+        'Team collaboration',
+        'Password strength analysis',
+        'Secure password generator',
+        'Audit logging',
+        'Breach monitoring'
+      ],
+      capabilities: [
+        'Unlimited password storage',
+        'Team sharing & permissions',
+        'Advanced security scoring',
+        'Real-time breach alerts',
+        'Custom branding',
+        'API access included'
+      ],
+      integrations: ['Custom GPTs', 'Team Management', 'Security Dashboard', 'API'],
+      threatTypes: ['Weak Passwords', 'Data Breaches', 'Credential Theft', 'Account Takeover'],
+      subscription_required: true,
+      enterprise_included: true,
+      enabled: false,
+      usage_limit: -1,
+      usage_current: 0
+    },
     {
-      id: 'safelink',
       name: 'Ultrium SafeLink™',
       description: 'Advanced AI-powered link security scanning and threat detection',
       longDescription: 'Comprehensive link analysis using multiple threat intelligence sources, machine learning models, and behavioral analysis to detect malicious URLs, phishing attempts, and advanced persistent threats.',

@@ -26,6 +26,7 @@ import { TeamCollaboration } from "@/components/TeamCollaboration";
 import KnowledgeBase from "@/components/KnowledgeBase";
 import SecurityAppsMarketplace from "@/components/SecurityAppsMarketplace";
 import { VideoUploadManager } from "@/components/VideoUploadManager";
+import { SafePassApp } from "@/components/apps/SafePassApp";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -81,6 +82,7 @@ const Dashboard = () => {
   const isKnowledgeBasePage = location.pathname.includes('/knowledge-base');
   const isSecurityAppsPage = location.pathname.includes('/security-apps');
   const isVideoManagerPage = location.pathname.includes('/video-manager');
+  const isSafePassPage = location.pathname.includes('/safepass');
   const isChatPage = location.pathname === '/dashboard/chat';
   const isDashboardOverview = location.pathname === '/dashboard';
   
@@ -110,6 +112,7 @@ const Dashboard = () => {
     if (isKnowledgeBasePage) return "Knowledge Base";
     if (isSecurityAppsPage) return "Security Apps";
     if (isVideoManagerPage) return "Video Manager";
+    if (isSafePassPage) return "SafePass Password Manager";
     return "Dashboard";
   };
 
@@ -139,6 +142,7 @@ const Dashboard = () => {
     if (isKnowledgeBasePage) return <div className="p-6"><KnowledgeBase /></div>;
     if (isSecurityAppsPage) return <div className="p-6"><SecurityAppsMarketplace /></div>;
     if (isVideoManagerPage) return <div className="p-6 flex justify-center"><VideoUploadManager /></div>;
+    if (isSafePassPage) return <SafePassApp />;
     return <DashboardOverview />;
   };
 

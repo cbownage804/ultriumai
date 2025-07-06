@@ -1070,6 +1070,153 @@ export type Database = {
           },
         ]
       }
+      password_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          password_entry_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          password_entry_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          password_entry_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "password_audit_logs_password_entry_id_fkey"
+            columns: ["password_entry_id"]
+            isOneToOne: false
+            referencedRelation: "password_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      password_entries: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          is_shared: boolean | null
+          last_used_at: string | null
+          name: string
+          notes: string | null
+          password_encrypted: string
+          shared_with: string[] | null
+          strength_score: number | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          username: string | null
+          vault_id: string
+          website: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_shared?: boolean | null
+          last_used_at?: string | null
+          name: string
+          notes?: string | null
+          password_encrypted: string
+          shared_with?: string[] | null
+          strength_score?: number | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          username?: string | null
+          vault_id: string
+          website?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_shared?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          notes?: string | null
+          password_encrypted?: string
+          shared_with?: string[] | null
+          strength_score?: number | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          username?: string | null
+          vault_id?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "password_entries_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "password_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      password_vaults: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_shared: boolean | null
+          name: string
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_shared?: boolean | null
+          name: string
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_shared?: boolean | null
+          name?: string
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "password_vaults_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
