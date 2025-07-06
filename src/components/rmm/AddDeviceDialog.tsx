@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAccountType } from "@/hooks/useAccountType";
+import { useMSP } from "@/hooks/useMSP";
 
 interface AddDeviceDialogProps {
   trigger?: React.ReactNode;
@@ -30,16 +32,20 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
   const [open, setOpen] = useState(false);
   const [deviceType, setDeviceType] = useState<'server' | 'workstation'>('workstation');
   const [osType, setOsType] = useState<'windows' | 'macos' | 'linux'>('windows');
-  const [clientId, setClientId] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState('');
   const [generatedConfig, setGeneratedConfig] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { isMSPOrMSSP, isBusiness } = useAccountType();
+  const { clients } = useMSP();
 
   const handleGenerateAgent = async () => {
-    if (!clientId) {
+    const clientId = isBusiness ? 'self' : selectedClientId;
+    
+    if (isMSPOrMSSP && !selectedClientId) {
       toast({
         title: "Missing Information", 
-        description: "Please enter a Client ID",
+        description: "Please select a client",
         variant: "destructive"
       });
       return;
@@ -91,6 +97,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
 
   const getDownloadInstructions = (os: string) => {
     const baseUrl = `${window.location.origin}/agent-download`;
+    const clientId = isBusiness ? 'self' : selectedClientId;
     
     switch (os) {
       case 'windows':
@@ -125,7 +132,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
   };
 
   const resetForm = () => {
-    setClientId('');
+    setSelectedClientId('');
     setGeneratedConfig(null);
   };
 
@@ -160,17 +167,25 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
           </TabsList>
 
           <TabsContent value="configure" className="space-y-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="clientId">Client ID *</Label>
-                <Input
-                  id="clientId"
-                  placeholder="Client identifier"
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value)}
-                />
+            {isMSPOrMSSP && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="clientSelect">Client *</Label>
+                  <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.filter(client => client.is_active).map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -256,7 +271,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
                           <div>Hostname: <strong>Auto-detected</strong></div>
                           <div>Type: <strong>{deviceType}</strong></div>
                           <div>OS: <strong>{osType}</strong></div>
-                          <div>Client: <strong>{clientId}</strong></div>
+                          <div>Client: <strong>{isBusiness ? 'Self' : clients.find(c => c.id === selectedClientId)?.company_name || selectedClientId}</strong></div>
                         </div>
                       </div>
                     </div>
