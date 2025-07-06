@@ -44,6 +44,7 @@ const safeSuiteItems = [
   { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText, tooltip: "Document security analysis and malware scanning" },
   { title: "SafeLink", url: "/dashboard/safelink", icon: Link, tooltip: "URL safety checking and phishing protection" },
   { title: "SafeNet", url: "/dashboard/safenet", icon: Network, tooltip: "Network security monitoring and threat analysis" },
+  { title: "SafeWeb", url: "/dashboard/safeweb", icon: Shield, tooltip: "Dark web monitoring and threat intelligence" },
   { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
 ];
 

@@ -31,6 +31,7 @@ import { SafeMailApp } from "@/components/apps/SafeMailApp";
 import { SafeDocApp } from "@/components/apps/SafeDocApp";
 import { SafeLinkApp } from "@/components/apps/SafeLinkApp";
 import { SafeNetApp } from "@/components/apps/SafeNetApp";
+import { SafeWebDashboard } from "@/components/SafeWebDashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -91,6 +92,7 @@ const Dashboard = () => {
   const isSafeDocPage = location.pathname.includes('/safedoc');
   const isSafeLinkPage = location.pathname.includes('/safelink');
   const isSafeNetPage = location.pathname.includes('/safenet');
+  const isSafeWebPage = location.pathname.includes('/safeweb');
   const isChatPage = location.pathname === '/dashboard/chat';
   const isDashboardOverview = location.pathname === '/dashboard';
   
@@ -125,6 +127,7 @@ const Dashboard = () => {
     if (isSafeDocPage) return "SafeDoc Document Scanner";
     if (isSafeLinkPage) return "SafeLink URL Security";
     if (isSafeNetPage) return "SafeNet Network Security";
+    if (isSafeWebPage) return "SafeWeb Dark Web Monitoring";
     return "Dashboard";
   };
 
@@ -159,6 +162,7 @@ const Dashboard = () => {
     if (isSafeDocPage) return <SafeDocApp />;
     if (isSafeLinkPage) return <SafeLinkApp />;
     if (isSafeNetPage) return <SafeNetApp />;
+    if (isSafeWebPage) return <div className="p-6"><SafeWebDashboard /></div>;
     return <DashboardOverview />;
   };
 
