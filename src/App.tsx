@@ -59,6 +59,7 @@ import SecurityDashboard from '@/pages/SecurityDashboard';
 import SafeWebDashboard from '@/pages/SafeWebDashboard';
 import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
 import SafeShield from '@/pages/SafeShield';
+import { SafeShieldDashboard } from '@/components/shield/SafeShieldDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
 import { Loader2 } from 'lucide-react';
 
@@ -140,6 +141,7 @@ function AppRouter() {
         </ProtectedRoute>
       } />
       <Route path="/safenet-mobile" element={<SafeNetMobilePage />} />
+      <Route path="/safeshield" element={<SafeShield />} />
       <Route path="/safesiem" element={
         <ProtectedRoute>
           <SafeSIEM />
@@ -218,7 +220,9 @@ function AppRouter() {
       } />
       <Route path="/dashboard/safeshield" element={
         <ProtectedRoute>
-          <SafeShield />
+          <div className="p-6">
+            <SafeShieldDashboard />
+          </div>
         </ProtectedRoute>
       } />
       

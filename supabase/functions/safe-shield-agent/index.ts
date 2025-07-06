@@ -298,119 +298,103 @@ serve(async (req) => {
             .limit(50)
         ]);
 
-        // If no data exists, provide demo data
         let endpoints = endpointsResult.data || [];
         let threats = threatsResult.data || [];
 
+        // If no data exists, provide demo data for testing
         if (endpoints.length === 0) {
-          // Generate demo endpoints
-          endpoints = [
+          // Insert demo endpoints into database for the user
+          const demoEndpoints = [
             {
-              id: '1',
+              user_id,
               hostname: 'DC01-CORP',
               ip_address: '192.168.1.10',
               os_version: 'Windows Server 2022',
               agent_version: '2.1.0',
               status: 'online',
-              last_seen: new Date().toISOString(),
               cpu_usage: 15,
               memory_usage: 45,
-              disk_usage: 67
+              disk_usage: 67,
+              metadata: { demo: true }
             },
             {
-              id: '2',
+              user_id,
               hostname: 'WS-FINANCE-01',
               ip_address: '192.168.1.25',
               os_version: 'Windows 11 Pro',
               agent_version: '2.1.0',
               status: 'threat_detected',
-              last_seen: new Date().toISOString(),
               cpu_usage: 85,
               memory_usage: 78,
               disk_usage: 23,
-              threats_count: 2
+              threats_count: 2,
+              metadata: { demo: true }
             },
             {
-              id: '3',
+              user_id,
               hostname: 'SRV-WEB-01',
               ip_address: '192.168.1.50',
               os_version: 'Ubuntu 22.04 LTS',
               agent_version: '2.1.0',
               status: 'isolated',
-              last_seen: new Date(Date.now() - 300000).toISOString(),
               cpu_usage: 5,
               memory_usage: 12,
-              disk_usage: 89
-            },
-            {
-              id: '4',
-              hostname: 'MAC-DESIGN-01',
-              ip_address: '192.168.1.35',
-              os_version: 'macOS Sonoma 14.2',
-              agent_version: '2.1.0',
-              status: 'online',
-              last_seen: new Date().toISOString(),
-              cpu_usage: 30,
-              memory_usage: 60,
-              disk_usage: 45
+              disk_usage: 89,
+              metadata: { demo: true }
             }
           ];
+
+          await supabase.from('safe_shield_endpoints').insert(demoEndpoints);
         }
 
         if (threats.length === 0) {
-          // Generate demo threats
-          threats = [
+          // Insert demo threats into database for the user
+          const demoThreats = [
             {
-              id: '1',
-              event_id: 'EVT-001',
+              user_id,
+              event_id: `demo_${Date.now()}_001`,
               hostname: 'WS-FINANCE-01',
               threat_type: 'ransomware_detection',
               severity: 'critical',
               ai_confidence_score: 0.95,
-              detected_at: new Date().toISOString(),
-              status: 'active',
+              status: 'detected',
               ai_analysis: {
-                threat_assessment: 'High-confidence ransomware detection based on file encryption patterns and suspicious process behavior.',
+                threat_assessment: 'High-confidence ransomware detection based on file encryption patterns.',
                 recommended_actions: ['isolate_endpoint', 'quarantine', 'backup_recovery'],
                 isolation_required: true,
                 walkthrough_steps: [
                   'Immediately isolate the affected endpoint from the network',
                   'Identify and quarantine suspicious files and processes',
-                  'Check for lateral movement indicators on adjacent systems',
-                  'Initiate backup recovery procedures for affected data',
-                  'Update threat intelligence and apply preventive measures'
+                  'Check for lateral movement indicators',
+                  'Initiate backup recovery procedures'
                 ],
-                impact_analysis: 'Potential data encryption affecting financial records. Immediate isolation prevents spread.',
-                containment_strategy: 'Network isolation with forensic preservation for investigation'
+                impact_analysis: 'Potential data encryption affecting financial records.',
+                containment_strategy: 'Network isolation with forensic preservation'
               },
-              behavioral_indicators: ['file_encryption_activity', 'suspicious_network_traffic', 'privilege_escalation']
-            },
-            {
-              id: '2',
-              event_id: 'EVT-002',
-              hostname: 'DC01-CORP',
-              threat_type: 'suspicious_process',
-              severity: 'medium',
-              ai_confidence_score: 0.75,
-              detected_at: new Date(Date.now() - 1800000).toISOString(),
-              status: 'investigating',
-              ai_analysis: {
-                threat_assessment: 'Unusual process behavior detected with potential privilege escalation attempts.',
-                recommended_actions: ['monitor', 'scan', 'analyze'],
-                isolation_required: false,
-                walkthrough_steps: [
-                  'Monitor process activity for additional indicators',
-                  'Run comprehensive malware scan',
-                  'Check system logs for related events',
-                  'Verify process legitimacy with signature validation'
-                ],
-                impact_analysis: 'Low to medium risk. Process appears contained to single system.',
-                containment_strategy: 'Monitor and analyze with selective process termination if needed'
-              },
-              behavioral_indicators: ['unusual_process_execution', 'registry_modification']
+              behavioral_indicators: ['file_encryption_activity', 'suspicious_network_traffic']
             }
           ];
+
+          await supabase.from('safe_shield_threats').insert(demoThreats);
         }
+
+        // Refresh data after potential demo insertion
+        const [newEndpoints, newThreats] = await Promise.all([
+          supabase
+            .from('safe_shield_endpoints')
+            .select('*')
+            .eq('user_id', user_id)
+            .order('last_seen', { ascending: false }),
+          supabase
+            .from('safe_shield_threats')
+            .select('*')
+            .eq('user_id', user_id)
+            .order('detected_at', { ascending: false })
+            .limit(50)
+        ]);
+
+        endpoints = newEndpoints.data || [];
+        threats = newThreats.data || [];
 
         // Calculate threat statistics
         const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);

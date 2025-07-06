@@ -77,9 +77,40 @@ export const SafeShieldDashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
-    // Set up real-time updates
-    const interval = setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
+    
+    // Set up real-time subscriptions
+    const endpointsChannel = supabase
+      .channel('safe-shield-endpoints')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'safe_shield_endpoints'
+      }, () => {
+        loadDashboardData();
+      })
+      .subscribe();
+
+    const threatsChannel = supabase
+      .channel('safe-shield-threats')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'safe_shield_threats'
+      }, () => {
+        loadDashboardData();
+        // Show toast for new threats
+        toast({
+          title: "🚨 New Threat Detected!",
+          description: "SafeShield has detected a new security threat",
+          variant: "destructive",
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(endpointsChannel);
+      supabase.removeChannel(threatsChannel);
+    };
   }, []);
 
   const loadDashboardData = async () => {
