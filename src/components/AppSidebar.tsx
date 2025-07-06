@@ -40,9 +40,11 @@ const gptItems = [
 ];
 
 const securityItems = [
+  { title: "Security Center", url: "/dashboard/security-center", icon: Shield, tooltip: "Unified security monitoring and threat management" },
+  { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Enterprise password management and security" },
+  { title: "SafeMail", url: "/dashboard/safemail", icon: Mail, tooltip: "Advanced email security and threat detection" },
+  { title: "SafeNet", url: "/dashboard/safenet", icon: Network, tooltip: "Advanced network monitoring and vulnerability management" },
   { title: "SafeShield", url: "/dashboard/safeshield", icon: Shield, tooltip: "AI-powered endpoint detection and response platform" },
-  { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Password security analysis and breach detection" },
-  { title: "SafeMail", url: "/dashboard/safemail", icon: Mail, tooltip: "Email security scanning and threat detection" },
   { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText, tooltip: "Document security analysis and malware scanning" },
   { title: "SafeLink", url: "/dashboard/safelink", icon: Link, tooltip: "URL safety checking and phishing protection" },
   { title: "SafeWeb", url: "/dashboard/safeweb", icon: Shield, tooltip: "Dark web monitoring and threat intelligence" },

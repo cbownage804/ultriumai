@@ -225,6 +225,26 @@ function AppRouter() {
           </div>
         </ProtectedRoute>
       } />
+      <Route path="/dashboard/security-center" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/safepass" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/safemail" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/safenet" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
