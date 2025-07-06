@@ -127,7 +127,7 @@ const Pricing = () => {
 
   const securityApps = [
     { name: "SafeMail", description: "AI email threat detection" },
-    { name: "SafeDoc", description: "Document security scanning" },
+    { name: "SafeKB", description: "Knowledge base & asset management" },
     { name: "SafeLink", description: "URL analysis & protection" },
     { name: "SafePass", description: "Password management" },
     { name: "SafeNet", description: "Network discovery & mapping" },
