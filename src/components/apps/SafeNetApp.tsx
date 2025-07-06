@@ -29,7 +29,19 @@ import {
   Eye,
   Search,
   MapPin,
-  Activity
+  Activity,
+  Bell,
+  FileText,
+  Settings,
+  Crown,
+  Zap,
+  Target,
+  Gauge,
+  Cpu,
+  Database,
+  AlertCircle,
+  Brain,
+  Lock
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,6 +91,62 @@ interface SafeNetAppProps {
   brandName?: string;
 }
 
+interface PricingTier {
+  name: string;
+  price: number;
+  features: string[];
+  maxDevices: number;
+  maxSites: number;
+  realTimeMonitoring: boolean;
+  advancedAnalytics: boolean;
+  threatIntelligence: boolean;
+  complianceReporting: boolean;
+  apiAccess: boolean;
+  automatedRemediation: boolean;
+}
+
+const PRICING_TIERS: Record<string, PricingTier> = {
+  basic: {
+    name: 'Basic',
+    price: 25,
+    features: ['Device Discovery', 'Vulnerability Scanning', 'Basic Reporting'],
+    maxDevices: 50,
+    maxSites: 1,
+    realTimeMonitoring: false,
+    advancedAnalytics: false,
+    threatIntelligence: false,
+    complianceReporting: false,
+    apiAccess: false,
+    automatedRemediation: false,
+  },
+  professional: {
+    name: 'Professional',
+    price: 75,
+    features: ['Everything in Basic', 'Real-time Monitoring', 'Advanced Analytics', 'Multi-site Management'],
+    maxDevices: 200,
+    maxSites: 5,
+    realTimeMonitoring: true,
+    advancedAnalytics: true,
+    threatIntelligence: false,
+    complianceReporting: true,
+    apiAccess: true,
+    automatedRemediation: false,
+  },
+  enterprise: {
+    name: 'Enterprise',
+    price: 150,
+    features: ['Everything in Professional', 'Threat Intelligence', 'Automated Remediation', 'SIEM Integration', 'Custom Compliance'],
+    maxDevices: 1000,
+    maxSites: 25,
+    realTimeMonitoring: true,
+    advancedAnalytics: true,
+    threatIntelligence: true,
+    complianceReporting: true,
+    apiAccess: true,
+    automatedRemediation: true,
+  },
+};
+
 export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', brandName = 'Ultrium AI' }: SafeNetAppProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -102,6 +170,24 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
     vulnerableDevices: 0,
     activeConnectors: 0,
     networkUptime: 99.2
+  });
+  const [currentTier, setCurrentTier] = useState<keyof typeof PRICING_TIERS>('basic');
+  const [alerts, setAlerts] = useState([
+    { id: '1', type: 'critical', message: 'Critical vulnerability detected in server-01', timestamp: new Date() },
+    { id: '2', type: 'warning', message: 'High CPU usage on router-gateway', timestamp: new Date() },
+    { id: '3', type: 'info', message: 'New device discovered: mobile-device-123', timestamp: new Date() }
+  ]);
+  const [threatIntelligence, setThreatIntelligence] = useState({
+    activeThreatFeeds: 5,
+    threatsBlocked: 127,
+    riskScore: 7.2,
+    lastUpdate: new Date()
+  });
+  const [complianceStatus, setComplianceStatus] = useState({
+    nist: 85,
+    iso27001: 78,
+    pci: 92,
+    custom: 88
   });
 
   // Load scan history and stats
@@ -400,8 +486,27 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
           <TabsTrigger value="scanner">Network Scanner</TabsTrigger>
           <TabsTrigger value="topology">Network Map</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
+          <TabsTrigger value="analytics" disabled={!PRICING_TIERS[currentTier].advancedAnalytics}>
+            Analytics {!PRICING_TIERS[currentTier].advancedAnalytics && <Lock className="h-3 w-3 ml-1" />}
+          </TabsTrigger>
+          <TabsTrigger value="alerts" disabled={!PRICING_TIERS[currentTier].realTimeMonitoring}>
+            Alerts {!PRICING_TIERS[currentTier].realTimeMonitoring && <Lock className="h-3 w-3 ml-1" />}
+          </TabsTrigger>
+          <TabsTrigger value="threats" disabled={!PRICING_TIERS[currentTier].threatIntelligence}>
+            Threat Intel {!PRICING_TIERS[currentTier].threatIntelligence && <Lock className="h-3 w-3 ml-1" />}
+          </TabsTrigger>
+          <TabsTrigger value="compliance" disabled={!PRICING_TIERS[currentTier].complianceReporting}>
+            Compliance {!PRICING_TIERS[currentTier].complianceReporting && <Lock className="h-3 w-3 ml-1" />}
+          </TabsTrigger>
+          <TabsTrigger value="automation" disabled={!PRICING_TIERS[currentTier].automatedRemediation}>
+            Automation {!PRICING_TIERS[currentTier].automatedRemediation && <Lock className="h-3 w-3 ml-1" />}
+          </TabsTrigger>
           <TabsTrigger value="history">Scan History</TabsTrigger>
           <TabsTrigger value="connector">Connector</TabsTrigger>
+          <TabsTrigger value="pricing">
+            <Crown className="h-4 w-4 mr-1" />
+            Pricing
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="scanner" className="space-y-4">
@@ -715,6 +820,372 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
                   Network ranges are scanned remotely and results are securely stored in your dashboard.
                 </AlertDescription>
               </Alert>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Performance Metrics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 border rounded-lg">
+                    <div className="text-2xl font-bold text-success">98.7%</div>
+                    <div className="text-sm text-muted-foreground">Network Availability</div>
+                  </div>
+                  <div className="text-center p-3 border rounded-lg">
+                    <div className="text-2xl font-bold text-primary">12ms</div>
+                    <div className="text-sm text-muted-foreground">Avg Response Time</div>
+                  </div>
+                  <div className="text-center p-3 border rounded-lg">
+                    <div className="text-2xl font-bold text-info">847 GB</div>
+                    <div className="text-sm text-muted-foreground">Traffic Volume</div>
+                  </div>
+                  <div className="text-center p-3 border rounded-lg">
+                    <div className="text-2xl font-bold text-warning">3</div>
+                    <div className="text-sm text-muted-foreground">Anomalies Detected</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Historical Trends
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span>Vulnerability Trend</span>
+                    <span className="text-green-500">↓ 23% (Last 30 days)</span>
+                  </div>
+                  <Progress value={77} className="h-2" />
+                  <div className="flex justify-between">
+                    <span>Device Growth</span>
+                    <span className="text-blue-500">↑ 12% (Last 30 days)</span>
+                  </div>
+                  <Progress value={88} className="h-2" />
+                  <div className="flex justify-between">
+                    <span>Security Score</span>
+                    <span className="text-primary">8.3/10</span>
+                  </div>
+                  <Progress value={83} className="h-2" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="alerts" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="h-5 w-5" />
+                    Active Alerts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {alerts.map((alert) => (
+                      <div key={alert.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {alert.type === 'critical' && <AlertCircle className="h-5 w-5 text-red-500" />}
+                          {alert.type === 'warning' && <AlertTriangle className="h-5 w-5 text-orange-500" />}
+                          {alert.type === 'info' && <AlertCircle className="h-5 w-5 text-blue-500" />}
+                          <div>
+                            <div className="font-medium">{alert.message}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {alert.timestamp.toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                        <Badge variant={alert.type === 'critical' ? 'destructive' : alert.type === 'warning' ? 'secondary' : 'default'}>
+                          {alert.type}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Alert Settings
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Critical Alerts</Label>
+                    <Badge variant="default">Enabled</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>Email Notifications</Label>
+                    <Badge variant="default">Enabled</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Label>SMS Alerts</Label>
+                    <Badge variant="secondary">Disabled</Badge>
+                  </div>
+                  <Button size="sm" className="w-full">
+                    Configure Alerts
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="threats" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="h-5 w-5" />
+                  Threat Intelligence
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 border rounded-lg">
+                    <div className="text-2xl font-bold text-info">{threatIntelligence.activeThreatFeeds}</div>
+                    <div className="text-sm text-muted-foreground">Active Threat Feeds</div>
+                  </div>
+                  <div className="text-center p-3 border rounded-lg">
+                    <div className="text-2xl font-bold text-success">{threatIntelligence.threatsBlocked}</div>
+                    <div className="text-sm text-muted-foreground">Threats Blocked</div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Current Risk Score</span>
+                    <span className="font-bold text-warning">{threatIntelligence.riskScore}/10</span>
+                  </div>
+                  <Progress value={threatIntelligence.riskScore * 10} className="h-2" />
+                  <div className="text-xs text-muted-foreground">
+                    Last updated: {threatIntelligence.lastUpdate.toLocaleString()}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Active Threat Feeds
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {['MITRE ATT&CK', 'VirusTotal', 'AlienVault OTX', 'ThreatConnect', 'IBM X-Force'].map((feed, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 border rounded">
+                    <span className="text-sm">{feed}</span>
+                    <Badge variant="default">Active</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="compliance" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Compliance Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(complianceStatus).map(([framework, score]) => (
+                  <div key={framework} className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="font-medium">{framework.toUpperCase()}</span>
+                      <span className="font-bold">{score}%</span>
+                    </div>
+                    <Progress value={score} className="h-2" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="h-5 w-5" />
+                  Compliance Reports
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {['NIST Cybersecurity Framework', 'ISO 27001:2013', 'PCI DSS v4.0', 'SOC 2 Type II'].map((report, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="font-medium">{report}</div>
+                      <div className="text-sm text-muted-foreground">Generated today</div>
+                    </div>
+                    <Button size="sm" variant="outline">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="automation" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Automated Remediation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {['Patch Management', 'Firewall Updates', 'Access Control', 'Certificate Renewal'].map((action, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{action}</div>
+                        <div className="text-sm text-muted-foreground">Auto-remediation enabled</div>
+                      </div>
+                      <Badge variant="default">Active</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  SIEM Integration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {['Splunk Enterprise', 'IBM QRadar', 'Microsoft Sentinel', 'Elastic SIEM'].map((siem, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{siem}</div>
+                        <div className="text-sm text-muted-foreground">Data export enabled</div>
+                      </div>
+                      <Badge variant={index < 2 ? "default" : "secondary"}>
+                        {index < 2 ? "Connected" : "Available"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="pricing" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {Object.entries(PRICING_TIERS).map(([key, tier]) => (
+              <Card key={key} className={`${currentTier === key ? 'border-2 border-primary bg-primary/5' : ''}`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    {tier.name}
+                    {currentTier === key && <Badge variant="default">Current</Badge>}
+                  </CardTitle>
+                  <div className="text-3xl font-bold">${tier.price}<span className="text-lg font-normal">/month</span></div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2 text-sm">
+                    <div>• {tier.maxDevices} devices</div>
+                    <div>• {tier.maxSites} site{tier.maxSites > 1 ? 's' : ''}</div>
+                    {tier.features.map((feature, index) => (
+                      <div key={index}>• {feature}</div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">Advanced Features:</div>
+                    <div className="grid grid-cols-2 gap-1 text-xs">
+                      <div className={tier.realTimeMonitoring ? 'text-green-600' : 'text-muted-foreground'}>
+                        {tier.realTimeMonitoring ? '✓' : '✗'} Real-time Monitoring
+                      </div>
+                      <div className={tier.advancedAnalytics ? 'text-green-600' : 'text-muted-foreground'}>
+                        {tier.advancedAnalytics ? '✓' : '✗'} Advanced Analytics
+                      </div>
+                      <div className={tier.threatIntelligence ? 'text-green-600' : 'text-muted-foreground'}>
+                        {tier.threatIntelligence ? '✓' : '✗'} Threat Intelligence
+                      </div>
+                      <div className={tier.complianceReporting ? 'text-green-600' : 'text-muted-foreground'}>
+                        {tier.complianceReporting ? '✓' : '✗'} Compliance Reports
+                      </div>
+                      <div className={tier.apiAccess ? 'text-green-600' : 'text-muted-foreground'}>
+                        {tier.apiAccess ? '✓' : '✗'} API Access
+                      </div>
+                      <div className={tier.automatedRemediation ? 'text-green-600' : 'text-muted-foreground'}>
+                        {tier.automatedRemediation ? '✓' : '✗'} Auto Remediation
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    className="w-full" 
+                    variant={currentTier === key ? "outline" : "hero"}
+                    onClick={() => {
+                      if (currentTier !== key) {
+                        setCurrentTier(key as keyof typeof PRICING_TIERS);
+                        toast({
+                          title: "Plan Updated",
+                          description: `Switched to ${tier.name} plan with ${tier.name.toLowerCase()} features enabled.`,
+                        });
+                      }
+                    }}
+                  >
+                    {currentTier === key ? "Current Plan" : `Upgrade to ${tier.name}`}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5" />
+                Enterprise Features
+              </CardTitle>
+              <CardDescription>
+                Unlock advanced capabilities with higher-tier plans
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { name: 'Multi-site Management', tier: 'Professional+' },
+                  { name: 'Threat Intelligence Feeds', tier: 'Enterprise' },
+                  { name: 'Automated Remediation', tier: 'Enterprise' },
+                  { name: 'Custom Compliance Reports', tier: 'Professional+' },
+                  { name: 'SIEM Integration', tier: 'Enterprise' },
+                  { name: 'API Access & Webhooks', tier: 'Professional+' },
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <span className="text-sm">{feature.name}</span>
+                    <Badge variant="outline">{feature.tier}</Badge>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
