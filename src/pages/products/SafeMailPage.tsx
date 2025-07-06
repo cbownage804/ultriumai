@@ -1,5 +1,5 @@
 import Navigation from "@/components/Navigation";
-import { SafeEmailDemo } from "@/components/demos/SafeEmailDemo";
+import { SafeMailDemo } from "@/components/demos/SafeMailDemo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

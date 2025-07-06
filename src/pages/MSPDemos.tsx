@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Target,
   Crown,
-  FileText
+  FileText,
+  Mail
 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -72,6 +73,29 @@ const MSPDemos = () => {
       color: 'green'
     },
     {
+      id: 'safemail',
+      name: 'SafeMail Embeddable',
+      description: 'White-label email security scanning for your clients',
+      monthlyRevenue: '$6/user',
+      setupTime: '3 minutes',
+      marketSize: 'Every business with email',
+      demoUrl: '/safemail-embed-demo',
+      features: [
+        'One-line website integration',
+        'Complete white-label branding',
+        'Real-time threat detection',
+        'Phishing & malware scanning',
+        'Recurring monthly revenue'
+      ],
+      revenueModel: {
+        charge: 10,
+        pay: 4,
+        profit: 6
+      },
+      icon: Mail,
+      color: 'blue'
+    },
+    {
       id: 'security-suite',
       name: 'Security Apps Bundle',
       description: 'Complete cybersecurity toolkit for SMBs',
@@ -81,7 +105,7 @@ const MSPDemos = () => {
       demoUrl: '/demos',
       features: [
         'SafeLink URL scanning',
-        'SafeEmail threat detection',
+        'SafeMail threat detection',
         'SafeDoc malware analysis',
         'DarkWeb monitoring',
         'Centralized dashboard'

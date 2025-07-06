@@ -91,7 +91,7 @@ GitHub Team`,
   }
 ];
 
-export const SafeEmailDemo = () => {
+export const SafeMailDemo = () => {
   const [emailText, setEmailText] = useState('');
   const [analysis, setAnalysis] = useState<EmailAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);

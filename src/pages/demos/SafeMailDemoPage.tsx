@@ -1,5 +1,5 @@
 import Navigation from "@/components/Navigation";
-import { SafeEmailDemo } from "@/components/demos/SafeEmailDemo";
+import { SafeMailDemo } from "@/components/demos/SafeMailDemo";
 import Footer from "@/components/Footer";
 
 const SafeEmailDemoPage = () => {

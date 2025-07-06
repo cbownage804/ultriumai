@@ -27,7 +27,7 @@ import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
 import OnboardingFlow from '@/components/OnboardingFlow';
-import SafeEmailDemoPage from '@/pages/demos/SafeEmailDemoPage';
+import SafeMailDemoPage from '@/pages/demos/SafeMailDemoPage';
 import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
 import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
@@ -35,7 +35,8 @@ import SafeCompDemoPage from '@/pages/demos/SafeCompDemoPage';
 import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
 import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
-import SafeEmailPage from '@/pages/products/SafeEmailPage';
+import SafeMailPage from '@/pages/products/SafeMailPage';
+import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SafeLinkPage from '@/pages/products/SafeLinkPage';
 import SafeDocPage from '@/pages/products/SafeDocPage';
 import SafePassPage from '@/pages/products/SafePassPage';
@@ -96,7 +97,7 @@ function AppRouter() {
           <Docs />
         </ProtectedRoute>
       } />
-      <Route path="/demos/safeemail" element={<SafeEmailDemoPage />} />
+      <Route path="/demos/safemail" element={<SafeMailDemoPage />} />
       <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
       <Route path="/demos/safescan" element={<SafeDocDemoPage />} />
       <Route path="/demos/safepass" element={<SafePassDemoPage />} />
@@ -107,9 +108,10 @@ function AppRouter() {
       <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
       <Route path="/embed-demo" element={<EmbedDemo />} />
       <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
+      <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
       
       {/* Product Pages */}
-      <Route path="/products/safeemail" element={<SafeEmailPage />} />
+      <Route path="/products/safemail" element={<SafeMailPage />} />
       <Route path="/products/safelink" element={<SafeLinkPage />} />
       <Route path="/products/safedoc" element={<SafeDocPage />} />
       <Route path="/products/safepass" element={<SafePassPage />} />

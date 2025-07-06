@@ -80,8 +80,8 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">AI Security Apps</h3>
             <div className="space-y-2">
-              <button onClick={() => handleNavigation('/products/safeemail')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeEmail™
+              <button onClick={() => handleNavigation('/products/safemail')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                SafeMail™
               </button>
               <button onClick={() => handleNavigation('/products/safelink')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 SafeLink™
