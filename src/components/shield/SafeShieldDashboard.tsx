@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Bot,
   Play,
-  Palette
+  Palette,
+  Search
 } from "lucide-react";
 import { ThreatMonitor } from "./ThreatMonitor";
 import { EndpointManager } from "./EndpointManager";
@@ -27,6 +28,7 @@ import { SafeAVDashboard } from "./SafeAVDashboard";
 import { SafeMDRDashboard } from "./SafeMDRDashboard";
 import { EndpointAgentDownloads } from "./EndpointAgentDownloads";
 import { MSPWhiteLabelConfig } from "./MSPWhiteLabelConfig";
+import { AIResponseGuide } from "./AIResponseGuide";
 
 interface DashboardStats {
   total_threats: number;
