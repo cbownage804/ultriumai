@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Crown, Coins, LogOut, Settings } from 'lucide-react';
+import { User, Crown, Coins, LogOut, Settings, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -164,6 +164,15 @@ const UserProfileDropdown = () => {
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Dashboard
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="w-full justify-start hover:bg-muted/50"
+                  onClick={() => navigate('/msp-control-center')}
+                >
+                  <Building2 className="h-4 w-4 mr-2" />
+                  MSP Control Center
                 </Button>
                 <Button 
                   variant="ghost" 

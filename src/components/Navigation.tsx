@@ -111,10 +111,6 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => handleNavigation('/msp-control-center')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              Control Center
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
             {user ? (
               <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
                 KB
@@ -214,9 +210,6 @@ const Navigation = () => {
               <button onClick={() => handleNavigationWithMenuClose('/msp-demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 MSP Demos
               </button>
-              <button onClick={() => handleNavigationWithMenuClose('/msp-control-center')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                MSP Control Center
-              </button>
               <button onClick={() => handleNavigationWithMenuClose('/contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Contact
               </button>
@@ -233,6 +226,9 @@ const Navigation = () => {
                   <div className="flex flex-col space-y-2">
                     <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/dashboard')}>
                       Dashboard
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/msp-control-center')}>
+                      MSP Control Center
                     </Button>
                     <Button variant="ghost" className="w-full justify-start">
                       <User className="h-4 w-4 mr-2" />
