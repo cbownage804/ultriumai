@@ -75,8 +75,47 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      // Create new asset
-      const { asset_type, asset_value, scan_frequency = 'daily', msp_client_id } = await req.json();
+      // Check if this is a delete action or regular asset creation
+      const requestBody = await req.json();
+      
+      if (requestBody.action === 'delete') {
+        // Handle delete via POST
+        const assetId = requestBody.id;
+        console.log('DELETE via POST request received for asset:', assetId);
+        console.log('User ID:', user.id);
+        
+        if (!assetId) {
+          console.log('No asset ID provided');
+          return new Response(
+            JSON.stringify({ error: 'Asset ID is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        console.log('Attempting to delete asset:', assetId, 'for user:', user.id);
+        const { error } = await supabaseClient
+          .from('safeweb_assets')
+          .delete()
+          .eq('id', assetId)
+          .eq('user_id', user.id);
+
+        if (error) {
+          console.error('Error deleting asset:', error);
+          return new Response(
+            JSON.stringify({ error: 'Failed to delete asset', details: error.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        console.log('Asset deleted successfully via POST');
+        return new Response(
+          JSON.stringify({ message: 'Asset deleted successfully' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Regular asset creation
+      const { asset_type, asset_value, scan_frequency = 'daily', msp_client_id } = requestBody;
 
       if (!asset_type || !asset_value) {
         return new Response(

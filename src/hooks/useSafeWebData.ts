@@ -172,12 +172,12 @@ export const useSafeWebData = () => {
     }
   };
 
-  // Delete asset
+  // Delete asset - using POST with action to avoid DELETE request issues
   const deleteAsset = async (assetId: string) => {
     try {
-      const { error } = await supabase.functions.invoke('safeweb-assets', {
-        method: 'DELETE',
-        body: { id: assetId }
+      const { data, error } = await supabase.functions.invoke('safeweb-assets', {
+        method: 'POST',
+        body: { action: 'delete', id: assetId }
       });
 
       if (error) throw error;
