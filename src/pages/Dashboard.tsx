@@ -27,6 +27,10 @@ import KnowledgeBase from "@/components/KnowledgeBase";
 import SecurityAppsMarketplace from "@/components/SecurityAppsMarketplace";
 import { VideoUploadManager } from "@/components/VideoUploadManager";
 import { SafePassApp } from "@/components/apps/SafePassApp";
+import { SafeMailApp } from "@/components/apps/SafeMailApp";
+import { SafeDocApp } from "@/components/apps/SafeDocApp";
+import { SafeLinkApp } from "@/components/apps/SafeLinkApp";
+import { SafeNetApp } from "@/components/apps/SafeNetApp";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
@@ -83,6 +87,10 @@ const Dashboard = () => {
   const isSecurityAppsPage = location.pathname.includes('/security-apps');
   const isVideoManagerPage = location.pathname.includes('/video-manager');
   const isSafePassPage = location.pathname.includes('/safepass');
+  const isSafeMailPage = location.pathname.includes('/safemail');
+  const isSafeDocPage = location.pathname.includes('/safedoc');
+  const isSafeLinkPage = location.pathname.includes('/safelink');
+  const isSafeNetPage = location.pathname.includes('/safenet');
   const isChatPage = location.pathname === '/dashboard/chat';
   const isDashboardOverview = location.pathname === '/dashboard';
   
@@ -113,6 +121,10 @@ const Dashboard = () => {
     if (isSecurityAppsPage) return "Security Apps";
     if (isVideoManagerPage) return "Video Manager";
     if (isSafePassPage) return "SafePass Password Manager";
+    if (isSafeMailPage) return "SafeMail Email Security";
+    if (isSafeDocPage) return "SafeDoc Document Scanner";
+    if (isSafeLinkPage) return "SafeLink URL Security";
+    if (isSafeNetPage) return "SafeNet Network Security";
     return "Dashboard";
   };
 
@@ -143,6 +155,10 @@ const Dashboard = () => {
     if (isSecurityAppsPage) return <div className="p-6"><SecurityAppsMarketplace /></div>;
     if (isVideoManagerPage) return <div className="p-6 flex justify-center"><VideoUploadManager /></div>;
     if (isSafePassPage) return <SafePassApp />;
+    if (isSafeMailPage) return <SafeMailApp />;
+    if (isSafeDocPage) return <SafeDocApp />;
+    if (isSafeLinkPage) return <SafeLinkApp />;
+    if (isSafeNetPage) return <SafeNetApp />;
     return <DashboardOverview />;
   };
 

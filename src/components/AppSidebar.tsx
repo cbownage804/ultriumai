@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +43,7 @@ const safeSuiteItems = [
   { title: "SafeMail", url: "/dashboard/safemail", icon: Mail },
   { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText },
   { title: "SafeLink", url: "/dashboard/safelink", icon: Link },
+  { title: "SafeNet", url: "/dashboard/safenet", icon: Network },
 ];
 
 const managementItems = [
