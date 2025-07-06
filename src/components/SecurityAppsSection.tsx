@@ -82,7 +82,7 @@ const SecurityAppsSection = () => {
     },
     {
       id: 'safecomp',
-      name: 'Ultrium SafeComp™',
+      name: 'Ultrium SafeScore™',
       icon: Users,
       description: 'Comprehensive compliance management and audit platform',
       features: ['Compliance monitoring', 'Audit automation', 'Risk assessment'],
@@ -183,7 +183,7 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Compliance & Intelligence Bundle',
-      apps: ['SafeComp', 'SafeWeb'],
+      apps: ['SafeScore', 'SafeWeb'],
       originalPrice: '$40',
       bundlePrice: '$35',
       enterprisePrice: '$62',

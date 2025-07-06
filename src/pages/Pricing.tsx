@@ -81,7 +81,7 @@ const Pricing = () => {
         "Everything in SafePro",
         "Complete SafeSuite Apps (8 total)",
         "SafeNet network discovery",
-        "SafeComp compliance management",
+        "SafeScore compliance management",
         "SafeWeb dark web monitoring",
         "SafeShield unified dashboard",
         "Enterprise support & SLA",
@@ -131,7 +131,7 @@ const Pricing = () => {
     { name: "SafeLink", description: "URL analysis & protection" },
     { name: "SafePass", description: "Password management" },
     { name: "SafeNet", description: "Network discovery & mapping" },
-    { name: "SafeComp", description: "Compliance management" },
+    { name: "SafeScore", description: "Compliance management" },
     { name: "SafeWeb", description: "Dark web monitoring" },
     { name: "SafeShield", description: "Unified security dashboard" }
   ];

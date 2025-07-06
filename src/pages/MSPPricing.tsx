@@ -74,7 +74,7 @@ const MSPPricing = () => {
         "Everything in SafeMSP Pro",
         "Complete SafeSuite Apps (8 total)",
         "SafeNet network discovery",
-        "SafeComp compliance management",
+        "SafeScore compliance management",
         "SafeWeb dark web monitoring",
         "SafeShield unified dashboard",
         "Full co-management tools",
