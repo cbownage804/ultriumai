@@ -440,6 +440,36 @@ export type Database = {
         }
         Relationships: []
       }
+      client_users: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          role: Database["public"]["Enums"]["helpdesk_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["helpdesk_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          role?: Database["public"]["Enums"]["helpdesk_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       compliance_alerts: {
         Row: {
           alert_type: string
@@ -1885,6 +1915,36 @@ export type Database = {
           },
         ]
       }
+      msp_staff: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          msp_id: string
+          role: Database["public"]["Enums"]["helpdesk_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          msp_id: string
+          role?: Database["public"]["Enums"]["helpdesk_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          msp_id?: string
+          role?: Database["public"]["Enums"]["helpdesk_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       msp_usage_logs: {
         Row: {
           action: string
@@ -3191,6 +3251,7 @@ export type Database = {
         Row: {
           ai_confidence_score: number | null
           ai_suggested_solution: string | null
+          assigned_by: string | null
           assigned_to: string | null
           auto_resolved: boolean | null
           category: string
@@ -3199,6 +3260,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          internal_notes: string | null
+          is_internal_visible: boolean | null
+          msp_id: string | null
           priority: string
           resolution_notes: string | null
           resolution_time_minutes: number | null
@@ -3211,6 +3275,7 @@ export type Database = {
         Insert: {
           ai_confidence_score?: number | null
           ai_suggested_solution?: string | null
+          assigned_by?: string | null
           assigned_to?: string | null
           auto_resolved?: boolean | null
           category?: string
@@ -3219,6 +3284,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          internal_notes?: string | null
+          is_internal_visible?: boolean | null
+          msp_id?: string | null
           priority?: string
           resolution_notes?: string | null
           resolution_time_minutes?: number | null
@@ -3231,6 +3299,7 @@ export type Database = {
         Update: {
           ai_confidence_score?: number | null
           ai_suggested_solution?: string | null
+          assigned_by?: string | null
           assigned_to?: string | null
           auto_resolved?: boolean | null
           category?: string
@@ -3239,6 +3308,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          internal_notes?: string | null
+          is_internal_visible?: boolean | null
+          msp_id?: string | null
           priority?: string
           resolution_notes?: string | null
           resolution_time_minutes?: number | null
@@ -3413,6 +3485,39 @@ export type Database = {
           source?: string
           threat_types?: string[]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      ticket_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          ticket_id: string
+          updated_at: string
+          user_id: string
+          visibility_level: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id: string
+          updated_at?: string
+          user_id: string
+          visibility_level?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id?: string
+          updated_at?: string
+          user_id?: string
+          visibility_level?: string | null
         }
         Relationships: []
       }
@@ -3716,6 +3821,7 @@ export type Database = {
         | "msp_admin"
         | "mssp_admin"
         | "ultrium_admin"
+      helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3840,6 +3946,7 @@ export const Constants = {
         "mssp_admin",
         "ultrium_admin",
       ],
+      helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
     },
   },
 } as const
