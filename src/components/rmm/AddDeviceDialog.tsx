@@ -103,20 +103,20 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
       case 'windows':
         return {
           installer: `${baseUrl}/ultrium-rmm-agent-windows.msi?agent_id=${generatedConfig?.agentId}&client_id=${clientId}`,
-          command: `REM Download and run the installer\nREM The installer will automatically configure the agent`,
-          description: "Windows batch installer with automatic configuration"
+          command: `# Run as Administrator\nmsiexec /i ultrium-rmm-agent-windows.msi /quiet`,
+          description: "Windows MSI installer with automatic configuration"
         };
       case 'macos':
         return {
           installer: `${baseUrl}/ultrium-rmm-agent-macos.pkg?agent_id=${generatedConfig?.agentId}&client_id=${clientId}`,
-          command: `# Download and run the installer\n# chmod +x ultrium-rmm-agent-macos.pkg && sudo ./ultrium-rmm-agent-macos.pkg`,
-          description: "macOS shell script installer with automatic configuration"
+          command: `# Install the package\nsudo installer -pkg ultrium-rmm-agent-macos.pkg -target /`,
+          description: "macOS PKG installer with automatic configuration"
         };
       case 'linux':
         return {
           installer: `${baseUrl}/ultrium-rmm-agent-linux.deb?agent_id=${generatedConfig?.agentId}&client_id=${clientId}`,
-          command: `# Download and run the installer\n# chmod +x ultrium-rmm-agent-linux.deb && sudo ./ultrium-rmm-agent-linux.deb`,
-          description: "Linux shell script installer with automatic configuration"
+          command: `# Install the package\nsudo dpkg -i ultrium-rmm-agent-linux.deb`,
+          description: "Linux DEB package with automatic configuration"
         };
       default:
         return { installer: '', command: '', description: '' };
