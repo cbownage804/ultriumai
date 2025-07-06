@@ -48,7 +48,6 @@ const safeSuiteItems = [
 ];
 
 const managementItems = [
-  { title: "Security Apps", url: "/dashboard/security-apps", icon: Shield },
   { title: "API Management", url: "/dashboard/api-management", icon: Key },
   { title: "Video Manager", url: "/dashboard/video-manager", icon: Video },
   { title: "White-label", url: "/dashboard/white-label", icon: Palette },
