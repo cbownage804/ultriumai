@@ -20,7 +20,9 @@ import {
   Mail,
   Network,
   Eye,
-  Search
+  Search,
+  Wrench,
+  MessageSquare
 } from 'lucide-react';
 import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
@@ -215,6 +217,98 @@ const MSPDemos = () => {
       },
       icon: Zap,
       color: 'green'
+    },
+    {
+      id: 'rmm',
+      name: 'Ultrium RMM',
+      description: 'Remote monitoring and management platform for IT infrastructure',
+      monthlyRevenue: '$30/client',
+      setupTime: '20 minutes',
+      marketSize: 'Every business with IT infrastructure',
+      demoUrl: '/demos/rmm',
+      features: [
+        'Real-time device monitoring',
+        'Automated script execution',
+        'Patch management',
+        'Remote access & control',
+        'Multi-client dashboard'
+      ],
+      revenueModel: {
+        charge: 45,
+        pay: 15,
+        profit: 30
+      },
+      icon: Wrench,
+      color: 'blue'
+    },
+    {
+      id: 'ticketing',
+      name: 'Ultrium Helpdesk',
+      description: 'AI-powered ticketing and helpdesk automation',
+      monthlyRevenue: '$25/user',
+      setupTime: '15 minutes',
+      marketSize: 'Every business with support needs',
+      demoUrl: '/demos/ticketing',
+      features: [
+        'Intelligent ticket routing',
+        'Automated responses',
+        'SLA tracking & alerts',
+        'Multi-channel support',
+        'Analytics & reporting'
+      ],
+      revenueModel: {
+        charge: 40,
+        pay: 15,
+        profit: 25
+      },
+      icon: MessageSquare,
+      color: 'green'
+    },
+    {
+      id: 'antivirus',
+      name: 'Ultrium Antivirus',
+      description: 'AI-powered endpoint protection and threat detection',
+      monthlyRevenue: '$20/endpoint',
+      setupTime: '10 minutes',
+      marketSize: 'Every business with computers',
+      demoUrl: '/demos/antivirus',
+      features: [
+        'Real-time threat detection',
+        'Behavioral analysis',
+        'Automated quarantine',
+        'Cloud-based scanning',
+        'Centralized management'
+      ],
+      revenueModel: {
+        charge: 30,
+        pay: 10,
+        profit: 20
+      },
+      icon: Shield,
+      color: 'red'
+    },
+    {
+      id: 'mdr',
+      name: 'Ultrium MDR',
+      description: '24/7 managed detection and response with expert analysts',
+      monthlyRevenue: '$100/client',
+      setupTime: '30 minutes',
+      marketSize: 'Mid-market and enterprise businesses',
+      demoUrl: '/demos/mdr',
+      features: [
+        '24/7 security monitoring',
+        'Expert threat hunting',
+        'Incident response',
+        'Threat intelligence',
+        'Forensic analysis'
+      ],
+      revenueModel: {
+        charge: 150,
+        pay: 50,
+        profit: 100
+      },
+      icon: Eye,
+      color: 'purple'
     }
   ];
 
