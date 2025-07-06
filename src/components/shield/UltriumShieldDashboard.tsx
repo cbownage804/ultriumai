@@ -18,11 +18,14 @@ import {
   Lock,
   RefreshCw,
   Bot,
-  Play
+  Play,
+  Palette
 } from "lucide-react";
 import { ThreatMonitor } from "./ThreatMonitor";
 import { EndpointManager } from "./EndpointManager";
 import { AIResponseGuide } from "./AIResponseGuide";
+import { EndpointAgentDownloads } from "./EndpointAgentDownloads";
+import { MSPWhiteLabelConfig } from "./MSPWhiteLabelConfig";
 
 interface DashboardStats {
   total_threats: number;
@@ -65,7 +68,7 @@ export const UltriumShieldDashboard = () => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [threats, setThreats] = useState<Threat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide' | 'downloads' | 'white-label'>('overview');
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const { toast } = useToast();
 
@@ -267,6 +270,20 @@ export const UltriumShieldDashboard = () => {
           <Bot className="h-4 w-4 mr-2" />
           AI Response Guide
         </Button>
+        <Button 
+          variant={activeView === 'downloads' ? 'default' : 'outline'}
+          onClick={() => setActiveView('downloads')}
+        >
+          <Zap className="h-4 w-4 mr-2" />
+          Agent Downloads
+        </Button>
+        <Button 
+          variant={activeView === 'white-label' ? 'default' : 'outline'}
+          onClick={() => setActiveView('white-label')}
+        >
+          <Palette className="h-4 w-4 mr-2" />
+          White Label
+        </Button>
       </div>
 
       {/* Critical Alerts */}
@@ -429,6 +446,16 @@ export const UltriumShieldDashboard = () => {
           threat={selectedThreat}
           onAction={loadDashboardData}
         />
+      )}
+
+      {/* Agent Downloads */}
+      {activeView === 'downloads' && (
+        <EndpointAgentDownloads />
+      )}
+
+      {/* White Label Configuration */}
+      {activeView === 'white-label' && (
+        <MSPWhiteLabelConfig />
       )}
     </div>
   );
