@@ -50,6 +50,7 @@ import SafeScorePage from '@/pages/products/SafeScorePage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
 import TicketingPage from '@/pages/products/TicketingPage';
 import AntivirusPage from '@/pages/products/AntivirusPage';
+import MDRPage from '@/pages/products/MDRPage';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
@@ -202,6 +203,7 @@ function AppRouter() {
       <Route path="/products/safenet" element={<SafeNetPage />} />
       <Route path="/products/ticketing" element={<TicketingPage />} />
       <Route path="/products/antivirus" element={<AntivirusPage />} />
+      <Route path="/products/mdr" element={<MDRPage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={
