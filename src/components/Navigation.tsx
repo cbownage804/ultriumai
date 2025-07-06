@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, User, ChevronDown } from "lucide-react";
+import { Menu, LogOut, User, ChevronDown, Phone } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,8 +13,9 @@ import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f92
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSecurityDropdownOpen, setIsSecurityDropdownOpen] = useState(false);
-  const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);
+  const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);  
   const [isDemosDropdownOpen, setIsDemosDropdownOpen] = useState(false);
+  const [isContactDropdownOpen, setIsContactDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -29,6 +30,7 @@ const Navigation = () => {
     setIsSecurityDropdownOpen(false);
     setIsBusinessDropdownOpen(false);
     setIsDemosDropdownOpen(false);
+    setIsContactDropdownOpen(false);
   };
 
   const handleSignOut = async () => {
@@ -53,45 +55,29 @@ const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleNavigationWithMenuClose('/')}>
-            <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform for MSPs and MSSPs" className="h-12 w-auto transition-transform duration-300 hover:scale-110" />
-            <span className="text-xl font-bold text-foreground transition-colors duration-300">UltriumAI</span>
+        <div className="flex items-center justify-between h-16">
+          {/* Logo - More Compact */}
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleNavigationWithMenuClose('/')}>
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto transition-transform duration-300 hover:scale-110" />
+            <span className="text-lg font-bold text-foreground transition-colors duration-300">UltriumAI</span>
           </div>
           
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            <div className="relative">
-              <button 
-                onClick={() => setIsSecurityDropdownOpen(!isSecurityDropdownOpen)}
-                className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
-              >
-                MSPs
-                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isSecurityDropdownOpen ? 'rotate-180' : ''}`} />
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </button>
-              {isSecurityDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
-                  <div className="py-2">
-                    <button onClick={() => { handleNavigationWithMenuClose('/msps'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">MSPs</button>
-                    <button onClick={() => { handleNavigationWithMenuClose('/mssps'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">MSSPs</button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {/* Desktop Navigation - Consolidated */}
+          <div className="hidden md:flex items-center gap-4">
             <div className="relative">
               <button 
                 onClick={() => setIsBusinessDropdownOpen(!isBusinessDropdownOpen)}
-                className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
               >
-                Business
+                Industries
                 <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isBusinessDropdownOpen ? 'rotate-180' : ''}`} />
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </button>
               {isBusinessDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
+                <div className="absolute top-full left-0 mt-2 w-48 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
                   <div className="py-2">
+                    <button onClick={() => { handleNavigationWithMenuClose('/msps'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">MSPs</button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/mssps'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">MSSPs</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/small-business'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">Small Business</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/medium-business'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">Medium Business</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/enterprise'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">Enterprise</button>
@@ -99,25 +85,25 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => handleNavigation('/ultriumgpt')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+            <button onClick={() => handleNavigation('/ultriumgpt')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               UltriumGPT
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('/solutions')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+            <button onClick={() => handleNavigation('/solutions')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
             <div className="relative">
               <button 
                 onClick={() => setIsDemosDropdownOpen(!isDemosDropdownOpen)}
-                className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
               >
                 Demos
                 <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isDemosDropdownOpen ? 'rotate-180' : ''}`} />
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </button>
               {isDemosDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
+                <div className="absolute top-full left-0 mt-2 w-48 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
                   <div className="py-2">
                     <button onClick={() => { handleNavigationWithMenuClose('/demos'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">Business Demos</button>
                     <button onClick={() => { handleNavigationWithMenuClose('/msp-demos'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">MSP Demos</button>
@@ -125,39 +111,57 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => handleNavigation('/msp-control-center')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              MSP Control Center
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
-            <button onClick={() => handleNavigation('/contact')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              Contact
+            <button onClick={() => handleNavigation('/msp-control-center')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+              Control Center
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
             {user ? (
-              <button onClick={() => handleNavigation('/docs')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+              <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
                 KB
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </button>
             ) : null}
           </div>
           
-          {/* Desktop Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" className="hover:scale-105 transition-all duration-300">
-              804-821-1410
-            </Button>
+          {/* Desktop Contact & Auth - Compact */}
+          <div className="hidden md:flex items-center gap-2">
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsContactDropdownOpen(!isContactDropdownOpen)}
+                className="hover:scale-105 transition-all duration-300 flex items-center gap-1"
+              >
+                <Phone className="h-4 w-4" />
+                Contact
+                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isContactDropdownOpen ? 'rotate-180' : ''}`} />
+              </Button>
+              {isContactDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-44 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
+                  <div className="py-2">
+                    <a href="tel:804-821-1410" className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      804-821-1410
+                    </a>
+                    <button onClick={() => { handleNavigationWithMenuClose('/contact'); setIsContactDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">
+                      Contact Form
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             {user ? (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-1">
                 <UserProfileDropdown />
                 <ThemeToggle />
-                <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:scale-110 transition-all duration-300 hover:text-destructive">
-                  <LogOut className="h-5 w-5" />
+                <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:scale-110 transition-all duration-300 hover:text-destructive h-8 w-8">
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-1">
                 <ThemeToggle />
-                <Button variant="hero" onClick={() => handleNavigation('/auth')} className="btn-glow hover:scale-105 transition-all duration-300">
+                <Button variant="hero" size="sm" onClick={() => handleNavigation('/auth')} className="btn-glow hover:scale-105 transition-all duration-300">
                   Sign In
                 </Button>
               </div>
