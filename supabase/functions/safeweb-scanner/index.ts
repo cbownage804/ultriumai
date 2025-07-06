@@ -251,6 +251,103 @@ async function scanWithIntelligenceX(email: string, apiKey: string): Promise<Sca
   }
 }
 
+async function scanWithDehashed(email: string, apiKey: string): Promise<ScanResult[]> {
+  try {
+    logStep('Scanning with Dehashed', { email });
+    
+    // Dehashed API endpoint for email search
+    const response = await fetch(`https://api.dehashed.com/search?query=email:${encodeURIComponent(email)}&size=100`, {
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': `Basic ${btoa(apiKey)}` // Dehashed uses API key as username with empty password
+      }
+    });
+
+    if (!response.ok) {
+      logStep('Dehashed API error', { status: response.status });
+      return [];
+    }
+
+    const data = await response.json();
+    const entries = data.entries || [];
+
+    if (entries.length === 0) {
+      logStep('No breaches found in Dehashed');
+      return [];
+    }
+
+    // Group entries by database/breach source
+    const breachGroups = entries.reduce((groups: any, entry: any) => {
+      const database = entry.database || 'Unknown Database';
+      if (!groups[database]) {
+        groups[database] = [];
+      }
+      groups[database].push(entry);
+      return groups;
+    }, {});
+
+    const threats: ScanResult[] = Object.entries(breachGroups).map(([database, entries]: [string, any]) => {
+      const entryList = entries as any[];
+      const firstEntry = entryList[0];
+      
+      // Determine severity based on data available
+      let severity: 'low' | 'medium' | 'high' | 'critical' = 'medium';
+      const hasPassword = entryList.some(e => e.password && e.password.length > 0);
+      const hasHashedPassword = entryList.some(e => e.hashed_password && e.hashed_password.length > 0);
+      const hasSensitiveData = entryList.some(e => e.phone || e.address || e.ip_address);
+      
+      if (hasPassword) {
+        severity = 'critical';
+      } else if (hasHashedPassword) {
+        severity = 'high';
+      } else if (hasSensitiveData) {
+        severity = 'high';
+      }
+
+      // Extract available data fields
+      const dataFields = new Set();
+      entryList.forEach(entry => {
+        Object.keys(entry).forEach(key => {
+          if (entry[key] && key !== 'id' && key !== 'email' && key !== 'database') {
+            dataFields.add(key);
+          }
+        });
+      });
+
+      return {
+        threat_type: 'data_breach',
+        title: `Email compromised in ${database} breach`,
+        description: `Email found in ${database} data breach with ${entryList.length} record(s). Exposed data includes: ${Array.from(dataFields).join(', ')}. ${hasPassword ? 'CRITICAL: Plain text passwords exposed!' : hasHashedPassword ? 'Hashed passwords exposed.' : ''}`,
+        severity,
+        confidence_score: 98,
+        source_name: 'Dehashed',
+        source_url: `https://dehashed.com/`,
+        raw_data: {
+          database,
+          total_records: entryList.length,
+          sample_record: firstEntry,
+          exposed_fields: Array.from(dataFields)
+        },
+        threat_indicators: {
+          database_name: database,
+          records_count: entryList.length,
+          has_password: hasPassword,
+          has_hashed_password: hasHashedPassword,
+          exposed_data_types: Array.from(dataFields),
+          breach_scope: entryList.length > 1 ? 'multiple_records' : 'single_record'
+        }
+      };
+    });
+
+    logStep('Dehashed scan completed', { threats_found: threats.length, total_records: entries.length });
+    return threats;
+
+  } catch (error) {
+    logStep('Dehashed scan error', error.message);
+    return [];
+  }
+}
+
 async function scanDomainReputation(domain: string): Promise<ScanResult[]> {
   try {
     logStep('Scanning domain reputation', { domain });
@@ -324,7 +421,7 @@ async function performRealScan(asset: Asset): Promise<ScanResult[]> {
         break;
         
       case 'email':
-        // Use both HIBP and Intelligence X for comprehensive breach detection
+        // Use multiple premium sources for comprehensive breach detection
         const breachThreats = await scanWithHaveIBeenPwned(asset.asset_value);
         threats.push(...breachThreats);
         
@@ -335,6 +432,15 @@ async function performRealScan(asset: Asset): Promise<ScanResult[]> {
           threats.push(...intelXThreats);
         } else {
           logStep('Intelligence X API key not configured');
+        }
+
+        // Add Dehashed scanning if API key is available
+        const dehashedKey = Deno.env.get('DEHASHED_API_KEY');
+        if (dehashedKey) {
+          const dehashedThreats = await scanWithDehashed(asset.asset_value, dehashedKey);
+          threats.push(...dehashedThreats);
+        } else {
+          logStep('Dehashed API key not configured');
         }
         break;
         
@@ -418,7 +524,7 @@ serve(async (req) => {
         job_type: scan_type,
         status: 'running',
         started_at: new Date().toISOString(),
-        scan_sources: ['VirusTotal', 'Have I Been Pwned', 'Intelligence X', 'Domain Analysis']
+        scan_sources: ['VirusTotal', 'Have I Been Pwned', 'Intelligence X', 'Dehashed', 'Domain Analysis']
       })
       .select()
       .single();
