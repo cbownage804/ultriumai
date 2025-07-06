@@ -2278,7 +2278,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_safeweb_threats_asset_id"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "safeweb_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_app_subscriptions: {
         Row: {
