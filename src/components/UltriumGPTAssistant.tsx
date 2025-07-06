@@ -472,10 +472,7 @@ Choose a question below to get started, or ask me anything!`,
                     />
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
-                      💡 Press <kbd className="px-2 py-1 bg-background rounded text-xs">Enter</kbd> to send, <kbd className="px-2 py-1 bg-background rounded text-xs">Shift+Enter</kbd> for new line
-                    </div>
+                  <div className="flex justify-end">
                     <Button 
                       onClick={handleSendMessage} 
                       disabled={!input.trim() || isLoading}
