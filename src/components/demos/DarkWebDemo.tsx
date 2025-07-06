@@ -39,8 +39,8 @@ interface ScanResults {
 }
 
 const mockResults: Record<string, ScanResults> = {
-  'brandon.howard@kwccpa.com': {
-    query: 'brandon.howard@kwccpa.com',
+  'john.doe@acmetech.com': {
+    query: 'john.doe@acmetech.com',
     totalFindings: 3,
     scanTime: new Date().toLocaleString(),
     results: [
@@ -66,7 +66,7 @@ const mockResults: Record<string, ScanResults> = {
         source: 'Underground Marketplace',
         date: '2024-01-20',
         details: {
-          username: 'brandon.howard@kwccpa.com',
+          username: 'john.doe@acmetech.com',
           passwordHash: 'SHA256:a8f5f167...truncated',
           additionalInfo: 'Part of 2024 credential collection',
           services: ['Corporate VPN', 'Email Portal']
@@ -236,7 +236,7 @@ export const DarkWebDemo = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => loadSampleQuery('brandon.howard@kwccpa.com')}
+                    onClick={() => loadSampleQuery('john.doe@acmetech.com')}
                     className="w-full justify-start text-xs"
                   >
                     📧 Email Address
