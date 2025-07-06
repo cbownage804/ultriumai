@@ -502,7 +502,7 @@ You should be helpful, professional, and proactive in suggesting actions. When u
             messages: [
               {
                 role: 'system',
-                content: 'You are UltriumGPT. Analyze the tool result and provide a helpful, detailed response to the user. Include key insights, recommendations, and next steps.'
+                content: 'You are UltriumGPT. Provide a concise, well-structured response. For reports, format them cleanly with clear sections, bullet points, and key metrics highlighted. Keep responses professional but not overly verbose. Focus on actionable insights.'
               },
               {
                 role: 'user',
@@ -514,7 +514,7 @@ You should be helpful, professional, and proactive in suggesting actions. When u
               },
               {
                 role: 'user',
-                content: 'Please provide a summary and analysis of these results in a user-friendly format.'
+                content: 'Provide a clear, concise summary of these results. For reports, use clean formatting with sections, bullet points, and highlight key metrics. Keep it professional and actionable.'
               }
             ],
             temperature: 0.7,

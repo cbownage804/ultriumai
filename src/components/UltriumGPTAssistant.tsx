@@ -17,7 +17,8 @@ import {
   FileText,
   Loader2,
   CheckCircle,
-  Clock
+  Clock,
+  Download
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -147,6 +148,18 @@ Choose a question below to get started, or ask me anything!`,
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const downloadReport = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -230,9 +243,24 @@ Choose a question below to get started, or ask me anything!`,
                                   </div>
                                 )}
                                 {message.metadata.reportGenerated && (
-                                  <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
-                                    <FileText className="h-4 w-4" />
-                                    Report generated and ready for download
+                                  <div className="flex items-center justify-between text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="h-4 w-4" />
+                                      Report generated and ready for download
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 text-xs bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
+                                      onClick={() => {
+                                        const reportContent = message.content;
+                                        const timestamp = new Date().toISOString().split('T')[0];
+                                        downloadReport(reportContent, `ultrium-report-${timestamp}.txt`);
+                                      }}
+                                    >
+                                      <Download className="h-3 w-3 mr-1" />
+                                      Download
+                                    </Button>
                                   </div>
                                 )}
                               </div>
