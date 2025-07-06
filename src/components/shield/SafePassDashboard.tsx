@@ -44,7 +44,7 @@ interface SafePassEntry {
   created_at: string;
 }
 
-export const SafePassEnterprise = () => {
+export const SafePassDashboard = () => {
   const [vaults, setVaults] = useState<SafePassVault[]>([]);
   const [entries, setEntries] = useState<SafePassEntry[]>([]);
   const [selectedVault, setSelectedVault] = useState<SafePassVault | null>(null);
@@ -202,7 +202,7 @@ export const SafePassEnterprise = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            SafePass Enterprise
+            SafePass
           </h2>
           <p className="text-muted-foreground">
             Enterprise password management and security

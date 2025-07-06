@@ -55,7 +55,7 @@ interface ThreatIntelligence {
   last_seen: string;
 }
 
-export const UnifiedSecurityCenter = () => {
+export const SecurityDashboard = () => {
   const [metrics, setMetrics] = useState<SecurityMetrics>({
     total_threats: 0,
     active_incidents: 0,
@@ -211,7 +211,7 @@ export const UnifiedSecurityCenter = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            Unified Security Center
+            Security Center
           </h2>
           <p className="text-muted-foreground">
             Centralized security monitoring and threat management

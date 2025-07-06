@@ -64,7 +64,7 @@ interface SafeNetVulnerability {
   solution: string;
 }
 
-export const SafeNetAdvanced = () => {
+export const SafeNetDashboard = () => {
   const [networks, setNetworks] = useState<SafeNetNetwork[]>([]);
   const [devices, setDevices] = useState<SafeNetDevice[]>([]);
   const [vulnerabilities, setVulnerabilities] = useState<SafeNetVulnerability[]>([]);
@@ -281,7 +281,7 @@ export const SafeNetAdvanced = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Network className="h-6 w-6 text-primary" />
-            SafeNet Advanced
+            SafeNet
           </h2>
           <p className="text-muted-foreground">
             Advanced network monitoring and vulnerability management

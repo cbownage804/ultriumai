@@ -45,7 +45,7 @@ interface SafeMailThreat {
   false_positive: boolean;
 }
 
-export const SafeMailPro = () => {
+export const SafeMailDashboard = () => {
   const [domains, setDomains] = useState<SafeMailDomain[]>([]);
   const [threats, setThreats] = useState<SafeMailThreat[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<SafeMailDomain | null>(null);
@@ -226,7 +226,7 @@ export const SafeMailPro = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Mail className="h-6 w-6 text-primary" />
-            SafeMail Pro
+            SafeMail
           </h2>
           <p className="text-muted-foreground">
             Advanced email security and threat detection
