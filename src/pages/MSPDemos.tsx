@@ -99,15 +99,15 @@ const MSPDemos = () => {
   const Icon = currentSolution.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center space-y-6 mb-12">
           <div className="flex items-center justify-center gap-2">
-            <Users className="h-8 w-8 text-blue-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <Users className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold text-gradient">
               MSP Demo Center
             </h1>
           </div>
@@ -132,9 +132,9 @@ const MSPDemos = () => {
         </div>
 
         {/* MSP Value Proposition */}
-        <Card className="mb-12 border-2 border-green-200 bg-green-50">
+        <Card className="mb-12 border-2 border-success/20 bg-success/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
+            <CardTitle className="flex items-center gap-2 text-success-foreground">
               <Crown className="h-6 w-6" />
               Why MSPs Choose Ultrium
             </CardTitle>
@@ -142,16 +142,16 @@ const MSPDemos = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">White-Label</div>
-                <p className="text-green-700">Complete branding control - it's YOUR service</p>
+                <div className="text-3xl font-bold text-success mb-2">White-Label</div>
+                <p className="text-muted-foreground">Complete branding control - it's YOUR service</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">Quick Setup</div>
-                <p className="text-blue-700">Deploy to clients in minutes, not weeks</p>
+                <div className="text-3xl font-bold text-primary mb-2">Quick Setup</div>
+                <p className="text-muted-foreground">Deploy to clients in minutes, not weeks</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-600 mb-2">High Margins</div>
-                <p className="text-purple-700">60-70% profit margins on all solutions</p>
+                <div className="text-3xl font-bold text-info mb-2">High Margins</div>
+                <p className="text-muted-foreground">60-70% profit margins on all solutions</p>
               </div>
             </div>
           </CardContent>
@@ -169,14 +169,14 @@ const MSPDemos = () => {
                   key={solution.id}
                   className={`cursor-pointer transition-all ${
                     selectedDemo === solution.id 
-                      ? `border-2 border-${solution.color}-500 bg-${solution.color}-50` 
-                      : 'hover:border-gray-300'
+                      ? 'border-2 border-primary bg-primary/5' 
+                      : 'hover:border-border'
                   }`}
                   onClick={() => setSelectedDemo(solution.id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center gap-3">
-                      <SolutionIcon className={`h-6 w-6 text-${solution.color}-600`} />
+                      <SolutionIcon className="h-6 w-6 text-primary" />
                       <div>
                         <div className="font-medium">{solution.name}</div>
                         <div className="text-sm text-muted-foreground">{solution.monthlyRevenue}</div>
@@ -193,7 +193,7 @@ const MSPDemos = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <Icon className={`h-8 w-8 text-${currentSolution.color}-600`} />
+                  <Icon className="h-8 w-8 text-primary" />
                   {currentSolution.name}
                 </CardTitle>
                 <CardDescription className="text-lg">
@@ -213,61 +213,61 @@ const MSPDemos = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <Card>
                         <CardContent className="p-4 text-center">
-                          <DollarSign className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                          <DollarSign className="h-8 w-8 mx-auto mb-2 text-success" />
                           <div className="font-semibold">Monthly Revenue</div>
-                          <div className="text-2xl font-bold text-green-600">{currentSolution.monthlyRevenue}</div>
+                          <div className="text-2xl font-bold text-success">{currentSolution.monthlyRevenue}</div>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4 text-center">
-                          <Zap className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+                          <Zap className="h-8 w-8 mx-auto mb-2 text-primary" />
                           <div className="font-semibold">Setup Time</div>
-                          <div className="text-2xl font-bold text-blue-600">{currentSolution.setupTime}</div>
+                          <div className="text-2xl font-bold text-primary">{currentSolution.setupTime}</div>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4 text-center">
-                          <Target className="h-8 w-8 mx-auto mb-2 text-purple-500" />
+                          <Target className="h-8 w-8 mx-auto mb-2 text-info" />
                           <div className="font-semibold">Market Size</div>
-                          <div className="text-sm font-bold text-purple-600">{currentSolution.marketSize}</div>
+                          <div className="text-sm font-bold text-info">{currentSolution.marketSize}</div>
                         </CardContent>
                       </Card>
                     </div>
                   </TabsContent>
 
                   <TabsContent value="revenue" className="space-y-4">
-                    <Card className="border-green-200 bg-green-50">
+                    <Card className="border-2 border-success/20 bg-success/5">
                       <CardHeader>
-                        <CardTitle className="text-green-800">Revenue Breakdown</CardTitle>
+                        <CardTitle className="text-success-foreground">Revenue Breakdown</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                           <div className="space-y-2">
-                            <div className="text-3xl font-bold text-green-600">
+                            <div className="text-3xl font-bold text-success">
                               ${currentSolution.revenueModel.charge}
                             </div>
-                            <div className="text-sm text-green-700">You charge client</div>
+                            <div className="text-sm text-muted-foreground">You charge client</div>
                           </div>
                           <div className="space-y-2">
-                            <div className="text-3xl font-bold text-blue-600">
+                            <div className="text-3xl font-bold text-primary">
                               ${currentSolution.revenueModel.pay}
                             </div>
-                            <div className="text-sm text-blue-700">You pay Ultrium</div>
+                            <div className="text-sm text-muted-foreground">You pay Ultrium</div>
                           </div>
                           <div className="space-y-2">
-                            <div className="text-3xl font-bold text-purple-600">
+                            <div className="text-3xl font-bold text-info">
                               ${currentSolution.revenueModel.profit}
                             </div>
-                            <div className="text-sm text-purple-700">Your profit</div>
+                            <div className="text-sm text-muted-foreground">Your profit</div>
                           </div>
                         </div>
-                        <div className="mt-6 p-4 bg-white rounded-lg">
+                        <div className="mt-6 p-4 bg-card border rounded-lg">
                           <div className="text-center">
                             <div className="font-semibold mb-2">Example: 20 clients with 5 users each</div>
-                            <div className="text-2xl font-bold text-green-600">
+                            <div className="text-2xl font-bold text-success">
                               ${currentSolution.revenueModel.profit * 100}/month recurring
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-muted-foreground">
                               = ${currentSolution.revenueModel.profit * 1200}/year additional revenue
                             </div>
                           </div>
@@ -280,7 +280,7 @@ const MSPDemos = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {currentSolution.features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <CheckCircle className="h-5 w-5 text-success" />
                           <span>{feature}</span>
                         </div>
                       ))}
@@ -288,7 +288,7 @@ const MSPDemos = () => {
                   </TabsContent>
 
                   <TabsContent value="demo" className="space-y-4">
-                    <Card className="border-2 border-blue-200">
+                    <Card className="border-2 border-primary/20">
                       <CardContent className="p-6 text-center space-y-4">
                         <h3 className="text-xl font-semibold">Ready to see it in action?</h3>
                         <p className="text-muted-foreground">
@@ -297,7 +297,7 @@ const MSPDemos = () => {
                         <Button 
                           size="lg" 
                           onClick={() => window.open(currentSolution.demoUrl, '_blank')}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          variant="hero"
                         >
                           <Globe className="h-5 w-5 mr-2" />
                           Launch Interactive Demo
@@ -313,16 +313,16 @@ const MSPDemos = () => {
         </div>
 
         {/* Call to Action */}
-        <Card className="mt-12 border-2 border-blue-200 bg-blue-50">
+        <Card className="mt-12 border-2 border-primary/20 bg-primary/5">
           <CardContent className="p-8 text-center space-y-6">
-            <h2 className="text-3xl font-bold text-blue-900">
+            <h2 className="text-3xl font-bold text-foreground">
               Ready to Scale Your MSP Business?
             </h2>
-            <p className="text-xl text-blue-700 max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Join hundreds of MSPs already generating additional recurring revenue with Ultrium's white-label solutions
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+              <Button size="lg" variant="hero">
                 Start Free Trial
               </Button>
               <Button size="lg" variant="outline">
