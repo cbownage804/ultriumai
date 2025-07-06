@@ -23,7 +23,13 @@ import {
   Zap,
   FileText,
   Calendar,
-  BarChart3
+  BarChart3,
+  Terminal,
+  FolderOpen,
+  Trash2,
+  Package,
+  User,
+  RotateCcw
 } from "lucide-react";
 
 export const RMMDashboard = () => {
@@ -42,18 +48,105 @@ export const RMMDashboard = () => {
   };
 
   const serverData = [
-    { name: "DC-PRIMARY", ip: "192.168.1.10", status: "online", cpu: 45, memory: 78, disk: 65, uptime: "30d 14h" },
-    { name: "EXCHANGE-01", ip: "192.168.1.15", status: "online", cpu: 62, memory: 84, disk: 72, uptime: "28d 6h" },
-    { name: "FILE-SERVER", ip: "192.168.1.20", status: "warning", cpu: 89, memory: 91, disk: 88, uptime: "15d 3h" },
-    { name: "DB-SERVER", ip: "192.168.1.25", status: "online", cpu: 34, memory: 67, disk: 55, uptime: "45d 12h" }
+    { 
+      name: "DC-PRIMARY", 
+      ip: "192.168.1.10", 
+      status: "online", 
+      cpu: 45, 
+      memory: 78, 
+      disk: 65, 
+      uptime: "30d 14h",
+      lastUser: "Administrator",
+      lastReboot: "2 days ago",
+      installedPrograms: 127
+    },
+    { 
+      name: "EXCHANGE-01", 
+      ip: "192.168.1.15", 
+      status: "online", 
+      cpu: 62, 
+      memory: 84, 
+      disk: 72, 
+      uptime: "28d 6h",
+      lastUser: "SYSTEM",
+      lastReboot: "4 hours ago",
+      installedPrograms: 89
+    },
+    { 
+      name: "FILE-SERVER", 
+      ip: "192.168.1.20", 
+      status: "warning", 
+      cpu: 89, 
+      memory: 91, 
+      disk: 88, 
+      uptime: "15d 3h",
+      lastUser: "fileadmin",
+      lastReboot: "15 minutes ago",
+      installedPrograms: 156
+    },
+    { 
+      name: "DB-SERVER", 
+      ip: "192.168.1.25", 
+      status: "online", 
+      cpu: 34, 
+      memory: 67, 
+      disk: 55, 
+      uptime: "45d 12h",
+      lastUser: "dbadmin",
+      lastReboot: "just now",
+      installedPrograms: 73
+    }
   ];
 
   const workstationData = [
-    { group: "Sales Department", total: 25, online: 24, needsPatches: 5, avgCpu: 35 },
-    { group: "Marketing", total: 18, online: 17, needsPatches: 3, avgCpu: 42 },
-    { group: "IT Department", total: 12, online: 12, needsPatches: 1, avgCpu: 28 },
-    { group: "Accounting", total: 15, online: 14, needsPatches: 4, avgCpu: 31 },
-    { group: "Executive", total: 8, online: 8, needsPatches: 0, avgCpu: 25 }
+    { 
+      name: "SALES-PC-01", 
+      ip: "192.168.2.15", 
+      status: "online", 
+      cpu: 35, 
+      memory: 62, 
+      disk: 45, 
+      department: "Sales",
+      lastUser: "john.smith",
+      lastReboot: "3 hours ago",
+      installedPrograms: 89
+    },
+    { 
+      name: "MARKETING-WS-03", 
+      ip: "192.168.2.28", 
+      status: "online", 
+      cpu: 42, 
+      memory: 58, 
+      disk: 67, 
+      department: "Marketing",
+      lastUser: "jane.doe",
+      lastReboot: "1 day ago",
+      installedPrograms: 134
+    },
+    { 
+      name: "IT-ADMIN-PC", 
+      ip: "192.168.2.10", 
+      status: "online", 
+      cpu: 28, 
+      memory: 45, 
+      disk: 34, 
+      department: "IT",
+      lastUser: "admin.user",
+      lastReboot: "just now",
+      installedPrograms: 267
+    },
+    { 
+      name: "EXEC-LAPTOP-01", 
+      ip: "192.168.2.5", 
+      status: "warning", 
+      cpu: 78, 
+      memory: 89, 
+      disk: 23, 
+      department: "Executive",
+      lastUser: "ceo.smith",
+      lastReboot: "2 weeks ago",
+      installedPrograms: 45
+    }
   ];
 
   const patchingData = [
@@ -322,35 +415,80 @@ export const RMMDashboard = () => {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>CPU</span>
-                          <span className={server.cpu > 80 ? 'text-red-600' : server.cpu > 60 ? 'text-yellow-600' : 'text-green-600'}>
-                            {server.cpu}%
-                          </span>
-                        </div>
-                        <Progress value={server.cpu} className="h-2" />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Memory</span>
-                          <span className={server.memory > 80 ? 'text-red-600' : server.memory > 60 ? 'text-yellow-600' : 'text-green-600'}>
-                            {server.memory}%
-                          </span>
-                        </div>
-                        <Progress value={server.memory} className="h-2" />
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Disk</span>
-                          <span className={server.disk > 80 ? 'text-red-600' : server.disk > 60 ? 'text-yellow-600' : 'text-green-600'}>
-                            {server.disk}%
-                          </span>
-                        </div>
-                        <Progress value={server.disk} className="h-2" />
-                      </div>
-                    </div>
+                     {/* User and Reboot Info */}
+                     <div className="flex items-center gap-6 mb-4 text-sm text-muted-foreground">
+                       <div className="flex items-center gap-2">
+                         <User className="h-4 w-4" />
+                         <span>Last user: {server.lastUser}</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <RotateCcw className="h-4 w-4" />
+                         <span>Last reboot: {server.lastReboot}</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <Package className="h-4 w-4" />
+                         <span>{server.installedPrograms} programs</span>
+                       </div>
+                     </div>
+
+                     {/* Performance Metrics */}
+                     <div className="grid grid-cols-3 gap-4 mb-4">
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span>CPU</span>
+                           <span className={server.cpu > 80 ? 'text-red-600' : server.cpu > 60 ? 'text-yellow-600' : 'text-green-600'}>
+                             {server.cpu}%
+                           </span>
+                         </div>
+                         <Progress value={server.cpu} className="h-2" />
+                       </div>
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span>Memory</span>
+                           <span className={server.memory > 80 ? 'text-red-600' : server.memory > 60 ? 'text-yellow-600' : 'text-green-600'}>
+                             {server.memory}%
+                           </span>
+                         </div>
+                         <Progress value={server.memory} className="h-2" />
+                       </div>
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span>Disk</span>
+                           <span className={server.disk > 80 ? 'text-red-600' : server.disk > 60 ? 'text-yellow-600' : 'text-green-600'}>
+                             {server.disk}%
+                           </span>
+                         </div>
+                         <Progress value={server.disk} className="h-2" />
+                       </div>
+                     </div>
+
+                     {/* Remote Access Controls */}
+                     <div className="flex flex-wrap gap-2">
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Monitor className="h-3 w-3 mr-1" />
+                         Remote Desktop
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Terminal className="h-3 w-3 mr-1" />
+                         PowerShell
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Terminal className="h-3 w-3 mr-1" />
+                         CMD
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <FolderOpen className="h-3 w-3 mr-1" />
+                         File Explorer
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Package className="h-3 w-3 mr-1" />
+                         Programs
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Trash2 className="h-3 w-3 mr-1" />
+                         Uninstall
+                       </Button>
+                     </div>
                   </div>
                 ))}
               </div>
@@ -369,41 +507,101 @@ export const RMMDashboard = () => {
               <CardDescription>Organized by department and location</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {workstationData.map((group) => (
-                  <div key={group.group} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Monitor className="h-8 w-8 text-blue-600" />
-                        <div>
-                          <h4 className="font-medium">{group.group}</h4>
-                          <p className="text-sm text-muted-foreground">{group.total} workstations</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-green-600">{group.online}</div>
-                          <div className="text-xs text-muted-foreground">Online</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-orange-600">{group.needsPatches}</div>
-                          <div className="text-xs text-muted-foreground">Need Patches</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-sm font-medium text-blue-600">{group.avgCpu}%</div>
-                          <div className="text-xs text-muted-foreground">Avg CPU</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-green-500 h-2 rounded-full" 
-                        style={{ width: `${(group.online / group.total) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+               <div className="space-y-4">
+                 {workstationData.map((workstation) => (
+                   <div key={workstation.name} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
+                     <div className="flex items-center justify-between mb-3">
+                       <div className="flex items-center gap-3">
+                         {getStatusIcon(workstation.status)}
+                         <div>
+                           <h4 className="font-medium">{workstation.name}</h4>
+                           <p className="text-sm text-muted-foreground">IP: {workstation.ip} • {workstation.department}</p>
+                         </div>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <Badge variant={workstation.status === 'online' ? 'default' : 'destructive'}>
+                           {workstation.status}
+                         </Badge>
+                       </div>
+                     </div>
+                     
+                     {/* User and Reboot Info */}
+                     <div className="flex items-center gap-6 mb-4 text-sm text-muted-foreground">
+                       <div className="flex items-center gap-2">
+                         <User className="h-4 w-4" />
+                         <span>Last user: {workstation.lastUser}</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <RotateCcw className="h-4 w-4" />
+                         <span>Last reboot: {workstation.lastReboot}</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <Package className="h-4 w-4" />
+                         <span>{workstation.installedPrograms} programs</span>
+                       </div>
+                     </div>
+
+                     {/* Performance Metrics */}
+                     <div className="grid grid-cols-3 gap-4 mb-4">
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span>CPU</span>
+                           <span className={workstation.cpu > 80 ? 'text-red-600' : workstation.cpu > 60 ? 'text-yellow-600' : 'text-green-600'}>
+                             {workstation.cpu}%
+                           </span>
+                         </div>
+                         <Progress value={workstation.cpu} className="h-2" />
+                       </div>
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span>Memory</span>
+                           <span className={workstation.memory > 80 ? 'text-red-600' : workstation.memory > 60 ? 'text-yellow-600' : 'text-green-600'}>
+                             {workstation.memory}%
+                           </span>
+                         </div>
+                         <Progress value={workstation.memory} className="h-2" />
+                       </div>
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span>Disk</span>
+                           <span className={workstation.disk > 80 ? 'text-red-600' : workstation.disk > 60 ? 'text-yellow-600' : 'text-green-600'}>
+                             {workstation.disk}%
+                           </span>
+                         </div>
+                         <Progress value={workstation.disk} className="h-2" />
+                       </div>
+                     </div>
+
+                     {/* Remote Access Controls */}
+                     <div className="flex flex-wrap gap-2">
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Monitor className="h-3 w-3 mr-1" />
+                         Remote Desktop
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Terminal className="h-3 w-3 mr-1" />
+                         PowerShell
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Terminal className="h-3 w-3 mr-1" />
+                         CMD
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <FolderOpen className="h-3 w-3 mr-1" />
+                         File Explorer
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Package className="h-3 w-3 mr-1" />
+                         Programs
+                       </Button>
+                       <Button size="sm" variant="outline" className="h-8">
+                         <Trash2 className="h-3 w-3 mr-1" />
+                         Uninstall
+                       </Button>
+                     </div>
+                   </div>
+                 ))}
+               </div>
             </CardContent>
           </Card>
         </TabsContent>
