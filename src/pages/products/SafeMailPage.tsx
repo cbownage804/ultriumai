@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Mail, Check, Star, Zap, Users, Shield, ArrowRight, Play } from "lucide-react";
 import Footer from "@/components/Footer";
 
-const SafeEmailPage = () => {
+const SafeMailPage = () => {
   const features = [
     "Real-time phishing detection",
     "Advanced malware scanning", 
@@ -82,7 +82,7 @@ const SafeEmailPage = () => {
                   <Mail className="h-8 w-8 text-primary" />
                 </div>
                 <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  Ultrium SafeEmail™
+                  Ultrium SafeMail™
                 </h1>
               </div>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
@@ -130,12 +130,12 @@ const SafeEmailPage = () => {
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Try SafeEmail Live</h2>
+              <h2 className="text-3xl font-bold mb-4">Try SafeMail Live</h2>
               <p className="text-muted-foreground">
-                Test our email analysis with sample phishing emails and see how SafeEmail detects threats
+                Test our email analysis with sample phishing emails and see how SafeMail detects threats
               </p>
             </div>
-            <SafeEmailDemo />
+            <SafeMailDemo />
           </div>
         </section>
 
@@ -143,7 +143,7 @@ const SafeEmailPage = () => {
         <section className="py-20 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Choose Your SafeEmail Plan</h2>
+              <h2 className="text-3xl font-bold mb-4">Choose Your SafeMail Plan</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Start with a free trial, then choose the plan that fits your organization's needs
               </p>
@@ -203,7 +203,7 @@ const SafeEmailPage = () => {
               <CardContent>
                 <h3 className="text-2xl font-bold mb-4">Ready to Secure Your Email?</h3>
                 <p className="text-muted-foreground mb-6">
-                  Join thousands of organizations protecting their email communications with SafeEmail
+                  Join thousands of organizations protecting their email communications with SafeMail
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button size="lg" className="btn-glow">
@@ -223,4 +223,4 @@ const SafeEmailPage = () => {
   );
 };
 
-export default SafeEmailPage;
+export default SafeMailPage;
