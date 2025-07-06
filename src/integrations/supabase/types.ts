@@ -63,6 +63,99 @@ export type Database = {
           },
         ]
       }
+      alert_notifications: {
+        Row: {
+          alert_rule_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          notification_type: string
+          recipient: string
+          security_event_id: string | null
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          alert_rule_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          recipient: string
+          security_event_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          alert_rule_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          recipient?: string
+          security_event_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_notifications_alert_rule_id_fkey"
+            columns: ["alert_rule_id"]
+            isOneToOne: false
+            referencedRelation: "alert_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_notifications_security_event_id_fkey"
+            columns: ["security_event_id"]
+            isOneToOne: false
+            referencedRelation: "security_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alert_rules: {
+        Row: {
+          conditions: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notification_channels: Json
+          severity_threshold: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conditions: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notification_channels?: Json
+          severity_threshold: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notification_channels?: Json
+          severity_threshold?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -599,6 +692,51 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      event_correlations: {
+        Row: {
+          confidence_score: number | null
+          correlation_id: string
+          correlation_type: string
+          created_at: string
+          id: string
+          primary_event_id: string
+          related_event_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          correlation_id: string
+          correlation_type: string
+          created_at?: string
+          id?: string
+          primary_event_id: string
+          related_event_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          correlation_id?: string
+          correlation_type?: string
+          created_at?: string
+          id?: string
+          primary_event_id?: string
+          related_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_correlations_primary_event_id_fkey"
+            columns: ["primary_event_id"]
+            isOneToOne: false
+            referencedRelation: "security_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_correlations_related_event_id_fkey"
+            columns: ["related_event_id"]
+            isOneToOne: false
+            referencedRelation: "security_events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gpt_actions: {
         Row: {
@@ -1688,6 +1826,63 @@ export type Database = {
         }
         Relationships: []
       }
+      security_events: {
+        Row: {
+          affected_assets: string[] | null
+          correlation_id: string | null
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          raw_data: Json | null
+          severity: string
+          source_app: string
+          status: string
+          threat_indicators: string[] | null
+          title: string
+          updated_at: string
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          affected_assets?: string[] | null
+          correlation_id?: string | null
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          raw_data?: Json | null
+          severity: string
+          source_app: string
+          status?: string
+          threat_indicators?: string[] | null
+          title: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          affected_assets?: string[] | null
+          correlation_id?: string | null
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          raw_data?: Json | null
+          severity?: string
+          source_app?: string
+          status?: string
+          threat_indicators?: string[] | null
+          title?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       security_settings: {
         Row: {
           account_locked_until: string | null
@@ -1889,6 +2084,51 @@ export type Database = {
           max_members?: number | null
           name?: string
           owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      threat_intelligence: {
+        Row: {
+          confidence: number
+          created_at: string
+          first_seen: string
+          id: string
+          indicator_type: string
+          indicator_value: string
+          is_active: boolean
+          last_seen: string
+          metadata: Json | null
+          source: string
+          threat_types: string[]
+          updated_at: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          first_seen?: string
+          id?: string
+          indicator_type: string
+          indicator_value: string
+          is_active?: boolean
+          last_seen?: string
+          metadata?: Json | null
+          source: string
+          threat_types?: string[]
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          first_seen?: string
+          id?: string
+          indicator_type?: string
+          indicator_value?: string
+          is_active?: boolean
+          last_seen?: string
+          metadata?: Json | null
+          source?: string
+          threat_types?: string[]
           updated_at?: string
         }
         Relationships: []

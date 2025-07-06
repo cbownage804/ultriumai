@@ -43,7 +43,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface SecurityEvent {
   id: string;
-  timestamp: string;
+  created_at: string;
   source_app: 'safedoc' | 'safemail' | 'safelink' | 'safepass' | 'safenet';
   event_type: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -70,9 +70,8 @@ interface DashboardMetrics {
 
 interface ThreatFeed {
   id: string;
-  name: string;
-  type: 'ip' | 'domain' | 'hash' | 'url';
-  value: string;
+  indicator_type: 'ip' | 'domain' | 'hash' | 'url' | 'email';
+  indicator_value: string;
   confidence: number;
   first_seen: string;
   last_seen: string;
@@ -84,37 +83,7 @@ const SafeSIEM = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [events, setEvents] = useState<SecurityEvent[]>([
-    {
-      id: 'event-001',
-      timestamp: new Date().toISOString(),
-      source_app: 'safedoc',
-      event_type: 'malware_detected',
-      severity: 'high',
-      status: 'open',
-      title: 'Malware Detected in Document Upload',
-      description: 'Trojan.Generic.12345 detected in financial_report.pdf',
-      affected_assets: ['file-server-01', 'user-workstation-42'],
-      user_email: 'john.doe@company.com',
-      ip_address: '192.168.1.150',
-      threat_indicators: ['hash:abc123', 'filename:financial_report.pdf'],
-      raw_data: { file_size: 2048000, scan_engine: 'virustotal' }
-    },
-    {
-      id: 'event-002',
-      timestamp: new Date(Date.now() - 15 * 60000).toISOString(),
-      source_app: 'safemail',
-      event_type: 'phishing_detected',
-      severity: 'critical',
-      status: 'investigating',
-      title: 'Phishing Email Campaign Detected',
-      description: 'Credential harvesting attempt targeting multiple users',
-      affected_assets: ['email-server', 'users'],
-      user_email: 'multiple@company.com',
-      threat_indicators: ['domain:fake-bank.com', 'subject:Urgent Account Update'],
-      raw_data: { recipients: 45, sender_domain: 'fake-bank.com' }
-    }
-  ]);
+  const [events, setEvents] = useState<SecurityEvent[]>([]);
 
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     events_today: 1247,
@@ -127,19 +96,7 @@ const SafeSIEM = () => {
     coverage_percentage: 94
   });
 
-  const [threatFeeds, setThreatFeeds] = useState<ThreatFeed[]>([
-    {
-      id: 'feed-001',
-      name: 'Malicious IP',
-      type: 'ip',
-      value: '192.168.100.1',
-      confidence: 95,
-      first_seen: '2024-01-20T08:00:00Z',
-      last_seen: '2024-01-20T16:30:00Z',
-      source: 'Internal Detection',
-      threat_types: ['botnet', 'scanning']
-    }
-  ]);
+  const [threatFeeds, setThreatFeeds] = useState<ThreatFeed[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
@@ -147,50 +104,128 @@ const SafeSIEM = () => {
   const [realTimeEnabled, setRealTimeEnabled] = useState(true);
 
   useEffect(() => {
-    loadSecurityEvents();
-    
-    // Simulate real-time updates
-    if (realTimeEnabled) {
-      const interval = setInterval(() => {
-        // Simulate random events
-        if (Math.random() > 0.95) {
-          addRandomEvent();
-        }
-      }, 5000);
+    if (user) {
+      loadSecurityEvents();
+      loadThreatIntelligence();
       
-      return () => clearInterval(interval);
+      // Set up real-time subscription for security events
+      if (realTimeEnabled) {
+        const channel = supabase
+          .channel('security-events-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'security_events',
+              filter: `user_id=eq.${user.id}`
+            },
+            (payload) => {
+              console.log('New security event:', payload.new);
+              setEvents(prev => [payload.new as SecurityEvent, ...prev]);
+              
+              // Update metrics
+              setMetrics(prev => ({
+                ...prev,
+                events_today: prev.events_today + 1,
+                events_last_hour: prev.events_last_hour + 1,
+                active_threats: payload.new.severity === 'high' || payload.new.severity === 'critical' 
+                  ? prev.active_threats + 1 
+                  : prev.active_threats
+              }));
+              
+              // Show toast for high/critical events
+              if (payload.new.severity === 'high' || payload.new.severity === 'critical') {
+                toast({
+                  title: "🚨 New Security Event",
+                  description: payload.new.title,
+                  variant: payload.new.severity === 'critical' ? 'destructive' : 'default',
+                });
+              }
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(channel);
+        };
+      }
     }
-  }, [realTimeEnabled]);
+  }, [user, realTimeEnabled]);
 
   const loadSecurityEvents = async () => {
     try {
-      // Load real events from database
-      const { data: safedocScans } = await supabase
-        .from('safedoc_scans')
+      if (!user?.id) return;
+      
+      // Load security events from database
+      const { data: securityEvents, error } = await supabase
+        .from('security_events')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
-      if (safedocScans) {
-        const convertedEvents: SecurityEvent[] = safedocScans.map(scan => ({
-          id: scan.id,
-          timestamp: scan.created_at,
-          source_app: 'safedoc' as const,
-          event_type: scan.threat_level === 'high' ? 'malware_detected' : 'file_scanned',
-          severity: mapThreatLevelToSeverity(scan.threat_level),
-          status: 'resolved' as const,
-          title: `File Scan: ${scan.file_name}`,
-          description: `Scanned ${scan.file_name} - ${scan.threats_found} threats found`,
-          affected_assets: [scan.file_name],
-          user_email: scan.user_email,
-          threat_indicators: scan.threats_found > 0 ? [`hash:${scan.file_hash}`] : [],
-          raw_data: (scan.scan_results as Record<string, any>) || {}
-        }));
+      if (error) {
+        console.error('Error loading security events:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load security events",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (securityEvents) {
+        setEvents(securityEvents as SecurityEvent[]);
         
-        setEvents(prev => [...prev, ...convertedEvents]);
+        // Calculate metrics from real data
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+        
+        const eventsToday = securityEvents.filter(e => new Date(e.created_at) >= today).length;
+        const eventsLastHour = securityEvents.filter(e => new Date(e.created_at) >= oneHourAgo).length;
+        const activeThreats = securityEvents.filter(e => 
+          e.status === 'open' && (e.severity === 'high' || e.severity === 'critical')
+        ).length;
+        const resolvedIncidents = securityEvents.filter(e => e.status === 'resolved').length;
+        const falsePositives = securityEvents.filter(e => e.status === 'false_positive').length;
+        
+        setMetrics({
+          events_today: eventsToday,
+          events_last_hour: eventsLastHour,
+          active_threats: activeThreats,
+          resolved_incidents: resolvedIncidents,
+          false_positives: falsePositives,
+          avg_response_time_minutes: 8.5, // This would be calculated from actual response times
+          threat_score: Math.min(10, Math.max(1, activeThreats * 1.5 + (eventsLastHour * 0.1))),
+          coverage_percentage: 94 // This would be calculated based on monitored systems
+        });
       }
     } catch (error) {
       console.error('Error loading security events:', error);
+    }
+  };
+
+  const loadThreatIntelligence = async () => {
+    try {
+      const { data: threatIntel, error } = await supabase
+        .from('threat_intelligence')
+        .select('*')
+        .eq('is_active', true)
+        .order('confidence', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error loading threat intelligence:', error);
+        return;
+      }
+
+      if (threatIntel) {
+        setThreatFeeds(threatIntel as ThreatFeed[]);
+      }
+    } catch (error) {
+      console.error('Error loading threat intelligence:', error);
     }
   };
 
@@ -203,48 +238,72 @@ const SafeSIEM = () => {
     }
   };
 
-  const addRandomEvent = () => {
-    const randomEvents = [
-      {
-        source_app: 'safelink' as const,
-        event_type: 'malicious_url_blocked',
-        severity: 'medium' as const,
-        title: 'Malicious URL Blocked',
-        description: 'Blocked access to known phishing site'
-      },
-      {
-        source_app: 'safepass' as const,
-        event_type: 'weak_password_detected',
-        severity: 'low' as const,
-        title: 'Weak Password Detected',
-        description: 'User password does not meet security requirements'
+  const createTestEvent = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { error } = await supabase.functions.invoke('siem-event-collector', {
+        body: {
+          source_app: 'safedoc',
+          event_type: 'test_event',
+          severity: 'medium',
+          title: 'Test Security Event',
+          description: 'This is a test event created from SafeSIEM dashboard',
+          user_email: user.email,
+          user_id: user.id,
+          affected_assets: ['test-system'],
+          threat_indicators: ['test:indicator'],
+          raw_data: { test: true, created_from: 'dashboard' }
+        }
+      });
+
+      if (error) {
+        console.error('Error creating test event:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create test event",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Test Event Created",
+          description: "A test security event has been generated",
+        });
       }
-    ];
-
-    const randomEvent = randomEvents[Math.floor(Math.random() * randomEvents.length)];
-    const newEvent: SecurityEvent = {
-      id: `event-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      status: 'open',
-      affected_assets: ['system'],
-      threat_indicators: [],
-      raw_data: {},
-      ...randomEvent
-    };
-
-    setEvents(prev => [newEvent, ...prev]);
-    setMetrics(prev => ({ ...prev, events_today: prev.events_today + 1 }));
+    } catch (error) {
+      console.error('Error creating test event:', error);
+    }
   };
 
   const updateEventStatus = async (eventId: string, status: SecurityEvent['status']) => {
-    setEvents(prev => prev.map(event => 
-      event.id === eventId ? { ...event, status } : event
-    ));
-    
-    toast({
-      title: "Event Updated",
-      description: `Event status changed to ${status}`,
-    });
+    try {
+      const { error } = await supabase
+        .from('security_events')
+        .update({ status })
+        .eq('id', eventId)
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error updating event status:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update event status",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setEvents(prev => prev.map(event => 
+        event.id === eventId ? { ...event, status } : event
+      ));
+      
+      toast({
+        title: "Event Updated",
+        description: `Event status changed to ${status}`,
+      });
+    } catch (error) {
+      console.error('Error updating event status:', error);
+    }
   };
 
   const exportSecurityReport = async () => {
@@ -318,6 +377,10 @@ const SafeSIEM = () => {
               <Play className="h-4 w-4 mr-2" />
             )}
             {realTimeEnabled ? 'Pause' : 'Start'} Real-time
+          </Button>
+          <Button variant="outline" onClick={createTestEvent}>
+            <Zap className="h-4 w-4 mr-2" />
+            Create Test Event
           </Button>
           <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
@@ -526,7 +589,7 @@ const SafeSIEM = () => {
                     
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-muted-foreground">
                       <div>
-                        <span className="font-medium">Time:</span> {new Date(event.timestamp).toLocaleString()}
+                        <span className="font-medium">Time:</span> {new Date(event.created_at).toLocaleString()}
                       </div>
                       <div>
                         <span className="font-medium">User:</span> {event.user_email || 'System'}
@@ -560,10 +623,10 @@ const SafeSIEM = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <Badge variant="outline" className="uppercase">
-                          {threat.type}
+                          {threat.indicator_type}
                         </Badge>
                         <code className="text-sm bg-muted px-2 py-1 rounded">
-                          {threat.value}
+                          {threat.indicator_value}
                         </code>
                         <span className="text-sm font-medium">
                           Confidence: {threat.confidence}%
