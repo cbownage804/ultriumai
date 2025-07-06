@@ -709,6 +709,117 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_frameworks: {
+        Row: {
+          automated_checks: Json | null
+          created_at: string
+          description: string | null
+          evidence_requirements: Json | null
+          framework_name: string
+          id: string
+          reporting_schedule: string | null
+          requirements: Json
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          automated_checks?: Json | null
+          created_at?: string
+          description?: string | null
+          evidence_requirements?: Json | null
+          framework_name: string
+          id?: string
+          reporting_schedule?: string | null
+          requirements: Json
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          automated_checks?: Json | null
+          created_at?: string
+          description?: string | null
+          evidence_requirements?: Json | null
+          framework_name?: string
+          id?: string
+          reporting_schedule?: string | null
+          requirements?: Json
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
+      compliance_status: {
+        Row: {
+          assigned_auditor: string | null
+          created_at: string
+          evidence_collected: Json | null
+          framework_id: string
+          id: string
+          last_audit_date: string | null
+          metadata: Json | null
+          msp_org_id: string | null
+          next_audit_date: string | null
+          notes: string | null
+          requirements_met: number | null
+          score: number | null
+          status: string | null
+          total_requirements: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_auditor?: string | null
+          created_at?: string
+          evidence_collected?: Json | null
+          framework_id: string
+          id?: string
+          last_audit_date?: string | null
+          metadata?: Json | null
+          msp_org_id?: string | null
+          next_audit_date?: string | null
+          notes?: string | null
+          requirements_met?: number | null
+          score?: number | null
+          status?: string | null
+          total_requirements?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_auditor?: string | null
+          created_at?: string
+          evidence_collected?: Json | null
+          framework_id?: string
+          id?: string
+          last_audit_date?: string | null
+          metadata?: Json | null
+          msp_org_id?: string | null
+          next_audit_date?: string | null
+          notes?: string | null
+          requirements_met?: number | null
+          score?: number | null
+          status?: string | null
+          total_requirements?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_status_framework_id_fkey"
+            columns: ["framework_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_frameworks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_status_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_files: {
         Row: {
           conversation_id: string
@@ -1831,6 +1942,54 @@ export type Database = {
           },
         ]
       }
+      mobile_devices: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          device_name: string | null
+          device_token: string
+          id: string
+          is_active: boolean | null
+          last_seen_at: string | null
+          notification_preferences: Json | null
+          os_version: string | null
+          platform: string
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          device_name?: string | null
+          device_token: string
+          id?: string
+          is_active?: boolean | null
+          last_seen_at?: string | null
+          notification_preferences?: Json | null
+          os_version?: string | null
+          platform: string
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          device_name?: string | null
+          device_token?: string
+          id?: string
+          is_active?: boolean | null
+          last_seen_at?: string | null
+          notification_preferences?: Json | null
+          os_version?: string | null
+          platform?: string
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       msp_billing_records: {
         Row: {
           additional_charges: number | null
@@ -1887,6 +2046,72 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      msp_client_endpoints: {
+        Row: {
+          assigned_technician: string | null
+          billing_rate: number | null
+          client_name: string
+          compliance_requirements: string[] | null
+          created_at: string
+          department: string | null
+          endpoint_id: string
+          id: string
+          location: string | null
+          metadata: Json | null
+          monitoring_level: string | null
+          msp_org_id: string
+          sla_tier: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_technician?: string | null
+          billing_rate?: number | null
+          client_name: string
+          compliance_requirements?: string[] | null
+          created_at?: string
+          department?: string | null
+          endpoint_id: string
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          monitoring_level?: string | null
+          msp_org_id: string
+          sla_tier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_technician?: string | null
+          billing_rate?: number | null
+          client_name?: string
+          compliance_requirements?: string[] | null
+          created_at?: string
+          department?: string | null
+          endpoint_id?: string
+          id?: string
+          location?: string | null
+          metadata?: Json | null
+          monitoring_level?: string | null
+          msp_org_id?: string
+          sla_tier?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_client_endpoints_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "safe_shield_endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msp_client_endpoints_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       msp_clients: {
         Row: {
@@ -1967,6 +2192,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      msp_organizations: {
+        Row: {
+          address: string | null
+          billing_contact: string | null
+          contact_email: string | null
+          created_at: string
+          domain: string | null
+          id: string
+          max_endpoints: number | null
+          name: string
+          phone: string | null
+          settings: Json | null
+          status: string | null
+          subscription_tier: string | null
+          technical_contact: string | null
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+          white_label_config: Json | null
+        }
+        Insert: {
+          address?: string | null
+          billing_contact?: string | null
+          contact_email?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+          max_endpoints?: number | null
+          name: string
+          phone?: string | null
+          settings?: Json | null
+          status?: string | null
+          subscription_tier?: string | null
+          technical_contact?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+          white_label_config?: Json | null
+        }
+        Update: {
+          address?: string | null
+          billing_contact?: string | null
+          contact_email?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+          max_endpoints?: number | null
+          name?: string
+          phone?: string | null
+          settings?: Json | null
+          status?: string | null
+          subscription_tier?: string | null
+          technical_contact?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+          white_label_config?: Json | null
+        }
+        Relationships: []
       }
       msp_revenue: {
         Row: {
@@ -2527,6 +2812,80 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      response_workflows: {
+        Row: {
+          actions: Json
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          max_executions_per_hour: number | null
+          metadata: Json | null
+          msp_org_id: string | null
+          name: string
+          priority: number | null
+          success_rate: number | null
+          trigger_conditions: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actions: Json
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          max_executions_per_hour?: number | null
+          metadata?: Json | null
+          msp_org_id?: string | null
+          name: string
+          priority?: number | null
+          success_rate?: number | null
+          trigger_conditions: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actions?: Json
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          max_executions_per_hour?: number | null
+          metadata?: Json | null
+          msp_org_id?: string | null
+          name?: string
+          priority?: number | null
+          success_rate?: number | null
+          trigger_conditions?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_workflows_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rmm_agent_commands: {
         Row: {
@@ -4154,6 +4513,77 @@ export type Database = {
             columns: ["asset_id"]
             isOneToOne: false
             referencedRelation: "safeweb_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_api_keys: {
+        Row: {
+          allowed_ips: string[] | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          key_hash: string
+          key_name: string
+          key_prefix: string
+          last_used_at: string | null
+          metadata: Json | null
+          msp_org_id: string | null
+          permissions: Json
+          rate_limit_per_hour: number | null
+          scopes: string[] | null
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+          webhook_url: string | null
+        }
+        Insert: {
+          allowed_ips?: string[] | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash: string
+          key_name: string
+          key_prefix: string
+          last_used_at?: string | null
+          metadata?: Json | null
+          msp_org_id?: string | null
+          permissions?: Json
+          rate_limit_per_hour?: number | null
+          scopes?: string[] | null
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+          webhook_url?: string | null
+        }
+        Update: {
+          allowed_ips?: string[] | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash?: string
+          key_name?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          metadata?: Json | null
+          msp_org_id?: string | null
+          permissions?: Json
+          rate_limit_per_hour?: number | null
+          scopes?: string[] | null
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_api_keys_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
             referencedColumns: ["id"]
           },
         ]

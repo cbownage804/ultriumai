@@ -30,6 +30,8 @@ import { EndpointAgentDownloads } from "./EndpointAgentDownloads";
 import { MSPWhiteLabelConfig } from "./MSPWhiteLabelConfig";
 import { AIResponseGuide } from "./AIResponseGuide";
 import { ThreatReportsAnalytics } from "./ThreatReportsAnalytics";
+import { MSPClientManager } from "./MSPClientManager";
+import { AutomatedWorkflows } from "./AutomatedWorkflows";
 
 interface DashboardStats {
   total_threats: number;
