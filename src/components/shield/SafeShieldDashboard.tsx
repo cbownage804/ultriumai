@@ -29,6 +29,7 @@ import { SafeMDRDashboard } from "./SafeMDRDashboard";
 import { EndpointAgentDownloads } from "./EndpointAgentDownloads";
 import { MSPWhiteLabelConfig } from "./MSPWhiteLabelConfig";
 import { AIResponseGuide } from "./AIResponseGuide";
+import { ThreatReportsAnalytics } from "./ThreatReportsAnalytics";
 
 interface DashboardStats {
   total_threats: number;
