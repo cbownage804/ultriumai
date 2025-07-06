@@ -9,9 +9,12 @@ import {
   Navigation, Signal, Battery, RefreshCw
 } from 'lucide-react'
 import { useMobileCapabilities } from '@/hooks/useMobileCapabilities'
+import { useMSPClientWhiteLabel } from '@/hooks/useMSPClientWhiteLabel'
+import { useAuth } from '@/hooks/useAuth'
 import { ImpactStyle, NotificationType } from '@capacitor/haptics'
 
 export default function TechnicianMobile() {
+  const { user } = useAuth()
   const { 
     pushNotifications, 
     camera, 
@@ -20,6 +23,17 @@ export default function TechnicianMobile() {
     network,
     haptics 
   } = useMobileCapabilities()
+  const { configs } = useMSPClientWhiteLabel()
+
+  // Get the first available white label config or use defaults
+  const whiteLabel = configs[0] || {
+    company_name: "UltriumAI",
+    company_logo: "",
+    primary_color: "#3b82f6",
+    secondary_color: "#8b5cf6",
+    background_color: "#ffffff",
+    text_color: "#000000"
+  }
 
   const [alerts, setAlerts] = useState([
     { id: 1, type: 'Critical', client: 'Acme Corp', issue: 'Network breach detected', location: '123 Main St', time: '2 min ago', priority: 'high' },
@@ -99,15 +113,34 @@ export default function TechnicianMobile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 p-4">
+    <div 
+      className="min-h-screen p-4"
+      style={{
+        background: `linear-gradient(to bottom right, ${whiteLabel.background_color}, ${whiteLabel.primary_color}10)`
+      }}
+    >
       <div className="max-w-md mx-auto space-y-6">
         {/* Header */}
-        <Card className="border-0 shadow-lg bg-gradient-to-r from-primary to-accent text-white">
+        <Card 
+          className="border-0 shadow-lg text-white"
+          style={{
+            background: `linear-gradient(135deg, ${whiteLabel.primary_color}, ${whiteLabel.secondary_color})`
+          }}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-white">UltriumAI Technician</CardTitle>
-                <CardDescription className="text-white/80">Mobile Field Operations</CardDescription>
+              <div className="flex items-center space-x-3">
+                {whiteLabel.company_logo && (
+                  <img 
+                    src={whiteLabel.company_logo} 
+                    alt={`${whiteLabel.company_name} logo`}
+                    className="w-8 h-8 rounded object-contain"
+                  />
+                )}
+                <div>
+                  <CardTitle className="text-white">{whiteLabel.company_name} Technician</CardTitle>
+                  <CardDescription className="text-white/80">Mobile Field Operations</CardDescription>
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 {networkStatus?.connected && (
