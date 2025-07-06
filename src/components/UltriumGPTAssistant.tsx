@@ -235,182 +235,217 @@ What can I help you with today?`,
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Zap className="h-8 w-8 text-primary" />
-            UltriumGPT Assistant
-          </h1>
-          <p className="text-muted-foreground">
-            Your AI-powered IT support and system management assistant
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Header Section */}
+        <div className="text-center space-y-4 py-8">
+          <div className="flex items-center justify-center gap-3">
+            <div className="p-3 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg">
+              <Zap className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              UltriumGPT Assistant
+            </h1>
+          </div>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            Your comprehensive AI assistant for IT support, system management, research, and creative tasks
           </p>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Quick Actions Panel */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-            <CardDescription>
-              Common tasks I can help you with
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {availableActions.map((action) => (
-              <div key={action.id}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start h-auto p-3"
-                  onClick={() => handleQuickAction(action)}
-                  disabled={isLoading}
-                >
-                  <div className="flex items-start gap-2 w-full">
-                    <action.icon className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <div className="text-left">
-                      <div className="font-medium text-sm">{action.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {action.description}
+        {/* Main Content Area */}
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
+          {/* Quick Actions Sidebar */}
+          <div className="xl:col-span-1 space-y-4">
+            <Card className="border-0 shadow-lg bg-gradient-to-b from-card to-card/50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  Quick Actions
+                </CardTitle>
+                <CardDescription>
+                  Common tasks I can help you with
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {availableActions.map((action) => (
+                  <Button
+                    key={action.id}
+                    variant="ghost"
+                    size="default"
+                    className="w-full justify-start h-auto p-4 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
+                    onClick={() => handleQuickAction(action)}
+                    disabled={isLoading}
+                  >
+                    <div className="flex items-start gap-3 w-full">
+                      <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                        <action.icon className="h-4 w-4 text-primary" />
                       </div>
-                      <Badge 
-                        variant="secondary" 
-                        className={`text-xs mt-1 ${getCategoryColor(action.category)}`}
-                      >
-                        {action.category}
-                      </Badge>
+                      <div className="text-left flex-1">
+                        <div className="font-medium text-sm mb-1">{action.name}</div>
+                        <div className="text-xs text-muted-foreground leading-relaxed mb-2">
+                          {action.description}
+                        </div>
+                        <Badge 
+                          variant="secondary" 
+                          className={`text-xs ${getCategoryColor(action.category)}`}
+                        >
+                          {action.category}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+                  </Button>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Chat Interface */}
-        <Card className="lg:col-span-3">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              Chat with UltriumGPT
-            </CardTitle>
-            <CardDescription>
-              Ask questions, request reports, or get IT support
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Messages */}
-            <div className="h-96 overflow-y-auto space-y-4 p-4 border rounded-lg bg-muted/20">
-              {messages.map((message) => (
-                <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.role === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : message.role === 'system'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-secondary text-secondary-foreground'
-                  }`}>
-                    {message.role === 'user' ? (
-                      <User className="h-4 w-4" />
-                    ) : (
-                      <Bot className="h-4 w-4" />
-                    )}
+          {/* Chat Interface */}
+          <div className="xl:col-span-4">
+            <Card className="border-0 shadow-xl bg-gradient-to-b from-card to-card/50 min-h-[700px]">
+              <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-secondary/5 rounded-t-lg pb-6">
+                <CardTitle className="text-xl flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Bot className="h-6 w-6 text-primary" />
                   </div>
-                  <div className={`flex-1 space-y-2 ${message.role === 'user' ? 'text-right' : ''}`}>
-                    <div className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground ml-auto'
-                        : 'bg-background border'
-                    }`}>
-                      <div className="whitespace-pre-wrap text-sm">
-                        {message.content}
-                      </div>
-                      {message.metadata && (
-                        <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
-                          {message.metadata.toolsUsed && (
-                            <div className="flex flex-wrap gap-1">
-                              {message.metadata.toolsUsed.map((tool, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {tool}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          {message.metadata.ticketCreated && (
-                            <div className="flex items-center gap-1 text-xs text-green-600">
-                              <CheckCircle className="h-3 w-3" />
-                              Ticket #{message.metadata.ticketCreated} created
-                            </div>
-                          )}
-                          {message.metadata.reportGenerated && (
-                            <div className="flex items-center gap-1 text-xs text-blue-600">
-                              <FileText className="h-3 w-3" />
-                              Report generated
-                            </div>
+                  Chat with UltriumGPT
+                </CardTitle>
+                <CardDescription className="text-base">
+                  Ask questions, request reports, search the web, generate images, or get IT support
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="p-6 space-y-6">
+                {/* Messages Container */}
+                <div className="relative">
+                  <div className="h-[450px] overflow-y-auto space-y-6 p-4 rounded-xl bg-gradient-to-b from-muted/20 to-muted/10 border border-border/50">
+                    {messages.map((message) => (
+                      <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${
+                          message.role === 'user' 
+                            ? 'bg-gradient-to-r from-primary to-primary/80 text-white' 
+                            : message.role === 'system'
+                            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+                            : 'bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground'
+                        }`}>
+                          {message.role === 'user' ? (
+                            <User className="h-5 w-5" />
+                          ) : (
+                            <Bot className="h-5 w-5" />
                           )}
                         </div>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatTimestamp(message.timestamp)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-background border rounded-lg p-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        UltriumGPT is thinking...
+                        
+                        <div className={`flex-1 space-y-2 max-w-[85%] ${message.role === 'user' ? 'text-right' : ''}`}>
+                          <div className={`inline-block p-4 rounded-2xl shadow-sm ${
+                            message.role === 'user'
+                              ? 'bg-gradient-to-r from-primary to-primary/90 text-white ml-auto'
+                              : 'bg-background border border-border/50'
+                          }`}>
+                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                              {message.content}
+                            </div>
+                            
+                            {message.metadata && (
+                              <div className="mt-3 pt-3 border-t border-border/30 space-y-2">
+                                {message.metadata.toolsUsed && message.metadata.toolsUsed.length > 0 && (
+                                  <div className="flex flex-wrap gap-2">
+                                    {message.metadata.toolsUsed.map((tool, index) => (
+                                      <Badge key={index} variant="secondary" className="text-xs">
+                                        🔧 {tool.replace('_', ' ')}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                                {message.metadata.ticketCreated && (
+                                  <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 p-2 rounded-lg">
+                                    <CheckCircle className="h-4 w-4" />
+                                    Support ticket #{message.metadata.ticketCreated} created successfully
+                                  </div>
+                                )}
+                                {message.metadata.reportGenerated && (
+                                  <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
+                                    <FileText className="h-4 w-4" />
+                                    Report generated and ready for download
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className={`text-xs text-muted-foreground flex items-center gap-1 ${
+                            message.role === 'user' ? 'justify-end' : 'justify-start'
+                          }`}>
+                            <Clock className="h-3 w-3" />
+                            {formatTimestamp(message.timestamp)}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
+                    
+                    {isLoading && (
+                      <div className="flex gap-4">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-secondary to-secondary/80 flex items-center justify-center shadow-md">
+                          <Loader2 className="h-5 w-5 animate-spin text-secondary-foreground" />
+                        </div>
+                        <div className="flex-1 max-w-[85%]">
+                          <div className="bg-background border border-border/50 rounded-2xl p-4 shadow-sm">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent font-medium">
+                                UltriumGPT is thinking...
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
                 </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
 
-            <Separator />
+                <Separator className="my-6" />
 
-            {/* Input Area */}
-            <div className="space-y-2">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask me anything about your systems, request reports, or get IT support..."
-                rows={3}
-                disabled={isLoading}
-                className="resize-none"
-              />
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-muted-foreground">
-                  Press Enter to send, Shift+Enter for new line
+                {/* Enhanced Input Area */}
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Textarea
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Ask me anything - generate reports, search the web, create images, troubleshoot issues, or get IT support..."
+                      rows={4}
+                      disabled={isLoading}
+                      className="resize-none border-border/50 focus:border-primary/50 bg-background/50 backdrop-blur-sm text-base p-4 rounded-xl"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                      💡 Press <kbd className="px-2 py-1 bg-background rounded text-xs">Enter</kbd> to send, <kbd className="px-2 py-1 bg-background rounded text-xs">Shift+Enter</kbd> for new line
+                    </div>
+                    <Button 
+                      onClick={handleSendMessage} 
+                      disabled={!input.trim() || isLoading}
+                      size="lg"
+                      className="px-6 py-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Send Message
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-                <Button 
-                  onClick={handleSendMessage} 
-                  disabled={!input.trim() || isLoading}
-                  size="sm"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-2" />
-                  )}
-                  Send
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
