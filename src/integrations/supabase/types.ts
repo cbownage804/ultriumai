@@ -204,6 +204,48 @@ export type Database = {
         }
         Relationships: []
       }
+      antivirus_scans: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          files_scanned: number | null
+          hostname: string
+          id: string
+          scan_duration: number | null
+          scan_results: Json | null
+          scan_type: string
+          started_at: string
+          threats_found: number | null
+          threats_quarantined: number | null
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          files_scanned?: number | null
+          hostname: string
+          id?: string
+          scan_duration?: number | null
+          scan_results?: Json | null
+          scan_type: string
+          started_at?: string
+          threats_found?: number | null
+          threats_quarantined?: number | null
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          files_scanned?: number | null
+          hostname?: string
+          id?: string
+          scan_duration?: number | null
+          scan_results?: Json | null
+          scan_type?: string
+          started_at?: string
+          threats_found?: number | null
+          threats_quarantined?: number | null
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -2190,6 +2232,180 @@ export type Database = {
         }
         Relationships: []
       }
+      rmm_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          client_id: string
+          created_at: string
+          id: string
+          message: string | null
+          metadata: Json | null
+          resolved_at: string | null
+          severity: string
+          source: string
+          status: string
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          client_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity: string
+          source: string
+          status?: string
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          severity?: string
+          source?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      rmm_command_logs: {
+        Row: {
+          client_id: string
+          command: string
+          executed_at: string
+          executed_by: string | null
+          hostname: string
+          id: string
+          parameters: Json | null
+          result: Json | null
+        }
+        Insert: {
+          client_id: string
+          command: string
+          executed_at?: string
+          executed_by?: string | null
+          hostname: string
+          id?: string
+          parameters?: Json | null
+          result?: Json | null
+        }
+        Update: {
+          client_id?: string
+          command?: string
+          executed_at?: string
+          executed_by?: string | null
+          hostname?: string
+          id?: string
+          parameters?: Json | null
+          result?: Json | null
+        }
+        Relationships: []
+      }
+      rmm_endpoints: {
+        Row: {
+          agent_version: string | null
+          client_id: string
+          cpu_info: string | null
+          created_at: string
+          disk_info: Json | null
+          hostname: string
+          id: string
+          last_seen: string | null
+          memory_available: number | null
+          memory_total: number | null
+          network_interfaces: Json | null
+          os_info: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_version?: string | null
+          client_id: string
+          cpu_info?: string | null
+          created_at?: string
+          disk_info?: Json | null
+          hostname: string
+          id?: string
+          last_seen?: string | null
+          memory_available?: number | null
+          memory_total?: number | null
+          network_interfaces?: Json | null
+          os_info?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_version?: string | null
+          client_id?: string
+          cpu_info?: string | null
+          created_at?: string
+          disk_info?: Json | null
+          hostname?: string
+          id?: string
+          last_seen?: string | null
+          memory_available?: number | null
+          memory_total?: number | null
+          network_interfaces?: Json | null
+          os_info?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rmm_metrics: {
+        Row: {
+          antivirus_status: Json | null
+          client_id: string
+          collected_at: string
+          cpu_usage: number | null
+          disk_usage: number | null
+          hostname: string
+          id: string
+          memory_usage: number | null
+          network_io: number | null
+          processes_count: number | null
+          services_count: number | null
+        }
+        Insert: {
+          antivirus_status?: Json | null
+          client_id: string
+          collected_at?: string
+          cpu_usage?: number | null
+          disk_usage?: number | null
+          hostname: string
+          id?: string
+          memory_usage?: number | null
+          network_io?: number | null
+          processes_count?: number | null
+          services_count?: number | null
+        }
+        Update: {
+          antivirus_status?: Json | null
+          client_id?: string
+          collected_at?: string
+          cpu_usage?: number | null
+          disk_usage?: number | null
+          hostname?: string
+          id?: string
+          memory_usage?: number | null
+          network_io?: number | null
+          processes_count?: number | null
+          services_count?: number | null
+        }
+        Relationships: []
+      }
       safedoc_scan_results: {
         Row: {
           created_at: string
@@ -2791,6 +3007,75 @@ export type Database = {
           two_factor_secret?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      software_deployments: {
+        Row: {
+          client_id: string
+          completed_at: string | null
+          deployment_log: string | null
+          deployment_status: string
+          hostname: string
+          id: string
+          package_id: string
+          started_at: string
+          started_by: string | null
+        }
+        Insert: {
+          client_id: string
+          completed_at?: string | null
+          deployment_log?: string | null
+          deployment_status?: string
+          hostname: string
+          id?: string
+          package_id: string
+          started_at?: string
+          started_by?: string | null
+        }
+        Update: {
+          client_id?: string
+          completed_at?: string | null
+          deployment_log?: string | null
+          deployment_status?: string
+          hostname?: string
+          id?: string
+          package_id?: string
+          started_at?: string
+          started_by?: string | null
+        }
+        Relationships: []
+      }
+      software_inventory: {
+        Row: {
+          client_id: string
+          hostname: string
+          id: string
+          install_date: string | null
+          last_seen: string
+          publisher: string | null
+          software_name: string
+          version: string | null
+        }
+        Insert: {
+          client_id: string
+          hostname: string
+          id?: string
+          install_date?: string | null
+          last_seen?: string
+          publisher?: string | null
+          software_name: string
+          version?: string | null
+        }
+        Update: {
+          client_id?: string
+          hostname?: string
+          id?: string
+          install_date?: string | null
+          last_seen?: string
+          publisher?: string | null
+          software_name?: string
+          version?: string | null
         }
         Relationships: []
       }
