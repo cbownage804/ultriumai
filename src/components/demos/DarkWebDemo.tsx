@@ -75,13 +75,13 @@ const mockResults: Record<string, ScanResults> = {
       {
         type: 'threat_actor',
         title: 'Targeted Reconnaissance Activity',
-        description: 'Email mentioned in threat actor discussion about CPA firms',
+        description: 'Email mentioned in threat actor discussion about tech companies',
         severity: 'medium',
         source: 'Encrypted Chat Forum',
         date: '2024-02-10',
         details: {
-          threatGroup: 'FinancialHunters',
-          targetingSector: 'Accounting & Finance',
+          threatGroup: 'TechHunters',
+          targetingSector: 'Technology & Software',
           attackVector: 'Spear phishing',
           status: 'Planning phase'
         }
@@ -95,21 +95,21 @@ const mockResults: Record<string, ScanResults> = {
       'Consider email address change for high-value accounts'
     ]
   },
-  'ultrium.ai': {
-    query: 'ultrium.ai',
+  'acmetech.com': {
+    query: 'acmetech.com',
     totalFindings: 2,
     scanTime: new Date().toLocaleString(),
     results: [
       {
         type: 'threat_actor',
-        title: 'AI Company Intelligence Gathering',
-        description: 'Domain mentioned in cybercriminal discussion about AI companies',
+        title: 'Tech Company Intelligence Gathering',
+        description: 'Domain mentioned in cybercriminal discussion about tech companies',
         severity: 'medium',
         source: 'Dark Web Intelligence Forum',
         date: '2024-03-05',
         details: {
           context: 'Reconnaissance activity',
-          targetType: 'AI/Technology companies',
+          targetType: 'Technology companies',
           informationSought: 'Customer data, intellectual property',
           riskLevel: 'Monitoring required'
         }
@@ -124,7 +124,7 @@ const mockResults: Record<string, ScanResults> = {
         details: {
           service: 'Domain generation for phishing',
           price: '$50-200 per domain',
-          variations: ['ultraium-ai.com', 'ultrium-ai.net', 'ultriumai.org'],
+          variations: ['acme-tech.com', 'acmetech.net', 'acmetech.org'],
           prevention: 'Domain monitoring recommended'
         }
       }
@@ -244,7 +244,7 @@ export const DarkWebDemo = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => loadSampleQuery('ultrium.ai')}
+                    onClick={() => loadSampleQuery('acmetech.com')}
                     className="w-full justify-start text-xs"
                   >
                     🌐 Company Domain
