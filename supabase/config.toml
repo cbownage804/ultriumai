@@ -2,3 +2,21 @@ project_id = "nsyobmjpdpvesjwdphlh"
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.rmm-agent-manager]
+verify_jwt = true
+
+[functions.rmm-realtime]
+verify_jwt = false
+
+[functions.rmm-remote-session]
+verify_jwt = false
+
+[functions.safedoc-agent-integration]
+verify_jwt = true
+
+[functions.safepass-agent-integration]
+verify_jwt = true
+
+[functions.ai-remote-assistant]
+verify_jwt = true
