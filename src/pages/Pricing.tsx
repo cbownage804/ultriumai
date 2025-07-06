@@ -33,37 +33,37 @@ const Pricing = () => {
   const plans = [
     {
       name: "Free",
-      description: "Perfect for trying out UltriumGPT",
+      description: "Perfect for trying out the platform",
       price: { monthly: 0, yearly: 0 },
       icon: Check,
       features: [
         "1 Custom GPT",
-        "500 character prompts",
         "Basic chat interface",
         "Community support",
-        "UltriumGPT branding"
+        "UltriumGPT branding",
+        "Limited mobile app access"
       ],
       limitations: [
+        "No security apps",
+        "No white-label branding",
         "No API access",
-        "No embedding",
-        "No custom branding",
-        "No document uploads"
+        "No MSP features"
       ],
       current: subscription.subscription_tier === "free",
       popular: false
     },
     {
-      name: "Premium",
-      description: "Best for small teams and professionals",
-      price: { monthly: 100, yearly: 1000 },
+      name: "Professional",
+      description: "Complete platform for businesses",
+      price: { monthly: 149, yearly: 1490 },
       icon: Crown,
       features: [
-        "5 Custom GPTs",
-        "2,000 character prompts",
-        "Document uploads & knowledge base",
-        "Custom branding & theming",
-        "Embed widgets",
-        "API access",
+        "Unlimited Custom GPTs",
+        "Mobile Technician App (iOS/Android)",
+        "4 Security Apps included",
+        "White-label branding",
+        "API access & webhooks",
+        "Knowledge base & document uploads",
         "Priority support",
         "Advanced analytics"
       ],
@@ -71,23 +71,35 @@ const Pricing = () => {
       popular: true
     },
     {
-      name: "Enterprise",
-      description: "Unlimited power for growing businesses",
-      price: { monthly: 500, yearly: 5000 },
+      name: "MSP/Enterprise",
+      description: "Full platform for service providers",
+      price: { monthly: 299, yearly: 2990 },
       icon: Building2,
       features: [
-        "Unlimited Custom GPTs",
-        "5,000 character prompts",
-        "Everything in Premium",
-        "White-label solutions",
-        "Custom integrations",
-        "Dedicated support",
-        "SLA guarantees",
-        "Custom deployment options"
+        "Everything in Professional",
+        "All 8 Security Applications",
+        "MSP client management portal",
+        "Co-managed service delivery",
+        "RMM & PSA integrations",
+        "SIEM & compliance tools",
+        "White-label mobile apps",
+        "Dedicated account manager",
+        "Custom integrations & SLA"
       ],
       current: subscription.subscription_tier === "enterprise",
       popular: false
     }
+  ];
+
+  const securityApps = [
+    { name: "SafeMail", description: "AI email threat detection" },
+    { name: "SafeDoc", description: "Document security scanning" },
+    { name: "SafeLink", description: "URL analysis & protection" },
+    { name: "SafePass", description: "Password management" },
+    { name: "SafeNet", description: "Network discovery & mapping" },
+    { name: "SafeComp", description: "Compliance management" },
+    { name: "SafeWeb", description: "Dark web monitoring" },
+    { name: "SafeShield", description: "Unified security dashboard" }
   ];
 
   const handleSubscribe = async (planName: string) => {
@@ -122,10 +134,10 @@ const Pricing = () => {
       <section className="pt-24 pb-16 bg-gradient-to-br from-background via-background to-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-primary to-blue-400 bg-clip-text text-transparent">
-            Choose Your <span className="text-primary">AI Power</span>
+            Complete AI Business Platform
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Transform your business with custom AI assistants. Start free, scale as you grow.
+            Custom GPTs, Mobile Apps, Security Suite, MSP Tools & White-Label Solutions - All in One Platform
           </p>
           
           {/* Billing Toggle */}
@@ -255,6 +267,161 @@ const Pricing = () => {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features Breakdown */}
+      <section className="py-16 bg-muted/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Platform Features Breakdown</h2>
+            <p className="text-muted-foreground">See exactly what's included in each plan</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            {/* Mobile & Core Platform */}
+            <Card className="p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Phone className="h-5 w-5 text-primary" />
+                Mobile & Core Platform
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline">Pro & MSP</Badge>
+                  <span className="text-sm">iOS & Android Technician Apps</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline">Pro & MSP</Badge>
+                  <span className="text-sm">GPS tracking & field operations</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline">Pro & MSP</Badge>
+                  <span className="text-sm">Real-time alerts & notifications</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline">MSP Only</Badge>
+                  <span className="text-sm">White-label mobile apps</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Security Applications */}
+            <Card className="p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Security Applications
+              </h3>
+              <div className="space-y-2">
+                {securityApps.slice(0, 4).map((app, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Badge variant="secondary">Pro & MSP</Badge>
+                    <span className="text-sm font-medium">{app.name}</span>
+                    <span className="text-xs text-muted-foreground">- {app.description}</span>
+                  </div>
+                ))}
+                {securityApps.slice(4).map((app, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Badge variant="default">MSP Only</Badge>
+                    <span className="text-sm font-medium">{app.name}</span>
+                    <span className="text-xs text-muted-foreground">- {app.description}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* MSP & Enterprise Features */}
+            <Card className="p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                MSP & Enterprise Features
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Badge variant="default">MSP Only</Badge>
+                  <span className="text-sm">Client management portal</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="default">MSP Only</Badge>
+                  <span className="text-sm">Co-managed service delivery</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="default">MSP Only</Badge>
+                  <span className="text-sm">RMM & PSA integrations</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="default">MSP Only</Badge>
+                  <span className="text-sm">SIEM & compliance dashboard</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* API & Development */}
+            <Card className="p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Settings className="h-5 w-5 text-primary" />
+                API & Development
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline">Pro & MSP</Badge>
+                  <span className="text-sm">Full REST API access</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline">Pro & MSP</Badge>
+                  <span className="text-sm">Webhook integrations</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="default">MSP Only</Badge>
+                  <span className="text-sm">Custom integrations</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="default">MSP Only</Badge>
+                  <span className="text-sm">Dedicated support & SLA</span>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Mobile App Showcase */}
+          <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl p-8 text-center">
+            <h3 className="text-2xl font-bold mb-4">Mobile Technician App Highlights</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div className="space-y-2">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <Phone className="h-6 w-6 text-blue-500" />
+                </div>
+                <div className="text-sm font-medium">iOS & Android</div>
+                <div className="text-xs text-muted-foreground">Native mobile apps</div>
+              </div>
+              <div className="space-y-2">
+                <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <Shield className="h-6 w-6 text-green-500" />
+                </div>
+                <div className="text-sm font-medium">Real-time Alerts</div>
+                <div className="text-xs text-muted-foreground">Push notifications</div>
+              </div>
+              <div className="space-y-2">
+                <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <Globe className="h-6 w-6 text-purple-500" />
+                </div>
+                <div className="text-sm font-medium">GPS Tracking</div>
+                <div className="text-xs text-muted-foreground">Field operations</div>
+              </div>
+              <div className="space-y-2">
+                <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto">
+                  <Zap className="h-6 w-6 text-orange-500" />
+                </div>
+                <div className="text-sm font-medium">White-Label</div>
+                <div className="text-xs text-muted-foreground">Custom branding</div>
+              </div>
+            </div>
+            <Button variant="outline" asChild>
+              <Link to="/technician-mobile">
+                Try Mobile App Demo
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

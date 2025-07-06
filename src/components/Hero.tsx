@@ -43,10 +43,10 @@ const Hero = () => {
               />
             </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
-              AI-Powered Knowledge Management for Business Success
+              Complete AI-Powered Business Platform
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in px-4" style={{animationDelay: '0.2s'}}>
-              Transform your operations with custom AI agents. Reduce support tickets, automate responses, and deploy intelligent solutions that scale with your business - from growing companies to enterprise service providers.
+              Build custom AI agents, deploy mobile technician apps, protect with enterprise security, and white-label everything for your clients. Complete platform from custom GPTs to mobile field operations.
             </p>
             <div className="flex items-center justify-center gap-2 text-base md:text-lg font-medium text-primary animate-bounce-gentle px-4">
               <span>Built for Business. Secure by Design</span>
@@ -71,6 +71,70 @@ const Hero = () => {
                   >
                     Start Building Now
                   </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Capabilities Showcase */}
+          <div className="animate-fade-in" style={{animationDelay: '0.5s'}}>
+            <div className="max-w-6xl mx-auto mb-8">
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold text-foreground mb-4">Complete Platform Capabilities</h3>
+                <p className="text-muted-foreground">Everything you need to deploy AI-powered solutions</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Mobile Technician App */}
+                <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border-2 border-blue-500/20 rounded-xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                     onClick={() => handleNavigation('/technician-mobile')}>
+                  <div className="text-center space-y-3">
+                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto">
+                      <Shield className="h-6 w-6 text-blue-500" />
+                    </div>
+                    <h4 className="font-bold text-foreground">Mobile Technician App</h4>
+                    <p className="text-sm text-muted-foreground">iOS & Android field operations app with GPS, camera, and real-time alerts</p>
+                    <div className="text-xs text-blue-500 font-medium">✓ White-label Ready</div>
+                  </div>
+                </div>
+
+                {/* Security Suite */}
+                <div className="bg-gradient-to-br from-red-500/10 to-red-600/10 border-2 border-red-500/20 rounded-xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                     onClick={() => handleNavigation('#security')}>
+                  <div className="text-center space-y-3">
+                    <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+                      <Lock className="h-6 w-6 text-red-500" />
+                    </div>
+                    <h4 className="font-bold text-foreground">8 Security Apps</h4>
+                    <p className="text-sm text-muted-foreground">SafeMail, SafeDoc, SafeNet, SafePass & more with real-time scanning</p>
+                    <div className="text-xs text-red-500 font-medium">✓ Enterprise Ready</div>
+                  </div>
+                </div>
+
+                {/* MSP Solutions */}
+                <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border-2 border-green-500/20 rounded-xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                     onClick={() => handleNavigation('/msps')}>
+                  <div className="text-center space-y-3">
+                    <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+                      <Users className="h-6 w-6 text-green-500" />
+                    </div>
+                    <h4 className="font-bold text-foreground">MSP Platform</h4>
+                    <p className="text-sm text-muted-foreground">Client management, RMM integration, SIEM & helpdesk automation</p>
+                    <div className="text-xs text-green-500 font-medium">✓ Co-Management</div>
+                  </div>
+                </div>
+
+                {/* API & Integration */}
+                <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border-2 border-purple-500/20 rounded-xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                     onClick={() => handleNavigation('/docs')}>
+                  <div className="text-center space-y-3">
+                    <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto">
+                      <Play className="h-6 w-6 text-purple-500" />
+                    </div>
+                    <h4 className="font-bold text-foreground">API Access</h4>
+                    <p className="text-sm text-muted-foreground">Full API access, webhook integrations, and custom development</p>
+                    <div className="text-xs text-purple-500 font-medium">✓ Developer Friendly</div>
+                  </div>
                 </div>
               </div>
             </div>

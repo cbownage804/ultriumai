@@ -19,48 +19,48 @@ const Features = () => {
   const features = [
     {
       icon: MessageSquare,
-      title: "Custom AI Agents",
-      description: "Built specifically for your business workflows, trained on your actual policies and procedures."
+      title: "Custom AI Agents & GPTs",
+      description: "Build powerful AI assistants tailored to your business workflows, complete with knowledge bases and custom actions."
     },
     {
       icon: Shield,
-      title: "Security-First Design", 
-      description: "Every GPT comes with built-in cybersecurity features, threat detection, and data protection protocols."
+      title: "Mobile Technician Apps", 
+      description: "iOS & Android field operations apps with GPS tracking, camera integration, and real-time alert management."
     },
     {
       icon: Users,
-      title: "Multi-Industry Expertise",
-      description: "Specialized solutions for IT teams, MSPs, accounting firms, automotive shops, and SMBs."
+      title: "White-Label Solutions",
+      description: "Complete white-label platform for MSPs and partners with custom branding, colors, and co-management capabilities."
     },
     {
       icon: Zap,
-      title: "Automated Support",
-      description: "Reduce helpdesk tickets by 20-30% with intelligent automation that handles common requests instantly."
+      title: "8 Security Applications",
+      description: "Enterprise-grade security suite including SafeMail, SafeDoc, SafeNet, SafePass, and 4 more protection tools."
     },
     {
       icon: Settings,
-      title: "Seamless Integration",
-      description: "Connect with your existing tools, RMM platforms, PSA systems, and business applications."
+      title: "RMM & Helpdesk Integration",
+      description: "Seamless integration with existing RMM platforms, PSA systems, and helpdesk automation workflows."
     },
     {
       icon: BarChart3,
-      title: "Real-Time Analytics",
-      description: "Track performance, measure ROI, and optimize your AI agents with comprehensive reporting."
+      title: "SIEM & Compliance Tools",
+      description: "Advanced security monitoring, incident management, and automated compliance reporting for multiple frameworks."
     },
     {
       icon: Globe,
-      title: "White-Glove Setup",
-      description: "Our team handles everything from initial setup to ongoing support and optimization."
+      title: "API & Developer Platform",
+      description: "Full REST API access, webhook integrations, and developer tools for custom integrations and automation."
     },
     {
       icon: Palette,
-      title: "Custom Branding",
-      description: "Your AI agents reflect your brand with custom colors, logos, and messaging."
+      title: "MSP Client Management",
+      description: "Complete MSP portal with client management, billing integration, and co-managed service delivery."
     },
     {
       icon: FileText,
-      title: "Document Intelligence",
-      description: "Transform your existing documentation into interactive, searchable knowledge bases."
+      title: "Knowledge Management",
+      description: "Transform documents into intelligent, searchable knowledge bases with AI-powered content analysis."
     }
   ];
 
