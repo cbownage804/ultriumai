@@ -4143,6 +4143,403 @@ export type Database = {
           },
         ]
       }
+      safemail_domains: {
+        Row: {
+          created_at: string
+          dkim_records: Json | null
+          dmarc_record: string | null
+          domain_name: string
+          id: string
+          is_monitored: boolean | null
+          last_scan_at: string | null
+          msp_org_id: string | null
+          mx_records: Json | null
+          security_score: number | null
+          spf_record: string | null
+          threat_level: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dkim_records?: Json | null
+          dmarc_record?: string | null
+          domain_name: string
+          id?: string
+          is_monitored?: boolean | null
+          last_scan_at?: string | null
+          msp_org_id?: string | null
+          mx_records?: Json | null
+          security_score?: number | null
+          spf_record?: string | null
+          threat_level?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dkim_records?: Json | null
+          dmarc_record?: string | null
+          domain_name?: string
+          id?: string
+          is_monitored?: boolean | null
+          last_scan_at?: string | null
+          msp_org_id?: string | null
+          mx_records?: Json | null
+          security_score?: number | null
+          spf_record?: string | null
+          threat_level?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safemail_domains_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safemail_threats: {
+        Row: {
+          action_taken: string | null
+          created_at: string
+          detected_at: string
+          domain_id: string | null
+          false_positive: boolean | null
+          id: string
+          recipient_email: string | null
+          resolved_at: string | null
+          risk_level: string
+          sender_email: string
+          subject: string | null
+          threat_details: Json
+          threat_score: number
+          threat_type: string
+          user_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string
+          detected_at?: string
+          domain_id?: string | null
+          false_positive?: boolean | null
+          id?: string
+          recipient_email?: string | null
+          resolved_at?: string | null
+          risk_level: string
+          sender_email: string
+          subject?: string | null
+          threat_details: Json
+          threat_score: number
+          threat_type: string
+          user_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string
+          detected_at?: string
+          domain_id?: string | null
+          false_positive?: boolean | null
+          id?: string
+          recipient_email?: string | null
+          resolved_at?: string | null
+          risk_level?: string
+          sender_email?: string
+          subject?: string | null
+          threat_details?: Json
+          threat_score?: number
+          threat_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safemail_threats_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "safemail_domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safenet_devices: {
+        Row: {
+          created_at: string
+          device_name: string
+          device_type: string
+          id: string
+          ip_address: unknown
+          is_managed: boolean | null
+          last_seen_at: string | null
+          mac_address: string | null
+          manufacturer: string | null
+          model: string | null
+          network_id: string
+          os_version: string | null
+          security_patches_needed: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          vulnerability_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          device_name: string
+          device_type: string
+          id?: string
+          ip_address: unknown
+          is_managed?: boolean | null
+          last_seen_at?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          network_id: string
+          os_version?: string | null
+          security_patches_needed?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          vulnerability_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          device_type?: string
+          id?: string
+          ip_address?: unknown
+          is_managed?: boolean | null
+          last_seen_at?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          network_id?: string
+          os_version?: string | null
+          security_patches_needed?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          vulnerability_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safenet_devices_network_id_fkey"
+            columns: ["network_id"]
+            isOneToOne: false
+            referencedRelation: "safenet_networks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safenet_networks: {
+        Row: {
+          created_at: string
+          device_count: number | null
+          id: string
+          last_scan_at: string | null
+          location: string | null
+          monitoring_enabled: boolean | null
+          msp_org_id: string | null
+          network_name: string
+          network_range: string
+          network_type: string | null
+          security_score: number | null
+          threat_count: number | null
+          updated_at: string
+          user_id: string
+          vulnerability_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          device_count?: number | null
+          id?: string
+          last_scan_at?: string | null
+          location?: string | null
+          monitoring_enabled?: boolean | null
+          msp_org_id?: string | null
+          network_name: string
+          network_range: string
+          network_type?: string | null
+          security_score?: number | null
+          threat_count?: number | null
+          updated_at?: string
+          user_id: string
+          vulnerability_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          device_count?: number | null
+          id?: string
+          last_scan_at?: string | null
+          location?: string | null
+          monitoring_enabled?: boolean | null
+          msp_org_id?: string | null
+          network_name?: string
+          network_range?: string
+          network_type?: string | null
+          security_score?: number | null
+          threat_count?: number | null
+          updated_at?: string
+          user_id?: string
+          vulnerability_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safenet_networks_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safenet_vulnerabilities: {
+        Row: {
+          affected_service: string | null
+          created_at: string
+          cve_id: string | null
+          cvss_score: number | null
+          description: string | null
+          device_id: string | null
+          discovered_at: string
+          id: string
+          network_id: string | null
+          patched_at: string | null
+          port: number | null
+          severity: string
+          solution: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          vulnerability_id: string
+        }
+        Insert: {
+          affected_service?: string | null
+          created_at?: string
+          cve_id?: string | null
+          cvss_score?: number | null
+          description?: string | null
+          device_id?: string | null
+          discovered_at?: string
+          id?: string
+          network_id?: string | null
+          patched_at?: string | null
+          port?: number | null
+          severity: string
+          solution?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          vulnerability_id: string
+        }
+        Update: {
+          affected_service?: string | null
+          created_at?: string
+          cve_id?: string | null
+          cvss_score?: number | null
+          description?: string | null
+          device_id?: string | null
+          discovered_at?: string
+          id?: string
+          network_id?: string | null
+          patched_at?: string | null
+          port?: number | null
+          severity?: string
+          solution?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          vulnerability_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safenet_vulnerabilities_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "safenet_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safenet_vulnerabilities_network_id_fkey"
+            columns: ["network_id"]
+            isOneToOne: false
+            referencedRelation: "safenet_networks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_entries: {
+        Row: {
+          category: string | null
+          compromise_details: Json | null
+          created_at: string
+          encrypted_data: Json
+          entry_type: string
+          id: string
+          is_compromised: boolean | null
+          is_favorite: boolean | null
+          last_used_at: string | null
+          notes: string | null
+          password_strength_score: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          url: string | null
+          user_id: string
+          vault_id: string
+        }
+        Insert: {
+          category?: string | null
+          compromise_details?: Json | null
+          created_at?: string
+          encrypted_data: Json
+          entry_type?: string
+          id?: string
+          is_compromised?: boolean | null
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          notes?: string | null
+          password_strength_score?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          vault_id: string
+        }
+        Update: {
+          category?: string | null
+          compromise_details?: Json | null
+          created_at?: string
+          encrypted_data?: Json
+          entry_type?: string
+          id?: string
+          is_compromised?: boolean | null
+          is_favorite?: boolean | null
+          last_used_at?: string | null
+          notes?: string | null
+          password_strength_score?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_entries_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safepass_usage_logs: {
         Row: {
           action: string
@@ -4181,6 +4578,62 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      safepass_vaults: {
+        Row: {
+          access_policies: Json | null
+          created_at: string
+          description: string | null
+          encryption_key_hash: string
+          id: string
+          is_active: boolean | null
+          is_shared: boolean | null
+          last_accessed_at: string | null
+          msp_org_id: string | null
+          shared_with: Json | null
+          updated_at: string
+          user_id: string
+          vault_name: string
+        }
+        Insert: {
+          access_policies?: Json | null
+          created_at?: string
+          description?: string | null
+          encryption_key_hash: string
+          id?: string
+          is_active?: boolean | null
+          is_shared?: boolean | null
+          last_accessed_at?: string | null
+          msp_org_id?: string | null
+          shared_with?: Json | null
+          updated_at?: string
+          user_id: string
+          vault_name: string
+        }
+        Update: {
+          access_policies?: Json | null
+          created_at?: string
+          description?: string | null
+          encryption_key_hash?: string
+          id?: string
+          is_active?: boolean | null
+          is_shared?: boolean | null
+          last_accessed_at?: string | null
+          msp_org_id?: string | null
+          shared_with?: Json | null
+          updated_at?: string
+          user_id?: string
+          vault_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_vaults_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safeweb_assets: {
         Row: {
@@ -4689,6 +5142,86 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      security_incidents: {
+        Row: {
+          acknowledged_at: string | null
+          affected_assets: Json | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          escalation_level: number | null
+          first_detected_at: string
+          id: string
+          incident_type: string
+          msp_org_id: string | null
+          resolved_at: string | null
+          response_actions: Json | null
+          severity: string
+          sla_deadline: string | null
+          source_data: Json | null
+          source_system: string
+          status: string | null
+          timeline: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          affected_assets?: Json | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalation_level?: number | null
+          first_detected_at?: string
+          id?: string
+          incident_type: string
+          msp_org_id?: string | null
+          resolved_at?: string | null
+          response_actions?: Json | null
+          severity: string
+          sla_deadline?: string | null
+          source_data?: Json | null
+          source_system: string
+          status?: string | null
+          timeline?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          affected_assets?: Json | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalation_level?: number | null
+          first_detected_at?: string
+          id?: string
+          incident_type?: string
+          msp_org_id?: string | null
+          resolved_at?: string | null
+          response_actions?: Json | null
+          severity?: string
+          sla_deadline?: string | null
+          source_data?: Json | null
+          source_system?: string
+          status?: string | null
+          timeline?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_incidents_msp_org_id_fkey"
+            columns: ["msp_org_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       security_settings: {
         Row: {
