@@ -18,14 +18,17 @@ import {
   Crown,
   FileText,
   Mail,
-  Network
+  Network,
+  Eye,
+  Search
 } from 'lucide-react';
 import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
+import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 const MSPDemos = () => {
-  const [selectedDemo, setSelectedDemo] = useState('safepass');
+  const [selectedDemo, setSelectedDemo] = useState('safeweb');
 
   const mspSolutions = [
     {
@@ -119,6 +122,29 @@ const MSPDemos = () => {
       },
       icon: Network,
       color: 'purple'
+    },
+    {
+      id: 'safeweb',
+      name: 'SafeWeb Dark Web Monitor',
+      description: 'White-label dark web monitoring and threat intelligence',
+      monthlyRevenue: '$20/user',
+      setupTime: '5 minutes',
+      marketSize: 'Every business with digital assets',
+      demoUrl: '/demos/safeweb',
+      features: [
+        'Complete white-label branding',
+        'Continuous dark web monitoring',
+        'Credential breach detection',
+        'Threat intelligence feeds',
+        'Automated client alerts'
+      ],
+      revenueModel: {
+        charge: 30,
+        pay: 10,
+        profit: 20
+      },
+      icon: Eye,
+      color: 'red'
     },
     {
       id: 'security-suite',
@@ -363,6 +389,19 @@ const MSPDemos = () => {
                   <TabsContent value="demo" className="space-y-4">
                     {selectedDemo === 'safenet' ? (
                       <SafeNetDemo />
+                    ) : selectedDemo === 'safeweb' ? (
+                      <div className="space-y-4">
+                        <div className="text-center space-y-2 mb-6">
+                          <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
+                            <Search className="h-6 w-6 text-primary" />
+                            MSP Dark Web Monitoring Demo
+                          </h3>
+                          <p className="text-muted-foreground">
+                            Experience how your clients will see dark web threats targeting their business
+                          </p>
+                        </div>
+                        <DarkWebDemo />
+                      </div>
                     ) : (
                       <Card className="border-2 border-primary/20">
                         <CardContent className="p-6 text-center space-y-4">
