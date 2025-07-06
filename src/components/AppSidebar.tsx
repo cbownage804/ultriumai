@@ -38,12 +38,15 @@ const customGPTItems = [
   { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings },
 ];
 
-const managementItems = [
-  { title: "Security Apps", url: "/dashboard/security-apps", icon: Shield },
+const safeSuiteItems = [
   { title: "SafePass", url: "/dashboard/safepass", icon: Key },
   { title: "SafeMail", url: "/dashboard/safemail", icon: Mail },
   { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText },
   { title: "SafeLink", url: "/dashboard/safelink", icon: Link },
+];
+
+const managementItems = [
+  { title: "Security Apps", url: "/dashboard/security-apps", icon: Shield },
   { title: "API Management", url: "/dashboard/api-management", icon: Key },
   { title: "Video Manager", url: "/dashboard/video-manager", icon: Video },
   { title: "White-label", url: "/dashboard/white-label", icon: Palette },
@@ -167,6 +170,24 @@ export function AppSidebar() {
                           )}
                         </span>
                       )}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>SafeSuite</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {safeSuiteItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink to={item.url} className={getNavClass}>
+                      <item.icon className="h-4 w-4" />
+                      {!isCollapsed && <span className="ml-2">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
