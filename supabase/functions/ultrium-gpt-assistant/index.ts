@@ -88,6 +88,30 @@ const availableTools: ToolFunction[] = [
         severity_filter: { type: "string", enum: ["all", "high", "critical"], default: "all" }
       }
     }
+  },
+  {
+    name: "web_search",
+    description: "Search the web for current information on any topic",
+    parameters: {
+      type: "object",
+      properties: {
+        query: { type: "string" },
+        max_results: { type: "number", default: 5 }
+      },
+      required: ["query"]
+    }
+  },
+  {
+    name: "generate_image",
+    description: "Generate an image based on a text description using AI",
+    parameters: {
+      type: "object",
+      properties: {
+        prompt: { type: "string" },
+        size: { type: "string", enum: ["1024x1024", "1536x1024", "1024x1536"], default: "1024x1024" }
+      },
+      required: ["prompt"]
+    }
   }
 ];
 
@@ -295,6 +319,90 @@ async function getRecentAlerts(userId: string, params: any) {
   }
 }
 
+async function webSearch(userId: string, params: any) {
+  try {
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    if (!perplexityApiKey) {
+      throw new Error('Perplexity API key not configured');
+    }
+
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: 'Be precise and concise. Provide accurate, current information with sources when possible.'
+          },
+          {
+            role: 'user',
+            content: params.query
+          }
+        ],
+        temperature: 0.2,
+        top_p: 0.9,
+        max_tokens: 1000,
+        return_images: false,
+        return_related_questions: false,
+        search_recency_filter: 'month',
+        frequency_penalty: 1,
+        presence_penalty: 0
+      }),
+    });
+
+    const data = await response.json();
+    
+    return {
+      query: params.query,
+      answer: data.choices?.[0]?.message?.content || 'No results found',
+      sources: data.citations || []
+    };
+  } catch (error) {
+    console.error('Error performing web search:', error);
+    throw error;
+  }
+}
+
+async function generateImage(userId: string, params: any) {
+  try {
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-image-1',
+        prompt: params.prompt,
+        size: params.size,
+        quality: 'high',
+        output_format: 'png',
+        n: 1
+      }),
+    });
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message);
+    }
+
+    return {
+      prompt: params.prompt,
+      image_data: data.data?.[0]?.b64_json || null,
+      size: params.size
+    };
+  } catch (error) {
+    console.error('Error generating image:', error);
+    throw error;
+  }
+}
+
 async function executeToolFunction(toolName: string, userId: string, parameters: any) {
   switch (toolName) {
     case 'generate_security_report':
@@ -309,6 +417,10 @@ async function executeToolFunction(toolName: string, userId: string, parameters:
       return await systemHealthCheck(userId, parameters);
     case 'get_recent_alerts':
       return await getRecentAlerts(userId, parameters);
+    case 'web_search':
+      return await webSearch(userId, parameters);
+    case 'generate_image':
+      return await generateImage(userId, parameters);
     default:
       throw new Error(`Unknown tool: ${toolName}`);
   }
@@ -334,19 +446,21 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'system',
-            content: `You are UltriumGPT, an AI assistant that helps with IT support, system monitoring, and security management. You have access to various tools and can:
+            content: `You are UltriumGPT, a comprehensive AI assistant for IT support, system monitoring, security management, research, and creative tasks. You have access to various tools and can:
 
 1. Generate comprehensive reports (security, RMM, system health)
 2. Check threat status and security events
 3. Create support tickets for escalation
 4. Monitor system health and performance
 5. Analyze recent alerts and incidents
+6. Search the web for current information on any topic
+7. Generate high-quality images based on text descriptions
 
-You should be helpful, professional, and proactive in suggesting actions. When users ask for reports or information that requires tool usage, use the appropriate functions. Always explain what you're doing and provide actionable insights.`
+You should be helpful, professional, and proactive in suggesting actions. When users ask for reports, current information, images, or anything that requires tool usage, use the appropriate functions. Always explain what you're doing and provide actionable insights.`
           },
           {
             role: 'user',
@@ -384,7 +498,7 @@ You should be helpful, professional, and proactive in suggesting actions. When u
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'gpt-4.1-2025-04-14',
             messages: [
               {
                 role: 'system',

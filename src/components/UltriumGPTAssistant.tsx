@@ -41,7 +41,7 @@ interface AvailableAction {
   name: string;
   description: string;
   icon: any;
-  category: 'report' | 'support' | 'monitoring' | 'security';
+  category: 'report' | 'support' | 'monitoring' | 'security' | 'research' | 'creative';
 }
 
 const availableActions: AvailableAction[] = [
@@ -79,6 +79,20 @@ const availableActions: AvailableAction[] = [
     description: 'Perform comprehensive system health check',
     icon: BarChart3,
     category: 'monitoring'
+  },
+  {
+    id: 'web-search',
+    name: 'Web Search',
+    description: 'Search the web for current information',
+    icon: FileText,
+    category: 'research'
+  },
+  {
+    id: 'generate-image',
+    name: 'Generate Image',
+    description: 'Create images with AI based on descriptions',
+    icon: FileText,
+    category: 'creative'
   }
 ];
 
@@ -89,13 +103,15 @@ export const UltriumGPTAssistant = () => {
     {
       id: '1',
       role: 'system',
-      content: `Hello! I'm UltriumGPT, your AI assistant for IT support and system management. I can help you with:
+      content: `Hello! I'm UltriumGPT, your comprehensive AI assistant for IT support, system management, and more. I can help you with:
 
 • **Generate Reports** - Security, RMM, threat analysis, and system health reports
 • **IT Support** - Answer questions and troubleshoot issues
 • **Monitor Systems** - Check status of your RMM, antivirus, and security tools
 • **Create Tickets** - Automatically escalate issues to support when needed
 • **Analyze Data** - Provide insights from your security and monitoring data
+• **Web Search** - Search the internet for current information and research
+• **Generate Images** - Create custom images and visual content with AI
 
 What can I help you with today?`,
       timestamp: new Date(),
@@ -212,6 +228,8 @@ What can I help you with today?`,
       case 'support': return 'bg-green-100 text-green-800';
       case 'monitoring': return 'bg-orange-100 text-orange-800';
       case 'security': return 'bg-red-100 text-red-800';
+      case 'research': return 'bg-purple-100 text-purple-800';
+      case 'creative': return 'bg-pink-100 text-pink-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
