@@ -36,65 +36,6 @@ interface Message {
   };
 }
 
-interface AvailableAction {
-  id: string;
-  name: string;
-  description: string;
-  icon: any;
-  category: 'report' | 'support' | 'monitoring' | 'security' | 'research' | 'creative';
-}
-
-const availableActions: AvailableAction[] = [
-  {
-    id: 'generate-security-report',
-    name: 'Security Report',
-    description: 'Generate comprehensive security status report',
-    icon: Shield,
-    category: 'report'
-  },
-  {
-    id: 'generate-rmm-report',
-    name: 'RMM Report',
-    description: 'Generate system monitoring and management report',
-    icon: Server,
-    category: 'report'
-  },
-  {
-    id: 'check-threat-status',
-    name: 'Threat Status',
-    description: 'Check current threat detection status',
-    icon: AlertTriangle,
-    category: 'security'
-  },
-  {
-    id: 'create-support-ticket',
-    name: 'Support Ticket',
-    description: 'Create a new support ticket',
-    icon: HeadphonesIcon,
-    category: 'support'
-  },
-  {
-    id: 'system-health-check',
-    name: 'System Health',
-    description: 'Perform comprehensive system health check',
-    icon: BarChart3,
-    category: 'monitoring'
-  },
-  {
-    id: 'web-search',
-    name: 'Web Search',
-    description: 'Search the web for current information',
-    icon: FileText,
-    category: 'research'
-  },
-  {
-    id: 'generate-image',
-    name: 'Generate Image',
-    description: 'Create images with AI based on descriptions',
-    icon: FileText,
-    category: 'creative'
-  }
-];
 
 export const UltriumGPTAssistant = () => {
   const { user } = useAuth();
@@ -195,16 +136,6 @@ Choose a question below to get started, or ask me anything!`,
     }
   };
 
-  const handleQuickAction = async (action: AvailableAction) => {
-    const quickMessage = `Please ${action.name.toLowerCase()}: ${action.description}`;
-    setInput(quickMessage);
-    
-    // Auto-send the message
-    setTimeout(() => {
-      handleSendMessage();
-    }, 100);
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -214,18 +145,6 @@ Choose a question below to get started, or ask me anything!`,
 
   const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'report': return 'bg-blue-100 text-blue-800';
-      case 'support': return 'bg-green-100 text-green-800';
-      case 'monitoring': return 'bg-orange-100 text-orange-800';
-      case 'security': return 'bg-red-100 text-red-800';
-      case 'research': return 'bg-purple-100 text-purple-800';
-      case 'creative': return 'bg-pink-100 text-pink-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
   };
 
   return (
@@ -247,54 +166,9 @@ Choose a question below to get started, or ask me anything!`,
         </div>
 
         {/* Main Content Area */}
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
-          {/* Quick Actions Sidebar */}
-          <div className="xl:col-span-1 space-y-4">
-            <Card className="border-0 shadow-lg bg-gradient-to-b from-card to-card/50">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  Quick Actions
-                </CardTitle>
-                <CardDescription>
-                  Common tasks I can help you with
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {availableActions.map((action) => (
-                  <Button
-                    key={action.id}
-                    variant="ghost"
-                    size="default"
-                    className="w-full justify-start h-auto p-4 border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
-                    onClick={() => handleQuickAction(action)}
-                    disabled={isLoading}
-                  >
-                    <div className="flex items-start gap-3 w-full">
-                      <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                        <action.icon className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="text-left flex-1">
-                        <div className="font-medium text-sm mb-1">{action.name}</div>
-                        <div className="text-xs text-muted-foreground leading-relaxed mb-2">
-                          {action.description}
-                        </div>
-                        <Badge 
-                          variant="secondary" 
-                          className={`text-xs ${getCategoryColor(action.category)}`}
-                        >
-                          {action.category}
-                        </Badge>
-                      </div>
-                    </div>
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
+        <div className="max-w-5xl mx-auto">
           {/* Chat Interface */}
-          <div className="xl:col-span-4">
+          <div>
             <Card className="border-0 shadow-xl bg-gradient-to-b from-card to-card/50 min-h-[700px]">
               <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-secondary/5 rounded-t-lg pb-6">
                 <CardTitle className="text-xl flex items-center gap-3">
