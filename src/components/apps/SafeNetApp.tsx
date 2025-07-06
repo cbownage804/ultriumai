@@ -88,6 +88,8 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<NetworkScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<NetworkScanResult[]>([]);
+  const [realTimeScanning, setRealTimeScanning] = useState(false);
+  const [lastRealTimeScan, setLastRealTimeScan] = useState<Date | null>(null);
   const [connectorStatus, setConnectorStatus] = useState<ConnectorStatus>({
     installed: false,
     version: '',
@@ -110,6 +112,31 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
       checkConnectorStatus();
     }
   }, [user]);
+
+  // Real-time monitoring effect
+  useEffect(() => {
+    if (!realTimeScanning || !user) return;
+
+    const interval = setInterval(async () => {
+      if (networkRange) {
+        console.log('Running real-time network scan...');
+        await startNetworkScan();
+        setLastRealTimeScan(new Date());
+      }
+    }, 300000); // Scan every 5 minutes
+
+    return () => clearInterval(interval);
+  }, [realTimeScanning, networkRange, user]);
+
+  const toggleRealTimeScanning = () => {
+    setRealTimeScanning(!realTimeScanning);
+    toast({
+      title: realTimeScanning ? "Real-time Monitoring Disabled" : "Real-time Monitoring Enabled",
+      description: realTimeScanning 
+        ? "Network monitoring stopped" 
+        : "Network will be scanned every 5 minutes",
+    });
+  };
 
   const loadScanHistory = async () => {
     try {
@@ -432,6 +459,30 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
                     </>
                   )}
                 </Button>
+
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="font-medium">Real-Time Monitoring</Label>
+                    <Badge variant={realTimeScanning ? "default" : "secondary"}>
+                      {realTimeScanning ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Automatically scan network every 5 minutes
+                    {lastRealTimeScan && (
+                      <span className="block">Last scan: {lastRealTimeScan.toLocaleTimeString()}</span>
+                    )}
+                  </p>
+                  <Button 
+                    onClick={toggleRealTimeScanning}
+                    variant={realTimeScanning ? "destructive" : "default"}
+                    size="sm"
+                    className="w-full"
+                  >
+                    <Activity className="mr-2 h-4 w-4" />
+                    {realTimeScanning ? "Disable" : "Enable"} Real-Time Monitoring
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
