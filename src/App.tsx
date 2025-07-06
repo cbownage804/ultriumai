@@ -239,7 +239,7 @@ function AppRouter() {
           <Dashboard />
         </ProtectedRoute>
       } />
-      <Route path="/dashboard/safemail" element={
+      <Route path="/dashboard/safekb" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>

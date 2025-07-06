@@ -61,7 +61,7 @@ const Pricing = () => {
         "Everything in SafeStart",
         "5 Custom GPT creations",
         "SafePass password management",
-        "SafeDoc document security",
+        "SafeKB asset management",
         "Advanced white-label branding",
         "Priority support",
         "Advanced analytics & reporting",

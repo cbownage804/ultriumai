@@ -156,7 +156,7 @@ const SecurityAppsSection = () => {
   const appBundles = [
     {
       name: 'Document & Password Bundle',
-      apps: ['SafeDoc', 'SafePass'],
+      apps: ['SafeKB', 'SafePass'],
       originalPrice: '$40',
       bundlePrice: '$35',
       enterprisePrice: '$62',
@@ -174,7 +174,7 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Network & Document Bundle',
-      apps: ['SafeNet', 'SafeDoc', 'SafePass'],
+      apps: ['SafeNet', 'SafeKB', 'SafePass'],
       originalPrice: '$60',
       bundlePrice: '$53',
       enterprisePrice: '$92',
