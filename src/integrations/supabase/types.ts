@@ -1921,6 +1921,63 @@ export type Database = {
         }
         Relationships: []
       }
+      network_assets: {
+        Row: {
+          connector_id: string | null
+          created_at: string
+          device_type: string | null
+          hostname: string | null
+          id: string
+          ip_address: string
+          last_seen: string
+          mac_address: string | null
+          manufacturer: string | null
+          open_ports: number[] | null
+          os_info: string | null
+          risk_level: string
+          status: string
+          updated_at: string
+          user_id: string
+          vulnerabilities: string[] | null
+        }
+        Insert: {
+          connector_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          hostname?: string | null
+          id?: string
+          ip_address: string
+          last_seen?: string
+          mac_address?: string | null
+          manufacturer?: string | null
+          open_ports?: number[] | null
+          os_info?: string | null
+          risk_level?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vulnerabilities?: string[] | null
+        }
+        Update: {
+          connector_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          hostname?: string | null
+          id?: string
+          ip_address?: string
+          last_seen?: string
+          mac_address?: string | null
+          manufacturer?: string | null
+          open_ports?: number[] | null
+          os_info?: string | null
+          risk_level?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vulnerabilities?: string[] | null
+        }
+        Relationships: []
+      }
       password_audit_logs: {
         Row: {
           action: string
@@ -2770,6 +2827,54 @@ export type Database = {
           subscription_tier?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          connector_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          priority: string
+          resolution_notes: string | null
+          resolved_at: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string
+          connector_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          connector_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
