@@ -392,6 +392,10 @@ const SafeSIEM = () => {
             <Target className="h-4 w-4 mr-2" />
             Incidents
           </Button>
+          <Button variant="outline" onClick={() => navigate('/safesiem/analytics')}>
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Analytics
+          </Button>
           <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
             Configure
@@ -693,10 +697,17 @@ const SafeSIEM = () => {
         <TabsContent value="analytics">
           <Card>
             <CardHeader>
-              <CardTitle>Security Analytics Dashboard</CardTitle>
-              <CardDescription>
-                Comprehensive security metrics and trend analysis
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Security Analytics Dashboard</CardTitle>
+                  <CardDescription>
+                    Comprehensive security metrics and trend analysis
+                  </CardDescription>
+                </div>
+                <Button onClick={() => navigate('/safesiem/analytics')}>
+                  View Detailed Analytics
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-center py-8">
@@ -704,6 +715,13 @@ const SafeSIEM = () => {
                 <p className="text-muted-foreground">
                   Advanced analytics dashboard with threat trends, compliance metrics, and performance insights
                 </p>
+                <Button 
+                  className="mt-4" 
+                  onClick={() => navigate('/safesiem/analytics')}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Open Analytics Dashboard
+                </Button>
               </div>
             </CardContent>
           </Card>
