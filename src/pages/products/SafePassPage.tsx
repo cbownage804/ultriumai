@@ -3,10 +3,13 @@ import { SafePassDemo } from "@/components/demos/SafePassDemo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Check, Star, Zap, Users, Shield, ArrowRight, Play } from "lucide-react";
+import { Lock, Check, Star, Zap, Users, Shield, ArrowRight, Play, ArrowLeft, Home } from "lucide-react";
 import Footer from "@/components/Footer";
+import { useNavigate } from "react-router-dom";
 
 const SafePassPage = () => {
+  const navigate = useNavigate();
+  
   const features = [
     "Secure password generation",
     "Advanced breach monitoring",
@@ -73,6 +76,29 @@ const SafePassPage = () => {
       <Navigation />
       
       <main className="pt-20">
+        {/* Navigation Header */}
+        <div className="bg-muted/30 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                className="shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/dashboard')}
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
