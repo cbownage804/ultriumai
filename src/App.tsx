@@ -44,7 +44,7 @@ import SafeCompPage from '@/pages/products/SafeCompPage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
 import EmbedDemo from '@/pages/EmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
-import MSPDashboard from '@/pages/MSPDashboard';
+import MSPControlCenter from '@/pages/MSPDashboard';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -85,11 +85,11 @@ function AppRouter() {
       <Route path="/solutions" element={<Solutions />} />
       <Route path="/demos" element={<LiveDemos />} />
       <Route path="/msp-demos" element={<MSPDemos />} />
-      <Route path="/msp-dashboard" element={
-        <ProtectedRoute>
-          <MSPDashboard />
-        </ProtectedRoute>
-      } />
+        <Route path="/msp-control-center" element={
+          <ProtectedRoute>
+            <MSPControlCenter />
+          </ProtectedRoute>
+        } />
       <Route path="/docs" element={
         <ProtectedRoute>
           <Docs />

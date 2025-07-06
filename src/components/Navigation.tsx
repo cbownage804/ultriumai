@@ -113,8 +113,8 @@ const Navigation = () => {
               MSP Demos
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
-            <button onClick={() => handleNavigation('/msp-dashboard')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              MSP Dashboard
+            <button onClick={() => handleNavigation('/msp-control-center')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+              MSP Control Center
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
             <button onClick={() => handleNavigation('/contact')} className="text-base font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
@@ -198,8 +198,8 @@ const Navigation = () => {
               <button onClick={() => handleNavigationWithMenuClose('/msp-demos')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 MSP Demos
               </button>
-              <button onClick={() => handleNavigationWithMenuClose('/msp-dashboard')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                MSP Dashboard
+              <button onClick={() => handleNavigationWithMenuClose('/msp-control-center')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                MSP Control Center
               </button>
               <button onClick={() => handleNavigationWithMenuClose('/contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Contact

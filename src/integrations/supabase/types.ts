@@ -1524,6 +1524,125 @@ export type Database = {
         }
         Relationships: []
       }
+      safedoc_scan_results: {
+        Row: {
+          created_at: string
+          description: string | null
+          engine_name: string
+          id: string
+          recommendation: string | null
+          scan_id: string
+          severity: string | null
+          threat_name: string | null
+          threat_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          engine_name: string
+          id?: string
+          recommendation?: string | null
+          scan_id: string
+          severity?: string | null
+          threat_name?: string | null
+          threat_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          engine_name?: string
+          id?: string
+          recommendation?: string | null
+          scan_id?: string
+          severity?: string | null
+          threat_name?: string | null
+          threat_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_scan_results_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_scans: {
+        Row: {
+          client_id: string | null
+          completed_at: string | null
+          created_at: string
+          expires_at: string | null
+          file_hash: string
+          file_name: string
+          file_size: number
+          id: string
+          metadata: Json | null
+          mime_type: string
+          msp_id: string | null
+          scan_engine: string | null
+          scan_results: Json | null
+          scan_status: string | null
+          threat_level: string | null
+          threats_found: number | null
+          user_email: string
+        }
+        Insert: {
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          file_hash: string
+          file_name: string
+          file_size: number
+          id?: string
+          metadata?: Json | null
+          mime_type: string
+          msp_id?: string | null
+          scan_engine?: string | null
+          scan_results?: Json | null
+          scan_status?: string | null
+          threat_level?: string | null
+          threats_found?: number | null
+          user_email: string
+        }
+        Update: {
+          client_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          file_hash?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          metadata?: Json | null
+          mime_type?: string
+          msp_id?: string | null
+          scan_engine?: string | null
+          scan_results?: Json | null
+          scan_status?: string | null
+          threat_level?: string | null
+          threats_found?: number | null
+          user_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_scans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_scans_msp_id_fkey"
+            columns: ["msp_id"]
+            isOneToOne: false
+            referencedRelation: "msps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_app_subscriptions: {
         Row: {
           app_id: string
@@ -1531,6 +1650,7 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          safedoc_enabled: boolean | null
           status: string
           stripe_subscription_id: string | null
           updated_at: string
@@ -1544,6 +1664,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          safedoc_enabled?: boolean | null
           status?: string
           stripe_subscription_id?: string | null
           updated_at?: string
@@ -1557,6 +1678,7 @@ export type Database = {
           created_at?: string
           expires_at?: string | null
           id?: string
+          safedoc_enabled?: boolean | null
           status?: string
           stripe_subscription_id?: string | null
           updated_at?: string

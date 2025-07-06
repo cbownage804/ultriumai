@@ -23,12 +23,16 @@ import {
   Target,
   Copy,
   Eye,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  Activity,
+  Clock
 } from 'lucide-react';
 import { useMSP, MSPClient } from '@/hooks/useMSP';
 import { useToast } from '@/hooks/use-toast';
+import SafeDocScanner from '@/components/SafeDocScanner';
 
-const MSPDashboard = () => {
+const MSPControlCenter = () => {
   const { 
     msp, 
     clients, 
@@ -118,9 +122,9 @@ const MSPDashboard = () => {
         <div className="max-w-2xl mx-auto text-center space-y-8">
           <div className="space-y-4">
             <Crown className="h-16 w-16 mx-auto text-primary" />
-            <h1 className="text-4xl font-bold">Welcome to MSP SafePass</h1>
+            <h1 className="text-4xl font-bold">Welcome to MSP Control Center</h1>
             <p className="text-xl text-muted-foreground">
-              Start generating recurring revenue with white-label password management
+              Manage all your security services and generate recurring revenue
             </p>
           </div>
 
@@ -235,10 +239,10 @@ const MSPDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Crown className="h-8 w-8 text-primary" />
-            {msp.company_name} Dashboard
+            {msp.company_name} Control Center
           </h1>
           <p className="text-muted-foreground">
-            Manage your SafePass clients and track revenue
+            Manage all your security services and track revenue
           </p>
         </div>
         <div className="flex gap-2">
@@ -405,8 +409,9 @@ const MSPDashboard = () => {
       <Tabs defaultValue="clients" className="space-y-4">
         <TabsList>
           <TabsTrigger value="clients">Clients</TabsTrigger>
+          <TabsTrigger value="safedoc">SafeDoc</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsTrigger value="integrations">Security Apps</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
 
@@ -496,6 +501,45 @@ const MSPDashboard = () => {
           </div>
         </TabsContent>
 
+        <TabsContent value="safedoc" className="space-y-4">
+          <div className="grid gap-6">
+            {clients.map((client) => (
+              <Card key={client.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    {client.company_name} - Document Security
+                  </CardTitle>
+                  <CardDescription>
+                    SafeDoc scanner for {client.company_name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SafeDocScanner 
+                    mspId={msp.id}
+                    clientId={client.id}
+                    userEmail={client.contact_email}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+            
+            {clients.length === 0 && (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Clients Yet</h3>
+                  <p className="text-muted-foreground mb-4">Add clients to start using SafeDoc</p>
+                  <Button onClick={() => setShowCreateClient(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add First Client
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
@@ -539,18 +583,22 @@ const MSPDashboard = () => {
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  Embeddable Widget
+                  <Shield className="h-5 w-5" />
+                  SafePass
                 </CardTitle>
                 <CardDescription>
-                  Add SafePass to any website with one line of code
+                  Password management and vault services
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Active</span>
+                </div>
                 <Button className="w-full">
                   <Code className="h-4 w-4 mr-2" />
                   Get Embed Code
@@ -561,35 +609,109 @@ const MSPDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Web Application
+                  <FileText className="h-5 w-5" />
+                  SafeDoc
                 </CardTitle>
                 <CardDescription>
-                  Full-featured web app for comprehensive password management
+                  Document security scanning and threat detection
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Launch Demo
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Active</span>
+                </div>
+                <Button className="w-full">
+                  <Code className="h-4 w-4 mr-2" />
+                  Integration Guide
                 </Button>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="opacity-60">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  API Access
+                  <Shield className="h-5 w-5" />
+                  SafeEmail
                 </CardTitle>
                 <CardDescription>
-                  Custom integrations via REST API
+                  Email security and phishing protection
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">Coming Soon</span>
+                </div>
+                <Button variant="outline" className="w-full" disabled>
                   <Settings className="h-4 w-4 mr-2" />
-                  API Documentation
+                  Not Available
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="opacity-60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  SafeLink
+                </CardTitle>
+                <CardDescription>
+                  URL scanning and link protection
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">Coming Soon</span>
+                </div>
+                <Button variant="outline" className="w-full" disabled>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Not Available
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="opacity-60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  SafeComp
+                </CardTitle>
+                <CardDescription>
+                  Compliance monitoring and reporting
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">Coming Soon</span>
+                </div>
+                <Button variant="outline" className="w-full" disabled>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Not Available
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="opacity-60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  SafeNet
+                </CardTitle>
+                <CardDescription>
+                  Network security monitoring
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm">Coming Soon</span>
+                </div>
+                <Button variant="outline" className="w-full" disabled>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Not Available
                 </Button>
               </CardContent>
             </Card>
@@ -640,4 +762,4 @@ const MSPDashboard = () => {
   );
 };
 
-export default MSPDashboard;
+export default MSPControlCenter;
