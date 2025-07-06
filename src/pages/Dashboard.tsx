@@ -40,7 +40,6 @@ import { SafeWebDashboard } from "@/components/SafeWebDashboard";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import Footer from "@/components/Footer";
 import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
 
 const Dashboard = () => {
@@ -199,7 +198,6 @@ const Dashboard = () => {
           <div className={`flex flex-1 flex-col ${!isSettingsPage ? 'h-[calc(100vh-4rem)]' : ''}`}>
             {renderContent()}
           </div>
-          {!isUltriumGPTPage && <Footer />}
         </SidebarInset>
       </div>
     </SidebarProvider>
