@@ -8,16 +8,10 @@ import {
   ArrowRight, 
   Users, 
   Building2, 
-  Factory,
-  MessageSquare,
-  Zap,
-  Shield,
-  BarChart3,
-  Settings,
-  Globe,
-  Phone,
   Crown,
-  X
+  Shield,
+  Wrench,
+  Zap
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,15 +19,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
 
-const Pricing = () => {
+const MSPPricing = () => {
   const [isYearly, setIsYearly] = useState(false);
   const { subscription, createCheckout, openCustomerPortal, isLoading } = useSubscription();
   const { user } = useAuth();
 
   const plans = [
     {
-      name: "Ultrium SafeStart",
-      description: "Essential AI and security foundation",
+      name: "Ultrium SafeMSP Start",
+      description: "Essential AI and security tools for MSP clients",
       price: { monthly: 29, yearly: 290 },
       trial: "14-day free trial",
       icon: Users,
@@ -43,8 +37,7 @@ const Pricing = () => {
         "SafeLink URL protection",
         "SafeMail email security",
         "Basic white-label customization",
-        "API access & webhooks",
-        "Knowledge base & document uploads",
+        "Client portal access",
         "Email & chat support"
       ],
       current: subscription.subscription_tier === "starter",
@@ -52,45 +45,50 @@ const Pricing = () => {
       perUser: true
     },
     {
-      name: "Ultrium SafePro",
+      name: "Ultrium SafeMSP Pro",
       description: "Enhanced security suite with expanded AI capabilities",
       price: { monthly: 49, yearly: 490 },
       trial: "14-day free trial",
       icon: Crown,
       features: [
-        "Everything in SafeStart",
+        "Everything in SafeMSP Start",
         "5 Custom GPT creations",
         "SafePass password management",
         "SafeDoc document security",
         "Advanced white-label branding",
+        "Multi-client management portal",
         "Priority support",
-        "Advanced analytics & reporting",
-        "Custom integrations"
+        "Advanced analytics & reporting"
       ],
       current: subscription.subscription_tier === "premium",
       popular: true,
       perUser: true
     },
     {
-      name: "Ultrium SafeEnterprise",
-      description: "Complete security arsenal for enterprise needs",
+      name: "Ultrium SafeMSP Enterprise",
+      description: "Complete security arsenal for MSP co-management",
       price: { monthly: 79, yearly: 790 },
       trial: "30-day free trial",
       icon: Building2,
       features: [
-        "Everything in SafePro",
+        "Everything in SafeMSP Pro",
         "Complete SafeSuite Apps (8 total)",
         "SafeNet network discovery",
         "SafeComp compliance management",
         "SafeWeb dark web monitoring",
         "SafeShield unified dashboard",
-        "Enterprise support & SLA",
+        "Full co-management tools",
         "Dedicated account manager",
-        "Custom deployment options"
+        "Custom SLA & support tiers"
       ],
       current: subscription.subscription_tier === "enterprise",
       popular: false,
-      perUser: true
+      perUser: true,
+      mspProfit: {
+        suggestedRate: 150,
+        profit: 71,
+        margin: "90%"
+      }
     }
   ];
 
@@ -113,27 +111,16 @@ const Pricing = () => {
       name: "Ultrium SafeCenter",
       description: "Complete service management platform",
       price: { monthly: 25, yearly: 250 },
-      icon: Factory,
+      icon: Wrench,
       features: [
         "Integrated ticketing system",
         "Remote monitoring & management (RMM)",
         "Automated patch management",
         "Asset management & tracking",
         "Service desk automation",
-        "Internal team collaboration"
+        "Client communication portal"
       ]
     }
-  ];
-
-  const securityApps = [
-    { name: "SafeMail", description: "AI email threat detection" },
-    { name: "SafeDoc", description: "Document security scanning" },
-    { name: "SafeLink", description: "URL analysis & protection" },
-    { name: "SafePass", description: "Password management" },
-    { name: "SafeNet", description: "Network discovery & mapping" },
-    { name: "SafeComp", description: "Compliance management" },
-    { name: "SafeWeb", description: "Dark web monitoring" },
-    { name: "SafeShield", description: "Unified security dashboard" }
   ];
 
   const handleSubscribe = async (planName: string) => {
@@ -147,12 +134,10 @@ const Pricing = () => {
   };
 
   const formatPrice = (price: number) => {
-    if (price === 0) return "Free";
     return `$${price}`;
   };
 
   const getSavings = (plan: any) => {
-    if (plan.price.yearly === 0) return null;
     const monthlyCost = plan.price.monthly * 12;
     const savings = monthlyCost - plan.price.yearly;
     return savings;
@@ -166,10 +151,10 @@ const Pricing = () => {
       <section className="pt-24 pb-16 bg-gradient-to-br from-background via-background to-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-primary via-primary to-blue-400 bg-clip-text text-transparent">
-            Business Pricing - AI-Powered Security Solutions
+            MSP Pricing - Strengthen Your Clients' Security Arsenal
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Strengthen your business security with AI-powered tools, custom GPTs, and comprehensive protection suite
+            Co-manage security for clients with internal IT teams. Add powerful tools to their arsenal with white-label solutions and scalable per-user pricing.
           </p>
           
           {/* Billing Toggle */}
@@ -196,8 +181,8 @@ const Pricing = () => {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Core Business Plans</h2>
-            <p className="text-muted-foreground">Choose the right security foundation for your business</p>
+            <h2 className="text-3xl font-bold mb-4">Core MSP Plans</h2>
+            <p className="text-muted-foreground">Choose the right security foundation for your clients</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
@@ -233,6 +218,15 @@ const Pricing = () => {
                       {isYearly && savings && (
                         <div className="text-sm text-green-600 font-medium mt-1">
                           Save ${savings} per user/year
+                        </div>
+                      )}
+                      {plan.mspProfit && (
+                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                          <div className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">MSP Profit Opportunity</div>
+                          <div className="text-sm space-y-1">
+                            <div>Charge: ${plan.mspProfit.suggestedRate}/user/month</div>
+                            <div className="text-green-600 font-bold">Profit: ${plan.mspProfit.profit}/user/month ({plan.mspProfit.margin})</div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -335,186 +329,51 @@ const Pricing = () => {
         </div>
       </section>
 
-
-      {/* Platform Features Breakdown */}
-      <section className="py-16 bg-muted/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* MSP Profit Calculator */}
+      <section className="py-16 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Platform Features Breakdown</h2>
-            <p className="text-muted-foreground">See exactly what's included in each plan</p>
+            <h2 className="text-3xl font-bold mb-4 text-green-700 dark:text-green-400">MSP Revenue Potential</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              See how much profit you can generate with our per-user pricing model while strengthening your clients' security arsenal.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-            {/* Mobile & Core Platform */}
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Phone className="h-5 w-5 text-primary" />
-                Mobile & Core Platform
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
-                  <span className="text-sm">iOS & Android Technician Apps</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
-                  <span className="text-sm">GPS tracking & field operations</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
-                  <span className="text-sm">Real-time alerts & notifications</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">MSP Only</Badge>
-                  <span className="text-sm">White-label mobile apps</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="p-6 border-green-200 dark:border-green-800">
+              <div className="text-center space-y-4">
+                <div className="text-2xl font-bold text-green-600">25 Users</div>
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Your Cost: $79 × 25 = $1,975/month</div>
+                  <div className="text-sm text-muted-foreground">Charge Clients: $150 × 25 = $3,750/month</div>
+                  <div className="text-lg font-bold text-green-600">Monthly Profit: $1,775</div>
+                  <div className="text-sm text-green-500">90% profit margin</div>
                 </div>
               </div>
             </Card>
 
-            {/* Security Applications */}
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                Security Applications
-              </h3>
-              <div className="space-y-2">
-                {securityApps.slice(0, 4).map((app, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <Badge variant="secondary">Pro & MSP</Badge>
-                    <span className="text-sm font-medium">{app.name}</span>
-                    <span className="text-xs text-muted-foreground">- {app.description}</span>
-                  </div>
-                ))}
-                {securityApps.slice(4).map((app, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <Badge variant="default">MSP Only</Badge>
-                    <span className="text-sm font-medium">{app.name}</span>
-                    <span className="text-xs text-muted-foreground">- {app.description}</span>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            {/* MSP & Enterprise Features */}
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                MSP & Enterprise Features
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
-                  <span className="text-sm">Client management portal</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
-                  <span className="text-sm">Co-managed service delivery</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
-                  <span className="text-sm">RMM & PSA integrations</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
-                  <span className="text-sm">SIEM & compliance dashboard</span>
+            <Card className="p-6 border-green-200 dark:border-green-800 ring-2 ring-green-500/20">
+              <div className="text-center space-y-4">
+                <div className="text-2xl font-bold text-green-600">100 Users</div>
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Your Cost: $79 × 100 = $7,900/month</div>
+                  <div className="text-sm text-muted-foreground">Charge Clients: $150 × 100 = $15,000/month</div>
+                  <div className="text-lg font-bold text-green-600">Monthly Profit: $7,100</div>
+                  <div className="text-sm text-green-500">90% profit margin</div>
                 </div>
               </div>
             </Card>
 
-            {/* API & Development */}
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Settings className="h-5 w-5 text-primary" />
-                API & Development
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
-                  <span className="text-sm">Full REST API access</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
-                  <span className="text-sm">Webhook integrations</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
-                  <span className="text-sm">Custom integrations</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
-                  <span className="text-sm">Dedicated support & SLA</span>
+            <Card className="p-6 border-green-200 dark:border-green-800">
+              <div className="text-center space-y-4">
+                <div className="text-2xl font-bold text-green-600">250 Users</div>
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Your Cost: $79 × 250 = $19,750/month</div>
+                  <div className="text-sm text-muted-foreground">Charge Clients: $150 × 250 = $37,500/month</div>
+                  <div className="text-lg font-bold text-green-600">Monthly Profit: $17,750</div>
+                  <div className="text-sm text-green-500">90% profit margin</div>
                 </div>
               </div>
-            </Card>
-          </div>
-
-          {/* Mobile App Showcase */}
-          <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl p-8 text-center">
-            <h3 className="text-2xl font-bold mb-4">Mobile Technician App Highlights</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-              <div className="space-y-2">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto">
-                  <Phone className="h-6 w-6 text-blue-500" />
-                </div>
-                <div className="text-sm font-medium">iOS & Android</div>
-                <div className="text-xs text-muted-foreground">Native mobile apps</div>
-              </div>
-              <div className="space-y-2">
-                <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-                  <Shield className="h-6 w-6 text-green-500" />
-                </div>
-                <div className="text-sm font-medium">Real-time Alerts</div>
-                <div className="text-xs text-muted-foreground">Push notifications</div>
-              </div>
-              <div className="space-y-2">
-                <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto">
-                  <Globe className="h-6 w-6 text-purple-500" />
-                </div>
-                <div className="text-sm font-medium">GPS Tracking</div>
-                <div className="text-xs text-muted-foreground">Field operations</div>
-              </div>
-              <div className="space-y-2">
-                <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto">
-                  <Zap className="h-6 w-6 text-orange-500" />
-                </div>
-                <div className="text-sm font-medium">White-Label</div>
-                <div className="text-xs text-muted-foreground">Custom branding</div>
-              </div>
-            </div>
-            <Button variant="outline" asChild>
-              <Link to="/technician-mobile">
-                Try Mobile App Demo
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-          
-          <div className="space-y-6">
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">How do the free trials work?</h3>
-              <p className="text-muted-foreground">Each plan includes a risk-free trial period (14-30 days). You get full access to all features during the trial with no credit card required to start.</p>
-            </Card>
-            
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">What's included in the MSP Co-Management plan?</h3>
-              <p className="text-muted-foreground">Perfect for MSPs supporting clients with internal IT teams. Strengthen their security arsenal with tools they can co-manage, plus white-label branding for each client.</p>
-            </Card>
-            
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">Can I customize the number of security apps?</h3>
-              <p className="text-muted-foreground">Yes! Business Starter includes 3 apps, Professional includes 6 apps, and MSP Co-Management includes all 8 security applications.</p>
-            </Card>
-            
-            <Card className="p-6">
-              <h3 className="font-semibold mb-2">Do you offer refunds and plan changes?</h3>
-              <p className="text-muted-foreground">We offer a 30-day money-back guarantee for all plans. You can upgrade or downgrade at any time, and changes take effect immediately.</p>
             </Card>
           </div>
         </div>
@@ -524,9 +383,9 @@ const Pricing = () => {
       <section className="py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-8">
-            <h2 className="text-3xl font-bold mb-4">Ready to Strengthen Your Business Security?</h2>
+            <h2 className="text-3xl font-bold mb-4">Ready to Strengthen Your Clients' Security?</h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Start protecting your business with AI-powered security tools and custom GPT solutions designed for modern threats.
+              Start co-managing security for clients with internal IT teams. Add powerful tools to their arsenal with white-label solutions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
@@ -536,8 +395,8 @@ const Pricing = () => {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/msp-pricing">
-                  View MSP Pricing
+                <Link to="/pricing">
+                  View Business Pricing
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
@@ -551,4 +410,4 @@ const Pricing = () => {
   );
 };
 
-export default Pricing;
+export default MSPPricing;

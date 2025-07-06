@@ -12,6 +12,7 @@ import NotFound from '@/pages/NotFound';
 import ProfilePage from '@/pages/ProfilePage';
 import SettingsPage from '@/pages/SettingsPage';
 import Pricing from '@/pages/Pricing';
+import MSPPricing from '@/pages/MSPPricing';
 import UltriumGPT from '@/pages/UltriumGPT';
 import Solutions from '@/pages/Solutions';
 import LiveDemos from '@/pages/LiveDemos';
@@ -83,6 +84,7 @@ function AppRouter() {
       <Route path="/" element={<Index />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/msp-pricing" element={<MSPPricing />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/credits" element={<CreditsPurchase />} />
       <Route path="/terms" element={<Terms />} />
