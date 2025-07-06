@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { Building2, Phone, MapPin, Mail, Plus, Edit, Monitor } from "lucide-react";
 
 interface Customer {
@@ -40,47 +41,18 @@ interface CustomerFormData {
   notes: string;
 }
 
-// Mock data for demo
-const mockCustomers: Customer[] = [
-  {
-    id: "1",
-    company_name: "Acme Corporation",
-    primary_contact_name: "John Smith",
-    primary_contact_email: "john@acmecorp.com",
-    phone: "(555) 123-4567",
-    address: "123 Business St",
-    city: "Business City",
-    state: "NY",
-    zip_code: "12345",
-    notes: "Large enterprise client with 50+ workstations",
-    device_count: 52,
-    last_activity: "2024-01-06T10:30:00Z",
-    is_active: true,
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-06T10:30:00Z"
-  },
-  {
-    id: "2",
-    company_name: "TechStart LLC",
-    primary_contact_name: "Sarah Wilson",
-    primary_contact_email: "sarah@techstart.com",
-    phone: "(555) 987-6543",
-    address: "456 Tech Ave",
-    city: "Innovation City",
-    state: "CA",
-    zip_code: "94102",
-    notes: "Fast-growing startup, expanding rapidly",
-    device_count: 15,
-    last_activity: "2024-01-05T14:22:00Z",
-    is_active: true,
-    created_at: "2023-12-15T00:00:00Z",
-    updated_at: "2024-01-05T14:22:00Z"
-  }
-];
+// Helper function to get device count
+const getDeviceCount = async (customerId: string) => {
+  const { count } = await supabase
+    .from('rmm_devices')
+    .select('*', { count: 'exact', head: true })
+    .eq('customer_id', customerId);
+  return count || 0;
+};
 
 export const CustomerManager = () => {
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
-  const [loading, setLoading] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>({
@@ -97,51 +69,121 @@ export const CustomerManager = () => {
   
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    loadCustomers();
+  }, []);
+
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('rmm_customers')
+        .select('*')
+        .order('company_name');
+
+      if (error) throw error;
+
+      // Transform data and add device counts
+      const transformedCustomers: Customer[] = await Promise.all(
+        (data || []).map(async (customer: any) => {
+          const deviceCount = await getDeviceCount(customer.id);
+          
+          return {
+            id: customer.id,
+            company_name: customer.company_name,
+            primary_contact_name: customer.primary_contact_name,
+            primary_contact_email: customer.primary_contact_email,
+            phone: customer.phone,
+            address: customer.address,
+            city: customer.city,
+            state: customer.state,
+            zip_code: customer.zip_code,
+            notes: customer.notes,
+            device_count: deviceCount,
+            last_activity: customer.last_activity,
+            is_active: customer.is_active,
+            created_at: customer.created_at,
+            updated_at: customer.updated_at
+          } as Customer;
+        })
+      );
+
+      setCustomers(transformedCustomers);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load customers",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingCustomer) {
-      // Update existing customer
-      setCustomers(prev => prev.map(customer => 
-        customer.id === editingCustomer.id 
-          ? { ...customer, ...formData, updated_at: new Date().toISOString() }
-          : customer
-      ));
-      toast({
-        title: "Success",
-        description: "Customer updated successfully",
+    try {
+      if (editingCustomer) {
+        // Update existing customer
+        const { error } = await supabase
+          .from('rmm_customers')
+          .update({
+            ...formData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingCustomer.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Customer updated successfully",
+        });
+      } else {
+        // Add new customer
+        const { error } = await supabase
+          .from('rmm_customers')
+          .insert({
+            ...formData,
+            is_active: true,
+            last_activity: new Date().toISOString()
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Customer added successfully",
+        });
+      }
+
+      setShowAddDialog(false);
+      setEditingCustomer(null);
+      setFormData({
+        company_name: '',
+        primary_contact_name: '',
+        primary_contact_email: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        zip_code: '',
+        notes: ''
       });
-    } else {
-      // Add new customer
-      const newCustomer: Customer = {
-        ...formData,
-        id: Date.now().toString(),
-        device_count: 0,
-        last_activity: new Date().toISOString(),
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      setCustomers(prev => [...prev, newCustomer]);
+      
+      // Reload customers
+      await loadCustomers();
+    } catch (error) {
+      console.error('Error saving customer:', error);
       toast({
-        title: "Success",
-        description: "Customer added successfully",
+        title: "Error",
+        description: "Failed to save customer",
+        variant: "destructive",
       });
     }
-
-    setShowAddDialog(false);
-    setEditingCustomer(null);
-    setFormData({
-      company_name: '',
-      primary_contact_name: '',
-      primary_contact_email: '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      notes: ''
-    });
   };
 
   const handleEdit = (customer: Customer) => {

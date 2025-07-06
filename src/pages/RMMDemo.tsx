@@ -1,4 +1,4 @@
-import { RMMTicketingDemo } from "@/components/rmm/RMMTicketingDemo";
+import { RMMDashboard } from "@/components/rmm/RMMDashboard";
 
 export default function RMMDemo() {
   return (
@@ -9,7 +9,7 @@ export default function RMMDemo() {
           Fully integrated customer management, device monitoring, and support ticketing
         </p>
       </div>
-      <RMMTicketingDemo />
+      <RMMDashboard />
     </div>
   );
 }
