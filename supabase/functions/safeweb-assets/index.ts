@@ -75,9 +75,10 @@ serve(async (req) => {
     }
 
     if (method === 'POST') {
-      // Check if this is a delete action or regular asset creation
+      // Read request body once
       const requestBody = await req.json();
       
+      // Check if this is a delete action
       if (requestBody.action === 'delete') {
         // Handle delete via POST
         const assetId = requestBody.id;
@@ -114,7 +115,7 @@ serve(async (req) => {
         );
       }
       
-      // Regular asset creation
+      // Regular asset creation - only if not a delete action
       const { asset_type, asset_value, scan_frequency = 'daily', msp_client_id } = requestBody;
 
       if (!asset_type || !asset_value) {
