@@ -2607,6 +2607,39 @@ export type Database = {
         }
         Relationships: []
       }
+      rmm_clipboard_sync: {
+        Row: {
+          content: string
+          content_type: string | null
+          created_at: string | null
+          device_id: string
+          direction: string | null
+          expires_at: string
+          id: string
+          synced: boolean | null
+        }
+        Insert: {
+          content: string
+          content_type?: string | null
+          created_at?: string | null
+          device_id: string
+          direction?: string | null
+          expires_at: string
+          id?: string
+          synced?: boolean | null
+        }
+        Update: {
+          content?: string
+          content_type?: string | null
+          created_at?: string | null
+          device_id?: string
+          direction?: string | null
+          expires_at?: string
+          id?: string
+          synced?: boolean | null
+        }
+        Relationships: []
+      }
       rmm_command_logs: {
         Row: {
           client_id: string
@@ -2688,6 +2721,51 @@ export type Database = {
           os_info?: string | null
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rmm_file_transfers: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          device_id: string
+          error_message: string | null
+          file_name: string
+          file_path: string | null
+          file_size: number | null
+          id: string
+          progress_percent: number | null
+          session_id: string | null
+          status: string | null
+          transfer_type: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          device_id: string
+          error_message?: string | null
+          file_name: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          progress_percent?: number | null
+          session_id?: string | null
+          status?: string | null
+          transfer_type?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          device_id?: string
+          error_message?: string | null
+          file_name?: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          progress_percent?: number | null
+          session_id?: string | null
+          status?: string | null
+          transfer_type?: string | null
         }
         Relationships: []
       }
@@ -2857,6 +2935,69 @@ export type Database = {
         }
         Relationships: []
       }
+      rmm_session_events: {
+        Row: {
+          device_id: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          session_id: string | null
+          timestamp: string | null
+        }
+        Insert: {
+          device_id: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          session_id?: string | null
+          timestamp?: string | null
+        }
+        Update: {
+          device_id?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          session_id?: string | null
+          timestamp?: string | null
+        }
+        Relationships: []
+      }
+      safedoc_quarantine: {
+        Row: {
+          device_id: string
+          file_hash: string | null
+          file_path: string
+          id: string
+          metadata: Json | null
+          quarantine_reason: string | null
+          quarantined_at: string | null
+          restored_at: string | null
+          status: string | null
+        }
+        Insert: {
+          device_id: string
+          file_hash?: string | null
+          file_path: string
+          id?: string
+          metadata?: Json | null
+          quarantine_reason?: string | null
+          quarantined_at?: string | null
+          restored_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          device_id?: string
+          file_hash?: string | null
+          file_path?: string
+          id?: string
+          metadata?: Json | null
+          quarantine_reason?: string | null
+          quarantined_at?: string | null
+          restored_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       safedoc_scan_results: {
         Row: {
           created_at: string
@@ -2975,6 +3116,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safepass_usage_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          device_id: string
+          domain: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          password_id: string | null
+          success: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          device_id: string
+          domain?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          password_id?: string | null
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          device_id?: string
+          domain?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          password_id?: string | null
+          success?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       safeweb_assets: {
         Row: {
