@@ -6,10 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useComplianceManager } from "@/hooks/useComplianceManager";
-import { Shield, AlertTriangle, CheckCircle, Clock, Settings, FileText, Activity } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, Clock, Settings, FileText, Activity, Palette } from "lucide-react";
 import { ComplianceConnectorManager } from "./ComplianceConnectorManager";
 import { ComplianceEvidenceViewer } from "./ComplianceEvidenceViewer";
 import { ComplianceAlertsPanel } from "./ComplianceAlertsPanel";
+import { RealTimeComplianceMonitor } from "./RealTimeComplianceMonitor";
+import { AdvancedReportGenerator } from "./AdvancedReportGenerator";
+import { WhiteLabelCustomizer } from "./WhiteLabelCustomizer";
 
 export const SafeCompDashboard = () => {
   const { loading, dashboardData, fetchDashboardData } = useComplianceManager();
@@ -59,7 +62,10 @@ export const SafeCompDashboard = () => {
       </div>
 
       {/* Overview Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Real-time Monitor */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overall Compliance</CardTitle>
@@ -111,6 +117,12 @@ export const SafeCompDashboard = () => {
             </p>
           </CardContent>
         </Card>
+          </div>
+        </div>
+        
+        <div className="lg:col-span-1">
+          <RealTimeComplianceMonitor />
+        </div>
       </div>
 
       {/* Critical Alerts */}
@@ -171,7 +183,7 @@ export const SafeCompDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="connectors" className="space-y-4">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="connectors" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
             Connectors
@@ -192,6 +204,10 @@ export const SafeCompDashboard = () => {
           <TabsTrigger value="reports" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Reports
+          </TabsTrigger>
+          <TabsTrigger value="whitelabel" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            White Label
           </TabsTrigger>
         </TabsList>
 
@@ -218,42 +234,11 @@ export const SafeCompDashboard = () => {
         </TabsContent>
 
         <TabsContent value="reports">
-          <Card>
-            <CardHeader>
-              <CardTitle>Compliance Reports</CardTitle>
-              <CardDescription>Generate and download compliance reports</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {frameworks.map(framework => (
-                  <Card key={framework} className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium">
-                        {frameworkNames[framework as keyof typeof frameworkNames]} Report
-                      </h3>
-                      <Badge variant="outline">
-                        {metrics.frameworkStatus[framework]?.compliancePercentage || 0}%
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Comprehensive compliance report including controls, evidence, and recommendations
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="w-full"
-                      onClick={() => {
-                        // Generate report functionality would go here
-                        console.log(`Generating ${framework} report`);
-                      }}
-                    >
-                      Generate Report
-                    </Button>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <AdvancedReportGenerator />
+        </TabsContent>
+        
+        <TabsContent value="whitelabel">
+          <WhiteLabelCustomizer />
         </TabsContent>
       </Tabs>
     </div>
