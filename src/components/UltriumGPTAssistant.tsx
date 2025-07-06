@@ -23,6 +23,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { VisualReportDisplay } from "./VisualReportDisplay";
 
 interface Message {
   id: string;
@@ -160,6 +161,66 @@ Choose a question below to get started, or ask me anything!`,
     window.URL.revokeObjectURL(url);
   };
 
+  const parseReportData = (message: Message) => {
+    if (!message.metadata?.reportGenerated) return null;
+
+    const toolUsed = message.metadata.toolsUsed?.[0];
+    let reportType: 'security' | 'rmm' | 'system_health' | 'threat_status' = 'rmm';
+    let title = 'System Report';
+
+    if (toolUsed?.includes('security')) {
+      reportType = 'security';
+      title = 'Security Report';
+    } else if (toolUsed?.includes('rmm')) {
+      reportType = 'rmm';
+      title = 'RMM Status Report';
+    } else if (toolUsed?.includes('health')) {
+      reportType = 'system_health';
+      title = 'System Health Report';
+    } else if (toolUsed?.includes('threat')) {
+      reportType = 'threat_status';
+      title = 'Threat Status Report';
+    }
+
+    // Parse mock data based on report type (in real implementation, this would come from the API)
+    const summary = reportType === 'rmm' ? {
+      total_devices: 247,
+      online_devices: 231,
+      offline_devices: 16,
+      alerts_count: 8,
+      clients_count: 12,
+      recommendations: [
+        "Review offline devices and ensure they are intentionally offline or address connectivity issues",
+        "Monitor SERVER-01 for high CPU usage and investigate potential causes",
+        "Resolve low disk space on WS-MARKETING-12 to prevent service disruptions"
+      ]
+    } : {
+      total_events: 15,
+      critical_events: 2,
+      high_severity_events: 5,
+      open_incidents: 3,
+      resolved_incidents: 8,
+      recommendations: [
+        "Immediate attention required for critical security events",
+        "Review and address open security incidents",
+        "Update security policies based on recent threat patterns"
+      ]
+    };
+
+    return {
+      type: reportType,
+      title,
+      summary,
+      details: message.content,
+      timestamp: message.timestamp.toISOString()
+    };
+  };
+
+  const handleRefreshReport = async (originalMessage: string) => {
+    setInput(originalMessage);
+    setTimeout(() => handleSendMessage(), 100);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
@@ -199,83 +260,81 @@ Choose a question below to get started, or ask me anything!`,
                 {/* Messages Container */}
                 <div className="relative">
                   <div className="h-[450px] overflow-y-auto space-y-6 p-4 rounded-xl bg-gradient-to-b from-muted/20 to-muted/10 border border-border/50">
-                    {messages.map((message) => (
-                      <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${
-                          message.role === 'user' 
-                            ? 'bg-gradient-to-r from-primary to-primary/80 text-white' 
-                            : message.role === 'system'
-                            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white'
-                            : 'bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground'
-                        }`}>
-                          {message.role === 'user' ? (
-                            <User className="h-5 w-5" />
-                          ) : (
-                            <Bot className="h-5 w-5" />
-                          )}
-                        </div>
-                        
-                        <div className={`flex-1 space-y-2 max-w-[85%] ${message.role === 'user' ? 'text-right' : ''}`}>
-                          <div className={`inline-block p-4 rounded-2xl shadow-sm ${
-                            message.role === 'user'
-                              ? 'bg-gradient-to-r from-primary to-primary/90 text-white ml-auto'
-                              : 'bg-background border border-border/50'
+                    {messages.map((message) => {
+                      const reportData = parseReportData(message);
+                      
+                      if (reportData && message.role === 'assistant') {
+                        return (
+                          <div key={message.id} className="w-full">
+                            <VisualReportDisplay
+                              reportData={reportData}
+                              onDownload={() => {
+                                const timestamp = new Date().toISOString().split('T')[0];
+                                downloadReport(message.content, `${reportData.title.toLowerCase().replace(/\s+/g, '-')}-${timestamp}.txt`);
+                              }}
+                              onRefresh={() => handleRefreshReport(`Generate ${reportData.title.toLowerCase()}`)}
+                            />
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={message.id} className={`flex gap-4 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ${
+                            message.role === 'user' 
+                              ? 'bg-gradient-to-r from-primary to-primary/80 text-white' 
+                              : message.role === 'system'
+                              ? 'bg-gradient-to-r from-green-500 to-green-600 text-white'
+                              : 'bg-gradient-to-r from-secondary to-secondary/80 text-secondary-foreground'
                           }`}>
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                              {message.content}
-                            </div>
-                            
-                            {message.metadata && (
-                              <div className="mt-3 pt-3 border-t border-border/30 space-y-2">
-                                {message.metadata.toolsUsed && message.metadata.toolsUsed.length > 0 && (
-                                  <div className="flex flex-wrap gap-2">
-                                    {message.metadata.toolsUsed.map((tool, index) => (
-                                      <Badge key={index} variant="secondary" className="text-xs">
-                                        🔧 {tool.replace('_', ' ')}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                )}
-                                {message.metadata.ticketCreated && (
-                                  <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 p-2 rounded-lg">
-                                    <CheckCircle className="h-4 w-4" />
-                                    Support ticket #{message.metadata.ticketCreated} created successfully
-                                  </div>
-                                )}
-                                {message.metadata.reportGenerated && (
-                                  <div className="flex items-center justify-between text-xs text-blue-600 bg-blue-50 p-2 rounded-lg">
-                                    <div className="flex items-center gap-2">
-                                      <FileText className="h-4 w-4" />
-                                      Report generated and ready for download
-                                    </div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-7 px-2 text-xs bg-blue-600 text-white hover:bg-blue-700 border-blue-600"
-                                      onClick={() => {
-                                        const reportContent = message.content;
-                                        const timestamp = new Date().toISOString().split('T')[0];
-                                        downloadReport(reportContent, `ultrium-report-${timestamp}.txt`);
-                                      }}
-                                    >
-                                      <Download className="h-3 w-3 mr-1" />
-                                      Download
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
+                            {message.role === 'user' ? (
+                              <User className="h-5 w-5" />
+                            ) : (
+                              <Bot className="h-5 w-5" />
                             )}
                           </div>
                           
-                          <div className={`text-xs text-muted-foreground flex items-center gap-1 ${
-                            message.role === 'user' ? 'justify-end' : 'justify-start'
-                          }`}>
-                            <Clock className="h-3 w-3" />
-                            {formatTimestamp(message.timestamp)}
+                          <div className={`flex-1 space-y-2 max-w-[85%] ${message.role === 'user' ? 'text-right' : ''}`}>
+                            <div className={`inline-block p-4 rounded-2xl shadow-sm ${
+                              message.role === 'user'
+                                ? 'bg-gradient-to-r from-primary to-primary/90 text-white ml-auto'
+                                : 'bg-background border border-border/50'
+                            }`}>
+                              <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                                {message.content}
+                              </div>
+                              
+                              {message.metadata && !message.metadata.reportGenerated && (
+                                <div className="mt-3 pt-3 border-t border-border/30 space-y-2">
+                                  {message.metadata.toolsUsed && message.metadata.toolsUsed.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {message.metadata.toolsUsed.map((tool, index) => (
+                                        <Badge key={index} variant="secondary" className="text-xs">
+                                          🔧 {tool.replace('_', ' ')}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                  {message.metadata.ticketCreated && (
+                                    <div className="flex items-center gap-2 text-xs text-green-600 bg-green-50 p-2 rounded-lg">
+                                      <CheckCircle className="h-4 w-4" />
+                                      Support ticket #{message.metadata.ticketCreated} created successfully
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className={`text-xs text-muted-foreground flex items-center gap-1 ${
+                              message.role === 'user' ? 'justify-end' : 'justify-start'
+                            }`}>
+                              <Clock className="h-3 w-3" />
+                              {formatTimestamp(message.timestamp)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     
                     {isLoading && (
                       <div className="flex gap-4">
