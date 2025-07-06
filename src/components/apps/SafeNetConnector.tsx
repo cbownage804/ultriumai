@@ -126,19 +126,50 @@ export const SafeNetConnector = () => {
   };
 
   const downloadConnector = (platform: 'windows' | 'linux' | 'docker') => {
+    const downloadData = {
+      windows: { 
+        file: 'safenet-connector-windows-x64.msi', 
+        size: '45 MB',
+        content: '# SafeNet Connector for Windows\n# This is a demo installer file\n# Version: 2.1.4\n# Platform: Windows x64\n# In production, this would be the actual MSI installer binary'
+      },
+      linux: { 
+        file: 'safenet-connector-linux.deb', 
+        size: '32 MB',
+        content: '# SafeNet Connector for Linux\n# This is a demo installer file\n# Version: 2.1.4\n# Platform: Linux (Debian/Ubuntu)\n# In production, this would be the actual DEB package binary'
+      },
+      docker: { 
+        file: 'safenet-connector-docker.tar.gz', 
+        size: '28 MB',
+        content: '# SafeNet Connector Docker Image\n# This is a demo installer file\n# Version: 2.1.4\n# Platform: Docker Container\n# In production, this would be the actual Docker image tarball'
+      }
+    };
+
+    const data = downloadData[platform];
+    
+    // Create blob and download link
+    const blob = new Blob([data.content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    
+    // Create temporary download link
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = data.file;
+    link.style.display = 'none';
+    
+    // Add to DOM, click, and clean up
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up blob URL
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+    }, 100);
+    
     toast({
       title: "Download Started",
-      description: `SafeNet Connector for ${platform} is downloading...`,
+      description: `${data.file} is downloading (${data.size})`,
     });
-    
-    // In a real implementation, this would download the actual installer
-    const downloadData = {
-      windows: { file: 'safenet-connector-windows-x64.msi', size: '45 MB' },
-      linux: { file: 'safenet-connector-linux.deb', size: '32 MB' },
-      docker: { file: 'safenet-connector-docker.tar.gz', size: '28 MB' }
-    };
-    
-    console.log(`Downloading ${downloadData[platform].file} (${downloadData[platform].size})`);
   };
 
   const restartConnector = (connectorId: string) => {
