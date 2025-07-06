@@ -32,7 +32,8 @@ import {
   Lock,
   Unlock,
   History,
-  Globe
+  Globe,
+  User
 } from "lucide-react";
 import { useSafePass, PasswordEntry, PasswordVault } from "@/hooks/useSafePass";
 import { useToast } from "@/hooks/use-toast";
@@ -541,7 +542,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                           disabled={!entry.username}
                           title="Copy username"
                         >
-                          <Copy className="h-4 w-4" />
+                          <User className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -557,7 +558,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                           onClick={() => copyToClipboard(atob(entry.password_encrypted), 'Password')}
                           title="Copy password"
                         >
-                          <Copy className="h-4 w-4" />
+                          <Key className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
