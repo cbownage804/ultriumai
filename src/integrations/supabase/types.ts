@@ -3131,6 +3131,171 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_av_definitions: {
+        Row: {
+          created_at: string
+          definition_version: string
+          engine_version: string | null
+          id: string
+          next_update_check: string | null
+          total_signatures: number | null
+          update_date: string
+          update_status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          definition_version: string
+          engine_version?: string | null
+          id?: string
+          next_update_check?: string | null
+          total_signatures?: number | null
+          update_date: string
+          update_status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          definition_version?: string
+          engine_version?: string | null
+          id?: string
+          next_update_check?: string | null
+          total_signatures?: number | null
+          update_date?: string
+          update_status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safe_av_scans: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          endpoint_id: string | null
+          files_scanned: number | null
+          id: string
+          scan_duration_seconds: number | null
+          scan_path: string | null
+          scan_results: Json | null
+          scan_type: string
+          started_at: string
+          status: string
+          threats_found: number | null
+          threats_quarantined: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          endpoint_id?: string | null
+          files_scanned?: number | null
+          id?: string
+          scan_duration_seconds?: number | null
+          scan_path?: string | null
+          scan_results?: Json | null
+          scan_type: string
+          started_at?: string
+          status?: string
+          threats_found?: number | null
+          threats_quarantined?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          endpoint_id?: string | null
+          files_scanned?: number | null
+          id?: string
+          scan_duration_seconds?: number | null
+          scan_path?: string | null
+          scan_results?: Json | null
+          scan_type?: string
+          started_at?: string
+          status?: string
+          threats_found?: number | null
+          threats_quarantined?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safe_mdr_alerts: {
+        Row: {
+          affected_assets: string[] | null
+          alert_type: string
+          analyst_notes: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          escalation_level: number | null
+          id: string
+          indicators: Json | null
+          msp_client_id: string | null
+          remediation_steps: string | null
+          resolved_at: string | null
+          response_actions: Json | null
+          severity: string
+          source_system: string | null
+          status: string
+          tactics: Json | null
+          techniques: Json | null
+          timeline: Json | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_assets?: string[] | null
+          alert_type: string
+          analyst_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalation_level?: number | null
+          id?: string
+          indicators?: Json | null
+          msp_client_id?: string | null
+          remediation_steps?: string | null
+          resolved_at?: string | null
+          response_actions?: Json | null
+          severity: string
+          source_system?: string | null
+          status?: string
+          tactics?: Json | null
+          techniques?: Json | null
+          timeline?: Json | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_assets?: string[] | null
+          alert_type?: string
+          analyst_notes?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalation_level?: number | null
+          id?: string
+          indicators?: Json | null
+          msp_client_id?: string | null
+          remediation_steps?: string | null
+          resolved_at?: string | null
+          response_actions?: Json | null
+          severity?: string
+          source_system?: string | null
+          status?: string
+          tactics?: Json | null
+          techniques?: Json | null
+          timeline?: Json | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       safe_shield_actions: {
         Row: {
           action_details: Json | null
