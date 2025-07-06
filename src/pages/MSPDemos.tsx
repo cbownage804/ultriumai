@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
-import { SafeCompDemo } from "@/components/demos/SafeCompDemo";
+import { SafeScoreDemo } from "@/components/demos/SafeScoreDemo";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -437,7 +437,7 @@ const MSPDemos = () => {
                             Show clients comprehensive compliance tracking and risk management
                           </p>
                         </div>
-                        <SafeCompDemo />
+                        <SafeScoreDemo />
                       </div>
                     ) : (
                       <Card className="border-2 border-primary/20">

@@ -32,7 +32,7 @@ import SafeMailDemoPage from '@/pages/demos/SafeMailDemoPage';
 import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
 import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
-import SafeCompDemoPage from '@/pages/demos/SafeCompDemoPage';
+import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
 import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
 import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
@@ -42,7 +42,7 @@ import SafeLinkPage from '@/pages/products/SafeLinkPage';
 import SafeDocPage from '@/pages/products/SafeDocPage';
 import SafePassPage from '@/pages/products/SafePassPage';
 import SafeWebPage from '@/pages/products/SafeWebPage';
-import SafeCompPage from '@/pages/products/SafeCompPage';
+import SafeScorePage from '@/pages/products/SafeScorePage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
@@ -125,7 +125,7 @@ function AppRouter() {
       <Route path="/demos/safepass" element={<SafePassDemoPage />} />
       <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
       <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
-      <Route path="/demos/safecomp" element={<SafeCompDemoPage />} />
+      <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
       <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
       <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
       <Route path="/embed-demo" element={<EmbedDemo />} />
@@ -188,7 +188,7 @@ function AppRouter() {
       <Route path="/products/safedoc" element={<SafeDocPage />} />
       <Route path="/products/safepass" element={<SafePassPage />} />
       <Route path="/products/safeweb" element={<SafeWebPage />} />
-      <Route path="/products/safecomp" element={<SafeCompPage />} />
+      <Route path="/products/safescore" element={<SafeScorePage />} />
       <Route path="/products/safenet" element={<SafeNetPage />} />
       
       {/* Protected Routes */}

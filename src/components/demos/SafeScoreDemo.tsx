@@ -118,7 +118,7 @@ const mockGaps: ComplianceGap[] = [
   }
 ];
 
-export const SafeCompDemo = () => {
+export const SafeScoreDemo = () => {
   const [selectedFramework, setSelectedFramework] = useState<string>('');
   const [isScanning, setIsScanning] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -177,7 +177,7 @@ export const SafeCompDemo = () => {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Shield className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Ultrium SafeComp Demo</h1>
+            <h1 className="text-3xl font-bold">Ultrium SafeScore Demo</h1>
           </div>
           <p className="text-muted-foreground">
             Comprehensive compliance management and risk assessment platform

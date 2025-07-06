@@ -1,15 +1,15 @@
-import { SafeCompDemo } from "@/components/demos/SafeCompDemo";
+import { SafeScoreDemo } from "@/components/demos/SafeScoreDemo";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
-const SafeCompDemoPage = () => {
+const SafeScoreDemoPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <SafeCompDemo />
+      <SafeScoreDemo />
       <Footer />
     </div>
   );
 };
 
-export default SafeCompDemoPage;
+export default SafeScoreDemoPage;
