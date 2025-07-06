@@ -362,6 +362,245 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_alerts: {
+        Row: {
+          alert_type: string
+          assigned_to: string | null
+          control_id: string | null
+          created_at: string
+          description: string
+          framework: string | null
+          id: string
+          metadata: Json | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          severity: string
+          source_connector_id: string | null
+          source_data_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          assigned_to?: string | null
+          control_id?: string | null
+          created_at?: string
+          description: string
+          framework?: string | null
+          id?: string
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity: string
+          source_connector_id?: string | null
+          source_data_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          assigned_to?: string | null
+          control_id?: string | null
+          created_at?: string
+          description?: string
+          framework?: string | null
+          id?: string
+          metadata?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity?: string
+          source_connector_id?: string | null
+          source_data_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_alerts_source_connector_id_fkey"
+            columns: ["source_connector_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_connectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_alerts_source_data_id_fkey"
+            columns: ["source_data_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_data"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_connectors: {
+        Row: {
+          configuration: Json
+          connector_name: string
+          connector_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          last_sync_at: string | null
+          metadata: Json | null
+          next_sync_at: string | null
+          status: string
+          sync_frequency: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          configuration?: Json
+          connector_name: string
+          connector_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          next_sync_at?: string | null
+          status?: string
+          sync_frequency?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          configuration?: Json
+          connector_name?: string
+          connector_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          last_sync_at?: string | null
+          metadata?: Json | null
+          next_sync_at?: string | null
+          status?: string
+          sync_frequency?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      compliance_data: {
+        Row: {
+          compliance_status: string | null
+          connector_id: string
+          created_at: string
+          data_source: string
+          data_type: string
+          evidence_collected: boolean | null
+          evidence_path: string | null
+          framework_mappings: Json | null
+          id: string
+          processed_data: Json | null
+          raw_data: Json
+          risk_level: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          compliance_status?: string | null
+          connector_id: string
+          created_at?: string
+          data_source: string
+          data_type: string
+          evidence_collected?: boolean | null
+          evidence_path?: string | null
+          framework_mappings?: Json | null
+          id?: string
+          processed_data?: Json | null
+          raw_data: Json
+          risk_level?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          compliance_status?: string | null
+          connector_id?: string
+          created_at?: string
+          data_source?: string
+          data_type?: string
+          evidence_collected?: boolean | null
+          evidence_path?: string | null
+          framework_mappings?: Json | null
+          id?: string
+          processed_data?: Json | null
+          raw_data?: Json
+          risk_level?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_data_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_evidence: {
+        Row: {
+          collected_at: string
+          collected_by: string | null
+          control_id: string
+          created_at: string
+          description: string | null
+          evidence_type: string
+          file_path: string | null
+          file_url: string | null
+          framework: string
+          id: string
+          metadata: Json | null
+          title: string
+          user_id: string
+          verification_status: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          collected_at?: string
+          collected_by?: string | null
+          control_id: string
+          created_at?: string
+          description?: string | null
+          evidence_type: string
+          file_path?: string | null
+          file_url?: string | null
+          framework: string
+          id?: string
+          metadata?: Json | null
+          title: string
+          user_id: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          collected_at?: string
+          collected_by?: string | null
+          control_id?: string
+          created_at?: string
+          description?: string | null
+          evidence_type?: string
+          file_path?: string | null
+          file_url?: string | null
+          framework?: string
+          id?: string
+          metadata?: Json | null
+          title?: string
+          user_id?: string
+          verification_status?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       conversation_files: {
         Row: {
           conversation_id: string
