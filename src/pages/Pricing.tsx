@@ -32,59 +32,60 @@ const Pricing = () => {
 
   const plans = [
     {
-      name: "Free",
-      description: "Perfect for trying out the platform",
-      price: { monthly: 0, yearly: 0 },
-      icon: Check,
+      name: "Business Starter",
+      description: "Essential tools for growing businesses",
+      price: { monthly: 99, yearly: 990 },
+      trial: "14-day free trial",
+      icon: Users,
       features: [
-        "1 Custom GPT",
-        "Basic chat interface",
-        "Community support",
-        "UltriumGPT branding",
-        "Limited mobile app access"
+        "Unlimited Custom GPTs & AI Agents",
+        "Mobile Technician App (iOS/Android)",
+        "Choose 3 Security Applications",
+        "Basic white-label customization",
+        "API access & webhooks",
+        "Knowledge base & document uploads",
+        "Email & chat support",
+        "Analytics dashboard"
       ],
-      limitations: [
-        "No security apps",
-        "No white-label branding",
-        "No API access",
-        "No MSP features"
-      ],
-      current: subscription.subscription_tier === "free",
+      current: subscription.subscription_tier === "starter",
       popular: false
     },
     {
       name: "Professional",
-      description: "Complete platform for businesses",
-      price: { monthly: 149, yearly: 1490 },
+      description: "Complete platform with enhanced security",
+      price: { monthly: 199, yearly: 1990 },
+      trial: "14-day free trial",
       icon: Crown,
       features: [
-        "Unlimited Custom GPTs",
-        "Mobile Technician App (iOS/Android)",
-        "4 Security Apps included",
-        "White-label branding",
-        "API access & webhooks",
-        "Knowledge base & document uploads",
+        "Everything in Business Starter",  
+        "Choose 6 Security Applications",
+        "Full white-label branding suite",
+        "Advanced mobile app customization",
         "Priority support",
-        "Advanced analytics"
+        "Advanced analytics & reporting",
+        "Custom integrations",
+        "Multi-tenant management"
       ],
       current: subscription.subscription_tier === "premium",
       popular: true
     },
     {
-      name: "MSP/Enterprise",
-      description: "Full platform for service providers",
-      price: { monthly: 299, yearly: 2990 },
+      name: "MSP Co-Management",
+      description: "Strengthen your clients' security arsenal through co-managed IT services",
+      price: { monthly: 349, yearly: 3490 },
+      trial: "30-day free trial",
       icon: Building2,
       features: [
         "Everything in Professional",
-        "All 8 Security Applications",
-        "MSP client management portal",
-        "Co-managed service delivery",
+        "All 8 Security Applications included",
+        "Complete MSP client portal",
+        "Co-managed service delivery tools",
+        "Strengthen clients with internal IT teams",
+        "White-label mobile apps per client",
         "RMM & PSA integrations",
-        "SIEM & compliance tools",
-        "White-label mobile apps",
+        "SIEM & compliance dashboard",
         "Dedicated account manager",
-        "Custom integrations & SLA"
+        "Custom SLA & support tiers"
       ],
       current: subscription.subscription_tier === "enterprise",
       popular: false
@@ -107,8 +108,6 @@ const Pricing = () => {
       window.location.href = "/auth";
       return;
     }
-
-    if (planName === "Free") return;
 
     const interval = isYearly ? "yearly" : "monthly";
     await createCheckout(planName.toLowerCase(), interval);
@@ -210,6 +209,13 @@ const Pricing = () => {
                   </CardHeader>
 
                   <CardContent className="space-y-6">
+                    {/* Trial Badge */}
+                    <div className="text-center">
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        {plan.trial}
+                      </Badge>
+                    </div>
+
                     {/* Features */}
                     <div className="space-y-3">
                       {plan.features.map((feature, featureIndex) => (
@@ -219,20 +225,6 @@ const Pricing = () => {
                         </div>
                       ))}
                     </div>
-
-                    {/* Limitations for Free plan */}
-                    {plan.limitations && (
-                      <div className="space-y-3 pt-4 border-t">
-                        <div className="text-sm font-medium text-muted-foreground">Not included:</div>
-                        {plan.limitations.map((limitation, limitationIndex) => (
-                          <div key={limitationIndex} className="flex items-center gap-3">
-                            <X className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                            <span className="text-sm text-muted-foreground">{limitation}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
                   </CardContent>
 
                   <CardFooter>
@@ -259,7 +251,7 @@ const Pricing = () => {
                         onClick={() => handleSubscribe(plan.name)}
                         disabled={isLoading}
                       >
-                        {plan.name === "Free" ? "Get Started" : `Upgrade to ${plan.name}`}
+                        Start {plan.trial}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     )}
@@ -433,23 +425,23 @@ const Pricing = () => {
           
           <div className="space-y-6">
             <Card className="p-6">
-              <h3 className="font-semibold mb-2">Can I change plans anytime?</h3>
-              <p className="text-muted-foreground">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.</p>
+              <h3 className="font-semibold mb-2">How do the free trials work?</h3>
+              <p className="text-muted-foreground">Each plan includes a risk-free trial period (14-30 days). You get full access to all features during the trial with no credit card required to start.</p>
             </Card>
             
             <Card className="p-6">
-              <h3 className="font-semibold mb-2">What happens to my GPTs if I downgrade?</h3>
-              <p className="text-muted-foreground">Your GPTs remain accessible, but you may need to deactivate some to meet your plan's limits.</p>
+              <h3 className="font-semibold mb-2">What's included in the MSP Co-Management plan?</h3>
+              <p className="text-muted-foreground">Perfect for MSPs supporting clients with internal IT teams. Strengthen their security arsenal with tools they can co-manage, plus white-label branding for each client.</p>
             </Card>
             
             <Card className="p-6">
-              <h3 className="font-semibold mb-2">Is there a free trial?</h3>
-              <p className="text-muted-foreground">Yes! Start with our free plan and upgrade when you're ready for more features.</p>
+              <h3 className="font-semibold mb-2">Can I customize the number of security apps?</h3>
+              <p className="text-muted-foreground">Yes! Business Starter includes 3 apps, Professional includes 6 apps, and MSP Co-Management includes all 8 security applications.</p>
             </Card>
             
             <Card className="p-6">
-              <h3 className="font-semibold mb-2">Do you offer refunds?</h3>
-              <p className="text-muted-foreground">We offer a 30-day money-back guarantee for all paid plans. No questions asked.</p>
+              <h3 className="font-semibold mb-2">Do you offer refunds and plan changes?</h3>
+              <p className="text-muted-foreground">We offer a 30-day money-back guarantee for all plans. You can upgrade or downgrade at any time, and changes take effect immediately.</p>
             </Card>
           </div>
         </div>
@@ -458,21 +450,22 @@ const Pricing = () => {
       {/* CTA Section */}
       <section className="py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-primary/5 rounded-2xl p-8">
-            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Business?</h2>
-            <p className="text-muted-foreground mb-6">
-              Join thousands of businesses already using UltriumGPT to create powerful AI assistants.
+          <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl p-8">
+            <h2 className="text-3xl font-bold mb-4">Strengthen Your Clients' Security Arsenal</h2>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              Whether you're growing your business or co-managing IT services for clients, our platform provides the AI-powered tools and mobile apps needed to enhance security and streamline operations.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
                 <Link to="/auth">
-                  Start Free Today
+                  Start Your Free Trial
                   <Zap className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/dashboard">
-                  View Live Demo
+                <Link to="/technician-mobile">
+                  Try Mobile App Demo
+                  <Phone className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
             </div>
