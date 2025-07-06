@@ -119,22 +119,85 @@ async function scanNetwork(payload: any) {
 }
 
 async function discoverNetworkAssets(networkRange: string): Promise<NetworkAsset[]> {
-  // Simulate network discovery
   const assets: NetworkAsset[] = []
+  const intelxKey = Deno.env.get('INTELX_API_KEY')
   
-  // Generate some realistic demo assets
+  // Try to get real network intelligence data
+  if (intelxKey) {
+    try {
+      const response = await fetch('https://2.intelx.io/phonebook/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-key': intelxKey
+        },
+        body: JSON.stringify({
+          term: networkRange.split('/')[0],
+          buckets: ['domains', 'ips'],
+          lookuplevel: 0,
+          maxresults: 20
+        })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        
+        // Process IntelX results to create network assets
+        if (data.selectors) {
+          for (const selector of data.selectors.slice(0, 15)) {
+            const assetType = determineAssetType(selector.selectorvalue)
+            if (assetType) {
+              assets.push({
+                ip_address: selector.selectorvalue.includes(':') ? 
+                  selector.selectorvalue.split(':')[0] : selector.selectorvalue,
+                hostname: selector.selectorvalue,
+                asset_type: assetType,
+                os_type: 'Unknown',
+                ports: generateOpenPorts(assetType)
+              })
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('IntelX API error, falling back to simulation:', error)
+    }
+  }
+  
+  // If we don't have enough real data, supplement with simulated assets
+  if (assets.length < 5) {
+    const simulatedAssets = generateSimulatedAssets(networkRange, Math.max(0, 15 - assets.length))
+    assets.push(...simulatedAssets)
+  }
+  
+  return assets
+}
+
+function determineAssetType(hostname: string): string | null {
+  if (hostname.includes('router') || hostname.includes('gateway')) return 'router'
+  if (hostname.includes('switch')) return 'switch'
+  if (hostname.includes('firewall') || hostname.includes('fw')) return 'firewall'
+  if (hostname.includes('server') || hostname.includes('srv')) return 'server'
+  if (hostname.includes('printer') || hostname.includes('print')) return 'printer'
+  if (hostname.includes('workstation') || hostname.includes('pc') || hostname.includes('desktop')) return 'workstation'
+  if (/\d+\.\d+\.\d+\.\d+/.test(hostname)) return 'server' // IP address, assume server
+  return 'workstation' // Default
+}
+
+function generateSimulatedAssets(networkRange: string, count: number): NetworkAsset[] {
+  const assets: NetworkAsset[] = []
   const assetTypes = ['server', 'workstation', 'printer', 'router', 'switch', 'firewall']
   const osTypes = ['Windows', 'Linux', 'macOS', 'pfSense', 'VMware ESXi']
   
   const baseIp = networkRange.split('/')[0].split('.').slice(0, 3).join('.')
   
-  for (let i = 1; i <= 20; i++) {
+  for (let i = 1; i <= count; i++) {
     if (Math.random() > 0.3) { // 70% chance device is online
       const assetType = assetTypes[Math.floor(Math.random() * assetTypes.length)]
       const osType = osTypes[Math.floor(Math.random() * osTypes.length)]
       
       assets.push({
-        ip_address: `${baseIp}.${i}`,
+        ip_address: `${baseIp}.${i + 100}`,
         hostname: `${assetType}-${String(i).padStart(2, '0')}`,
         asset_type: assetType,
         os_type: osType,

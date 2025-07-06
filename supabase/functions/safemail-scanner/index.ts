@@ -248,6 +248,8 @@ async function checkSuspiciousLinks(content: string) {
   let totalScore = 0
   let maxSeverity = 'low'
   
+  const virusTotalKey = Deno.env.get('VIRUSTOTAL_API_KEY')
+  
   for (const url of urls) {
     try {
       const urlObj = new URL(url)
@@ -255,7 +257,33 @@ async function checkSuspiciousLinks(content: string) {
       let severity = 'low'
       const flags = []
       
-      // Check for suspicious domains
+      // Real VirusTotal URL scanning
+      if (virusTotalKey) {
+        try {
+          const vtResponse = await fetch('https://www.virustotal.com/vtapi/v2/url/report', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+              apikey: virusTotalKey,
+              resource: url
+            })
+          })
+          
+          const vtData = await vtResponse.json()
+          
+          if (vtData.response_code === 1 && vtData.positives > 0) {
+            linkScore += Math.min(vtData.positives * 10, 80)
+            flags.push(`detected_by_${vtData.positives}_engines`)
+            severity = vtData.positives > 5 ? 'critical' : vtData.positives > 2 ? 'high' : 'medium'
+          }
+        } catch (vtError) {
+          console.warn('VirusTotal API error:', vtError)
+        }
+      }
+      
+      // Fallback heuristic checks
       const suspiciousTlds = ['.tk', '.ml', '.ga', '.cf', '.bit']
       if (suspiciousTlds.some(tld => urlObj.hostname.endsWith(tld))) {
         linkScore += 30
@@ -281,21 +309,26 @@ async function checkSuspiciousLinks(content: string) {
         flags.push('ip_address')
       }
       
-      if (linkScore > 50) {
+      if (linkScore > 70) {
+        severity = 'critical'
+        maxSeverity = 'critical'
+      } else if (linkScore > 50) {
         severity = 'high'
-        maxSeverity = 'high'
+        if (!['critical'].includes(maxSeverity)) maxSeverity = 'high'
       } else if (linkScore > 25) {
         severity = 'medium'
-        if (maxSeverity === 'low') maxSeverity = 'medium'
+        if (!['critical', 'high'].includes(maxSeverity)) maxSeverity = 'medium'
       }
       
-      if (linkScore > 20) {
+      if (linkScore > 20 || flags.some(f => f.includes('detected_by'))) {
         suspiciousLinks.push({
           url,
           score: linkScore,
           severity,
           flags,
-          reason: `Suspicious link with ${flags.join(', ')}`
+          reason: flags.some(f => f.includes('detected_by')) 
+            ? `Malicious URL detected by threat intelligence`
+            : `Suspicious link with ${flags.join(', ')}`
         })
         totalScore += linkScore
       }
