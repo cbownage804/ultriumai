@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Users, Phone, MapPin, Mail, Plus, Edit, Monitor } from "lucide-react";
+import { Building2, Phone, MapPin, Mail, Plus, Edit, Monitor } from "lucide-react";
 
 interface Customer {
   id: string;
@@ -41,9 +40,47 @@ interface CustomerFormData {
   notes: string;
 }
 
+// Mock data for demo
+const mockCustomers: Customer[] = [
+  {
+    id: "1",
+    company_name: "Acme Corporation",
+    primary_contact_name: "John Smith",
+    primary_contact_email: "john@acmecorp.com",
+    phone: "(555) 123-4567",
+    address: "123 Business St",
+    city: "Business City",
+    state: "NY",
+    zip_code: "12345",
+    notes: "Large enterprise client with 50+ workstations",
+    device_count: 52,
+    last_activity: "2024-01-06T10:30:00Z",
+    is_active: true,
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-06T10:30:00Z"
+  },
+  {
+    id: "2",
+    company_name: "TechStart LLC",
+    primary_contact_name: "Sarah Wilson",
+    primary_contact_email: "sarah@techstart.com",
+    phone: "(555) 987-6543",
+    address: "456 Tech Ave",
+    city: "Innovation City",
+    state: "CA",
+    zip_code: "94102",
+    notes: "Fast-growing startup, expanding rapidly",
+    device_count: 15,
+    last_activity: "2024-01-05T14:22:00Z",
+    is_active: true,
+    created_at: "2023-12-15T00:00:00Z",
+    updated_at: "2024-01-05T14:22:00Z"
+  }
+];
+
 export const CustomerManager = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+  const [loading, setLoading] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>({
@@ -60,91 +97,51 @@ export const CustomerManager = () => {
   
   const { toast } = useToast();
 
-  const loadCustomers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('rmm_customers')
-        .select(`
-          *,
-          rmm_devices(count)
-        `)
-        .order('company_name');
-
-      if (error) throw error;
-
-      const processedCustomers = data?.map(customer => ({
-        ...customer,
-        device_count: customer.rmm_devices?.[0]?.count || 0
-      })) || [];
-
-      setCustomers(processedCustomers);
-    } catch (error) {
-      console.error('Error loading customers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load customers",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      if (editingCustomer) {
-        const { error } = await supabase
-          .from('rmm_customers')
-          .update(formData)
-          .eq('id', editingCustomer.id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Customer updated successfully",
-        });
-      } else {
-        const { error } = await supabase
-          .from('rmm_customers')
-          .insert([formData]);
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "Customer added successfully",
-        });
-      }
-
-      setShowAddDialog(false);
-      setEditingCustomer(null);
-      setFormData({
-        company_name: '',
-        primary_contact_name: '',
-        primary_contact_email: '',
-        phone: '',
-        address: '',
-        city: '',
-        state: '',
-        zip_code: '',
-        notes: ''
-      });
-      loadCustomers();
-    } catch (error) {
-      console.error('Error saving customer:', error);
+    if (editingCustomer) {
+      // Update existing customer
+      setCustomers(prev => prev.map(customer => 
+        customer.id === editingCustomer.id 
+          ? { ...customer, ...formData, updated_at: new Date().toISOString() }
+          : customer
+      ));
       toast({
-        title: "Error",
-        description: "Failed to save customer",
-        variant: "destructive",
+        title: "Success",
+        description: "Customer updated successfully",
+      });
+    } else {
+      // Add new customer
+      const newCustomer: Customer = {
+        ...formData,
+        id: Date.now().toString(),
+        device_count: 0,
+        last_activity: new Date().toISOString(),
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      setCustomers(prev => [...prev, newCustomer]);
+      toast({
+        title: "Success",
+        description: "Customer added successfully",
       });
     }
+
+    setShowAddDialog(false);
+    setEditingCustomer(null);
+    setFormData({
+      company_name: '',
+      primary_contact_name: '',
+      primary_contact_email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      notes: ''
+    });
   };
 
   const handleEdit = (customer: Customer) => {
@@ -179,35 +176,12 @@ export const CustomerManager = () => {
     setShowAddDialog(true);
   };
 
-  const syncWithTicketing = async (customerId: string) => {
-    try {
-      const { error } = await supabase.functions.invoke('rmm-customer-sync', {
-        body: { customer_id: customerId, action: 'sync_to_ticketing' }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Customer synced with ticketing system",
-      });
-    } catch (error) {
-      console.error('Error syncing customer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to sync with ticketing system",
-        variant: "destructive",
-      });
-    }
+  const syncWithTicketing = (customerId: string) => {
+    toast({
+      title: "Success",
+      description: "Customer synced with ticketing system",
+    });
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

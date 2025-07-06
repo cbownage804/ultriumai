@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DeviceContactInfo } from "./DeviceContactInfo";
 import { RemoteSessionViewer } from "./RemoteSessionViewer";
@@ -36,10 +35,46 @@ interface Device {
   pending_tickets: number;
 }
 
+// Mock data
+const mockDevices: Device[] = [
+  {
+    id: "1",
+    hostname: "WORKSTATION-01",
+    ip_address: "192.168.1.100",
+    os_info: "Windows 11 Pro",
+    device_type: "desktop",
+    status: "online",
+    last_seen: "2024-01-06T10:30:00Z",
+    last_logged_user: "john.doe",
+    customer_id: "customer-1",
+    customer_name: "Acme Corporation",
+    cpu_usage: 45,
+    memory_usage: 62,
+    disk_usage: 78,
+    pending_tickets: 2
+  },
+  {
+    id: "2",
+    hostname: "LAPTOP-SALES-02",
+    ip_address: "192.168.1.105",
+    os_info: "Windows 11 Pro",
+    device_type: "laptop",
+    status: "offline",
+    last_seen: "2024-01-05T14:22:00Z",
+    last_logged_user: "sarah.wilson",
+    customer_id: "customer-2",
+    customer_name: "TechStart LLC",
+    cpu_usage: 23,
+    memory_usage: 34,
+    disk_usage: 56,
+    pending_tickets: 1
+  }
+];
+
 export const IntegratedDeviceList = () => {
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [devices] = useState<Device[]>(mockDevices);
+  const [filteredDevices, setFilteredDevices] = useState<Device[]>(mockDevices);
+  const [loading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
@@ -53,95 +88,6 @@ export const IntegratedDeviceList = () => {
   } | null>(null);
 
   const { toast } = useToast();
-
-  const loadDevices = async () => {
-    try {
-      setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('rmm_devices')
-        .select(`
-          *,
-          rmm_customers (
-            id,
-            company_name
-          ),
-          helpdesk_tickets (
-            count
-          )
-        `)
-        .order('last_seen', { ascending: false });
-
-      if (error) throw error;
-
-      const processedDevices: Device[] = data?.map(device => ({
-        id: device.id,
-        hostname: device.hostname,
-        ip_address: device.ip_address,
-        os_info: device.os_info,
-        device_type: device.device_type,
-        status: device.status as 'online' | 'offline' | 'maintenance',
-        last_seen: device.last_seen,
-        last_logged_user: device.last_logged_user || 'Unknown',
-        customer_id: device.customer_id,
-        customer_name: device.rmm_customers?.company_name || 'Unknown Customer',
-        cpu_usage: device.cpu_usage || 0,
-        memory_usage: device.memory_usage || 0,
-        disk_usage: device.disk_usage || 0,
-        pending_tickets: 0
-      })) || [];
-
-      setDevices(processedDevices);
-      setFilteredDevices(processedDevices);
-    } catch (error) {
-      console.error('Error loading devices:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load devices",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadDevices();
-    
-    // Set up real-time subscription for device updates
-    const subscription = supabase
-      .channel('device-updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'rmm_devices' },
-        () => loadDevices()
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, []);
-
-  useEffect(() => {
-    let filtered = devices;
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(device =>
-        device.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.last_logged_user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        device.ip_address.includes(searchTerm)
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(device => device.status === statusFilter);
-    }
-
-    setFilteredDevices(filtered);
-  }, [searchTerm, statusFilter, devices]);
 
   const handleUserClick = (deviceId: string, username: string) => {
     setSelectedDeviceId(deviceId);
@@ -196,39 +142,13 @@ export const IntegratedDeviceList = () => {
                 Integrated RMM devices with customer contacts and ticketing
               </p>
             </div>
-            <Button onClick={loadDevices} variant="outline">
+            <Button variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
-          <div className="flex gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search devices, customers, users, or IP addresses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="border rounded px-3 py-2 text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="online">Online</option>
-                <option value="offline">Offline</option>
-                <option value="maintenance">Maintenance</option>
-              </select>
-            </div>
-          </div>
-
           {/* Device Table */}
           <div className="rounded-md border">
             <Table>
@@ -329,18 +249,6 @@ export const IntegratedDeviceList = () => {
               </TableBody>
             </Table>
           </div>
-
-          {filteredDevices.length === 0 && (
-            <div className="text-center py-8">
-              <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'No devices match your search criteria' 
-                  : 'No devices found'
-                }
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 

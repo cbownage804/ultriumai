@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { 
   User, 
@@ -47,6 +46,92 @@ interface DeviceContactInfoProps {
   onRemoteConnect?: (deviceId: string, hostname: string) => void;
 }
 
+interface MockTicket {
+  id: string;
+  title: string;
+  description: string;
+  priority: string;
+  status: string;
+  category: string;
+  created_at: string;
+}
+
+// Mock data
+const mockContactInfo: Record<string, ContactInfo> = {
+  "1": {
+    id: "1",
+    customer_id: "customer-1",
+    company_name: "Acme Corporation",
+    primary_contact_name: "John Smith",
+    primary_contact_email: "john@acmecorp.com",
+    phone: "(555) 123-4567",
+    address: "123 Business St",
+    city: "Business City",
+    state: "NY",
+    zip_code: "12345",
+    device_hostname: "WORKSTATION-01",
+    device_ip: "192.168.1.100",
+    last_logged_user: "john.doe",
+    last_activity: "2024-01-06T10:30:00Z",
+    device_status: "online",
+    ticket_count: 2,
+    notes: "Primary workstation for John Smith"
+  },
+  "2": {
+    id: "2",
+    customer_id: "customer-2",
+    company_name: "TechStart LLC",
+    primary_contact_name: "Sarah Wilson",
+    primary_contact_email: "sarah@techstart.com",
+    phone: "(555) 987-6543",
+    address: "456 Tech Ave",
+    city: "Innovation City",
+    state: "CA",
+    zip_code: "94102",
+    device_hostname: "LAPTOP-SALES-02",
+    device_ip: "192.168.1.105",
+    last_logged_user: "sarah.wilson",
+    last_activity: "2024-01-05T14:22:00Z",
+    device_status: "offline",
+    ticket_count: 1,
+    notes: "Sales team laptop"
+  }
+};
+
+const mockTickets: Record<string, MockTicket[]> = {
+  "customer-1": [
+    {
+      id: "1",
+      title: "Network connectivity issues",
+      description: "Intermittent network drops during peak hours",
+      priority: "high",
+      status: "open",
+      category: "network",
+      created_at: "2024-01-05T09:15:00Z"
+    },
+    {
+      id: "2",
+      title: "Software update required",
+      description: "Critical security update for workstation software",
+      priority: "medium",
+      status: "in_progress",
+      category: "software",
+      created_at: "2024-01-04T14:30:00Z"
+    }
+  ],
+  "customer-2": [
+    {
+      id: "3",
+      title: "Performance optimization",
+      description: "Laptop running slowly, needs cleanup",
+      priority: "low",
+      status: "open",
+      category: "performance",
+      created_at: "2024-01-03T11:45:00Z"
+    }
+  ]
+};
+
 export const DeviceContactInfo = ({ 
   deviceId, 
   lastLoggedUser, 
@@ -56,7 +141,7 @@ export const DeviceContactInfo = ({
 }: DeviceContactInfoProps) => {
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<MockTicket[]>([]);
   const { toast } = useToast();
 
   const loadContactInfo = async () => {
@@ -65,61 +150,17 @@ export const DeviceContactInfo = ({
     try {
       setLoading(true);
       
-      // Get device and customer information
-      const { data: deviceData, error: deviceError } = await supabase
-        .from('rmm_devices')
-        .select(`
-          *,
-          rmm_customers (
-            id,
-            company_name,
-            primary_contact_name,
-            primary_contact_email,
-            phone,
-            address,
-            city,
-            state,
-            zip_code,
-            notes
-          )
-        `)
-        .eq('id', deviceId)
-        .single();
-
-      if (deviceError) throw deviceError;
-
-      // Get associated tickets
-      const { data: ticketData, error: ticketError } = await supabase
-        .from('helpdesk_tickets')
-        .select('*')
-        .eq('customer_id', deviceData.customer_id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (ticketError) throw ticketError;
-
-      const contact: ContactInfo = {
-        id: deviceData.id,
-        customer_id: deviceData.customer_id,
-        company_name: deviceData.rmm_customers?.company_name || 'Unknown',
-        primary_contact_name: deviceData.rmm_customers?.primary_contact_name || 'Unknown',
-        primary_contact_email: deviceData.rmm_customers?.primary_contact_email || '',
-        phone: deviceData.rmm_customers?.phone || '',
-        address: deviceData.rmm_customers?.address || '',
-        city: deviceData.rmm_customers?.city || '',
-        state: deviceData.rmm_customers?.state || '',
-        zip_code: deviceData.rmm_customers?.zip_code || '',
-        device_hostname: deviceData.hostname,
-        device_ip: deviceData.ip_address,
-        last_logged_user: lastLoggedUser,
-        last_activity: deviceData.last_seen,
-        device_status: deviceData.status,
-        ticket_count: ticketData?.length || 0,
-        notes: deviceData.rmm_customers?.notes
-      };
-
-      setContactInfo(contact);
-      setTickets(ticketData || []);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Get mock data
+      const contact = mockContactInfo[deviceId];
+      const ticketData = mockTickets[contact?.customer_id] || [];
+      
+      if (contact) {
+        setContactInfo(contact);
+        setTickets(ticketData);
+      }
     } catch (error) {
       console.error('Error loading contact info:', error);
       toast({
@@ -148,34 +189,23 @@ export const DeviceContactInfo = ({
     if (!contactInfo) return;
 
     try {
-      const { data, error } = await supabase
-        .from('helpdesk_tickets')
-        .insert([{
-          customer_id: contactInfo.customer_id,
-          title: `Remote Support - ${contactInfo.device_hostname}`,
-          description: `Remote support session requested for device ${contactInfo.device_hostname} (${contactInfo.device_ip})`,
-          priority: 'medium',
-          status: 'open',
-          category: 'remote_support',
-          device_context: {
-            device_id: contactInfo.id,
-            hostname: contactInfo.device_hostname,
-            ip_address: contactInfo.device_ip,
-            last_logged_user: contactInfo.last_logged_user
-          }
-        }])
-        .select()
-        .single();
+      const newTicket: MockTicket = {
+        id: Date.now().toString(),
+        title: `Remote Support - ${contactInfo.device_hostname}`,
+        description: `Remote support session requested for device ${contactInfo.device_hostname} (${contactInfo.device_ip})`,
+        priority: 'medium',
+        status: 'open',
+        category: 'remote_support',
+        created_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
-
+      // Add to mock data
+      setTickets(prev => [newTicket, ...prev]);
+      
       toast({
         title: "Success",
         description: "Support ticket created successfully",
       });
-
-      // Refresh tickets
-      loadContactInfo();
     } catch (error) {
       console.error('Error creating ticket:', error);
       toast({
