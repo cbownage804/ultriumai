@@ -55,7 +55,7 @@ const MSPDemos = () => {
       monthlyRevenue: '$8/user',
       setupTime: '3 minutes',
       marketSize: 'Every business handling documents',
-      demoUrl: '/demos/safedoc',
+      demoUrl: '/safedoc-embed-demo',
       features: [
         'One-line website integration',
         'Complete white-label branding',
