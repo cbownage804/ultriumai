@@ -19,7 +19,7 @@ const Navigation = () => {
   const [isContactDropdownOpen, setIsContactDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { isMSPOrMSSP } = useAccountType();
+  const { isMSPOrMSSP, isUltriumEmployee } = useAccountType();
   const { toast } = useToast();
   
   // Use the navigation utility for consistent scroll behavior
@@ -116,6 +116,12 @@ const Navigation = () => {
             {user ? (
               <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
                 KB
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
+            ) : null}
+            {isUltriumEmployee ? (
+              <button onClick={() => handleNavigation('/admin')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+                Admin
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
               </button>
             ) : null}
@@ -218,6 +224,11 @@ const Navigation = () => {
               {user ? (
                 <button onClick={() => handleNavigationWithMenuClose('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                   KB
+                </button>
+              ) : null}
+              {isUltriumEmployee ? (
+                <button onClick={() => handleNavigationWithMenuClose('/admin')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                  Admin Dashboard
                 </button>
               ) : null}
               <div className="flex flex-col space-y-2 pt-4 px-3">
