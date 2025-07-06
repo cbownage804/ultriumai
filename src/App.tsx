@@ -57,6 +57,7 @@ import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
 import SecurityDashboard from '@/pages/SecurityDashboard';
 import SafeWebDashboard from '@/pages/SafeWebDashboard';
 import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
+import AdminDashboard from '@/pages/AdminDashboard';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
