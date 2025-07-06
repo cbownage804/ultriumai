@@ -17,7 +17,10 @@ import {
   ArrowRight,
   ExternalLink,
   Play,
-  Network
+  Network,
+  Wrench,
+  MessageSquare,
+  Eye
 } from "lucide-react";
 
 interface DemoApp {
@@ -236,6 +239,106 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
+    id: "ultrium-rmm",
+    name: "Ultrium RMM™",
+    category: "Remote Management",
+    description: "Comprehensive remote monitoring and management platform",
+    longDescription: "Advanced RMM solution providing real-time device monitoring, automated script execution, patch management, and remote access capabilities for IT professionals and MSPs.",
+    icon: Wrench,
+    features: [
+      "Real-time device monitoring",
+      "Automated script execution",
+      "Patch management",
+      "Remote access & control",
+      "Multi-client dashboard",
+      "Asset tracking"
+    ],
+    demoUrl: "/demos/rmm",
+    isLive: true,
+    tags: ["RMM", "Remote Management", "IT Operations"],
+    useCases: [
+      "Proactive device monitoring",
+      "Automated maintenance tasks",
+      "Remote troubleshooting",
+      "Client infrastructure management"
+    ]
+  },
+  {
+    id: "ultrium-ticketing",
+    name: "Ultrium Helpdesk™",
+    category: "Service Management",
+    description: "AI-powered ticketing and helpdesk automation platform",
+    longDescription: "Comprehensive helpdesk solution with intelligent ticket routing, automated responses, SLA management, and integrated communication tools for superior customer service.",
+    icon: MessageSquare,
+    features: [
+      "Intelligent ticket routing",
+      "Automated response templates",
+      "SLA tracking & alerts",
+      "Multi-channel support",
+      "Analytics & reporting",
+      "Team collaboration"
+    ],
+    demoUrl: "/demos/ticketing",
+    isLive: true,
+    tags: ["Helpdesk", "Ticketing", "Customer Service"],
+    useCases: [
+      "IT support ticket management",
+      "Customer service automation",
+      "SLA compliance tracking",
+      "Team productivity optimization"
+    ]
+  },
+  {
+    id: "ultrium-antivirus",
+    name: "Ultrium Antivirus™",
+    category: "Endpoint Security",
+    description: "AI-powered endpoint protection and threat detection platform",
+    longDescription: "Advanced antivirus solution with real-time threat detection, behavioral analysis, automated quarantine, and comprehensive endpoint protection for businesses of all sizes.",
+    icon: Shield,
+    features: [
+      "Real-time threat detection",
+      "Behavioral analysis",
+      "Automated quarantine",
+      "Cloud-based scanning",
+      "Performance optimization",
+      "Centralized management"
+    ],
+    demoUrl: "/demos/antivirus",
+    isLive: true,
+    tags: ["Antivirus", "Endpoint Security", "Threat Detection"],
+    useCases: [
+      "Endpoint protection",
+      "Malware prevention",
+      "Security compliance",
+      "Threat response automation"
+    ]
+  },
+  {
+    id: "ultrium-mdr",
+    name: "Ultrium MDR™",
+    category: "Managed Security",
+    description: "24/7 managed detection and response with expert analysts",
+    longDescription: "Comprehensive managed detection and response service providing 24/7 security monitoring, expert threat hunting, incident response, and continuous threat intelligence.",
+    icon: Eye,
+    features: [
+      "24/7 security monitoring",
+      "Expert threat hunting",
+      "Incident response",
+      "Threat intelligence",
+      "Forensic analysis",
+      "Compliance reporting"
+    ],
+    demoUrl: "/demos/mdr",
+    isLive: true,
+    tags: ["MDR", "Security Operations", "Threat Hunting"],
+    useCases: [
+      "Continuous security monitoring",
+      "Advanced threat detection",
+      "Incident response management",
+      "Compliance and reporting"
+    ]
+  },
+  {
     id: "ultrium-gpt",
     name: "UltriumGPT",
     category: "AI Assistant",
@@ -265,7 +368,7 @@ const demoApps: DemoApp[] = [
 const LiveDemos = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Network Security", "Compliance Management", "Threat Intelligence", "AI Assistant"];
+  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Network Security", "Compliance Management", "Threat Intelligence", "Remote Management", "Service Management", "Endpoint Security", "Managed Security", "AI Assistant"];
   
   const filteredApps = selectedCategory === "all" 
     ? demoApps 
