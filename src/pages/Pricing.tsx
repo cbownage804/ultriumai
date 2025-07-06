@@ -34,7 +34,7 @@ const Pricing = () => {
     {
       name: "Business Starter",
       description: "Essential tools for growing businesses",
-      price: { monthly: 99, yearly: 990 },
+      price: { monthly: 29, yearly: 290 },
       trial: "14-day free trial",
       icon: Users,
       features: [
@@ -48,12 +48,13 @@ const Pricing = () => {
         "Analytics dashboard"
       ],
       current: subscription.subscription_tier === "starter",
-      popular: false
+      popular: false,
+      perUser: true
     },
     {
       name: "Professional",
       description: "Complete platform with enhanced security",
-      price: { monthly: 199, yearly: 1990 },
+      price: { monthly: 49, yearly: 490 },
       trial: "14-day free trial",
       icon: Crown,
       features: [
@@ -67,12 +68,13 @@ const Pricing = () => {
         "Multi-tenant management"
       ],
       current: subscription.subscription_tier === "premium",
-      popular: true
+      popular: true,
+      perUser: true
     },
     {
       name: "MSP Co-Management",
       description: "Strengthen your clients' security arsenal through co-managed IT services",
-      price: { monthly: 349, yearly: 3490 },
+      price: { monthly: 79, yearly: 790 },
       trial: "30-day free trial",
       icon: Building2,
       features: [
@@ -88,7 +90,13 @@ const Pricing = () => {
         "Custom SLA & support tiers"
       ],
       current: subscription.subscription_tier === "enterprise",
-      popular: false
+      popular: false,
+      perUser: true,
+      mspProfit: {
+        suggestedRate: 150,
+        profit: 71,
+        margin: "90%"
+      }
     }
   ];
 
@@ -197,12 +205,21 @@ const Pricing = () => {
                       </div>
                       {plan.price.monthly > 0 && (
                         <div className="text-sm text-muted-foreground">
-                          per {isYearly ? 'year' : 'month'}
+                          per user/{isYearly ? 'year' : 'month'}
                         </div>
                       )}
                       {isYearly && savings && (
                         <div className="text-sm text-green-600 font-medium mt-1">
-                          Save ${savings}/year
+                          Save ${savings} per user/year
+                        </div>
+                      )}
+                      {plan.mspProfit && (
+                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                          <div className="text-xs text-green-600 dark:text-green-400 font-medium mb-1">MSP Profit Opportunity</div>
+                          <div className="text-sm space-y-1">
+                            <div>Charge: ${plan.mspProfit.suggestedRate}/user/month</div>
+                            <div className="text-green-600 font-bold">Profit: ${plan.mspProfit.profit}/user/month ({plan.mspProfit.margin})</div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -259,6 +276,111 @@ const Pricing = () => {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* MSP Profit Calculator */}
+      <section className="py-16 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4 text-green-700 dark:text-green-400">MSP Profit Potential</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              See how much profit you can generate with our per-user pricing model. Scale your business while delivering exceptional value.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* 10 Users Example */}
+            <Card className="p-6 border-green-200 dark:border-green-800">
+              <div className="text-center space-y-4">
+                <div className="text-2xl font-bold text-green-600">10 Users</div>
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Your Cost: $79 × 10 = $790/month</div>
+                  <div className="text-sm text-muted-foreground">Charge Clients: $150 × 10 = $1,500/month</div>
+                  <div className="text-lg font-bold text-green-600">Monthly Profit: $710</div>
+                  <div className="text-sm text-green-500">90% profit margin</div>
+                </div>
+              </div>
+            </Card>
+
+            {/* 50 Users Example */}
+            <Card className="p-6 border-green-200 dark:border-green-800 ring-2 ring-green-500/20">
+              <div className="text-center space-y-4">
+                <div className="text-2xl font-bold text-green-600">50 Users</div>
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Your Cost: $79 × 50 = $3,950/month</div>
+                  <div className="text-sm text-muted-foreground">Charge Clients: $150 × 50 = $7,500/month</div>
+                  <div className="text-lg font-bold text-green-600">Monthly Profit: $3,550</div>
+                  <div className="text-sm text-green-500">90% profit margin</div>
+                </div>
+              </div>
+            </Card>
+
+            {/* 100 Users Example */}
+            <Card className="p-6 border-green-200 dark:border-green-800">
+              <div className="text-center space-y-4">
+                <div className="text-2xl font-bold text-green-600">100 Users</div>
+                <div className="space-y-2">
+                  <div className="text-sm text-muted-foreground">Your Cost: $79 × 100 = $7,900/month</div>
+                  <div className="text-sm text-muted-foreground">Charge Clients: $150 × 100 = $15,000/month</div>
+                  <div className="text-lg font-bold text-green-600">Monthly Profit: $7,100</div>
+                  <div className="text-sm text-green-500">90% profit margin</div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-green-200 dark:border-green-800">
+            <h3 className="text-xl font-bold mb-6 text-center">Why This Pricing Works for MSPs</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-medium">Scalable Revenue Model</div>
+                    <div className="text-sm text-muted-foreground">Per-user pricing grows with your client base</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-medium">High Profit Margins</div>
+                    <div className="text-sm text-muted-foreground">90% margin on every user across all clients</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-medium">White-Label Everything</div>
+                    <div className="text-sm text-muted-foreground">Apps, portals, and branding for each client</div>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-medium">Co-Management Ready</div>
+                    <div className="text-sm text-muted-foreground">Perfect for clients with internal IT teams</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-medium">Recurring Revenue</div>
+                    <div className="text-sm text-muted-foreground">Predictable monthly income that scales</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-medium">Value-Based Pricing</div>
+                    <div className="text-sm text-muted-foreground">Full platform justifies premium rates</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
