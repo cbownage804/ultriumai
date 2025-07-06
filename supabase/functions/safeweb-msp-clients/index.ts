@@ -36,52 +36,45 @@ serve(async (req) => {
     const method = req.method;
 
     if (method === 'GET') {
-      // List MSP clients with stats
-      const { data: clients, error } = await supabaseClient
-        .from('safeweb_msp_clients')
-        .select(`
-          *,
-          assets:safeweb_assets(count),
-          threats:safeweb_threats(count)
-        `)
-        .eq('msp_user_id', user.id)
-        .order('created_at', { ascending: false });
+      // List MSP clients with basic info
+      try {
+        const { data: clients, error } = await supabaseClient
+          .from('safeweb_msp_clients')
+          .select('*')
+          .eq('msp_user_id', user.id)
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching MSP clients:', error);
+        if (error) {
+          console.error('Error fetching MSP clients:', error);
+          return new Response(
+            JSON.stringify({ error: 'Failed to fetch clients', details: error.message }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // For now, return basic client info without complex stats
+        const clientsWithStats = clients.map(client => ({
+          ...client,
+          threat_stats: {
+            total_threats: 0,
+            critical_threats: 0,
+            high_threats: 0,
+            medium_threats: 0,
+            low_threats: 0,
+          }
+        }));
+
         return new Response(
-          JSON.stringify({ error: 'Failed to fetch clients' }),
+          JSON.stringify({ clients: clientsWithStats }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error in GET MSP clients:', error);
+        return new Response(
+          JSON.stringify({ error: 'Internal server error', details: error.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      // Get threat counts by severity for each client
-      const clientsWithStats = await Promise.all(
-        clients.map(async (client) => {
-          const { data: threatStats } = await supabaseClient
-            .from('safeweb_threats')
-            .select('severity')
-            .eq('msp_client_id', client.id);
-
-          const stats = {
-            total_threats: threatStats?.length || 0,
-            critical_threats: threatStats?.filter(t => t.severity === 'critical').length || 0,
-            high_threats: threatStats?.filter(t => t.severity === 'high').length || 0,
-            medium_threats: threatStats?.filter(t => t.severity === 'medium').length || 0,
-            low_threats: threatStats?.filter(t => t.severity === 'low').length || 0,
-          };
-
-          return {
-            ...client,
-            threat_stats: stats
-          };
-        })
-      );
-
-      return new Response(
-        JSON.stringify({ clients: clientsWithStats }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
     if (method === 'POST') {

@@ -201,9 +201,27 @@ serve(async (req) => {
     }
 
     if (method === 'DELETE') {
-      // Delete asset
+      // Delete asset - handle both query param and body approaches
       console.log('DELETE request received');
-      const { id: assetId } = await req.json();
+      let assetId;
+      
+      try {
+        // Try to get from query params first
+        assetId = url.searchParams.get('id');
+        
+        // If not in query params, try request body
+        if (!assetId) {
+          const body = await req.json();
+          assetId = body?.id;
+        }
+      } catch (error) {
+        console.error('Error parsing DELETE request:', error);
+        return new Response(
+          JSON.stringify({ error: 'Invalid request format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       console.log('Asset ID from request:', assetId);
       console.log('User ID:', user.id);
       
