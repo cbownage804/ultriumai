@@ -48,6 +48,8 @@ import SafePassPage from '@/pages/products/SafePassPage';
 import SafeWebPage from '@/pages/products/SafeWebPage';
 import SafeScorePage from '@/pages/products/SafeScorePage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
+import TicketingPage from '@/pages/products/TicketingPage';
+import AntivirusPage from '@/pages/products/AntivirusPage';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
@@ -198,6 +200,8 @@ function AppRouter() {
       <Route path="/products/safeweb" element={<SafeWebPage />} />
       <Route path="/products/safescore" element={<SafeScorePage />} />
       <Route path="/products/safenet" element={<SafeNetPage />} />
+      <Route path="/products/ticketing" element={<TicketingPage />} />
+      <Route path="/products/antivirus" element={<AntivirusPage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={
