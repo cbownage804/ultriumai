@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Zap, Play, Settings, CheckCircle, Clock } from "lucide-react";
+import { Zap, Play, Settings, CheckCircle, Clock, Code2, History } from "lucide-react";
+import { ScriptEditor } from "./ScriptEditor";
 
 interface AutomationScript {
   name: string;
@@ -26,14 +27,30 @@ const getStatusIcon = (status: string) => {
 
 export const AutomationManager = ({ scripts }: AutomationManagerProps) => {
   return (
-    <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-primary" />
-          Scripts & Automation
-        </CardTitle>
-        <CardDescription>Automated tasks and their execution status</CardDescription>
-      </CardHeader>
+    <div className="space-y-6">
+      {/* Script Management Actions */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Script Management</h3>
+          <p className="text-sm text-muted-foreground">Create, manage, and execute custom automation scripts</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <History className="h-4 w-4 mr-2" />
+            Execution History
+          </Button>
+          <ScriptEditor />
+        </div>
+      </div>
+
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-primary" />
+            Active Scripts & Automation
+          </CardTitle>
+          <CardDescription>Currently running automated tasks and their execution status</CardDescription>
+        </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {scripts.map((script) => (
@@ -74,5 +91,6 @@ export const AutomationManager = ({ scripts }: AutomationManagerProps) => {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
