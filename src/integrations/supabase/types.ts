@@ -1953,6 +1953,333 @@ export type Database = {
           },
         ]
       }
+      safeweb_assets: {
+        Row: {
+          asset_type: string
+          asset_value: string
+          created_at: string
+          id: string
+          last_scan_at: string | null
+          metadata: Json
+          msp_client_id: string | null
+          next_scan_at: string
+          scan_frequency: string
+          status: string
+          threats_found: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_type: string
+          asset_value: string
+          created_at?: string
+          id?: string
+          last_scan_at?: string | null
+          metadata?: Json
+          msp_client_id?: string | null
+          next_scan_at?: string
+          scan_frequency?: string
+          status?: string
+          threats_found?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          asset_value?: string
+          created_at?: string
+          id?: string
+          last_scan_at?: string | null
+          metadata?: Json
+          msp_client_id?: string | null
+          next_scan_at?: string
+          scan_frequency?: string
+          status?: string
+          threats_found?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safeweb_msp_billing: {
+        Row: {
+          asset_count: number
+          billing_period_end: string
+          billing_period_start: string
+          client_charge: number
+          client_id: string
+          created_at: string
+          id: string
+          invoice_id: string | null
+          metadata: Json
+          msp_profit: number
+          msp_user_id: string
+          paid_at: string | null
+          status: string
+          threat_count: number
+          ultrium_fee: number
+        }
+        Insert: {
+          asset_count?: number
+          billing_period_end: string
+          billing_period_start: string
+          client_charge: number
+          client_id: string
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json
+          msp_profit: number
+          msp_user_id: string
+          paid_at?: string | null
+          status?: string
+          threat_count?: number
+          ultrium_fee: number
+        }
+        Update: {
+          asset_count?: number
+          billing_period_end?: string
+          billing_period_start?: string
+          client_charge?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json
+          msp_profit?: number
+          msp_user_id?: string
+          paid_at?: string | null
+          status?: string
+          threat_count?: number
+          ultrium_fee?: number
+        }
+        Relationships: []
+      }
+      safeweb_msp_clients: {
+        Row: {
+          billing_cycle_start: string
+          billing_email: string | null
+          branding: Json
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          domain: string | null
+          id: string
+          last_billed_at: string | null
+          max_assets: number
+          monthly_price: number
+          msp_user_id: string
+          next_billing_date: string
+          settings: Json
+          subscription_plan: string
+          subscription_status: string
+          trial_ends_at: string
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle_start?: string
+          billing_email?: string | null
+          branding?: Json
+          company_name: string
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+          last_billed_at?: string | null
+          max_assets?: number
+          monthly_price?: number
+          msp_user_id: string
+          next_billing_date?: string
+          settings?: Json
+          subscription_plan?: string
+          subscription_status?: string
+          trial_ends_at?: string
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle_start?: string
+          billing_email?: string | null
+          branding?: Json
+          company_name?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          domain?: string | null
+          id?: string
+          last_billed_at?: string | null
+          max_assets?: number
+          monthly_price?: number
+          msp_user_id?: string
+          next_billing_date?: string
+          settings?: Json
+          subscription_plan?: string
+          subscription_status?: string
+          trial_ends_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      safeweb_scan_jobs: {
+        Row: {
+          asset_id: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          job_type: string
+          scan_results: Json
+          scan_sources: string[]
+          started_at: string | null
+          status: string
+          threats_found: number
+          user_id: string
+        }
+        Insert: {
+          asset_id: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type: string
+          scan_results?: Json
+          scan_sources?: string[]
+          started_at?: string | null
+          status?: string
+          threats_found?: number
+          user_id: string
+        }
+        Update: {
+          asset_id?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type?: string
+          scan_results?: Json
+          scan_sources?: string[]
+          started_at?: string | null
+          status?: string
+          threats_found?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safeweb_sources: {
+        Row: {
+          api_config: Json
+          base_url: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          last_accessed: string | null
+          name: string
+          reliability_score: number
+          source_type: string
+        }
+        Insert: {
+          api_config?: Json
+          base_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_accessed?: string | null
+          name: string
+          reliability_score?: number
+          source_type: string
+        }
+        Update: {
+          api_config?: Json
+          base_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_accessed?: string | null
+          name?: string
+          reliability_score?: number
+          source_type?: string
+        }
+        Relationships: []
+      }
+      safeweb_threats: {
+        Row: {
+          affected_assets: string[]
+          asset_id: string | null
+          confidence_score: number
+          created_at: string
+          description: string
+          first_seen: string
+          id: string
+          last_seen: string
+          msp_client_id: string | null
+          raw_data: Json
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source_name: string
+          source_url: string | null
+          status: string
+          tags: string[]
+          threat_indicators: Json
+          threat_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affected_assets?: string[]
+          asset_id?: string | null
+          confidence_score?: number
+          created_at?: string
+          description: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          msp_client_id?: string | null
+          raw_data?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          source_name: string
+          source_url?: string | null
+          status?: string
+          tags?: string[]
+          threat_indicators?: Json
+          threat_type: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affected_assets?: string[]
+          asset_id?: string | null
+          confidence_score?: number
+          created_at?: string
+          description?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          msp_client_id?: string | null
+          raw_data?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_name?: string
+          source_url?: string | null
+          status?: string
+          tags?: string[]
+          threat_indicators?: Json
+          threat_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_app_subscriptions: {
         Row: {
           app_id: string
