@@ -42,6 +42,7 @@ import SafePassPage from '@/pages/products/SafePassPage';
 import SafeWebPage from '@/pages/products/SafeWebPage';
 import SafeCompPage from '@/pages/products/SafeCompPage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
+import EmbedDemo from '@/pages/EmbedDemo';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -95,6 +96,7 @@ function AppRouter() {
       <Route path="/demos/safecomp" element={<SafeCompDemoPage />} />
       <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
       <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
+      <Route path="/embed-demo" element={<EmbedDemo />} />
       
       {/* Product Pages */}
       <Route path="/products/safeemail" element={<SafeEmailPage />} />

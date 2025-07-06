@@ -31,7 +31,8 @@ import {
   Share,
   Lock,
   Unlock,
-  History
+  History,
+  Globe
 } from "lucide-react";
 import { useSafePass, PasswordEntry, PasswordVault } from "@/hooks/useSafePass";
 import { useToast } from "@/hooks/use-toast";
@@ -213,6 +214,15 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="secondary"
+            onClick={() => window.open('/embed-demo', '_blank')}
+            className="mb-2"
+          >
+            <Globe className="h-4 w-4 mr-2" />
+            Embeddable Widget Demo
+          </Button>
+          
           <Dialog open={showCreateVault} onOpenChange={setShowCreateVault}>
             <DialogTrigger asChild>
               <Button variant="outline">
