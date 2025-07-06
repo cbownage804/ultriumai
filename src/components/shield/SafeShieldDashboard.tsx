@@ -71,7 +71,7 @@ export const SafeShieldDashboard = () => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [threats, setThreats] = useState<Threat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide' | 'downloads' | 'white-label' | 'safe-av' | 'safe-mdr'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide' | 'downloads' | 'white-label' | 'safe-av' | 'safe-mdr' | 'reports'>('overview');
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const { toast } = useToast();
 
@@ -325,6 +325,13 @@ export const SafeShieldDashboard = () => {
           <Search className="h-4 w-4 mr-2" />
           SafeMDR
         </Button>
+        <Button 
+          variant={activeView === 'reports' ? 'default' : 'outline'}
+          onClick={() => setActiveView('reports')}
+        >
+          <Activity className="h-4 w-4 mr-2" />
+          Reports & Analytics
+        </Button>
       </div>
 
       {/* Critical Alerts */}
@@ -502,6 +509,11 @@ export const SafeShieldDashboard = () => {
       {/* SafeMDR Dashboard */}
       {activeView === 'safe-mdr' && (
         <SafeMDRDashboard />
+      )}
+
+      {/* Reports & Analytics */}
+      {activeView === 'reports' && (
+        <ThreatReportsAnalytics />
       )}
 
       {/* White Label Configuration */}

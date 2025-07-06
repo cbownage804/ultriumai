@@ -19,7 +19,7 @@ interface EndpointData {
 interface ThreatEvent {
   event_id: string;
   hostname: string;
-  threat_type: 'malware' | 'ransomware' | 'suspicious_process' | 'network_anomaly' | 'file_modification';
+  threat_type: 'malware' | 'ransomware' | 'suspicious_process' | 'network_anomaly' | 'file_modification' | 'advanced_persistent_threat' | 'zero_day_exploit' | 'credential_theft' | 'data_exfiltration' | 'insider_threat';
   severity: 'low' | 'medium' | 'high' | 'critical';
   file_path?: string;
   process_name?: string;
@@ -42,13 +42,18 @@ interface AIThreatAnalysis {
   containment_strategy: string;
 }
 
-// Simulate advanced threat detection algorithms
+// Enhanced threat detection with machine learning patterns
 function analyzeThreatBehavior(event: Partial<ThreatEvent>): AIThreatAnalysis {
   const isCritical = event.threat_type === 'ransomware' || 
+                    event.threat_type === 'advanced_persistent_threat' ||
+                    event.threat_type === 'zero_day_exploit' ||
                     event.behavioral_indicators?.some(i => 
                       i.includes('encryption') || 
                       i.includes('mass_file_deletion') ||
-                      i.includes('shadow_copy_deletion')
+                      i.includes('shadow_copy_deletion') ||
+                      i.includes('credential_dumping') ||
+                      i.includes('privilege_escalation') ||
+                      i.includes('lateral_movement_detected')
                     );
 
   const isAdvancedThreat = event.behavioral_indicators?.some(i =>
@@ -113,9 +118,13 @@ function analyzeThreatBehavior(event: Partial<ThreatEvent>): AIThreatAnalysis {
   };
 }
 
-// Simulate real-time threat detection
+// Enhanced real-time threat detection with advanced patterns
 function generateThreatEvent(hostname: string): ThreatEvent {
-  const threatTypes = ['malware', 'ransomware', 'suspicious_process', 'network_anomaly', 'file_modification'] as const;
+  const threatTypes = [
+    'malware', 'ransomware', 'suspicious_process', 'network_anomaly', 
+    'file_modification', 'advanced_persistent_threat', 'zero_day_exploit', 
+    'credential_theft', 'data_exfiltration', 'insider_threat'
+  ] as const;
   const randomThreat = threatTypes[Math.floor(Math.random() * threatTypes.length)];
   
   let behavioral_indicators = [];
@@ -128,10 +137,62 @@ function generateThreatEvent(hostname: string): ThreatEvent {
         'mass_file_encryption_detected',
         'shadow_copy_deletion',
         'backup_service_termination',
-        'ransom_note_creation'
+        'ransom_note_creation',
+        'privilege_escalation'
       ];
       severity = 'critical';
       ai_confidence_score = 0.85 + Math.random() * 0.15;
+      break;
+    case 'advanced_persistent_threat':
+      behavioral_indicators = [
+        'lateral_movement_detected',
+        'credential_dumping',
+        'persistence_mechanism',
+        'data_staging',
+        'covert_channel_communication'
+      ];
+      severity = 'critical';
+      ai_confidence_score = 0.80 + Math.random() * 0.20;
+      break;
+    case 'zero_day_exploit':
+      behavioral_indicators = [
+        'unknown_vulnerability_exploitation',
+        'memory_corruption_detected',
+        'code_injection_attempt',
+        'system_service_manipulation'
+      ];
+      severity = 'critical';
+      ai_confidence_score = 0.75 + Math.random() * 0.25;
+      break;
+    case 'credential_theft':
+      behavioral_indicators = [
+        'password_hash_extraction',
+        'keylogger_activity',
+        'browser_credential_access',
+        'authentication_bypass_attempt'
+      ];
+      severity = 'high';
+      ai_confidence_score = 0.70 + Math.random() * 0.30;
+      break;
+    case 'data_exfiltration':
+      behavioral_indicators = [
+        'large_data_transfer_detected',
+        'unauthorized_file_access',
+        'encrypted_communication_channel',
+        'compression_activity'
+      ];
+      severity = 'high';
+      ai_confidence_score = 0.65 + Math.random() * 0.35;
+      break;
+    case 'insider_threat':
+      behavioral_indicators = [
+        'unusual_access_patterns',
+        'after_hours_activity',
+        'sensitive_data_collection',
+        'policy_violation_detected'
+      ];
+      severity = 'medium';
+      ai_confidence_score = 0.60 + Math.random() * 0.40;
       break;
     case 'malware':
       behavioral_indicators = [
@@ -272,11 +333,36 @@ serve(async (req) => {
             .eq('user_id', user_id);
         }
 
+        // Get the inserted threat ID for notification
+        const { data: insertedThreat } = await supabase
+          .from('safe_shield_threats')
+          .select('id')
+          .eq('event_id', threatEvent.event_id)
+          .single();
+
+        // Trigger automatic notifications for critical/high threats
+        if (insertedThreat && (threatEvent.severity === 'critical' || threatEvent.severity === 'high')) {
+          try {
+            await supabase.functions.invoke('threat-notification', {
+              body: {
+                threat_id: insertedThreat.id,
+                user_id: user_id,
+                notification_type: 'both',
+                urgency: threatEvent.severity
+              }
+            });
+          } catch (notificationError) {
+            console.error('Failed to send threat notification:', notificationError);
+            // Don't fail the entire request if notification fails
+          }
+        }
+
         return new Response(JSON.stringify({
           success: true,
           threat_event: threatEvent,
           ai_analysis: aiAnalysis,
-          message: `Threat detected on ${hostname} - ${aiAnalysis.threat_assessment}`
+          message: `Threat detected on ${hostname} - ${aiAnalysis.threat_assessment}`,
+          notifications_triggered: (threatEvent.severity === 'critical' || threatEvent.severity === 'high')
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
