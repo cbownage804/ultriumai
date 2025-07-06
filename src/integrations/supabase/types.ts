@@ -1199,6 +1199,123 @@ export type Database = {
         }
         Relationships: []
       }
+      darkweb_monitors: {
+        Row: {
+          created_at: string | null
+          findings: Json | null
+          id: string
+          item_type: string
+          last_scan: string | null
+          monitored_item: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          findings?: Json | null
+          id?: string
+          item_type: string
+          last_scan?: string | null
+          monitored_item: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          findings?: Json | null
+          id?: string
+          item_type?: string
+          last_scan?: string | null
+          monitored_item?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      document_scans: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          file_hash: string
+          file_name: string
+          file_size: number
+          id: string
+          scan_result: Json | null
+          scan_status: string
+          threat_level: string | null
+          threats_detected: number | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          file_hash: string
+          file_name: string
+          file_size: number
+          id?: string
+          scan_result?: Json | null
+          scan_status?: string
+          threat_level?: string | null
+          threats_detected?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          file_hash?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          scan_result?: Json | null
+          scan_status?: string
+          threat_level?: string | null
+          threats_detected?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      email_scans: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          email_subject: string | null
+          id: string
+          recipient_email: string | null
+          scan_result: Json | null
+          scan_status: string
+          sender_email: string
+          threat_level: string | null
+          threats_detected: number | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          email_subject?: string | null
+          id?: string
+          recipient_email?: string | null
+          scan_result?: Json | null
+          scan_status?: string
+          sender_email: string
+          threat_level?: string | null
+          threats_detected?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          email_subject?: string | null
+          id?: string
+          recipient_email?: string | null
+          scan_result?: Json | null
+          scan_status?: string
+          sender_email?: string
+          threat_level?: string | null
+          threats_detected?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       event_correlations: {
         Row: {
           confidence_score: number | null
@@ -2643,6 +2760,45 @@ export type Database = {
         }
         Relationships: []
       }
+      network_scans: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          risk_score: number | null
+          scan_result: Json | null
+          scan_status: string
+          scan_type: string
+          target_ip: string
+          user_id: string | null
+          vulnerabilities_found: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          risk_score?: number | null
+          scan_result?: Json | null
+          scan_status?: string
+          scan_type: string
+          target_ip: string
+          user_id?: string | null
+          vulnerabilities_found?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          risk_score?: number | null
+          scan_result?: Json | null
+          scan_status?: string
+          scan_type?: string
+          target_ip?: string
+          user_id?: string | null
+          vulnerabilities_found?: number | null
+        }
+        Relationships: []
+      }
       password_audit_logs: {
         Row: {
           action: string
@@ -2758,6 +2914,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      password_scans: {
+        Row: {
+          analysis_result: Json | null
+          created_at: string | null
+          id: string
+          password_hash: string
+          recommendations: string[] | null
+          strength_level: string
+          strength_score: number
+          user_id: string | null
+        }
+        Insert: {
+          analysis_result?: Json | null
+          created_at?: string | null
+          id?: string
+          password_hash: string
+          recommendations?: string[] | null
+          strength_level: string
+          strength_score: number
+          user_id?: string | null
+        }
+        Update: {
+          analysis_result?: Json | null
+          created_at?: string | null
+          id?: string
+          password_hash?: string
+          recommendations?: string[] | null
+          strength_level?: string
+          strength_score?: number
+          user_id?: string | null
+        }
+        Relationships: []
       }
       password_vaults: {
         Row: {
@@ -5047,6 +5236,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_analytics: {
+        Row: {
+          created_at: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          service_name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          service_name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          service_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       security_api_keys: {
         Row: {
