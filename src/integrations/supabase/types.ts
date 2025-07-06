@@ -1313,6 +1313,62 @@ export type Database = {
           },
         ]
       }
+      helpdesk_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          created_at: string | null
+          customer_id: string | null
+          description: string | null
+          device_context: Json | null
+          id: string
+          priority: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          device_context?: Json | null
+          id?: string
+          priority?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          description?: string | null
+          device_context?: Json | null
+          id?: string
+          priority?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helpdesk_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incident_activities: {
         Row: {
           activity_type: string
@@ -2672,6 +2728,119 @@ export type Database = {
           result?: Json | null
         }
         Relationships: []
+      }
+      rmm_customers: {
+        Row: {
+          address: string
+          city: string
+          company_name: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_activity: string | null
+          notes: string | null
+          phone: string
+          primary_contact_email: string
+          primary_contact_name: string
+          state: string
+          updated_at: string | null
+          zip_code: string
+        }
+        Insert: {
+          address: string
+          city: string
+          company_name: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_activity?: string | null
+          notes?: string | null
+          phone: string
+          primary_contact_email: string
+          primary_contact_name: string
+          state: string
+          updated_at?: string | null
+          zip_code: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          company_name?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_activity?: string | null
+          notes?: string | null
+          phone?: string
+          primary_contact_email?: string
+          primary_contact_name?: string
+          state?: string
+          updated_at?: string | null
+          zip_code?: string
+        }
+        Relationships: []
+      }
+      rmm_devices: {
+        Row: {
+          agent_version: string | null
+          cpu_usage: number | null
+          created_at: string | null
+          customer_id: string | null
+          device_type: string | null
+          disk_usage: number | null
+          hostname: string
+          id: string
+          ip_address: string
+          last_logged_user: string | null
+          last_seen: string | null
+          memory_usage: number | null
+          os_info: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_version?: string | null
+          cpu_usage?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          device_type?: string | null
+          disk_usage?: number | null
+          hostname: string
+          id?: string
+          ip_address: string
+          last_logged_user?: string | null
+          last_seen?: string | null
+          memory_usage?: number | null
+          os_info?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_version?: string | null
+          cpu_usage?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          device_type?: string | null
+          disk_usage?: number | null
+          hostname?: string
+          id?: string
+          ip_address?: string
+          last_logged_user?: string | null
+          last_seen?: string | null
+          memory_usage?: number | null
+          os_info?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rmm_devices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rmm_endpoints: {
         Row: {

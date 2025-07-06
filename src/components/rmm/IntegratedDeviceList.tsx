@@ -80,7 +80,7 @@ export const IntegratedDeviceList = () => {
         ip_address: device.ip_address,
         os_info: device.os_info,
         device_type: device.device_type,
-        status: device.status,
+        status: device.status as 'online' | 'offline' | 'maintenance',
         last_seen: device.last_seen,
         last_logged_user: device.last_logged_user || 'Unknown',
         customer_id: device.customer_id,
@@ -88,7 +88,7 @@ export const IntegratedDeviceList = () => {
         cpu_usage: device.cpu_usage || 0,
         memory_usage: device.memory_usage || 0,
         disk_usage: device.disk_usage || 0,
-        pending_tickets: device.helpdesk_tickets?.[0]?.count || 0
+        pending_tickets: 0
       })) || [];
 
       setDevices(processedDevices);
