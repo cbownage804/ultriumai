@@ -23,45 +23,45 @@ import {
 } from "@/components/ui/sidebar";
 
 const chatItems = [
-  { title: "Chat", url: "/dashboard/chat", icon: MessageSquare },
-  { title: "History", url: "/dashboard/history", icon: History },
-  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
+  { title: "Chat", url: "/dashboard/chat", icon: MessageSquare, tooltip: "Start new conversations with AI" },
+  { title: "History", url: "/dashboard/history", icon: History, tooltip: "View and manage past conversations" },
+  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3, tooltip: "View chat usage statistics and insights" },
 ];
 
 const customGPTItems = [
-  { title: "Templates", url: "/dashboard/templates", icon: Star },
-  { title: "Build", url: "/dashboard/custom-gpts/build", icon: Bot },
-  { title: "Personalize", url: "/dashboard/custom-gpts/personalize", icon: User },
-  { title: "Actions", url: "/dashboard/custom-gpts/actions", icon: Settings, badge: "Beta" },
-  { title: "Ask", url: "/dashboard/custom-gpts/ask", icon: MessageSquare },
-  { title: "Deploy", url: "/dashboard/custom-gpts/deploy", icon: Settings },
-  { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings },
+  { title: "Templates", url: "/dashboard/templates", icon: Star, tooltip: "Browse pre-built GPT templates for common use cases" },
+  { title: "Build", url: "/dashboard/custom-gpts/build", icon: Bot, tooltip: "Create and configure custom AI assistants" },
+  { title: "Personalize", url: "/dashboard/custom-gpts/personalize", icon: User, tooltip: "Customize appearance and branding of your GPTs" },
+  { title: "Actions", url: "/dashboard/custom-gpts/actions", icon: Settings, badge: "Beta", tooltip: "Add custom actions and integrations to your GPTs" },
+  { title: "Ask", url: "/dashboard/custom-gpts/ask", icon: MessageSquare, tooltip: "Test and interact with your custom GPTs" },
+  { title: "Deploy", url: "/dashboard/custom-gpts/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
+  { title: "Analyze", url: "/dashboard/custom-gpts/analyze", icon: Settings, tooltip: "View performance analytics for your GPTs" },
 ];
 
 const safeSuiteItems = [
-  { title: "SafePass", url: "/dashboard/safepass", icon: Key },
-  { title: "SafeMail", url: "/dashboard/safemail", icon: Mail },
-  { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText },
-  { title: "SafeLink", url: "/dashboard/safelink", icon: Link },
-  { title: "SafeNet", url: "/dashboard/safenet", icon: Network },
-  { title: "SafeSIEM", url: "/safesiem", icon: Shield },
+  { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Password security analysis and breach detection" },
+  { title: "SafeMail", url: "/dashboard/safemail", icon: Mail, tooltip: "Email security scanning and threat detection" },
+  { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText, tooltip: "Document security analysis and malware scanning" },
+  { title: "SafeLink", url: "/dashboard/safelink", icon: Link, tooltip: "URL safety checking and phishing protection" },
+  { title: "SafeNet", url: "/dashboard/safenet", icon: Network, tooltip: "Network security monitoring and threat analysis" },
+  { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
 ];
 
 const managementItems = [
-  { title: "API Management", url: "/dashboard/api-management", icon: Key },
-  { title: "Video Manager", url: "/dashboard/video-manager", icon: Video },
-  { title: "White-label", url: "/dashboard/white-label", icon: Palette },
+  { title: "API Management", url: "/dashboard/api-management", icon: Key, tooltip: "Manage API keys, usage limits, and access permissions" },
+  { title: "Video Manager", url: "/dashboard/video-manager", icon: Video, tooltip: "Upload and manage training videos for your GPTs" },
+  { title: "White-label", url: "/dashboard/white-label", icon: Palette, tooltip: "Customize branding and white-label your GPT solutions" },
 ];
 
 const teamItems = [
-  { title: "Team Management", url: "/dashboard/teams", icon: Users },
-  { title: "Team Analytics", url: "/dashboard/team-analytics", icon: TrendingUp },
+  { title: "Team Management", url: "/dashboard/teams", icon: Users, tooltip: "Manage team members, roles, and permissions" },
+  { title: "Team Analytics", url: "/dashboard/team-analytics", icon: TrendingUp, tooltip: "View team usage statistics and performance metrics" },
 ];
 
 const settingsItems = [
-  { title: "Profile", url: "/dashboard/profile", icon: User },
-  { title: "Security", url: "/dashboard/security", icon: Shield },
-  { title: "Settings", url: "/dashboard/settings", icon: Settings },
+  { title: "Profile", url: "/dashboard/profile", icon: User, tooltip: "Manage your account profile and personal information" },
+  { title: "Security", url: "/dashboard/security", icon: Shield, tooltip: "Configure security settings and two-factor authentication" },
+  { title: "Settings", url: "/dashboard/settings", icon: Settings, tooltip: "General application settings and preferences" },
 ];
 
 export function AppSidebar() {
@@ -124,7 +124,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton asChild tooltip="Main dashboard overview and summary">
                   <NavLink to="/dashboard" end className={getNavClass}>
                     <Home className="h-4 w-4" />
                     {!isCollapsed && <span className="ml-2">Dashboard</span>}
@@ -140,7 +140,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {chatItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.tooltip}>
                     <NavLink to={item.url} end className={getNavClass}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span className="ml-2">{item.title}</span>}
@@ -158,7 +158,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {customGPTItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.tooltip}>
                     <NavLink to={item.url} className={getNavClass}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && (
@@ -185,7 +185,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {safeSuiteItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.tooltip}>
                     <NavLink to={item.url} className={getNavClass}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span className="ml-2">{item.title}</span>}
@@ -203,7 +203,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {managementItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.tooltip}>
                     <NavLink to={item.url} className={getNavClass}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span className="ml-2">{item.title}</span>}
@@ -350,7 +350,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {teamItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.tooltip}>
                     <NavLink to={item.url} className={getNavClass}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span className="ml-2">{item.title}</span>}
@@ -368,7 +368,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild tooltip={item.tooltip}>
                     <NavLink to={item.url} className={getNavClass}>
                       <item.icon className="h-4 w-4" />
                       {!isCollapsed && <span className="ml-2">{item.title}</span>}
