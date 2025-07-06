@@ -4189,6 +4189,144 @@ export type Database = {
         }
         Relationships: []
       }
+      ultrium_shield_actions: {
+        Row: {
+          action_details: Json | null
+          action_type: string
+          created_at: string
+          hostname: string
+          id: string
+          performed_at: string
+          result: string | null
+          user_id: string
+        }
+        Insert: {
+          action_details?: Json | null
+          action_type: string
+          created_at?: string
+          hostname: string
+          id?: string
+          performed_at?: string
+          result?: string | null
+          user_id: string
+        }
+        Update: {
+          action_details?: Json | null
+          action_type?: string
+          created_at?: string
+          hostname?: string
+          id?: string
+          performed_at?: string
+          result?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ultrium_shield_endpoints: {
+        Row: {
+          agent_version: string
+          created_at: string
+          hostname: string
+          id: string
+          ip_address: string
+          last_seen: string
+          metadata: Json | null
+          os_version: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_version: string
+          created_at?: string
+          hostname: string
+          id?: string
+          ip_address: string
+          last_seen?: string
+          metadata?: Json | null
+          os_version: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_version?: string
+          created_at?: string
+          hostname?: string
+          id?: string
+          ip_address?: string
+          last_seen?: string
+          metadata?: Json | null
+          os_version?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ultrium_shield_threats: {
+        Row: {
+          ai_analysis: Json | null
+          ai_confidence_score: number
+          behavioral_indicators: string[] | null
+          command_line: string | null
+          created_at: string
+          detected_at: string
+          event_id: string
+          file_path: string | null
+          hostname: string
+          id: string
+          network_connection: string | null
+          process_name: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          threat_signature: string | null
+          threat_type: string
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: Json | null
+          ai_confidence_score?: number
+          behavioral_indicators?: string[] | null
+          command_line?: string | null
+          created_at?: string
+          detected_at?: string
+          event_id: string
+          file_path?: string | null
+          hostname: string
+          id?: string
+          network_connection?: string | null
+          process_name?: string | null
+          resolved_at?: string | null
+          severity: string
+          status?: string
+          threat_signature?: string | null
+          threat_type: string
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: Json | null
+          ai_confidence_score?: number
+          behavioral_indicators?: string[] | null
+          command_line?: string | null
+          created_at?: string
+          detected_at?: string
+          event_id?: string
+          file_path?: string | null
+          hostname?: string
+          id?: string
+          network_connection?: string | null
+          process_name?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          threat_signature?: string | null
+          threat_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           created_at: string
