@@ -66,18 +66,24 @@ serve(async (req) => {
           throw new Error('VirusTotal API key not configured');
         }
 
-        // Check if file was already scanned
-        const lookupResponse = await fetch(`https://www.virustotal.com/vtapi/v2/file/report?apikey=${virusTotalApiKey}&resource=${fileHash}`);
-        const lookupResult = await lookupResponse.json();
+        // Use VirusTotal v3 API to check file hash
+        const lookupResponse = await fetch(`https://www.virustotal.com/api/v3/files/${fileHash}`, {
+          headers: {
+            'x-apikey': virusTotalApiKey
+          }
+        });
 
         let scanResults = {};
         let threatLevel = 'clean';
         let threatsFound = 0;
 
-        if (lookupResult.response_code === 1) {
-          // File already scanned
-          scanResults = lookupResult;
-          threatsFound = lookupResult.positives || 0;
+        if (lookupResponse.status === 200) {
+          // File found in VirusTotal database
+          const lookupResult = await lookupResponse.json();
+          const stats = lookupResult.data.attributes.last_analysis_stats;
+          
+          scanResults = lookupResult.data.attributes;
+          threatsFound = stats.malicious + stats.suspicious;
           
           if (threatsFound === 0) {
             threatLevel = 'clean';
@@ -92,34 +98,47 @@ serve(async (req) => {
           }
 
           // Store detailed results
-          if (lookupResult.scans) {
-            for (const [engine, result] of Object.entries(lookupResult.scans)) {
-              if (result.detected) {
+          const engines = lookupResult.data.attributes.last_analysis_results;
+          if (engines) {
+            for (const [engineName, result] of Object.entries(engines)) {
+              if (result.category === 'malicious' || result.category === 'suspicious') {
                 await supabaseClient.from('safedoc_scan_results').insert({
                   scan_id: scan.id,
-                  engine_name: engine,
-                  threat_name: result.result,
-                  threat_type: 'malware',
-                  severity: threatsFound <= 2 ? 'low' : threatsFound <= 5 ? 'medium' : 'high',
-                  description: `Detected by ${engine}: ${result.result}`,
-                  recommendation: 'Quarantine or delete this file immediately'
+                  engine_name: engineName,
+                  threat_name: result.result || 'Unknown threat',
+                  threat_type: result.category,
+                  severity: result.category === 'malicious' ? 'high' : 'medium',
+                  description: `Detected by ${engineName}: ${result.result || 'Suspicious file'}`,
+                  recommendation: result.category === 'malicious' ? 
+                    'Quarantine or delete this file immediately' : 
+                    'Review this file carefully before use'
                 });
               }
             }
           }
-        } else {
-          // File needs to be scanned - for demo purposes, simulate scan
+        } else if (lookupResponse.status === 404) {
+          // File not found in VirusTotal - mark as unknown for hash-only analysis
           scanResults = {
-            scan_id: fileHash,
             sha256: fileHash,
-            total: 70,
-            positives: 0,
-            scans: {},
             scan_date: new Date().toISOString(),
-            permalink: `https://www.virustotal.com/file/${fileHash}/analysis/`
+            message: 'File not found in VirusTotal database - hash-based lookup only'
           };
-          threatLevel = 'clean';
+          threatLevel = 'unknown';
           threatsFound = 0;
+          
+          // Log that file wasn't found in VT database
+          await supabaseClient.from('safedoc_scan_results').insert({
+            scan_id: scan.id,
+            engine_name: 'VirusTotal',
+            threat_name: null,
+            threat_type: 'info',
+            severity: 'info',
+            description: 'File not found in VirusTotal database. This could indicate a new or rare file.',
+            recommendation: 'Consider additional security measures for unknown files'
+          });
+        } else {
+          // API error or rate limit
+          throw new Error(`VirusTotal API error: ${lookupResponse.status} ${lookupResponse.statusText}`);
         }
 
         // Update scan record
