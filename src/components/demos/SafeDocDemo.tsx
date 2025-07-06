@@ -380,8 +380,8 @@ export const SafeDocDemo = () => {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        {doc.favorite && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
-                        {doc.shared && <Share className="h-4 w-4 text-blue-500" />}
+                        {doc.favorite && <Star className="h-4 w-4 text-warning fill-current" />}
+                        {doc.shared && <Share className="h-4 w-4 text-primary" />}
                       </div>
                     </div>
                   </CardHeader>
@@ -503,8 +503,8 @@ export const SafeDocDemo = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {viewingDocument?.favorite && <Star className="h-4 w-4 text-yellow-500 fill-current" />}
-                  {viewingDocument?.shared && <Share className="h-4 w-4 text-blue-500" />}
+                  {viewingDocument?.favorite && <Star className="h-4 w-4 text-warning fill-current" />}
+                  {viewingDocument?.shared && <Share className="h-4 w-4 text-primary" />}
                 </div>
               </div>
             </DialogHeader>
