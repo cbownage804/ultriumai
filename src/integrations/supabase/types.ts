@@ -2882,6 +2882,10 @@ export type Database = {
         Args: { _user_id: string; _team_id: string }
         Returns: boolean
       }
+      is_ultrium_employee: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       ivfflat_bit_support: {
         Args: { "": unknown }
         Returns: unknown
@@ -2941,7 +2945,13 @@ export type Database = {
     }
     Enums: {
       account_type: "business" | "msp" | "mssp"
-      app_role: "admin" | "moderator" | "user" | "msp_admin" | "mssp_admin"
+      app_role:
+        | "admin"
+        | "moderator"
+        | "user"
+        | "msp_admin"
+        | "mssp_admin"
+        | "ultrium_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3058,7 +3068,14 @@ export const Constants = {
   public: {
     Enums: {
       account_type: ["business", "msp", "mssp"],
-      app_role: ["admin", "moderator", "user", "msp_admin", "mssp_admin"],
+      app_role: [
+        "admin",
+        "moderator",
+        "user",
+        "msp_admin",
+        "mssp_admin",
+        "ultrium_admin",
+      ],
     },
   },
 } as const

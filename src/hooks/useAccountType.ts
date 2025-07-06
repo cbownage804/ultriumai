@@ -87,6 +87,7 @@ export const useAccountType = () => {
   const isMSSP = profile?.account_type === 'mssp';
   const isMSPOrMSSP = isMSP || isMSSP;
   const isBusiness = profile?.account_type === 'business';
+  const isUltriumEmployee = profile?.email?.endsWith('@ultriumai.com') || false;
 
   return {
     profile,
@@ -99,6 +100,7 @@ export const useAccountType = () => {
     isMSSP,
     isMSPOrMSSP,
     isBusiness,
+    isUltriumEmployee,
     accountType: profile?.account_type
   };
 };
