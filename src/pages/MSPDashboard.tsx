@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +27,8 @@ import {
   ExternalLink,
   FileText,
   Activity,
-  Clock
+  Clock,
+  XCircle
 } from 'lucide-react';
 import { useMSP, MSPClient } from '@/hooks/useMSP';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +46,10 @@ const MSPControlCenter = () => {
   } = useMSP();
   
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
   const [showCreateMSP, setShowCreateMSP] = useState(false);
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [showEmbedCode, setShowEmbedCode] = useState<MSPClient | null>(null);
@@ -222,6 +228,15 @@ const MSPControlCenter = () => {
               >
                 <Crown className="h-4 w-4 mr-2" />
                 Create MSP Profile
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleNavigation('/')} 
+                className="w-full mt-3"
+              >
+                <XCircle className="h-4 w-4 mr-2" />
+                Cancel
               </Button>
             </CardContent>
           </Card>
