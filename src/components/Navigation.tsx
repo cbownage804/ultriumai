@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccountType } from "@/hooks/useAccountType";
 import { useToast } from "@/hooks/use-toast";
 import { createNavigationHandler } from "@/hooks/useScrollToTop";
 import ThemeToggle from "./ThemeToggle";
@@ -18,6 +19,7 @@ const Navigation = () => {
   const [isContactDropdownOpen, setIsContactDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isMSPOrMSSP } = useAccountType();
   const { toast } = useToast();
   
   // Use the navigation utility for consistent scroll behavior
@@ -227,9 +229,11 @@ const Navigation = () => {
                     <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/dashboard')}>
                       Dashboard
                     </Button>
-                    <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/msp-control-center')}>
-                      MSP Control Center
-                    </Button>
+                    {isMSPOrMSSP && (
+                      <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/msp-control-center')}>
+                        MSP Control Center
+                      </Button>
+                    )}
                     <Button variant="ghost" className="w-full justify-start">
                       <User className="h-4 w-4 mr-2" />
                       Profile

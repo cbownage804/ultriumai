@@ -1803,34 +1803,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: Database["public"]["Enums"]["account_type"] | null
           avatar_url: string | null
           bio: string | null
+          company_name: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
+          phone: string | null
           updated_at: string
           user_id: string
+          website: string | null
         }
         Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
           avatar_url?: string | null
           bio?: string | null
+          company_name?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id: string
+          website?: string | null
         }
         Update: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
           avatar_url?: string | null
           bio?: string | null
+          company_name?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -2813,6 +2825,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      get_user_account_type: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["account_type"]
+      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
@@ -2857,6 +2873,10 @@ export type Database = {
       hnswhandler: {
         Args: { "": unknown }
         Returns: unknown
+      }
+      is_msp_or_mssp: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       is_team_member: {
         Args: { _user_id: string; _team_id: string }
@@ -2920,7 +2940,8 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      account_type: "business" | "msp" | "mssp"
+      app_role: "admin" | "moderator" | "user" | "msp_admin" | "mssp_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3036,7 +3057,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      account_type: ["business", "msp", "mssp"],
+      app_role: ["admin", "moderator", "user", "msp_admin", "mssp_admin"],
     },
   },
 } as const

@@ -3,6 +3,7 @@ import { User, Crown, Coins, LogOut, Settings, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useAccountType } from '@/hooks/useAccountType';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +12,7 @@ const UserProfileDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { profile, credits, subscription, loading } = useUserProfile();
+  const { isMSPOrMSSP, accountType, loading: accountLoading } = useAccountType();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -99,6 +101,15 @@ const UserProfileDropdown = () => {
                   <p className="text-xs text-muted-foreground truncate">
                     {profile?.email}
                   </p>
+                  {accountType && (
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      accountType === 'msp' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100' :
+                      accountType === 'mssp' ? 'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                    }`}>
+                      {accountType.toUpperCase()}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -165,15 +176,17 @@ const UserProfileDropdown = () => {
                   <Settings className="h-4 w-4 mr-2" />
                   Dashboard
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="w-full justify-start hover:bg-muted/50"
-                  onClick={() => navigate('/msp-control-center')}
-                >
-                  <Building2 className="h-4 w-4 mr-2" />
-                  MSP Control Center
-                </Button>
+                {isMSPOrMSSP && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-start hover:bg-muted/50"
+                    onClick={() => navigate('/msp-control-center')}
+                  >
+                    <Building2 className="h-4 w-4 mr-2" />
+                    MSP Control Center
+                  </Button>
+                )}
                 <Button 
                   variant="ghost" 
                   size="sm" 
