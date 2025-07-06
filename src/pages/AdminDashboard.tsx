@@ -11,6 +11,8 @@ import { AdminMSPsManager } from '@/components/admin/AdminMSPsManager';
 import { AdminSubscriptionsManager } from '@/components/admin/AdminSubscriptionsManager';
 import { AdminGPTsManager } from '@/components/admin/AdminGPTsManager';
 import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
+import { AdminNotifications } from '@/components/admin/AdminNotifications';
+import { DataExporter } from '@/components/admin/DataExporter';
 
 const AdminDashboard = () => {
   const { isUltriumEmployee, loading } = useAccountType();
@@ -55,10 +57,14 @@ const AdminDashboard = () => {
             <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
             <p className="text-muted-foreground">UltriumAI Employee Management Portal</p>
           </div>
-          <Badge variant="secondary" className="ml-auto">
-            <Shield className="h-3 w-3 mr-1" />
-            Admin Access
-          </Badge>
+          <div className="ml-auto flex items-center gap-3">
+            <DataExporter entityType="analytics" />
+            <AdminNotifications />
+            <Badge variant="secondary">
+              <Shield className="h-3 w-3 mr-1" />
+              Admin Access
+            </Badge>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
