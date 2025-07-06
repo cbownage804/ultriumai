@@ -2,22 +2,29 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Monitor, 
-  Search, 
-  Activity, 
-  Lock,
+  Shield, 
+  Wifi, 
+  WifiOff, 
+  Lock, 
   Unlock,
-  Info,
-  Clock,
-  Shield,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2,
+  Settings,
+  MoreVertical,
+  Eye,
+  Power,
+  RefreshCw,
+  Filter,
+  Search
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Endpoint {
   id: string;
@@ -27,7 +34,12 @@ interface Endpoint {
   agent_version: string;
   status: 'online' | 'offline' | 'threat_detected' | 'isolated';
   last_seen: string;
-  metadata?: any;
+  cpu_usage?: number;
+  memory_usage?: number;
+  disk_usage?: number;
+  threats_count?: number;
+  location?: string;
+  department?: string;
 }
 
 interface EndpointManagerProps {
@@ -36,48 +48,49 @@ interface EndpointManagerProps {
 }
 
 export const EndpointManager = ({ endpoints, onEndpointAction }: EndpointManagerProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedEndpoints, setSelectedEndpoints] = useState<string[]>([]);
   const { toast } = useToast();
-
-  const filteredEndpoints = endpoints.filter(endpoint => {
-    const matchesSearch = endpoint.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         endpoint.ip_address.includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || endpoint.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online': return 'default';
-      case 'isolated': return 'destructive';
-      case 'threat_detected': return 'secondary';
-      case 'offline': return 'outline';
-      default: return 'outline';
+      case 'offline': return 'secondary';
+      case 'threat_detected': return 'destructive';
+      case 'isolated': return 'outline';
+      default: return 'secondary';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'online': return <Activity className="h-4 w-4 text-green-600" />;
-      case 'isolated': return <Lock className="h-4 w-4 text-red-600" />;
-      case 'threat_detected': return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
-      case 'offline': return <Monitor className="h-4 w-4 text-gray-500" />;
-      default: return <Monitor className="h-4 w-4 text-gray-500" />;
+      case 'online': return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+      case 'offline': return <WifiOff className="h-4 w-4 text-gray-500" />;
+      case 'threat_detected': return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      case 'isolated': return <Lock className="h-4 w-4 text-orange-600" />;
+      default: return <Monitor className="h-4 w-4" />;
     }
   };
 
-  const isolateEndpoint = async (hostname: string) => {
+  const filteredEndpoints = endpoints.filter(endpoint => {
+    const matchesSearch = endpoint.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         endpoint.ip_address.includes(searchTerm);
+    const matchesStatus = statusFilter === 'all' || endpoint.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleEndpointAction = async (action: string, endpointId: string, hostname: string) => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      const response = await supabase.functions.invoke('ultrium-shield-agent', {
+      const response = await supabase.functions.invoke('safe-shield-agent', {
         body: { 
-          action: 'isolate_endpoint',
-          hostname,
+          action: action,
+          endpoint_id: endpointId,
+          hostname: hostname,
           user_id: user.user.id
         }
       });
@@ -85,279 +98,331 @@ export const EndpointManager = ({ endpoints, onEndpointAction }: EndpointManager
       if (response.error) throw response.error;
 
       toast({
-        title: "Endpoint Isolated",
-        description: `${hostname} has been isolated from the network`,
+        title: "Action Executed",
+        description: `${action.replace('_', ' ')} completed for ${hostname}`,
       });
 
       onEndpointAction();
     } catch (error) {
-      console.error('Error isolating endpoint:', error);
+      console.error('Error executing action:', error);
       toast({
         title: "Error",
-        description: "Failed to isolate endpoint",
+        description: "Failed to execute action",
         variant: "destructive",
       });
     }
   };
 
-  const viewEndpointDetails = (endpoint: Endpoint) => {
-    setSelectedEndpoint(endpoint);
-    setShowDetails(true);
+  const handleBulkAction = async (action: string) => {
+    if (selectedEndpoints.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select endpoints first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const promises = selectedEndpoints.map(endpointId => {
+        const endpoint = endpoints.find(e => e.id === endpointId);
+        return handleEndpointAction(action, endpointId, endpoint?.hostname || '');
+      });
+
+      await Promise.all(promises);
+      setSelectedEndpoints([]);
+      
+      toast({
+        title: "Bulk Action Completed",
+        description: `${action.replace('_', ' ')} executed on ${selectedEndpoints.length} endpoints`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Some actions failed to execute",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleEndpointSelection = (endpointId: string) => {
+    setSelectedEndpoints(prev => 
+      prev.includes(endpointId) 
+        ? prev.filter(id => id !== endpointId)
+        : [...prev, endpointId]
+    );
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <Monitor className="h-6 w-6" />
+          Endpoint Manager
+        </h2>
+        <p className="text-muted-foreground">
+          Monitor and manage protected endpoints across your organization
+        </p>
+      </div>
+
+      {/* Filters and Actions */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <Monitor className="h-5 w-5" />
-              Endpoint Management
-            </CardTitle>
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search endpoints..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 w-64"
-                />
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-input bg-background rounded-md text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="online">Online</option>
-                <option value="offline">Offline</option>
-                <option value="threat_detected">Threat Detected</option>
-                <option value="isolated">Isolated</option>
-              </select>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters & Actions
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredEndpoints.length === 0 ? (
-            <div className="text-center py-8">
-              <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                {endpoints.length === 0 ? "No endpoints registered" : "No endpoints match your search criteria"}
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search endpoints..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Endpoint</TableHead>
-                    <TableHead>IP Address</TableHead>
-                    <TableHead>OS Version</TableHead>
-                    <TableHead>Agent Version</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Last Seen</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEndpoints.map((endpoint) => (
-                    <TableRow key={endpoint.id} className="hover:bg-muted/50">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(endpoint.status)}
-                          <div>
-                            <p className="font-medium">{endpoint.hostname}</p>
-                            <p className="text-xs text-muted-foreground">
-                              ID: {endpoint.id.slice(0, 8)}...
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <p className="font-mono text-sm">{endpoint.ip_address}</p>
-                      </TableCell>
-                      <TableCell>
-                        <p className="text-sm">{endpoint.os_version}</p>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          v{endpoint.agent_version}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(endpoint.status)}>
-                          {endpoint.status.replace('_', ' ').toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {new Date(endpoint.last_seen).toLocaleString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => viewEndpointDetails(endpoint)}
-                          >
-                            <Info className="h-4 w-4" />
-                          </Button>
-                          {endpoint.status !== 'isolated' ? (
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => isolateEndpoint(endpoint.hostname)}
-                            >
-                              <Lock className="h-4 w-4" />
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              disabled
-                            >
-                              <Unlock className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="offline">Offline</SelectItem>
+                <SelectItem value="threat_detected">Threat Detected</SelectItem>
+                <SelectItem value="isolated">Isolated</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button variant="outline" onClick={() => window.location.reload()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            
+            <Button 
+              variant="destructive" 
+              onClick={() => handleBulkAction('isolate_endpoint')}
+              disabled={selectedEndpoints.length === 0}
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              Isolate Selected
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => handleBulkAction('release_isolation')}
+              disabled={selectedEndpoints.length === 0}
+            >
+              <Unlock className="h-4 w-4 mr-2" />
+              Release Selected
+            </Button>
+          </div>
+          
+          {selectedEndpoints.length > 0 && (
+            <Alert className="mt-4">
+              <Shield className="h-4 w-4" />
+              <AlertDescription>
+                {selectedEndpoints.length} endpoint(s) selected for bulk operations
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
 
-      {/* Status Summary Cards */}
+      {/* Endpoint Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-green-600" />
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Online</p>
+                <p className="text-sm text-muted-foreground">Online</p>
                 <p className="text-2xl font-bold text-green-600">
                   {endpoints.filter(e => e.status === 'online').length}
                 </p>
               </div>
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Monitor className="h-4 w-4 text-gray-500" />
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Offline</p>
-                <p className="text-2xl font-bold text-gray-500">
-                  {endpoints.filter(e => e.status === 'offline').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-              <div>
-                <p className="text-sm font-medium">Threats</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-sm text-muted-foreground">Threats</p>
+                <p className="text-2xl font-bold text-red-600">
                   {endpoints.filter(e => e.status === 'threat_detected').length}
                 </p>
               </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
             </div>
           </CardContent>
         </Card>
-
+        
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-red-600" />
+            <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Isolated</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-sm text-muted-foreground">Isolated</p>
+                <p className="text-2xl font-bold text-orange-600">
                   {endpoints.filter(e => e.status === 'isolated').length}
                 </p>
               </div>
+              <Lock className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-2xl font-bold">{endpoints.length}</p>
+              </div>
+              <Monitor className="h-8 w-8" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Endpoint Details Dialog */}
-      <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Monitor className="h-5 w-5" />
-              Endpoint Details - {selectedEndpoint?.hostname}
-            </DialogTitle>
-            <DialogDescription>
-              Detailed information about this endpoint
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedEndpoint && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">System Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Hostname:</span>
-                      <span className="font-mono">{selectedEndpoint.hostname}</span>
+      {/* Endpoints List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Endpoints</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredEndpoints.length === 0 ? (
+            <div className="text-center py-8">
+              <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No endpoints found matching your filters</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredEndpoints.map((endpoint) => (
+                <Card key={endpoint.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4 flex-1">
+                        <input
+                          type="checkbox"
+                          checked={selectedEndpoints.includes(endpoint.id)}
+                          onChange={() => toggleEndpointSelection(endpoint.id)}
+                          className="mt-1"
+                        />
+                        
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Monitor className="h-5 w-5" />
+                            <h3 className="font-medium">{endpoint.hostname}</h3>
+                            <Badge variant={getStatusColor(endpoint.status)}>
+                              {getStatusIcon(endpoint.status)}
+                              <span className="ml-1">{endpoint.status.replace('_', ' ')}</span>
+                            </Badge>
+                            {endpoint.threats_count && endpoint.threats_count > 0 && (
+                              <Badge variant="destructive">
+                                {endpoint.threats_count} threats
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">IP Address:</span>
+                              <span className="ml-2 font-mono">{endpoint.ip_address}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">OS:</span>
+                              <span className="ml-2">{endpoint.os_version}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Agent:</span>
+                              <span className="ml-2">{endpoint.agent_version}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Last Seen:</span>
+                              <span className="ml-2">{new Date(endpoint.last_seen).toLocaleString()}</span>
+                            </div>
+                          </div>
+                          
+                          {endpoint.cpu_usage && (
+                            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">CPU:</span>
+                                <span className="ml-2">{endpoint.cpu_usage}%</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Memory:</span>
+                                <span className="ml-2">{endpoint.memory_usage}%</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Disk:</span>
+                                <span className="ml-2">{endpoint.disk_usage}%</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEndpointAction('scan_endpoint', endpoint.id, endpoint.hostname)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Scan
+                        </Button>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem 
+                              onClick={() => handleEndpointAction('restart_agent', endpoint.id, endpoint.hostname)}
+                            >
+                              <Power className="h-4 w-4 mr-2" />
+                              Restart Agent
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleEndpointAction('update_agent', endpoint.id, endpoint.hostname)}
+                            >
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                              Update Agent
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleEndpointAction('isolate_endpoint', endpoint.id, endpoint.hostname)}
+                              className="text-red-600"
+                            >
+                              <Lock className="h-4 w-4 mr-2" />
+                              Isolate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleEndpointAction('release_isolation', endpoint.id, endpoint.hostname)}
+                              className="text-green-600"
+                            >
+                              <Unlock className="h-4 w-4 mr-2" />
+                              Release
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">IP Address:</span>
-                      <span className="font-mono">{selectedEndpoint.ip_address}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">OS Version:</span>
-                      <span>{selectedEndpoint.os_version}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Agent Version:</span>
-                      <span>v{selectedEndpoint.agent_version}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Status Information</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Status:</span>
-                      <Badge variant={getStatusColor(selectedEndpoint.status)}>
-                        {selectedEndpoint.status.replace('_', ' ').toUpperCase()}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Last Seen:</span>
-                      <span>{new Date(selectedEndpoint.last_seen).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Uptime:</span>
-                      <span>
-                        {Math.floor((Date.now() - new Date(selectedEndpoint.last_seen).getTime()) / (1000 * 60 * 60))}h
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
     </div>
   );
 };

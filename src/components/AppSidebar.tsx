@@ -40,6 +40,7 @@ const gptItems = [
 ];
 
 const securityItems = [
+  { title: "SafeShield", url: "/dashboard/safeshield", icon: Shield, tooltip: "AI-powered endpoint detection and response platform" },
   { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Password security analysis and breach detection" },
   { title: "SafeMail", url: "/dashboard/safemail", icon: Mail, tooltip: "Email security scanning and threat detection" },
   { title: "SafeDoc", url: "/dashboard/safedoc", icon: FileText, tooltip: "Document security analysis and malware scanning" },

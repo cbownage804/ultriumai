@@ -58,6 +58,7 @@ import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
 import SecurityDashboard from '@/pages/SecurityDashboard';
 import SafeWebDashboard from '@/pages/SafeWebDashboard';
 import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
+import SafeShield from '@/pages/SafeShield';
 import AdminDashboard from '@/pages/AdminDashboard';
 import { Loader2 } from 'lucide-react';
 
@@ -213,6 +214,11 @@ function AppRouter() {
       <Route path="/admin" element={
         <ProtectedRoute>
           <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/safeshield" element={
+        <ProtectedRoute>
+          <SafeShield />
         </ProtectedRoute>
       } />
       
