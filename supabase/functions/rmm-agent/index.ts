@@ -91,6 +91,7 @@ serve(async (req) => {
         clientId,
         reportingEndpoint: `${Deno.env.get('SUPABASE_URL')}/functions/v1/rmm-agent`,
         syncInterval: 300, // 5 minutes
+        autoDetectHostname: true, // Agent will report hostname on first connect
         capabilities: {
           systemMonitoring: true,
           remoteAccess: true,
@@ -126,12 +127,12 @@ serve(async (req) => {
       const antivirusStatus: AntivirusStatus = agentData.antivirusStatus;
       
       try {
-        // Update system information
+        // Update or create system information - hostname is now auto-detected from agent
         await supabaseClient
           .from('rmm_endpoints')
           .upsert({
             client_id: clientId,
-            hostname: systemInfo.hostname,
+            hostname: systemInfo.hostname, // Now comes from the agent automatically
             os_info: `${systemInfo.os} ${systemInfo.osVersion}`,
             cpu_info: systemInfo.cpuModel,
             memory_total: systemInfo.totalMemory,
@@ -188,7 +189,8 @@ serve(async (req) => {
           JSON.stringify({ 
             success: true, 
             alertsGenerated: alerts.length,
-            nextHeartbeat: Date.now() + 300000 // 5 minutes
+            nextHeartbeat: Date.now() + 300000, // 5 minutes
+            message: 'Device registered and monitoring started'
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );

@@ -28,7 +28,6 @@ interface AddDeviceDialogProps {
 
 export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [deviceName, setDeviceName] = useState('');
   const [deviceType, setDeviceType] = useState<'server' | 'workstation'>('workstation');
   const [osType, setOsType] = useState<'windows' | 'macos' | 'linux'>('windows');
   const [clientId, setClientId] = useState('');
@@ -37,10 +36,10 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
   const { toast } = useToast();
 
   const handleGenerateAgent = async () => {
-    if (!deviceName || !clientId) {
+    if (!clientId) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
+        title: "Missing Information", 
+        description: "Please enter a Client ID",
         variant: "destructive"
       });
       return;
@@ -53,7 +52,6 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
           action: 'register_agent',
           clientId,
           deviceInfo: {
-            hostname: deviceName,
             type: deviceType,
             os: osType
           }
@@ -66,7 +64,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
       
       toast({
         title: "Agent Configuration Generated",
-        description: "Download the installer for your operating system"
+        description: "Download the installer - hostname will be detected automatically"
       });
 
       onDeviceAdded?.();
@@ -127,7 +125,6 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
   };
 
   const resetForm = () => {
-    setDeviceName('');
     setClientId('');
     setGeneratedConfig(null);
   };
@@ -152,7 +149,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
             Add New Device to RMM
           </DialogTitle>
           <DialogDescription>
-            Register a new device and generate the RMM agent installer for Windows, macOS, or Linux
+            Generate RMM agent installer - device hostname will be automatically detected during installation
           </DialogDescription>
         </DialogHeader>
 
@@ -163,16 +160,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
           </TabsList>
 
           <TabsContent value="configure" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="deviceName">Device Name *</Label>
-                <Input
-                  id="deviceName"
-                  placeholder="e.g., DESKTOP-PC01 or SERVER-01"
-                  value={deviceName}
-                  onChange={(e) => setDeviceName(e.target.value)}
-                />
-              </div>
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="clientId">Client ID *</Label>
                 <Input
@@ -265,7 +253,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
                       <div className="p-4 bg-muted rounded-lg">
                         <h4 className="font-medium mb-2">Device Details</h4>
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>Name: <strong>{deviceName}</strong></div>
+                          <div>Hostname: <strong>Auto-detected</strong></div>
                           <div>Type: <strong>{deviceType}</strong></div>
                           <div>OS: <strong>{osType}</strong></div>
                           <div>Client: <strong>{clientId}</strong></div>
@@ -318,7 +306,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
                           <ol className="list-decimal list-inside mt-1 space-y-1 text-yellow-700">
                             <li>Download the installer for your operating system</li>
                             <li>Run the installer with administrator privileges</li>
-                            <li>The agent will automatically connect and begin monitoring</li>
+                            <li>The agent will automatically detect hostname and connect</li>
                             <li>Device should appear in your RMM dashboard within 5 minutes</li>
                           </ol>
                         </div>
