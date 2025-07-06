@@ -13,6 +13,7 @@ import { AdminGPTsManager } from '@/components/admin/AdminGPTsManager';
 import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { AdminNotifications } from '@/components/admin/AdminNotifications';
 import { DataExporter } from '@/components/admin/DataExporter';
+import { AuditTrailsViewer } from '@/components/admin/AuditTrailsViewer';
 
 const AdminDashboard = () => {
   const { isUltriumEmployee, loading } = useAccountType();
@@ -68,7 +69,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Overview
@@ -92,6 +93,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <Database className="h-4 w-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Audit
             </TabsTrigger>
           </TabsList>
 
@@ -201,6 +206,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="analytics">
             <AdminAnalytics />
+          </TabsContent>
+
+          <TabsContent value="audit">
+            <AuditTrailsViewer />
           </TabsContent>
         </Tabs>
       </div>
