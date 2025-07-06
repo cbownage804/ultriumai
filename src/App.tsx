@@ -51,6 +51,7 @@ import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
 import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
 import SafeNetMobilePage from '@/pages/SafeNetMobilePage';
 import SafeSIEM from '@/pages/SafeSIEM';
+import SafeSIEMAlertRules from '@/pages/SafeSIEMAlertRules';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -129,6 +130,11 @@ function AppRouter() {
       <Route path="/safesiem" element={
         <ProtectedRoute>
           <SafeSIEM />
+        </ProtectedRoute>
+      } />
+      <Route path="/safesiem/alert-rules" element={
+        <ProtectedRoute>
+          <SafeSIEMAlertRules />
         </ProtectedRoute>
       } />
       

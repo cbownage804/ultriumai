@@ -40,6 +40,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface SecurityEvent {
   id: string;
@@ -82,6 +83,7 @@ interface ThreatFeed {
 const SafeSIEM = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [events, setEvents] = useState<SecurityEvent[]>([]);
 
@@ -381,6 +383,10 @@ const SafeSIEM = () => {
           <Button variant="outline" onClick={createTestEvent}>
             <Zap className="h-4 w-4 mr-2" />
             Create Test Event
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/safesiem/alert-rules')}>
+            <Bell className="h-4 w-4 mr-2" />
+            Alert Rules
           </Button>
           <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
