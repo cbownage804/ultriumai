@@ -1070,6 +1070,260 @@ export type Database = {
           },
         ]
       }
+      msp_clients: {
+        Row: {
+          api_enabled: boolean | null
+          billing_status: string | null
+          company_name: string
+          contact_email: string
+          contact_name: string
+          created_at: string
+          current_users: number | null
+          custom_branding: Json | null
+          domain: string | null
+          id: string
+          integration_settings: Json | null
+          is_active: boolean | null
+          last_billed_at: string | null
+          max_users: number | null
+          monthly_rate: number
+          msp_id: string
+          phone: string | null
+          trial_ends_at: string | null
+          updated_at: string
+          webapp_enabled: boolean | null
+          widget_enabled: boolean | null
+        }
+        Insert: {
+          api_enabled?: boolean | null
+          billing_status?: string | null
+          company_name: string
+          contact_email: string
+          contact_name: string
+          created_at?: string
+          current_users?: number | null
+          custom_branding?: Json | null
+          domain?: string | null
+          id?: string
+          integration_settings?: Json | null
+          is_active?: boolean | null
+          last_billed_at?: string | null
+          max_users?: number | null
+          monthly_rate: number
+          msp_id: string
+          phone?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          webapp_enabled?: boolean | null
+          widget_enabled?: boolean | null
+        }
+        Update: {
+          api_enabled?: boolean | null
+          billing_status?: string | null
+          company_name?: string
+          contact_email?: string
+          contact_name?: string
+          created_at?: string
+          current_users?: number | null
+          custom_branding?: Json | null
+          domain?: string | null
+          id?: string
+          integration_settings?: Json | null
+          is_active?: boolean | null
+          last_billed_at?: string | null
+          max_users?: number | null
+          monthly_rate?: number
+          msp_id?: string
+          phone?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          webapp_enabled?: boolean | null
+          widget_enabled?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_clients_msp_id_fkey"
+            columns: ["msp_id"]
+            isOneToOne: false
+            referencedRelation: "msps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msp_revenue: {
+        Row: {
+          billing_period_end: string
+          billing_period_start: string
+          client_charge: number
+          client_id: string
+          created_at: string
+          id: string
+          msp_id: string
+          msp_profit: number
+          status: string | null
+          ultrium_fee: number
+          updated_at: string
+          users_count: number
+        }
+        Insert: {
+          billing_period_end: string
+          billing_period_start: string
+          client_charge: number
+          client_id: string
+          created_at?: string
+          id?: string
+          msp_id: string
+          msp_profit: number
+          status?: string | null
+          ultrium_fee: number
+          updated_at?: string
+          users_count: number
+        }
+        Update: {
+          billing_period_end?: string
+          billing_period_start?: string
+          client_charge?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          msp_id?: string
+          msp_profit?: number
+          status?: string | null
+          ultrium_fee?: number
+          updated_at?: string
+          users_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_revenue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msp_revenue_msp_id_fkey"
+            columns: ["msp_id"]
+            isOneToOne: false
+            referencedRelation: "msps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msp_usage_logs: {
+        Row: {
+          action: string
+          client_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          msp_id: string
+          user_email: string
+          widget_type: string | null
+        }
+        Insert: {
+          action: string
+          client_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          msp_id: string
+          user_email: string
+          widget_type?: string | null
+        }
+        Update: {
+          action?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          msp_id?: string
+          user_email?: string
+          widget_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_usage_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msp_usage_logs_msp_id_fkey"
+            columns: ["msp_id"]
+            isOneToOne: false
+            referencedRelation: "msps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msps: {
+        Row: {
+          address: string | null
+          brand_color: string | null
+          brand_name: string | null
+          commission_rate: number | null
+          company_name: string
+          contact_email: string
+          created_at: string
+          domain: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          max_clients: number | null
+          monthly_rate_per_user: number | null
+          phone: string | null
+          secondary_color: string | null
+          subscription_tier: string | null
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          brand_color?: string | null
+          brand_name?: string | null
+          commission_rate?: number | null
+          company_name: string
+          contact_email: string
+          created_at?: string
+          domain?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_clients?: number | null
+          monthly_rate_per_user?: number | null
+          phone?: string | null
+          secondary_color?: string | null
+          subscription_tier?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          brand_color?: string | null
+          brand_name?: string | null
+          commission_rate?: number | null
+          company_name?: string
+          contact_email?: string
+          created_at?: string
+          domain?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          max_clients?: number | null
+          monthly_rate_per_user?: number | null
+          phone?: string | null
+          secondary_color?: string | null
+          subscription_tier?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       password_audit_logs: {
         Row: {
           action: string
@@ -1118,6 +1372,7 @@ export type Database = {
           id: string
           is_shared: boolean | null
           last_used_at: string | null
+          msp_client_id: string | null
           name: string
           notes: string | null
           password_encrypted: string
@@ -1136,6 +1391,7 @@ export type Database = {
           id?: string
           is_shared?: boolean | null
           last_used_at?: string | null
+          msp_client_id?: string | null
           name: string
           notes?: string | null
           password_encrypted: string
@@ -1154,6 +1410,7 @@ export type Database = {
           id?: string
           is_shared?: boolean | null
           last_used_at?: string | null
+          msp_client_id?: string | null
           name?: string
           notes?: string | null
           password_encrypted?: string
@@ -1167,6 +1424,13 @@ export type Database = {
           website?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "password_entries_msp_client_id_fkey"
+            columns: ["msp_client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "password_entries_vault_id_fkey"
             columns: ["vault_id"]
@@ -1182,6 +1446,7 @@ export type Database = {
           description: string | null
           id: string
           is_shared: boolean | null
+          msp_client_id: string | null
           name: string
           team_id: string | null
           updated_at: string
@@ -1192,6 +1457,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_shared?: boolean | null
+          msp_client_id?: string | null
           name: string
           team_id?: string | null
           updated_at?: string
@@ -1202,12 +1468,20 @@ export type Database = {
           description?: string | null
           id?: string
           is_shared?: boolean | null
+          msp_client_id?: string | null
           name?: string
           team_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "password_vaults_msp_client_id_fkey"
+            columns: ["msp_client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "password_vaults_team_id_fkey"
             columns: ["team_id"]
