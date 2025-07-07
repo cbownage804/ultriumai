@@ -3901,6 +3901,59 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_av_quarantine: {
+        Row: {
+          created_at: string
+          file_hash: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          quarantined_at: string
+          scan_id: string | null
+          status: string
+          threat_name: string
+          threat_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_hash: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          quarantined_at?: string
+          scan_id?: string | null
+          status?: string
+          threat_name: string
+          threat_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_hash?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          quarantined_at?: string
+          scan_id?: string | null
+          status?: string
+          threat_name?: string
+          threat_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safe_av_quarantine_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "safe_av_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safe_av_scans: {
         Row: {
           completed_at: string | null
@@ -4029,6 +4082,66 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      safe_mdr_incident_response: {
+        Row: {
+          alert_id: string | null
+          containment_status: string | null
+          created_at: string
+          eradication_status: string | null
+          id: string
+          incident_type: string
+          investigation_id: string | null
+          lessons_learned: string | null
+          recovery_status: string | null
+          response_actions: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_id?: string | null
+          containment_status?: string | null
+          created_at?: string
+          eradication_status?: string | null
+          id?: string
+          incident_type: string
+          investigation_id?: string | null
+          lessons_learned?: string | null
+          recovery_status?: string | null
+          response_actions?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_id?: string | null
+          containment_status?: string | null
+          created_at?: string
+          eradication_status?: string | null
+          id?: string
+          incident_type?: string
+          investigation_id?: string | null
+          lessons_learned?: string | null
+          recovery_status?: string | null
+          response_actions?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safe_mdr_incident_response_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "safe_mdr_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safe_mdr_incident_response_investigation_id_fkey"
+            columns: ["investigation_id"]
+            isOneToOne: false
+            referencedRelation: "safe_mdr_investigations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safe_mdr_investigations: {
         Row: {

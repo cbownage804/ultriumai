@@ -26,6 +26,7 @@ import { ThreatMonitor } from "./ThreatMonitor";
 import { EndpointManager } from "./EndpointManager";
 import { SafeAVDashboard } from "./SafeAVDashboard";
 import { SafeMDRDashboard } from "./SafeMDRDashboard";
+import { useSafeShieldData } from "@/hooks/useSafeShieldData";
 import { EndpointAgentDownloads } from "./EndpointAgentDownloads";
 import { MSPWhiteLabelConfig } from "./MSPWhiteLabelConfig";
 import { AIResponseGuide } from "./AIResponseGuide";
@@ -64,6 +65,7 @@ interface Threat {
 }
 
 export const SafeShieldDashboard = () => {
+  const { initialized, loading: initLoading } = useSafeShieldData();
   const [stats, setStats] = useState<DashboardStats>({
     total_threats: 0,
     threats_24h: 0,
@@ -79,62 +81,127 @@ export const SafeShieldDashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadDashboardData();
-    
-    // Set up real-time subscriptions
-    const endpointsChannel = supabase
-      .channel('safe-shield-endpoints')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'safe_shield_endpoints'
-      }, () => {
-        loadDashboardData();
-      })
-      .subscribe();
+    if (initialized) {
+      loadDashboardData();
+      
+      // Set up real-time subscriptions
+      const endpointsChannel = supabase
+        .channel('safe-shield-endpoints')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'safe_shield_endpoints'
+        }, () => {
+          loadDashboardData();
+        })
+        .subscribe();
 
-    const threatsChannel = supabase
-      .channel('safe-shield-threats')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'safe_shield_threats'
-      }, () => {
-        loadDashboardData();
-        // Show toast for new threats
-        toast({
-          title: "🚨 New Threat Detected!",
-          description: "SafeShield has detected a new security threat",
-          variant: "destructive",
-        });
-      })
-      .subscribe();
+      const threatsChannel = supabase
+        .channel('safe-shield-threats')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'safe_shield_threats'
+        }, () => {
+          loadDashboardData();
+          // Show toast for new threats
+          toast({
+            title: "🚨 New Threat Detected!",
+            description: "SafeShield has detected a new security threat",
+            variant: "destructive",
+          });
+        })
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(endpointsChannel);
-      supabase.removeChannel(threatsChannel);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(endpointsChannel);
+        supabase.removeChannel(threatsChannel);
+      };
+    }
+  }, [initialized]);
 
   const loadDashboardData = async () => {
     try {
       const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
+      if (!user.user || !initialized) return;
 
-      const response = await supabase.functions.invoke('safe-shield-agent', {
-        body: { 
-          action: 'get_dashboard_data',
-          user_id: user.user.id
-        }
-      });
+      // Load endpoints directly from database
+      const { data: endpointsData } = await supabase
+        .from('safe_shield_endpoints')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false });
 
-      if (response.error) throw response.error;
+      // Load threats from shield threats table
+      const { data: threatsData } = await supabase
+        .from('safe_shield_threats')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      const { endpoints: endpointsData, threats: threatsData, threat_stats } = response.data;
+      // Load recent MDR alerts as threats too
+      const { data: mdrAlertsData } = await supabase
+        .from('safe_mdr_alerts')
+        .select('*')
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      // Transform MDR alerts to threat format
+      const mdrThreats = (mdrAlertsData || []).map(alert => ({
+        id: alert.id,
+        event_id: alert.id,
+        hostname: alert.affected_assets?.[0] || 'Unknown',
+        threat_type: alert.alert_type,
+        severity: alert.severity as 'low' | 'medium' | 'high' | 'critical',
+        ai_confidence_score: 85,
+        detected_at: alert.created_at,
+        status: alert.status === 'resolved' ? 'resolved' : 'active',
+        ai_analysis: {
+          description: alert.description,
+          source: 'SafeMDR',
+          tactics: alert.tactics,
+          techniques: alert.techniques
+        },
+        created_at: alert.created_at
+      }));
+
+      // Cast threats data to proper type
+      const typedThreats = (threatsData || []).map(threat => ({
+        ...threat,
+        severity: threat.severity as 'low' | 'medium' | 'high' | 'critical'
+      }));
+
+      const combinedThreats = [...typedThreats, ...mdrThreats];
       
-      setEndpoints(endpointsData || []);
-      setThreats(threatsData || []);
-      setStats(threat_stats || stats);
+      // Cast endpoints to proper type
+      const typedEndpoints = (endpointsData || []).map(endpoint => ({
+        ...endpoint,
+        status: endpoint.status as 'online' | 'offline' | 'threat_detected' | 'isolated'
+      }));
+      
+      setEndpoints(typedEndpoints);
+      setThreats(combinedThreats);
+      
+      // Calculate stats
+      const totalThreats = combinedThreats.length;
+      const threats24h = combinedThreats.filter(threat => {
+        const threatDate = new Date(threat.created_at || threat.detected_at);
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        return threatDate > yesterday;
+      }).length;
+      const criticalThreats = combinedThreats.filter(t => t.severity === 'critical').length;
+      const isolatedEndpoints = typedEndpoints.filter(e => e.status === 'isolated').length;
+      const activeEndpoints = typedEndpoints.filter(e => e.status === 'online').length;
+
+      setStats({
+        total_threats: totalThreats,
+        threats_24h: threats24h,
+        critical_threats: criticalThreats,
+        isolated_endpoints: isolatedEndpoints,
+        active_endpoints: activeEndpoints
+      });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast({
@@ -240,10 +307,13 @@ export const SafeShieldDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (loading || initLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="ml-2 text-muted-foreground">
+          {initLoading ? 'Initializing SafeShield...' : 'Loading dashboard...'}
+        </p>
       </div>
     );
   }
