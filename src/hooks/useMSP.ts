@@ -94,13 +94,13 @@ export const useMSP = () => {
         .from('msps')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         throw error;
       }
 
-      setMSP(data as MSP);
+      setMSP(data as MSP | null);
     } catch (error) {
       console.error('Error loading MSP:', error);
     }
