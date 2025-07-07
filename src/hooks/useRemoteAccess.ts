@@ -343,8 +343,8 @@ export const useRemoteAccess = () => {
 
     try {
       console.log('Loading sessions...');
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
-        body: { action: 'get_sessions' },
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=get_sessions', {
+        body: {},
       });
 
       console.log('Sessions response:', { data, error });
