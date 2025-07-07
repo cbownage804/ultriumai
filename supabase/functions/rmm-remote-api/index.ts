@@ -52,23 +52,23 @@ serve(async (req) => {
 
     switch (action) {
       case 'start_session':
-        return await startRemoteSession(req, supabase, user.id)
+        return await startRemoteSession(req, supabaseWithAuth, user.id)
       case 'end_session':
-        return await endRemoteSession(req, supabase, user.id)
+        return await endRemoteSession(req, supabaseWithAuth, user.id)
       case 'execute_command':
-        return await executeRemoteCommand(req, supabase, user.id)
+        return await executeRemoteCommand(req, supabaseWithAuth, user.id)
       case 'execute_script':
-        return await executeScript(req, supabase, user.id)
+        return await executeScript(req, supabaseWithAuth, user.id)
       case 'transfer_file':
-        return await handleFileTransfer(req, supabase, user.id)
+        return await handleFileTransfer(req, supabaseWithAuth, user.id)
       case 'sync_clipboard':
-        return await syncClipboard(req, supabase, user.id)
+        return await syncClipboard(req, supabaseWithAuth, user.id)
       case 'get_sessions':
-        return await getActiveSessions(req, supabase, user.id)
+        return await getActiveSessions(req, supabaseWithAuth, user.id)
       case 'get_commands':
-        return await getCommandHistory(req, supabase, user.id)
+        return await getCommandHistory(req, supabaseWithAuth, user.id)
       case 'get_file_transfers':
-        return await getFileTransfers(req, supabase, user.id)
+        return await getFileTransfers(req, supabaseWithAuth, user.id)
       default:
         return new Response('Invalid action', { status: 400, headers: corsHeaders })
     }
