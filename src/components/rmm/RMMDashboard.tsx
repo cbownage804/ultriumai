@@ -308,11 +308,73 @@ export const RMMDashboard = () => {
             <Button 
               className="w-full" 
               variant="outline"
-              onClick={() => {
-                const link = document.createElement('a');
-                link.href = '/UltriumRMMAgent-Installer.ps1';
-                link.download = 'UltriumRMMAgent-Installer.ps1';
-                link.click();
+              onClick={async () => {
+                try {
+                  // Fetch the installer content from the public folder
+                  const response = await fetch('/UltriumRMMAgent-Installer.ps1');
+                  if (!response.ok) {
+                    // Fallback: create the installer content directly
+                    const installerContent = `# Ultrium RMM Agent Installer for Real Computer Testing
+# This script installs the Ultrium RMM agent on Windows computers for remote management
+# Version 2.0 - Enhanced for live testing
+
+param(
+    [string]$ServerUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co",
+    [string]$AgentToken = "",
+    [string]$CompanyId = "",
+    [string]$MSPId = "",
+    [switch]$Install,
+    [switch]$Uninstall,
+    [switch]$Start,
+    [switch]$Stop,
+    [switch]$Status
+)
+
+# Configuration
+$ServiceName = "UltriumRMMAgent"
+$ServiceDisplayName = "Ultrium RMM Agent"
+$ServiceDescription = "Ultrium Remote Monitoring and Management Agent with Live Remote Desktop"
+$InstallPath = "$env:ProgramFiles\\Ultrium\\RMMAgent"
+$ConfigFile = "$InstallPath\\config.json"
+$LogFile = "$InstallPath\\agent.log"
+
+Write-Host "Ultrium RMM Agent Installer v2.0" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Usage:" -ForegroundColor Yellow
+Write-Host "  Install:   .\\UltriumRMMAgent-Installer.ps1 -Install -AgentToken <token> -CompanyId <company-id>"
+Write-Host "  Uninstall: .\\UltriumRMMAgent-Installer.ps1 -Uninstall"
+Write-Host "  Status:    .\\UltriumRMMAgent-Installer.ps1 -Status"
+Write-Host ""
+Write-Host "Example:" -ForegroundColor Green
+Write-Host "  .\\UltriumRMMAgent-Installer.ps1 -Install -AgentToken 'your-token-here' -CompanyId 'test-company'"
+Write-Host ""
+Write-Host "Please run this script as Administrator for installation." -ForegroundColor Red`;
+                    
+                    const blob = new Blob([installerContent], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'UltriumRMMAgent-Installer.ps1';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    return;
+                  }
+                  
+                  const blob = await response.blob();
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = 'UltriumRMMAgent-Installer.ps1';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(url);
+                } catch (error) {
+                  console.error('Download failed:', error);
+                  alert('Download failed. Please try again.');
+                }
               }}
             >
               <Download className="h-4 w-4 mr-2" />
