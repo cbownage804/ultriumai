@@ -25,7 +25,10 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card 
           className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50 cursor-pointer hover:shadow-xl transition-shadow duration-200"
-          onClick={() => onTabChange?.('monitor')}
+          onClick={() => {
+            console.log('Total Devices card clicked - switching to monitor tab');
+            onTabChange?.('monitor');
+          }}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Devices</CardTitle>
@@ -61,7 +64,10 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
 
         <Card 
           className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 cursor-pointer hover:shadow-xl transition-shadow duration-200"
-          onClick={() => onTabChange?.('patching')}
+          onClick={() => {
+            console.log('Pending Patches card clicked - switching to patching tab');
+            onTabChange?.('patching');
+          }}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Patches</CardTitle>
