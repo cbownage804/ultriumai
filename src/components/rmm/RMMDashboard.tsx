@@ -165,9 +165,9 @@ export const RMMDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCustomers}</div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               Active customers
-            </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -178,9 +178,9 @@ export const RMMDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.openTickets}</div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               Requiring attention
-            </p>
+            </div>
           </CardContent>
         </Card>
 
@@ -191,9 +191,9 @@ export const RMMDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.highThreatDevices}</div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <div className="text-xs text-muted-foreground mt-2">
               Need immediate attention
-            </p>
+            </div>
           </CardContent>
         </Card>
       </div>
