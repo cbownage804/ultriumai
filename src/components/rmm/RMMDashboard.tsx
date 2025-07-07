@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   Activity,
   Ticket,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react";
 
 interface DashboardStats {
@@ -291,7 +292,7 @@ export const RMMDashboard = () => {
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Button className="w-full" variant="outline">
               <Shield className="h-4 w-4 mr-2" />
               Run Security Scan on All Devices
@@ -303,6 +304,19 @@ export const RMMDashboard = () => {
             <Button className="w-full" variant="outline">
               <AlertTriangle className="h-4 w-4 mr-2" />
               View Security Alerts
+            </Button>
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = '/downloads/UltriumRMMAgent-Installer.ps1';
+                link.download = 'UltriumRMMAgent-Installer.ps1';
+                link.click();
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download RMM Agent
             </Button>
           </div>
         </CardContent>
