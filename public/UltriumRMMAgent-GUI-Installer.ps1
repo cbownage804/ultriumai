@@ -30,15 +30,17 @@ iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAA
 function Write-Log {
     param([string]$Message)
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    Write-Host "$timestamp - $Message"
     
-    # Create log directory if it doesn't exist
-    $logDir = Split-Path $LogFile -Parent
-    if (-not (Test-Path $logDir)) {
-        New-Item -ItemType Directory -Path $logDir -Force -ErrorAction SilentlyContinue | Out-Null
+    # Only try to write to file if the directory exists
+    try {
+        $logDir = Split-Path $LogFile -Parent
+        if (Test-Path $logDir) {
+            "$timestamp - $Message" | Out-File -FilePath $LogFile -Append -ErrorAction SilentlyContinue
+        }
+    } catch {
+        # Silently ignore file logging errors during early startup
     }
-    
-    "$timestamp - $Message" | Out-File -FilePath $LogFile -Append -ErrorAction SilentlyContinue
-    Write-Host $Message
 }
 
 function Test-Administrator {
