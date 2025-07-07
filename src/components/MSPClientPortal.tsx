@@ -9,6 +9,16 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { 
   Building2, 
   Users, 
   Shield, 
@@ -34,7 +44,10 @@ import {
   Key,
   Link,
   Network,
-  Layers
+  Layers,
+  X,
+  Camera,
+  Paperclip
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -74,10 +87,18 @@ interface ClientTicket {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'critical';
   category: string;
+  queue: 'helpdesk' | 'engineering' | 'onboarding' | 'offboarding';
   created_at: string;
   updated_at: string;
   assigned_to?: string;
   client_contact: string;
+  attachments?: Array<{
+    id: string;
+    filename: string;
+    url: string;
+    size: number;
+    type: string;
+  }>;
 }
 
 interface ClientReport {
@@ -100,6 +121,15 @@ const MSPClientPortal = () => {
   const [tickets, setTickets] = useState<ClientTicket[]>([]);
   const [reports, setReports] = useState<ClientReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCreateTicket, setShowCreateTicket] = useState(false);
+  const [ticketForm, setTicketForm] = useState({
+    title: '',
+    description: '',
+    priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
+    queue: 'helpdesk' as 'helpdesk' | 'engineering' | 'onboarding' | 'offboarding',
+    category: '',
+    attachments: [] as File[]
+  });
 
   // Portal customization settings
   const [portalSettings, setPortalSettings] = useState({
@@ -211,10 +241,20 @@ const MSPClientPortal = () => {
         status: 'in_progress',
         priority: 'medium',
         category: 'Email Support',
+        queue: 'helpdesk',
         created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         assigned_to: 'Tech Support Team',
-        client_contact: 'sarah.smith@techcorp.com'
+        client_contact: 'sarah.smith@techcorp.com',
+        attachments: [
+          {
+            id: '1',
+            filename: 'error_screenshot.png',
+            url: '/attachments/error_screenshot.png',
+            size: 234567,
+            type: 'image/png'
+          }
+        ]
       },
       {
         id: 'TCK-002',
@@ -223,6 +263,7 @@ const MSPClientPortal = () => {
         status: 'open',
         priority: 'high',
         category: 'Hardware Support',
+        queue: 'engineering',
         created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
         client_contact: 'john.doe@techcorp.com'
@@ -234,6 +275,7 @@ const MSPClientPortal = () => {
         status: 'resolved',
         priority: 'low',
         category: 'Software Support',
+        queue: 'onboarding',
         created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
         assigned_to: 'Installation Team',
@@ -299,24 +341,78 @@ const MSPClientPortal = () => {
   };
 
   const createTicket = () => {
-    // Mock ticket creation from portal
+    if (!ticketForm.title || !ticketForm.description) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in title and description",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Mock ticket creation with form data
     const newTicket: ClientTicket = {
       id: `TCK-${String(tickets.length + 1).padStart(3, '0')}`,
-      title: 'New support request',
-      description: 'Support request submitted via client portal',
+      title: ticketForm.title,
+      description: ticketForm.description,
       status: 'open',
-      priority: 'medium',
-      category: 'General Support',
+      priority: ticketForm.priority,
+      category: ticketForm.category || 'General Support',
+      queue: ticketForm.queue,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      client_contact: user?.email || 'client@company.com'
+      client_contact: user?.email || 'client@company.com',
+      attachments: ticketForm.attachments.map((file, index) => ({
+        id: `att-${index}`,
+        filename: file.name,
+        url: URL.createObjectURL(file),
+        size: file.size,
+        type: file.type
+      }))
     };
 
     setTickets(prev => [newTicket, ...prev]);
-    toast({
-      title: "Ticket Created",
-      description: `Ticket ${newTicket.id} has been created successfully`
+    
+    // Reset form
+    setTicketForm({
+      title: '',
+      description: '',
+      priority: 'medium',
+      queue: 'helpdesk',
+      category: '',
+      attachments: []
     });
+    setShowCreateTicket(false);
+
+    toast({
+      title: "Ticket Created Successfully",
+      description: `Ticket ${newTicket.id} has been submitted to the ${newTicket.queue} queue`
+    });
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length !== files.length) {
+      toast({
+        title: "File Type Restriction",
+        description: "Only image files are allowed for attachments",
+        variant: "destructive"
+      });
+    }
+
+    setTicketForm(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, ...imageFiles].slice(0, 5) // Max 5 files
+    }));
+  };
+
+  const removeAttachment = (index: number) => {
+    setTicketForm(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index)
+    }));
   };
 
   const getStatusColor = (status: string) => {
@@ -361,6 +457,16 @@ const MSPClientPortal = () => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getQueueColor = (queue: string) => {
+    switch (queue) {
+      case 'helpdesk': return 'default';
+      case 'engineering': return 'secondary';
+      case 'onboarding': return 'outline';
+      case 'offboarding': return 'destructive';
+      default: return 'default';
+    }
   };
 
   return (
@@ -608,10 +714,180 @@ const MSPClientPortal = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Button onClick={createTicket}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Ticket
-            </Button>
+            <Dialog open={showCreateTicket} onOpenChange={setShowCreateTicket}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Ticket
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Create New Support Ticket</DialogTitle>
+                  <DialogDescription>
+                    Submit a detailed support request with attachments to our support team
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Ticket Title *</Label>
+                      <Input
+                        id="title"
+                        value={ticketForm.title}
+                        onChange={(e) => setTicketForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Brief description of the issue"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category</Label>
+                      <Input
+                        id="category"
+                        value={ticketForm.category}
+                        onChange={(e) => setTicketForm(prev => ({ ...prev, category: e.target.value }))}
+                        placeholder="e.g., Hardware, Software, Email"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select 
+                        value={ticketForm.priority} 
+                        onValueChange={(value: any) => setTicketForm(prev => ({ ...prev, priority: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low - General inquiry</SelectItem>
+                          <SelectItem value="medium">Medium - Standard issue</SelectItem>
+                          <SelectItem value="high">High - Business impacting</SelectItem>
+                          <SelectItem value="critical">Critical - System down</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="queue">Support Queue</Label>
+                      <Select 
+                        value={ticketForm.queue} 
+                        onValueChange={(value: any) => setTicketForm(prev => ({ ...prev, queue: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="helpdesk">
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4" />
+                              Helpdesk - General support
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="engineering">
+                            <div className="flex items-center gap-2">
+                              <Settings className="h-4 w-4" />
+                              Engineering - Technical issues
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="onboarding">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              Onboarding - New user setup
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="offboarding">
+                            <div className="flex items-center gap-2">
+                              <Trash2 className="h-4 w-4" />
+                              Offboarding - User removal
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Description *</Label>
+                    <Textarea
+                      id="description"
+                      value={ticketForm.description}
+                      onChange={(e) => setTicketForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Provide detailed information about your issue, including steps to reproduce, error messages, and any troubleshooting already attempted"
+                      className="min-h-24"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Photo Attachments</Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('photo-upload')?.click()}
+                          className="flex items-center gap-2"
+                        >
+                          <Camera className="h-4 w-4" />
+                          Add Photos
+                        </Button>
+                        <span className="text-sm text-muted-foreground">
+                          Max 5 photos • Images only
+                        </span>
+                      </div>
+                      
+                      <input
+                        id="photo-upload"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      
+                      {ticketForm.attachments.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Attached Photos:</p>
+                          <div className="space-y-2">
+                            {ticketForm.attachments.map((file, index) => (
+                              <div key={index} className="flex items-center justify-between p-2 border rounded">
+                                <div className="flex items-center gap-2">
+                                  <Paperclip className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm">{file.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({formatFileSize(file.size)})
+                                  </span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeAttachment(index)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowCreateTicket(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={createTicket}>
+                    Create Ticket
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
 
           <div className="space-y-4">
@@ -633,9 +909,18 @@ const MSPClientPortal = () => {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>#{ticket.id}</span>
                         <span>{ticket.category}</span>
+                        <Badge variant={getQueueColor(ticket.queue)} className="text-xs">
+                          {ticket.queue}
+                        </Badge>
                         <span>Contact: {ticket.client_contact}</span>
                         <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
                         {ticket.assigned_to && <span>Assigned: {ticket.assigned_to}</span>}
+                        {ticket.attachments && ticket.attachments.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Paperclip className="h-3 w-3" />
+                            {ticket.attachments.length} file{ticket.attachments.length > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </div>
                     </div>
                     
