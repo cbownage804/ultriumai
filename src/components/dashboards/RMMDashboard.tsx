@@ -113,9 +113,9 @@ export const RMMDashboard = () => {
             <Server className="h-10 w-10 text-primary" />
             Remote Monitoring & Management
           </h1>
-          <p className="text-lg text-muted-foreground mt-2">
+          <div className="text-lg text-muted-foreground mt-2">
             Complete infrastructure monitoring and automated management - Live Data
-          </p>
+          </div>
           <div className="text-sm text-muted-foreground mt-1">
             {stats.totalDevices > 0 ? (
               <span className="text-success">Connected to live database • {stats.totalDevices} devices monitored</span>
