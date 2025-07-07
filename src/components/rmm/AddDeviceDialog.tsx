@@ -42,7 +42,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
   const handleGenerateAgent = async () => {
     const clientId = isBusiness ? 'self' : selectedClientId;
     
-    if (isMSPOrMSSP && !selectedClientId) {
+    if (isMSPOrMSSP && clients.length > 0 && !selectedClientId) {
       toast({
         title: "Missing Information", 
         description: "Please select a client",
@@ -167,7 +167,7 @@ export const AddDeviceDialog = ({ trigger, onDeviceAdded }: AddDeviceDialogProps
           </TabsList>
 
           <TabsContent value="configure" className="space-y-4">
-            {isMSPOrMSSP && (
+            {isMSPOrMSSP && clients.length > 0 && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="clientSelect">Client *</Label>

@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccountType } from "@/hooks/useAccountType";
-import { useMSP } from "@/hooks/useMSP";
 
 interface DeviceStatus {
   id: string;
@@ -33,7 +32,6 @@ export const RealTimeMonitor = () => {
   const [devices, setDevices] = useState<DeviceStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const { isMSPOrMSSP, isBusiness } = useAccountType();
-  const { clients } = useMSP();
 
   useEffect(() => {
     loadDevices();
