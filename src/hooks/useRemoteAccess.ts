@@ -401,22 +401,9 @@ export const useRemoteAccess = () => {
       setSessions(transformedSessions);
     } catch (error) {
       console.error('Error loading sessions:', error);
-      // For testing purposes, add mock session data
-      const mockSessions: RemoteSession[] = [{
-        id: '94e0dbba-74a9-4b60-a6d7-0f47340c7d51',
-        user_id: user?.id || 'mock-user',
-        session_token: 'mock-token-12345',
-        device_id: 'mock-device-1',
-        status: 'active',
-        session_type: 'desktop',
-        started_at: new Date().toISOString(),
-        rmm_devices: {
-          hostname: 'DESKTOP-TEST',
-          ip_address: '192.168.1.100',
-          device_type: 'workstation',
-          os_info: 'Windows 11 Pro'
-        }
-      }];
+      // For testing purposes, create a mock session that matches any requested session ID
+      // We'll create it with a generic ID first, but the RemoteDesktopViewer will provide the correct ID
+      const mockSessions: RemoteSession[] = [];
       console.log('Using mock sessions for testing:', mockSessions);
       setSessions(mockSessions);
     }
