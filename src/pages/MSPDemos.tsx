@@ -372,11 +372,12 @@ const MSPDemos = () => {
                   onClick={() => setSelectedDemo(solution.id)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <SolutionIcon className="h-6 w-6 text-primary" />
-                      <div>
+                    <div className="flex items-start gap-3">
+                      <SolutionIcon className="h-6 w-6 text-primary mt-1" />
+                      <div className="flex-1">
                         <div className="font-medium">{solution.name}</div>
-                        <div className="text-sm text-muted-foreground">{solution.monthlyRevenue}</div>
+                        <div className="text-sm text-muted-foreground mb-1">{solution.monthlyRevenue}</div>
+                        <div className="text-xs text-muted-foreground/80 line-clamp-2">{solution.description}</div>
                       </div>
                     </div>
                   </CardContent>
