@@ -142,7 +142,11 @@ export const RMMDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-9 bg-muted/50 text-xs">
+        <TabsList className="grid w-full grid-cols-9 bg-muted/50 text-xs overflow-x-auto">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+            <BarChart3 className="h-3 w-3 mr-1" />
+            Overview
+          </TabsTrigger>
           <TabsTrigger value="monitor" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             <BarChart3 className="h-3 w-3 mr-1" />
             Monitor
@@ -174,10 +178,6 @@ export const RMMDashboard = () => {
           <TabsTrigger value="automation" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             <Zap className="h-3 w-3 mr-1" />
             Scripts
-          </TabsTrigger>
-          <TabsTrigger value="overview" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-            <BarChart3 className="h-3 w-3 mr-1" />
-            Legacy
           </TabsTrigger>
         </TabsList>
 
