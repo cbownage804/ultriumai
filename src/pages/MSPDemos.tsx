@@ -23,7 +23,8 @@ import {
   Search,
   Wrench,
   MessageSquare,
-  Key
+  Key,
+  Database
 } from 'lucide-react';
 import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
@@ -80,6 +81,30 @@ const MSPDemos = () => {
       },
       icon: Shield,
       color: 'green'
+    },
+    {
+      id: 'safekb',
+      name: 'SafeKB for MSP',
+      description: 'White-label knowledge base and asset management platform',
+      monthlyRevenue: '$15/user',
+      setupTime: '10 minutes',
+      marketSize: 'Every business with documentation needs',
+      demoUrl: '/dashboard/safekb',
+      features: [
+        'Centralized knowledge management',
+        'Asset tracking & documentation',
+        'AI-powered search capabilities',
+        'Team collaboration tools',
+        'White-label client portals',
+        'Automated documentation workflows'
+      ],
+      revenueModel: {
+        charge: 25,
+        pay: 10,
+        profit: 15
+      },
+      icon: Database,
+      color: 'purple'
     },
     {
       id: 'safedoc',
