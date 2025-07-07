@@ -1027,6 +1027,63 @@ const MSPClientPortal = () => {
                 </div>
               </div>
               
+              <div className="space-y-4">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  SafeSuite Security Apps
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Control which SafeSuite applications are available to clients in their portal
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { key: 'safedoc', label: 'SafeDoc', description: 'Document security scanning', icon: FileText },
+                    { key: 'safelink', label: 'SafeLink', description: 'URL safety verification', icon: Link },
+                    { key: 'safemail', label: 'SafeMail', description: 'Email security protection', icon: Mail },
+                    { key: 'safenet', label: 'SafeNet', description: 'Network security monitoring', icon: Network },
+                    { key: 'safepass', label: 'SafePass', description: 'Password management', icon: Key }
+                  ].map(app => {
+                    const IconComponent = app.icon;
+                    return (
+                      <Card key={app.key} className="p-4">
+                        <div className="flex items-start space-x-3">
+                          <Switch
+                            checked={portalSettings.safesuite_apps[app.key as keyof typeof portalSettings.safesuite_apps]}
+                            onCheckedChange={(checked) => 
+                              setPortalSettings(prev => ({ 
+                                ...prev, 
+                                safesuite_apps: { 
+                                  ...prev.safesuite_apps, 
+                                  [app.key]: checked 
+                                } 
+                              }))
+                            }
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <IconComponent className="h-4 w-4 text-primary" />
+                              <Label className="font-medium">{app.label}</Label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{app.description}</p>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+                <div className="bg-muted/50 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                    <div className="text-sm">
+                      <p className="font-medium text-warning">MSP Management Note</p>
+                      <p className="text-muted-foreground">
+                        SafeNet is typically managed by MSPs directly. Consider disabling client access unless they need self-service network monitoring capabilities.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <div className="flex justify-end gap-4">
                 <Button variant="outline">
                   <ExternalLink className="h-4 w-4 mr-2" />
