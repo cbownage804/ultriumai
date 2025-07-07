@@ -130,6 +130,7 @@ const MSPClientPortal = () => {
   const [showQueueManager, setShowQueueManager] = useState(false);
   const [showTypeManager, setShowTypeManager] = useState(false);
   const [newQueue, setNewQueue] = useState({ name: '', color: '#3b82f6', description: '', icon: 'MessageSquare' });
+  const [newTicketType, setNewTicketType] = useState({ name: '', color: '#3b82f6', description: '' });
   const [ticketForm, setTicketForm] = useState({
     title: '',
     description: '',
@@ -266,6 +267,7 @@ const MSPClientPortal = () => {
         priority: 'medium',
         category: 'Email Support',
         queue: 'helpdesk',
+        ticket_type: 'software',
         created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         assigned_to: 'Tech Support Team',
@@ -288,6 +290,7 @@ const MSPClientPortal = () => {
         priority: 'high',
         category: 'Hardware Support',
         queue: 'engineering',
+        ticket_type: 'hardware',
         created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
         client_contact: 'john.doe@techcorp.com'
@@ -300,6 +303,7 @@ const MSPClientPortal = () => {
         priority: 'low',
         category: 'Software Support',
         queue: 'onboarding',
+        ticket_type: 'software',
         created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
         assigned_to: 'Installation Team',
