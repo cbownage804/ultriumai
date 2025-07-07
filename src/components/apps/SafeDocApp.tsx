@@ -253,7 +253,7 @@ export const SafeDocApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
             onClick={() => window.open('/safedoc-embed-demo', '_blank')}
           >
             <Globe className="h-4 w-4 mr-2" />
-            Embeddable Widget Demo
+            MSP Widget Demo
           </Button>
         </div>
       </div>

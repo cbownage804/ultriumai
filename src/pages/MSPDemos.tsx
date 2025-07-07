@@ -31,12 +31,12 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 const MSPDemos = () => {
-  const [selectedDemo, setSelectedDemo] = useState('safeweb');
+  const [selectedDemo, setSelectedDemo] = useState('safescore');
 
   const mspSolutions = [
     {
       id: 'safepass',
-      name: 'SafePass Embeddable',
+      name: 'SafePass for MSP',
       description: 'White-label password management for your clients',
       monthlyRevenue: '$10/user',
       setupTime: '5 minutes',
@@ -58,19 +58,19 @@ const MSPDemos = () => {
       color: 'blue'
     },
     {
-      id: 'safecomp',
-      name: 'SafeComp Compliance Suite',
-      description: 'White-label compliance management and risk assessment platform',
+      id: 'safescore',
+      name: 'SafeScore for MSP',
+      description: 'White-label security risk assessment platform',
       monthlyRevenue: '$35/user',
       setupTime: '15 minutes',
       marketSize: 'Every business with compliance requirements',
-      demoUrl: '/demos/safecomp',
+      demoUrl: '/demos/safescore',
       features: [
-        'Multi-framework compliance tracking',
+        'Multi-framework security scoring',
         'Complete white-label branding',
-        'Automated compliance scanning',
-        'Gap analysis and remediation',
-        'Evidence collection and reporting'
+        'Automated security assessment',
+        'Risk analysis and remediation',
+        'Security posture reporting'
       ],
       revenueModel: {
         charge: 50,
@@ -82,7 +82,7 @@ const MSPDemos = () => {
     },
     {
       id: 'safedoc',
-      name: 'SafeDoc Embeddable',
+      name: 'SafeDoc for MSP',
       description: 'White-label document security scanning for your clients',
       monthlyRevenue: '$8/user',
       setupTime: '3 minutes',
@@ -105,7 +105,7 @@ const MSPDemos = () => {
     },
     {
       id: 'safemail',
-      name: 'SafeMail Embeddable',
+      name: 'SafeMail for MSP',
       description: 'White-label email security scanning for your clients',
       monthlyRevenue: '$6/user',
       setupTime: '3 minutes',
@@ -520,15 +520,15 @@ const MSPDemos = () => {
                         </div>
                         <DarkWebDemo />
                       </div>
-                    ) : selectedDemo === 'safecomp' ? (
+                    ) : selectedDemo === 'safescore' ? (
                       <div className="space-y-4">
                         <div className="text-center space-y-2 mb-6">
                           <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
                             <Shield className="h-6 w-6 text-primary" />
-                            MSP Compliance Management Demo
+                            MSP Security Risk Assessment Demo
                           </h3>
                           <p className="text-muted-foreground">
-                            Show clients comprehensive compliance tracking and risk management
+                            Show clients comprehensive security scoring and risk management
                           </p>
                         </div>
                         <SafeScoreDemo />

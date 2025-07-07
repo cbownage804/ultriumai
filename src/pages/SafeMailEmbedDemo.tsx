@@ -143,7 +143,7 @@ PayPal Security Team`);
           <div className="flex items-center justify-center gap-2">
             <Mail className="h-8 w-8 text-primary" />
             <h1 className="text-4xl font-bold text-gradient">
-              SafeMail Embeddable Demo
+              SafeMail for MSP Demo
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">

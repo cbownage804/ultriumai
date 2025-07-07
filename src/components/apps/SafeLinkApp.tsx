@@ -264,7 +264,7 @@ export const SafeLinkApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
             onClick={() => window.open('/safelink-embed-demo', '_blank')}
           >
             <Globe className="h-4 w-4 mr-2" />
-            Embeddable Widget Demo
+            MSP Widget Demo
           </Button>
         </div>
       </div>

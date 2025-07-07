@@ -249,7 +249,7 @@ PayPal Security Team`);
             onClick={() => window.open('/safemail-embed-demo', '_blank')}
           >
             <Globe className="h-4 w-4 mr-2" />
-            Embeddable Widget Demo
+            MSP Widget Demo
           </Button>
         </div>
       </div>

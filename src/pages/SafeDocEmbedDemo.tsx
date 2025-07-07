@@ -69,7 +69,7 @@ const SafeDocEmbedDemo = () => {
           <div className="flex items-center justify-center gap-2 mb-4">
             <FileText className="h-8 w-8 text-primary" />
             <h1 className="text-4xl font-bold text-gradient">
-              SafeDoc Embeddable Widget
+              SafeDoc for MSP Widget
             </h1>
           </div>
           <p className="text-xl text-muted-foreground">

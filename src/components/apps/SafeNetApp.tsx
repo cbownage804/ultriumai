@@ -413,7 +413,7 @@ export const SafeNetApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
             onClick={() => window.open('/safenet-embed-demo', '_blank')}
           >
             <Globe className="h-4 w-4 mr-2" />
-            Embeddable Widget Demo
+            MSP Widget Demo
           </Button>
           <Link to="/safenet-connector">
             <Button variant="outline">

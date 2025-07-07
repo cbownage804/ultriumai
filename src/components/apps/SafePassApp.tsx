@@ -228,7 +228,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
             className="mb-2"
           >
             <Globe className="h-4 w-4 mr-2" />
-            Embeddable Widget Demo
+            MSP Widget Demo
           </Button>
           
           <Dialog open={showCreateVault} onOpenChange={setShowCreateVault}>
