@@ -7,21 +7,29 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('RMM Remote Session function called:', req.method, req.url);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   const url = new URL(req.url)
   const token = url.searchParams.get('token')
+  console.log('Session token received:', token);
 
   if (!token) {
+    console.log('Error: Missing session token');
     return new Response('Missing session token', { status: 400, headers: corsHeaders })
   }
 
   // Validate WebSocket upgrade
   const upgradeHeader = req.headers.get('upgrade')
+  console.log('Upgrade header:', upgradeHeader);
+  
   if (upgradeHeader?.toLowerCase() !== 'websocket') {
+    console.log('Error: Not a WebSocket upgrade request');
     return new Response('Expected WebSocket connection', { status: 400, headers: corsHeaders })
   }
 
