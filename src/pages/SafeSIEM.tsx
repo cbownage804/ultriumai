@@ -216,7 +216,8 @@ const SafeSIEM = () => {
 
   const loadThreatIntelligence = async () => {
     try {
-      const { data: threatIntel, error } = await supabase
+      const supabaseAny = supabase as any;
+      const { data: threatIntel, error } = await supabaseAny
         .from('threat_intelligence')
         .select('*')
         .eq('is_active', true)
