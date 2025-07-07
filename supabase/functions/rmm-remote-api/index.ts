@@ -46,7 +46,17 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url)
-    const action = url.searchParams.get('action')
+    let action = url.searchParams.get('action')
+    
+    // If action is not in URL params, try to get it from request body
+    if (!action && req.method === 'POST') {
+      try {
+        const body = await req.json()
+        action = body.action
+      } catch (error) {
+        console.error('Error parsing request body:', error)
+      }
+    }
 
     console.log(`Remote API action: ${action}`)
 

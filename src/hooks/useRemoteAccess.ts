@@ -82,8 +82,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=start_session', {
-        body: { deviceId, sessionType },
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'start_session', deviceId, sessionType },
       });
 
       if (error) throw error;
@@ -111,8 +111,8 @@ export const useRemoteAccess = () => {
   // End a remote session
   const endSession = async (sessionId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=end_session', {
-        body: { sessionId },
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'end_session', sessionId },
       });
 
       if (error) throw error;
@@ -147,8 +147,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=execute_command', {
-        body: { deviceId, sessionId, command, commandType },
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'execute_command', deviceId, sessionId, command, commandType },
       });
 
       if (error) throw error;
@@ -178,8 +178,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=execute_script', {
-        body: { deviceId, sessionId, scriptName, scriptContent, scriptType },
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'execute_script', deviceId, sessionId, scriptName, scriptContent, scriptType },
       });
 
       if (error) throw error;
@@ -209,8 +209,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=transfer_file', {
-        body: { deviceId, sessionId, transferType, localPath, remotePath, fileName, fileSize },
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'transfer_file', deviceId, sessionId, transferType, localPath, remotePath, fileName, fileSize },
       });
 
       if (error) throw error;
@@ -240,8 +240,8 @@ export const useRemoteAccess = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=sync_clipboard', {
-        body: { deviceId, sessionId, content, direction, contentType: 'text' },
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'sync_clipboard', deviceId, sessionId, content, direction, contentType: 'text' },
       });
 
       if (error) throw error;
@@ -343,8 +343,8 @@ export const useRemoteAccess = () => {
 
     try {
       console.log('Loading sessions...');
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=get_sessions', {
-        body: {},
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'get_sessions' },
       });
 
       console.log('Sessions response:', { data, error });
@@ -387,8 +387,8 @@ export const useRemoteAccess = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=get_commands', {
-        body: {},
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'get_commands' },
       });
 
       if (error) throw error;
@@ -405,8 +405,8 @@ export const useRemoteAccess = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=get_file_transfers', {
-        body: {},
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+        body: { action: 'get_file_transfers' },
       });
 
       if (error) throw error;
