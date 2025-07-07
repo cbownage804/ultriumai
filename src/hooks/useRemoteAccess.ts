@@ -82,11 +82,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=start_session', {
         body: { deviceId, sessionType },
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -114,11 +111,8 @@ export const useRemoteAccess = () => {
   // End a remote session
   const endSession = async (sessionId: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=end_session', {
         body: { sessionId },
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -153,11 +147,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=execute_command', {
         body: { deviceId, sessionId, command, commandType },
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -187,11 +178,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=execute_script', {
         body: { deviceId, sessionId, scriptName, scriptContent, scriptType },
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -221,11 +209,8 @@ export const useRemoteAccess = () => {
     if (!user) return null;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=transfer_file', {
         body: { deviceId, sessionId, transferType, localPath, remotePath, fileName, fileSize },
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -255,11 +240,8 @@ export const useRemoteAccess = () => {
     if (!user) return false;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=sync_clipboard', {
         body: { deviceId, sessionId, content, direction, contentType: 'text' },
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -349,11 +331,8 @@ export const useRemoteAccess = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=get_sessions', {
         body: {},
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -370,11 +349,8 @@ export const useRemoteAccess = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=get_commands', {
         body: {},
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;
@@ -391,11 +367,8 @@ export const useRemoteAccess = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
+      const { data, error } = await supabase.functions.invoke('rmm-remote-api?action=get_file_transfers', {
         body: {},
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (error) throw error;

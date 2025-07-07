@@ -23,16 +23,24 @@ serve(async (req) => {
       }
     )
 
-    // Get the authorization header
+    // Get the authorization header and validate the user
     const authHeader = req.headers.get('Authorization')
-    if (authHeader) {
-      supabase.auth.setSession({
-        access_token: authHeader.replace('Bearer ', ''),
-        refresh_token: '',
-      })
+    if (!authHeader) {
+      return new Response('Unauthorized', { status: 401, headers: corsHeaders })
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
+    // Create a new supabase client with the user's token
+    const supabaseWithAuth = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
+    )
+
+    const { data: { user } } = await supabaseWithAuth.auth.getUser()
     if (!user) {
       return new Response('Unauthorized', { status: 401, headers: corsHeaders })
     }
