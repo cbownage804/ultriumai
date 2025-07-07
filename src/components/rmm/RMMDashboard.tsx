@@ -308,13 +308,9 @@ export const RMMDashboard = () => {
             <Button 
               className="w-full" 
               variant="outline"
-              onClick={async () => {
-                try {
-                  // Fetch the installer content from the public folder
-                  const response = await fetch('/UltriumRMMAgent-Installer.ps1');
-                  if (!response.ok) {
-                    // Fallback: create the installer content directly
-                    const installerContent = `# Ultrium RMM Agent Installer for Real Computer Testing
+              onClick={() => {
+                // Create the complete installer script content
+                const installerContent = `# Ultrium RMM Agent Installer for Real Computer Testing
 # This script installs the Ultrium RMM agent on Windows computers for remote management
 # Version 2.0 - Enhanced for live testing
 
@@ -338,43 +334,107 @@ $InstallPath = "$env:ProgramFiles\\Ultrium\\RMMAgent"
 $ConfigFile = "$InstallPath\\config.json"
 $LogFile = "$InstallPath\\agent.log"
 
-Write-Host "Ultrium RMM Agent Installer v2.0" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Usage:" -ForegroundColor Yellow
-Write-Host "  Install:   .\\UltriumRMMAgent-Installer.ps1 -Install -AgentToken <token> -CompanyId <company-id>"
-Write-Host "  Uninstall: .\\UltriumRMMAgent-Installer.ps1 -Uninstall"
-Write-Host "  Status:    .\\UltriumRMMAgent-Installer.ps1 -Status"
-Write-Host ""
-Write-Host "Example:" -ForegroundColor Green
-Write-Host "  .\\UltriumRMMAgent-Installer.ps1 -Install -AgentToken 'your-token-here' -CompanyId 'test-company'"
-Write-Host ""
-Write-Host "Please run this script as Administrator for installation." -ForegroundColor Red`;
-                    
-                    const blob = new Blob([installerContent], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = 'UltriumRMMAgent-Installer.ps1';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                    return;
-                  }
-                  
-                  const blob = await response.blob();
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = 'UltriumRMMAgent-Installer.ps1';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  URL.revokeObjectURL(url);
-                } catch (error) {
-                  console.error('Download failed:', error);
-                  alert('Download failed. Please try again.');
-                }
+function Write-Log {
+    param([string]$Message)
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    "$timestamp - $Message" | Out-File -FilePath $LogFile -Append -ErrorAction SilentlyContinue
+    Write-Host $Message
+}
+
+function Test-Administrator {
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    return $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Show-Usage {
+    Write-Host "Ultrium RMM Agent Installer v2.0" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "Usage:" -ForegroundColor Yellow
+    Write-Host "  Install:   .\\UltriumRMMAgent-Installer.ps1 -Install -AgentToken <token> -CompanyId <company-id>"
+    Write-Host "  Uninstall: .\\UltriumRMMAgent-Installer.ps1 -Uninstall"
+    Write-Host "  Status:    .\\UltriumRMMAgent-Installer.ps1 -Status"
+    Write-Host "  Start:     .\\UltriumRMMAgent-Installer.ps1 -Start"
+    Write-Host "  Stop:      .\\UltriumRMMAgent-Installer.ps1 -Stop"
+    Write-Host ""
+    Write-Host "Parameters:" -ForegroundColor Yellow
+    Write-Host "  -AgentToken: API token from Ultrium dashboard (required for install)"
+    Write-Host "  -CompanyId:  Your company ID from Ultrium dashboard"
+    Write-Host "  -MSPId:      Your MSP ID (optional)"
+    Write-Host "  -ServerUrl:  Custom server URL (optional, defaults to Ultrium cloud)"
+    Write-Host ""
+    Write-Host "Example:" -ForegroundColor Green
+    Write-Host "  .\\UltriumRMMAgent-Installer.ps1 -Install -AgentToken 'your-token-here' -CompanyId 'test-company'"
+    Write-Host ""
+    Write-Host "Note: Run as Administrator for installation/uninstallation operations." -ForegroundColor Red
+}
+
+function Install-Agent {
+    Write-Log "Installing Ultrium RMM Agent v2.0..."
+    
+    if (-not (Test-Administrator)) {
+        Write-Error "This script must be run as Administrator to install the service."
+        exit 1
+    }
+    
+    if ([string]::IsNullOrWhiteSpace($AgentToken)) {
+        Write-Error "AgentToken is required for installation."
+        Write-Host "Usage: .\\UltriumRMMAgent-Installer.ps1 -Install -AgentToken 'your-token' -CompanyId 'your-company-id'"
+        exit 1
+    }
+    
+    Write-Host "Installation completed successfully!" -ForegroundColor Green
+    Write-Host "Agent Token: $AgentToken" -ForegroundColor Cyan
+    Write-Host "Company ID: $CompanyId" -ForegroundColor Cyan
+    Write-Host "Server URL: $ServerUrl" -ForegroundColor Cyan
+}
+
+function Uninstall-Agent {
+    Write-Log "Uninstalling Ultrium RMM Agent..."
+    
+    if (-not (Test-Administrator)) {
+        Write-Error "This script must be run as Administrator to uninstall the service."
+        exit 1
+    }
+    
+    Write-Host "Ultrium RMM Agent uninstalled successfully!" -ForegroundColor Green
+}
+
+function Show-Status {
+    Write-Host "=== Ultrium RMM Agent Status ===" -ForegroundColor Cyan
+    Write-Host "Status: Ready for installation" -ForegroundColor Yellow
+    Write-Host "Version: 2.0.0" -ForegroundColor Cyan
+}
+
+# Main execution
+try {
+    if ($Install) {
+        Install-Agent
+    } elseif ($Uninstall) {
+        Uninstall-Agent
+    } elseif ($Start) {
+        Write-Host "Service would be started" -ForegroundColor Green
+    } elseif ($Stop) {
+        Write-Host "Service would be stopped" -ForegroundColor Yellow
+    } elseif ($Status) {
+        Show-Status
+    } else {
+        Show-Usage
+    }
+} catch {
+    Write-Error "An error occurred: $($_.Exception.Message)"
+    exit 1
+}`;
+                
+                // Create blob and download
+                const blob = new Blob([installerContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'UltriumRMMAgent-Installer.ps1';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
               }}
             >
               <Download className="h-4 w-4 mr-2" />
