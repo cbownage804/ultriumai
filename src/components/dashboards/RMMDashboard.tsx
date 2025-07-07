@@ -133,12 +133,6 @@ export const RMMDashboard = () => {
         </div>
       </div>
 
-      <RMMOverview stats={stats} onTabChange={(newTab) => {
-        console.log('onTabChange called with:', newTab);
-        console.log('Current activeTab before change:', activeTab);
-        setActiveTab(newTab);
-        console.log('setActiveTab called with:', newTab);
-      }} />
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
