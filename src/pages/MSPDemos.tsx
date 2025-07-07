@@ -128,7 +128,7 @@ const MSPDemos = () => {
     },
     {
       id: 'safenet',
-      name: 'SafeNet Network Security',
+      name: 'SafeNet for MSP',
       description: 'White-label network scanning and vulnerability assessment',
       monthlyRevenue: '$25/client',
       setupTime: '10 minutes',
@@ -151,7 +151,7 @@ const MSPDemos = () => {
     },
     {
       id: 'safeweb',
-      name: 'SafeWeb Dark Web Monitor',
+      name: 'SafeWeb for MSP',
       description: 'White-label dark web monitoring and threat intelligence',
       monthlyRevenue: '$20/user',
       setupTime: '5 minutes',
@@ -174,7 +174,7 @@ const MSPDemos = () => {
     },
     {
       id: 'security-suite',
-      name: 'Security Apps Bundle',
+      name: 'Security Apps Bundle for MSP',
       description: 'Complete cybersecurity toolkit for SMBs',
       monthlyRevenue: '$50/client',
       setupTime: '15 minutes',
@@ -197,7 +197,7 @@ const MSPDemos = () => {
     },
     {
       id: 'custom-gpts',
-      name: 'Custom AI Agents',
+      name: 'Custom AI Agents for MSP',
       description: 'Deploy AI assistants for client industries',
       monthlyRevenue: '$100/client',
       setupTime: '30 minutes',
@@ -219,65 +219,45 @@ const MSPDemos = () => {
       color: 'green'
     },
     {
-      id: 'rmm',
-      name: 'Ultrium RMM',
-      description: 'Remote monitoring and management platform for IT infrastructure',
-      monthlyRevenue: '$30/client',
-      setupTime: '20 minutes',
-      marketSize: 'Every business with IT infrastructure',
+      id: 'safecenter',
+      name: 'SafeCenter for MSP',
+      description: 'Combined RMM and helpdesk platform for complete IT management',
+      monthlyRevenue: '$45/client',
+      setupTime: '25 minutes',
+      marketSize: 'Every MSP and IT service provider',
       demoUrl: '/demos/rmm',
       features: [
         'Real-time device monitoring',
+        'Intelligent ticket routing',
         'Automated script execution',
-        'Patch management',
+        'Patch management system',
         'Remote access & control',
+        'SLA tracking & alerts',
         'Multi-client dashboard'
       ],
       revenueModel: {
-        charge: 45,
-        pay: 15,
-        profit: 30
+        charge: 70,
+        pay: 25,
+        profit: 45
       },
       icon: Wrench,
       color: 'blue'
     },
     {
-      id: 'ticketing',
-      name: 'Ultrium Helpdesk',
-      description: 'AI-powered ticketing and helpdesk automation',
-      monthlyRevenue: '$25/user',
-      setupTime: '15 minutes',
-      marketSize: 'Every business with support needs',
-      demoUrl: '/demos/ticketing',
-      features: [
-        'Intelligent ticket routing',
-        'Automated responses',
-        'SLA tracking & alerts',
-        'Multi-channel support',
-        'Analytics & reporting'
-      ],
-      revenueModel: {
-        charge: 40,
-        pay: 15,
-        profit: 25
-      },
-      icon: MessageSquare,
-      color: 'green'
-    },
-    {
-      id: 'antivirus',
-      name: 'Ultrium Antivirus',
-      description: 'AI-powered endpoint protection and threat detection',
+      id: 'safeav',
+      name: 'SafeAV for MSP',
+      description: 'AI-powered endpoint protection and threat detection for MSPs',
       monthlyRevenue: '$20/endpoint',
       setupTime: '10 minutes',
       marketSize: 'Every business with computers',
       demoUrl: '/demos/antivirus',
       features: [
         'Real-time threat detection',
-        'Behavioral analysis',
-        'Automated quarantine',
+        'Behavioral analysis engine',
+        'Automated quarantine system',
         'Cloud-based scanning',
-        'Centralized management'
+        'Centralized MSP management',
+        'White-label deployment'
       ],
       revenueModel: {
         charge: 30,
@@ -289,8 +269,8 @@ const MSPDemos = () => {
     },
     {
       id: 'mdr',
-      name: 'SafeEDR',
-      description: 'AI-powered endpoint detection and response with behavioral analysis',
+      name: 'SafeEDR for MSP',
+      description: 'AI-powered endpoint detection and response for MSPs with behavioral analysis',
       monthlyRevenue: '$100/client',
       setupTime: '30 minutes',
       marketSize: 'Mid-market and enterprise businesses',
