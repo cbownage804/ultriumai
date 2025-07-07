@@ -310,7 +310,7 @@ export const RMMDashboard = () => {
               variant="outline"
               onClick={() => {
                 const link = document.createElement('a');
-                link.href = '/downloads/UltriumRMMAgent-Installer.ps1';
+                link.href = '/UltriumRMMAgent-Installer.ps1';
                 link.download = 'UltriumRMMAgent-Installer.ps1';
                 link.click();
               }}
