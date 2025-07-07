@@ -371,23 +371,34 @@ export const useRemoteAccess = () => {
 
     try {
       console.log('Loading sessions...');
-      const { data, error } = await supabase.functions.invoke('rmm-remote-api', {
-        body: { action: 'get_sessions' },
-      });
+      const { data, error } = await supabase
+        .from('remote_sessions')
+        .select(`
+          *,
+          rmm_devices!remote_sessions_device_id_fkey (
+            hostname,
+            ip_address,
+            device_type,
+            os_info
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       console.log('Sessions response:', { data, error });
 
       if (error) {
-        console.error('Sessions API error:', error);
+        console.error('Sessions database error:', error);
         throw error;
       }
 
-      if (data?.success) {
-        console.log('Sessions loaded successfully:', data.sessions);
-        setSessions(data.sessions || []);
-      } else {
-        console.error('Sessions API returned unsuccessful response:', data);
-      }
+      console.log('Sessions loaded successfully:', data);
+      // Transform the data to match our type structure
+      const transformedSessions = data?.map(session => ({
+        ...session,
+        rmm_devices: Array.isArray(session.rmm_devices) ? session.rmm_devices[0] : session.rmm_devices
+      })) || [];
+      setSessions(transformedSessions);
     } catch (error) {
       console.error('Error loading sessions:', error);
       // For testing purposes, add mock session data
