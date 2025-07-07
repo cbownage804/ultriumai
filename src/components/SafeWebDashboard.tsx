@@ -20,7 +20,7 @@ import { useSafeWebData } from '@/hooks/useSafeWebData';
 import { SafeWebAssetManager } from './SafeWebAssetManager';
 import { MSPClientManager } from './MSPClientManager';
 import { ThreatAnalytics } from './ThreatAnalytics';
-import { BillingDashboard } from './BillingDashboard';
+import BillingDashboard from './BillingDashboard';
 
 export const SafeWebDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');

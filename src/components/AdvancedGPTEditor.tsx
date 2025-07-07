@@ -366,7 +366,7 @@ const AdvancedGPTEditor = ({ gpt, onUpdate, onClose }: AdvancedGPTEditorProps) =
         </TabsContent>
 
         <TabsContent value="integrations" className="space-y-4">
-          <IntegrationsManager gptId={gpt.id} gptName={gpt.name} />
+          <IntegrationsManager />
         </TabsContent>
 
         <TabsContent value="embedding" className="space-y-4">

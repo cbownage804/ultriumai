@@ -11,7 +11,7 @@ import { ComplianceConnectorManager } from "./ComplianceConnectorManager";
 import { ComplianceEvidenceViewer } from "./ComplianceEvidenceViewer";
 import { ComplianceAlertsPanel } from "./ComplianceAlertsPanel";
 import { RealTimeComplianceMonitor } from "./RealTimeComplianceMonitor";
-import { AdvancedReportGenerator } from "./AdvancedReportGenerator";
+import AdvancedReportGenerator from "./AdvancedReportGenerator";
 import { WhiteLabelCustomizer } from "./WhiteLabelCustomizer";
 
 export const SafeCompDashboard = () => {
