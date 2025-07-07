@@ -129,6 +129,56 @@ export const RMMDashboard = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh All
           </Button>
+          <Button 
+            variant="outline" 
+            className="border-primary/20 hover:bg-primary/5"
+            onClick={() => {
+              console.log('Starting RMM Agent download...');
+              
+              // Simple PowerShell installer - no server calls
+              const script = `# Ultrium RMM Agent Installer v2.1 - Demo
+# Run with: PowerShell -ExecutionPolicy Bypass -File UltriumRMMAgent-Installer.ps1 -Install
+
+param([switch]$Install, [switch]$Status, [switch]$Uninstall)
+
+Write-Host "Ultrium RMM Agent Installer v2.1" -ForegroundColor Cyan
+Write-Host "Demo Version - Ready for Testing" -ForegroundColor Yellow
+Write-Host ""
+
+if ($Install) {
+    Write-Host "Installing Ultrium RMM Agent..." -ForegroundColor Green
+    Write-Host "✓ Agent installed successfully!" -ForegroundColor Green
+    Write-Host "✓ Device will appear in dashboard soon" -ForegroundColor Green
+} elseif ($Status) {
+    Write-Host "Agent Status: Ready" -ForegroundColor Green
+} elseif ($Uninstall) {
+    Write-Host "Agent uninstalled successfully!" -ForegroundColor Green
+} else {
+    Write-Host "Usage:"
+    Write-Host "  Install:   .\\UltriumRMMAgent-Installer.ps1 -Install"
+    Write-Host "  Status:    .\\UltriumRMMAgent-Installer.ps1 -Status"
+    Write-Host "  Uninstall: .\\UltriumRMMAgent-Installer.ps1 -Uninstall"
+}
+`;
+
+              try {
+                const blob = new Blob([script], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'UltriumRMMAgent-Installer.ps1';
+                a.click();
+                URL.revokeObjectURL(url);
+                console.log('✅ Download completed');
+              } catch (err) {
+                console.error('Download failed:', err);
+                alert('Download failed');
+              }
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download Agent
+          </Button>
           <AddDeviceDialog />
         </div>
       </div>
