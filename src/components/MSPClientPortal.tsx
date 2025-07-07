@@ -47,7 +47,11 @@ import {
   Layers,
   X,
   Camera,
-  Paperclip
+  Paperclip,
+  UserPlus,
+  UserMinus,
+  Palette,
+  Save
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -87,7 +91,8 @@ interface ClientTicket {
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'critical';
   category: string;
-  queue: 'helpdesk' | 'engineering' | 'onboarding' | 'offboarding';
+  queue: string;
+  ticket_type: string;
   created_at: string;
   updated_at: string;
   assigned_to?: string;
@@ -122,12 +127,15 @@ const MSPClientPortal = () => {
   const [reports, setReports] = useState<ClientReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateTicket, setShowCreateTicket] = useState(false);
+  const [showQueueManager, setShowQueueManager] = useState(false);
+  const [showTypeManager, setShowTypeManager] = useState(false);
+  const [newQueue, setNewQueue] = useState({ name: '', color: '#3b82f6', description: '', icon: 'MessageSquare' });
   const [ticketForm, setTicketForm] = useState({
     title: '',
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
-    queue: 'helpdesk' as 'helpdesk' | 'engineering' | 'onboarding' | 'offboarding',
-    category: '',
+    queue: 'helpdesk',
+    ticket_type: 'hardware',
     attachments: [] as File[]
   });
 
@@ -151,7 +159,23 @@ const MSPClientPortal = () => {
       safemail: false,
       safenet: true,
       safepass: true
-    }
+    },
+    // Custom queues
+    support_queues: [
+      { id: 'helpdesk', name: 'Helpdesk', color: '#3b82f6', description: 'General support and user assistance', icon: 'MessageSquare' },
+      { id: 'engineering', name: 'Engineering', color: '#ef4444', description: 'Technical issues and infrastructure', icon: 'Settings' },
+      { id: 'onboarding', name: 'Onboarding', color: '#22c55e', description: 'New user setup and training', icon: 'UserPlus' },
+      { id: 'offboarding', name: 'Offboarding', color: '#f59e0b', description: 'User removal and account cleanup', icon: 'UserMinus' },
+    ],
+    // Custom ticket types
+    ticket_types: [
+      { id: 'hardware', name: 'Hardware', color: '#8b5cf6', description: 'Physical equipment issues' },
+      { id: 'software', name: 'Software', color: '#06b6d4', description: 'Application and software problems' },
+      { id: 'credentials', name: 'Credentials', color: '#f59e0b', description: 'Password and access issues' },
+      { id: 'update', name: 'Update', color: '#10b981', description: 'System updates and patches' },
+      { id: 'network', name: 'Network', color: '#ef4444', description: 'Connectivity and network issues' },
+      { id: 'security', name: 'Security', color: '#dc2626', description: 'Security incidents and threats' },
+    ]
   });
 
   useEffect(() => {
@@ -357,8 +381,9 @@ const MSPClientPortal = () => {
       description: ticketForm.description,
       status: 'open',
       priority: ticketForm.priority,
-      category: ticketForm.category || 'General Support',
+      category: ticketForm.ticket_type || 'General Support',
       queue: ticketForm.queue,
+      ticket_type: ticketForm.ticket_type,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       client_contact: user?.email || 'client@company.com',
@@ -378,8 +403,8 @@ const MSPClientPortal = () => {
       title: '',
       description: '',
       priority: 'medium',
-      queue: 'helpdesk',
-      category: '',
+      queue: portalSettings.support_queues[0]?.id || 'helpdesk',
+      ticket_type: portalSettings.ticket_types[0]?.id || 'hardware',
       attachments: []
     });
     setShowCreateTicket(false);
@@ -459,14 +484,69 @@ const MSPClientPortal = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getQueueColor = (queue: string) => {
-    switch (queue) {
-      case 'helpdesk': return 'default';
-      case 'engineering': return 'secondary';
-      case 'onboarding': return 'outline';
-      case 'offboarding': return 'destructive';
-      default: return 'default';
-    }
+  const getQueueColor = (queueId: string) => {
+    const queue = portalSettings.support_queues.find(q => q.id === queueId);
+    return queue?.color || '#6b7280';
+  };
+
+  const getTicketTypeColor = (typeId: string) => {
+    const type = portalSettings.ticket_types.find(t => t.id === typeId);
+    return type?.color || '#6b7280';
+  };
+
+  const addQueue = () => {
+    if (!newQueue.name) return;
+    
+    const queue = {
+      id: newQueue.name.toLowerCase().replace(/\s+/g, '_'),
+      name: newQueue.name,
+      color: newQueue.color,
+      description: newQueue.description,
+      icon: newQueue.icon
+    };
+    
+    setPortalSettings(prev => ({
+      ...prev,
+      support_queues: [...prev.support_queues, queue]
+    }));
+    
+    setNewQueue({ name: '', color: '#3b82f6', description: '', icon: 'MessageSquare' });
+    toast({ title: "Queue Added", description: `${queue.name} queue has been created` });
+  };
+
+  const addTicketType = () => {
+    if (!newTicketType.name) return;
+    
+    const type = {
+      id: newTicketType.name.toLowerCase().replace(/\s+/g, '_'),
+      name: newTicketType.name,
+      color: newTicketType.color,
+      description: newTicketType.description
+    };
+    
+    setPortalSettings(prev => ({
+      ...prev,
+      ticket_types: [...prev.ticket_types, type]
+    }));
+    
+    setNewTicketType({ name: '', color: '#3b82f6', description: '' });
+    toast({ title: "Ticket Type Added", description: `${type.name} type has been created` });
+  };
+
+  const removeQueue = (queueId: string) => {
+    setPortalSettings(prev => ({
+      ...prev,
+      support_queues: prev.support_queues.filter(q => q.id !== queueId)
+    }));
+    toast({ title: "Queue Removed", description: "Queue has been deleted" });
+  };
+
+  const removeTicketType = (typeId: string) => {
+    setPortalSettings(prev => ({
+      ...prev,
+      ticket_types: prev.ticket_types.filter(t => t.id !== typeId)
+    }));
+    toast({ title: "Ticket Type Removed", description: "Type has been deleted" });
   };
 
   return (
@@ -742,13 +822,31 @@ const MSPClientPortal = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Input
-                        id="category"
-                        value={ticketForm.category}
-                        onChange={(e) => setTicketForm(prev => ({ ...prev, category: e.target.value }))}
-                        placeholder="e.g., Hardware, Software, Email"
-                      />
+                      <Label htmlFor="ticket-type">Ticket Type</Label>
+                      <Select 
+                        value={ticketForm.ticket_type} 
+                        onValueChange={(value: any) => setTicketForm(prev => ({ ...prev, ticket_type: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {portalSettings.ticket_types.map(type => (
+                            <SelectItem key={type.id} value={type.id}>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-3 h-3 rounded-full" 
+                                  style={{ backgroundColor: type.color }}
+                                />
+                                <span>{type.name}</span>
+                                {type.description && (
+                                  <span className="text-xs text-muted-foreground">- {type.description}</span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   
@@ -781,30 +879,33 @@ const MSPClientPortal = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="helpdesk">
-                            <div className="flex items-center gap-2">
-                              <MessageSquare className="h-4 w-4" />
-                              Helpdesk - General support
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="engineering">
-                            <div className="flex items-center gap-2">
-                              <Settings className="h-4 w-4" />
-                              Engineering - Technical issues
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="onboarding">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              Onboarding - New user setup
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="offboarding">
-                            <div className="flex items-center gap-2">
-                              <Trash2 className="h-4 w-4" />
-                              Offboarding - User removal
-                            </div>
-                          </SelectItem>
+                          {portalSettings.support_queues.map(queue => {
+                            const iconMap: Record<string, any> = {
+                              MessageSquare,
+                              Settings,
+                              UserPlus,
+                              UserMinus,
+                              Users,
+                              Ticket
+                            };
+                            const IconComponent = iconMap[queue.icon] || MessageSquare;
+                            
+                            return (
+                              <SelectItem key={queue.id} value={queue.id}>
+                                <div className="flex items-center gap-2">
+                                  <div 
+                                    className="w-3 h-3 rounded-full" 
+                                    style={{ backgroundColor: queue.color }}
+                                  />
+                                  <IconComponent className="h-4 w-4" />
+                                  <span>{queue.name}</span>
+                                  {queue.description && (
+                                    <span className="text-xs text-muted-foreground">- {queue.description}</span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
@@ -908,10 +1009,20 @@ const MSPClientPortal = () => {
                       <p className="text-sm text-muted-foreground mb-3">{ticket.description}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>#{ticket.id}</span>
-                        <span>{ticket.category}</span>
-                        <Badge variant={getQueueColor(ticket.queue)} className="text-xs">
-                          {ticket.queue}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: getTicketTypeColor(ticket.ticket_type || 'hardware') }}
+                          />
+                          <span>{portalSettings.ticket_types.find(t => t.id === ticket.ticket_type)?.name || 'General'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: getQueueColor(ticket.queue) }}
+                          />
+                          <span>{portalSettings.support_queues.find(q => q.id === ticket.queue)?.name || ticket.queue}</span>
+                        </div>
                         <span>Contact: {ticket.client_contact}</span>
                         <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
                         {ticket.assigned_to && <span>Assigned: {ticket.assigned_to}</span>}
@@ -1365,6 +1476,196 @@ const MSPClientPortal = () => {
                         SafeNet is typically managed by MSPs directly. Consider disabling client access unless they need self-service network monitoring capabilities.
                       </p>
                     </div>
+                  </div>
+                 </div>
+               </div>
+               
+               <div className="space-y-4">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Ticket className="h-4 w-4" />
+                  Support Queue Management
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Create and manage custom support queues with colors and routing
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Dialog open={showQueueManager} onOpenChange={setShowQueueManager}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Queue
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Support Queue</DialogTitle>
+                          <DialogDescription>
+                            Define a new queue for routing and organizing support tickets
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Queue Name</Label>
+                            <Input
+                              value={newQueue.name}
+                              onChange={(e) => setNewQueue(prev => ({ ...prev, name: e.target.value }))}
+                              placeholder="e.g., Level 2 Support"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Description</Label>
+                            <Input
+                              value={newQueue.description}
+                              onChange={(e) => setNewQueue(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="Brief description of this queue's purpose"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Queue Color</Label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="color"
+                                value={newQueue.color}
+                                onChange={(e) => setNewQueue(prev => ({ ...prev, color: e.target.value }))}
+                                className="w-12 h-10 p-1"
+                              />
+                              <Input
+                                value={newQueue.color}
+                                onChange={(e) => setNewQueue(prev => ({ ...prev, color: e.target.value }))}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShowQueueManager(false)}>Cancel</Button>
+                          <Button onClick={addQueue}>Create Queue</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {portalSettings.support_queues.map(queue => (
+                      <Card key={queue.id} className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-4 h-4 rounded-full" 
+                              style={{ backgroundColor: queue.color }}
+                            />
+                            <div>
+                              <p className="font-medium">{queue.name}</p>
+                              <p className="text-xs text-muted-foreground">{queue.description}</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeQueue(queue.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Palette className="h-4 w-4" />
+                  Ticket Type Management
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Define custom ticket types and categories for better organization
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Dialog open={showTypeManager} onOpenChange={setShowTypeManager}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Type
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Ticket Type</DialogTitle>
+                          <DialogDescription>
+                            Define a new ticket type for categorizing support requests
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <Label>Type Name</Label>
+                            <Input
+                              value={newTicketType.name}
+                              onChange={(e) => setNewTicketType(prev => ({ ...prev, name: e.target.value }))}
+                              placeholder="e.g., Mobile Device, VPN Access"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Description</Label>
+                            <Input
+                              value={newTicketType.description}
+                              onChange={(e) => setNewTicketType(prev => ({ ...prev, description: e.target.value }))}
+                              placeholder="What types of issues does this cover?"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Type Color</Label>
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="color"
+                                value={newTicketType.color}
+                                onChange={(e) => setNewTicketType(prev => ({ ...prev, color: e.target.value }))}
+                                className="w-12 h-10 p-1"
+                              />
+                              <Input
+                                value={newTicketType.color}
+                                onChange={(e) => setNewTicketType(prev => ({ ...prev, color: e.target.value }))}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShowTypeManager(false)}>Cancel</Button>
+                          <Button onClick={addTicketType}>Create Type</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {portalSettings.ticket_types.map(type => (
+                      <Card key={type.id} className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-4 h-4 rounded-full" 
+                              style={{ backgroundColor: type.color }}
+                            />
+                            <div>
+                              <p className="font-medium">{type.name}</p>
+                              <p className="text-xs text-muted-foreground">{type.description}</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeTicketType(type.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
                   </div>
                 </div>
               </div>
