@@ -36,6 +36,8 @@ export const RMMDashboard = () => {
     getDevicesByType 
   } = useRMMData();
 
+  console.log('Current active tab:', activeTab);
+
   // Get devices by type for component props
   const serverData = getDevicesByType('server').map(device => ({
     name: device.hostname,
