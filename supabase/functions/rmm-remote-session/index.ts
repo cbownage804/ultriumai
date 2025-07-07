@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,9 +27,11 @@ serve(async (req) => {
     return new Response('Missing session token', { status: 400, headers: corsHeaders })
   }
 
-  // Validate WebSocket upgrade
+  // Check for WebSocket upgrade headers
   const upgradeHeader = req.headers.get('upgrade')
+  const connectionHeader = req.headers.get('connection')
   console.log('Upgrade header:', upgradeHeader);
+  console.log('Connection header:', connectionHeader);
   
   if (upgradeHeader?.toLowerCase() !== 'websocket') {
     console.log('Error: Not a WebSocket upgrade request');
@@ -38,104 +39,71 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // Validate session token
-    const { data: session, error } = await supabase
-      .from('remote_sessions')
-      .select('*')
-      .eq('session_token', token)
-      .eq('status', 'active')
-      .single()
-
-    if (error || !session) {
-      console.error('Invalid session token:', error)
-      return new Response('Invalid session token', { status: 401, headers: corsHeaders })
-    }
-
-    console.log('WebSocket connection validated for session:', session.id)
-
+    console.log('Attempting WebSocket upgrade...');
+    
     // Upgrade to WebSocket
     const { socket, response } = Deno.upgradeWebSocket(req)
+    console.log('WebSocket upgrade successful');
 
     socket.onopen = () => {
-      console.log('WebSocket connected for session:', session.id)
+      console.log('WebSocket opened for token:', token)
       
-      // Send session ready message
+      // Send immediate welcome message
       socket.send(JSON.stringify({
         type: 'session_ready',
         data: {
-          sessionId: session.id,
-          deviceId: session.device_id,
-          timestamp: new Date().toISOString()
+          sessionToken: token,
+          timestamp: new Date().toISOString(),
+          message: 'WebSocket connection established'
         }
       }))
 
-      // Simulate desktop frames for demo
-      const sendFrame = () => {
+      // Send periodic ping messages
+      const pingInterval = setInterval(() => {
         if (socket.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify({
-            type: 'screen_frame',
-            data: {
-              frame: 'base64_encoded_frame_data_would_go_here',
-              timestamp: new Date().toISOString(),
-              resolution: { width: 1920, height: 1080 }
-            }
+            type: 'ping',
+            timestamp: new Date().toISOString()
           }))
+        } else {
+          clearInterval(pingInterval)
         }
-      }
-
-      // Send frame every 100ms for smooth experience
-      const frameInterval = setInterval(sendFrame, 100)
+      }, 5000)
 
       socket.onclose = () => {
-        clearInterval(frameInterval)
+        console.log('WebSocket closed for token:', token)
+        clearInterval(pingInterval)
       }
     }
 
     socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data)
-        console.log('Received message:', message.type)
+        console.log('Received message:', message.type, message)
 
-        switch (message.type) {
-          case 'mouse_event':
-            // Handle mouse events
-            console.log('Mouse event:', message.data)
-            break
-          
-          case 'keyboard_event':
-            // Handle keyboard events
-            console.log('Keyboard event:', message.data)
-            break
-          
-          case 'ping':
-            // Respond to ping
-            socket.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }))
-            break
-          
-          default:
-            console.log('Unknown message type:', message.type)
-        }
+        // Echo back any message
+        socket.send(JSON.stringify({
+          type: 'echo',
+          originalMessage: message,
+          timestamp: new Date().toISOString()
+        }))
       } catch (error) {
         console.error('Error processing message:', error)
       }
     }
 
     socket.onclose = (event) => {
-      console.log('WebSocket closed:', event.code, event.reason)
+      console.log('WebSocket closed:', event.code, event.reason, 'for token:', token)
     }
 
     socket.onerror = (error) => {
-      console.error('WebSocket error:', error)
+      console.error('WebSocket error for token:', token, error)
     }
 
+    console.log('Returning WebSocket response');
     return response
   } catch (error) {
     console.error('WebSocket setup error:', error)
-    return new Response('Internal server error', { status: 500, headers: corsHeaders })
+    return new Response('Internal server error: ' + error.message, { status: 500, headers: corsHeaders })
   }
 })
