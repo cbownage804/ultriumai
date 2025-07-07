@@ -30,10 +30,19 @@ import {
   ExternalLink,
   MessageSquare,
   Phone,
-  Mail
+  Mail,
+  Key,
+  Link,
+  Network,
+  Layers
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { SafeDocApp } from "@/components/apps/SafeDocApp";
+import { SafeLinkApp } from "@/components/apps/SafeLinkApp";
+import { SafeMailApp } from "@/components/apps/SafeMailApp";
+import { SafeNetApp } from "@/components/apps/SafeNetApp";
+import { SafePassApp } from "@/components/apps/SafePassApp";
 
 interface ClientPortalUser {
   id: string;
@@ -104,7 +113,15 @@ const MSPClientPortal = () => {
     enable_tickets: true,
     enable_reports: true,
     enable_assets: true,
-    enable_knowledge_base: true
+    enable_knowledge_base: true,
+    // SafeSuite app subscriptions
+    safesuite_apps: {
+      safedoc: true,
+      safelink: true,
+      safemail: false,
+      safenet: true,
+      safepass: true
+    }
   });
 
   useEffect(() => {
@@ -368,11 +385,12 @@ const MSPClientPortal = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="users">Portal Users</TabsTrigger>
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
           <TabsTrigger value="assets">Assets</TabsTrigger>
+          <TabsTrigger value="safesuite">SafeSuite Apps</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -697,6 +715,178 @@ const MSPClientPortal = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="safesuite" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="h-5 w-5" />
+                SafeSuite Security Applications
+              </CardTitle>
+              <CardDescription>
+                Access your subscribed security applications directly in the portal
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {[
+                  { key: 'safedoc', name: 'SafeDoc', icon: FileText, description: 'Document security scanning' },
+                  { key: 'safelink', name: 'SafeLink', icon: Link, description: 'URL safety verification' },
+                  { key: 'safemail', name: 'SafeMail', icon: Mail, description: 'Email security protection' },
+                  { key: 'safenet', name: 'SafeNet', icon: Network, description: 'Network security monitoring' },
+                  { key: 'safepass', name: 'SafePass', icon: Key, description: 'Password management' }
+                ].map(app => {
+                  const isEnabled = portalSettings.safesuite_apps[app.key as keyof typeof portalSettings.safesuite_apps];
+                  const IconComponent = app.icon;
+                  
+                  return (
+                    <Card key={app.key} className={`transition-all ${isEnabled ? 'border-primary/50 bg-primary/5' : 'opacity-60'}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`p-2 rounded-lg ${isEnabled ? 'bg-primary/10' : 'bg-muted'}`}>
+                            <IconComponent className={`h-5 w-5 ${isEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-sm">{app.name}</h3>
+                            <Badge variant={isEnabled ? 'default' : 'secondary'} className="text-xs">
+                              {isEnabled ? 'Active' : 'Not Subscribed'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{app.description}</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Embedded SafeSuite Apps */}
+          <div className="space-y-6">
+            {portalSettings.safesuite_apps.safedoc && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    SafeDoc Document Scanner
+                  </CardTitle>
+                  <CardDescription>
+                    Scan documents for security threats and malware
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SafeDocApp 
+                    isWhiteLabeled={true}
+                    brandColor={portalSettings.primary_color}
+                    brandName={portalSettings.company_name}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {portalSettings.safesuite_apps.safelink && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Link className="h-5 w-5" />
+                    SafeLink URL Scanner
+                  </CardTitle>
+                  <CardDescription>
+                    Verify URL safety and check for phishing attempts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SafeLinkApp 
+                    isWhiteLabeled={true}
+                    brandColor={portalSettings.primary_color}
+                    brandName={portalSettings.company_name}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {portalSettings.safesuite_apps.safemail && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    SafeMail Email Security
+                  </CardTitle>
+                  <CardDescription>
+                    Advanced email threat detection and protection
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SafeMailApp 
+                    isWhiteLabeled={true}
+                    brandColor={portalSettings.primary_color}
+                    brandName={portalSettings.company_name}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {portalSettings.safesuite_apps.safenet && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Network className="h-5 w-5" />
+                    SafeNet Network Security
+                  </CardTitle>
+                  <CardDescription>
+                    Monitor network security and detect vulnerabilities
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SafeNetApp 
+                    isWhiteLabeled={true}
+                    brandColor={portalSettings.primary_color}
+                    brandName={portalSettings.company_name}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {portalSettings.safesuite_apps.safepass && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Key className="h-5 w-5" />
+                    SafePass Password Manager
+                  </CardTitle>
+                  <CardDescription>
+                    Secure password management and generation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SafePassApp 
+                    isWhiteLabeled={true}
+                    brandColor={portalSettings.primary_color}
+                    brandName={portalSettings.company_name}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* No Apps Enabled Message */}
+            {!Object.values(portalSettings.safesuite_apps).some(Boolean) && (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Shield className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No SafeSuite Apps Enabled</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Contact your MSP to enable SafeSuite security applications for your organization.
+                  </p>
+                  <Button variant="outline">
+                    <Phone className="h-4 w-4 mr-2" />
+                    Contact Support
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
 
