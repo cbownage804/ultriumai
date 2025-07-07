@@ -47,6 +47,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
   const { 
+    sessions,
     activeWebSocket, 
     executeCommand, 
     transferFile, 
@@ -60,7 +61,6 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
     const connectToSession = async () => {
       try {
         // Get the session token from the sessions data
-        const { sessions } = useRemoteAccess();
         const session = sessions.find(s => s.id === sessionId);
         
         if (!session) {
@@ -99,7 +99,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
         wsRef.current.close();
       }
     };
-  }, [sessionId]);
+  }, [sessionId, sessions]);
 
   // Setup canvas for displaying remote screen
   const setupCanvasRendering = (ws: WebSocket) => {
