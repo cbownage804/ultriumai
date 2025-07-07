@@ -21,37 +21,40 @@ import {
   Target,
   Users,
   FileText,
-  Play
+  Play,
+  Download
 } from "lucide-react";
+import { SafeEDRAgentDownloads } from "./SafeEDRAgentDownloads";
 
-interface MDRAlert {
+interface EDRAlert {
   id: string;
   alert_type: string;
   severity: string;
   title: string;
   description?: string;
   status: string;
-  source_system?: string;
-  affected_assets?: string[];
-  assigned_to?: string;
-  escalation_level: number;
+  endpoint_id?: string;
+  behavioral_analysis_id?: string;
+  analyst_assigned?: string;
   created_at: string;
   updated_at: string;
   resolved_at?: string;
+  indicators_of_compromise?: any;
+  response_actions_taken?: any;
+  auto_response_enabled?: boolean;
+  user_id: string;
 }
 
-interface MDRInvestigation {
+interface EDRInvestigation {
   id: string;
-  alert_id: string;
-  investigation_type: string;
-  priority: string;
-  investigation_status: string;
-  investigator_id?: string;
-  time_spent_minutes: number;
-  findings?: string;
-  recommendations?: string;
+  alert_type: string;
+  title: string;
+  description?: string;
+  severity: string;
+  status: string;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
 
 interface DashboardStats {
@@ -74,10 +77,10 @@ export const SafeEDRDashboard = () => {
     threats_mitigated: 0,
     escalation_rate: 0
   });
-  const [alerts, setAlerts] = useState<MDRAlert[]>([]);
-  const [investigations, setInvestigations] = useState<MDRInvestigation[]>([]);
+  const [alerts, setAlerts] = useState<EDRAlert[]>([]);
+  const [investigations, setInvestigations] = useState<EDRInvestigation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'overview' | 'alerts' | 'investigations' | 'analytics'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'alerts' | 'investigations' | 'analytics' | 'agents'>('overview');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,19 +94,20 @@ export const SafeEDRDashboard = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      // Load alerts
+      // Load alerts from EDR system
       const { data: alertsData } = await supabase
-        .from('safe_mdr_alerts')
+        .from('edr_realtime_alerts')
         .select('*')
         .eq('user_id', user.user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Load investigations
+      // Load investigations (using compliance_alerts as investigation proxy)
       const { data: investigationsData } = await supabase
-        .from('safe_mdr_investigations')
+        .from('compliance_alerts')
         .select('*')
         .eq('user_id', user.user.id)
+        .eq('alert_type', 'investigation')
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -113,7 +117,7 @@ export const SafeEDRDashboard = () => {
       // Calculate stats
       const newAlertCount = alertsData?.filter(alert => alert.status === 'new').length || 0;
       const criticalAlertCount = alertsData?.filter(alert => alert.severity === 'critical').length || 0;
-      const openInvestigations = investigationsData?.filter(inv => inv.investigation_status === 'open').length || 0;
+      const openInvestigations = investigationsData?.filter(inv => inv.status === 'open').length || 0;
       const resolvedAlerts = alertsData?.filter(alert => alert.status === 'resolved').length || 0;
       
       // Calculate mean response time (mock calculation)
@@ -134,13 +138,13 @@ export const SafeEDRDashboard = () => {
         investigations_open: openInvestigations,
         mean_response_time: Math.round(meanResponseTime),
         threats_mitigated: resolvedAlerts,
-        escalation_rate: alertsData?.length ? (alertsData.filter(a => a.escalation_level > 0).length / alertsData.length) * 100 : 0
+        escalation_rate: alertsData?.length ? ((alertsData.filter(a => a.severity === 'critical').length / alertsData.length) * 100) : 0
       });
     } catch (error) {
-      console.error('Error loading SafeMDR data:', error);
+      console.error('Error loading SafeEDR data:', error);
       toast({
         title: "Error",
-        description: "Failed to load SafeMDR data",
+        description: "Failed to load SafeEDR data",
         variant: "destructive",
       });
     } finally {
@@ -159,42 +163,42 @@ export const SafeEDRDashboard = () => {
       const randomSeverity = severities[Math.floor(Math.random() * severities.length)];
 
       const { data, error } = await supabase
-        .from('safe_mdr_alerts')
+        .from('edr_realtime_alerts')
         .insert({
           user_id: user.user.id,
           alert_type: randomType,
           severity: randomSeverity,
           title: `${randomType} Detected`,
-          description: `Automated detection of ${randomType.toLowerCase()} requiring immediate attention`,
+          description: `AI-powered detection of ${randomType.toLowerCase()} requiring immediate attention`,
           status: 'new',
-          source_system: 'SafeShield EDR',
-          affected_assets: [`ENDPOINT-${Math.floor(Math.random() * 100)}`],
-          escalation_level: randomSeverity === 'critical' ? 1 : 0,
-          tactics: ['T1055'], // MITRE ATT&CK tactic
-          techniques: ['Process Injection'],
-          indicators: [
+          endpoint_id: null, // Would be actual endpoint ID in production
+          behavioral_analysis_id: null, // Would link to behavioral analysis
+          indicators_of_compromise: [
             {
               type: 'file_hash',
               value: `sha256:${Math.random().toString(36).substring(2, 15)}`,
               confidence: 85
             }
-          ]
+          ],
+          response_actions_taken: [],
+          auto_response_enabled: true
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Create investigation if critical
+      // Create investigation record if critical
       if (randomSeverity === 'critical') {
         await supabase
-          .from('safe_mdr_investigations')
+          .from('compliance_alerts')
           .insert({
             user_id: user.user.id,
-            alert_id: data.id,
-            investigation_type: 'Threat Hunting',
-            priority: 'high',
-            investigation_status: 'open'
+            alert_type: 'investigation',
+            severity: 'high',
+            title: `Investigation: ${randomType}`,
+            description: `Critical alert investigation for ${randomType}`,
+            status: 'open'
           });
       }
 
@@ -221,10 +225,10 @@ export const SafeEDRDashboard = () => {
       if (!user.user) return;
 
       await supabase
-        .from('safe_mdr_alerts')
+        .from('edr_realtime_alerts')
         .update({
           status: 'investigating',
-          assigned_to: user.user.id,
+          analyst_assigned: user.user.id,
           updated_at: new Date().toISOString()
         })
         .eq('id', alertId);
@@ -243,7 +247,7 @@ export const SafeEDRDashboard = () => {
   const resolveAlert = async (alertId: string) => {
     try {
       await supabase
-        .from('safe_mdr_alerts')
+        .from('edr_realtime_alerts')
         .update({
           status: 'resolved',
           resolved_at: new Date().toISOString(),
@@ -308,11 +312,11 @@ export const SafeEDRDashboard = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Search className="h-8 w-8 text-primary" />
-            SafeMDR - Managed Detection & Response
+            <Eye className="h-8 w-8 text-primary" />
+            SafeEDR - AI-Powered Endpoint Detection & Response
           </h1>
           <p className="text-muted-foreground">
-            24/7 Threat Hunting & Incident Response
+            Real-time behavioral analysis • Automated threat response
           </p>
         </div>
         <div className="flex gap-2">
@@ -352,6 +356,13 @@ export const SafeEDRDashboard = () => {
         >
           <TrendingUp className="h-4 w-4 mr-2" />
           Analytics
+        </Button>
+        <Button 
+          variant={activeView === 'agents' ? 'default' : 'outline'}
+          onClick={() => setActiveView('agents')}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Agent Downloads
         </Button>
       </div>
 
@@ -466,17 +477,17 @@ export const SafeEDRDashboard = () => {
                   {investigations.slice(0, 5).map((investigation) => (
                     <div key={investigation.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <p className="font-medium">{investigation.investigation_type}</p>
+                        <p className="font-medium">{investigation.title}</p>
                         <p className="text-sm text-muted-foreground">
-                          Priority: {investigation.priority}
+                          Type: {investigation.alert_type}
                         </p>
                       </div>
                       <div className="text-right">
                         <Badge variant="outline">
-                          {investigation.investigation_status}
+                          {investigation.status}
                         </Badge>
                         <div className="text-sm text-muted-foreground">
-                          {investigation.time_spent_minutes}m spent
+                          {investigation.severity}
                         </div>
                       </div>
                     </div>
@@ -559,22 +570,22 @@ export const SafeEDRDashboard = () => {
               {investigations.map((investigation) => (
                 <div key={investigation.id} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="font-medium">{investigation.investigation_type}</p>
+                    <p className="font-medium">{investigation.title}</p>
                     <Badge variant="outline">
-                      {investigation.investigation_status}
+                      {investigation.status}
                     </Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Priority:</span> {investigation.priority}
+                      <span className="text-muted-foreground">Type:</span> {investigation.alert_type}
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Time Spent:</span> {investigation.time_spent_minutes} minutes
+                      <span className="text-muted-foreground">Severity:</span> {investigation.severity}
                     </div>
                   </div>
-                  {investigation.findings && (
+                  {investigation.description && (
                     <div className="mt-2 p-2 bg-muted rounded text-sm">
-                      <strong>Findings:</strong> {investigation.findings}
+                      <strong>Description:</strong> {investigation.description}
                     </div>
                   )}
                 </div>
@@ -645,6 +656,11 @@ export const SafeEDRDashboard = () => {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Agent Downloads View */}
+      {activeView === 'agents' && (
+        <SafeEDRAgentDownloads />
       )}
     </div>
   );
