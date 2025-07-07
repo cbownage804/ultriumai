@@ -1,300 +1,129 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-interface RemoteSessionMessage {
-  type: 'screen_frame' | 'mouse_event' | 'keyboard_event' | 'clipboard_sync' | 'file_transfer' | 'ai_query';
-  data: any;
-  timestamp: number;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 serve(async (req) => {
-  const { headers } = req;
-  const upgradeHeader = headers.get("upgrade") || "";
-
-  if (upgradeHeader.toLowerCase() !== "websocket") {
-    return new Response("Expected WebSocket connection", { status: 400 });
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
 
-  const url = new URL(req.url);
-  const sessionToken = url.searchParams.get('token');
-  
-  if (!sessionToken) {
-    return new Response("Session token required", { status: 400 });
+  const url = new URL(req.url)
+  const token = url.searchParams.get('token')
+
+  if (!token) {
+    return new Response('Missing session token', { status: 400, headers: corsHeaders })
   }
 
-  const { socket, response } = Deno.upgradeWebSocket(req);
-  
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
+  // Validate WebSocket upgrade
+  const upgradeHeader = req.headers.get('upgrade')
+  if (upgradeHeader?.toLowerCase() !== 'websocket') {
+    return new Response('Expected WebSocket connection', { status: 400, headers: corsHeaders })
+  }
 
-  let sessionInfo: any = null;
-  let authenticated = false;
-
-  socket.onopen = async () => {
-    console.log("Remote session WebSocket connection established with token:", sessionToken);
-    
-    try {
-      // Validate session token
-      console.log("Attempting to validate session token...");
-      sessionInfo = await validateSessionToken(supabase, sessionToken);
-      console.log("Session validation result:", sessionInfo ? "SUCCESS" : "FAILED");
-      
-      if (sessionInfo) {
-        authenticated = true;
-        console.log("Session authenticated, sending ready message");
-        socket.send(JSON.stringify({
-          type: 'session_ready',
-          session_id: sessionInfo.id,
-          device_info: sessionInfo.device,
-          capabilities: {
-            screen_sharing: true,
-            mouse_control: true,
-            keyboard_input: true,
-            clipboard_sync: true,
-            file_transfer: true,
-            ai_assistant: true,
-            safedoc_integration: true,
-            safepass_integration: true
-          },
-          timestamp: Date.now()
-        }));
-      } else {
-        console.error("Session validation failed - closing connection");
-        socket.send(JSON.stringify({
-          type: 'auth_error',
-          message: 'Invalid session token',
-          timestamp: Date.now()
-        }));
-        socket.close();
-      }
-    } catch (error) {
-      console.error('Session validation error - closing connection:', error);
-      socket.close();
-    }
-  };
-
-  socket.onmessage = async (event) => {
-    if (!authenticated) return;
-
-    try {
-      const message: RemoteSessionMessage = JSON.parse(event.data);
-
-      switch (message.type) {
-        case 'screen_frame':
-          // Forward screen frame to connected client
-          await handleScreenFrame(message.data);
-          break;
-
-        case 'mouse_event':
-          await handleMouseEvent(supabase, sessionInfo.device_id, message.data);
-          break;
-
-        case 'keyboard_event':
-          await handleKeyboardEvent(supabase, sessionInfo.device_id, message.data);
-          break;
-
-        case 'clipboard_sync':
-          await handleClipboardSync(supabase, sessionInfo.device_id, message.data);
-          break;
-
-        case 'file_transfer':
-          await handleFileTransfer(supabase, sessionInfo.device_id, message.data);
-          break;
-
-        case 'ai_query':
-          const aiResponse = await handleAIQuery(supabase, sessionInfo, message.data);
-          socket.send(JSON.stringify({
-            type: 'ai_response',
-            data: aiResponse,
-            timestamp: Date.now()
-          }));
-          break;
-
-        default:
-          console.log('Unknown message type:', message.type);
-      }
-    } catch (error) {
-      console.error('Remote session message error:', error);
-      socket.send(JSON.stringify({
-        type: 'error',
-        message: error.message,
-        timestamp: Date.now()
-      }));
-    }
-  };
-
-  socket.onclose = async () => {
-    console.log("Remote session WebSocket connection closed");
-    if (sessionInfo) {
-      // Update session status
-      await supabase
-        .from('remote_sessions')
-        .update({
-          status: 'ended',
-          ended_at: new Date().toISOString()
-        })
-        .eq('id', sessionInfo.id);
-    }
-  };
-
-  return response;
-});
-
-async function validateSessionToken(supabase: any, token: string) {
   try {
-    console.log('Validating session token:', token);
-    
-    // Get session info by token - allow any status initially
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Validate session token
     const { data: session, error } = await supabase
       .from('remote_sessions')
-      .select(`
-        *,
-        rmm_devices (*)
-      `)
+      .select('*')
       .eq('session_token', token)
-      .single();
+      .eq('status', 'active')
+      .single()
 
-    if (error) {
-      console.error('Session query error:', error);
-      return null;
+    if (error || !session) {
+      console.error('Invalid session token:', error)
+      return new Response('Invalid session token', { status: 401, headers: corsHeaders })
     }
 
-    if (!session) {
-      console.error('No session found for token');
-      return null;
-    }
+    console.log('WebSocket connection validated for session:', session.id)
 
-    console.log('Found session:', session.id, 'with status:', session.status);
+    // Upgrade to WebSocket
+    const { socket, response } = Deno.upgradeWebSocket(req)
 
-    // Check if session is valid (not ended)
-    if (session.status === 'ended') {
-      console.error('Session has ended');
-      return null;
-    }
-
-    // Update session to active if it's still connecting
-    if (session.status === 'connecting') {
-      const { error: updateError } = await supabase
-        .from('remote_sessions')
-        .update({ status: 'active' })
-        .eq('id', session.id);
+    socket.onopen = () => {
+      console.log('WebSocket connected for session:', session.id)
       
-      if (updateError) {
-        console.error('Failed to update session status:', updateError);
-      } else {
-        console.log('Updated session to active status');
-      }
-    }
+      // Send session ready message
+      socket.send(JSON.stringify({
+        type: 'session_ready',
+        data: {
+          sessionId: session.id,
+          deviceId: session.device_id,
+          timestamp: new Date().toISOString()
+        }
+      }))
 
-    return {
-      id: session.id,
-      device_id: session.device_id,
-      device: session.rmm_devices,
-      user_id: session.user_id,
-      session_type: session.session_type
-    };
-  } catch (error) {
-    console.error('Token validation error:', error);
-    return null;
-  }
-}
-
-async function handleScreenFrame(frameData: any) {
-  // In a real implementation, this would process and forward screen frames
-  // to the remote viewer. For now, we'll just log it.
-  console.log('Screen frame received, size:', frameData.size);
-}
-
-async function handleMouseEvent(supabase: any, deviceId: string, eventData: any) {
-  // Execute mouse event via remote command
-  await supabase
-    .from('remote_commands')
-    .insert({
-      device_id: deviceId,
-      command: `mouse_event:${JSON.stringify(eventData)}`,
-      command_type: 'mouse',
-      status: 'pending'
-    });
-}
-
-async function handleKeyboardEvent(supabase: any, deviceId: string, eventData: any) {
-  // Execute keyboard event via remote command
-  await supabase
-    .from('remote_commands')
-    .insert({
-      device_id: deviceId,
-      command: `keyboard_event:${JSON.stringify(eventData)}`,
-      command_type: 'keyboard',
-      status: 'pending'
-    });
-}
-
-async function handleClipboardSync(supabase: any, deviceId: string, clipboardData: any) {
-  // Sync clipboard between remote session and agent
-  await supabase
-    .from('clipboard_syncs')
-    .insert({
-      device_id: deviceId,
-      content: clipboardData.content,
-      content_type: clipboardData.type,
-      direction: clipboardData.direction, // 'to_remote' or 'from_remote'
-      remote_session_id: null // Will be set by session context
-    });
-}
-
-async function handleFileTransfer(supabase: any, deviceId: string, transferData: any) {
-  // Handle file transfer between remote session and agent
-  await supabase
-    .from('file_transfers')
-    .insert({
-      device_id: deviceId,
-      file_name: transferData.file_name,
-      file_size: transferData.file_size,
-      transfer_type: transferData.type, // 'upload' or 'download'
-      local_path: transferData.local_path,
-      remote_path: transferData.remote_path,
-      transfer_status: 'pending'
-    });
-}
-
-async function handleAIQuery(supabase: any, sessionInfo: any, queryData: any) {
-  try {
-    // Process AI query with context from current remote session
-    const context = {
-      device_id: sessionInfo.device_id,
-      session_type: sessionInfo.session_type,
-      current_screen: queryData.screen_context,
-      query: queryData.query
-    };
-
-    // Call AI assistant function with SafeDoc and SafePass integration
-    const { data, error } = await supabase.functions.invoke('ai-remote-assistant', {
-      body: {
-        context,
-        query: queryData.query,
-        integrations: {
-          safedoc: queryData.include_safedoc || false,
-          safepass: queryData.include_safepass || false
+      // Simulate desktop frames for demo
+      const sendFrame = () => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({
+            type: 'screen_frame',
+            data: {
+              frame: 'base64_encoded_frame_data_would_go_here',
+              timestamp: new Date().toISOString(),
+              resolution: { width: 1920, height: 1080 }
+            }
+          }))
         }
       }
-    });
 
-    if (error) throw error;
+      // Send frame every 100ms for smooth experience
+      const frameInterval = setInterval(sendFrame, 100)
 
-    return {
-      response: data.response,
-      suggestions: data.suggestions,
-      documents: data.related_documents,
-      passwords: data.related_passwords,
-      actions: data.suggested_actions
-    };
+      socket.onclose = () => {
+        clearInterval(frameInterval)
+      }
+    }
+
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data)
+        console.log('Received message:', message.type)
+
+        switch (message.type) {
+          case 'mouse_event':
+            // Handle mouse events
+            console.log('Mouse event:', message.data)
+            break
+          
+          case 'keyboard_event':
+            // Handle keyboard events
+            console.log('Keyboard event:', message.data)
+            break
+          
+          case 'ping':
+            // Respond to ping
+            socket.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }))
+            break
+          
+          default:
+            console.log('Unknown message type:', message.type)
+        }
+      } catch (error) {
+        console.error('Error processing message:', error)
+      }
+    }
+
+    socket.onclose = (event) => {
+      console.log('WebSocket closed:', event.code, event.reason)
+    }
+
+    socket.onerror = (error) => {
+      console.error('WebSocket error:', error)
+    }
+
+    return response
   } catch (error) {
-    console.error('AI query error:', error);
-    return {
-      response: 'Sorry, I encountered an error processing your request.',
-      error: error.message
-    };
+    console.error('WebSocket setup error:', error)
+    return new Response('Internal server error', { status: 500, headers: corsHeaders })
   }
-}
+})
