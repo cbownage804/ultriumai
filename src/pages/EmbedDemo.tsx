@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Code, Globe, Users, DollarSign, Zap } from 'lucide-react';
+import { Shield, Code, Globe, Users, DollarSign, Zap, Key } from 'lucide-react';
 
 const EmbedDemo = () => {
   const [selectedClient, setSelectedClient] = useState('lawfirm');
@@ -48,7 +48,7 @@ const EmbedDemo = () => {
         {/* Header */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Shield className="h-8 w-8 text-blue-600" />
+            <Key className="h-8 w-8 text-blue-600" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               SafePass for MSP Widget
             </h1>
@@ -162,7 +162,7 @@ const EmbedDemo = () => {
                               className="pr-10"
                             />
                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                              <Shield 
+                              <Key 
                                 className="h-4 w-4 cursor-pointer" 
                                 style={{ color: currentClient.branding.primaryColor }}
                               />
@@ -179,7 +179,7 @@ const EmbedDemo = () => {
                               className="pr-10"
                             />
                             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                              <Shield 
+                              <Key 
                                 className="h-4 w-4 cursor-pointer" 
                                 style={{ color: currentClient.branding.primaryColor }}
                               />
@@ -198,7 +198,7 @@ const EmbedDemo = () => {
                     {/* SafePass Widget Preview */}
                     <div className="mt-6 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
                       <div className="flex items-center gap-2 mb-3">
-                        <Shield className="h-4 w-4 text-blue-600" />
+                        <Key className="h-4 w-4 text-blue-600" />
                         <span className="text-sm font-medium text-blue-800">
                           {currentClient.branding.companyName} Password Manager
                         </span>
@@ -230,7 +230,7 @@ const EmbedDemo = () => {
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-start gap-3">
-                      <Shield className="h-5 w-5 text-green-500 mt-0.5" />
+                      <Key className="h-5 w-5 text-green-500 mt-0.5" />
                       <div>
                         <div className="font-medium">Auto-Detection</div>
                         <div className="text-sm text-muted-foreground">

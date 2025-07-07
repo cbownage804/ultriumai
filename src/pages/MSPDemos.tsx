@@ -22,7 +22,8 @@ import {
   Eye,
   Search,
   Wrench,
-  MessageSquare
+  MessageSquare,
+  Key
 } from 'lucide-react';
 import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
@@ -54,7 +55,7 @@ const MSPDemos = () => {
         pay: 5,
         profit: 10
       },
-      icon: Shield,
+      icon: Key,
       color: 'blue'
     },
     {
