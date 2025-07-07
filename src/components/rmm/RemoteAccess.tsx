@@ -68,8 +68,7 @@ export const RemoteAccess = () => {
 
   useEffect(() => {
     loadDevices();
-    loadSessions();
-  }, [loadSessions]);
+  }, []);
 
   const loadDevices = async () => {
     try {
