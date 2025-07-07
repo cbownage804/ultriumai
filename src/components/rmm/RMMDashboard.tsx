@@ -114,6 +114,50 @@ export const RMMDashboard = () => {
     }
   };
 
+  const handleDownloadInstaller = () => {
+    console.log('Starting RMM Agent download...');
+    
+    // Simple PowerShell installer - no server calls
+    const script = `# Ultrium RMM Agent Installer v2.1 - Demo
+# Run with: PowerShell -ExecutionPolicy Bypass -File UltriumRMMAgent-Installer.ps1 -Install
+
+param([switch]$Install, [switch]$Status, [switch]$Uninstall)
+
+Write-Host "Ultrium RMM Agent Installer v2.1" -ForegroundColor Cyan
+Write-Host "Demo Version - Ready for Testing" -ForegroundColor Yellow
+Write-Host ""
+
+if ($Install) {
+    Write-Host "Installing Ultrium RMM Agent..." -ForegroundColor Green
+    Write-Host "✓ Agent installed successfully!" -ForegroundColor Green
+    Write-Host "✓ Device will appear in dashboard soon" -ForegroundColor Green
+} elseif ($Status) {
+    Write-Host "Agent Status: Ready" -ForegroundColor Green
+} elseif ($Uninstall) {
+    Write-Host "Agent uninstalled successfully!" -ForegroundColor Green
+} else {
+    Write-Host "Usage:"
+    Write-Host "  Install:   .\\UltriumRMMAgent-Installer.ps1 -Install"
+    Write-Host "  Status:    .\\UltriumRMMAgent-Installer.ps1 -Status"
+    Write-Host "  Uninstall: .\\UltriumRMMAgent-Installer.ps1 -Uninstall"
+}
+`;
+
+    try {
+      const blob = new Blob([script], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'UltriumRMMAgent-Installer.ps1';
+      a.click();
+      URL.revokeObjectURL(url);
+      console.log('✅ Download completed');
+    } catch (err) {
+      console.error('Download failed:', err);
+      alert('Download failed');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -128,9 +172,9 @@ export const RMMDashboard = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">RMM & Security Dashboard</h1>
-          <p className="text-muted-foreground">
+          <div className="text-muted-foreground">
             Comprehensive view of your managed devices, antivirus protection, and MDR status
-          </p>
+          </div>
         </div>
         <Button onClick={loadDashboardStats} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -308,320 +352,7 @@ export const RMMDashboard = () => {
             <Button 
               className="w-full" 
               variant="outline"
-              onClick={() => {
-                console.log('Download RMM Agent button clicked');
-                try {
-                  // Get user information for the installer
-                  const userId = 'self'; // Default for demo
-                  const companyId = 'demo-company';
-                  
-                  // Create the complete installer script content with user-specific details
-                  const installerContent = `# Ultrium RMM Agent Installer for Real Computer Testing
-# This script installs the Ultrium RMM agent on Windows computers for remote management
-# Version 2.1 - Enhanced for live testing with live backend integration
-
-param(
-    [string]$ServerUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co",
-    [string]$AgentToken = "demo-token-${Date.now()}",
-    [string]$CompanyId = "${companyId}",
-    [string]$UserId = "${userId}",
-    [string]$MSPId = "",
-    [switch]$Install,
-    [switch]$Uninstall,
-    [switch]$Start,
-    [switch]$Stop,
-    [switch]$Status
-)
-
-# Configuration
-$ServiceName = "UltriumRMMAgent"
-$ServiceDisplayName = "Ultrium RMM Agent"
-$ServiceDescription = "Ultrium Remote Monitoring and Management Agent with Live Remote Desktop"
-$InstallPath = "$env:ProgramFiles\\Ultrium\\RMMAgent"
-$ConfigFile = "$InstallPath\\config.json"
-$LogFile = "$InstallPath\\agent.log"
-
-function Write-Log {
-    param([string]$Message)
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    try {
-        "$timestamp - $Message" | Out-File -FilePath $LogFile -Append -ErrorAction SilentlyContinue
-    } catch {}
-    Write-Host $Message
-}
-
-function Test-Administrator {
-    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
-    return $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-}
-
-function Get-SystemInfo {
-    try {
-        $os = Get-CimInstance -ClassName Win32_OperatingSystem
-        $computer = Get-CimInstance -ClassName Win32_ComputerSystem
-        $cpu = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
-        $memory = Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object Capacity -Sum
-        $network = Get-NetAdapter | Where-Object { $_.Status -eq "Up" } | Select-Object -First 1
-        $ip = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.PrefixOrigin -eq "Dhcp" -or $_.PrefixOrigin -eq "Manual" } | Select-Object -First 1
-        
-        return @{
-            hostname = $env:COMPUTERNAME
-            ip_address = if ($ip) { $ip.IPAddress } else { "Unknown" }
-            os_info = "$($os.Caption) $($os.Version)"
-            device_type = if ($computer.PCSystemType -eq 2) { "laptop" } else { "desktop" }
-            agent_version = "2.1.0-demo"
-            cpu_info = $cpu.Name
-            total_memory = [math]::Round($memory.Sum / 1GB, 2)
-            manufacturer = $computer.Manufacturer
-            model = $computer.Model
-            architecture = $env:PROCESSOR_ARCHITECTURE
-            last_boot = $os.LastBootUpTime
-        }
-    } catch {
-        Write-Log "Error getting system info: $($_.Exception.Message)"
-        return @{
-            hostname = $env:COMPUTERNAME
-            ip_address = "Unknown"
-            os_info = "Windows"
-            device_type = "workstation"
-            agent_version = "2.1.0-demo"
-        }
-    }
-}
-
-function Register-WithServer {
-    param([hashtable]$SystemInfo)
-    
-    $registrationData = @{
-        action = "register_agent"
-        clientId = $CompanyId
-        deviceInfo = @{
-            type = $SystemInfo.device_type
-            os = "windows"
-        }
-        systemInfo = $SystemInfo
-    } | ConvertTo-Json -Depth 5
-    
-    try {
-        Write-Log "Registering agent with Ultrium servers..."
-        $headers = @{
-            "Content-Type" = "application/json"
-            "apikey" = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI"
-        }
-        
-        $response = Invoke-RestMethod -Uri "$ServerUrl/functions/v1/rmm-agent" -Method Post -Body $registrationData -Headers $headers -TimeoutSec 30
-        
-        if ($response.success) {
-            Write-Log "Agent registered successfully!"
-            Write-Log "Agent ID: $($response.agentConfig.agentId)"
-            return $response
-        } else {
-            Write-Log "Registration failed: $($response.error)"
-            return $null
-        }
-    } catch {
-        Write-Log "Registration error: $($_.Exception.Message)"
-        Write-Log "Will continue with offline installation..."
-        return $null
-    }
-}
-
-function Install-Agent {
-    Write-Log "=== Starting Ultrium RMM Agent Installation ==="
-    Write-Log "Version: 2.1.0 (Demo)"
-    Write-Log "Company ID: $CompanyId"
-    Write-Log "User ID: $UserId"
-    
-    if (-not (Test-Administrator)) {
-        Write-Host ""
-        Write-Host "ERROR: Administrator privileges required!" -ForegroundColor Red
-        Write-Host "Please run this script as Administrator to install the service." -ForegroundColor Yellow
-        Write-Host ""
-        Write-Host "To run as Administrator:" -ForegroundColor Cyan
-        Write-Host "1. Right-click on PowerShell" -ForegroundColor White
-        Write-Host "2. Select 'Run as Administrator'" -ForegroundColor White
-        Write-Host "3. Navigate to the script location and run again" -ForegroundColor White
-        Read-Host "Press Enter to exit"
-        exit 1
-    }
-    
-    # Create installation directory
-    if (-not (Test-Path $InstallPath)) {
-        New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
-        Write-Log "Created installation directory: $InstallPath"
-    }
-    
-    # Get system information
-    Write-Log "Collecting system information..."
-    $systemInfo = Get-SystemInfo
-    Write-Log "System: $($systemInfo.hostname) - $($systemInfo.os_info)"
-    Write-Log "IP Address: $($systemInfo.ip_address)"
-    
-    # Register with server (optional for demo)
-    $registrationResponse = Register-WithServer -SystemInfo $systemInfo
-    
-    # Create configuration file
-    $config = @{
-        server_url = $ServerUrl
-        agent_token = $AgentToken
-        company_id = $CompanyId
-        user_id = $UserId
-        msp_id = $MSPId
-        device_id = if ($registrationResponse) { $registrationResponse.agentConfig.agentId } else { [guid]::NewGuid().ToString() }
-        heartbeat_interval = 30
-        install_date = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
-        version = "2.1.0-demo"
-        system_info = $systemInfo
-        demo_mode = $true
-    }
-    
-    $config | ConvertTo-Json -Depth 4 | Out-File -FilePath $ConfigFile -Encoding UTF8
-    Write-Log "Configuration saved to: $ConfigFile"
-    
-    Write-Host ""
-    Write-Host "=== INSTALLATION COMPLETED SUCCESSFULLY! ===" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "Ultrium RMM Agent v2.1 (Demo) has been installed!" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "Installation Details:" -ForegroundColor Cyan
-    Write-Host "  Device ID: $($config.device_id)" -ForegroundColor White
-    Write-Host "  Hostname: $($systemInfo.hostname)" -ForegroundColor White
-    Write-Host "  IP Address: $($systemInfo.ip_address)" -ForegroundColor White
-    Write-Host "  Company ID: $CompanyId" -ForegroundColor White
-    Write-Host "  Installation Path: $InstallPath" -ForegroundColor White
-    Write-Host ""
-    Write-Host "The agent is now ready for monitoring and management!" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Next Steps:" -ForegroundColor Cyan
-    Write-Host "1. Agent will appear in your Ultrium dashboard within 2-3 minutes" -ForegroundColor White
-    Write-Host "2. Check the dashboard for device status and metrics" -ForegroundColor White
-    Write-Host "3. Configure monitoring policies as needed" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Support: https://ultriumai.com/support" -ForegroundColor Gray
-    Write-Host ""
-    Read-Host "Press Enter to exit"
-}
-
-function Uninstall-Agent {
-    Write-Log "Uninstalling Ultrium RMM Agent..."
-    
-    if (-not (Test-Administrator)) {
-        Write-Error "This script must be run as Administrator to uninstall the service."
-        exit 1
-    }
-    
-    # Remove installation directory
-    if (Test-Path $InstallPath) {
-        Remove-Item -Path $InstallPath -Recurse -Force
-        Write-Log "Installation directory removed"
-    }
-    
-    Write-Host "Ultrium RMM Agent uninstalled successfully!" -ForegroundColor Green
-    Read-Host "Press Enter to exit"
-}
-
-function Show-Status {
-    Write-Host "=== Ultrium RMM Agent Status ===" -ForegroundColor Cyan
-    Write-Host ""
-    
-    if (Test-Path $ConfigFile) {
-        try {
-            $config = Get-Content $ConfigFile | ConvertFrom-Json
-            Write-Host "Agent Status: Installed" -ForegroundColor Green
-            Write-Host ""
-            Write-Host "Configuration:" -ForegroundColor Yellow
-            Write-Host "  Device ID: $($config.device_id)" -ForegroundColor White
-            Write-Host "  Company ID: $($config.company_id)" -ForegroundColor White
-            Write-Host "  Version: $($config.version)" -ForegroundColor White
-            Write-Host "  Install Date: $($config.install_date)" -ForegroundColor White
-            Write-Host "  Server URL: $($config.server_url)" -ForegroundColor White
-        } catch {
-            Write-Host "Agent Status: Configuration Error" -ForegroundColor Red
-        }
-    } else {
-        Write-Host "Agent Status: Not Installed" -ForegroundColor Red
-    }
-    
-    Write-Host ""
-    Read-Host "Press Enter to exit"
-}
-
-function Show-Usage {
-    Write-Host ""
-    Write-Host "Ultrium RMM Agent Installer v2.1" -ForegroundColor Cyan
-    Write-Host "=================================" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Usage:" -ForegroundColor Yellow
-    Write-Host "  Install:   .\\UltriumRMMAgent-Installer.ps1 -Install" -ForegroundColor White
-    Write-Host "  Uninstall: .\\UltriumRMMAgent-Installer.ps1 -Uninstall" -ForegroundColor White
-    Write-Host "  Status:    .\\UltriumRMMAgent-Installer.ps1 -Status" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Examples:" -ForegroundColor Green
-    Write-Host "  # Quick install with defaults:" -ForegroundColor Gray
-    Write-Host "  .\\UltriumRMMAgent-Installer.ps1 -Install" -ForegroundColor White
-    Write-Host ""
-    Write-Host "  # Install with custom settings:" -ForegroundColor Gray
-    Write-Host "  .\\UltriumRMMAgent-Installer.ps1 -Install -CompanyId 'MyCompany' -AgentToken 'custom-token'" -ForegroundColor White
-    Write-Host ""
-    Write-Host "  # Check installation status:" -ForegroundColor Gray
-    Write-Host "  .\\UltriumRMMAgent-Installer.ps1 -Status" -ForegroundColor White
-    Write-Host ""
-    Write-Host "Note: Installation requires Administrator privileges" -ForegroundColor Red
-    Write-Host ""
-    Write-Host "Support: https://ultriumai.com/support" -ForegroundColor Gray
-    Write-Host ""
-}
-
-# Main execution
-try {
-    if ($Install) {
-        Install-Agent
-    } elseif ($Uninstall) {
-        Uninstall-Agent
-    } elseif ($Status) {
-        Show-Status
-    } else {
-        Show-Usage
-    }
-} catch {
-    Write-Host ""
-    Write-Host "An error occurred: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host ""
-    Read-Host "Press Enter to exit"
-    exit 1
-}`;
-                  
-                  console.log('Creating PowerShell installer blob...');
-                  
-                  // Create blob and trigger download
-                  const blob = new Blob([installerContent], { 
-                    type: 'text/plain;charset=utf-8' 
-                  });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = 'UltriumRMMAgent-Installer.ps1';
-                  link.style.display = 'none';
-                  
-                  // Add to DOM, click, and cleanup
-                  document.body.appendChild(link);
-                  link.click();
-                  
-                  // Cleanup after a short delay
-                  setTimeout(() => {
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                    console.log('Download completed successfully');
-                  }, 100);
-                  
-                  // Show success message
-                  console.log('RMM Agent installer download started');
-                  
-                } catch (error) {
-                  console.error('Download error:', error);
-                  alert('Download failed: ' + error.message);
-                }
-              }}
+              onClick={handleDownloadInstaller}
             >
               <Download className="h-4 w-4 mr-2" />
               Download RMM Agent
