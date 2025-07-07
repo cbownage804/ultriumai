@@ -139,28 +139,57 @@ serve(async (req) => {
 
 async function validateSessionToken(supabase: any, token: string) {
   try {
-    // Get session info by token
-    const { data: session } = await supabase
+    console.log('Validating session token:', token);
+    
+    // Get session info by token - allow any status initially
+    const { data: session, error } = await supabase
       .from('remote_sessions')
       .select(`
         *,
         rmm_devices (*)
       `)
       .eq('session_token', token)
-      .in('status', ['connecting', 'active'])
       .single();
 
-    if (session) {
-      return {
-        id: session.id,
-        device_id: session.device_id,
-        device: session.rmm_devices,
-        user_id: session.user_id,
-        session_type: session.session_type
-      };
+    if (error) {
+      console.error('Session query error:', error);
+      return null;
     }
 
-    return null;
+    if (!session) {
+      console.error('No session found for token');
+      return null;
+    }
+
+    console.log('Found session:', session.id, 'with status:', session.status);
+
+    // Check if session is valid (not ended)
+    if (session.status === 'ended') {
+      console.error('Session has ended');
+      return null;
+    }
+
+    // Update session to active if it's still connecting
+    if (session.status === 'connecting') {
+      const { error: updateError } = await supabase
+        .from('remote_sessions')
+        .update({ status: 'active' })
+        .eq('id', session.id);
+      
+      if (updateError) {
+        console.error('Failed to update session status:', updateError);
+      } else {
+        console.log('Updated session to active status');
+      }
+    }
+
+    return {
+      id: session.id,
+      device_id: session.device_id,
+      device: session.rmm_devices,
+      user_id: session.user_id,
+      session_type: session.session_type
+    };
   } catch (error) {
     console.error('Token validation error:', error);
     return null;
