@@ -59,8 +59,23 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
   useEffect(() => {
     const connectToSession = async () => {
       try {
-        // Get session token from your session management
-        const sessionToken = sessionId; // In real implementation, get actual token
+        // Get the session token from the sessions data
+        const { sessions } = useRemoteAccess();
+        const session = sessions.find(s => s.id === sessionId);
+        
+        if (!session) {
+          console.error('Session not found:', sessionId);
+          toast({
+            title: "Session Not Found",
+            description: "Could not find session data",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        const sessionToken = session.session_token;
+        console.log('Connecting with session token:', sessionToken);
+        
         const ws = await connectWebSocket(sessionToken);
         
         if (ws) {
