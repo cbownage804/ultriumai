@@ -33,13 +33,17 @@ serve(async (req) => {
   let authenticated = false;
 
   socket.onopen = async () => {
-    console.log("Remote session WebSocket connection established");
+    console.log("Remote session WebSocket connection established with token:", sessionToken);
     
     try {
       // Validate session token
+      console.log("Attempting to validate session token...");
       sessionInfo = await validateSessionToken(supabase, sessionToken);
+      console.log("Session validation result:", sessionInfo ? "SUCCESS" : "FAILED");
+      
       if (sessionInfo) {
         authenticated = true;
+        console.log("Session authenticated, sending ready message");
         socket.send(JSON.stringify({
           type: 'session_ready',
           session_id: sessionInfo.id,
@@ -57,6 +61,7 @@ serve(async (req) => {
           timestamp: Date.now()
         }));
       } else {
+        console.error("Session validation failed - closing connection");
         socket.send(JSON.stringify({
           type: 'auth_error',
           message: 'Invalid session token',
@@ -65,7 +70,7 @@ serve(async (req) => {
         socket.close();
       }
     } catch (error) {
-      console.error('Session validation error:', error);
+      console.error('Session validation error - closing connection:', error);
       socket.close();
     }
   };

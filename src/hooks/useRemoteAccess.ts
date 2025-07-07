@@ -267,11 +267,14 @@ export const useRemoteAccess = () => {
   // Connect to WebSocket for live session
   const connectWebSocket = async (sessionToken: string) => {
     try {
+      console.log('Connecting WebSocket with token:', sessionToken);
       const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-remote-session?token=${sessionToken}`;
+      console.log('WebSocket URL:', wsUrl);
+      
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected successfully');
         setActiveWebSocket(ws);
         toast({
           title: "Live Session Connected",
@@ -281,7 +284,7 @@ export const useRemoteAccess = () => {
 
       ws.onmessage = (event) => {
         const message = JSON.parse(event.data);
-        console.log('WebSocket message:', message);
+        console.log('WebSocket message received:', message);
         
         // Handle different message types
         switch (message.type) {
@@ -290,6 +293,14 @@ export const useRemoteAccess = () => {
             break;
           case 'ai_response':
             console.log('AI response:', message.data);
+            break;
+          case 'auth_error':
+            console.error('WebSocket auth error:', message.message);
+            toast({
+              title: "Authentication Error",
+              description: message.message,
+              variant: "destructive",
+            });
             break;
           case 'error':
             toast({
@@ -301,8 +312,8 @@ export const useRemoteAccess = () => {
         }
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
+      ws.onclose = (event) => {
+        console.log('WebSocket disconnected - Code:', event.code, 'Reason:', event.reason);
         setActiveWebSocket(null);
         toast({
           title: "Session Disconnected",
