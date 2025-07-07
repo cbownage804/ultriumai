@@ -309,8 +309,10 @@ export const RMMDashboard = () => {
               className="w-full" 
               variant="outline"
               onClick={() => {
-                // Create the complete installer script content
-                const installerContent = `# Ultrium RMM Agent Installer for Real Computer Testing
+                console.log('Download button clicked');
+                try {
+                  // Create the complete installer script content
+                  const installerContent = `# Ultrium RMM Agent Installer for Real Computer Testing
 # This script installs the Ultrium RMM agent on Windows computers for remote management
 # Version 2.0 - Enhanced for live testing
 
@@ -424,17 +426,23 @@ try {
     Write-Error "An error occurred: $($_.Exception.Message)"
     exit 1
 }`;
-                
-                // Create blob and download
-                const blob = new Blob([installerContent], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'UltriumRMMAgent-Installer.ps1';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
+                  
+                  console.log('Creating blob and starting download...');
+                  // Create blob and download
+                  const blob = new Blob([installerContent], { type: 'text/plain;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = 'UltriumRMMAgent-Installer.ps1';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(url);
+                  console.log('Download completed successfully');
+                } catch (error) {
+                  console.error('Download error:', error);
+                  alert('Download failed: ' + error.message);
+                }
               }}
             >
               <Download className="h-4 w-4 mr-2" />
