@@ -25,7 +25,7 @@ import { RemoteAccess } from "@/components/rmm/RemoteAccess";
 import { useRMMData } from "@/hooks/useRMMData";
 
 export const RMMDashboard = () => {
-  const [activeTab, setActiveTab] = useState("monitor");
+  const [activeTab, setActiveTab] = useState("overview");
   const { 
     devices, 
     customers, 
