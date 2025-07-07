@@ -73,13 +73,16 @@ interface DashboardMetrics {
 
 interface ThreatFeed {
   id: string;
-  indicator_type: 'ip' | 'domain' | 'hash' | 'url' | 'email';
+  indicator_type: string;
   indicator_value: string;
-  confidence: number;
-  first_seen: string;
-  last_seen: string;
-  source: string;
-  threat_types: string[];
+  reputation: string;
+  score: number;
+  threats: any;
+  sources: any;
+  last_analyzed: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 const SafeSIEM = () => {
@@ -226,7 +229,7 @@ const SafeSIEM = () => {
       }
 
       if (threatIntel) {
-        setThreatFeeds(threatIntel as ThreatFeed[]);
+        setThreatFeeds(threatIntel || []);
       }
     } catch (error) {
       console.error('Error loading threat intelligence:', error);
@@ -662,16 +665,16 @@ const SafeSIEM = () => {
                           {threat.indicator_value}
                         </code>
                         <span className="text-sm font-medium">
-                          Confidence: {threat.confidence}%
+                          Score: {threat.score}%
                         </span>
                       </div>
-                      <Progress value={threat.confidence} className="w-24 h-2" />
+                      <Progress value={threat.score} className="w-24 h-2" />
                     </div>
                     
                     <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span>Source: {threat.source}</span>
-                      <span>First seen: {new Date(threat.first_seen).toLocaleDateString()}</span>
-                      <span>Types: {threat.threat_types.join(', ')}</span>
+                      <span>Sources: {Array.isArray(threat.sources) ? threat.sources.join(', ') : 'Unknown'}</span>
+                      <span>Last analyzed: {new Date(threat.last_analyzed).toLocaleDateString()}</span>
+                      <span>Reputation: {threat.reputation}</span>
                     </div>
                   </div>
                 ))}

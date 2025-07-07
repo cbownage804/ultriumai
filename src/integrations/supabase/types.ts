@@ -1274,6 +1274,227 @@ export type Database = {
         }
         Relationships: []
       }
+      edr_behavioral_analysis: {
+        Row: {
+          ai_confidence_score: number | null
+          analysis_timestamp: string
+          anomaly_indicators: Json | null
+          behavior_score: number | null
+          command_line: string | null
+          created_at: string
+          detection_rules_triggered: Json | null
+          endpoint_id: string | null
+          file_operations: Json | null
+          file_path: string | null
+          hash_sha256: string | null
+          id: string
+          memory_analysis: Json | null
+          mitre_tactics: string[] | null
+          mitre_techniques: string[] | null
+          network_connections: Json | null
+          parent_process_id: number | null
+          parent_process_name: string | null
+          process_id: number
+          process_name: string
+          registry_operations: Json | null
+          status: string
+          threat_classification: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_confidence_score?: number | null
+          analysis_timestamp?: string
+          anomaly_indicators?: Json | null
+          behavior_score?: number | null
+          command_line?: string | null
+          created_at?: string
+          detection_rules_triggered?: Json | null
+          endpoint_id?: string | null
+          file_operations?: Json | null
+          file_path?: string | null
+          hash_sha256?: string | null
+          id?: string
+          memory_analysis?: Json | null
+          mitre_tactics?: string[] | null
+          mitre_techniques?: string[] | null
+          network_connections?: Json | null
+          parent_process_id?: number | null
+          parent_process_name?: string | null
+          process_id: number
+          process_name: string
+          registry_operations?: Json | null
+          status?: string
+          threat_classification?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_confidence_score?: number | null
+          analysis_timestamp?: string
+          anomaly_indicators?: Json | null
+          behavior_score?: number | null
+          command_line?: string | null
+          created_at?: string
+          detection_rules_triggered?: Json | null
+          endpoint_id?: string | null
+          file_operations?: Json | null
+          file_path?: string | null
+          hash_sha256?: string | null
+          id?: string
+          memory_analysis?: Json | null
+          mitre_tactics?: string[] | null
+          mitre_techniques?: string[] | null
+          network_connections?: Json | null
+          parent_process_id?: number | null
+          parent_process_name?: string | null
+          process_id?: number
+          process_name?: string
+          registry_operations?: Json | null
+          status?: string
+          threat_classification?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edr_behavioral_analysis_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "safe_shield_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      edr_ml_models: {
+        Row: {
+          accuracy_score: number | null
+          created_at: string
+          false_positive_rate: number | null
+          id: string
+          is_active: boolean | null
+          last_trained: string | null
+          model_name: string
+          model_parameters: Json | null
+          model_type: string
+          model_version: string
+          performance_metrics: Json | null
+          training_data_size: number | null
+          updated_at: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          created_at?: string
+          false_positive_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_trained?: string | null
+          model_name: string
+          model_parameters?: Json | null
+          model_type: string
+          model_version: string
+          performance_metrics?: Json | null
+          training_data_size?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          created_at?: string
+          false_positive_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_trained?: string | null
+          model_name?: string
+          model_parameters?: Json | null
+          model_type?: string
+          model_version?: string
+          performance_metrics?: Json | null
+          training_data_size?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      edr_realtime_alerts: {
+        Row: {
+          alert_type: string
+          analyst_assigned: string | null
+          attack_stage: string | null
+          auto_response_enabled: boolean | null
+          behavioral_analysis_id: string | null
+          containment_status: string | null
+          created_at: string
+          description: string | null
+          endpoint_id: string | null
+          id: string
+          indicators_of_compromise: Json | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          response_actions_taken: Json | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          analyst_assigned?: string | null
+          attack_stage?: string | null
+          auto_response_enabled?: boolean | null
+          behavioral_analysis_id?: string | null
+          containment_status?: string | null
+          created_at?: string
+          description?: string | null
+          endpoint_id?: string | null
+          id?: string
+          indicators_of_compromise?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          response_actions_taken?: Json | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          analyst_assigned?: string | null
+          attack_stage?: string | null
+          auto_response_enabled?: boolean | null
+          behavioral_analysis_id?: string | null
+          containment_status?: string | null
+          created_at?: string
+          description?: string | null
+          endpoint_id?: string | null
+          id?: string
+          indicators_of_compromise?: Json | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          response_actions_taken?: Json | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "edr_realtime_alerts_behavioral_analysis_id_fkey"
+            columns: ["behavioral_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "edr_behavioral_analysis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "edr_realtime_alerts_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "safe_shield_endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_scans: {
         Row: {
           completed_at: string | null
@@ -5981,46 +6202,43 @@ export type Database = {
       }
       threat_intelligence: {
         Row: {
-          confidence: number
           created_at: string
-          first_seen: string
           id: string
           indicator_type: string
           indicator_value: string
-          is_active: boolean
-          last_seen: string
-          metadata: Json | null
-          source: string
-          threat_types: string[]
+          last_analyzed: string
+          reputation: string
+          score: number
+          sources: Json | null
+          threats: Json | null
           updated_at: string
+          user_id: string
         }
         Insert: {
-          confidence: number
           created_at?: string
-          first_seen?: string
           id?: string
           indicator_type: string
           indicator_value: string
-          is_active?: boolean
-          last_seen?: string
-          metadata?: Json | null
-          source: string
-          threat_types?: string[]
+          last_analyzed?: string
+          reputation: string
+          score?: number
+          sources?: Json | null
+          threats?: Json | null
           updated_at?: string
+          user_id: string
         }
         Update: {
-          confidence?: number
           created_at?: string
-          first_seen?: string
           id?: string
           indicator_type?: string
           indicator_value?: string
-          is_active?: boolean
-          last_seen?: string
-          metadata?: Json | null
-          source?: string
-          threat_types?: string[]
+          last_analyzed?: string
+          reputation?: string
+          score?: number
+          sources?: Json | null
+          threats?: Json | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

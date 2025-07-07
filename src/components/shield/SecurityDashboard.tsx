@@ -46,13 +46,16 @@ interface SecurityIncident {
 
 interface ThreatIntelligence {
   id: string;
-  threat_types: string[];
+  user_id: string;
   indicator_type: string;
   indicator_value: string;
-  source: string;
-  confidence: number;
-  first_seen: string;
-  last_seen: string;
+  reputation: string;
+  score: number;
+  threats: any;
+  sources: any;
+  last_analyzed: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const SecurityDashboard = () => {
@@ -92,8 +95,8 @@ export const SecurityDashboard = () => {
       const { data: threatData } = await supabase
         .from('threat_intelligence')
         .select('*')
-        .eq('is_active', true)
-        .order('first_seen', { ascending: false })
+        .eq('user_id', user.user.id)
+        .order('created_at', { ascending: false })
         .limit(20);
 
       // Calculate metrics from various sources
@@ -551,7 +554,7 @@ const ThreatIntelTable = ({ threats, getThreatLevelColor }: any) => {
               <td className="p-2">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className={`h-4 w-4 text-orange-600`} />
-                  <span className="capitalize">{threat.threat_types.join(', ')}</span>
+                  <span className="capitalize">{Array.isArray(threat.threats) ? threat.threats.map((t: any) => t.category || 'unknown').join(', ') : 'unknown'}</span>
                 </div>
               </td>
               <td className="p-2">
@@ -561,20 +564,20 @@ const ThreatIntelTable = ({ threats, getThreatLevelColor }: any) => {
                 </div>
               </td>
               <td className="p-2">
-                <Badge variant="outline" className="text-orange-600">
-                  Medium
+                <Badge variant="outline" className={threat.reputation === 'malicious' ? 'text-red-600' : threat.reputation === 'suspicious' ? 'text-orange-600' : threat.reputation === 'questionable' ? 'text-yellow-600' : 'text-green-600'}>
+                  {threat.reputation}
                 </Badge>
               </td>
               <td className="p-2">
-                <span className="text-sm">{threat.confidence}%</span>
+                <span className="text-sm">{threat.score}%</span>
               </td>
               <td className="p-2">
-                <span className="text-sm">{threat.source}</span>
+                <span className="text-sm">{Array.isArray(threat.sources) ? threat.sources.join(', ') : 'Unknown'}</span>
               </td>
               <td className="p-2">
                 <div className="text-sm">
-                  <div>{new Date(threat.first_seen).toLocaleDateString()}</div>
-                  <div className="text-muted-foreground">{new Date(threat.last_seen).toLocaleDateString()}</div>
+                  <div>{new Date(threat.last_analyzed).toLocaleDateString()}</div>
+                  <div className="text-muted-foreground">{new Date(threat.created_at).toLocaleDateString()}</div>
                 </div>
               </td>
             </tr>
