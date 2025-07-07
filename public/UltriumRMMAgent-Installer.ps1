@@ -1,6 +1,5 @@
-# Ultrium RMM Agent Installer for Real Computer Testing
-# This script installs the Ultrium RMM agent on Windows computers for remote management
-# Version 2.0 - Enhanced for live testing
+# Ultrium RMM Agent Installer v2.1 - Full Version
+# Run with: PowerShell -ExecutionPolicy Bypass -File UltriumRMMAgent-Installer.ps1 -Install
 
 param(
     [string]$ServerUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co",
@@ -48,7 +47,7 @@ function Get-SystemInfo {
             ip_address = $ip.IPAddress
             os_info = "$($os.Caption) $($os.Version)"
             device_type = if ($computer.PCSystemType -eq 2) { "laptop" } else { "desktop" }
-            agent_version = "2.0.0-live"
+            agent_version = "2.1.0-live"
             cpu_info = $cpu.Name
             total_memory = [math]::Round($memory.Sum / 1GB, 2)
             available_memory = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
@@ -131,7 +130,7 @@ function Send-Heartbeat {
             "Authorization" = "Bearer $AgentToken"
         }
         
-        Invoke-RestMethod -Uri "$ServerUrl/functions/v1/rmm-agent" -Method Post -Body ($heartbeatData | ConvertTo-Json -Depth 3) -Headers $headers | Out-Null
+        Invoke-RestMethod -Uri "$ServerUrl/functions/v1/rmm-agent" -Method Post -Body ($heartbeatData | ConvertTo-Json -Depth 3) -Headers $headers -TimeoutSec 30 | Out-Null
         Write-Log "Heartbeat sent successfully"
         
     } catch {
@@ -153,7 +152,7 @@ function Check-PendingCommands {
             "Authorization" = "Bearer $AgentToken"
         }
         
-        $response = Invoke-RestMethod -Uri "$ServerUrl/functions/v1/rmm-agent" -Method Post -Body ($commandData | ConvertTo-Json) -Headers $headers
+        $response = Invoke-RestMethod -Uri "$ServerUrl/functions/v1/rmm-command" -Method Post -Body ($commandData | ConvertTo-Json) -Headers $headers -TimeoutSec 30
         
         if ($response.success -and $response.commands) {
             foreach ($command in $response.commands) {
@@ -216,7 +215,7 @@ function Execute-Command {
             action = "command_result"
         } + $result
         
-        Invoke-RestMethod -Uri "$ServerUrl/functions/v1/rmm-agent" -Method Post -Body ($resultData | ConvertTo-Json -Depth 3) -Headers $headers | Out-Null
+        Invoke-RestMethod -Uri "$ServerUrl/functions/v1/rmm-command" -Method Post -Body ($resultData | ConvertTo-Json -Depth 3) -Headers $headers -TimeoutSec 30 | Out-Null
         Write-Log "Command result sent for: $($Command.id)"
         
     } catch {
@@ -225,7 +224,7 @@ function Execute-Command {
 }
 
 function Install-Agent {
-    Write-Log "Installing Ultrium RMM Agent v2.0..."
+    Write-Log "Installing Ultrium RMM Agent v2.1..."
     
     if (-not (Test-Administrator)) {
         Write-Error "This script must be run as Administrator to install the service."
@@ -263,7 +262,7 @@ function Install-Agent {
         heartbeat_interval = 30
         command_check_interval = 10
         install_date = (Get-Date).ToString("yyyy-MM-ddTHH:mm:ssZ")
-        version = "2.0.0-live"
+        version = "2.1.0-live"
         system_info = $systemInfo
     }
     
@@ -271,7 +270,7 @@ function Install-Agent {
     Write-Log "Configuration saved to: $ConfigFile"
     
     # Create the main agent service script
-    $serviceScript = @"
+    $ServiceScriptContent = @"
 # Ultrium RMM Agent Service - Live Version
 `$ConfigPath = "$ConfigFile"
 `$LogPath = "$LogFile"
@@ -343,7 +342,7 @@ function Check-Commands {
             "Authorization" = "Bearer `$(`$Config.agent_token)"
         }
         
-        `$response = Invoke-RestMethod -Uri "`$(`$Config.server_url)/functions/v1/rmm-agent" -Method Post -Body (`$commandData | ConvertTo-Json) -Headers `$headers -TimeoutSec 30
+        `$response = Invoke-RestMethod -Uri "`$(`$Config.server_url)/functions/v1/rmm-command" -Method Post -Body (`$commandData | ConvertTo-Json) -Headers `$headers -TimeoutSec 30
         
         if (`$response.success -and `$response.commands) {
             foreach (`$command in `$response.commands) {
@@ -379,7 +378,7 @@ function Check-Commands {
                 
                 # Send result back
                 try {
-                    Invoke-RestMethod -Uri "`$(`$Config.server_url)/functions/v1/rmm-agent" -Method Post -Body (`$result | ConvertTo-Json -Depth 3) -Headers `$headers -TimeoutSec 30 | Out-Null
+                    Invoke-RestMethod -Uri "`$(`$Config.server_url)/functions/v1/rmm-command" -Method Post -Body (`$result | ConvertTo-Json -Depth 3) -Headers `$headers -TimeoutSec 30 | Out-Null
                     Write-AgentLog "Command result sent for: `$(`$command.id)"
                 } catch {
                     Write-AgentLog "Failed to send command result: `$(`$_.Exception.Message)"
@@ -393,7 +392,7 @@ function Check-Commands {
 }
 
 # Main service loop
-Write-AgentLog "Starting Ultrium RMM Agent v2.0..."
+Write-AgentLog "Starting Ultrium RMM Agent v2.1..."
 
 `$config = Load-Config
 if (-not `$config) {
@@ -419,7 +418,7 @@ while (`$true) {
 "@
     
     $ServiceScriptPath = "$InstallPath\service.ps1"
-    $serviceScript | Out-File -FilePath $ServiceScriptPath -Encoding UTF8
+    $ServiceScriptContent | Out-File -FilePath $ServiceScriptPath -Encoding UTF8
     
     # Create Windows Service
     $servicePath = "powershell.exe -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$ServiceScriptPath`""
@@ -447,7 +446,7 @@ while (`$true) {
         if ($service.Status -eq "Running") {
             Write-Host ""
             Write-Host "=== INSTALLATION SUCCESSFUL ===" -ForegroundColor Green
-            Write-Host "Ultrium RMM Agent v2.0 has been installed and started!" -ForegroundColor Green
+            Write-Host "Ultrium RMM Agent v2.1 has been installed and started!" -ForegroundColor Green
             Write-Host ""
             Write-Host "Device ID: $deviceId" -ForegroundColor Cyan
             Write-Host "Hostname: $($systemInfo.hostname)" -ForegroundColor Cyan
@@ -530,7 +529,7 @@ function Show-Status {
 }
 
 function Show-Usage {
-    Write-Host "Ultrium RMM Agent Installer v2.0" -ForegroundColor Cyan
+    Write-Host "Ultrium RMM Agent Installer v2.1" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Usage:" -ForegroundColor Yellow
     Write-Host "  Install:   .\UltriumRMMAgent-Installer.ps1 -Install -AgentToken <token> -CompanyId <company-id>"
@@ -570,4 +569,3 @@ try {
     Write-Error "An error occurred: $($_.Exception.Message)"
     exit 1
 }
-"@
