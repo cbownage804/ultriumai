@@ -94,6 +94,8 @@ export const useRemoteAccess = () => {
           description: `Connected to ${data.session.rmm_devices?.hostname || 'device'}`,
         });
         
+        // Add the new session to our sessions list immediately
+        setSessions(prev => [data.session, ...prev]);
         await loadSessions();
         return data.session;
       }
@@ -373,15 +375,7 @@ export const useRemoteAccess = () => {
       console.log('Loading sessions...');
       const { data, error } = await supabase
         .from('remote_sessions')
-        .select(`
-          *,
-          rmm_devices!remote_sessions_device_id_fkey (
-            hostname,
-            ip_address,
-            device_type,
-            os_info
-          )
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -393,12 +387,7 @@ export const useRemoteAccess = () => {
       }
 
       console.log('Sessions loaded successfully:', data);
-      // Transform the data to match our type structure
-      const transformedSessions = data?.map(session => ({
-        ...session,
-        rmm_devices: Array.isArray(session.rmm_devices) ? session.rmm_devices[0] : session.rmm_devices
-      })) || [];
-      setSessions(transformedSessions);
+      setSessions(data || []);
     } catch (error) {
       console.error('Error loading sessions:', error);
       // For testing purposes, create a mock session that matches any requested session ID

@@ -52,24 +52,14 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
         // Get the session token from the sessions data
         let session = sessions.find(s => s.id === sessionId);
         
-        // If session not found, create a mock session for testing
         if (!session) {
-          console.log('Session not found in loaded sessions, creating mock session for testing');
-          session = {
-            id: sessionId,
-            user_id: 'mock-user',
-            session_token: 'mock-token-12345',
-            device_id: 'mock-device-1',
-            status: 'active',
-            session_type: 'desktop',
-            started_at: new Date().toISOString(),
-            rmm_devices: {
-              hostname: 'DESKTOP-TEST',
-              ip_address: '192.168.1.100',
-              device_type: 'workstation',
-              os_info: 'Windows 11 Pro'
-            }
-          };
+          console.log('Session not found in loaded sessions, this should not happen with real API calls');
+          toast({
+            title: "Session Not Found",
+            description: "Could not find session data",
+            variant: "destructive"
+          });
+          return;
         }
 
         const sessionToken = session.session_token;
