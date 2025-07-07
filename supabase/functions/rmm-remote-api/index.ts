@@ -47,12 +47,13 @@ serve(async (req) => {
 
     const url = new URL(req.url)
     let action = url.searchParams.get('action')
+    let requestBody = null
     
     // If action is not in URL params, try to get it from request body
     if (!action && req.method === 'POST') {
       try {
-        const body = await req.json()
-        action = body.action
+        requestBody = await req.json()
+        action = requestBody.action
       } catch (error) {
         console.error('Error parsing request body:', error)
       }
@@ -62,23 +63,23 @@ serve(async (req) => {
 
     switch (action) {
       case 'start_session':
-        return await startRemoteSession(req, supabaseWithAuth, user.id)
+        return await startRemoteSession(requestBody, supabaseWithAuth, user.id)
       case 'end_session':
-        return await endRemoteSession(req, supabaseWithAuth, user.id)
+        return await endRemoteSession(requestBody, supabaseWithAuth, user.id)
       case 'execute_command':
-        return await executeRemoteCommand(req, supabaseWithAuth, user.id)
+        return await executeRemoteCommand(requestBody, supabaseWithAuth, user.id)
       case 'execute_script':
-        return await executeScript(req, supabaseWithAuth, user.id)
+        return await executeScript(requestBody, supabaseWithAuth, user.id)
       case 'transfer_file':
-        return await handleFileTransfer(req, supabaseWithAuth, user.id)
+        return await handleFileTransfer(requestBody, supabaseWithAuth, user.id)
       case 'sync_clipboard':
-        return await syncClipboard(req, supabaseWithAuth, user.id)
+        return await syncClipboard(requestBody, supabaseWithAuth, user.id)
       case 'get_sessions':
-        return await getActiveSessions(req, supabaseWithAuth, user.id)
+        return await getActiveSessions(requestBody, supabaseWithAuth, user.id)
       case 'get_commands':
-        return await getCommandHistory(req, supabaseWithAuth, user.id)
+        return await getCommandHistory(requestBody, supabaseWithAuth, user.id)
       case 'get_file_transfers':
-        return await getFileTransfers(req, supabaseWithAuth, user.id)
+        return await getFileTransfers(requestBody, supabaseWithAuth, user.id)
       default:
         return new Response('Invalid action', { status: 400, headers: corsHeaders })
     }
@@ -88,9 +89,9 @@ serve(async (req) => {
   }
 })
 
-async function startRemoteSession(req: Request, supabase: any, userId: string) {
+async function startRemoteSession(body: any, supabase: any, userId: string) {
   try {
-    const { deviceId, sessionType = 'desktop' } = await req.json()
+    const { deviceId, sessionType = 'desktop' } = body
     
     console.log('Starting remote session:', { deviceId, sessionType, userId })
 
@@ -106,7 +107,7 @@ async function startRemoteSession(req: Request, supabase: any, userId: string) {
         session_type: sessionType,
         session_token: sessionToken,
         status: 'connecting',
-        client_ip: req.headers.get('x-forwarded-for') || 'unknown'
+        client_ip: 'unknown'
       })
       .select(`
         *,
@@ -152,8 +153,8 @@ async function startRemoteSession(req: Request, supabase: any, userId: string) {
   }
 }
 
-async function endRemoteSession(req: Request, supabase: any, userId: string) {
-  const { sessionId } = await req.json()
+async function endRemoteSession(body: any, supabase: any, userId: string) {
+  const { sessionId } = body
 
   const { error } = await supabase
     .from('remote_sessions')
@@ -174,8 +175,8 @@ async function endRemoteSession(req: Request, supabase: any, userId: string) {
   })
 }
 
-async function executeRemoteCommand(req: Request, supabase: any, userId: string) {
-  const { deviceId, sessionId, command, commandType = 'cmd' } = await req.json()
+async function executeRemoteCommand(body: any, supabase: any, userId: string) {
+  const { deviceId, sessionId, command, commandType = 'cmd' } = body
 
   // Insert command record
   const { data: cmdRecord, error } = await supabase
@@ -221,8 +222,8 @@ async function executeRemoteCommand(req: Request, supabase: any, userId: string)
   })
 }
 
-async function executeScript(req: Request, supabase: any, userId: string) {
-  const { deviceId, sessionId, scriptName, scriptContent, scriptType = 'powershell' } = await req.json()
+async function executeScript(body: any, supabase: any, userId: string) {
+  const { deviceId, sessionId, scriptName, scriptContent, scriptType = 'powershell' } = body
 
   const { data: scriptExecution, error } = await supabase
     .from('script_executions')
@@ -277,8 +278,8 @@ async function executeScript(req: Request, supabase: any, userId: string) {
   })
 }
 
-async function handleFileTransfer(req: Request, supabase: any, userId: string) {
-  const { deviceId, sessionId, transferType, localPath, remotePath, fileName, fileSize } = await req.json()
+async function handleFileTransfer(body: any, supabase: any, userId: string) {
+  const { deviceId, sessionId, transferType, localPath, remotePath, fileName, fileSize } = body
 
   const { data: transfer, error } = await supabase
     .from('file_transfers')
@@ -333,8 +334,8 @@ async function handleFileTransfer(req: Request, supabase: any, userId: string) {
   })
 }
 
-async function syncClipboard(req: Request, supabase: any, userId: string) {
-  const { deviceId, sessionId, content, contentType = 'text', direction } = await req.json()
+async function syncClipboard(body: any, supabase: any, userId: string) {
+  const { deviceId, sessionId, content, contentType = 'text', direction } = body
 
   const { error } = await supabase
     .from('clipboard_syncs')
@@ -357,7 +358,7 @@ async function syncClipboard(req: Request, supabase: any, userId: string) {
   })
 }
 
-async function getActiveSessions(req: Request, supabase: any, userId: string) {
+async function getActiveSessions(body: any, supabase: any, userId: string) {
   const { data: sessions, error } = await supabase
     .from('remote_sessions')
     .select(`
@@ -386,10 +387,8 @@ async function getActiveSessions(req: Request, supabase: any, userId: string) {
   })
 }
 
-async function getCommandHistory(req: Request, supabase: any, userId: string) {
-  const url = new URL(req.url)
-  const deviceId = url.searchParams.get('deviceId')
-  const limit = parseInt(url.searchParams.get('limit') || '50')
+async function getCommandHistory(body: any, supabase: any, userId: string) {
+  const limit = 50
 
   let query = supabase
     .from('remote_commands')
@@ -397,10 +396,6 @@ async function getCommandHistory(req: Request, supabase: any, userId: string) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
-
-  if (deviceId) {
-    query = query.eq('device_id', deviceId)
-  }
 
   const { data: commands, error } = await query
 
@@ -417,10 +412,8 @@ async function getCommandHistory(req: Request, supabase: any, userId: string) {
   })
 }
 
-async function getFileTransfers(req: Request, supabase: any, userId: string) {
-  const url = new URL(req.url)
-  const deviceId = url.searchParams.get('deviceId')
-  const limit = parseInt(url.searchParams.get('limit') || '50')
+async function getFileTransfers(body: any, supabase: any, userId: string) {
+  const limit = 50
 
   let query = supabase
     .from('file_transfers')
@@ -428,10 +421,6 @@ async function getFileTransfers(req: Request, supabase: any, userId: string) {
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit)
-
-  if (deviceId) {
-    query = query.eq('device_id', deviceId)
-  }
 
   const { data: transfers, error } = await query
 
