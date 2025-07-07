@@ -125,7 +125,7 @@ serve(async (req) => {
     if (sessionInfo) {
       // Update session status
       await supabase
-        .from('rmm_sessions')
+        .from('remote_sessions')
         .update({
           status: 'ended',
           ended_at: new Date().toISOString()
@@ -139,29 +139,22 @@ serve(async (req) => {
 
 async function validateSessionToken(supabase: any, token: string) {
   try {
-    // Decode and validate session token
-    const payload = JSON.parse(atob(token));
-    
-    if (payload.expires_at < Date.now()) {
-      throw new Error('Session token expired');
-    }
-
-    // Get session info
+    // Get session info by token
     const { data: session } = await supabase
-      .from('rmm_sessions')
+      .from('remote_sessions')
       .select(`
         *,
-        rmm_endpoints (*)
+        rmm_devices (*)
       `)
-      .eq('id', payload.session_id)
-      .eq('status', 'active')
+      .eq('session_token', token)
+      .in('status', ['connecting', 'active'])
       .single();
 
     if (session) {
       return {
         id: session.id,
         device_id: session.device_id,
-        device: session.rmm_endpoints,
+        device: session.rmm_devices,
         user_id: session.user_id,
         session_type: session.session_type
       };
@@ -181,57 +174,54 @@ async function handleScreenFrame(frameData: any) {
 }
 
 async function handleMouseEvent(supabase: any, deviceId: string, eventData: any) {
-  // Log mouse event for session recording
+  // Execute mouse event via remote command
   await supabase
-    .from('rmm_session_events')
+    .from('remote_commands')
     .insert({
       device_id: deviceId,
-      event_type: 'mouse',
-      event_data: eventData,
-      timestamp: new Date().toISOString()
+      command: `mouse_event:${JSON.stringify(eventData)}`,
+      command_type: 'mouse',
+      status: 'pending'
     });
 }
 
 async function handleKeyboardEvent(supabase: any, deviceId: string, eventData: any) {
-  // Log keyboard event (without sensitive data) for session recording
+  // Execute keyboard event via remote command
   await supabase
-    .from('rmm_session_events')
+    .from('remote_commands')
     .insert({
       device_id: deviceId,
-      event_type: 'keyboard',
-      event_data: {
-        key_count: eventData.keys?.length || 0,
-        modifiers: eventData.modifiers
-      },
-      timestamp: new Date().toISOString()
+      command: `keyboard_event:${JSON.stringify(eventData)}`,
+      command_type: 'keyboard',
+      status: 'pending'
     });
 }
 
 async function handleClipboardSync(supabase: any, deviceId: string, clipboardData: any) {
   // Sync clipboard between remote session and agent
   await supabase
-    .from('rmm_clipboard_sync')
+    .from('clipboard_syncs')
     .insert({
       device_id: deviceId,
       content: clipboardData.content,
       content_type: clipboardData.type,
-      direction: clipboardData.direction, // 'to_agent' or 'from_agent'
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+      direction: clipboardData.direction, // 'to_remote' or 'from_remote'
+      remote_session_id: null // Will be set by session context
     });
 }
 
 async function handleFileTransfer(supabase: any, deviceId: string, transferData: any) {
   // Handle file transfer between remote session and agent
   await supabase
-    .from('rmm_file_transfers')
+    .from('file_transfers')
     .insert({
       device_id: deviceId,
       file_name: transferData.file_name,
       file_size: transferData.file_size,
       transfer_type: transferData.type, // 'upload' or 'download'
-      status: 'in_progress',
-      created_at: new Date().toISOString()
+      local_path: transferData.local_path,
+      remote_path: transferData.remote_path,
+      transfer_status: 'pending'
     });
 }
 

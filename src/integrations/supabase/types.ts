@@ -470,6 +470,54 @@ export type Database = {
         }
         Relationships: []
       }
+      clipboard_syncs: {
+        Row: {
+          content: string
+          content_type: string
+          device_id: string
+          direction: string
+          id: string
+          remote_session_id: string
+          synced_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          content_type?: string
+          device_id: string
+          direction: string
+          id?: string
+          remote_session_id: string
+          synced_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          content_type?: string
+          device_id?: string
+          direction?: string
+          id?: string
+          remote_session_id?: string
+          synced_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_clipboard_syncs_device"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_clipboard_syncs_session"
+            columns: ["remote_session_id"]
+            isOneToOne: false
+            referencedRelation: "remote_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_alerts: {
         Row: {
           alert_type: string
@@ -1578,6 +1626,81 @@ export type Database = {
             columns: ["related_event_id"]
             isOneToOne: false
             referencedRelation: "security_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_transfers: {
+        Row: {
+          bytes_transferred: number | null
+          completed_at: string | null
+          created_at: string
+          device_id: string
+          error_message: string | null
+          file_name: string
+          file_size: number | null
+          id: string
+          local_path: string
+          remote_path: string
+          remote_session_id: string | null
+          started_at: string | null
+          transfer_speed: number | null
+          transfer_status: string
+          transfer_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bytes_transferred?: number | null
+          completed_at?: string | null
+          created_at?: string
+          device_id: string
+          error_message?: string | null
+          file_name: string
+          file_size?: number | null
+          id?: string
+          local_path: string
+          remote_path: string
+          remote_session_id?: string | null
+          started_at?: string | null
+          transfer_speed?: number | null
+          transfer_status?: string
+          transfer_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bytes_transferred?: number | null
+          completed_at?: string | null
+          created_at?: string
+          device_id?: string
+          error_message?: string | null
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          local_path?: string
+          remote_path?: string
+          remote_session_id?: string | null
+          started_at?: string | null
+          transfer_speed?: number | null
+          transfer_status?: string
+          transfer_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_file_transfers_device"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_file_transfers_session"
+            columns: ["remote_session_id"]
+            isOneToOne: false
+            referencedRelation: "remote_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -3300,6 +3423,119 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      remote_commands: {
+        Row: {
+          command: string
+          command_type: string
+          created_at: string
+          device_id: string
+          error_output: string | null
+          executed_at: string | null
+          exit_code: number | null
+          id: string
+          output: string | null
+          remote_session_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          command: string
+          command_type?: string
+          created_at?: string
+          device_id: string
+          error_output?: string | null
+          executed_at?: string | null
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          remote_session_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          command?: string
+          command_type?: string
+          created_at?: string
+          device_id?: string
+          error_output?: string | null
+          executed_at?: string | null
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          remote_session_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_remote_commands_device"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_remote_commands_session"
+            columns: ["remote_session_id"]
+            isOneToOne: false
+            referencedRelation: "remote_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remote_sessions: {
+        Row: {
+          client_ip: string | null
+          connection_details: Json | null
+          created_at: string
+          device_id: string
+          ended_at: string | null
+          id: string
+          session_token: string
+          session_type: string
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_ip?: string | null
+          connection_details?: Json | null
+          created_at?: string
+          device_id: string
+          ended_at?: string | null
+          id?: string
+          session_token: string
+          session_type?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_ip?: string | null
+          connection_details?: Json | null
+          created_at?: string
+          device_id?: string
+          ended_at?: string | null
+          id?: string
+          session_token?: string
+          session_type?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_remote_sessions_device"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       response_workflows: {
         Row: {
@@ -5567,6 +5803,75 @@ export type Database = {
             columns: ["asset_id"]
             isOneToOne: false
             referencedRelation: "safeweb_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      script_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          device_id: string
+          error_output: string | null
+          execution_status: string
+          exit_code: number | null
+          id: string
+          output: string | null
+          remote_session_id: string | null
+          script_content: string
+          script_name: string
+          script_type: string
+          started_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          device_id: string
+          error_output?: string | null
+          execution_status?: string
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          remote_session_id?: string | null
+          script_content: string
+          script_name: string
+          script_type?: string
+          started_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          device_id?: string
+          error_output?: string | null
+          execution_status?: string
+          exit_code?: number | null
+          id?: string
+          output?: string | null
+          remote_session_id?: string | null
+          script_content?: string
+          script_name?: string
+          script_type?: string
+          started_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_script_executions_device"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_script_executions_session"
+            columns: ["remote_session_id"]
+            isOneToOne: false
+            referencedRelation: "remote_sessions"
             referencedColumns: ["id"]
           },
         ]
