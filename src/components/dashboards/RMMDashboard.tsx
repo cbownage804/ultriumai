@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -24,6 +25,7 @@ import { RemoteAccess } from "@/components/rmm/RemoteAccess";
 import { useRMMData } from "@/hooks/useRMMData";
 
 export const RMMDashboard = () => {
+  const [activeTab, setActiveTab] = useState("monitor");
   const { 
     devices, 
     customers, 
@@ -129,10 +131,10 @@ export const RMMDashboard = () => {
         </div>
       </div>
 
-      <RMMOverview stats={stats} />
+      <RMMOverview stats={stats} onTabChange={setActiveTab} />
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="monitor" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-9 bg-muted/50 text-xs">
           <TabsTrigger value="monitor" className="data-[state=active]:bg-primary data-[state=active]:text-white">
             <BarChart3 className="h-3 w-3 mr-1" />

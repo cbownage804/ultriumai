@@ -15,14 +15,18 @@ interface RMMOverviewProps {
     pendingPatches: number;
     scriptsRunning: number;
   };
+  onTabChange?: (tab: string) => void;
 }
 
-export const RMMOverview = ({ stats }: RMMOverviewProps) => {
+export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
   return (
     <>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
+        <Card 
+          className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50 cursor-pointer hover:shadow-xl transition-shadow duration-200"
+          onClick={() => onTabChange?.('monitor')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Devices</CardTitle>
             <Server className="h-5 w-5 text-primary" />
@@ -55,7 +59,10 @@ export const RMMOverview = ({ stats }: RMMOverviewProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10">
+        <Card 
+          className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 cursor-pointer hover:shadow-xl transition-shadow duration-200"
+          onClick={() => onTabChange?.('patching')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Patches</CardTitle>
             <Download className="h-5 w-5 text-orange-600" />
@@ -66,7 +73,10 @@ export const RMMOverview = ({ stats }: RMMOverviewProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10">
+        <Card 
+          className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 cursor-pointer hover:shadow-xl transition-shadow duration-200"
+          onClick={() => onTabChange?.('automation')}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Scripts</CardTitle>
             <Code className="h-5 w-5 text-blue-600" />
@@ -88,7 +98,10 @@ export const RMMOverview = ({ stats }: RMMOverviewProps) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <div 
+              className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors duration-200"
+              onClick={() => onTabChange?.('servers')}
+            >
               <div className="flex items-center gap-3">
                 <Server className="h-8 w-8 text-green-600" />
                 <div>
@@ -98,7 +111,10 @@ export const RMMOverview = ({ stats }: RMMOverviewProps) => {
               </div>
               <CheckCircle className="h-5 w-5 text-green-600" />
             </div>
-            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div 
+              className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200"
+              onClick={() => onTabChange?.('workstations')}
+            >
               <div className="flex items-center gap-3">
                 <Server className="h-8 w-8 text-blue-600" />
                 <div>
@@ -108,7 +124,10 @@ export const RMMOverview = ({ stats }: RMMOverviewProps) => {
               </div>
               <CheckCircle className="h-5 w-5 text-blue-600" />
             </div>
-            <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+            <div 
+              className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors duration-200"
+              onClick={() => onTabChange?.('monitor')}
+            >
               <div className="flex items-center gap-3">
                 <Server className="h-8 w-8 text-purple-600" />
                 <div>
