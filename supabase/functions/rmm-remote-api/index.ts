@@ -79,53 +79,67 @@ serve(async (req) => {
 })
 
 async function startRemoteSession(req: Request, supabase: any, userId: string) {
-  const { deviceId, sessionType = 'desktop' } = await req.json()
+  try {
+    const { deviceId, sessionType = 'desktop' } = await req.json()
+    
+    console.log('Starting remote session:', { deviceId, sessionType, userId })
 
-  // Generate session token
-  const sessionToken = crypto.randomUUID()
-  
-  // Create session record
-  const { data: session, error } = await supabase
-    .from('remote_sessions')
-    .insert({
-      user_id: userId,
-      device_id: deviceId,
-      session_type: sessionType,
-      session_token: sessionToken,
-      status: 'connecting',
-      client_ip: req.headers.get('x-forwarded-for') || 'unknown'
-    })
-    .select(`
-      *,
-      rmm_devices (
-        hostname,
-        ip_address,
-        device_type,
-        os_info
-      )
-    `)
-    .single()
-
-  if (error) {
-    console.error('Failed to create session:', error)
-    return new Response('Failed to create session', { status: 500, headers: corsHeaders })
-  }
-
-  // Simulate connection establishment
-  setTimeout(async () => {
-    await supabase
+    // Generate session token
+    const sessionToken = crypto.randomUUID()
+    
+    // Create session record
+    const { data: session, error } = await supabase
       .from('remote_sessions')
-      .update({ status: 'active' })
-      .eq('id', session.id)
-  }, 2000)
+      .insert({
+        user_id: userId,
+        device_id: deviceId,
+        session_type: sessionType,
+        session_token: sessionToken,
+        status: 'connecting',
+        client_ip: req.headers.get('x-forwarded-for') || 'unknown'
+      })
+      .select(`
+        *,
+        rmm_devices (
+          hostname,
+          ip_address,
+          device_type,
+          os_info
+        )
+      `)
+      .single()
 
-  return new Response(JSON.stringify({
-    success: true,
-    session: session,
-    wsUrl: `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-remote-session?token=${sessionToken}`
-  }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  })
+    if (error) {
+      console.error('Failed to create session:', error)
+      return new Response(`Failed to create session: ${error.message}`, { status: 500, headers: corsHeaders })
+    }
+
+    console.log('Session created successfully:', session.id)
+
+    // Simulate connection establishment
+    setTimeout(async () => {
+      try {
+        await supabase
+          .from('remote_sessions')
+          .update({ status: 'active' })
+          .eq('id', session.id)
+        console.log('Session status updated to active')
+      } catch (err) {
+        console.error('Failed to update session status:', err)
+      }
+    }, 2000)
+
+    return new Response(JSON.stringify({
+      success: true,
+      session: session,
+      wsUrl: `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-remote-session?token=${sessionToken}`
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  } catch (error) {
+    console.error('StartRemoteSession error:', error)
+    return new Response(`Internal error: ${error.message}`, { status: 500, headers: corsHeaders })
+  }
 }
 
 async function endRemoteSession(req: Request, supabase: any, userId: string) {
