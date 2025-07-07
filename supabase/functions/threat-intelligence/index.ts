@@ -81,6 +81,30 @@ async function analyzeIndicators(payload: any) {
       }
     }
 
+    // AbuseIPDB Analysis (for IPs)
+    try {
+      const abuseAnalysis = await analyzeWithAbuseIPDB(indicator)
+      if (abuseAnalysis) {
+        analysis.threats.push(...abuseAnalysis.threats)
+        analysis.sources.push('AbuseIPDB')
+        analysis.score += abuseAnalysis.score
+      }
+    } catch (error) {
+      console.warn('AbuseIPDB analysis failed:', error)
+    }
+
+    // URLVoid Analysis (for domains/URLs)
+    try {
+      const urlAnalysis = await analyzeWithURLVoid(indicator)
+      if (urlAnalysis) {
+        analysis.threats.push(...urlAnalysis.threats)
+        analysis.sources.push('URLVoid')
+        analysis.score += urlAnalysis.score
+      }
+    } catch (error) {
+      console.warn('URLVoid analysis failed:', error)
+    }
+
     // IntelX Analysis
     if (intelxKey) {
       try {
@@ -145,57 +169,140 @@ async function analyzeIndicators(payload: any) {
 async function analyzeWithVirusTotal(indicator: any, apiKey: string) {
   const { value, type } = indicator
   let endpoint = ''
-  let params = new URLSearchParams({ apikey: apiKey })
+  let headers = {
+    'x-apikey': apiKey,
+    'Content-Type': 'application/json'
+  }
 
+  // Use v3 API for better results
   switch (type) {
     case 'ip':
-      endpoint = 'https://www.virustotal.com/vtapi/v2/ip-address/report'
-      params.append('ip', value)
+      endpoint = `https://www.virustotal.com/api/v3/ip_addresses/${value}`
       break
     case 'domain':
-      endpoint = 'https://www.virustotal.com/vtapi/v2/domain/report'
-      params.append('domain', value)
+      endpoint = `https://www.virustotal.com/api/v3/domains/${value}`
       break
     case 'url':
-      endpoint = 'https://www.virustotal.com/vtapi/v2/url/report'
-      params.append('resource', value)
+      // For URLs, we need to encode them
+      const urlId = btoa(value).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')
+      endpoint = `https://www.virustotal.com/api/v3/urls/${urlId}`
       break
     case 'hash':
-      endpoint = 'https://www.virustotal.com/vtapi/v2/file/report'
-      params.append('resource', value)
+      endpoint = `https://www.virustotal.com/api/v3/files/${value}`
       break
     default:
       return null
   }
 
-  const response = await fetch(`${endpoint}?${params}`)
+  const response = await fetch(endpoint, { headers })
   if (!response.ok) return null
 
   const data = await response.json()
   
-  if (data.response_code !== 1) return null
+  if (!data.data) return null
 
-  const positives = data.positives || 0
-  const total = data.total || 0
+  const stats = data.data.attributes?.last_analysis_stats || {}
+  const results = data.data.attributes?.last_analysis_results || {}
+  
+  const malicious = stats.malicious || 0
+  const suspicious = stats.suspicious || 0
+  const total = Object.keys(results).length || 0
   const threats = []
 
-  if (data.scans) {
-    Object.entries(data.scans).forEach(([engine, result]: [string, any]) => {
-      if (result.detected && result.result) {
-        threats.push({
-          engine,
-          threat_name: result.result,
-          category: categorizeThreap(result.result)
-        })
-      }
-    })
-  }
+  // Extract threat information
+  Object.entries(results).forEach(([engine, result]: [string, any]) => {
+    if (result.category === 'malicious' && result.result) {
+      threats.push({
+        engine,
+        threat_name: result.result,
+        category: categorizeThreap(result.result)
+      })
+    }
+  })
 
+  const positives = malicious + suspicious
+  
   return {
-    reputation: positives > 5 ? 'malicious' : positives > 0 ? 'suspicious' : 'clean',
+    reputation: malicious > 5 ? 'malicious' : positives > 0 ? 'suspicious' : 'clean',
     score: Math.min(positives * 10, 80),
-    threats: threats.slice(0, 10), // Limit to top 10
-    detection_ratio: `${positives}/${total}`
+    threats: threats.slice(0, 10),
+    detection_ratio: `${positives}/${total}`,
+    last_analysis: data.data.attributes?.last_analysis_date
+  }
+}
+
+// Add AbuseIPDB analysis for IP reputation
+async function analyzeWithAbuseIPDB(indicator: any) {
+  const { value, type } = indicator
+  
+  if (type !== 'ip') return null
+
+  try {
+    const response = await fetch(`https://api.abuseipdb.com/api/v2/check`, {
+      method: 'GET',
+      headers: {
+        'Key': Deno.env.get('ABUSEIPDB_API_KEY') || '',
+        'Accept': 'application/json'
+      },
+      body: new URLSearchParams({
+        ipAddress: value,
+        maxAgeInDays: '90',
+        verbose: ''
+      })
+    })
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    const abuseConfidence = data.data?.abuseConfidencePercentage || 0
+    
+    return {
+      score: Math.min(abuseConfidence, 70),
+      threats: abuseConfidence > 25 ? [{
+        source: 'AbuseIPDB',
+        threat_name: `Abuse Confidence: ${abuseConfidence}%`,
+        category: 'suspicious_ip'
+      }] : [],
+      reputation: abuseConfidence > 75 ? 'malicious' : abuseConfidence > 25 ? 'suspicious' : 'clean'
+    }
+  } catch (error) {
+    console.warn('AbuseIPDB analysis failed:', error)
+    return null
+  }
+}
+
+// Add URLVoid analysis for domain/URL reputation  
+async function analyzeWithURLVoid(indicator: any) {
+  const { value, type } = indicator
+  
+  if (type !== 'domain' && type !== 'url') return null
+
+  try {
+    // URLVoid is free but requires registration - using basic analysis
+    const domain = type === 'url' ? new URL(value).hostname : value
+    
+    // Simple heuristic analysis (in production, integrate with URLVoid API)
+    const suspiciousPatterns = [
+      /[0-9]{1,3}-[0-9]{1,3}-[0-9]{1,3}-[0-9]{1,3}/, // IP-like domains
+      /\b(bit\.ly|tinyurl|short|tiny)\b/i, // URL shorteners
+      /\b(phish|scam|fake|malware)\b/i, // Suspicious keywords
+      /[a-z]{20,}\.com/i, // Very long random domains
+    ]
+    
+    const isSuspicious = suspiciousPatterns.some(pattern => pattern.test(domain))
+    
+    return {
+      score: isSuspicious ? 40 : 0,
+      threats: isSuspicious ? [{
+        source: 'Pattern Analysis',
+        threat_name: 'Suspicious domain pattern',
+        category: 'suspicious_domain'
+      }] : [],
+      reputation: isSuspicious ? 'suspicious' : 'clean'
+    }
+  } catch (error) {
+    console.warn('URLVoid analysis failed:', error)
+    return null
   }
 }
 
