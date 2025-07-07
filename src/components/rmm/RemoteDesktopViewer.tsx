@@ -70,6 +70,14 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
         if (ws) {
           wsRef.current = ws;
           setupCanvasRendering(ws);
+        } else {
+          // Fallback: Show simulated interface when WebSocket connection fails
+          console.log('WebSocket connection failed, showing simulated interface');
+          toast({
+            title: "Simulated Mode",
+            description: "Remote session running in simulation mode - WebSocket connection unavailable",
+            variant: "default",
+          });
         }
       } catch (error) {
         console.error('Failed to connect to remote session:', error);

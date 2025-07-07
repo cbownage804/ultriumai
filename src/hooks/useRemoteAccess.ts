@@ -277,12 +277,12 @@ export const useRemoteAccess = () => {
       const ws = new WebSocket(wsUrl);
       let connectionTimeout: NodeJS.Timeout;
 
-      // Set up a connection timeout
+      // Set up a connection timeout (reduced to 5 seconds)
       const connectionPromise = new Promise<WebSocket>((resolve, reject) => {
         connectionTimeout = setTimeout(() => {
           ws.close();
-          reject(new Error('WebSocket connection timeout'));
-        }, 10000); // 10 second timeout
+          reject(new Error('WebSocket connection timeout - Edge Function may not be available'));
+        }, 5000); // 5 second timeout
 
         ws.onopen = () => {
           clearTimeout(connectionTimeout);
@@ -298,11 +298,7 @@ export const useRemoteAccess = () => {
         ws.onerror = (error) => {
           clearTimeout(connectionTimeout);
           console.error('WebSocket connection error:', error);
-          toast({
-            title: "Connection Failed",
-            description: "Unable to establish WebSocket connection. This may be due to network restrictions or firewall settings.",
-            variant: "destructive",
-          });
+          // Don't show error toast here, will be handled in catch block
           reject(error);
         };
       });
