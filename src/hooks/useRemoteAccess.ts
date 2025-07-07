@@ -271,68 +271,96 @@ export const useRemoteAccess = () => {
       const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-remote-session?token=${sessionToken}`;
       console.log('WebSocket URL:', wsUrl);
       
+      // Add a timeout to the WebSocket connection
       const ws = new WebSocket(wsUrl);
+      let connectionTimeout: NodeJS.Timeout;
 
-      ws.onopen = () => {
-        console.log('WebSocket connected successfully');
-        setActiveWebSocket(ws);
-        toast({
-          title: "Live Session Connected",
-          description: "Real-time remote access is now active",
-        });
-      };
+      // Set up a connection timeout
+      const connectionPromise = new Promise<WebSocket>((resolve, reject) => {
+        connectionTimeout = setTimeout(() => {
+          ws.close();
+          reject(new Error('WebSocket connection timeout'));
+        }, 10000); // 10 second timeout
+
+        ws.onopen = () => {
+          clearTimeout(connectionTimeout);
+          console.log('WebSocket connected successfully');
+          setActiveWebSocket(ws);
+          toast({
+            title: "Live Session Connected",
+            description: "Real-time remote access is now active",
+          });
+          resolve(ws);
+        };
+
+        ws.onerror = (error) => {
+          clearTimeout(connectionTimeout);
+          console.error('WebSocket connection error:', error);
+          toast({
+            title: "Connection Failed",
+            description: "Unable to establish WebSocket connection. This may be due to network restrictions or firewall settings.",
+            variant: "destructive",
+          });
+          reject(error);
+        };
+      });
 
       ws.onmessage = (event) => {
-        const message = JSON.parse(event.data);
-        console.log('WebSocket message received:', message);
-        
-        // Handle different message types
-        switch (message.type) {
-          case 'session_ready':
-            console.log('Session ready:', message);
-            break;
-          case 'ai_response':
-            console.log('AI response:', message.data);
-            break;
-          case 'auth_error':
-            console.error('WebSocket auth error:', message.message);
-            toast({
-              title: "Authentication Error",
-              description: message.message,
-              variant: "destructive",
-            });
-            break;
-          case 'error':
-            toast({
-              title: "Session Error",
-              description: message.message,
-              variant: "destructive",
-            });
-            break;
+        try {
+          const message = JSON.parse(event.data);
+          console.log('WebSocket message received:', message);
+          
+          // Handle different message types
+          switch (message.type) {
+            case 'session_ready':
+              console.log('Session ready:', message);
+              break;
+            case 'ai_response':
+              console.log('AI response:', message.data);
+              break;
+            case 'auth_error':
+              console.error('WebSocket auth error:', message.message);
+              toast({
+                title: "Authentication Error",
+                description: message.message,
+                variant: "destructive",
+              });
+              break;
+            case 'error':
+              toast({
+                title: "Session Error",
+                description: message.message,
+                variant: "destructive",
+              });
+              break;
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
         }
       };
 
       ws.onclose = (event) => {
-        console.log('WebSocket disconnected - Code:', event.code, 'Reason:', event.reason);
+        console.log('WebSocket closed - Code:', event.code, 'Reason:', event.reason);
         setActiveWebSocket(null);
-        toast({
-          title: "Session Disconnected",
-          description: "Live remote session has ended",
-        });
+        
+        // Only show disconnection message if it was an unexpected close
+        if (event.code !== 1000) { // 1000 is normal closure
+          toast({
+            title: "Session Disconnected",
+            description: `Connection closed unexpectedly (Code: ${event.code})`,
+            variant: "destructive",
+          });
+        }
       };
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        toast({
-          title: "Connection Error",
-          description: "WebSocket connection failed",
-          variant: "destructive",
-        });
-      };
-
-      return ws;
+      return await connectionPromise;
     } catch (error) {
       console.error('Error connecting WebSocket:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to establish remote session connection. Please check your network connection and firewall settings.",
+        variant: "destructive",
+      });
       return null;
     }
   };
