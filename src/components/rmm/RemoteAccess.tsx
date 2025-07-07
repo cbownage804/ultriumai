@@ -16,11 +16,14 @@ import {
   Clock,
   ExternalLink,
   Shield,
-  Wifi
+  Wifi,
+  Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useRemoteAccess } from "@/hooks/useRemoteAccess";
+import { RemoteDesktopViewer } from "./RemoteDesktopViewer";
 
 interface Device {
   id: string;
@@ -43,23 +46,35 @@ interface RemoteSession {
 
 export const RemoteAccess = () => {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [sessions, setSessions] = useState<RemoteSession[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>('');
-  const [sessionType, setSessionType] = useState<'rdp' | 'vnc' | 'ssh' | 'web_terminal'>('rdp');
+  const [sessionType, setSessionType] = useState<'desktop' | 'terminal' | 'file_transfer'>('desktop');
   const [loading, setLoading] = useState(false);
   const [showNewSession, setShowNewSession] = useState(false);
+  const [activeDesktopSession, setActiveDesktopSession] = useState<{
+    sessionId: string;
+    deviceId: string;
+    deviceName: string;
+  } | null>(null);
+  
   const { toast } = useToast();
   const { user } = useAuth();
+  const { 
+    sessions, 
+    isLoading: remoteLoading, 
+    startSession, 
+    endSession,
+    loadSessions 
+  } = useRemoteAccess();
 
   useEffect(() => {
     loadDevices();
     loadSessions();
-  }, []);
+  }, [loadSessions]);
 
   const loadDevices = async () => {
     try {
       const { data, error } = await supabase
-        .from('rmm_endpoints')
+        .from('rmm_devices')
         .select('*')
         .eq('status', 'online')
         .order('hostname');
@@ -71,25 +86,6 @@ export const RemoteAccess = () => {
     }
   };
 
-  const loadSessions = async () => {
-    try {
-      // Mock data for demo - replace with actual remote session tracking
-      const mockSessions: RemoteSession[] = [
-        {
-          id: '1',
-          hostname: 'DEMO-PC-01',
-          session_type: 'rdp',
-          session_status: 'active',
-          started_at: new Date(Date.now() - 3600000).toISOString(),
-          duration_seconds: 3600
-        }
-      ];
-      setSessions(mockSessions);
-    } catch (error) {
-      console.error('Failed to load sessions:', error);
-    }
-  };
-
   const startRemoteSession = async () => {
     if (!selectedDevice || !user) return;
 
@@ -98,83 +94,54 @@ export const RemoteAccess = () => {
       const device = devices.find(d => d.id === selectedDevice);
       if (!device) throw new Error('Device not found');
 
-      // Create session record (mock for demo)
-      const session = {
-        id: crypto.randomUUID(),
-        hostname: device.hostname,
-        session_type: sessionType,
-        session_status: 'active',
-        started_at: new Date().toISOString()
-      };
+      const session = await startSession(selectedDevice, sessionType);
       
-      // In real implementation, this would create a database record
-      console.log('Creating remote session:', session);
-
-      // Mock successful session creation
-
-      // Simulate remote connection (in real implementation, this would connect to actual remote service)
-      await simulateRemoteConnection(device, sessionType);
-
-      toast({
-        title: "Remote Session Started",
-        description: `Connected to ${device.hostname} via ${sessionType.toUpperCase()}`
-      });
+      if (session && sessionType === 'desktop') {
+        setActiveDesktopSession({
+          sessionId: session.id,
+          deviceId: selectedDevice,
+          deviceName: device.hostname
+        });
+      }
 
       setShowNewSession(false);
       setSelectedDevice('');
-      loadSessions();
     } catch (error) {
       console.error('Failed to start remote session:', error);
-      toast({
-        title: "Connection Failed",
-        description: "Could not establish remote connection",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
   };
 
-  const simulateRemoteConnection = async (device: Device, type: string) => {
-    // In a real implementation, this would:
-    // 1. Establish actual remote connection based on type
-    // 2. Handle authentication
-    // 3. Open remote desktop/terminal window
-    // 4. Monitor connection status
-    
-    console.log(`Simulating ${type} connection to ${device.hostname} (${device.ip_address})`);
-    
-    // For demo purposes, just wait a moment
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  };
-
-  const endSession = async (sessionId: string) => {
+  const handleEndSession = async (sessionId: string) => {
     try {
-      // Mock ending session
-      console.log('Ending session:', sessionId);
+      await endSession(sessionId);
       
-      toast({
-        title: "Session Ended",
-        description: "Remote session has been disconnected"
-      });
-
-      loadSessions();
+      // Close desktop viewer if this was the active session
+      if (activeDesktopSession?.sessionId === sessionId) {
+        setActiveDesktopSession(null);
+      }
     } catch (error) {
       console.error('Failed to end session:', error);
-      toast({
-        title: "Error",
-        description: "Failed to end session",
-        variant: "destructive"
+    }
+  };
+
+  const openDesktopViewer = (session: any) => {
+    const device = devices.find(d => d.id === session.device_id);
+    if (device) {
+      setActiveDesktopSession({
+        sessionId: session.id,
+        deviceId: session.device_id,
+        deviceName: device.hostname
       });
     }
   };
 
   const getSessionIcon = (type: string) => {
     switch (type) {
-      case 'rdp': return <Monitor className="h-4 w-4" />;
-      case 'vnc': return <Monitor className="h-4 w-4" />;
-      case 'ssh': return <Terminal className="h-4 w-4" />;
-      case 'web_terminal': return <Terminal className="h-4 w-4" />;
+      case 'desktop': return <Monitor className="h-4 w-4" />;
+      case 'terminal': return <Terminal className="h-4 w-4" />;
+      case 'file_transfer': return <ExternalLink className="h-4 w-4" />;
       default: return <ExternalLink className="h-4 w-4" />;
     }
   };
@@ -182,8 +149,9 @@ export const RemoteAccess = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
+      case 'connecting': return 'bg-yellow-100 text-yellow-800';
       case 'disconnected': return 'bg-gray-100 text-gray-800';
-      case 'failed': return 'bg-red-100 text-red-800';
+      case 'ended': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -195,7 +163,19 @@ export const RemoteAccess = () => {
     return `${hours}h ${minutes}m`;
   };
 
-  const activeSessions = sessions.filter(s => s.session_status === 'active').length;
+  const activeSessions = sessions.filter(s => s.status === 'active').length;
+
+  // Show desktop viewer if active session
+  if (activeDesktopSession) {
+    return (
+      <RemoteDesktopViewer
+        sessionId={activeDesktopSession.sessionId}
+        deviceId={activeDesktopSession.deviceId}
+        deviceName={activeDesktopSession.deviceName}
+        onClose={() => setActiveDesktopSession(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -292,28 +272,22 @@ export const RemoteAccess = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="rdp">
+                        <SelectItem value="desktop">
                           <div className="flex items-center gap-2">
                             <Monitor className="h-4 w-4" />
-                            Remote Desktop (RDP)
+                            Remote Desktop (Full Control)
                           </div>
                         </SelectItem>
-                        <SelectItem value="vnc">
-                          <div className="flex items-center gap-2">
-                            <Monitor className="h-4 w-4" />
-                            VNC
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="ssh">
+                        <SelectItem value="terminal">
                           <div className="flex items-center gap-2">
                             <Terminal className="h-4 w-4" />
-                            SSH
+                            Terminal Only
                           </div>
                         </SelectItem>
-                        <SelectItem value="web_terminal">
+                        <SelectItem value="file_transfer">
                           <div className="flex items-center gap-2">
-                            <Terminal className="h-4 w-4" />
-                            Web Terminal
+                            <ExternalLink className="h-4 w-4" />
+                            File Transfer Only
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -345,37 +319,52 @@ export const RemoteAccess = () => {
             </TabsList>
 
             <TabsContent value="active" className="space-y-4">
-              {sessions.filter(s => s.session_status === 'active').map((session) => (
-                <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getSessionIcon(session.session_type)}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{session.hostname}</span>
-                        <Badge variant="outline">
-                          {session.session_type.toUpperCase()}
-                        </Badge>
-                        <Badge className={getStatusColor(session.session_status)}>
-                          {session.session_status}
-                        </Badge>
+              {sessions.filter(s => s.status === 'active').map((session) => {
+                const device = devices.find(d => d.id === session.device_id);
+                return (
+                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {getSessionIcon(session.session_type)}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{device?.hostname || 'Unknown Device'}</span>
+                          <Badge variant="outline">
+                            {session.session_type.toUpperCase()}
+                          </Badge>
+                          <Badge className={getStatusColor(session.status)}>
+                            {session.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Started: {new Date(session.started_at).toLocaleString()}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Started: {new Date(session.started_at).toLocaleString()}
-                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      {session.session_type === 'desktop' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openDesktopViewer(session)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Screen
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEndSession(session.id)}
+                      >
+                        <Square className="h-4 w-4 mr-2" />
+                        Disconnect
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => endSession(session.id)}
-                  >
-                    <Square className="h-4 w-4 mr-2" />
-                    Disconnect
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
 
-              {sessions.filter(s => s.session_status === 'active').length === 0 && (
+              {sessions.filter(s => s.status === 'active').length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No active remote sessions</p>
@@ -384,31 +373,34 @@ export const RemoteAccess = () => {
             </TabsContent>
 
             <TabsContent value="history" className="space-y-4">
-              {sessions.map((session) => (
-                <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {getSessionIcon(session.session_type)}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{session.hostname}</span>
-                        <Badge variant="outline">
-                          {session.session_type.toUpperCase()}
-                        </Badge>
-                        <Badge className={getStatusColor(session.session_status)}>
-                          {session.session_status}
-                        </Badge>
+              {sessions.map((session) => {
+                const device = devices.find(d => d.id === session.device_id);
+                return (
+                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {getSessionIcon(session.session_type)}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{device?.hostname || 'Unknown Device'}</span>
+                          <Badge variant="outline">
+                            {session.session_type.toUpperCase()}
+                          </Badge>
+                          <Badge className={getStatusColor(session.status)}>
+                            {session.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(session.started_at).toLocaleString()}
+                          {session.ended_at && ` - ${new Date(session.ended_at).toLocaleString()}`}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(session.started_at).toLocaleString()}
-                        {session.ended_at && ` - ${new Date(session.ended_at).toLocaleString()}`}
-                      </p>
+                    </div>
+                    <div className="text-right text-sm text-muted-foreground">
+                      <p>Session: {session.session_type}</p>
                     </div>
                   </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    <p>Duration: {formatDuration(session.duration_seconds)}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               {sessions.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
