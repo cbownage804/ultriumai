@@ -403,7 +403,7 @@ export const useRemoteAccess = () => {
       console.error('Error loading sessions:', error);
       // For testing purposes, add mock session data
       const mockSessions: RemoteSession[] = [{
-        id: 'c160b11c-5552-4b58-bcd5-452a081c054b',
+        id: '94e0dbba-74a9-4b60-a6d7-0f47340c7d51',
         user_id: user?.id || 'mock-user',
         session_token: 'mock-token-12345',
         device_id: 'mock-device-1',
