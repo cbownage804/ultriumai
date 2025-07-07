@@ -135,11 +135,11 @@ export const RMMDashboard = () => {
             onClick={() => {
               console.log('Starting RMM Agent download...');
               
-              // Download the pre-created installer file
-              const link = document.createElement('a');
-              link.href = '/UltriumRMMAgent-Installer.ps1';
-              link.download = 'UltriumRMMAgent-Installer.ps1';
-              link.click();
+            // Download the GUI installer file
+            const link = document.createElement('a');
+            link.href = '/UltriumRMMAgent-GUI-Installer.ps1';
+            link.download = 'UltriumRMMAgent-GUI-Installer.ps1';
+            link.click();
               console.log('✅ Full installer download completed');
             }}
           >
