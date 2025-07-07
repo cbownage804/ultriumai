@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, AlertTriangle, Shield, Activity, Clock, CheckCircle, XCircle } from "lucide-react";
 
-export const MDRDashboard = () => {
+export const SafeEDRDashboard = () => {
   // Mock data - replace with real MDR service data
   const stats = {
     threatsDetected: 142,

@@ -328,9 +328,9 @@ const demoApps: DemoApp[] = [
       "Forensic analysis",
       "Compliance reporting"
     ],
-    demoUrl: "/demos/mdr",
+    demoUrl: "/demos/safeedr",
     isLive: true,
-    tags: ["MDR", "Security Operations", "Threat Hunting"],
+    tags: ["SafeEDR", "AI Behavioral Analysis", "Real-time Response"],
     useCases: [
       "Continuous security monitoring",
       "Advanced threat detection",

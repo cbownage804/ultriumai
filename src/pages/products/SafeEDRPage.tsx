@@ -26,7 +26,7 @@ import {
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
-const MDRPage = () => {
+const SafeEDRPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   const features = [
@@ -475,4 +475,4 @@ const MDRPage = () => {
   );
 };
 
-export default MDRPage;
+export default SafeEDRPage;

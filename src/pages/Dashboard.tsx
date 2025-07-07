@@ -22,7 +22,7 @@ import { DashboardOverview } from "@/components/DashboardOverview";
 import { GPTDashboard } from "@/components/dashboards/GPTDashboard";
 import { RMMDashboard } from "@/components/dashboards/RMMDashboard";
 import { AntivirusDashboard } from "@/components/dashboards/AntivirusDashboard";
-import { MDRDashboard } from "@/components/dashboards/MDRDashboard";
+import { SafeEDRDashboard } from "@/components/dashboards/SafeEDRDashboard";
 import { HelpdeskDashboard } from "@/components/dashboards/HelpdeskDashboard";
 import { ConversationManager } from "@/components/ConversationManager";
 import { GPTDeploymentCenter } from "@/components/deployment/GPTDeploymentCenter";
@@ -107,7 +107,7 @@ const Dashboard = () => {
   const isGPTDashboard = location.pathname === '/dashboard/gpt';
   const isRMMPage = location.pathname.includes('/rmm');
   const isAntivirusPage = location.pathname.includes('/antivirus');
-  const isMDRPage = location.pathname.includes('/mdr');
+  const isSafeEDRPage = location.pathname.includes('/safeedr');
   const isHelpdeskPage = location.pathname.includes('/helpdesk');
   const isDashboardOverview = location.pathname === '/dashboard';
   const isUltriumGPTPage = location.pathname === '/dashboard/ultrium-gpt';
@@ -163,7 +163,7 @@ const Dashboard = () => {
     if (isGPTDashboard) return <GPTDashboard />;
     if (isRMMPage) return <RMMDashboard />;
     if (isAntivirusPage) return <AntivirusDashboard />;
-    if (isMDRPage) return <MDRDashboard />;
+    if (isSafeEDRPage) return <SafeEDRDashboard />;
     if (isHelpdeskPage) return <HelpdeskDashboard />;
     if (isChatPage) return <ChatInterface />;
     if (isSettingsPage) return <SettingsPage />;

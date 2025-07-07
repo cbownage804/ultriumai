@@ -25,7 +25,7 @@ import {
 import { ThreatMonitor } from "./ThreatMonitor";
 import { EndpointManager } from "./EndpointManager";
 import { SafeAVDashboard } from "./SafeAVDashboard";
-import { SafeMDRDashboard } from "./SafeMDRDashboard";
+import { SafeEDRDashboard } from "./SafeEDRDashboard";
 import { useSafeShieldData } from "@/hooks/useSafeShieldData";
 import { EndpointAgentDownloads } from "./EndpointAgentDownloads";
 import { MSPWhiteLabelConfig } from "./MSPWhiteLabelConfig";
@@ -396,7 +396,7 @@ export const SafeShieldDashboard = () => {
           onClick={() => setActiveView('safe-mdr')}
         >
           <Search className="h-4 w-4 mr-2" />
-          SafeMDR
+          SafeEDR
         </Button>
         <Button 
           variant={activeView === 'reports' ? 'default' : 'outline'}
@@ -581,7 +581,7 @@ export const SafeShieldDashboard = () => {
 
       {/* SafeMDR Dashboard */}
       {activeView === 'safe-mdr' && (
-        <SafeMDRDashboard />
+        <SafeEDRDashboard />
       )}
 
       {/* Reports & Analytics */}

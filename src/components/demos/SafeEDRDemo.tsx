@@ -136,7 +136,7 @@ const statusColors = {
   resolved: 'bg-green-100 text-green-800'
 };
 
-export const MDRDemo = () => {
+export const SafeEDRDemo = () => {
   const [incidents] = useState<SecurityIncident[]>(mockIncidents);
   const [threatIntel] = useState<ThreatIntel[]>(mockThreatIntel);
   const [selectedIncident, setSelectedIncident] = useState<SecurityIncident | null>(null);
@@ -159,10 +159,10 @@ export const MDRDemo = () => {
       <div className="text-center space-y-2 mb-6">
         <div className="flex items-center justify-center gap-2">
           <Eye className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Ultrium MDR Demo</h1>
+          <h1 className="text-3xl font-bold">SafeEDR Demo</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Experience 24/7 managed detection and response with AI-powered threat hunting and expert analyst support
+          Experience AI-powered endpoint detection and response with real-time behavioral analysis and automated threat blocking
         </p>
       </div>
 
@@ -175,8 +175,8 @@ export const MDRDemo = () => {
                 <Eye className="h-8 w-8 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-blue-800">24/7 Monitoring Active</h3>
-                <p className="text-blue-600">Expert analysts • AI-powered detection • Real-time response</p>
+                <h3 className="text-xl font-bold text-blue-800">AI EDR Active</h3>
+                <p className="text-blue-600">Real-time behavioral analysis • AI-powered detection • Automated response</p>
               </div>
             </div>
             <div className="text-right">
@@ -671,11 +671,11 @@ export const MDRDemo = () => {
       <Alert>
         <Eye className="h-4 w-4" />
         <AlertDescription>
-          This is a demonstration of Ultrium MDR capabilities. In production, you would have 24/7 expert analysts monitoring your environment with real-time threat detection and response.
+          This is a demonstration of SafeEDR capabilities. In production, you would have AI-powered behavioral analysis continuously monitoring your endpoints with real-time threat detection and automated response.
         </AlertDescription>
       </Alert>
     </div>
   );
 };
 
-export default MDRDemo;
+export default SafeEDRDemo;

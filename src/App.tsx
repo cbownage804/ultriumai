@@ -39,7 +39,7 @@ import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
 import RMMDemoPage from '@/pages/demos/RMMDemoPage';
 import TicketingDemoPage from '@/pages/demos/TicketingDemoPage';
 import AntivirusDemoPage from '@/pages/demos/AntivirusDemoPage';
-import MDRDemoPage from '@/pages/demos/MDRDemoPage';
+import SafeEDRDemoPage from '@/pages/demos/SafeEDRDemoPage';
 import SafeMailPage from '@/pages/products/SafeMailPage';
 import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SafeLinkPage from '@/pages/products/SafeLinkPage';
@@ -50,7 +50,7 @@ import SafeScorePage from '@/pages/products/SafeScorePage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
 import TicketingPage from '@/pages/products/TicketingPage';
 import AntivirusPage from '@/pages/products/AntivirusPage';
-import MDRPage from '@/pages/products/MDRPage';
+import SafeEDRPage from '@/pages/products/SafeEDRPage';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
@@ -138,7 +138,7 @@ function AppRouter() {
       <Route path="/demos/rmm" element={<RMMDemoPage />} />
       <Route path="/demos/ticketing" element={<TicketingDemoPage />} />
       <Route path="/demos/antivirus" element={<AntivirusDemoPage />} />
-      <Route path="/demos/mdr" element={<MDRDemoPage />} />
+      <Route path="/demos/safeedr" element={<SafeEDRDemoPage />} />
       <Route path="/embed-demo" element={<EmbedDemo />} />
       <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
       <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
@@ -203,7 +203,7 @@ function AppRouter() {
       <Route path="/products/safenet" element={<SafeNetPage />} />
       <Route path="/products/ticketing" element={<TicketingPage />} />
       <Route path="/products/antivirus" element={<AntivirusPage />} />
-      <Route path="/products/mdr" element={<MDRPage />} />
+      <Route path="/products/safeedr" element={<SafeEDRPage />} />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={

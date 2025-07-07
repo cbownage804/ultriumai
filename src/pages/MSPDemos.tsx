@@ -289,12 +289,12 @@ const MSPDemos = () => {
     },
     {
       id: 'mdr',
-      name: 'Ultrium MDR',
-      description: '24/7 managed detection and response with expert analysts',
+      name: 'SafeEDR',
+      description: 'AI-powered endpoint detection and response with behavioral analysis',
       monthlyRevenue: '$100/client',
       setupTime: '30 minutes',
       marketSize: 'Mid-market and enterprise businesses',
-      demoUrl: '/demos/mdr',
+      demoUrl: '/demos/safeedr',
       features: [
         '24/7 security monitoring',
         'Expert threat hunting',

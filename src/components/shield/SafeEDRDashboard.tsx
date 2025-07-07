@@ -64,7 +64,7 @@ interface DashboardStats {
   escalation_rate: number;
 }
 
-export const SafeMDRDashboard = () => {
+export const SafeEDRDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
     total_alerts: 0,
     new_alerts: 0,
