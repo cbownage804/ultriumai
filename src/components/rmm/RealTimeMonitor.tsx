@@ -44,7 +44,7 @@ export const RealTimeMonitor = () => {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'rmm_endpoints'
+        table: 'rmm_devices'
       }, (payload) => {
         console.log('Real-time device update:', payload);
         loadDevices(); // Reload devices on any change
@@ -63,7 +63,7 @@ export const RealTimeMonitor = () => {
   const loadDevices = async () => {
     try {
       const { data, error } = await supabase
-        .from('rmm_endpoints')
+        .from('rmm_devices')
         .select('*')
         .order('last_seen', { ascending: false });
 
