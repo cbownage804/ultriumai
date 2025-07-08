@@ -40,7 +40,7 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -54,15 +54,33 @@ const Auth = () => {
       });
 
       if (error) {
-        setError(error.message);
-      } else {
+        console.error('Sign up error:', error);
+        if (error.message.includes('User already registered')) {
+          setError('This email is already registered. Please try signing in instead.');
+        } else if (error.message.includes('Invalid email')) {
+          setError('Please enter a valid email address.');
+        } else if (error.message.includes('Password')) {
+          setError('Password must be at least 6 characters long.');
+        } else {
+          setError(error.message);
+        }
+      } else if (data?.user && !data.session) {
+        // Email confirmation required
         toast({
           title: "Check your email",
-          description: "We've sent you a confirmation link to complete your registration.",
+          description: "We've sent you a confirmation link to complete your registration. Please check your email and click the link to verify your account.",
         });
+      } else if (data?.session) {
+        // User was created and automatically signed in
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created successfully.",
+        });
+        navigate('/');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error('Sign up exception:', err);
+      setError(err.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

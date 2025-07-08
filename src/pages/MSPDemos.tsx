@@ -528,18 +528,24 @@ const MSPDemos = () => {
                         <DarkWebDemo />
                       </div>
                     ) : selectedDemo === 'safescore' ? (
-                      <div className="space-y-4">
-                        <div className="text-center space-y-2 mb-6">
-                          <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
-                            <Shield className="h-6 w-6 text-primary" />
-                            MSP Security Risk Assessment Demo
-                          </h3>
+                      <Card className="border-2 border-primary/20">
+                        <CardContent className="p-6 text-center space-y-4">
+                          <Shield className="h-12 w-12 mx-auto text-primary mb-4" />
+                          <h3 className="text-xl font-semibold">MSP Security Risk Assessment Demo</h3>
                           <p className="text-muted-foreground">
-                            Show clients comprehensive security scoring and risk management
+                            Experience the full interactive SafeScore demo and see how easy it is to deploy for your clients
                           </p>
-                        </div>
-                        <SafeScoreDemo />
-                      </div>
+                          <Button 
+                            size="lg" 
+                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
+                            variant="hero"
+                          >
+                            <Globe className="h-5 w-5 mr-2" />
+                            Launch Interactive SafeScore Demo
+                            <ArrowRight className="h-5 w-5 ml-2" />
+                          </Button>
+                        </CardContent>
+                      </Card>
                     ) : (
                       <Card className="border-2 border-primary/20">
                         <CardContent className="p-6 text-center space-y-4">
