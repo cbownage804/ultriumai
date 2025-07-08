@@ -6897,6 +6897,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      is_current_user_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_msp_or_mssp: {
         Args: { _user_id: string }
         Returns: boolean
