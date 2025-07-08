@@ -22,8 +22,8 @@ const SecurityAppsSection = () => {
       features: ['Real-time phishing detection', 'Malware scanning', 'Social engineering detection'],
       riskTypes: ['Phishing', 'Malware', 'BEC'],
       category: 'Email Security',
-      demoUrl: '/demos/safeemail',
-      productUrl: '/products/safeemail'
+      demoUrl: '/demos/safemail',
+      productUrl: '/products/safemail'
     },
     {
       id: 'safelink',

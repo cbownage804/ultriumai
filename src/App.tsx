@@ -127,12 +127,14 @@ function AppRouter() {
         </ProtectedRoute>
       } />
       <Route path="/demos/safemail" element={<SafeMailDemoPage />} />
+      <Route path="/demos/safeemail" element={<SafeMailDemoPage />} />
       <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
       <Route path="/demos/safescan" element={<SafeDocDemoPage />} />
       <Route path="/demos/safepass" element={<SafePassDemoPage />} />
       <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
       <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
       <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
+      <Route path="/demos/safecomp" element={<SafeScoreDemoPage />} />
       <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
       <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
       <Route path="/demos/rmm" element={<RMMDemoPage />} />

@@ -222,10 +222,10 @@ const Hero = () => {
             <Button 
               size="lg" 
               className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow"
-              onClick={() => handleNavigation('#security')}
+              onClick={() => handleNavigation('/live-demos')}
             >
               <Play className="mr-2 h-5 w-5" />
-              See Our GPT Agents In Action
+              See Our AI Security Demos
             </Button>
             <Button 
               variant="outline" 

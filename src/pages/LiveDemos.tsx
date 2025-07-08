@@ -53,7 +53,7 @@ const demoApps: DemoApp[] = [
       "Detailed threat reports",
       "API integration ready"
     ],
-    demoUrl: "/demos/safeemail",
+    demoUrl: "/demos/safemail",
     isLive: true,
     tags: ["Email Security", "AI Detection", "Threat Analysis"],
     useCases: [
