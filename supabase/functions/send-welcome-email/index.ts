@@ -29,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "UltriumGPT <onboarding@ultriumai.com>",
       to: [email],
-      subject: "Welcome to UltriumGPT! 🚀",
+      subject: "Welcome to UltriumAI! 🚀",
       html: `
         <!DOCTYPE html>
         <html>
