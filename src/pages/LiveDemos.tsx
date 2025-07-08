@@ -289,8 +289,8 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
-    id: "ultrium-antivirus",
-    name: "Ultrium Antivirus™",
+    id: "ultrium-safeav",
+    name: "Ultrium SafeAV™",
     category: "Endpoint Security",
     description: "AI-powered endpoint protection and threat detection platform",
     longDescription: "Advanced antivirus solution with real-time threat detection, behavioral analysis, automated quarantine, and comprehensive endpoint protection for businesses of all sizes.",
@@ -305,7 +305,7 @@ const demoApps: DemoApp[] = [
     ],
     demoUrl: "/demos/antivirus",
     isLive: true,
-    tags: ["Antivirus", "Endpoint Security", "Threat Detection"],
+    tags: ["SafeAV", "Endpoint Security", "Threat Detection"],
     useCases: [
       "Endpoint protection",
       "Malware prevention",
@@ -314,8 +314,8 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
-    id: "ultrium-mdr",
-    name: "Ultrium MDR™",
+    id: "ultrium-safeedr",
+    name: "Ultrium SafeEDR™",
     category: "Managed Security",
     description: "24/7 managed detection and response with expert analysts",
     longDescription: "Comprehensive managed detection and response service providing 24/7 security monitoring, expert threat hunting, incident response, and continuous threat intelligence.",

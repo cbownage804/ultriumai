@@ -99,8 +99,8 @@ const MSPPricing = () => {
       price: { monthly: 15, yearly: 150 },
       icon: Shield,
       features: [
-        "AI-powered antivirus protection",
-        "Managed Detection & Response (MDR)",
+        "AI-powered SafeAV protection",
+        "Managed Detection & Response (SafeEDR)",
         "24/7 threat monitoring",
         "Incident response automation",
         "Endpoint detection & response",

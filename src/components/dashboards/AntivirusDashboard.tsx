@@ -84,7 +84,7 @@ export const AntivirusDashboard = () => {
         <div>
           <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             <Shield className="h-10 w-10 text-primary" />
-            Antivirus Protection
+            SafeAV Protection
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
             Real-time threat protection and malware detection

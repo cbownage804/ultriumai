@@ -167,7 +167,7 @@ export const AntivirusDemo = () => {
       <div className="text-center space-y-2 mb-6">
         <div className="flex items-center justify-center gap-2">
           <Shield className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Ultrium Antivirus Demo</h1>
+          <h1 className="text-3xl font-bold">Ultrium SafeAV Demo</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl mx-auto">
           Experience advanced endpoint protection with AI-powered threat detection and automated response
@@ -611,7 +611,7 @@ export const AntivirusDemo = () => {
       <Alert>
         <Shield className="h-4 w-4" />
         <AlertDescription>
-          This is a demonstration of Ultrium Antivirus capabilities. In production, you would see real-time threat detection and automated response across all managed endpoints.
+          This is a demonstration of Ultrium SafeAV capabilities. In production, you would see real-time threat detection and automated response across all managed endpoints.
         </AlertDescription>
       </Alert>
     </div>

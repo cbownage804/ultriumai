@@ -89,16 +89,16 @@ const MSPPricingCalculator = () => {
       description: 'AI-powered ticketing system'
     },
     {
-      id: 'antivirus',
-      name: 'Ultrium Antivirus',
+      id: 'safeav',
+      name: 'Ultrium SafeAV',
       chargePrice: 30,
       costPrice: 10,
       unit: 'endpoint/month',
       description: 'AI-powered endpoint protection'
     },
     {
-      id: 'mdr',
-      name: 'Ultrium MDR',
+      id: 'safeedr',
+      name: 'Ultrium SafeEDR',
       chargePrice: 150,
       costPrice: 50,
       unit: 'client/month',

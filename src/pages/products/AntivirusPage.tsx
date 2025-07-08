@@ -72,7 +72,7 @@ const AntivirusPage = () => {
     },
     {
       title: "MSP Multi-Tenant",
-      description: "White-label antivirus solution for managed service providers with multi-client support",
+      description: "White-label SafeAV solution for managed service providers with multi-client support",
       benefits: ["Per-client dashboards", "Automated billing integration", "Custom branding", "Tiered service levels"]
     },
     {
@@ -97,7 +97,7 @@ const AntivirusPage = () => {
       price: "$3",
       description: "Basic protection for small businesses",
       features: [
-        "Real-time antivirus",
+        "Real-time SafeAV",
         "Web protection",
         "Email security",
         "Basic reporting",
@@ -153,7 +153,7 @@ const AntivirusPage = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <Shield className="h-12 w-12 text-primary" />
               <h1 className="text-5xl font-bold text-gradient">
-                Ultrium Antivirus
+                Ultrium SafeAV
               </h1>
             </div>
             <p className="text-2xl text-muted-foreground max-w-3xl mx-auto">
@@ -216,7 +216,7 @@ const AntivirusPage = () => {
                 <div className="text-center space-y-6">
                   <h2 className="text-3xl font-bold">Advanced Threat Protection</h2>
                   <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-                    Ultrium Antivirus leverages artificial intelligence and behavioral analysis to provide 
+                    Ultrium SafeAV leverages artificial intelligence and behavioral analysis to provide 
                     comprehensive protection against known and unknown threats, ensuring your business stays secure.
                   </p>
                 </div>
@@ -491,7 +491,7 @@ const AntivirusPage = () => {
           <div className="max-w-4xl mx-auto text-center px-4 space-y-8">
             <h2 className="text-4xl font-bold">Ready to Secure Your Business?</h2>
             <p className="text-xl text-muted-foreground">
-              Join thousands of organizations protecting their endpoints with Ultrium Antivirus
+              Join thousands of organizations protecting their endpoints with Ultrium SafeAV
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-lg px-8 py-3" variant="hero">

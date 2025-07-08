@@ -276,7 +276,7 @@ const MSPDemos = () => {
       monthlyRevenue: '$20/endpoint',
       setupTime: '10 minutes',
       marketSize: 'Every business with computers',
-      demoUrl: '/demos/antivirus',
+      demoUrl: '/demos/safeav',
       features: [
         'Real-time threat detection',
         'Behavioral analysis engine',
@@ -294,7 +294,7 @@ const MSPDemos = () => {
       color: 'red'
     },
     {
-      id: 'mdr',
+      id: 'safeedr',
       name: 'SafeEDR for MSP',
       description: 'AI-powered endpoint detection and response for MSPs with behavioral analysis',
       monthlyRevenue: '$100/client',

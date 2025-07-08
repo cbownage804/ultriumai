@@ -53,8 +53,8 @@ const securityItems = [
 
 const managedServicesItems = [
   { title: "RMM", url: "/dashboard/rmm", icon: Server, tooltip: "Remote Monitoring and Management" },
-  { title: "Antivirus", url: "/dashboard/antivirus", icon: Shield, tooltip: "AI-powered antivirus protection and threat detection" },
-  { title: "MDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
+  { title: "SafeAV", url: "/dashboard/antivirus", icon: Shield, tooltip: "AI-powered antivirus protection and threat detection" },
+  { title: "SafeEDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
   { title: "Helpdesk", url: "/dashboard/helpdesk", icon: HeadphonesIcon, tooltip: "AI-powered helpdesk and ticketing system" },
   { title: "Network Monitoring", url: "/dashboard/safenet", icon: Network, tooltip: "Network security monitoring and analysis" },
 ];

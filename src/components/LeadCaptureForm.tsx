@@ -97,8 +97,8 @@ const LeadCaptureForm = ({
     'Dark Web Monitoring',
     'RMM Platform',
     'Helpdesk/Ticketing',
-    'Antivirus/Endpoint Protection',
-    'MDR Services',
+    'SafeAV/Endpoint Protection',
+    'SafeEDR Services',
     'Compliance Management'
   ];
 

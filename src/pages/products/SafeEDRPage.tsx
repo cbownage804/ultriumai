@@ -106,7 +106,7 @@ const SafeEDRPage = () => {
 
   const pricingTiers = [
     {
-      name: "Essential MDR",
+      name: "Essential SafeEDR",
       price: "$5,000",
       description: "Core managed detection and response for small to medium businesses",
       features: [
@@ -119,9 +119,9 @@ const SafeEDRPage = () => {
       popular: false
     },
     {
-      name: "Advanced MDR", 
+      name: "Advanced SafeEDR", 
       price: "$15,000",
-      description: "Comprehensive MDR with enhanced threat hunting and response",
+      description: "Comprehensive SafeEDR with enhanced threat hunting and response",
       features: [
         "Everything in Essential",
         "Proactive threat hunting",
@@ -133,7 +133,7 @@ const SafeEDRPage = () => {
       popular: true
     },
     {
-      name: "Enterprise MDR",
+      name: "Enterprise SafeEDR",
       price: "Custom",
       description: "Full-spectrum security operations for large enterprises",
       features: [
@@ -166,7 +166,7 @@ const SafeEDRPage = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <Eye className="h-12 w-12 text-primary" />
               <h1 className="text-5xl font-bold text-gradient">
-                Ultrium MDR
+                Ultrium SafeEDR
               </h1>
             </div>
             <p className="text-2xl text-muted-foreground max-w-3xl mx-auto">
@@ -229,8 +229,8 @@ const SafeEDRPage = () => {
                 <div className="text-center space-y-6">
                   <h2 className="text-3xl font-bold">Enterprise-Grade Security Operations</h2>
                   <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-                    Ultrium MDR provides comprehensive managed detection and response services, 
-                    combining cutting-edge technology with expert human analysis to protect your organization 
+                    Ultrium SafeEDR provides comprehensive managed detection and response services, 
+                    combining cutting-edge technology with expert human analysis to protect your organization
                     from sophisticated cyber threats.
                   </p>
                 </div>
@@ -439,7 +439,7 @@ const SafeEDRPage = () => {
                 <div className="text-center mt-12">
                   <h3 className="text-xl font-semibold mb-4">Need a Custom Solution?</h3>
                   <p className="text-muted-foreground mb-6">
-                    We offer tailored MDR services for unique requirements and large enterprises
+                    We offer tailored SafeEDR services for unique requirements and large enterprises
                   </p>
                   <Button variant="outline" size="lg">
                     Schedule Consultation
@@ -455,7 +455,7 @@ const SafeEDRPage = () => {
           <div className="max-w-4xl mx-auto text-center px-4 space-y-8">
             <h2 className="text-4xl font-bold">Ready to Strengthen Your Security Posture?</h2>
             <p className="text-xl text-muted-foreground">
-              Let our security experts assess your current environment and design a comprehensive MDR solution
+              Let our security experts assess your current environment and design a comprehensive SafeEDR solution
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-lg px-8 py-3" variant="hero">

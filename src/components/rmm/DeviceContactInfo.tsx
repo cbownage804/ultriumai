@@ -385,13 +385,13 @@ export const DeviceContactInfo = ({
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Shield className="h-4 w-4" />
-                Antivirus & MDR Status
+                SafeAV & SafeEDR Status
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <h4 className="font-semibold">Antivirus Protection</h4>
+                  <h4 className="font-semibold">SafeAV Protection</h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm">Status:</span>
@@ -428,10 +428,10 @@ export const DeviceContactInfo = ({
                 </div>
                 
                 <div className="space-y-3">
-                  <h4 className="font-semibold">MDR & Threat Detection</h4>
+                  <h4 className="font-semibold">SafeEDR & Threat Detection</h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">MDR Status:</span>
+                      <span className="text-sm">SafeEDR Status:</span>
                       <Badge variant={contactInfo.mdr_status === 'active' ? 'default' : 'secondary'}>
                         {contactInfo.mdr_status}
                       </Badge>
