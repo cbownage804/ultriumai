@@ -64,15 +64,23 @@ const Auth = () => {
       } else if (data?.user) {
         // Send welcome email via Resend
         try {
-          await supabase.functions.invoke('send-welcome-email', {
+          console.log('Attempting to send welcome email to:', data.user.email);
+          const emailResult = await supabase.functions.invoke('send-welcome-email', {
             body: {
               email: data.user.email,
               name: fullName,
               userId: data.user.id
             }
           });
+          console.log('Welcome email result:', emailResult);
+          
+          if (emailResult.error) {
+            console.error('Welcome email error:', emailResult.error);
+          } else {
+            console.log('Welcome email sent successfully');
+          }
         } catch (emailError) {
-          console.error('Welcome email error:', emailError);
+          console.error('Welcome email exception:', emailError);
           // Don't fail the signup if email fails
         }
 
