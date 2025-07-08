@@ -55,17 +55,28 @@ const handler = async (req: Request): Promise<Response> => {
 
     logStep("Confirming user email", { email });
 
-    // Update user to confirmed status
-    const { data: userData, error: userError } = await supabase.auth.admin.updateUserById(
-      await getUserIdByEmail(supabase, email),
+    // Get all users and find the one with the matching email
+    const { data: listResult, error: listError } = await supabase.auth.admin.listUsers();
+    if (listError) {
+      throw new Error(`Failed to list users: ${listError.message}`);
+    }
+
+    const targetUser = listResult.users.find((user: any) => user.email === email);
+    if (!targetUser) {
+      throw new Error(`User with email ${email} not found`);
+    }
+
+    // Confirm the user's email
+    const { data: updateResult, error: updateError } = await supabase.auth.admin.updateUserById(
+      targetUser.id,
       { email_confirm: true }
     );
 
-    if (userError) {
-      throw new Error(`User confirmation error: ${userError.message}`);
+    if (updateError) {
+      throw new Error(`User confirmation error: ${updateError.message}`);
     }
 
-    logStep("User email confirmed successfully");
+    logStep("User email confirmed successfully", { userId: targetUser.id });
 
     // Log admin action
     await supabase
@@ -75,6 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
         admin_email: adminProfile.email,
         action: 'user_email_confirmed',
         resource_type: 'user',
+        resource_id: targetUser.id,
         metadata: {
           target_email: email,
           confirmation_method: 'admin_manual'
@@ -83,7 +95,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({ 
       success: true,
-      message: 'User email confirmed successfully'
+      message: `User ${email} email confirmed successfully`,
+      userId: targetUser.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -96,15 +109,5 @@ const handler = async (req: Request): Promise<Response> => {
     });
   }
 };
-
-async function getUserIdByEmail(supabase: any, email: string): Promise<string> {
-  const { data: users, error } = await supabase.auth.admin.listUsers();
-  if (error) throw error;
-  
-  const user = users.users.find((u: any) => u.email === email);
-  if (!user) throw new Error('User not found');
-  
-  return user.id;
-}
 
 serve(handler);
