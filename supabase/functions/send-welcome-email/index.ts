@@ -58,7 +58,7 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
 
           <div style="text-align: center; margin-bottom: 30px;">
-            <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') || 'https://yourdomain.com'}/onboarding" 
+            <a href="https://ultriumai.com/onboarding" 
                style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
               Start Your Journey →
             </a>
