@@ -26,10 +26,10 @@ const SafeDocDemoPage = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/demos')}
               >
                 <Home className="h-4 w-4 mr-2" />
-                Dashboard
+                Back to Demos
               </Button>
             </div>
           </div>
