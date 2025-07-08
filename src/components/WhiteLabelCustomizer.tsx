@@ -127,7 +127,7 @@ export const WhiteLabelCustomizer = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">White-Label Customization</h2>
-          <p className="text-muted-foreground">Customize the SafeComp interface for your clients</p>
+          <p className="text-muted-foreground">Customize the SafeScore interface for your clients</p>
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" onClick={() => setPreviewMode(!previewMode)}>
@@ -156,7 +156,7 @@ export const WhiteLabelCustomizer = () => {
           <CardContent className="p-8" style={{ backgroundColor: config.colors.background, color: config.colors.foreground }}>
             <div className="text-center space-y-4">
               <h3 className="text-2xl font-bold">Preview Mode</h3>
-              <p>This is how your white-labeled SafeComp dashboard will appear to clients</p>
+              <p>This is how your white-labeled SafeScore dashboard will appear to clients</p>
               <div className="flex justify-center space-x-4">
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: config.colors.primary }}></div>
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: config.colors.secondary }}></div>

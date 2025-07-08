@@ -120,8 +120,8 @@ const Solutions = () => {
       gradient: "from-teal-100 to-cyan-100"
     },
     {
-      id: "safecomp",
-      name: "Ultrium SafeComp™",
+      id: "safescore",
+      name: "Ultrium SafeScore™",
       category: "Compliance Management",
       description: "Comprehensive compliance management and audit platform",
       longDescription: "Enterprise compliance management solution that automates compliance monitoring, conducts security audits, and tracks regulatory requirements.",
@@ -134,8 +134,8 @@ const Solutions = () => {
         "Automated reporting",
         "Remediation tracking"
       ],
-      demoUrl: "/demos/safecomp",
-      pageUrl: "/products/safecomp",
+      demoUrl: "/demos/safescore",
+      pageUrl: "/products/safescore",
       gradient: "from-pink-100 to-rose-100"
     },
     {

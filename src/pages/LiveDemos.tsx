@@ -189,8 +189,8 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
-    id: "ultrium-safecomp",
-    name: "Ultrium SafeComp™",
+    id: "ultrium-safescore",
+    name: "Ultrium SafeScore™",
     category: "Compliance Management",
     description: "Comprehensive compliance management and audit platform",
     longDescription: "Enterprise compliance management solution that automates compliance monitoring, conducts security audits, tracks regulatory requirements, and provides detailed reporting for various frameworks including SOC 2, HIPAA, and GDPR.",
@@ -203,7 +203,7 @@ const demoApps: DemoApp[] = [
       "Automated reporting",
       "Remediation tracking"
     ],
-    demoUrl: "/demos/safecomp",
+    demoUrl: "/demos/safescore",
     isLive: true,
     tags: ["Compliance", "Audit", "Risk Management"],
     useCases: [

@@ -156,11 +156,11 @@ const docSections: DocSection[] = [
         tags: ["password", "security", "strength", "breach", "analysis"]
       },
       {
-        id: "safecomp-guide",
-        title: "SafeComp: Computer Security Scanner",
+        id: "safescore-guide",
+        title: "SafeScore: Computer Security Scanner",
         description: "Comprehensive system and network security analysis",
         category: "Security Apps",
-        content: "# Ultrium SafeComp™ Guide\n\nFull-spectrum computer and network security assessment platform.\n\n## System Analysis\n- **Vulnerability Scanning**: Known CVE detection\n- **Configuration Review**: Security hardening check\n- **Service Analysis**: Running services audit\n- **User Account Review**: Access control assessment\n- **Registry Analysis**: Windows registry security\n- **File System Scan**: Suspicious file detection\n\n## Network Security\n- **Port Scanning**: Open port identification\n- **Service Fingerprinting**: Service version detection\n- **Protocol Analysis**: Network traffic review\n- **Firewall Testing**: Rule effectiveness\n- **Wireless Security**: WiFi security assessment\n\n## Compliance Checking\n- **Framework Mapping**: NIST, ISO, CIS standards\n- **Policy Compliance**: Internal policy checks\n- **Regulatory Requirements**: Industry-specific rules\n- **Best Practices**: Security recommendations\n- **Gap Analysis**: Compliance deficiencies\n\n## Remediation\n- Prioritized fix recommendations\n- Step-by-step remediation guides\n- Risk-based prioritization\n- Timeline recommendations\n- Progress tracking",
+        content: "# Ultrium SafeScore™ Guide\n\nFull-spectrum computer and network security assessment platform.\n\n## System Analysis\n- **Vulnerability Scanning**: Known CVE detection\n- **Configuration Review**: Security hardening check\n- **Service Analysis**: Running services audit\n- **User Account Review**: Access control assessment\n- **Registry Analysis**: Windows registry security\n- **File System Scan**: Suspicious file detection\n\n## Network Security\n- **Port Scanning**: Open port identification\n- **Service Fingerprinting**: Service version detection\n- **Protocol Analysis**: Network traffic review\n- **Firewall Testing**: Rule effectiveness\n- **Wireless Security**: WiFi security assessment\n\n## Compliance Checking\n- **Framework Mapping**: NIST, ISO, CIS standards\n- **Policy Compliance**: Internal policy checks\n- **Regulatory Requirements**: Industry-specific rules\n- **Best Practices**: Security recommendations\n- **Gap Analysis**: Compliance deficiencies\n\n## Remediation\n- Prioritized fix recommendations\n- Step-by-step remediation guides\n- Risk-based prioritization\n- Timeline recommendations\n- Progress tracking",
         tags: ["computer", "system", "network", "security", "vulnerability"]
       },
       {

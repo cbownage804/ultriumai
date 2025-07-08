@@ -81,15 +81,15 @@ const SecurityAppsSection = () => {
       productUrl: '/products/safeweb'
     },
     {
-      id: 'safecomp',
+      id: 'safescore',
       name: 'Ultrium SafeScore™',
       icon: Users,
       description: 'Comprehensive compliance management and audit platform',
       features: ['Compliance monitoring', 'Audit automation', 'Risk assessment'],
       riskTypes: ['Compliance Violations', 'Audit Failures', 'Regulatory Risks'],
       category: 'Compliance Management',
-      demoUrl: '/demos/safecomp',
-      productUrl: '/products/safecomp'
+      demoUrl: '/demos/safescore',
+      productUrl: '/products/safescore'
     },
     {
       id: 'safenet',

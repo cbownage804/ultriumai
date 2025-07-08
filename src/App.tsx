@@ -134,7 +134,7 @@ function AppRouter() {
       <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
       <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
       <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
-      <Route path="/demos/safecomp" element={<SafeScoreDemoPage />} />
+      <Route path="/products/safescore" element={<SafeScorePage />} />
       <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
       <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
       <Route path="/demos/rmm" element={<RMMDemoPage />} />

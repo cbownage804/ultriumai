@@ -18,7 +18,7 @@ import {
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
-const SafeCompPage = () => {
+const SafeScorePage = () => {
   const features = [
     {
       icon: Shield,
@@ -54,7 +54,7 @@ const SafeCompPage = () => {
               <div className="flex items-center justify-center gap-2 mb-6">
                 <Shield className="h-12 w-12 text-primary" />
                 <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  SafeComp
+                  SafeScore
                 </h1>
               </div>
               
@@ -117,4 +117,4 @@ const SafeCompPage = () => {
   );
 };
 
-export default SafeCompPage;
+export default SafeScorePage;

@@ -95,8 +95,8 @@ const Footer = () => {
               <button onClick={() => handleNavigation('/products/safenet')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 SafeNet™
               </button>
-              <button onClick={() => handleNavigation('/products/safecomp')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeComp™
+              <button onClick={() => handleNavigation('/products/safescore')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                SafeScore™
               </button>
               <button onClick={() => handleNavigation('/products/safeweb')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 SafeWeb™

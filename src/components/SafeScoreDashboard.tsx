@@ -14,7 +14,7 @@ import { RealTimeComplianceMonitor } from "./RealTimeComplianceMonitor";
 import AdvancedReportGenerator from "./AdvancedReportGenerator";
 import { WhiteLabelCustomizer } from "./WhiteLabelCustomizer";
 
-export const SafeCompDashboard = () => {
+export const SafeScoreDashboard = () => {
   const { loading, dashboardData, fetchDashboardData } = useComplianceManager();
   const [selectedFramework, setSelectedFramework] = useState<string>('soc2');
 
@@ -52,7 +52,7 @@ export const SafeCompDashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">SafeComp Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground">SafeScore Dashboard</h1>
           <p className="text-muted-foreground">Continuous compliance monitoring and management</p>
         </div>
         <Button onClick={fetchDashboardData} disabled={loading}>

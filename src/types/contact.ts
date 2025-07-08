@@ -27,7 +27,7 @@ export const PRODUCTS: Product[] = [
   { id: 'safedoc', name: 'SafeDoc™' },
   { id: 'safepass', name: 'SafePass™' },
   { id: 'safenet', name: 'SafeNet™' },
-  { id: 'safecomp', name: 'SafeComp™' },
+  { id: 'safescore', name: 'SafeScore™' },
   { id: 'safeweb', name: 'SafeWeb™' }
 ];
 

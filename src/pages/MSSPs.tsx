@@ -66,7 +66,7 @@ const MSSPs = () => {
     { name: "SafeDoc™", description: "Document malware analysis" },
     { name: "SafePass™", description: "Password security auditing" },
     { name: "SafeWeb™", description: "Web application scanning" },
-    { name: "SafeComp™", description: "Compliance monitoring" },
+    { name: "SafeScore™", description: "Compliance monitoring" },
     { name: "SafeNet™", description: "Network security analysis" }
   ];
 
