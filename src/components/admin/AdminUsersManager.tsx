@@ -22,22 +22,23 @@ export const AdminUsersManager = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log('🔍 Fetching users for admin dashboard...');
+      
+      // Simplified query to avoid JOIN issues
       const { data, error } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles(role),
-          subscribers(subscription_tier, subscribed, subscription_end),
-          user_credits(credits_used, credits_limit)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
+
+      console.log('👥 Users data:', { count: data?.length, error: error?.message });
 
       if (error) throw error;
       setUsers(data || []);
     } catch (error: any) {
+      console.error('❌ Error fetching users:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch users",
+        description: `Failed to fetch users: ${error.message}`,
         variant: "destructive",
       });
     } finally {
