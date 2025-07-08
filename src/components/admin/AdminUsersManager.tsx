@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Search, Edit, Trash2, Plus, Filter } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, Filter, Mail, KeyRound, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export const AdminUsersManager = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -68,6 +69,55 @@ export const AdminUsersManager = () => {
       toast({
         title: "Error",
         description: "Failed to update user",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleResendWelcomeEmail = async (user: any) => {
+    try {
+      const { error } = await supabase.functions.invoke('admin-resend-welcome', {
+        body: {
+          userId: user.id,
+          email: user.email,
+          name: user.full_name
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Welcome email sent to ${user.email}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to send welcome email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleResetPassword = async (user: any) => {
+    try {
+      const { error } = await supabase.functions.invoke('admin-reset-password', {
+        body: {
+          email: user.email,
+          redirectTo: `${window.location.origin}/auth`
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Password reset email sent to ${user.email}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to send password reset email",
         variant: "destructive",
       });
     }
@@ -275,6 +325,30 @@ export const AdminUsersManager = () => {
                             )}
                           </DialogContent>
                         </Dialog>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem 
+                              onClick={() => handleResendWelcomeEmail(user)}
+                              className="flex items-center gap-2"
+                            >
+                              <Mail className="h-4 w-4" />
+                              Resend Welcome Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleResetPassword(user)}
+                              className="flex items-center gap-2"
+                            >
+                              <KeyRound className="h-4 w-4" />
+                              Reset Password
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
