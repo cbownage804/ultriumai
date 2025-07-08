@@ -38,13 +38,10 @@ const Auth = () => {
     setError('');
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: redirectUrl,
           data: {
             full_name: fullName,
             account_type: accountType,
@@ -64,19 +61,30 @@ const Auth = () => {
         } else {
           setError(error.message);
         }
-      } else if (data?.user && !data.session) {
-        // Email confirmation required
+      } else if (data?.user) {
+        // Send welcome email via Resend
+        try {
+          await supabase.functions.invoke('send-welcome-email', {
+            body: {
+              email: data.user.email,
+              name: fullName,
+              userId: data.user.id
+            }
+          });
+        } catch (emailError) {
+          console.error('Welcome email error:', emailError);
+          // Don't fail the signup if email fails
+        }
+
         toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link to complete your registration. Please check your email and click the link to verify your account.",
+          title: "Welcome to UltriumGPT!",
+          description: "Your account has been created successfully. Check your email for getting started tips!",
         });
-      } else if (data?.session) {
-        // User was created and automatically signed in
-        toast({
-          title: "Welcome!",
-          description: "Your account has been created successfully.",
-        });
-        navigate('/');
+        
+        // Navigate to dashboard if user is signed in, otherwise wait for confirmation
+        if (data.session) {
+          navigate('/');
+        }
       }
     } catch (err: any) {
       console.error('Sign up exception:', err);
