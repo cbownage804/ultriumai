@@ -22,28 +22,23 @@ export const AdminMSPsManager = () => {
 
   const fetchMSPs = async () => {
     try {
+      console.log('🔍 Fetching MSPs for admin dashboard...');
+      
+      // Simplified query to avoid JOIN issues
       const { data, error } = await supabase
         .from('msps')
-        .select(`
-          *,
-          profiles(email, full_name),
-          msp_clients(
-            id,
-            company_name,
-            contact_email, 
-            monthly_rate,
-            billing_status,
-            is_active
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
+
+      console.log('🏢 MSPs data:', { count: data?.length, error: error?.message });
 
       if (error) throw error;
       setMsps(data || []);
     } catch (error: any) {
+      console.error('❌ Error fetching MSPs:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch MSPs",
+        description: `Failed to fetch MSPs: ${error.message}`,
         variant: "destructive",
       });
     } finally {

@@ -21,29 +21,24 @@ export const AdminGPTsManager = () => {
 
   const fetchGPTs = async () => {
     try {
-      const [gptsRes, analyticsRes] = await Promise.all([
-        supabase
-          .from('custom_gpts')
-          .select(`
-            *,
-            profiles(email, full_name, company_name)
-          `)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('gpt_analytics')
-          .select('*')
-          .order('created_at', { ascending: false })
-      ]);
+      console.log('🔍 Fetching GPTs for admin dashboard...');
+      
+      // Simplified query to avoid JOIN issues
+      const { data, error } = await supabase
+        .from('custom_gpts')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (gptsRes.error) throw gptsRes.error;
-      if (analyticsRes.error) throw analyticsRes.error;
+      console.log('🤖 GPTs data:', { count: data?.length, error: error?.message });
 
-      setGpts(gptsRes.data || []);
-      setAnalytics(analyticsRes.data || []);
+      if (error) throw error;
+      setGpts(data || []);
+      setAnalytics([]); // Simplified - no analytics for now
     } catch (error: any) {
+      console.error('❌ Error fetching GPTs:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch GPTs",
+        description: `Failed to fetch GPTs: ${error.message}`,
         variant: "destructive",
       });
     } finally {

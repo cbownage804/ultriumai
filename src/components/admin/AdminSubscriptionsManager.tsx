@@ -22,32 +22,24 @@ export const AdminSubscriptionsManager = () => {
 
   const fetchSubscriptions = async () => {
     try {
-      const [subscriptionsRes, creditsRes] = await Promise.all([
-        supabase
-          .from('subscribers')
-          .select(`
-            *,
-            profiles(email, full_name, company_name)
-          `)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('user_credits')
-          .select(`
-            *,
-            profiles(email, full_name)
-          `)
-          .order('updated_at', { ascending: false })
-      ]);
+      console.log('🔍 Fetching subscriptions for admin dashboard...');
+      
+      // Simplified query to avoid JOIN issues
+      const { data, error } = await supabase
+        .from('subscribers')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (subscriptionsRes.error) throw subscriptionsRes.error;
-      if (creditsRes.error) throw creditsRes.error;
+      console.log('💳 Subscriptions data:', { count: data?.length, error: error?.message });
 
-      setSubscriptions(subscriptionsRes.data || []);
-      setCredits(creditsRes.data || []);
+      if (error) throw error;
+      setSubscriptions(data || []);
+      setCredits([]); // Simplified - no credits for now
     } catch (error: any) {
+      console.error('❌ Error fetching subscriptions:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch billing data",
+        description: `Failed to fetch subscriptions: ${error.message}`,
         variant: "destructive",
       });
     } finally {
