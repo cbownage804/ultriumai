@@ -628,7 +628,7 @@ const CustomGPTActions = () => {
                     icon: Settings
                   },
                   {
-                    name: 'Ultrium SafeEmail™ Scanner',
+                    name: 'Ultrium SafeMail™ Scanner',
                     description: 'Email header analysis and reputation checking',
                     action_type: 'security' as const,
                     icon: Settings

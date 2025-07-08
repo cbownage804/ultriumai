@@ -26,7 +26,7 @@ const Solutions = () => {
   const securityApps = [
     {
       id: "safeemail",
-      name: "Ultrium SafeEmail™",
+      name: "Ultrium SafeMail™",
       category: "Email Security",
       description: "AI-powered email analysis and threat detection",
       longDescription: "Advanced email security solution that uses AI to analyze incoming emails for phishing attempts, malware, suspicious links, and social engineering attacks.",
@@ -39,8 +39,8 @@ const Solutions = () => {
         "Detailed threat reports",
         "API integration ready"
       ],
-      demoUrl: "/demos/safeemail",
-      pageUrl: "/products/safeemail",
+      demoUrl: "/demos/safemail",
+      pageUrl: "/products/safemail",
       gradient: "from-blue-100 to-indigo-100"
     },
     {

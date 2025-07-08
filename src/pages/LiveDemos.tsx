@@ -40,7 +40,7 @@ interface DemoApp {
 const demoApps: DemoApp[] = [
   {
     id: "ultrium-safeemail",
-    name: "Ultrium SafeEmail™",
+    name: "Ultrium SafeMail™",
     category: "Email Security",
     description: "AI-powered email analysis and threat detection",
     longDescription: "Advanced email security solution that uses AI to analyze incoming emails for phishing attempts, malware, suspicious links, and social engineering attacks. Provides real-time threat assessment with detailed risk scoring.",

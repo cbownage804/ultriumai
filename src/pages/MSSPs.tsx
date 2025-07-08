@@ -61,7 +61,7 @@ const MSSPs = () => {
   ];
 
   const securityApps = [
-    { name: "SafeEmail™", description: "Email threat detection" },
+    { name: "SafeMail™", description: "Email threat detection" },
     { name: "SafeLink™", description: "URL security scanning" },
     { name: "SafeDoc™", description: "Document malware analysis" },
     { name: "SafePass™", description: "Password security auditing" },

@@ -74,7 +74,7 @@ const Terms = () => {
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">Security Applications</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    <li>SafeEmail™ threat detection</li>
+                    <li>SafeMail™ threat detection</li>
                     <li>SafeLink™ URL scanning</li>
                     <li>SafeDoc™ document analysis</li>
                     <li>Additional security tools</li>

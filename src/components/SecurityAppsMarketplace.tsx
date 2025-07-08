@@ -100,7 +100,7 @@ const SecurityAppsMarketplace = () => {
     },
     {
       id: 'safeemail',
-      name: 'Ultrium SafeEmail™',
+      name: 'Ultrium SafeMail™',
       description: 'AI-driven email security analysis and reputation checking',
       longDescription: 'Advanced email header analysis, sender reputation verification, and content analysis using natural language processing to detect sophisticated email threats and business email compromise attacks.',
       icon: Shield,

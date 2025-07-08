@@ -16,7 +16,7 @@ const SecurityAppsSection = () => {
   const securityApps = [
     {
       id: 'safeemail',
-      name: 'Ultrium SafeEmail™',
+      name: 'Ultrium SafeMail™',
       icon: Mail,
       description: 'AI-powered email analysis and threat detection',
       features: ['Real-time phishing detection', 'Malware scanning', 'Social engineering detection'],
@@ -165,7 +165,7 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Email & Link Security Bundle',
-      apps: ['SafeEmail', 'SafeScan', 'SafeLink'],
+      apps: ['SafeMail', 'SafeScan', 'SafeLink'],
       originalPrice: '$60',
       bundlePrice: '$53',
       enterprisePrice: '$92',
