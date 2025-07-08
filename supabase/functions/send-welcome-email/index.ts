@@ -27,7 +27,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Sending welcome email to:', email);
 
     const emailResponse = await resend.emails.send({
-      from: "UltriumGPT <onboarding@resend.dev>",
+      from: "UltriumGPT <cbownage804@gmail.com>",
       to: [email],
       subject: "Welcome to UltriumGPT! 🚀",
       html: `
