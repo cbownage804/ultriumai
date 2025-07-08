@@ -36,17 +36,17 @@ const handler = async (req: Request): Promise<Response> => {
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Welcome to UltriumGPT</title>
+          <title>Welcome to UltriumAI</title>
         </head>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 40px;">
-            <h1 style="color: #2563eb; margin-bottom: 10px;">Welcome to UltriumGPT! 🎉</h1>
+            <h1 style="color: #2563eb; margin-bottom: 10px;">Welcome to UltriumAI! 🎉</h1>
             <p style="font-size: 18px; color: #666;">Build powerful AI assistants tailored to your business</p>
           </div>
 
           <div style="background: #f8fafc; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
             <h2 style="color: #1e293b; margin-top: 0;">Hi ${name || 'there'}! 👋</h2>
-            <p>Thank you for joining UltriumGPT! You're now part of a community building the future of AI-powered business solutions.</p>
+            <p>Thank you for joining UltriumAI! You're now part of a community building the future of AI-powered business solutions.</p>
             
             <h3 style="color: #1e293b; margin-top: 25px;">🚀 Get Started in Minutes:</h3>
             <ol style="padding-left: 20px;">
