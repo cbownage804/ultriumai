@@ -20,9 +20,21 @@ export const AdminAnalytics = () => {
 
   const fetchAnalytics = async () => {
     try {
+      console.log('🔍 Starting admin analytics fetch...');
+      
+      // Check authentication first
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('👤 Current user:', user?.email);
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - parseInt(timeRange));
+
+      console.log('📅 Date range:', { startDate: startDate.toISOString(), endDate: endDate.toISOString() });
 
       const [
         usersRes,
@@ -48,10 +60,17 @@ export const AdminAnalytics = () => {
           .gte('created_at', startDate.toISOString())
       ]);
 
-      if (usersRes.error) throw usersRes.error;
-      if (gptsRes.error) throw gptsRes.error;
-      if (subscriptionsRes.error) throw subscriptionsRes.error;
-      if (analyticsRes.error) throw analyticsRes.error;
+      console.log('📊 Query results:', {
+        users: { data: usersRes.data?.length, error: usersRes.error?.message },
+        gpts: { data: gptsRes.data?.length, error: gptsRes.error?.message },
+        subscriptions: { data: subscriptionsRes.data?.length, error: subscriptionsRes.error?.message },
+        analytics: { data: analyticsRes.data?.length, error: analyticsRes.error?.message }
+      });
+
+      if (usersRes.error) throw new Error(`Users query failed: ${usersRes.error.message}`);
+      if (gptsRes.error) throw new Error(`GPTs query failed: ${gptsRes.error.message}`);
+      if (subscriptionsRes.error) throw new Error(`Subscriptions query failed: ${subscriptionsRes.error.message}`);
+      if (analyticsRes.error) throw new Error(`Analytics query failed: ${analyticsRes.error.message}`);
 
       // Process user growth data
       const userGrowthData = processTimeSeriesData(usersRes.data, 'created_at');
