@@ -513,20 +513,43 @@ const MSPDemos = () => {
 
                   <TabsContent value="demo" className="space-y-4">
                     {selectedDemo === 'safenet' ? (
-                      <SafeNetDemo />
-                    ) : selectedDemo === 'safeweb' ? (
-                      <div className="space-y-4">
-                        <div className="text-center space-y-2 mb-6">
-                          <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
-                            <Search className="h-6 w-6 text-primary" />
-                            MSP Dark Web Monitoring Demo
-                          </h3>
+                      <Card className="border-2 border-primary/20">
+                        <CardContent className="p-6 text-center space-y-4">
+                          <Network className="h-12 w-12 mx-auto text-primary mb-4" />
+                          <h3 className="text-xl font-semibold">MSP Network Security Demo</h3>
                           <p className="text-muted-foreground">
-                            Experience how your clients will see dark web threats targeting their business
+                            Experience the full interactive SafeNet demo and see how easy it is to deploy network security monitoring for your clients
                           </p>
-                        </div>
-                        <DarkWebDemo />
-                      </div>
+                          <Button 
+                            size="lg" 
+                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
+                            variant="hero"
+                          >
+                            <Globe className="h-5 w-5 mr-2" />
+                            Launch Interactive SafeNet Demo
+                            <ArrowRight className="h-5 w-5 ml-2" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ) : selectedDemo === 'safeweb' ? (
+                      <Card className="border-2 border-primary/20">
+                        <CardContent className="p-6 text-center space-y-4">
+                          <Search className="h-12 w-12 mx-auto text-primary mb-4" />
+                          <h3 className="text-xl font-semibold">MSP Dark Web Monitoring Demo</h3>
+                          <p className="text-muted-foreground">
+                            Experience the full interactive SafeWeb demo and see how your clients will monitor dark web threats targeting their business
+                          </p>
+                          <Button 
+                            size="lg" 
+                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
+                            variant="hero"
+                          >
+                            <Globe className="h-5 w-5 mr-2" />
+                            Launch Interactive SafeWeb Demo
+                            <ArrowRight className="h-5 w-5 ml-2" />
+                          </Button>
+                        </CardContent>
+                      </Card>
                     ) : selectedDemo === 'safescore' ? (
                       <Card className="border-2 border-primary/20">
                         <CardContent className="p-6 text-center space-y-4">
