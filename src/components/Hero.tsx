@@ -142,8 +142,7 @@ const Hero = () => {
 
           {/* Demo GIF Section */}
           <div className="animate-fade-in" style={{animationDelay: '0.6s'}}>
-            <div className="max-w-4xl mx-auto mb-8">
-              <h3 className="text-2xl font-bold mb-4 text-foreground text-center">See UltriumAI in Action</h3>
+            <div className="max-w-2xl mx-auto mb-8">
               <div className="relative rounded-xl overflow-hidden shadow-2xl">
                 <img 
                   src="https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/gpt-logos/UltriumAI_intro_gif.gif"
