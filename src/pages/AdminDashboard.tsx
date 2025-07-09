@@ -14,6 +14,7 @@ import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
 import { AdminNotifications } from '@/components/admin/AdminNotifications';
 import { DataExporter } from '@/components/admin/DataExporter';
 import { AuditTrailsViewer } from '@/components/admin/AuditTrailsViewer';
+import { AdminDashboardOverview } from '@/components/admin/AdminDashboardOverview';
 
 const AdminDashboard = () => {
   const { isUltriumEmployee, loading } = useAccountType();
@@ -101,7 +102,7 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <AdminAnalytics />
+            <AdminDashboardOverview />
           </TabsContent>
 
           <TabsContent value="users">
