@@ -16,6 +16,11 @@ export const AdminUsersManager = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
+  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
+  const [showPaymentsDialog, setShowPaymentsDialog] = useState(false);
+  const [showSubscriptionsDialog, setShowSubscriptionsDialog] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -207,6 +212,20 @@ export const AdminUsersManager = () => {
         {subscription.subscription_tier?.toUpperCase() || 'BASIC'}
       </Badge>
     );
+  };
+
+  const openPermissionsManager = (userId: string, userEmail: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(userEmail);
+    setShowPermissionsDialog(true);
+  };
+
+  const openPaymentsManager = () => {
+    setShowPaymentsDialog(true);
+  };
+
+  const openSubscriptionsManager = () => {
+    setShowSubscriptionsDialog(true);
   };
 
   const columns = [

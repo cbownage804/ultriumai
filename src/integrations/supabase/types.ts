@@ -3384,6 +3384,71 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          payment_method_id: string | null
+          processed_by: string | null
+          status: string
+          stripe_charge_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_refund_id: string | null
+          subscription_id: string | null
+          transaction_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method_id?: string | null
+          processed_by?: string | null
+          status: string
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
+          subscription_id?: string | null
+          transaction_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_method_id?: string | null
+          processed_by?: string | null
+          status?: string
+          stripe_charge_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
+          subscription_id?: string | null
+          transaction_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_type: Database["public"]["Enums"]["account_type"] | null
@@ -6314,6 +6379,71 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_modifications: {
+        Row: {
+          created_at: string
+          effective_date: string
+          from_amount: number | null
+          from_tier: string | null
+          id: string
+          metadata: Json | null
+          modification_type: string
+          processed_by: string | null
+          proration_amount: number | null
+          reason: string | null
+          stripe_proration_id: string | null
+          subscription_id: string | null
+          to_amount: number | null
+          to_tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          effective_date: string
+          from_amount?: number | null
+          from_tier?: string | null
+          id?: string
+          metadata?: Json | null
+          modification_type: string
+          processed_by?: string | null
+          proration_amount?: number | null
+          reason?: string | null
+          stripe_proration_id?: string | null
+          subscription_id?: string | null
+          to_amount?: number | null
+          to_tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          effective_date?: string
+          from_amount?: number | null
+          from_tier?: string | null
+          id?: string
+          metadata?: Json | null
+          modification_type?: string
+          processed_by?: string | null
+          proration_amount?: number | null
+          reason?: string | null
+          stripe_proration_id?: string | null
+          subscription_id?: string | null
+          to_amount?: number | null
+          to_tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_modifications_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           ai_confidence_score: number | null
@@ -6648,6 +6778,45 @@ export type Database = {
           reset_date?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_at: string
+          granted_by: string | null
+          id: string
+          metadata: Json | null
+          permission_key: string
+          permission_value: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          metadata?: Json | null
+          permission_key: string
+          permission_value?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          metadata?: Json | null
+          permission_key?: string
+          permission_value?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
