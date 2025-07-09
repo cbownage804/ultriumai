@@ -22,6 +22,7 @@ import { UserActivityDashboard } from '@/components/admin/UserActivityDashboard'
 import { RevenueAnalyticsDashboard } from '@/components/admin/RevenueAnalyticsDashboard';
 import { SystemHealthMonitoring } from '@/components/admin/SystemHealthMonitoring';
 import { WorkflowAutomationManager } from '@/components/admin/WorkflowAutomationManager';
+import { MSPClientSupportManager } from '@/components/admin/MSPClientSupportManager';
 
 const AdminDashboard = () => {
   const { isUltriumEmployee, loading } = useAccountType();
@@ -102,6 +103,10 @@ const AdminDashboard = () => {
               <Settings className="h-4 w-4" />
               Automation
             </TabsTrigger>
+            <TabsTrigger value="msp-support" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" />
+              MSP Support
+            </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
@@ -117,10 +122,6 @@ const AdminDashboard = () => {
             <TabsTrigger value="bulk" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Bulk Ops
-            </TabsTrigger>
-            <TabsTrigger value="monitoring" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Monitor
             </TabsTrigger>
             <TabsTrigger value="audit" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
@@ -150,6 +151,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="automation">
             <WorkflowAutomationManager />
+          </TabsContent>
+
+          <TabsContent value="msp-support">
+            <MSPClientSupportManager />
           </TabsContent>
 
           <TabsContent value="users">
