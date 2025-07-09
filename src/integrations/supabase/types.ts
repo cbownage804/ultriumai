@@ -445,6 +445,48 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_triggered_at: string | null
+          message: string
+          recipient_emails: string[] | null
+          recipient_phones: string[] | null
+          severity: string
+          title: string
+          trigger_conditions: Json
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          message: string
+          recipient_emails?: string[] | null
+          recipient_phones?: string[] | null
+          severity?: string
+          title: string
+          trigger_conditions: Json
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_triggered_at?: string | null
+          message?: string
+          recipient_emails?: string[] | null
+          recipient_phones?: string[] | null
+          severity?: string
+          title?: string
+          trigger_conditions?: Json
+        }
+        Relationships: []
+      }
       client_users: {
         Row: {
           client_id: string
@@ -1280,6 +1322,42 @@ export type Database = {
           item_type?: string
           last_scan?: string | null
           monitored_item?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      data_export_requests: {
+        Row: {
+          created_at: string
+          export_file_path: string | null
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          request_type: string
+          requested_data_types: string[] | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          export_file_path?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          request_type: string
+          requested_data_types?: string[] | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          export_file_path?: string | null
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          request_type?: string
+          requested_data_types?: string[] | null
           status?: string
           user_id?: string | null
         }
@@ -3680,6 +3758,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      revenue_analytics: {
+        Row: {
+          arr: number | null
+          churn_rate: number | null
+          churned_customers: number | null
+          conversion_rate: number | null
+          created_at: string
+          id: string
+          ltv: number | null
+          mrr: number | null
+          new_customers: number | null
+          period_end: string
+          period_start: string
+          total_revenue: number | null
+        }
+        Insert: {
+          arr?: number | null
+          churn_rate?: number | null
+          churned_customers?: number | null
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          ltv?: number | null
+          mrr?: number | null
+          new_customers?: number | null
+          period_end: string
+          period_start: string
+          total_revenue?: number | null
+        }
+        Update: {
+          arr?: number | null
+          churn_rate?: number | null
+          churned_customers?: number | null
+          conversion_rate?: number | null
+          created_at?: string
+          id?: string
+          ltv?: number | null
+          mrr?: number | null
+          new_customers?: number | null
+          period_end?: string
+          period_start?: string
+          total_revenue?: number | null
+        }
+        Relationships: []
       }
       rmm_agent_commands: {
         Row: {
@@ -6519,6 +6642,42 @@ export type Database = {
         }
         Relationships: []
       }
+      system_health_metrics: {
+        Row: {
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          recorded_at: string
+          status: string
+          threshold_critical: number | null
+          threshold_warning: number | null
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value: number
+          recorded_at?: string
+          status?: string
+          threshold_critical?: number | null
+          threshold_warning?: number | null
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number
+          recorded_at?: string
+          status?: string
+          threshold_critical?: number | null
+          threshold_warning?: number | null
+        }
+        Relationships: []
+      }
       team_invitations: {
         Row: {
           accepted_at: string | null
@@ -6748,6 +6907,45 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visibility_level?: string | null
+        }
+        Relationships: []
+      }
+      user_activity_logs: {
+        Row: {
+          activity_details: Json | null
+          activity_type: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          location_city: string | null
+          location_country: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_details?: Json | null
+          activity_type: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          location_city?: string | null
+          location_country?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_details?: Json | null
+          activity_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          location_city?: string | null
+          location_country?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -7003,6 +7201,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workflow_automations: {
+        Row: {
+          actions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          name: string
+          trigger_conditions: Json
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          actions: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name: string
+          trigger_conditions: Json
+          trigger_type: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name?: string
+          trigger_conditions?: Json
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

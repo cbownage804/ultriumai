@@ -18,6 +18,10 @@ import { AdminDashboardOverview } from '@/components/admin/AdminDashboardOvervie
 import BulkOperations from '@/components/admin/BulkOperations';
 import { SystemMonitoring } from '@/components/admin/SystemMonitoring';
 import { GlobalSearch } from '@/components/admin/GlobalSearch';
+import { UserActivityDashboard } from '@/components/admin/UserActivityDashboard';
+import { RevenueAnalyticsDashboard } from '@/components/admin/RevenueAnalyticsDashboard';
+import { SystemHealthMonitoring } from '@/components/admin/SystemHealthMonitoring';
+import { WorkflowAutomationManager } from '@/components/admin/WorkflowAutomationManager';
 
 const AdminDashboard = () => {
   const { isUltriumEmployee, loading } = useAccountType();
@@ -73,7 +77,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Overview
@@ -82,13 +86,25 @@ const AdminDashboard = () => {
               <Database className="h-4 w-4" />
               Search
             </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Activity
+            </TabsTrigger>
+            <TabsTrigger value="revenue" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Revenue
+            </TabsTrigger>
+            <TabsTrigger value="health" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Health
+            </TabsTrigger>
+            <TabsTrigger value="automation" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Automation
+            </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Users
-            </TabsTrigger>
-            <TabsTrigger value="msps" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              MSPs
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
@@ -97,10 +113,6 @@ const AdminDashboard = () => {
             <TabsTrigger value="gpts" className="flex items-center gap-2">
               <Bot className="h-4 w-4" />
               GPTs
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Analytics
             </TabsTrigger>
             <TabsTrigger value="bulk" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -124,12 +136,24 @@ const AdminDashboard = () => {
             <GlobalSearch />
           </TabsContent>
 
-          <TabsContent value="users">
-            <AdminUsersManager />
+          <TabsContent value="activity">
+            <UserActivityDashboard />
           </TabsContent>
 
-          <TabsContent value="msps">
-            <AdminMSPsManager />
+          <TabsContent value="revenue">
+            <RevenueAnalyticsDashboard />
+          </TabsContent>
+
+          <TabsContent value="health">
+            <SystemHealthMonitoring />
+          </TabsContent>
+
+          <TabsContent value="automation">
+            <WorkflowAutomationManager />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <AdminUsersManager />
           </TabsContent>
 
           <TabsContent value="subscriptions">
@@ -138,10 +162,6 @@ const AdminDashboard = () => {
 
           <TabsContent value="gpts">
             <AdminGPTsManager />
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <AdminAnalytics />
           </TabsContent>
 
           <TabsContent value="bulk">
