@@ -487,6 +487,59 @@ export type Database = {
         }
         Relationships: []
       }
+      client_contacts: {
+        Row: {
+          client_id: string
+          communication_preferences: Json | null
+          contact_name: string
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          is_primary: boolean | null
+          phone: string | null
+          role: string | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          communication_preferences?: Json | null
+          contact_name: string
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          phone?: string | null
+          role?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          communication_preferences?: Json | null
+          contact_name?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          phone?: string | null
+          role?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_client_contacts_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_users: {
         Row: {
           client_id: string
@@ -1970,51 +2023,95 @@ export type Database = {
       }
       helpdesk_tickets: {
         Row: {
+          actual_hours: number | null
           assigned_to: string | null
           category: string | null
+          contact_id: string | null
           created_at: string | null
           customer_id: string | null
+          customer_satisfaction: number | null
           description: string | null
           device_context: Json | null
+          escalation_level: number | null
+          estimated_hours: number | null
+          first_response_at: string | null
           id: string
+          last_activity_at: string | null
           priority: string | null
           resolution_notes: string | null
           resolved_at: string | null
+          sla_due_at: string | null
+          sla_policy_id: string | null
           status: string | null
+          tags: string[] | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          actual_hours?: number | null
           assigned_to?: string | null
           category?: string | null
+          contact_id?: string | null
           created_at?: string | null
           customer_id?: string | null
+          customer_satisfaction?: number | null
           description?: string | null
           device_context?: Json | null
+          escalation_level?: number | null
+          estimated_hours?: number | null
+          first_response_at?: string | null
           id?: string
+          last_activity_at?: string | null
           priority?: string | null
           resolution_notes?: string | null
           resolved_at?: string | null
+          sla_due_at?: string | null
+          sla_policy_id?: string | null
           status?: string | null
+          tags?: string[] | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          actual_hours?: number | null
           assigned_to?: string | null
           category?: string | null
+          contact_id?: string | null
           created_at?: string | null
           customer_id?: string | null
+          customer_satisfaction?: number | null
           description?: string | null
           device_context?: Json | null
+          escalation_level?: number | null
+          estimated_hours?: number | null
+          first_response_at?: string | null
           id?: string
+          last_activity_at?: string | null
           priority?: string | null
           resolution_notes?: string | null
           resolved_at?: string | null
+          sla_due_at?: string | null
+          sla_policy_id?: string | null
           status?: string | null
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_helpdesk_tickets_contact"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_helpdesk_tickets_sla"
+            columns: ["sla_policy_id"]
+            isOneToOne: false
+            referencedRelation: "sla_policies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "helpdesk_tickets_customer_id_fkey"
             columns: ["customer_id"]
@@ -2739,21 +2836,26 @@ export type Database = {
         Row: {
           api_enabled: boolean | null
           billing_status: string | null
+          business_hours: Json | null
           company_name: string
           contact_email: string
           contact_name: string
+          contract_end_date: string | null
           created_at: string
           current_users: number | null
           custom_branding: Json | null
           domain: string | null
+          health_status: string | null
           id: string
           integration_settings: Json | null
           is_active: boolean | null
           last_billed_at: string | null
           max_users: number | null
+          monthly_fee: number | null
           monthly_rate: number
           msp_id: string
           phone: string | null
+          timezone: string | null
           trial_ends_at: string | null
           updated_at: string
           webapp_enabled: boolean | null
@@ -2762,21 +2864,26 @@ export type Database = {
         Insert: {
           api_enabled?: boolean | null
           billing_status?: string | null
+          business_hours?: Json | null
           company_name: string
           contact_email: string
           contact_name: string
+          contract_end_date?: string | null
           created_at?: string
           current_users?: number | null
           custom_branding?: Json | null
           domain?: string | null
+          health_status?: string | null
           id?: string
           integration_settings?: Json | null
           is_active?: boolean | null
           last_billed_at?: string | null
           max_users?: number | null
+          monthly_fee?: number | null
           monthly_rate: number
           msp_id: string
           phone?: string | null
+          timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string
           webapp_enabled?: boolean | null
@@ -2785,21 +2892,26 @@ export type Database = {
         Update: {
           api_enabled?: boolean | null
           billing_status?: string | null
+          business_hours?: Json | null
           company_name?: string
           contact_email?: string
           contact_name?: string
+          contract_end_date?: string | null
           created_at?: string
           current_users?: number | null
           custom_branding?: Json | null
           domain?: string | null
+          health_status?: string | null
           id?: string
           integration_settings?: Json | null
           is_active?: boolean | null
           last_billed_at?: string | null
           max_users?: number | null
+          monthly_fee?: number | null
           monthly_rate?: number
           msp_id?: string
           phone?: string | null
+          timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string
           webapp_enabled?: boolean | null
@@ -6397,6 +6509,48 @@ export type Database = {
         }
         Relationships: []
       }
+      sla_policies: {
+        Row: {
+          business_hours_only: boolean | null
+          created_at: string | null
+          description: string | null
+          escalation_hours: number | null
+          first_response_hours: number
+          id: string
+          is_active: boolean | null
+          name: string
+          priority_level: string
+          resolution_hours: number
+          updated_at: string | null
+        }
+        Insert: {
+          business_hours_only?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          escalation_hours?: number | null
+          first_response_hours: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority_level: string
+          resolution_hours: number
+          updated_at?: string | null
+        }
+        Update: {
+          business_hours_only?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          escalation_hours?: number | null
+          first_response_hours?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority_level?: string
+          resolution_hours?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       software_deployments: {
         Row: {
           client_id: string
@@ -6566,6 +6720,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      support_agents: {
+        Row: {
+          agent_name: string
+          created_at: string | null
+          department: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          max_concurrent_tickets: number | null
+          role: string
+          skills: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string | null
+          department?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_tickets?: number | null
+          role?: string
+          skills?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_tickets?: number | null
+          role?: string
+          skills?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_metrics: {
+        Row: {
+          agent_id: string | null
+          avg_first_response_hours: number | null
+          avg_resolution_hours: number | null
+          client_id: string | null
+          created_at: string | null
+          customer_satisfaction_score: number | null
+          date: string
+          id: string
+          resolved_tickets: number | null
+          sla_breaches: number | null
+          total_tickets: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          avg_first_response_hours?: number | null
+          avg_resolution_hours?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          customer_satisfaction_score?: number | null
+          date: string
+          id?: string
+          resolved_tickets?: number | null
+          sla_breaches?: number | null
+          total_tickets?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          avg_first_response_hours?: number | null
+          avg_resolution_hours?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          customer_satisfaction_score?: number | null
+          date?: string
+          id?: string
+          resolved_tickets?: number | null
+          sla_breaches?: number | null
+          total_tickets?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       support_tickets: {
         Row: {
@@ -6877,6 +7118,95 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_activities: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          description: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_ticket_activities_ticket"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "helpdesk_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_assignments: {
+        Row: {
+          agent_id: string
+          assigned_at: string | null
+          assigned_by: string
+          assignment_reason: string | null
+          id: string
+          is_active: boolean | null
+          ticket_id: string
+          unassigned_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          assigned_at?: string | null
+          assigned_by: string
+          assignment_reason?: string | null
+          id?: string
+          is_active?: boolean | null
+          ticket_id: string
+          unassigned_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          assigned_at?: string | null
+          assigned_by?: string
+          assignment_reason?: string | null
+          id?: string
+          is_active?: boolean | null
+          ticket_id?: string
+          unassigned_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_ticket_assignments_agent"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "support_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ticket_assignments_ticket"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "helpdesk_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_comments: {
         Row: {
           content: string
@@ -6907,6 +7237,150 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visibility_level?: string | null
+        }
+        Relationships: []
+      }
+      ticket_escalations: {
+        Row: {
+          escalated_at: string | null
+          escalated_by: string
+          escalated_from: string | null
+          escalated_to: string
+          escalation_reason: string
+          escalation_type: string
+          id: string
+          resolved_at: string | null
+          ticket_id: string
+        }
+        Insert: {
+          escalated_at?: string | null
+          escalated_by: string
+          escalated_from?: string | null
+          escalated_to: string
+          escalation_reason: string
+          escalation_type: string
+          id?: string
+          resolved_at?: string | null
+          ticket_id: string
+        }
+        Update: {
+          escalated_at?: string | null
+          escalated_by?: string
+          escalated_from?: string | null
+          escalated_to?: string
+          escalation_reason?: string
+          escalation_type?: string
+          id?: string
+          resolved_at?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_ticket_escalations_ticket"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "helpdesk_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ticket_escalations_to"
+            columns: ["escalated_to"]
+            isOneToOne: false
+            referencedRelation: "support_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_internal_notes: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          id: string
+          is_private: boolean | null
+          note_content: string
+          note_type: string | null
+          ticket_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          id?: string
+          is_private?: boolean | null
+          note_content: string
+          note_type?: string | null
+          ticket_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          id?: string
+          is_private?: boolean | null
+          note_content?: string
+          note_type?: string | null
+          ticket_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_ticket_notes_agent"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "support_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ticket_notes_ticket"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "helpdesk_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string
+          description_template: string
+          estimated_hours: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          priority: string | null
+          tags: string[] | null
+          title_template: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          created_by: string
+          description_template: string
+          estimated_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          priority?: string | null
+          tags?: string[] | null
+          title_template: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string
+          description_template?: string
+          estimated_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          priority?: string | null
+          tags?: string[] | null
+          title_template?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
