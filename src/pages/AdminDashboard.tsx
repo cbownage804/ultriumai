@@ -15,6 +15,9 @@ import { AdminNotifications } from '@/components/admin/AdminNotifications';
 import { DataExporter } from '@/components/admin/DataExporter';
 import { AuditTrailsViewer } from '@/components/admin/AuditTrailsViewer';
 import { AdminDashboardOverview } from '@/components/admin/AdminDashboardOverview';
+import BulkOperations from '@/components/admin/BulkOperations';
+import { SystemMonitoring } from '@/components/admin/SystemMonitoring';
+import { GlobalSearch } from '@/components/admin/GlobalSearch';
 
 const AdminDashboard = () => {
   const { isUltriumEmployee, loading } = useAccountType();
@@ -70,10 +73,14 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="search" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              Search
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -95,6 +102,14 @@ const AdminDashboard = () => {
               <Database className="h-4 w-4" />
               Analytics
             </TabsTrigger>
+            <TabsTrigger value="bulk" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Bulk Ops
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Monitor
+            </TabsTrigger>
             <TabsTrigger value="audit" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Audit
@@ -103,6 +118,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <AdminDashboardOverview />
+          </TabsContent>
+
+          <TabsContent value="search">
+            <GlobalSearch />
           </TabsContent>
 
           <TabsContent value="users">
@@ -123,6 +142,14 @@ const AdminDashboard = () => {
 
           <TabsContent value="analytics">
             <AdminAnalytics />
+          </TabsContent>
+
+          <TabsContent value="bulk">
+            <BulkOperations />
+          </TabsContent>
+
+          <TabsContent value="monitoring">
+            <SystemMonitoring />
           </TabsContent>
 
           <TabsContent value="audit">
