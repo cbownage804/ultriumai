@@ -169,9 +169,13 @@ export const SafeMailApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     try {
       const { data, error } = await supabase.functions.invoke('safemail-scanner', {
         body: {
-          email_content: emailText,
-          sender_email: senderEmail,
-          user_id: user?.id
+          action: 'scan_email',
+          email: {
+            subject: 'Email Analysis', // We can extract this from content later if needed
+            sender: senderEmail || 'unknown@unknown.com',
+            content: emailText,
+            timestamp: new Date().toISOString()
+          }
         }
       });
 
