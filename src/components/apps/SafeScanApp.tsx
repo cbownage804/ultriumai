@@ -443,68 +443,167 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               </CardContent>
             </Card>
 
-            {/* Results card would be shared across all tabs */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Scan Results</CardTitle>
+            {/* Beautiful Results Display */}
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  Scan Results
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {!scanResult ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Run a scan to see detailed security analysis
+                  <div className="text-center py-16 px-6">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full animate-pulse" />
+                      </div>
+                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 w-fit mx-auto">
+                        <Shield className="h-12 w-12 text-primary" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Ready to Scan</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">
+                      Run a security scan to see detailed threat analysis and recommendations
+                    </p>
                   </div>
                 ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium">{scanResult.type?.toUpperCase() || 'UNKNOWN'} SCAN</div>
-                          <div className="text-sm text-muted-foreground truncate">
-                            {scanResult.content || 'No content available'}
+                  <div className="animate-fade-in">
+                    {/* Status Hero Section */}
+                    <div className="relative overflow-hidden">
+                      <div className={`absolute inset-0 ${
+                        scanResult.safe 
+                          ? 'bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-950/30 dark:via-green-950/20 dark:to-teal-950/30' 
+                          : 'bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-red-950/30 dark:via-orange-950/20 dark:to-yellow-950/30'
+                      }`} />
+                      
+                      <div className="relative p-8">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-4 rounded-2xl shadow-lg ${
+                              scanResult.safe 
+                                ? 'bg-gradient-to-br from-emerald-500 to-green-600' 
+                                : 'bg-gradient-to-br from-red-500 to-orange-600'
+                            }`}>
+                              {scanResult.safe ? (
+                                <CheckCircle className="h-8 w-8 text-white" />
+                              ) : (
+                                <XCircle className="h-8 w-8 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-bold mb-1">
+                                {scanResult.safe ? 'Content is Safe' : 'Threats Detected'}
+                              </h3>
+                              <p className="text-muted-foreground">
+                                {scanResult.type.charAt(0).toUpperCase() + scanResult.type.slice(1)} security analysis complete
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <Badge 
+                              variant={getRiskBadgeVariant(scanResult.risk_level)} 
+                              className="text-lg px-4 py-2 font-bold shadow-md"
+                            >
+                              {scanResult.risk_level?.toUpperCase() || 'UNKNOWN'}
+                            </Badge>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              Risk Assessment
+                            </div>
                           </div>
                         </div>
-                        <Badge variant={getRiskBadgeVariant(scanResult.risk_level || 'unknown')} className="ml-2">
-                          {scanResult.risk_level?.toUpperCase() || 'UNKNOWN'}
-                        </Badge>
+                        
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                              {scanResult.reputation_score || 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Reputation Score</div>
+                          </div>
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                              {scanResult.threats_detected?.length || 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Threats Found</div>
+                          </div>
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                              {scanResult.type === 'url' ? 'URL' : scanResult.type === 'email' ? 'Email' : 'Doc'}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Content Type</div>
+                          </div>
+                        </div>
                       </div>
-
-                    <div className="flex items-center gap-2">
-                      {scanResult.safe ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <XCircle className="h-5 w-5 text-red-500" />
-                      )}
-                      <span className={`font-medium ${getRiskColor(scanResult.risk_level)}`}>
-                        {scanResult.safe ? 'Safe to use' : 'Security threats detected'}
-                      </span>
                     </div>
 
-                    {scanResult.threats_detected.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Threats Detected</h4>
-                        <div className="space-y-1">
-                          {scanResult.threats_detected.map((threat, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm text-red-600">
-                              <XCircle className="h-3 w-3" />
-                              <span>{threat}</span>
-                            </div>
-                          ))}
+                    <div className="p-6 space-y-6">
+                      {/* Scanned Content */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold flex items-center gap-2 text-lg">
+                          {scanResult.type === 'url' && <Link className="h-5 w-5 text-blue-500" />}
+                          {scanResult.type === 'email' && <Mail className="h-5 w-5 text-green-500" />}
+                          {scanResult.type === 'document' && <FileText className="h-5 w-5 text-purple-500" />}
+                          Analyzed Content
+                        </h4>
+                        <div className="p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30">
+                          <code className="text-sm text-muted-foreground break-all font-mono">
+                            {scanResult.content}
+                          </code>
                         </div>
                       </div>
-                    )}
 
-                    {scanResult.recommendations.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Recommendations</h4>
-                        <div className="space-y-1">
-                          {scanResult.recommendations.map((recommendation, index) => (
-                            <div key={index} className="flex items-start gap-2 text-sm">
-                              <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
-                              <span>{recommendation}</span>
-                            </div>
-                          ))}
+                      {/* Threats Section */}
+                      {scanResult.threats_detected && scanResult.threats_detected.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold flex items-center gap-2 text-lg text-red-600 dark:text-red-400">
+                            <AlertTriangle className="h-5 w-5" />
+                            Security Threats ({scanResult.threats_detected.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {scanResult.threats_detected.map((threat, index) => (
+                              <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                                <div className="p-1 rounded-full bg-red-100 dark:bg-red-900">
+                                  <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                </div>
+                                <span className="text-sm font-medium text-red-800 dark:text-red-200">{threat}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {scanResult.recommendations && scanResult.recommendations.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold flex items-center gap-2 text-lg text-green-600 dark:text-green-400">
+                            <CheckCircle className="h-5 w-5" />
+                            Security Recommendations
+                          </h4>
+                          <div className="space-y-2">
+                            {scanResult.recommendations.map((recommendation, index) => (
+                              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                                <div className="p-1 rounded-full bg-green-100 dark:bg-green-900 mt-0.5">
+                                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                </div>
+                                <span className="text-sm font-medium text-green-800 dark:text-green-200">{recommendation}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Scan Timestamp */}
+                      <div className="pt-4 border-t border-muted-foreground/10">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>Scan completed at {new Date(scanResult.scan_date).toLocaleString()}</span>
+                          <span className="font-medium">Powered by Ultrium SafeScan™</span>
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -571,20 +670,165 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               </CardContent>
             </Card>
 
-            {/* Shared results card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Scan Results</CardTitle>
+            {/* Beautiful Results Display */}
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  Scan Results
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {!scanResult ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Upload a document to see security analysis
+                  <div className="text-center py-16 px-6">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-300/5 rounded-full animate-pulse" />
+                      </div>
+                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-purple-500/10 to-purple-300/5 w-fit mx-auto">
+                        <FileText className="h-12 w-12 text-purple-500" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Upload Document</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">
+                      Upload a document to scan for malware and security threats
+                    </p>
                   </div>
                 ) : (
-                  // Same results display as above
-                  <div className="space-y-4">
-                    {/* Results content here */}
+                  <div className="animate-fade-in">
+                    {/* Status Hero Section */}
+                    <div className="relative overflow-hidden">
+                      <div className={`absolute inset-0 ${
+                        scanResult.safe 
+                          ? 'bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-950/30 dark:via-green-950/20 dark:to-teal-950/30' 
+                          : 'bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-red-950/30 dark:via-orange-950/20 dark:to-yellow-950/30'
+                      }`} />
+                      
+                      <div className="relative p-8">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-4 rounded-2xl shadow-lg ${
+                              scanResult.safe 
+                                ? 'bg-gradient-to-br from-emerald-500 to-green-600' 
+                                : 'bg-gradient-to-br from-red-500 to-orange-600'
+                            }`}>
+                              {scanResult.safe ? (
+                                <CheckCircle className="h-8 w-8 text-white" />
+                              ) : (
+                                <XCircle className="h-8 w-8 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-bold mb-1">
+                                {scanResult.safe ? 'Document is Safe' : 'Threats Detected'}
+                              </h3>
+                              <p className="text-muted-foreground">
+                                Document security analysis complete
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <Badge 
+                              variant={getRiskBadgeVariant(scanResult.risk_level)} 
+                              className="text-lg px-4 py-2 font-bold shadow-md"
+                            >
+                              {scanResult.risk_level?.toUpperCase() || 'UNKNOWN'}
+                            </Badge>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              Risk Assessment
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                              {scanResult.reputation_score || 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Reputation Score</div>
+                          </div>
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                              {scanResult.threats_detected?.length || 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Threats Found</div>
+                          </div>
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                              Doc
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Content Type</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                      {/* Scanned Content */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold flex items-center gap-2 text-lg">
+                          <FileText className="h-5 w-5 text-purple-500" />
+                          Analyzed Document
+                        </h4>
+                        <div className="p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30">
+                          <code className="text-sm text-muted-foreground break-all font-mono">
+                            {scanResult.content}
+                          </code>
+                        </div>
+                      </div>
+
+                      {/* Threats Section */}
+                      {scanResult.threats_detected && scanResult.threats_detected.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold flex items-center gap-2 text-lg text-red-600 dark:text-red-400">
+                            <AlertTriangle className="h-5 w-5" />
+                            Security Threats ({scanResult.threats_detected.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {scanResult.threats_detected.map((threat, index) => (
+                              <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                                <div className="p-1 rounded-full bg-red-100 dark:bg-red-900">
+                                  <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                </div>
+                                <span className="text-sm font-medium text-red-800 dark:text-red-200">{threat}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {scanResult.recommendations && scanResult.recommendations.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold flex items-center gap-2 text-lg text-green-600 dark:text-green-400">
+                            <CheckCircle className="h-5 w-5" />
+                            Security Recommendations
+                          </h4>
+                          <div className="space-y-2">
+                            {scanResult.recommendations.map((recommendation, index) => (
+                              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                                <div className="p-1 rounded-full bg-green-100 dark:bg-green-900 mt-0.5">
+                                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                </div>
+                                <span className="text-sm font-medium text-green-800 dark:text-green-200">{recommendation}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Scan Timestamp */}
+                      <div className="pt-4 border-t border-muted-foreground/10">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>Scan completed at {new Date(scanResult.scan_date).toLocaleString()}</span>
+                          <span className="font-medium">Powered by Ultrium SafeScan™</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -641,20 +885,165 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               </CardContent>
             </Card>
 
-            {/* Shared results card */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Scan Results</CardTitle>
+            {/* Beautiful Results Display */}
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  Scan Results
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 {!scanResult ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Enter a URL to see security analysis
+                  <div className="text-center py-16 px-6">
+                    <div className="relative mb-6">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500/20 to-blue-300/5 rounded-full animate-pulse" />
+                      </div>
+                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-blue-500/10 to-blue-300/5 w-fit mx-auto">
+                        <Link className="h-12 w-12 text-blue-500" />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">Enter URL</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">
+                      Enter a URL to analyze for phishing and malicious content
+                    </p>
                   </div>
                 ) : (
-                  // Same results display
-                  <div className="space-y-4">
-                    {/* Results content here */}
+                  <div className="animate-fade-in">
+                    {/* Status Hero Section */}
+                    <div className="relative overflow-hidden">
+                      <div className={`absolute inset-0 ${
+                        scanResult.safe 
+                          ? 'bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-950/30 dark:via-green-950/20 dark:to-teal-950/30' 
+                          : 'bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50 dark:from-red-950/30 dark:via-orange-950/20 dark:to-yellow-950/30'
+                      }`} />
+                      
+                      <div className="relative p-8">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-4 rounded-2xl shadow-lg ${
+                              scanResult.safe 
+                                ? 'bg-gradient-to-br from-emerald-500 to-green-600' 
+                                : 'bg-gradient-to-br from-red-500 to-orange-600'
+                            }`}>
+                              {scanResult.safe ? (
+                                <CheckCircle className="h-8 w-8 text-white" />
+                              ) : (
+                                <XCircle className="h-8 w-8 text-white" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-bold mb-1">
+                                {scanResult.safe ? 'URL is Safe' : 'Threats Detected'}
+                              </h3>
+                              <p className="text-muted-foreground">
+                                URL security analysis complete
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right">
+                            <Badge 
+                              variant={getRiskBadgeVariant(scanResult.risk_level)} 
+                              className="text-lg px-4 py-2 font-bold shadow-md"
+                            >
+                              {scanResult.risk_level?.toUpperCase() || 'UNKNOWN'}
+                            </Badge>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              Risk Assessment
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                              {scanResult.reputation_score || 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Reputation Score</div>
+                          </div>
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                              {scanResult.threats_detected?.length || 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Threats Found</div>
+                          </div>
+                          <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20 backdrop-blur-sm border border-white/20">
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                              URL
+                            </div>
+                            <div className="text-sm text-muted-foreground font-medium">Content Type</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                      {/* Scanned Content */}
+                      <div className="space-y-3">
+                        <h4 className="font-semibold flex items-center gap-2 text-lg">
+                          <Link className="h-5 w-5 text-blue-500" />
+                          Analyzed URL
+                        </h4>
+                        <div className="p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30">
+                          <code className="text-sm text-muted-foreground break-all font-mono">
+                            {scanResult.content}
+                          </code>
+                        </div>
+                      </div>
+
+                      {/* Threats Section */}
+                      {scanResult.threats_detected && scanResult.threats_detected.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold flex items-center gap-2 text-lg text-red-600 dark:text-red-400">
+                            <AlertTriangle className="h-5 w-5" />
+                            Security Threats ({scanResult.threats_detected.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {scanResult.threats_detected.map((threat, index) => (
+                              <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                                <div className="p-1 rounded-full bg-red-100 dark:bg-red-900">
+                                  <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                </div>
+                                <span className="text-sm font-medium text-red-800 dark:text-red-200">{threat}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Recommendations */}
+                      {scanResult.recommendations && scanResult.recommendations.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-semibold flex items-center gap-2 text-lg text-green-600 dark:text-green-400">
+                            <CheckCircle className="h-5 w-5" />
+                            Security Recommendations
+                          </h4>
+                          <div className="space-y-2">
+                            {scanResult.recommendations.map((recommendation, index) => (
+                              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                                <div className="p-1 rounded-full bg-green-100 dark:bg-green-900 mt-0.5">
+                                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                </div>
+                                <span className="text-sm font-medium text-green-800 dark:text-green-200">{recommendation}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Scan Timestamp */}
+                      <div className="pt-4 border-t border-muted-foreground/10">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>Scan completed at {new Date(scanResult.scan_date).toLocaleString()}</span>
+                          <span className="font-medium">Powered by Ultrium SafeScan™</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
