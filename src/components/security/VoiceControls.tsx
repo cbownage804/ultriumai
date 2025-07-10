@@ -35,7 +35,7 @@ export const VoiceControls = ({ onVoiceMessage, className }: VoiceControlsProps)
   const { speak, stopSpeaking, isPlaying, isLoading, settings, updateSettings } = useVoiceInterface();
 
   const handleTestVoice = async () => {
-    const testMessage = "Hello! This is UltriumDefender AI. Your security systems are being monitored and protected.";
+    const testMessage = "Hello! This is SafeShield AI. Your security systems are being monitored and protected.";
     await speak(testMessage);
   };
 

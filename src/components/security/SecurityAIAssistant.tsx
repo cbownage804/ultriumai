@@ -73,7 +73,7 @@ export const SecurityAIAssistant = ({
     {
       id: '1',
       role: 'assistant',
-      content: `🛡️ **UltriumDefender AI** at your service. I'm your dedicated cybersecurity analyst with real-time access to your security infrastructure.
+      content: `🛡️ **SafeShield AI** at your service. I'm your dedicated cybersecurity analyst with real-time access to your security infrastructure.
 
 **Current Security Status:**
 ${securityContext ? `
@@ -349,7 +349,7 @@ Would you like me to analyze these threats and recommend response actions?`,
       console.error('Security AI error:', error);
       toast({
         title: "Error",
-        description: "Failed to communicate with UltriumDefender AI",
+        description: "Failed to communicate with SafeShield AI",
         variant: "destructive",
       });
     } finally {
@@ -411,7 +411,7 @@ Would you like me to analyze these threats and recommend response actions?`,
                 <Shield className="h-5 w-5 text-red-400/50" />
               </div>
             </div>
-            <CardTitle className="text-lg text-white">UltriumDefender AI</CardTitle>
+            <CardTitle className="text-lg text-white">SafeShield AI</CardTitle>
             <Badge className="text-xs bg-green-600/80 text-green-100 animate-pulse">
               <Activity className="h-3 w-3 mr-1" />
               Live
@@ -517,7 +517,7 @@ Would you like me to analyze these threats and recommend response actions?`,
                   <div className="bg-gray-800/80 border border-red-800/30 rounded-lg p-3 backdrop-blur-sm text-gray-100">
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin text-red-400" />
-                      <span className="text-sm">UltriumDefender AI analyzing...</span>
+                      <span className="text-sm">SafeShield AI analyzing...</span>
                     </div>
                   </div>
                 </div>
@@ -566,7 +566,7 @@ Would you like me to analyze these threats and recommend response actions?`,
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask UltriumDefender AI about security threats, compliance, or incidents..."
+                placeholder="Ask SafeShield AI about security threats, compliance, or incidents..."
                 className="min-h-[40px] resize-none bg-gray-800/50 border-red-800/30 text-gray-100 placeholder-gray-400 focus:border-red-600 focus:ring-red-600/50"
                 disabled={isLoading}
               />
