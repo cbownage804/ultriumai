@@ -207,11 +207,21 @@ const ProfilePage = () => {
                 variant="ghost" 
                 size="sm"
                 onClick={async () => {
-                  await checkSubscription();
-                  toast({
-                    title: "Subscription status refreshed",
-                    description: "Your subscription status has been updated.",
-                  });
+                  console.log('Refresh button clicked');
+                  try {
+                    await checkSubscription();
+                    toast({
+                      title: "Subscription status refreshed",
+                      description: "Your subscription status has been updated.",
+                    });
+                  } catch (error) {
+                    console.error('Error in refresh button click:', error);
+                    toast({
+                      title: "Error",
+                      description: "Failed to refresh subscription status.",
+                      variant: "destructive",
+                    });
+                  }
                 }}
                 disabled={isSubscriptionLoading}
               >
@@ -269,7 +279,15 @@ const ProfilePage = () => {
               <p className="text-2xl font-bold">{remainingCredits.toLocaleString()}</p>
               <p className="text-sm text-muted-foreground">Credits remaining</p>
             </div>
-            <Button variant="outline" size="sm" onClick={refreshCredits} disabled={isCreditsLoading}>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                console.log('Credits refresh button clicked');
+                refreshCredits();
+              }} 
+              disabled={isCreditsLoading}
+            >
               <RefreshCw className={`w-4 h-4 mr-2 ${isCreditsLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
