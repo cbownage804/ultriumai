@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SecurityAIAssistant } from "@/components/security/SecurityAIAssistant";
 import { ThreatPredictionEngine } from "@/components/security/ThreatPredictionEngine";
+import { ThreatAnalysisEngine } from "@/components/security/ThreatAnalysisEngine";
+import { AutomatedActions } from "@/components/security/AutomatedActions";
 import { 
   Shield, 
   AlertTriangle, 
@@ -224,6 +226,12 @@ const SecurityAI = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Advanced Threat Analysis */}
+      <ThreatAnalysisEngine securityContext={securityMetrics} />
+
+      {/* Automated Actions */}
+      <AutomatedActions />
 
       {/* Threat Prediction Engine */}
       <ThreatPredictionEngine securityContext={securityMetrics} />
