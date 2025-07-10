@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Settings, Database, Zap, BarChart3, FileText, Clock, Shield } from "lucide-react";
+import { Header } from "@/components/layout/Header";
 
 // Import our advanced components
 import { CustomFieldsManager } from "@/components/admin/CustomFieldsManager";
@@ -19,7 +20,9 @@ export default function AdvancedHelpdeskAdmin() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -195,6 +198,7 @@ export default function AdvancedHelpdeskAdmin() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
