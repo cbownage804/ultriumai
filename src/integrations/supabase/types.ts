@@ -3179,6 +3179,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_msp_clients_organization"
+            columns: ["msp_id"]
+            isOneToOne: false
+            referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "msp_clients_msp_id_fkey"
             columns: ["msp_id"]
             isOneToOne: false
