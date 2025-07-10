@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
+import { NotificationProvider } from '@/hooks/useNotifications';
 import { useAuth } from '@/hooks/useAuth';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -295,9 +296,11 @@ export default function App() {
   }, []);
 
   return (
-    <Router>
-      <AppRouter />
-      <Toaster />
-    </Router>
+    <NotificationProvider>
+      <Router>
+        <AppRouter />
+        <Toaster />
+      </Router>
+    </NotificationProvider>
   );
 }
