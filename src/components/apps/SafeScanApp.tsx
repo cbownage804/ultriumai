@@ -410,18 +410,18 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                     Run a scan to see detailed security analysis
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium">{scanResult.type.toUpperCase()} SCAN</div>
-                        <div className="text-sm text-muted-foreground truncate">
-                          {scanResult.content}
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{scanResult.type?.toUpperCase() || 'UNKNOWN'} SCAN</div>
+                          <div className="text-sm text-muted-foreground truncate">
+                            {scanResult.content || 'No content available'}
+                          </div>
                         </div>
+                        <Badge variant={getRiskBadgeVariant(scanResult.risk_level || 'unknown')} className="ml-2">
+                          {scanResult.risk_level?.toUpperCase() || 'UNKNOWN'}
+                        </Badge>
                       </div>
-                      <Badge variant={getRiskBadgeVariant(scanResult.risk_level)} className="ml-2">
-                        {scanResult.risk_level.toUpperCase()}
-                      </Badge>
-                    </div>
 
                     <div className="flex items-center gap-2">
                       {scanResult.safe ? (
