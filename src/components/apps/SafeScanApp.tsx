@@ -175,9 +175,11 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
       }
 
       console.log('Calling function:', functionName, 'with body:', body);
+      console.log('About to invoke Supabase function...');
       const { data, error } = await supabase.functions.invoke(functionName, { body });
 
-      console.log('Function response:', { data, error });
+      console.log('Function response received:', { data, error });
+      console.log('Raw data object:', JSON.stringify(data, null, 2));
 
       if (error) {
         console.error('Function error:', error);
