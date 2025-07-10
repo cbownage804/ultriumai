@@ -148,21 +148,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* UltriumGPT Assistant */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="AI assistant that integrates with all your tools - ask questions, request reports, get IT support">
-                  <NavLink to="/dashboard/ultrium-gpt" className={getNavClass}>
-                    <Zap className="h-4 w-4" />
-                    {!isCollapsed && <span className="ml-2">UltriumGPT</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
         {/* Custom GPTs Section */}
         <Collapsible open={openSections.gpt} onOpenChange={() => toggleSection('gpt')}>
           <SidebarGroup>
