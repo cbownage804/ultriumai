@@ -17,11 +17,14 @@ import {
   Settings,
   Activity,
   Users,
-  Lock
+  Lock,
+  ArrowLeft
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const SecurityAI = () => {
+  const navigate = useNavigate();
   const [isAIMinimized, setIsAIMinimized] = useState(false);
   const [securityMetrics, setSecurityMetrics] = useState({
     activeAlerts: 0,
@@ -195,6 +198,18 @@ const SecurityAI = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Back Navigation */}
+      <div className="flex items-center justify-between">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
+
       {/* Header Section */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3 mb-4">
