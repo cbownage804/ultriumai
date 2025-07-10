@@ -106,8 +106,6 @@ const Dashboard = () => {
   const isChatPage = location.pathname === '/dashboard/chat';
   const isGPTDashboard = location.pathname === '/dashboard/gpt';
   const isRMMPage = location.pathname.includes('/rmm');
-  const isSafeAVPage = location.pathname.includes('/antivirus');
-  const isSafeMDRPage = location.pathname.includes('/mdr');
   const isHelpdeskPage = location.pathname.includes('/helpdesk');
   const isDashboardOverview = location.pathname === '/dashboard';
   const isUltriumGPTPage = location.pathname === '/dashboard/ultrium-gpt';
@@ -163,8 +161,6 @@ const Dashboard = () => {
     if (isUltriumGPTPage) return <div className="p-6"><UltriumGPTAssistant /></div>;
     if (isGPTDashboard) return <GPTDashboard />;
     if (isRMMPage) return <RMMDashboard />;
-    if (isSafeAVPage) return <AntivirusDashboard />;
-    if (isSafeMDRPage) return <SafeMDRDashboard />;
     if (isHelpdeskPage) return <HelpdeskDashboard />;
     if (isChatPage) return <ChatInterface />;
     if (isSettingsPage) return <SettingsPage />;

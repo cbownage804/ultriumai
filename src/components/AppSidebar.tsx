@@ -44,12 +44,10 @@ const safeSuiteItems = [
   { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Enterprise password management and security" },
   { title: "SafeScan", url: "/dashboard/safescan", icon: Shield, tooltip: "Comprehensive security scanning for emails, documents, and URLs" },
   { title: "SafeNet", url: "/dashboard/safenet", icon: Network, tooltip: "Advanced network monitoring and vulnerability management" },
-  { title: "SafeShield", url: "/dashboard/safeshield", icon: Shield, tooltip: "AI-powered endpoint detection and response platform" },
+  { title: "SafeShield", url: "/dashboard/safeshield", icon: Shield, tooltip: "Unified endpoint security platform with EDR, MDR, and Antivirus" },
   { title: "SafeKB", url: "/dashboard/safekb", icon: Database, tooltip: "Knowledge base, asset management, and documentation" },
   { title: "SafeWeb", url: "/dashboard/safeweb", icon: Shield, tooltip: "Dark web monitoring and threat intelligence" },
   { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
-  { title: "SafeAV", url: "/dashboard/antivirus", icon: Shield, tooltip: "AI-powered antivirus protection and threat detection" },
-  { title: "SafeMDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
 ];
 
 const managedServicesItems = [

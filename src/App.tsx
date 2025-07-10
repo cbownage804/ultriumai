@@ -33,6 +33,7 @@ import Contact from '@/pages/Contact';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
 import SafeScanPage from '@/pages/SafeScanPage';
+import { SafeShieldApp } from '@/components/apps/SafeShieldApp';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
 import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
 import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
@@ -158,7 +159,11 @@ function AppRouter() {
       } />
       <Route path="/safenet-mobile" element={<SafeNetMobilePage />} />
       <Route path="/technician-mobile" element={<TechnicianMobile />} />
-      <Route path="/safeshield" element={<SafeShield />} />
+      <Route path="/safeshield" element={
+        <ProtectedRoute>
+          <SafeShieldApp />
+        </ProtectedRoute>
+      } />
       <Route path="/safesiem" element={
         <ProtectedRoute>
           <SafeSIEM />
@@ -258,9 +263,7 @@ function AppRouter() {
       } />
       <Route path="/dashboard/safeshield" element={
         <ProtectedRoute>
-          <div className="p-6">
-            <SafeShieldDashboard />
-          </div>
+          <SafeShieldApp />
         </ProtectedRoute>
       } />
       <Route path="/dashboard/security-center" element={
