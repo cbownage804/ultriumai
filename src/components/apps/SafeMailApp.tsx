@@ -21,7 +21,18 @@ import {
   Loader2,
   Copy,
   FileText,
-  Clock
+  Clock,
+  Eye,
+  Zap,
+  Bug,
+  Link,
+  File,
+  Calendar,
+  Info,
+  AlertCircle,
+  ShieldCheck,
+  ShieldAlert,
+  Activity
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -413,96 +424,222 @@ PayPal Security Team`);
               </CardContent>
             </Card>
 
-            {/* Scan Results */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Analysis Results</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!scanResult ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Scan an email to see detailed security analysis
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Risk Assessment</span>
-                        <Badge variant={getRiskBadgeVariant(scanResult.risk_level)}>
+            {/* Enhanced Scan Results */}
+            <div className="space-y-4">
+              {!scanResult ? (
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <h3 className="font-medium mb-2">Ready to Analyze</h3>
+                      <p className="text-sm">Scan an email to see detailed security analysis</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {/* Risk Overview Card */}
+                  <Card className={`border-l-4 ${
+                    scanResult.risk_level === 'critical' ? 'border-l-red-500 bg-red-50/50' :
+                    scanResult.risk_level === 'high' ? 'border-l-orange-500 bg-orange-50/50' :
+                    scanResult.risk_level === 'medium' ? 'border-l-yellow-500 bg-yellow-50/50' :
+                    scanResult.risk_level === 'low' ? 'border-l-blue-500 bg-blue-50/50' :
+                    'border-l-green-500 bg-green-50/50'
+                  }`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          {scanResult.safe ? (
+                            <ShieldCheck className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <ShieldAlert className="h-5 w-5 text-red-500" />
+                          )}
+                          Security Assessment
+                        </CardTitle>
+                        <Badge 
+                          variant={getRiskBadgeVariant(scanResult.risk_level)}
+                          className="font-semibold px-3 py-1"
+                        >
                           {scanResult.risk_level.toUpperCase()}
                         </Badge>
                       </div>
-                      <Progress value={100 - scanResult.reputation_score} className="h-3" />
-                      <p className={`text-sm mt-1 ${getRiskColor(scanResult.risk_level)}`}>
-                        Reputation Score: {scanResult.reputation_score}/100
+                      <p className="text-sm text-muted-foreground">
+                        {scanResult.email} • Scanned {new Date(scanResult.scan_details.scan_date).toLocaleString()}
                       </p>
-                    </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium">Risk Score</span>
+                            <span className={`text-sm font-bold ${getRiskColor(scanResult.risk_level)}`}>
+                              {100 - scanResult.reputation_score}/100
+                            </span>
+                          </div>
+                          <Progress 
+                            value={100 - scanResult.reputation_score} 
+                            className={`h-2 ${
+                              scanResult.risk_level === 'critical' ? '[&>div]:bg-red-500' :
+                              scanResult.risk_level === 'high' ? '[&>div]:bg-orange-500' :
+                              scanResult.risk_level === 'medium' ? '[&>div]:bg-yellow-500' :
+                              scanResult.risk_level === 'low' ? '[&>div]:bg-blue-500' :
+                              '[&>div]:bg-green-500'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium">Reputation</span>
+                            <span className="text-sm font-bold text-green-600">
+                              {scanResult.reputation_score}/100
+                            </span>
+                          </div>
+                          <Progress value={scanResult.reputation_score} className="h-2 [&>div]:bg-green-500" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                    <div>
-                      <h4 className="font-medium mb-2">Threats Detected</h4>
+                  {/* Threat Analysis Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Bug className="h-5 w-5 text-red-500" />
+                        Threat Analysis
+                        {scanResult.threats_detected.length > 0 && (
+                          <Badge variant="destructive" className="ml-auto">
+                            {scanResult.threats_detected.length} Threat{scanResult.threats_detected.length > 1 ? 's' : ''}
+                          </Badge>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       {scanResult.threats_detected.length > 0 ? (
-                        <div className="space-y-1">
+                        <div className="space-y-3">
                           {scanResult.threats_detected.map((threat, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <XCircle className="h-4 w-4 text-red-500" />
-                              <span>{threat}</span>
-                            </div>
+                            <Alert key={index} variant="destructive">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertDescription className="font-medium">
+                                {threat}
+                              </AlertDescription>
+                            </Alert>
                           ))}
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-sm text-green-600">
-                          <CheckCircle className="h-4 w-4" />
-                          <span>No threats detected</span>
+                        <div className="text-center py-6">
+                          <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-3" />
+                          <h3 className="font-medium text-green-700 mb-1">All Clear</h3>
+                          <p className="text-sm text-green-600">No security threats detected in this email</p>
                         </div>
                       )}
-                    </div>
+                    </CardContent>
+                  </Card>
 
-                    <div>
-                      <h4 className="font-medium mb-2">Authentication Status</h4>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div className="flex items-center gap-1">
-                          {scanResult.scan_details.spf_valid ? (
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <XCircle className="h-3 w-3 text-red-500" />
-                          )}
-                          <span>SPF</span>
+                  {/* Technical Details Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Activity className="h-5 w-5 text-blue-500" />
+                        Technical Analysis
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Email Authentication */}
+                        <div>
+                          <h4 className="font-medium mb-3 flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            Email Authentication
+                          </h4>
+                          <div className="space-y-2">
+                            {[
+                              { name: 'SPF', valid: scanResult.scan_details.spf_valid, desc: 'Sender Policy Framework' },
+                              { name: 'DKIM', valid: scanResult.scan_details.dkim_valid, desc: 'DomainKeys Identified Mail' },
+                              { name: 'DMARC', valid: scanResult.scan_details.dmarc_valid, desc: 'Domain-based Authentication' }
+                            ].map((auth) => (
+                              <div key={auth.name} className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                                <div className="flex items-center gap-2">
+                                  {auth.valid ? (
+                                    <CheckCircle className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                  )}
+                                  <div>
+                                    <span className="font-medium text-sm">{auth.name}</span>
+                                    <p className="text-xs text-muted-foreground">{auth.desc}</p>
+                                  </div>
+                                </div>
+                                <Badge variant={auth.valid ? "default" : "destructive"} className="text-xs">
+                                  {auth.valid ? "PASS" : "FAIL"}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {scanResult.scan_details.dkim_valid ? (
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <XCircle className="h-3 w-3 text-red-500" />
-                          )}
-                          <span>DKIM</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {scanResult.scan_details.dmarc_valid ? (
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <XCircle className="h-3 w-3 text-red-500" />
-                          )}
-                          <span>DMARC</span>
+
+                        {/* Content Analysis */}
+                        <div>
+                          <h4 className="font-medium mb-3 flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            Content Analysis
+                          </h4>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                              <span className="text-sm">Spam Score</span>
+                              <div className="flex items-center gap-2">
+                                <Progress 
+                                  value={scanResult.scan_details.content_analysis.spam_score} 
+                                  className="w-16 h-2" 
+                                />
+                                <span className="text-sm font-medium">
+                                  {scanResult.scan_details.content_analysis.spam_score}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                              <span className="text-sm">Phishing Indicators</span>
+                              <Badge variant={scanResult.scan_details.content_analysis.phishing_indicators.length > 0 ? "destructive" : "default"}>
+                                {scanResult.scan_details.content_analysis.phishing_indicators.length}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                              <span className="text-sm">Suspicious Attachments</span>
+                              <Badge variant={scanResult.scan_details.content_analysis.suspicious_attachments > 0 ? "destructive" : "default"}>
+                                {scanResult.scan_details.content_analysis.suspicious_attachments}
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </CardContent>
+                  </Card>
 
-                    {scanResult.recommendations.length > 0 && (
-                      <Alert>
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription>
-                          <ul className="list-disc pl-4 space-y-1">
-                            {scanResult.recommendations.map((rec, index) => (
-                              <li key={index} className="text-sm">{rec}</li>
-                            ))}
-                          </ul>
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  {/* Security Recommendations */}
+                  {scanResult.recommendations.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Info className="h-5 w-5 text-blue-500" />
+                          Security Recommendations
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {scanResult.recommendations.map((rec, index) => (
+                            <Alert key={index} className="border-orange-200 bg-orange-50">
+                              <AlertTriangle className="h-4 w-4 text-orange-600" />
+                              <AlertDescription className="text-orange-800">
+                                {rec}
+                              </AlertDescription>
+                            </Alert>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </TabsContent>
 
