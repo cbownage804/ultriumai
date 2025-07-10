@@ -35,18 +35,59 @@ const SecurityAI = () => {
 
   const loadSecurityMetrics = async () => {
     try {
-      // Simulate loading real security metrics
-      // In production, this would fetch from actual security tables
-      const mockMetrics = {
-        activeAlerts: Math.floor(Math.random() * 10) + 5,
-        criticalThreats: Math.floor(Math.random() * 3) + 1,
-        openIncidents: Math.floor(Math.random() * 5) + 2,
-        complianceScore: Math.floor(Math.random() * 20) + 80
-      };
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get real security events
+      const { data: securityEvents } = await supabase
+        .from('security_events')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active');
+
+      // Get real EDR alerts
+      const { data: edrAlerts } = await supabase
+        .from('edr_realtime_alerts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'new');
+
+      // Get real incidents
+      const { data: incidents } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['open', 'investigating', 'escalated']);
+
+      // Get compliance status
+      const { data: compliance } = await supabase
+        .from('compliance_status')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      const activeAlerts = (securityEvents?.length || 0) + (edrAlerts?.length || 0);
+      const criticalThreats = [
+        ...(securityEvents?.filter(e => e.severity === 'critical') || []),
+        ...(edrAlerts?.filter(a => a.severity === 'critical') || [])
+      ].length;
       
-      setSecurityMetrics(mockMetrics);
+      setSecurityMetrics({
+        activeAlerts,
+        criticalThreats,
+        openIncidents: incidents?.length || 0,
+        complianceScore: compliance?.[0]?.score || 85
+      });
     } catch (error) {
       console.error('Error loading security metrics:', error);
+      // Fallback to default values if there's an error
+      setSecurityMetrics({
+        activeAlerts: 0,
+        criticalThreats: 0,
+        openIncidents: 0,
+        complianceScore: 85
+      });
     } finally {
       setIsLoading(false);
     }
