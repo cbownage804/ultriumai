@@ -255,7 +255,7 @@ const MSPControlCenter = () => {
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent flex items-center gap-3">
               <Crown className="h-10 w-10 text-primary" />
-              {msp.company_name}
+              {msp.company_name.replace(/\s*LLC\s*$/i, '')}
             </h1>
             <p className="text-xl text-muted-foreground">
               MSP Control Center • {metrics.totalClients} clients • ${metrics.monthlyRevenue.toFixed(0)} MRR
