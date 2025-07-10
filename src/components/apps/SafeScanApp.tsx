@@ -35,7 +35,7 @@ interface ScanResult {
   type: 'email' | 'document' | 'url';
   content: string;
   safe: boolean;
-  risk_level: 'safe' | 'low' | 'medium' | 'high' | 'critical';
+  risk_level: 'safe' | 'low' | 'medium' | 'high' | 'critical' | 'unknown';
   threats_detected: string[];
   reputation_score: number;
   scan_details: any;
@@ -142,6 +142,8 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
 
   const performScan = async (type: 'email' | 'document' | 'url', content: string | File) => {
     setIsScanning(true);
+    console.log('Starting scan:', { type, content: typeof content === 'string' ? content.substring(0, 50) + '...' : (content as File).name });
+    
     try {
       let functionName = '';
       let body: any = { user_id: user?.id };
@@ -163,20 +165,58 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
           break;
       }
 
+      console.log('Calling function:', functionName, 'with body:', body);
       const { data, error } = await supabase.functions.invoke(functionName, { body });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Function error:', error);
+        throw error;
+      }
+
+      // Ensure we have a valid result structure
+      const result = {
+        type: type,
+        content: typeof content === 'string' ? content.substring(0, 100) : (content as File).name,
+        safe: data?.safe ?? false,
+        risk_level: data?.risk_level || 'unknown',
+        threats_detected: data?.threats_detected || [],
+        reputation_score: data?.reputation_score || 50,
+        scan_details: data?.scan_details || {},
+        scan_date: new Date().toISOString(),
+        recommendations: data?.recommendations || []
+      };
+
+      console.log('Setting scan result:', result);
+      setScanResult(result);
       
-      setScanResult(data as ScanResult);
       await loadScanHistory();
       await loadStats();
       
       toast({
         title: "Scan Complete",
-        description: `${type} analyzed - Risk level: ${data.risk_level}`,
-        variant: data.safe ? "default" : "destructive"
+        description: `${type} analyzed - Risk level: ${result.risk_level}`,
+        variant: result.safe ? "default" : "destructive"
       });
     } catch (error: any) {
+      console.error('Scan error:', error);
+      
+      // Create a fallback error result
+      const errorResult = {
+        type: type,
+        content: typeof content === 'string' ? content.substring(0, 100) : (content as File).name,
+        safe: false,
+        risk_level: 'unknown' as const,
+        threats_detected: ['Scan failed - unable to analyze'],
+        reputation_score: 0,
+        scan_details: { error: error.message },
+        scan_date: new Date().toISOString(),
+        recommendations: ['Please try scanning again', 'Contact support if issue persists']
+      };
+      
+      setScanResult(errorResult);
+      
       toast({
         title: "Scan Failed",
         description: error.message || `Failed to scan ${type}`,
