@@ -4,25 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Eye, AlertTriangle, Shield, Activity, Clock, CheckCircle, XCircle } from "lucide-react";
 
 export const SafeEDRDashboard = () => {
-  // Mock data - replace with real MDR service data
+  // Empty state - no mock data
   const stats = {
-    threatsDetected: 142,
-    threatsBlocked: 138,
-    activeIncidents: 4,
-    lastScanTime: "2 minutes ago",
+    threatsDetected: 0,
+    threatsBlocked: 0,
+    activeIncidents: 0,
+    lastScanTime: "No scans performed",
   };
 
-  const recentThreats = [
-    { id: 1, type: "Malware", source: "email attachment", status: "blocked", severity: "high", time: "3 min ago" },
-    { id: 2, type: "Phishing", source: "suspicious link", status: "quarantined", severity: "medium", time: "15 min ago" },
-    { id: 3, type: "Ransomware", source: "file download", status: "blocked", severity: "critical", time: "1 hour ago" },
-  ];
+  const recentThreats: any[] = [];
 
-  const threatCategories = [
-    { category: "Malware", count: 67, blocked: 65, color: "text-red-600" },
-    { category: "Phishing", count: 43, blocked: 41, color: "text-orange-600" },
-    { category: "Suspicious Activity", count: 32, blocked: 32, color: "text-yellow-600" },
-  ];
+  const threatCategories: any[] = [];
 
   return (
     <div className="space-y-6 p-6">

@@ -142,7 +142,7 @@ const SecurityDashboard = () => {
           ...prev,
           totalEvents: events.length,
           activeThreats,
-          overallScore: Math.max(50, 100 - (activeThreats * 5) - (eventsToday * 0.1))
+          overallScore: events.length === 0 ? 0 : Math.max(50, 100 - (activeThreats * 5) - (eventsToday * 0.1))
         }));
       }
     } catch (error) {
