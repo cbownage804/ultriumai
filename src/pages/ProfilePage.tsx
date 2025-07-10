@@ -25,7 +25,8 @@ import {
   Settings,
   RefreshCw,
   TrendingUp,
-  ArrowLeft
+  ArrowLeft,
+  Shield
 } from "lucide-react";
 
 const ProfilePage = () => {
@@ -39,6 +40,7 @@ const ProfilePage = () => {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -48,8 +50,15 @@ const ProfilePage = () => {
   useEffect(() => {
     if (user) {
       loadProfile();
+      checkAdminStatus();
     }
   }, [user]);
+
+  const checkAdminStatus = () => {
+    if (user?.email?.endsWith('@ultriumai.com')) {
+      setIsAdmin(true);
+    }
+  };
 
   const loadProfile = async () => {
     if (!user) return;
@@ -455,6 +464,54 @@ const ProfilePage = () => {
               {user?.id}
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Account Settings
+          </CardTitle>
+          <CardDescription>
+            Manage your account security and access.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Account Actions</h3>
+            <div className="grid grid-cols-1 gap-2">
+              <Button variant="outline" className="w-full">
+                Change Password
+              </Button>
+              <Button variant="outline" className="w-full">
+                Export Account Data
+              </Button>
+            </div>
+          </div>
+
+          {isAdmin && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  Administrator Access
+                </h3>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
+                  onClick={() => window.open('/admin', '_blank')}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Open Admin Portal
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Access administrative functions and system management tools.
+                </p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

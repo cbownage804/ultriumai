@@ -181,10 +181,9 @@ const SettingsPage = () => {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="ai">AI Settings</TabsTrigger>
-          <TabsTrigger value="account">Account</TabsTrigger>
           <TabsTrigger value="data">Data</TabsTrigger>
         </TabsList>
 
@@ -311,79 +310,6 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="account" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Account Information
-              </CardTitle>
-              <CardDescription>
-                View and manage your account details.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  disabled
-                  className="bg-muted"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Email cannot be changed here. Contact support if needed.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name</Label>
-                <Input
-                  id="full_name"
-                  value={profile.full_name}
-                  onChange={(e) => setProfile(prev => ({ ...prev, full_name: e.target.value }))}
-                  placeholder="Enter your full name"
-                />
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Account Actions</h3>
-                <Button variant="outline" className="w-full">
-                  Change Password
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Export Account Data
-                </Button>
-              </div>
-
-              {isAdmin && (
-                <>
-                  <Separator />
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium flex items-center gap-2">
-                      <Shield className="w-4 h-4" />
-                      Administrator Access
-                    </h3>
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
-                      onClick={() => window.open('/admin', '_blank')}
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Open Admin Portal
-                    </Button>
-                    <p className="text-xs text-muted-foreground">
-                      Access administrative functions and system management tools.
-                    </p>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="data" className="space-y-4">
           <Card>
