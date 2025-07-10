@@ -31,9 +31,8 @@ import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
 import OnboardingFlow from '@/components/OnboardingFlow';
-import SafeMailDemoPage from '@/pages/demos/SafeMailDemoPage';
-import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
-import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
+import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
+import SafeScanPage from '@/pages/SafeScanPage';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
 import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
 import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
@@ -131,12 +130,8 @@ function AppRouter() {
           <Docs />
         </ProtectedRoute>
       } />
-      <Route path="/demos/safemail" element={<SafeMailDemoPage />} />
-      <Route path="/demos/safeemail" element={<SafeMailDemoPage />} />
-      <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
-      <Route path="/demos/safescan" element={<SafeDocDemoPage />} />
+      <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
       <Route path="/demos/safepass" element={<SafePassDemoPage />} />
-      <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
       <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
       <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
       <Route path="/products/safescore" element={<SafeScorePage />} />
@@ -201,9 +196,7 @@ function AppRouter() {
       } />
       
       {/* Product Pages */}
-      <Route path="/products/safemail" element={<SafeMailPage />} />
-      <Route path="/products/safelink" element={<SafeLinkPage />} />
-      <Route path="/products/safedoc" element={<SafeDocPage />} />
+      <Route path="/products/safescan" element={<SafeScanPage />} />
       <Route path="/products/safepass" element={<SafePassPage />} />
       <Route path="/products/safeweb" element={<SafeWebPage />} />
       <Route path="/products/safescore" element={<SafeScorePage />} />
@@ -283,6 +276,11 @@ function AppRouter() {
       <Route path="/dashboard/safekb" element={
         <ProtectedRoute>
           <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/dashboard/safescan" element={
+        <ProtectedRoute>
+          <SafeScanPage />
         </ProtectedRoute>
       } />
       <Route path="/dashboard/safenet" element={

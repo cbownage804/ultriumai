@@ -80,14 +80,8 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="font-semibold text-foreground">AI Security Apps</h3>
             <div className="space-y-2">
-              <button onClick={() => handleNavigation('/products/safemail')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeMail™
-              </button>
-              <button onClick={() => handleNavigation('/products/safelink')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeLink™
-              </button>
-              <button onClick={() => handleNavigation('/products/safedoc')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeDoc™
+              <button onClick={() => handleNavigation('/products/safescan')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                SafeScan™
               </button>
               <button onClick={() => handleNavigation('/products/safepass')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                 SafePass™

@@ -106,7 +106,7 @@ const Hero = () => {
                       <Lock className="h-6 w-6 text-red-500" />
                     </div>
                     <h4 className="font-bold text-foreground">8 Security Apps</h4>
-                    <p className="text-sm text-muted-foreground">SafeMail, SafeDoc, SafeNet, SafePass & more with real-time scanning</p>
+                    <p className="text-sm text-muted-foreground">SafeScan, SafeNet, SafePass & more with real-time scanning</p>
                     <div className="text-xs text-red-500 font-medium">✓ Enterprise Ready</div>
                   </div>
                 </div>
