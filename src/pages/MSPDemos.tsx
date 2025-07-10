@@ -33,295 +33,102 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 const MSPDemos = () => {
-  const [selectedDemo, setSelectedDemo] = useState('safescore');
+  const [selectedDemo, setSelectedDemo] = useState('security-scanning');
 
-  const mspSolutions = [
+  const platformFeatures = [
     {
-      id: 'safepass',
-      name: 'SafePass for MSP',
-      description: 'White-label password management for your clients',
-      monthlyRevenue: '$10/user',
-      setupTime: '5 minutes',
-      marketSize: 'Every business with employees',
-      demoUrl: '/embed-demo',
+      id: 'security-scanning',
+      name: 'Security Scanning Suite',
+      description: 'Complete document, email, and web scanning in one unified platform',
+      demoUrl: '/demos/safedoc',
       features: [
-        'One-line website integration',
-        'Complete white-label branding',
-        'Auto-detects login forms',
-        'Team collaboration features',
-        'Recurring monthly revenue'
+        'SafeDoc - Document malware scanning',
+        'SafeMail - Email threat detection', 
+        'SafeLink - URL security analysis',
+        'Real-time threat intelligence',
+        'Unified security dashboard'
       ],
-      revenueModel: {
-        charge: 15,
-        pay: 5,
-        profit: 10
-      },
-      icon: Key,
-      color: 'blue'
-    },
-    {
-      id: 'safescore',
-      name: 'SafeScore for MSP',
-      description: 'White-label security risk assessment platform',
-      monthlyRevenue: '$35/user',
-      setupTime: '15 minutes',
-      marketSize: 'Every business with compliance requirements',
-      demoUrl: '/demos/safescore',
-      features: [
-        'Multi-framework security scoring',
-        'Complete white-label branding',
-        'Automated security assessment',
-        'Risk analysis and remediation',
-        'Security posture reporting'
-      ],
-      revenueModel: {
-        charge: 50,
-        pay: 15,
-        profit: 35
-      },
       icon: Shield,
       color: 'green'
     },
     {
-      id: 'safekb',
-      name: 'SafeKB for MSP',
-      description: 'White-label knowledge base and asset management platform',
-      monthlyRevenue: '$15/user',
-      setupTime: '10 minutes',
-      marketSize: 'Every business with documentation needs',
-      demoUrl: '/dashboard/safekb',
+      id: 'threat-monitoring',
+      name: 'Threat Intelligence & Monitoring',
+      description: 'Dark web monitoring and network security assessment',
+      demoUrl: '/demos/darkweb',
       features: [
-        'Centralized knowledge management',
-        'Asset tracking & documentation',
-        'AI-powered search capabilities',
-        'Team collaboration tools',
-        'White-label client portals',
-        'Automated documentation workflows'
+        'Dark web credential monitoring',
+        'Network vulnerability scanning',
+        'Real-time threat intelligence',
+        'Automated security scoring',
+        'Comprehensive risk assessment'
       ],
-      revenueModel: {
-        charge: 25,
-        pay: 10,
-        profit: 15
-      },
-      icon: Database,
-      color: 'purple'
-    },
-    {
-      id: 'safedoc',
-      name: 'SafeDoc for MSP',
-      description: 'White-label document security scanning for your clients',
-      monthlyRevenue: '$8/user',
-      setupTime: '3 minutes',
-      marketSize: 'Every business handling documents',
-      demoUrl: '/safedoc-embed-demo',
-      features: [
-        'One-line website integration',
-        'Complete white-label branding',
-        'Real-time malware detection',
-        'VirusTotal API integration',
-        'Recurring monthly revenue'
-      ],
-      revenueModel: {
-        charge: 12,
-        pay: 4,
-        profit: 8
-      },
-      icon: FileText,
-      color: 'green'
-    },
-    {
-      id: 'safemail',
-      name: 'SafeMail for MSP',
-      description: 'White-label email security scanning for your clients',
-      monthlyRevenue: '$6/user',
-      setupTime: '3 minutes',
-      marketSize: 'Every business with email',
-      demoUrl: '/safemail-embed-demo',
-      features: [
-        'One-line website integration',
-        'Complete white-label branding',
-        'Real-time threat detection',
-        'Phishing & malware scanning',
-        'Recurring monthly revenue'
-      ],
-      revenueModel: {
-        charge: 10,
-        pay: 4,
-        profit: 6
-      },
-      icon: Mail,
-      color: 'blue'
-    },
-    {
-      id: 'safenet',
-      name: 'SafeNet for MSP',
-      description: 'White-label network scanning and vulnerability assessment',
-      monthlyRevenue: '$25/client',
-      setupTime: '10 minutes',
-      marketSize: 'Every business with a network',
-      demoUrl: '/demos/safenet',
-      features: [
-        'Installable network connector',
-        'Complete white-label branding',
-        'Device discovery & mapping',
-        'Vulnerability scanning',
-        'MSP multi-client dashboard'
-      ],
-      revenueModel: {
-        charge: 40,
-        pay: 15,
-        profit: 25
-      },
-      icon: Network,
-      color: 'purple'
-    },
-    {
-      id: 'safeweb',
-      name: 'SafeWeb for MSP',
-      description: 'White-label dark web monitoring and threat intelligence',
-      monthlyRevenue: '$20/user',
-      setupTime: '5 minutes',
-      marketSize: 'Every business with digital assets',
-      demoUrl: '/demos/safeweb',
-      features: [
-        'Complete white-label branding',
-        'Continuous dark web monitoring',
-        'Credential breach detection',
-        'Threat intelligence feeds',
-        'Automated client alerts'
-      ],
-      revenueModel: {
-        charge: 30,
-        pay: 10,
-        profit: 20
-      },
       icon: Eye,
       color: 'red'
     },
     {
-      id: 'security-suite',
-      name: 'UltriumAI Complete Platform',
-      description: 'Unified cybersecurity platform - all tools in one integrated solution',
-      monthlyRevenue: '$75/client',
-      setupTime: '15 minutes',
-      marketSize: '32M small businesses in US',
-      demoUrl: '/demos',
+      id: 'ai-assistant',
+      name: 'AI-Powered Security Assistant',
+      description: 'UltriumGPT integrated with all security tools for intelligent analysis',
+      demoUrl: '/demos/ultriumgpt',
       features: [
-        'Integrated security scanning suite',
-        'Unified threat intelligence dashboard',
-        'Single sign-on for all tools',
-        'Comprehensive reporting & analytics',
-        'One purchase, complete protection'
+        'Natural language security queries',
+        'Intelligent threat analysis',
+        'Automated report generation',
+        'Cross-platform data correlation',
+        'Client-specific AI customization'
       ],
-      revenueModel: {
-        charge: 100,
-        pay: 25,
-        profit: 75
-      },
-      icon: Building2,
+      icon: MessageSquare,
       color: 'purple'
     },
     {
-      id: 'custom-gpts',
-      name: 'Custom AI Agents for MSP',
-      description: 'Deploy AI assistants for client industries',
-      monthlyRevenue: '$100/client',
-      setupTime: '30 minutes',
-      marketSize: 'Every industry vertical',
-      demoUrl: '/ultriumgpt',
-      features: [
-        'Industry-specific knowledge bases',
-        'Client branding and customization',
-        'API integrations',
-        'Analytics and reporting',
-        'Multi-tenant deployment'
-      ],
-      revenueModel: {
-        charge: 150,
-        pay: 50,
-        profit: 100
-      },
-      icon: Zap,
-      color: 'green'
-    },
-    {
-      id: 'safecenter',
-      name: 'SafeCenter for MSP',
-      description: 'Next-gen RMM with web-based agents and Windows Defender integration',
-      monthlyRevenue: '$45/client',
-      setupTime: '25 minutes',
-      marketSize: 'Every MSP and IT service provider',
+      id: 'rmm-platform',
+      name: 'Remote Monitoring & Management',
+      description: 'Complete RMM solution with integrated security monitoring',
       demoUrl: '/demos/rmm',
       features: [
-        'Web-based agent deployment',
-        'Real-time device monitoring',
-        'Windows Defender management',
-        'Remote desktop & file transfer',
-        'Automated script execution',
-        'Intelligent ticket routing',
-        'SLA tracking & alerts',
-        'Multi-client dashboard'
+        'Remote device management',
+        'Integrated antivirus control',
+        'Real-time monitoring dashboard',
+        'Automated patch management',
+        'Security incident response'
       ],
-      revenueModel: {
-        charge: 70,
-        pay: 25,
-        profit: 45
-      },
       icon: Wrench,
       color: 'blue'
     },
     {
-      id: 'safeav',
-      name: 'SafeAV for MSP',
-      description: 'Windows Defender integration platform for MSPs with SafeShield',
-      monthlyRevenue: '$20/endpoint',
-      setupTime: '10 minutes',
-      marketSize: 'Every business with Windows endpoints',
-      demoUrl: '/safeshield',
+      id: 'password-management',
+      name: 'Password & Identity Management',
+      description: 'SafePass integrated with security monitoring for complete protection',
+      demoUrl: '/demos/safepass',
       features: [
-        'Windows Defender integration',
-        'Centralized endpoint management',
-        'Real-time threat monitoring',
-        'Policy deployment automation',
-        'Compliance reporting',
-        'Multi-client dashboard',
-        'White-label deployment'
+        'Enterprise password management',
+        'Multi-factor authentication',
+        'Security breach monitoring',
+        'Team collaboration tools',
+        'Compliance reporting'
       ],
-      revenueModel: {
-        charge: 30,
-        pay: 10,
-        profit: 20
-      },
-      icon: Shield,
-      color: 'red'
-    },
-    {
-      id: 'safeedr',
-      name: 'SafeEDR for MSP',
-      description: 'AI-powered endpoint detection and response for MSPs with behavioral analysis',
-      monthlyRevenue: '$100/client',
-      setupTime: '30 minutes',
-      marketSize: 'Mid-market and enterprise businesses',
-      demoUrl: '/demos/safeedr',
-      features: [
-        '24/7 security monitoring',
-        'Expert threat hunting',
-        'Incident response',
-        'Threat intelligence',
-        'Forensic analysis'
-      ],
-      revenueModel: {
-        charge: 150,
-        pay: 50,
-        profit: 100
-      },
-      icon: Eye,
-      color: 'purple'
+      icon: Key,
+      color: 'green'
     }
   ];
 
-  const currentSolution = mspSolutions.find(s => s.id === selectedDemo) || mspSolutions[0];
-  const Icon = currentSolution.icon;
+  // Platform overview
+  const platformOverview = {
+    name: 'UltriumAI Complete Platform',
+    description: 'Unified cybersecurity platform - all tools in one integrated solution',
+    monthlyRevenue: '$150/client',
+    setupTime: '30 minutes',
+    marketSize: '32M+ businesses need cybersecurity',
+    revenueModel: {
+      charge: 200,
+      pay: 50, 
+      profit: 150
+    }
+  ];
+
+  const currentFeature = platformFeatures.find(f => f.id === selectedDemo) || platformFeatures[0];
+  const Icon = currentFeature.icon;
 
   return (
     <div className="min-h-screen bg-background">
@@ -386,26 +193,25 @@ const MSPDemos = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Solution Selector */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Choose Demo:</h3>
-            {mspSolutions.map((solution) => {
-              const SolutionIcon = solution.icon;
+            <h3 className="text-lg font-semibold">Platform Features:</h3>
+            {platformFeatures.map((feature) => {
+              const FeatureIcon = feature.icon;
               return (
                 <Card 
-                  key={solution.id}
+                  key={feature.id}
                   className={`cursor-pointer transition-all ${
-                    selectedDemo === solution.id 
+                    selectedDemo === feature.id 
                       ? 'border-2 border-primary bg-primary/5' 
                       : 'hover:border-border'
                   }`}
-                  onClick={() => setSelectedDemo(solution.id)}
+                  onClick={() => setSelectedDemo(feature.id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <SolutionIcon className="h-6 w-6 text-primary mt-1" />
+                      <FeatureIcon className="h-6 w-6 text-primary mt-1" />
                       <div className="flex-1">
-                        <div className="font-medium">{solution.name}</div>
-                        <div className="text-sm text-muted-foreground mb-1">{solution.monthlyRevenue}</div>
-                        <div className="text-xs text-muted-foreground/80 line-clamp-2">{solution.description}</div>
+                        <div className="font-medium">{feature.name}</div>
+                        <div className="text-xs text-muted-foreground/80 line-clamp-2">{feature.description}</div>
                       </div>
                     </div>
                   </CardContent>
@@ -420,10 +226,10 @@ const MSPDemos = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
                   <Icon className="h-8 w-8 text-primary" />
-                  {currentSolution.name}
+                  {currentFeature.name}
                 </CardTitle>
                 <CardDescription className="text-lg">
-                  {currentSolution.description}
+                  {currentFeature.description}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -440,22 +246,22 @@ const MSPDemos = () => {
                       <Card>
                         <CardContent className="p-4 text-center">
                           <DollarSign className="h-8 w-8 mx-auto mb-2 text-success" />
-                          <div className="font-semibold">Monthly Revenue</div>
-                          <div className="text-2xl font-bold text-success">{currentSolution.monthlyRevenue}</div>
+                          <div className="font-semibold">Platform Revenue</div>
+                          <div className="text-2xl font-bold text-success">{platformOverview.monthlyRevenue}</div>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4 text-center">
                           <Zap className="h-8 w-8 mx-auto mb-2 text-primary" />
-                          <div className="font-semibold">Setup Time</div>
-                          <div className="text-2xl font-bold text-primary">{currentSolution.setupTime}</div>
+                          <div className="font-semibold">Full Setup</div>
+                          <div className="text-2xl font-bold text-primary">{platformOverview.setupTime}</div>
                         </CardContent>
                       </Card>
                       <Card>
                         <CardContent className="p-4 text-center">
                           <Target className="h-8 w-8 mx-auto mb-2 text-info" />
                           <div className="font-semibold">Market Size</div>
-                          <div className="text-sm font-bold text-info">{currentSolution.marketSize}</div>
+                          <div className="text-sm font-bold text-info">{platformOverview.marketSize}</div>
                         </CardContent>
                       </Card>
                     </div>
@@ -470,31 +276,31 @@ const MSPDemos = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                           <div className="space-y-2">
                             <div className="text-3xl font-bold text-success">
-                              ${currentSolution.revenueModel.charge}
+                              ${platformOverview.revenueModel.charge}
                             </div>
                             <div className="text-sm text-muted-foreground">You charge client</div>
                           </div>
                           <div className="space-y-2">
                             <div className="text-3xl font-bold text-primary">
-                              ${currentSolution.revenueModel.pay}
+                              ${platformOverview.revenueModel.pay}
                             </div>
                             <div className="text-sm text-muted-foreground">You pay Ultrium</div>
                           </div>
                           <div className="space-y-2">
                             <div className="text-3xl font-bold text-info">
-                              ${currentSolution.revenueModel.profit}
+                              ${platformOverview.revenueModel.profit}
                             </div>
                             <div className="text-sm text-muted-foreground">Your profit</div>
                           </div>
                         </div>
                         <div className="mt-6 p-4 bg-card border rounded-lg">
                           <div className="text-center">
-                            <div className="font-semibold mb-2">Example: 20 clients with 5 users each</div>
+                            <div className="font-semibold mb-2">Example: 20 clients</div>
                             <div className="text-2xl font-bold text-success">
-                              ${currentSolution.revenueModel.profit * 100}/month recurring
+                              ${platformOverview.revenueModel.profit * 20}/month recurring
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              = ${currentSolution.revenueModel.profit * 1200}/year additional revenue
+                              = ${platformOverview.revenueModel.profit * 240}/year additional revenue
                             </div>
                           </div>
                         </div>
@@ -503,92 +309,40 @@ const MSPDemos = () => {
                   </TabsContent>
 
                   <TabsContent value="features" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {currentSolution.features.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                    <div className="grid grid-cols-1 gap-3">
+                      {currentFeature.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-card border rounded-lg">
                           <CheckCircle className="h-5 w-5 text-success" />
                           <span>{feature}</span>
                         </div>
                       ))}
                     </div>
+                    <Button 
+                      asChild 
+                      className="w-full" 
+                      size="lg"
+                    >
+                      <a href={currentFeature.demoUrl} target="_blank" rel="noopener noreferrer">
+                        Try This Feature Demo
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </a>
+                    </Button>
                   </TabsContent>
 
                   <TabsContent value="demo" className="space-y-4">
-                    {selectedDemo === 'safenet' ? (
-                      <Card className="border-2 border-primary/20">
-                        <CardContent className="p-6 text-center space-y-4">
-                          <Network className="h-12 w-12 mx-auto text-primary mb-4" />
-                          <h3 className="text-xl font-semibold">MSP Network Security Demo</h3>
-                          <p className="text-muted-foreground">
-                            Experience the full interactive SafeNet demo and see how easy it is to deploy network security monitoring for your clients
-                          </p>
-                          <Button 
-                            size="lg" 
-                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
-                            variant="hero"
-                          >
-                            <Globe className="h-5 w-5 mr-2" />
-                            Launch Interactive SafeNet Demo
-                            <ArrowRight className="h-5 w-5 ml-2" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ) : selectedDemo === 'safeweb' ? (
-                      <Card className="border-2 border-primary/20">
-                        <CardContent className="p-6 text-center space-y-4">
-                          <Search className="h-12 w-12 mx-auto text-primary mb-4" />
-                          <h3 className="text-xl font-semibold">MSP Dark Web Monitoring Demo</h3>
-                          <p className="text-muted-foreground">
-                            Experience the full interactive SafeWeb demo and see how your clients will monitor dark web threats targeting their business
-                          </p>
-                          <Button 
-                            size="lg" 
-                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
-                            variant="hero"
-                          >
-                            <Globe className="h-5 w-5 mr-2" />
-                            Launch Interactive SafeWeb Demo
-                            <ArrowRight className="h-5 w-5 ml-2" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ) : selectedDemo === 'safescore' ? (
-                      <Card className="border-2 border-primary/20">
-                        <CardContent className="p-6 text-center space-y-4">
-                          <Shield className="h-12 w-12 mx-auto text-primary mb-4" />
-                          <h3 className="text-xl font-semibold">MSP Security Risk Assessment Demo</h3>
-                          <p className="text-muted-foreground">
-                            Experience the full interactive SafeScore demo and see how easy it is to deploy for your clients
-                          </p>
-                          <Button 
-                            size="lg" 
-                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
-                            variant="hero"
-                          >
-                            <Globe className="h-5 w-5 mr-2" />
-                            Launch Interactive SafeScore Demo
-                            <ArrowRight className="h-5 w-5 ml-2" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <Card className="border-2 border-primary/20">
-                        <CardContent className="p-6 text-center space-y-4">
-                          <h3 className="text-xl font-semibold">Ready to see it in action?</h3>
-                          <p className="text-muted-foreground">
-                            Experience the full interactive demo and see how easy it is to deploy
-                          </p>
-                          <Button 
-                            size="lg" 
-                            onClick={() => window.open(currentSolution.demoUrl, '_blank')}
-                            variant="hero"
-                          >
-                            <Globe className="h-5 w-5 mr-2" />
-                            Launch Interactive Demo
-                            <ArrowRight className="h-5 w-5 ml-2" />
-                          </Button>
-                        </CardContent>
-                      </Card>
+                    {selectedDemo === 'threat-monitoring' && <DarkWebDemo />}
+                    {selectedDemo === 'threat-monitoring' && <SafeScoreDemo />}
+                    {selectedDemo !== 'threat-monitoring' && (
+                      <div className="text-center py-12 space-y-4">
+                        <div className="text-lg mb-4">Experience the unified UltriumAI platform</div>
+                        <div className="text-muted-foreground mb-6">All features integrated in one seamless solution</div>
+                        <Button asChild size="lg">
+                          <a href="/demos" target="_blank" rel="noopener noreferrer">
+                            View Complete Platform Demo
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </a>
+                        </Button>
+                      </div>
                     )}
                   </TabsContent>
                 </Tabs>
@@ -604,7 +358,7 @@ const MSPDemos = () => {
               Ready to Scale Your MSP Business?
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Join hundreds of MSPs already generating additional recurring revenue with Ultrium's white-label solutions
+              Join hundreds of MSPs already generating additional recurring revenue with UltriumAI's unified platform
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" variant="hero">
