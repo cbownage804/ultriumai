@@ -146,21 +146,37 @@ export const RMMDemo = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2 mb-6">
+      <div className="text-center space-y-4 mb-6">
         <div className="flex items-center justify-center gap-2">
           <Wrench className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold">Ultrium RMM Demo</h1>
         </div>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Experience comprehensive remote monitoring and management capabilities for MSPs and IT teams
+        <p className="text-muted-foreground max-w-3xl mx-auto">
+          Experience next-generation remote monitoring and management with web-based agent deployment, 
+          Windows Defender integration, and comprehensive endpoint control for MSPs and IT teams
         </p>
+        <div className="flex justify-center gap-2 flex-wrap">
+          <Badge variant="secondary" className="text-sm">
+            <Shield className="h-3 w-3 mr-1" />
+            Windows Defender Integration
+          </Badge>
+          <Badge variant="outline" className="text-sm">
+            <Monitor className="h-3 w-3 mr-1" />
+            Web-Based Agent
+          </Badge>
+          <Badge variant="outline" className="text-sm">
+            <Activity className="h-3 w-3 mr-1" />
+            Real-Time Control
+          </Badge>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
-          <TabsTrigger value="scripts">Scripts</TabsTrigger>
+          <TabsTrigger value="web-agent">Web Agent</TabsTrigger>
+          <TabsTrigger value="defender">Windows Defender</TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
 
@@ -231,8 +247,18 @@ export const RMMDemo = () => {
                   <div className="flex items-center gap-3">
                     <Shield className="h-5 w-5 text-blue-500" />
                     <div>
-                      <div className="font-medium">Security patch installed</div>
-                      <div className="text-sm text-muted-foreground">12 devices updated successfully</div>
+                      <div className="font-medium">Windows Defender policy deployed</div>
+                      <div className="text-sm text-muted-foreground">Real-time protection enabled on 15 endpoints</div>
+                    </div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">30 min ago</div>
+                </div>
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Monitor className="h-5 w-5 text-green-500" />
+                    <div>
+                      <div className="font-medium">Web agent registered</div>
+                      <div className="text-sm text-muted-foreground">New device connected via /agent endpoint</div>
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground">1 hour ago</div>
@@ -400,6 +426,190 @@ export const RMMDemo = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="web-agent" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Monitor className="h-5 w-5" />
+                Web-Based Agent Deployment
+              </CardTitle>
+              <CardDescription>
+                Deploy agents instantly via web interface - no software downloads required
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-2 border-primary/20 bg-primary/5">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Agent Registration</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>No software installation required</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>Real-time system information collection</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>Screen sharing capabilities</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>File transfer support</span>
+                      </div>
+                    </div>
+                    <Button className="w-full mt-4">
+                      View Agent Portal (/agent)
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Deployment Process</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">1</div>
+                        <div>
+                          <div className="font-medium">Send Link</div>
+                          <div className="text-sm text-muted-foreground">Share /agent URL with client</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">2</div>
+                        <div>
+                          <div className="font-medium">Register Device</div>
+                          <div className="text-sm text-muted-foreground">Device auto-registers via browser</div>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">3</div>
+                        <div>
+                          <div className="font-medium">Start Managing</div>
+                          <div className="text-sm text-muted-foreground">Full RMM capabilities available</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="defender" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Windows Defender Management
+              </CardTitle>
+              <CardDescription>
+                Centralized Windows Defender endpoint management and threat monitoring
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Shield className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                    <div className="text-2xl font-bold">185</div>
+                    <div className="text-sm text-muted-foreground">Protected Endpoints</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-red-500" />
+                    <div className="text-2xl font-bold">3</div>
+                    <div className="text-sm text-muted-foreground">At Risk</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <AlertTriangle className="h-6 w-6 mx-auto mb-2 text-orange-500" />
+                    <div className="text-2xl font-bold">7</div>
+                    <div className="text-sm text-muted-foreground">Active Threats</div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <CheckCircle className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                    <div className="text-2xl font-bold">42</div>
+                    <div className="text-sm text-muted-foreground">Resolved Threats</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Recent Threat Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <AlertTriangle className="h-4 w-4 text-red-500" />
+                          <div>
+                            <div className="font-medium">Trojan Detected</div>
+                            <div className="text-sm text-muted-foreground">WKS-001 - Quarantined</div>
+                          </div>
+                        </div>
+                        <Badge variant="destructive">Severe</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <div>
+                            <div className="font-medium">Policy Applied</div>
+                            <div className="text-sm text-muted-foreground">Real-time protection enabled</div>
+                          </div>
+                        </div>
+                        <Badge className="bg-green-100 text-green-800">Success</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Protection Status</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Real-time Protection</span>
+                        <Badge className="bg-green-100 text-green-800">95% Enabled</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Tamper Protection</span>
+                        <Badge className="bg-green-100 text-green-800">88% Enabled</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Network Protection</span>
+                        <Badge className="bg-yellow-100 text-yellow-800">72% Enabled</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Controlled Folder Access</span>
+                        <Badge className="bg-yellow-100 text-yellow-800">45% Enabled</Badge>
+                      </div>
+                    </div>
+                    <Button className="w-full mt-4">
+                      Configure Policies
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="alerts" className="space-y-6">
           <Card>
             <CardHeader>
@@ -441,10 +651,10 @@ export const RMMDemo = () => {
                   <AlertDescription>
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium">Pending Updates - 12 Devices</div>
-                        <div className="text-sm">Critical security updates available for installation.</div>
+                        <div className="font-medium">Windows Defender Disabled - CEO-DESKTOP</div>
+                        <div className="text-sm">Real-time protection has been disabled by user.</div>
                       </div>
-                      <Badge className="bg-orange-100 text-orange-800">Low</Badge>
+                      <Badge variant="destructive">Critical</Badge>
                     </div>
                   </AlertDescription>
                 </Alert>

@@ -241,26 +241,29 @@ const demoApps: DemoApp[] = [
   {
     id: "ultrium-rmm",
     name: "Ultrium RMM™",
-    category: "Remote Management",
-    description: "Comprehensive remote monitoring and management platform",
-    longDescription: "Advanced RMM solution providing real-time device monitoring, automated script execution, patch management, and remote access capabilities for IT professionals and MSPs.",
+    category: "Remote Management", 
+    description: "Next-generation RMM with web-based agent and Windows Defender integration",
+    longDescription: "Advanced RMM solution featuring web-based agent deployment, real-time device monitoring, remote desktop control, Windows Defender endpoint management, and comprehensive IT automation for MSPs and IT professionals.",
     icon: Wrench,
     features: [
-      "Real-time device monitoring",
+      "Web-based agent deployment",
+      "Real-time device monitoring", 
+      "Remote desktop & file transfer",
+      "Windows Defender integration",
       "Automated script execution",
-      "Patch management",
-      "Remote access & control",
       "Multi-client dashboard",
-      "Asset tracking"
+      "Screen sharing & control",
+      "Endpoint threat management"
     ],
     demoUrl: "/demos/rmm",
     isLive: true,
-    tags: ["RMM", "Remote Management", "IT Operations"],
+    tags: ["RMM", "Remote Management", "Windows Defender", "Web Agent"],
     useCases: [
-      "Proactive device monitoring",
-      "Automated maintenance tasks",
-      "Remote troubleshooting",
-      "Client infrastructure management"
+      "Device registration via web interface",
+      "Remote desktop support sessions",
+      "Centralized Windows Defender management", 
+      "Proactive endpoint monitoring",
+      "Automated security deployments"
     ]
   },
   {
@@ -292,25 +295,27 @@ const demoApps: DemoApp[] = [
     id: "ultrium-safeav",
     name: "Ultrium SafeAV™",
     category: "Endpoint Security",
-    description: "AI-powered endpoint protection and threat detection platform",
-    longDescription: "Advanced antivirus solution with real-time threat detection, behavioral analysis, automated quarantine, and comprehensive endpoint protection for businesses of all sizes.",
+    description: "AI-powered endpoint protection with Windows Defender integration",
+    longDescription: "Advanced endpoint security platform featuring native Windows Defender integration, real-time threat detection, behavioral analysis, and centralized management through SafeShield for complete endpoint protection.",
     icon: Shield,
     features: [
-      "Real-time threat detection",
-      "Behavioral analysis",
-      "Automated quarantine",
-      "Cloud-based scanning",
-      "Performance optimization",
-      "Centralized management"
+      "Windows Defender integration",
+      "Real-time threat monitoring",
+      "Centralized endpoint management",
+      "Automated threat quarantine",
+      "Security policy deployment",
+      "Compliance reporting",
+      "Multi-client dashboard"
     ],
-    demoUrl: "/demos/antivirus",
+    demoUrl: "/safeshield",
     isLive: true,
-    tags: ["SafeAV", "Endpoint Security", "Threat Detection"],
+    tags: ["SafeAV", "Windows Defender", "Endpoint Security", "SafeShield"],
     useCases: [
-      "Endpoint protection",
-      "Malware prevention",
-      "Security compliance",
-      "Threat response automation"
+      "Windows endpoint protection",
+      "Defender policy management",
+      "Threat detection & response",
+      "Security compliance monitoring",
+      "MSP endpoint security"
     ]
   },
   {
