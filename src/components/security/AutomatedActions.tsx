@@ -94,24 +94,7 @@ export const AutomatedActions = () => {
     }
   ]);
 
-  const [executionLogs, setExecutionLogs] = useState<ExecutionLog[]>([
-    {
-      id: '1',
-      actionId: '1',
-      timestamp: '2 hours ago',
-      status: 'success',
-      details: 'Endpoint WS-USER-15 quarantined - Trojan.GenKD detected',
-      duration: 1200
-    },
-    {
-      id: '2',
-      actionId: '2', 
-      timestamp: '45 minutes ago',
-      status: 'success',
-      details: 'Blocked traffic to malicious domain: evil-site.com',
-      duration: 800
-    }
-  ]);
+  const [executionLogs, setExecutionLogs] = useState<ExecutionLog[]>([]);
 
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionProgress, setExecutionProgress] = useState(0);
@@ -307,32 +290,42 @@ export const AutomatedActions = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            {executionLogs.map((log) => {
-              const action = actions.find(a => a.id === log.actionId);
-              return (
-                <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/20">
-                  {log.status === 'success' ? (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <AlertTriangle className="h-4 w-4 text-red-500" />
-                  )}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium">{action?.name}</span>
-                      <Badge variant={log.status === 'success' ? 'default' : 'destructive'} className="text-xs">
-                        {log.status}
-                      </Badge>
+          {executionLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Settings className="h-12 w-12 text-green-400 mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No Recent Executions</h3>
+              <p className="text-gray-400 max-w-md">
+                No automated actions have been executed recently. Actions will appear here when triggered or manually executed.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {executionLogs.map((log) => {
+                const action = actions.find(a => a.id === log.actionId);
+                return (
+                  <div key={log.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/20">
+                    {log.status === 'success' ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium">{action?.name}</span>
+                        <Badge variant={log.status === 'success' ? 'default' : 'destructive'} className="text-xs">
+                          {log.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{log.details}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">{log.details}</p>
+                    <div className="text-xs text-muted-foreground">
+                      {log.timestamp}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {log.timestamp}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
