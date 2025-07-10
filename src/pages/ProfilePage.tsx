@@ -42,7 +42,7 @@ const ProfilePage = () => {
   
   const { toast } = useToast();
   const { user } = useAuth();
-  const { subscription, createCheckout, openCustomerPortal, isLoading: isSubscriptionLoading } = useSubscription();
+  const { subscription, createCheckout, openCustomerPortal, checkSubscription, isLoading: isSubscriptionLoading } = useSubscription();
   const { credits, isLoading: isCreditsLoading, refreshCredits, remainingCredits, usagePercentage } = useUserCredits();
 
   useEffect(() => {
@@ -206,11 +206,16 @@ const ProfilePage = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => {
-                  window.location.reload();
+                onClick={async () => {
+                  await checkSubscription();
+                  toast({
+                    title: "Subscription status refreshed",
+                    description: "Your subscription status has been updated.",
+                  });
                 }}
+                disabled={isSubscriptionLoading}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className={`w-4 h-4 mr-2 ${isSubscriptionLoading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
               {subscription.subscribed ? (
