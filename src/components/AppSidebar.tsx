@@ -39,6 +39,7 @@ const gptItems = [
 ];
 
 const securityItems = [
+  { title: "UltriumDefender AI", url: "/security-ai", icon: Bot, tooltip: "AI-powered security analyst and threat management center" },
   { title: "Security Center", url: "/dashboard/security-center", icon: Shield, tooltip: "Unified security monitoring and threat management" },
   { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Enterprise password management and security" },
   { title: "SafeMail", url: "/dashboard/safemail", icon: Mail, tooltip: "Advanced email security and threat detection" },
