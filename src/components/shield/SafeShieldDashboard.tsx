@@ -33,6 +33,7 @@ import { AIResponseGuide } from "./AIResponseGuide";
 import { ThreatReportsAnalytics } from "./ThreatReportsAnalytics";
 import { MSPClientManager } from "./MSPClientManager";
 import { AutomatedWorkflows } from "./AutomatedWorkflows";
+import { WindowsDefenderAgent } from "./WindowsDefenderAgent";
 
 interface DashboardStats {
   total_threats: number;
@@ -76,7 +77,7 @@ export const SafeShieldDashboard = () => {
   const [endpoints, setEndpoints] = useState<Endpoint[]>([]);
   const [threats, setThreats] = useState<Threat[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide' | 'downloads' | 'white-label' | 'safe-av' | 'safe-mdr' | 'reports'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'threats' | 'endpoints' | 'ai-guide' | 'downloads' | 'white-label' | 'safe-av' | 'safe-mdr' | 'reports' | 'defender'>('overview');
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const { toast } = useToast();
 
@@ -405,6 +406,13 @@ export const SafeShieldDashboard = () => {
           <Activity className="h-4 w-4 mr-2" />
           Reports & Analytics
         </Button>
+        <Button 
+          variant={activeView === 'defender' ? 'default' : 'outline'}
+          onClick={() => setActiveView('defender')}
+        >
+          <Shield className="h-4 w-4 mr-2" />
+          Windows Defender
+        </Button>
       </div>
 
       {/* Critical Alerts */}
@@ -587,6 +595,11 @@ export const SafeShieldDashboard = () => {
       {/* Reports & Analytics */}
       {activeView === 'reports' && (
         <ThreatReportsAnalytics />
+      )}
+
+      {/* Windows Defender Agent */}
+      {activeView === 'defender' && (
+        <WindowsDefenderAgent />
       )}
 
       {/* White Label Configuration */}
