@@ -51,6 +51,7 @@ import SafeNetPage from '@/pages/products/SafeNetPage';
 import TicketingPage from '@/pages/products/TicketingPage';
 import AntivirusPage from '@/pages/products/AntivirusPage';
 import SafeEDRPage from '@/pages/products/SafeEDRPage';
+import AdvancedHelpdeskAdmin from '@/pages/admin/AdvancedHelpdeskAdmin';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
@@ -206,6 +207,13 @@ function AppRouter() {
       <Route path="/products/ticketing" element={<TicketingPage />} />
       <Route path="/products/antivirus" element={<AntivirusPage />} />
       <Route path="/products/safeedr" element={<SafeEDRPage />} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin/helpdesk" element={
+        <ProtectedRoute>
+          <AdvancedHelpdeskAdmin />
+        </ProtectedRoute>
+      } />
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={
