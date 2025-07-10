@@ -88,7 +88,7 @@ const Dashboard = () => {
   const isWhiteLabelPage = location.pathname.includes('/white-label');
   const isTeamManagementPage = location.pathname.includes('/teams');
   const isTeamAnalyticsPage = location.pathname.includes('/team-analytics');
-  const isSecurityPage = location.pathname.includes('/security');
+  const isSecuritySettingsPage = location.pathname.includes('/security');
   const isConversationsPage = location.pathname.includes('/conversations');
   const isDeploymentPage = location.pathname.includes('/deployment');
   const isAPIKeysPage = location.pathname.includes('/api-keys');
@@ -112,6 +112,7 @@ const Dashboard = () => {
   const isDashboardOverview = location.pathname === '/dashboard';
   const isUltriumGPTPage = location.pathname === '/dashboard/ultrium-gpt';
   const isSecurityCenterPage = location.pathname.includes('/security-center');
+  const isSecurityPage = location.pathname === '/dashboard/security';
   const isSafePassDashboard = location.pathname.includes('/safepass') && !location.pathname.includes('/app');
   const isSafeMailDashboard = location.pathname.includes('/safemail') && !location.pathname.includes('/app');
   const isSafeNetDashboard = location.pathname.includes('/safenet') && !location.pathname.includes('/app');
