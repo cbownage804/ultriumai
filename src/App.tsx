@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect } from 'react';
 import { Toaster } from '@/components/ui/toaster';
 import { NotificationProvider } from '@/hooks/useNotifications';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -337,6 +338,16 @@ function AppRouter() {
   );
 }
 
+// Create a QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
+
 export default function App() {
   // Initialize dark mode as default on app startup
   useEffect(() => {
@@ -353,14 +364,16 @@ export default function App() {
   }, []);
 
   return (
-    <NotificationProvider>
-      <VoiceAssistantProvider>
-        <Router>
-          <AppRouter />
-          
-          <Toaster />
-        </Router>
-      </VoiceAssistantProvider>
-    </NotificationProvider>
+    <QueryClientProvider client={queryClient}>
+      <NotificationProvider>
+        <VoiceAssistantProvider>
+          <Router>
+            <AppRouter />
+            
+            <Toaster />
+          </Router>
+        </VoiceAssistantProvider>
+      </NotificationProvider>
+    </QueryClientProvider>
   );
 }
