@@ -25,8 +25,10 @@ import {
   Copy,
   Eye,
   Zap,
-  Upload
+  Upload,
+  ArrowLeft
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,6 +54,7 @@ interface SafeScanAppProps {
 export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', brandName = 'Ultrium AI' }: SafeScanAppProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState('email');
   const [emailContent, setEmailContent] = useState('');
@@ -317,14 +320,25 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8" style={{ color: brandColor }} />
-            {isWhiteLabeled ? brandName : 'Ultrium'} SafeScan
-          </h1>
-          <p className="text-muted-foreground">
-            Comprehensive security scanning for emails, documents, and URLs
-          </p>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold flex items-center gap-2">
+              <Shield className="h-8 w-8" style={{ color: brandColor }} />
+              {isWhiteLabeled ? brandName : 'Ultrium'} SafeScan
+            </h1>
+            <p className="text-muted-foreground">
+              Comprehensive security scanning for emails, documents, and URLs
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button 
