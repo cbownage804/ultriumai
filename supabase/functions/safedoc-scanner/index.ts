@@ -75,8 +75,11 @@ serve(async (req) => {
         'Consider file unnecessary unless from trusted source'
       ];
     } else if (suspiciousExtensions.includes(fileExtension)) {
+      console.log(`Analyzing suspicious extension: ${fileExtension}, filename: ${file_name}`);
+      
       // Additional checks for suspicious files
       if (file_size > 50 * 1024 * 1024) { // 50MB+
+        console.log('Large file detected');
         riskLevel = 'medium';
         reputationScore = 60;
         threats.push('Large file size - potential for hidden content');
@@ -91,6 +94,7 @@ serve(async (req) => {
                  file_name.toLowerCase().includes('refund') ||
                  file_name.toLowerCase().includes('tax') ||
                  file_name.toLowerCase().includes('bank')) {
+        console.log('Suspicious filename pattern detected');
         riskLevel = 'medium';
         reputationScore = 55;
         threats.push('Suspicious filename pattern commonly used in phishing');
@@ -100,6 +104,7 @@ serve(async (req) => {
           'Be extremely cautious of macros or embedded content'
         ];
       } else {
+        console.log('Normal document detected - marking as safe');
         // Normal documents from trusted sources should be safe
         riskLevel = 'safe';
         reputationScore = 90;
