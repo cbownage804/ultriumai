@@ -69,7 +69,7 @@ interface ThreatIntelligence {
 export const SafeShieldApp = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('ai-dashboard');
   const [loading, setLoading] = useState(true);
   
   const [metrics, setMetrics] = useState<SecurityMetrics>({
@@ -295,7 +295,11 @@ export const SafeShieldApp = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="ai-dashboard" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            SafeShield AI
+          </TabsTrigger>
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Overview
@@ -321,6 +325,129 @@ export const SafeShieldApp = () => {
             Threat Intel
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ai-dashboard" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* AI Assistant Chat Panel */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  SafeShield AI Assistant
+                </CardTitle>
+                <CardDescription>
+                  Get AI-powered insights and automated responses for your security metrics
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* AI Chat Interface */}
+                  <div className="bg-muted/30 rounded-lg p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary rounded-full p-2">
+                          <Shield className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                        <div className="bg-background rounded-lg p-3 max-w-[80%]">
+                          <p className="text-sm">
+                            Welcome to SafeShield AI! I'm here to help you understand your security metrics and provide automated responses. 
+                            I can analyze your current security posture, explain threat patterns, and suggest remediation actions.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="bg-primary rounded-full p-2">
+                          <Shield className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                        <div className="bg-background rounded-lg p-3 max-w-[80%]">
+                          <p className="text-sm">
+                            Current Analysis: Your security score is <strong>{metrics.security_score}/100</strong> with <strong>{metrics.active_incidents}</strong> active incidents. 
+                            I've detected {metrics.threats_blocked_24h} threats in the last 24 hours across {metrics.protected_endpoints} endpoints.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" className="text-left justify-start">
+                      📊 Analyze Security Score
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-left justify-start">
+                      🚨 Review Active Incidents
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-left justify-start">
+                      🔍 Threat Intelligence Summary
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-left justify-start">
+                      🛡️ Endpoint Protection Status
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Stats & Recommendations */}
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">AI Recommendations</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="bg-yellow-100 dark:bg-yellow-900/20 p-1 rounded">
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                      </div>
+                      <div className="text-sm">
+                        <p className="font-medium">Update Endpoint Policies</p>
+                        <p className="text-muted-foreground">2 endpoints need policy updates</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="bg-blue-100 dark:bg-blue-900/20 p-1 rounded">
+                        <Shield className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="text-sm">
+                        <p className="font-medium">Review Threat Intelligence</p>
+                        <p className="text-muted-foreground">5 new IOCs detected</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="bg-green-100 dark:bg-green-900/20 p-1 rounded">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div className="text-sm">
+                        <p className="font-medium">Security Posture Strong</p>
+                        <p className="text-muted-foreground">All critical systems protected</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Automated Actions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Button className="w-full justify-start" size="sm">
+                      🤖 Enable Auto-Remediation
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" size="sm">
+                      📧 Configure Alert Notifications
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" size="sm">
+                      🔄 Schedule Security Scan
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
