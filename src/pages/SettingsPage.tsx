@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Save, User, Brain, Database, Trash2 } from "lucide-react";
+import { Save, User, Brain, Database, Trash2, Shield } from "lucide-react";
 
 interface UserSettings {
   preferred_model: string;
@@ -39,6 +39,7 @@ const SettingsPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationCount, setConversationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -47,8 +48,15 @@ const SettingsPage = () => {
     if (user) {
       loadUserData();
       loadStats();
+      checkAdminStatus();
     }
   }, [user]);
+
+  const checkAdminStatus = () => {
+    if (user?.email?.endsWith('@ultriumai.com')) {
+      setIsAdmin(true);
+    }
+  };
 
   const loadUserData = async () => {
     if (!user) return;
@@ -350,6 +358,29 @@ const SettingsPage = () => {
                   Export Account Data
                 </Button>
               </div>
+
+              {isAdmin && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Administrator Access
+                    </h3>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
+                      onClick={() => window.open('/admin', '_blank')}
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Open Admin Portal
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Access administrative functions and system management tools.
+                    </p>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
