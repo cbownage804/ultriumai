@@ -129,7 +129,7 @@ ${conversationHistory ? JSON.stringify(conversationHistory.slice(0, 5), null, 2)
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-2025-04-14',
+        model: 'gpt-4o-mini',
         messages: messages,
         temperature: 0.3, // Lower temperature for more precise security responses
         max_tokens: 2000,
