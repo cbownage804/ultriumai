@@ -39,6 +39,33 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Give all UltriumAI employees enterprise status - check this FIRST before cache
+    if (user.email.endsWith('@ultriumai.com') || user.email === 'brandon.howard@kwccpa.com') {
+      logStep("UltriumAI employee detected - granting enterprise status", { email: user.email });
+      
+      // Update database to reflect enterprise status
+      const enterpriseData = {
+        email: user.email,
+        user_id: user.id,
+        stripe_customer_id: null,
+        subscribed: true,
+        subscription_tier: "enterprise",
+        subscription_end: null,
+        updated_at: new Date().toISOString(),
+      };
+      
+      await supabaseClient.from("subscribers").upsert(enterpriseData, { onConflict: 'email' });
+      
+      return new Response(JSON.stringify({
+        subscribed: true,
+        subscription_tier: "enterprise",
+        subscription_end: null // No expiration for admins
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // First, try to get subscription from database (fast)
     const { data: dbSubscription, error: dbError } = await supabaseClient
       .from("subscribers")
@@ -64,19 +91,6 @@ serve(async (req) => {
           status: 200,
         });
       }
-    }
-
-    // Give all UltriumAI employees enterprise status
-    if (user.email.endsWith('@ultriumai.com') || user.email === 'brandon.howard@kwccpa.com') {
-      logStep("UltriumAI employee detected - granting enterprise status", { email: user.email });
-      return new Response(JSON.stringify({
-        subscribed: true,
-        subscription_tier: "enterprise",
-        subscription_end: null // No expiration for admins
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
     }
 
     // Only hit Stripe API if we need fresh data
