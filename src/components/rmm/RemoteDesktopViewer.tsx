@@ -10,6 +10,7 @@ import { RemoteTerminal } from "./RemoteTerminal";
 import { RemoteFileTransfer } from "./RemoteFileTransfer";
 import { RemoteClipboard } from "./RemoteClipboard";
 import { RemoteSettings } from "./RemoteSettings";
+import { SafeKBInjection } from "./SafeKBInjection";
 
 interface RemoteDesktopViewerProps {
   sessionId: string;
@@ -44,6 +45,20 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
     syncToRemote,
     syncFromRemote
   } = useRemoteDesktop(sessionId, deviceId);
+
+  // Handle SafeKB text injection
+  const handleInjectText = useCallback((text: string) => {
+    // Send text injection command via WebSocket
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'inject_text',
+        data: { text }
+      }));
+    }
+    
+    // Also sync to clipboard for fallback
+    syncToRemote(text);
+  }, [syncToRemote]);
 
   // Initialize WebSocket connection for live screen sharing
   useEffect(() => {
@@ -167,11 +182,12 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
         
         <CardContent className="p-0">
           <Tabs defaultValue="screen" className="h-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="screen">Screen</TabsTrigger>
               <TabsTrigger value="terminal">Terminal</TabsTrigger>
               <TabsTrigger value="files">Files</TabsTrigger>
               <TabsTrigger value="clipboard">Clipboard</TabsTrigger>
+              <TabsTrigger value="safekb">SafeKB</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
@@ -205,6 +221,13 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
                 onSyncToRemote={syncToRemote}
                 onSyncFromRemote={syncFromRemote}
                 remoteClipboard={remoteClipboard}
+              />
+            </TabsContent>
+
+            <TabsContent value="safekb" className="p-4">
+              <SafeKBInjection
+                onInjectText={handleInjectText}
+                onExecuteCommand={executeCommand}
               />
             </TabsContent>
 
