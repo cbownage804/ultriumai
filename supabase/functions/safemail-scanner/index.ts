@@ -87,7 +87,7 @@ async function scanEmail(payload: any) {
   }
 
   // Check sender reputation
-  const senderRisk = analyzeSenderReputation(email.sender)
+  const senderRisk = await analyzeSenderReputation(email.sender)
   if (senderRisk.isRisky) {
     threats.push({
       type: 'sender_reputation',
@@ -150,7 +150,7 @@ async function analyzeSender(payload: any) {
     throw new Error('Sender email is required')
   }
 
-  const analysis = analyzeSenderReputation(sender)
+  const analysis = await analyzeSenderReputation(sender)
   
   return new Response(
     JSON.stringify(analysis),
@@ -158,7 +158,7 @@ async function analyzeSender(payload: any) {
   )
 }
 
-function analyzeSenderReputation(sender: string) {
+async function analyzeSenderReputation(sender: string) {
   // Simulate sender reputation analysis
   const suspiciousDomains = [
     'tempmail.org', '10minutemail.com', 'guerrillamail.com', 'mailinator.com',
@@ -207,6 +207,31 @@ function analyzeSenderReputation(sender: string) {
     score += 60
     severity = 'critical'
     description = 'Potential domain spoofing detected'
+  }
+
+  // Check with DeHashed for compromised emails
+  const dehashedApiKey = Deno.env.get('DEHASHED_API_KEY')
+  if (dehashedApiKey) {
+    try {
+      const dehashedResponse = await fetch(`https://api.dehashed.com/search?query=email:${encodeURIComponent(sender)}&size=1`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${btoa(`${dehashedApiKey}:`)}`,
+          'Accept': 'application/json',
+        }
+      })
+
+      if (dehashedResponse.ok) {
+        const dehashedData = await dehashedResponse.json()
+        if (dehashedData.entries && dehashedData.entries.length > 0) {
+          score += 25
+          severity = score > 70 ? 'critical' : score > 50 ? 'high' : 'medium'
+          description += ' (found in breach databases)'
+        }
+      }
+    } catch (error) {
+      console.warn('DeHashed API error:', error)
+    }
   }
 
   return {

@@ -1,20 +1,15 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const virusTotalApiKey = Deno.env.get('VIRUSTOTAL_API_KEY');
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface ScanResult {
-  isClean: boolean;
-  threatLevel: 'clean' | 'suspicious' | 'malicious';
-  detectionCount: number;
-  totalScans: number;
-  detectedThreats: string[];
-  scanId: string;
+interface URLScanRequest {
+  url: string;
+  user_id?: string;
 }
 
 serve(async (req) => {
@@ -23,133 +18,147 @@ serve(async (req) => {
   }
 
   try {
-    const { url: targetUrl, scanType = 'url' } = await req.json();
+    const { url, user_id }: URLScanRequest = await req.json();
+    console.log('Scanning URL:', url);
 
-    if (!targetUrl) {
-      return new Response(
-        JSON.stringify({ error: 'URL is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (!url) {
+      throw new Error('URL is required');
     }
 
-    // Encode URL for VirusTotal
-    const urlId = btoa(targetUrl).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
-    // Check existing scan results first
-    const analysisResponse = await fetch(
-      `https://www.virustotal.com/api/v3/urls/${urlId}`,
-      {
-        method: 'GET',
-        headers: {
-          'x-apikey': virusTotalApiKey!,
-        },
-      }
-    );
-
-    let scanResult: ScanResult;
-
-    if (analysisResponse.status === 200) {
-      // URL has been scanned before
-      const data = await analysisResponse.json();
-      const stats = data.data.attributes.last_analysis_stats;
-      
-      scanResult = {
-        isClean: stats.malicious === 0 && stats.suspicious === 0,
-        threatLevel: stats.malicious > 0 ? 'malicious' : 
-                    stats.suspicious > 0 ? 'suspicious' : 'clean',
-        detectionCount: stats.malicious + stats.suspicious,
-        totalScans: Object.values(stats).reduce((sum: number, count: any) => sum + count, 0),
-        detectedThreats: Object.entries(data.data.attributes.last_analysis_results)
-          .filter(([_, result]: [string, any]) => 
-            result.category === 'malicious' || result.category === 'suspicious'
-          )
-          .map(([engine, _]: [string, any]) => engine),
-        scanId: data.data.id
-      };
-    } else {
-      // Submit URL for scanning
-      const submitResponse = await fetch(
-        'https://www.virustotal.com/api/v3/urls',
-        {
-          method: 'POST',
-          headers: {
-            'x-apikey': virusTotalApiKey!,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: `url=${encodeURIComponent(targetUrl)}`,
-        }
-      );
-
-      if (!submitResponse.ok) {
-        throw new Error('Failed to submit URL for scanning');
-      }
-
-      const submitData = await submitResponse.json();
-      const analysisId = submitData.data.id;
-
-      // Wait a moment and check results
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const resultResponse = await fetch(
-        `https://www.virustotal.com/api/v3/analyses/${analysisId}`,
-        {
-          method: 'GET',
-          headers: {
-            'x-apikey': virusTotalApiKey!,
-          },
-        }
-      );
-
-      const resultData = await resultResponse.json();
-      
-      if (resultData.data.attributes.status === 'completed') {
-        const stats = resultData.data.attributes.stats;
-        
-        scanResult = {
-          isClean: stats.malicious === 0 && stats.suspicious === 0,
-          threatLevel: stats.malicious > 0 ? 'malicious' : 
-                      stats.suspicious > 0 ? 'suspicious' : 'clean',
-          detectionCount: stats.malicious + stats.suspicious,
-          totalScans: Object.values(stats).reduce((sum: number, count: any) => sum + count, 0),
-          detectedThreats: [],
-          scanId: analysisId
-        };
-      } else {
-        // Scan still in progress
-        scanResult = {
-          isClean: true,
-          threatLevel: 'clean',
-          detectionCount: 0,
-          totalScans: 0,
-          detectedThreats: [],
-          scanId: analysisId
-        };
-      }
+    const virusTotalApiKey = Deno.env.get('VIRUSTOTAL_API_KEY');
+    if (!virusTotalApiKey) {
+      throw new Error('VirusTotal API key not configured');
     }
 
-    return new Response(
-      JSON.stringify({
-        url: targetUrl,
-        scanResult,
-        scannedAt: new Date().toISOString(),
-        scannerName: 'Ultrium SafeLink™ Scanner'
+    // Submit URL to VirusTotal
+    const submitResponse = await fetch('https://www.virustotal.com/vtapi/v2/url/scan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        apikey: virusTotalApiKey,
+        url: url,
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+    const submitData = await submitResponse.json();
+    console.log('VirusTotal submit response:', submitData);
+
+    // Wait a moment then get the report
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const reportResponse = await fetch(`https://www.virustotal.com/vtapi/v2/url/report?apikey=${virusTotalApiKey}&resource=${encodeURIComponent(url)}`);
+    const reportData = await reportResponse.json();
+    console.log('VirusTotal report:', reportData);
+
+    // Analyze the results
+    const positives = reportData.positives || 0;
+    const total = reportData.total || 0;
+    const scanDate = reportData.scan_date || new Date().toISOString();
+    const permalink = reportData.permalink;
+
+    // Determine risk level
+    let riskLevel: 'safe' | 'low' | 'medium' | 'high' | 'critical' = 'safe';
+    let threats: string[] = [];
+    
+    if (positives > 0) {
+      const riskPercentage = (positives / total) * 100;
+      
+      if (riskPercentage >= 50) {
+        riskLevel = 'critical';
+      } else if (riskPercentage >= 25) {
+        riskLevel = 'high';
+      } else if (riskPercentage >= 10) {
+        riskLevel = 'medium';
+      } else {
+        riskLevel = 'low';
       }
-    );
+
+      // Extract threat details
+      if (reportData.scans) {
+        threats = Object.entries(reportData.scans)
+          .filter(([_, scan]: [string, any]) => scan.detected)
+          .map(([engine, scan]: [string, any]) => `${engine}: ${scan.result}`)
+          .slice(0, 5); // Limit to top 5 threats
+      }
+    }
+
+    const reputationScore = Math.max(0, 100 - (positives * 10));
+
+    // Generate recommendations
+    const recommendations = [];
+    if (riskLevel === 'safe') {
+      recommendations.push('URL appears safe to visit');
+      recommendations.push('No known security threats detected');
+    } else {
+      recommendations.push('Exercise caution when accessing this URL');
+      recommendations.push('Consider using alternative trusted sources');
+      if (positives > 5) {
+        recommendations.push('This URL has been flagged by multiple security vendors');
+        recommendations.push('Avoid entering sensitive information');
+      }
+    }
+
+    const scanResult = {
+      url: url,
+      safe: riskLevel === 'safe',
+      risk_level: riskLevel,
+      reputation_score: reputationScore,
+      threats_detected: threats,
+      scan_details: {
+        positives,
+        total,
+        scan_date: scanDate,
+        permalink,
+        engines: reportData.scans ? Object.keys(reportData.scans).length : 0,
+        scan_id: reportData.scan_id
+      },
+      recommendations,
+      scan_timestamp: new Date().toISOString()
+    };
+
+    // Store scan result in analytics if user_id provided
+    if (user_id) {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      await supabase.from('gpt_analytics').insert({
+        user_id,
+        gpt_id: 'safescan-url',
+        interaction_type: 'security_scan',
+        tokens_used: 1,
+        metadata: {
+          scan_type: 'url',
+          content: url.substring(0, 100),
+          risk_level: riskLevel,
+          threats_detected: threats,
+          reputation_score: reputationScore,
+          scan_details: scanResult.scan_details,
+          recommendations
+        }
+      });
+    }
+
+    return new Response(JSON.stringify(scanResult), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
-    console.error('Error in Ultrium SafeLink Scanner:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Failed to scan URL',
-        details: error.message 
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    console.error('URL scan error:', error);
+    return new Response(JSON.stringify({
+      error: error.message,
+      safe: false,
+      risk_level: 'unknown',
+      threats_detected: ['Scan failed'],
+      reputation_score: 0,
+      scan_details: {},
+      recommendations: ['Unable to complete scan', 'Please try again later']
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

@@ -63,3 +63,6 @@ verify_jwt = false
 
 [functions.activate-security-suite]
 verify_jwt = false
+
+[functions.ultrium-safelink-scanner]
+verify_jwt = false
