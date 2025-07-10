@@ -26,12 +26,19 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Security AI Assistant function called');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')!;
 
+    console.log('Environment variables check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey,
+      hasOpenAIKey: !!openAIApiKey
+    });
+
     if (!supabaseUrl || !supabaseServiceKey || !openAIApiKey) {
-      throw new Error('Missing required environment variables');
+      throw new Error(`Missing required environment variables: ${!supabaseUrl ? 'SUPABASE_URL ' : ''}${!supabaseServiceKey ? 'SUPABASE_SERVICE_ROLE_KEY ' : ''}${!openAIApiKey ? 'OPENAI_API_KEY' : ''}`);
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
