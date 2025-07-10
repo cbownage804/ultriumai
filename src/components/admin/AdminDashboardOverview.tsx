@@ -46,7 +46,7 @@ interface RealtimeActivity {
   user?: string;
 }
 
-export const AdminDashboardOverview = () => {
+export const AdminDashboardOverview = ({ onTabChange }: { onTabChange?: (tab: string) => void }) => {
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     newUsersToday: 0,
@@ -243,7 +243,8 @@ export const AdminDashboardOverview = () => {
     change, 
     icon: Icon, 
     trend = 'up',
-    color = 'blue'
+    color = 'blue',
+    onClick
   }: {
     title: string;
     value: string | number;
@@ -251,6 +252,7 @@ export const AdminDashboardOverview = () => {
     icon: any;
     trend?: 'up' | 'down';
     color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple';
+    onClick?: () => void;
   }) => {
     const colorClasses = {
       blue: 'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
@@ -261,7 +263,10 @@ export const AdminDashboardOverview = () => {
     };
 
     return (
-      <Card className="hover:shadow-lg transition-shadow duration-200">
+      <Card 
+        className={`hover:shadow-lg transition-all duration-200 ${onClick ? 'cursor-pointer hover:scale-105' : ''}`}
+        onClick={onClick}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
           <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
@@ -352,6 +357,7 @@ export const AdminDashboardOverview = () => {
           change={`+${stats.newUsersToday} today`}
           icon={Users}
           color="blue"
+          onClick={() => onTabChange?.('users')}
         />
         <StatCard
           title="Active GPTs"
@@ -359,6 +365,7 @@ export const AdminDashboardOverview = () => {
           change={`${stats.totalGPTs} total`}
           icon={Bot}
           color="green"
+          onClick={() => onTabChange?.('gpts')}
         />
         <StatCard
           title="Monthly Revenue"
@@ -366,6 +373,7 @@ export const AdminDashboardOverview = () => {
           change={`$${stats.totalRevenue.toLocaleString()} annually`}
           icon={DollarSign}
           color="purple"
+          onClick={() => onTabChange?.('subscriptions')}
         />
         <StatCard
           title="Interactions Today"
@@ -373,6 +381,7 @@ export const AdminDashboardOverview = () => {
           change={`${stats.totalInteractions.toLocaleString()} total`}
           icon={Activity}
           color="yellow"
+          onClick={() => onTabChange?.('activity')}
         />
       </div>
 
@@ -384,18 +393,21 @@ export const AdminDashboardOverview = () => {
           change={`${stats.totalMSPs} total registered`}
           icon={Building2}
           color="blue"
+          onClick={() => onTabChange?.('msp-support')}
         />
         <StatCard
           title="Active Subscriptions"
           value={stats.activeSubscriptions.toLocaleString()}
           icon={CreditCard}
           color="green"
+          onClick={() => onTabChange?.('subscriptions')}
         />
         <StatCard
           title="Platform Health"
           value={`${stats.systemHealth}%`}
           icon={Zap}
           color={stats.systemHealth >= 95 ? 'green' : 'yellow'}
+          onClick={() => onTabChange?.('health')}
         />
       </div>
 

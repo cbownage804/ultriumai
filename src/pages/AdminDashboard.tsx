@@ -130,7 +130,7 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <AdminDashboardOverview />
+            <AdminDashboardOverview onTabChange={setActiveTab} />
           </TabsContent>
 
           <TabsContent value="search">
