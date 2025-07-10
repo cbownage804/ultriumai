@@ -46,13 +46,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
-import { UnifiedAIAssistant } from "@/components/UnifiedAIAssistant";
+
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAIMinimized, setIsAIMinimized] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -205,23 +204,6 @@ const Dashboard = () => {
     return <DashboardOverview />;
   };
 
-  // Determine AI context based on current page
-  const getAIContext = () => {
-    if (isSecurityPage || isSafePassDashboard || isSafeMailDashboard || isSafeNetDashboard || isSafeScanPage) return 'security';
-    if (isHelpdeskPage) return 'helpdesk';
-    if (isRMMPage) return 'rmm';
-    if (isSafeScanPage) return 'safescan';
-    return 'ultrium';
-  };
-
-  const getAIDefaultSource = () => {
-    if (isSecurityPage || isSafePassDashboard || isSafeMailDashboard || isSafeNetDashboard) return 'security';
-    if (isHelpdeskPage) return 'helpdesk';
-    if (isRMMPage) return 'rmm';
-    if (isSafeScanPage) return 'safescan';
-    return 'ultrium';
-  };
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -237,14 +219,6 @@ const Dashboard = () => {
             {renderContent()}
           </div>
         </SidebarInset>
-        
-        {/* Unified AI Assistant - Available on all dashboard screens */}
-        <UnifiedAIAssistant
-          isMinimized={isAIMinimized}
-          onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
-          defaultSource={getAIDefaultSource() as any}
-          context={getAIContext()}
-        />
       </div>
     </SidebarProvider>
   );

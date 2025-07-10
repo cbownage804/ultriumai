@@ -78,12 +78,15 @@ import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { EnhancedVoiceAssistant } from '@/components/voice/EnhancedVoiceAssistant';
+import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 function AppRouter() {
   const { user, loading } = useAuth();
-  
-  // Automatically scroll to top on route changes
+  const location = useLocation();
+  const [isAIMinimized, setIsAIMinimized] = useState(true);
   useScrollToTop();
 
   if (loading) {
@@ -94,215 +97,243 @@ function AppRouter() {
     );
   }
 
+  // Determine AI context and source based on current page
+  const getAIContext = () => {
+    if (location.pathname.includes('security') || location.pathname.includes('safescan') || location.pathname.includes('safeshield')) return 'security';
+    if (location.pathname.includes('helpdesk') || location.pathname.includes('admin')) return 'helpdesk';
+    if (location.pathname.includes('rmm') || location.pathname.includes('technician')) return 'rmm';
+    return 'dashboard';
+  };
+
+  const getAIDefaultSource = () => {
+    if (location.pathname.includes('security') || location.pathname.includes('safescan') || location.pathname.includes('safeshield')) return 'security';
+    if (location.pathname.includes('helpdesk') || location.pathname.includes('admin')) return 'helpdesk';
+    if (location.pathname.includes('rmm') || location.pathname.includes('technician')) return 'rmm';
+    if (location.pathname.includes('safescan')) return 'safescan';
+    return 'ultrium';
+  };
+
   return (
-    <Routes>
-      <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Index />} />
-      <Route path="/agent" element={<Agent />} />
-      <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/msp-pricing" element={<MSPPricing />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/credits" element={<CreditsPurchase />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/security" element={<Security />} />
-      <Route path="/onboarding" element={
-        <ProtectedRoute>
-          <OnboardingFlow />
-        </ProtectedRoute>
-      } />
-      <Route path="/ultriumgpt" element={<UltriumGPT />} />
-      <Route path="/small-business" element={<SmallBusiness />} />
-      <Route path="/medium-business" element={<MediumBusiness />} />
-      <Route path="/enterprise" element={<Enterprise />} />
-      <Route path="/msps" element={<MSPs />} />
-      <Route path="/mssps" element={<MSSPs />} />
-      <Route path="/solutions" element={<Solutions />} />
-      <Route path="/demos" element={<LiveDemos />} />
-      <Route path="/msp-demos" element={<MSPDemos />} />
-        <Route path="/msp-control-center" element={
+    <>
+      <Routes>
+        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Index />} />
+        <Route path="/agent" element={<Agent />} />
+        <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/msp-pricing" element={<MSPPricing />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/credits" element={<CreditsPurchase />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/security" element={<Security />} />
+        <Route path="/onboarding" element={
           <ProtectedRoute>
-            <MSPControlCenter />
+            <OnboardingFlow />
           </ProtectedRoute>
         } />
-        <Route path="/msp-dashboard" element={
+        <Route path="/ultriumgpt" element={<UltriumGPT />} />
+        <Route path="/small-business" element={<SmallBusiness />} />
+        <Route path="/medium-business" element={<MediumBusiness />} />
+        <Route path="/enterprise" element={<Enterprise />} />
+        <Route path="/msps" element={<MSPs />} />
+        <Route path="/mssps" element={<MSSPs />} />
+        <Route path="/solutions" element={<Solutions />} />
+        <Route path="/demos" element={<LiveDemos />} />
+        <Route path="/msp-demos" element={<MSPDemos />} />
+          <Route path="/msp-control-center" element={
+            <ProtectedRoute>
+              <MSPControlCenter />
+            </ProtectedRoute>
+          } />
+          <Route path="/msp-dashboard" element={
+            <ProtectedRoute>
+              <MSPDashboardPage />
+            </ProtectedRoute>
+          } />
+        <Route path="/docs" element={
           <ProtectedRoute>
-            <MSPDashboardPage />
+            <Docs />
           </ProtectedRoute>
         } />
-      <Route path="/docs" element={
-        <ProtectedRoute>
-          <Docs />
-        </ProtectedRoute>
-      } />
-      <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
-      <Route path="/demos/safepass" element={<SafePassDemoPage />} />
-      <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
-      <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
-      <Route path="/products/safescore" element={<SafeScorePage />} />
-      <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
-      <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
-      <Route path="/demos/rmm" element={<RMMDemoPage />} />
-      <Route path="/demos/ticketing" element={<TicketingDemoPage />} />
-      <Route path="/demos/antivirus" element={<AntivirusDemoPage />} />
-      <Route path="/demos/safemdr" element={<SafeMDRDemoPage />} />
-      <Route path="/embed-demo" element={<EmbedDemo />} />
-      <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
-      <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
+        <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
+        <Route path="/demos/safepass" element={<SafePassDemoPage />} />
+        <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
+        <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
+        <Route path="/products/safescore" element={<SafeScorePage />} />
+        <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
+        <Route path="/demos/safeweb" element={<DarkWebDemoPage />} />
+        <Route path="/demos/rmm" element={<RMMDemoPage />} />
+        <Route path="/demos/ticketing" element={<TicketingDemoPage />} />
+        <Route path="/demos/antivirus" element={<AntivirusDemoPage />} />
+        <Route path="/demos/safemdr" element={<SafeMDRDemoPage />} />
+        <Route path="/embed-demo" element={<EmbedDemo />} />
+        <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
+        <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
+        
+        {/* SafeNet App Routes */}
+        <Route path="/safenet-connector" element={
+          <ProtectedRoute>
+            <SafeNetConnectorPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/safenet-msp-dashboard" element={
+          <ProtectedRoute>
+            <SafeNetMSPPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/safenet-mobile" element={<SafeNetMobilePage />} />
+        <Route path="/technician-mobile" element={<TechnicianMobile />} />
+        <Route path="/safeshield" element={
+          <ProtectedRoute>
+            <SafeShieldApp />
+          </ProtectedRoute>
+        } />
+        <Route path="/safesiem" element={
+          <ProtectedRoute>
+            <SafeSIEM />
+          </ProtectedRoute>
+        } />
+        <Route path="/safesiem/alert-rules" element={
+          <ProtectedRoute>
+            <SafeSIEMAlertRules />
+          </ProtectedRoute>
+        } />
+        <Route path="/safesiem/incidents" element={
+          <ProtectedRoute>
+            <SafeSIEMIncidents />
+          </ProtectedRoute>
+        } />
+        <Route path="/safesiem/analytics" element={
+          <ProtectedRoute>
+            <SafeSIEMAnalytics />
+          </ProtectedRoute>
+        } />
+        <Route path="/security-dashboard" element={
+          <ProtectedRoute>
+            <SecurityDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/safeweb-dashboard" element={
+          <ProtectedRoute>
+            <SafeWebDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/safeweb-msp-dashboard" element={
+          <ProtectedRoute>
+            <SafeWebMSPDashboard />
+          </ProtectedRoute>
+        } />
+        
+        {/* Product Pages */}
+        <Route path="/products/safescan" element={<SafeScanPage />} />
+        <Route path="/products/safepass" element={<SafePassPage />} />
+        <Route path="/products/safeweb" element={<SafeWebPage />} />
+        <Route path="/products/safescore" element={<SafeScorePage />} />
+        <Route path="/products/safenet" element={<SafeNetPage />} />
+        <Route path="/products/ticketing" element={<TicketingPage />} />
+        <Route path="/products/antivirus" element={<AntivirusPage />} />
+        <Route path="/products/safemdr" element={<SafeMDRPage />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/helpdesk" element={
+          <ProtectedRoute>
+            <AdvancedHelpdeskAdmin />
+          </ProtectedRoute>
+        } />
+        
+        {/* Reports & Analytics Routes */}
+        <Route path="/reports" element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } />
+        <Route path="/analytics" element={
+          <ProtectedRoute>
+            <Analytics />
+          </ProtectedRoute>
+        } />
+        
+        
+        {/* Protected Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/*" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/chat/:gptId" element={
+          <ProtectedRoute>
+            <GPTChat />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <SettingsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/safeshield" element={
+          <ProtectedRoute>
+            <SafeShieldApp />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/security-center" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/safepass" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/safekb" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/safescan" element={
+          <ProtectedRoute>
+            <SafeScanPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/safenet" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/security-ai" element={
+          <ProtectedRoute>
+            <SecurityAI />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
       
-      {/* SafeNet App Routes */}
-      <Route path="/safenet-connector" element={
-        <ProtectedRoute>
-          <SafeNetConnectorPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/safenet-msp-dashboard" element={
-        <ProtectedRoute>
-          <SafeNetMSPPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/safenet-mobile" element={<SafeNetMobilePage />} />
-      <Route path="/technician-mobile" element={<TechnicianMobile />} />
-      <Route path="/safeshield" element={
-        <ProtectedRoute>
-          <SafeShieldApp />
-        </ProtectedRoute>
-      } />
-      <Route path="/safesiem" element={
-        <ProtectedRoute>
-          <SafeSIEM />
-        </ProtectedRoute>
-      } />
-      <Route path="/safesiem/alert-rules" element={
-        <ProtectedRoute>
-          <SafeSIEMAlertRules />
-        </ProtectedRoute>
-      } />
-      <Route path="/safesiem/incidents" element={
-        <ProtectedRoute>
-          <SafeSIEMIncidents />
-        </ProtectedRoute>
-      } />
-      <Route path="/safesiem/analytics" element={
-        <ProtectedRoute>
-          <SafeSIEMAnalytics />
-        </ProtectedRoute>
-      } />
-      <Route path="/security-dashboard" element={
-        <ProtectedRoute>
-          <SecurityDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/safeweb-dashboard" element={
-        <ProtectedRoute>
-          <SafeWebDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/safeweb-msp-dashboard" element={
-        <ProtectedRoute>
-          <SafeWebMSPDashboard />
-        </ProtectedRoute>
-      } />
-      
-      {/* Product Pages */}
-      <Route path="/products/safescan" element={<SafeScanPage />} />
-      <Route path="/products/safepass" element={<SafePassPage />} />
-      <Route path="/products/safeweb" element={<SafeWebPage />} />
-      <Route path="/products/safescore" element={<SafeScorePage />} />
-      <Route path="/products/safenet" element={<SafeNetPage />} />
-      <Route path="/products/ticketing" element={<TicketingPage />} />
-      <Route path="/products/antivirus" element={<AntivirusPage />} />
-      <Route path="/products/safemdr" element={<SafeMDRPage />} />
-      
-      {/* Admin Routes */}
-      <Route path="/admin/helpdesk" element={
-        <ProtectedRoute>
-          <AdvancedHelpdeskAdmin />
-        </ProtectedRoute>
-      } />
-      
-      {/* Reports & Analytics Routes */}
-      <Route path="/reports" element={
-        <ProtectedRoute>
-          <Reports />
-        </ProtectedRoute>
-      } />
-      <Route path="/analytics" element={
-        <ProtectedRoute>
-          <Analytics />
-        </ProtectedRoute>
-      } />
-      
-      
-      {/* Protected Routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/*" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/chat/:gptId" element={
-        <ProtectedRoute>
-          <GPTChat />
-        </ProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <ProtectedRoute>
-          <ProfilePage />
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <SettingsPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin" element={
-        <ProtectedRoute>
-          <AdminDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/safeshield" element={
-        <ProtectedRoute>
-          <SafeShieldApp />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/security-center" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/safepass" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/safekb" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/safescan" element={
-        <ProtectedRoute>
-          <SafeScanPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/dashboard/safenet" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/security-ai" element={
-        <ProtectedRoute>
-          <SecurityAI />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+      {/* Global AI Assistant - Available on all authenticated pages */}
+      {user && (
+        <UnifiedAIAssistant
+          isMinimized={isAIMinimized}
+          onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
+          defaultSource={getAIDefaultSource() as any}
+          context={getAIContext()}
+        />
+      )}
+    </>
   );
 }
 
