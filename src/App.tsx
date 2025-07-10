@@ -76,6 +76,8 @@ import { SafeShieldDashboard } from '@/components/shield/SafeShieldDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
 import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
+import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
+import { SafeShieldVoiceAssistant } from '@/components/voice/SafeShieldVoiceAssistant';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -321,10 +323,13 @@ export default function App() {
 
   return (
     <NotificationProvider>
-      <Router>
-        <AppRouter />
-        <Toaster />
-      </Router>
+      <VoiceAssistantProvider>
+        <Router>
+          <AppRouter />
+          <SafeShieldVoiceAssistant />
+          <Toaster />
+        </Router>
+      </VoiceAssistantProvider>
     </NotificationProvider>
   );
 }
