@@ -7,11 +7,9 @@ import { SecurityAIAssistant } from "@/components/security/SecurityAIAssistant";
 import { ThreatPredictionEngine } from "@/components/security/ThreatPredictionEngine";
 import { ThreatAnalysisEngine } from "@/components/security/ThreatAnalysisEngine";
 import { AutomatedActions } from "@/components/security/AutomatedActions";
-import { SafePassDashboard } from "@/components/shield/SafePassDashboard";
-import { SafeMailDashboard } from "@/components/shield/SafeMailDashboard";
-import { SafeNetDashboard } from "@/components/shield/SafeNetDashboard";
+import { SafeMDRDashboard } from "@/components/dashboards/SafeMDRDashboard";
+import { AntivirusDashboard } from "@/components/dashboards/AntivirusDashboard";
 import { SecurityDashboard } from "@/components/shield/SecurityDashboard";
-import { SafeWebDashboard } from "@/components/SafeWebDashboard";
 import { 
   Shield, 
   AlertTriangle, 
@@ -25,11 +23,10 @@ import {
   Users,
   Lock,
   ArrowLeft,
-  Mail,
-  Network,
-  Key,
-  Search,
-  Globe
+  ShieldCheck,
+  Radar,
+  Monitor,
+  Bug
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -229,36 +226,32 @@ export const SafeShieldApp = () => {
           <h1 className="text-4xl font-bold">SafeShield</h1>
         </div>
         <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-          Comprehensive AI-powered security platform with integrated threat detection, 
-          email security, password management, and dark web monitoring.
+          Advanced AI-powered security platform with integrated endpoint detection, antivirus protection, 
+          managed detection and response, and comprehensive security monitoring.
         </p>
       </div>
 
       {/* Security Apps Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="safepass" className="flex items-center gap-2">
-            <Key className="h-4 w-4" />
-            SafePass
+          <TabsTrigger value="safeav" className="flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            SafeAV
           </TabsTrigger>
-          <TabsTrigger value="safemail" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            SafeMail
+          <TabsTrigger value="safemdr" className="flex items-center gap-2">
+            <Radar className="h-4 w-4" />
+            SafeMDR
           </TabsTrigger>
-          <TabsTrigger value="safenet" className="flex items-center gap-2">
-            <Network className="h-4 w-4" />
-            SafeNet
-          </TabsTrigger>
-          <TabsTrigger value="safeintel" className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            SafeIntel
+          <TabsTrigger value="safeedr" className="flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            Safe EDR
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
+            <ShieldCheck className="h-4 w-4" />
             Security
           </TabsTrigger>
         </TabsList>
@@ -424,20 +417,60 @@ export const SafeShieldApp = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="safepass" className="mt-8">
-          <SafePassDashboard />
+        <TabsContent value="safeav" className="mt-8">
+          <AntivirusDashboard />
         </TabsContent>
 
-        <TabsContent value="safemail" className="mt-8">
-          <SafeMailDashboard />
+        <TabsContent value="safemdr" className="mt-8">
+          <SafeMDRDashboard />
         </TabsContent>
 
-        <TabsContent value="safenet" className="mt-8">
-          <SafeNetDashboard />
-        </TabsContent>
-
-        <TabsContent value="safeintel" className="mt-8">
-          <SafeWebDashboard />
+        <TabsContent value="safeedr" className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Monitor className="h-5 w-5" />
+                Safe EDR - Endpoint Detection & Response
+              </CardTitle>
+              <CardDescription>
+                Advanced endpoint detection and response capabilities with AI-powered behavioral analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Real-time Monitoring</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Continuous monitoring of endpoint activities with AI-powered threat detection
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Behavioral Analysis</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Advanced behavioral analysis to detect zero-day threats and APTs
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Automated Response</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">
+                      Instant automated response and containment of detected threats
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="security" className="mt-8">
