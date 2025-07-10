@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { 
   Shield, 
   ArrowLeft,
@@ -27,7 +28,13 @@ import {
   MessageSquare,
   X,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Mic,
+  MicOff,
+  Send,
+  Volume2,
+  VolumeX,
+  Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +79,14 @@ interface ThreatIntelligence {
   updated_at: string;
 }
 
+interface ChatMessage {
+  id: string;
+  type: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+  isAudio?: boolean;
+}
+
 export const SafeShieldApp = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -79,6 +94,16 @@ export const SafeShieldApp = () => {
   const [loading, setLoading] = useState(true);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [aiMinimized, setAiMinimized] = useState(false);
+  
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
   
   const [metrics, setMetrics] = useState<SecurityMetrics>({
     total_threats: 0,
@@ -95,6 +120,14 @@ export const SafeShieldApp = () => {
 
   useEffect(() => {
     loadSecurityData();
+    // Initialize chat with welcome message
+    const welcomeMessage: ChatMessage = {
+      id: 'welcome-1',
+      type: 'assistant',
+      content: "Welcome to SafeShield AI! I'm here to help you understand your security metrics and provide automated responses. I can analyze your current security posture, explain threat patterns, and suggest remediation actions.",
+      timestamp: new Date(),
+    };
+    setChatMessages([welcomeMessage]);
   }, []);
 
   const loadSecurityData = async () => {
@@ -220,6 +253,191 @@ export const SafeShieldApp = () => {
     );
   }
 
+  // Chat functionality
+  const scrollToBottom = () => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
+
+  const sendMessage = async (message: string) => {
+    if (!message.trim()) return;
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      type: 'user',
+      content: message,
+      timestamp: new Date(),
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsProcessing(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('safeshield-voice-chat', {
+        body: {
+          action: 'chat',
+          message: message,
+          context: { activeTab },
+          metrics: metrics
+        }
+      });
+
+      if (error) throw error;
+
+      const assistantMessage: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        type: 'assistant',
+        content: data.response,
+        timestamp: new Date(),
+      };
+
+      setChatMessages(prev => [...prev, assistantMessage]);
+
+      // Convert response to speech
+      await speakText(data.response);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const speakText = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      const { data, error } = await supabase.functions.invoke('safeshield-voice-chat', {
+        body: {
+          action: 'text-to-speech',
+          text: text,
+          voice: 'Sarah'
+        }
+      });
+
+      if (error) throw error;
+
+      // Play the audio
+      const audio = new Audio(`data:audio/mpeg;base64,${data.audioContent}`);
+      audio.onended = () => setIsSpeaking(false);
+      await audio.play();
+
+    } catch (error) {
+      console.error('Error converting text to speech:', error);
+      setIsSpeaking(false);
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      });
+
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+
+      const chunks: Blob[] = [];
+      
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        await processAudioInput(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setAudioChunks(chunks);
+
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({
+        title: "Error",
+        description: "Failed to access microphone",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setMediaRecorder(null);
+    }
+  };
+
+  const processAudioInput = async (audioBlob: Blob) => {
+    try {
+      setIsProcessing(true);
+      
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = async () => {
+        const base64Audio = reader.result?.toString().split(',')[1];
+        
+        if (!base64Audio) {
+          throw new Error('Failed to convert audio to base64');
+        }
+
+        // Send to speech-to-text
+        const { data, error } = await supabase.functions.invoke('safeshield-voice-chat', {
+          body: {
+            action: 'speech-to-text',
+            audio: base64Audio
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.text && data.text.trim()) {
+          await sendMessage(data.text);
+        } else {
+          toast({
+            title: "No speech detected",
+            description: "Please try speaking more clearly",
+            variant: "destructive",
+          });
+        }
+      };
+
+    } catch (error) {
+      console.error('Error processing audio:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process audio input",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -328,61 +546,142 @@ export const SafeShieldApp = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
               {/* AI Chat Interface */}
               <div className="lg:col-span-2 space-y-4">
-                <div className="bg-muted/30 rounded-lg p-4 min-h-[300px] max-h-[400px] overflow-y-auto">
-                  <div className="space-y-3">
+                {/* Chat Messages */}
+                <div 
+                  ref={chatMessagesRef}
+                  className="bg-muted/30 rounded-lg p-4 min-h-[300px] max-h-[400px] overflow-y-auto space-y-3"
+                >
+                  {chatMessages.map((message) => (
+                    <div key={message.id} className="flex items-start gap-3">
+                      <div className={`rounded-full p-2 ${
+                        message.type === 'assistant' 
+                          ? 'bg-primary' 
+                          : 'bg-secondary'
+                      }`}>
+                        {message.type === 'assistant' ? (
+                          <Shield className="h-4 w-4 text-primary-foreground" />
+                        ) : (
+                          <Users className="h-4 w-4 text-secondary-foreground" />
+                        )}
+                      </div>
+                      <div className={`rounded-lg p-3 max-w-[80%] ${
+                        message.type === 'assistant' 
+                          ? 'bg-background' 
+                          : 'bg-primary text-primary-foreground'
+                      }`}>
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {message.timestamp.toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isProcessing && (
                     <div className="flex items-start gap-3">
                       <div className="bg-primary rounded-full p-2">
                         <Shield className="h-4 w-4 text-primary-foreground" />
                       </div>
-                      <div className="bg-background rounded-lg p-3 max-w-[80%]">
-                        <p className="text-sm">
-                          Welcome to SafeShield AI! I'm here to help you understand your security metrics and provide automated responses. 
-                          I can analyze your current security posture, explain threat patterns, and suggest remediation actions.
-                        </p>
+                      <div className="bg-background rounded-lg p-3">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="text-sm">Analyzing...</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <div className="bg-primary rounded-full p-2">
-                        <Shield className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <div className="bg-background rounded-lg p-3 max-w-[80%]">
-                        <p className="text-sm">
-                          Current Analysis: Your security score is <strong>{metrics.security_score}/100</strong> with <strong>{metrics.active_incidents}</strong> active incidents. 
-                          I've detected {metrics.threats_blocked_24h} threats in the last 24 hours across {metrics.protected_endpoints} endpoints.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="bg-primary rounded-full p-2">
-                        <Shield className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <div className="bg-background rounded-lg p-3 max-w-[80%]">
-                        <p className="text-sm">
-                          <strong>Current Tab Analysis:</strong> You're viewing the <strong>{activeTab}</strong> section. 
-                          {activeTab === 'overview' && "I can help you understand your overall security posture and key metrics."}
-                          {activeTab === 'incidents' && "I can help you prioritize and respond to active security incidents."}
-                          {activeTab === 'edr' && "I can explain endpoint detection alerts and recommend response actions."}
-                          {activeTab === 'mdr' && "I can help you understand managed detection findings and next steps."}
-                          {activeTab === 'antivirus' && "I can explain antivirus scan results and threat classifications."}
-                          {activeTab === 'intelligence' && "I can help interpret threat intelligence indicators and their relevance."}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </div>
+                
+                {/* Chat Input */}
+                <div className="flex gap-2">
+                  <Input
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder="Ask about your security posture..."
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage(inputMessage);
+                      }
+                    }}
+                    disabled={isProcessing || isRecording}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant={isRecording ? "destructive" : "outline"}
+                    size="icon"
+                    onClick={isRecording ? stopRecording : startRecording}
+                    disabled={isProcessing}
+                  >
+                    {isRecording ? (
+                      <MicOff className="h-4 w-4" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    size="icon"
+                    onClick={() => sendMessage(inputMessage)}
+                    disabled={!inputMessage.trim() || isProcessing || isRecording}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Voice Status */}
+                {(isRecording || isSpeaking) && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {isRecording && (
+                      <>
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        Recording... (Click mic to stop)
+                      </>
+                    )}
+                    {isSpeaking && (
+                      <>
+                        <Volume2 className="h-4 w-4" />
+                        Speaking...
+                      </>
+                    )}
+                  </div>
+                )}
                 
                 {/* Quick Actions */}
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" className="text-left justify-start">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-left justify-start"
+                    onClick={() => sendMessage(`Analyze my current ${activeTab} metrics and provide insights`)}
+                    disabled={isProcessing}
+                  >
                     📊 Analyze Current Tab
                   </Button>
-                  <Button variant="outline" size="sm" className="text-left justify-start">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-left justify-start"
+                    onClick={() => sendMessage("What are my top security priorities right now?")}
+                    disabled={isProcessing}
+                  >
                     🚨 Priority Recommendations
                   </Button>
-                  <Button variant="outline" size="sm" className="text-left justify-start">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-left justify-start"
+                    onClick={() => sendMessage("Explain my security metrics in simple terms")}
+                    disabled={isProcessing}
+                  >
                     🔍 Explain Metrics
                   </Button>
-                  <Button variant="outline" size="sm" className="text-left justify-start">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-left justify-start"
+                    onClick={() => sendMessage("What automated responses can you set up for me?")}
+                    disabled={isProcessing}
+                  >
                     🛡️ Automated Response
                   </Button>
                 </div>
