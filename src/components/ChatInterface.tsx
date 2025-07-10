@@ -8,9 +8,11 @@ import { useConversations } from "@/hooks/useConversations";
 import { useMessages } from "@/hooks/useMessages";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAnalyticsTracking } from "@/hooks/useAnalyticsTracking";
+import { useGPTVoice } from "@/hooks/useGPTVoice";
 import ConversationSidebar from "@/components/chat/ConversationSidebar";
 import ChatArea from "@/components/chat/ChatArea";
 import MessageInput from "@/components/chat/MessageInput";
+import { GPTVoiceControls } from "@/components/voice/GPTVoiceControls";
 import { Conversation, ConversationFile } from "@/types/chat";
 import { useFileUpload } from "@/hooks/useFileUpload";
 import {
@@ -48,6 +50,21 @@ const ChatInterface = () => {
     trackMessageExchange,
     trackFileUpload
   } = useAnalyticsTracking();
+  
+  // Voice integration for custom GPTs
+  const currentGPT = gpts.find(gpt => gpt.id === selectedGPT);
+  const voiceSettings = currentGPT?.integration_settings && 
+    typeof currentGPT.integration_settings === 'object' && 
+    currentGPT.integration_settings !== null &&
+    'voice' in currentGPT.integration_settings 
+    ? (currentGPT.integration_settings as any).voice 
+    : undefined;
+    
+  const { speak, settings: voiceConfig } = useGPTVoice({ 
+    gptId: selectedGPT !== "default" ? selectedGPT : undefined,
+    userId: user?.id,
+    initialSettings: voiceSettings
+  });
 
   // Load messages when conversation changes
   useEffect(() => {
@@ -203,6 +220,11 @@ const ChatInterface = () => {
       // Save AI message to database
       await saveMessage(conversationId, aiMessage.content, "assistant");
 
+      // Auto-speak the response if voice is enabled and auto-speak is on
+      if (voiceConfig.enabled && voiceConfig.autoSpeak && aiMessage.content) {
+        await speak(aiMessage.content);
+      }
+
       // Track analytics for custom GPTs
       if (selectedGPT !== "default" && sessionId) {
         await trackMessageExchange(
@@ -328,6 +350,16 @@ const ChatInterface = () => {
                 <div className="text-xs text-muted-foreground">
                   {selectedGPT === "default" ? "General AI Assistant" : gpts.find(g => g.id === selectedGPT)?.description}
                 </div>
+                {/* Voice Controls for Custom GPTs */}
+                {selectedGPT !== "default" && (
+                  <GPTVoiceControls 
+                    gptId={selectedGPT}
+                    userId={user?.id}
+                    onVoiceMessage={(message) => setInput(message)}
+                    showSettings={true}
+                    initialSettings={voiceSettings}
+                  />
+                )}
               </div>
             </div>
             

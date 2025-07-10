@@ -24,12 +24,14 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Crown
+  Crown,
+  Volume2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { GPTVoiceControls } from "@/components/voice/GPTVoiceControls";
 
 interface GPTData {
   id?: string;
@@ -397,7 +399,7 @@ const CustomGPTPersonalize = () => {
 
         <Tabs defaultValue="general" className="space-y-8">
           <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b pb-4">
-            <TabsList className="grid w-full grid-cols-7 h-14 p-1 bg-muted/50 rounded-xl">
+            <TabsList className="grid w-full grid-cols-8 h-14 p-1 bg-muted/50 rounded-xl">
               <TabsTrigger value="general" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
                 <Settings className="h-4 w-4" />
                 <span className="text-xs">General</span>
@@ -425,6 +427,10 @@ const CustomGPTPersonalize = () => {
               <TabsTrigger value="security" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
                 <Shield className="h-4 w-4" />
                 <span className="text-xs">Security</span>
+              </TabsTrigger>
+              <TabsTrigger value="voice" className="flex flex-col items-center gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                <Volume2 className="h-4 w-4" />
+                <span className="text-xs">Voice</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1327,6 +1333,61 @@ const CustomGPTPersonalize = () => {
                   <Label htmlFor="retention-never">Never delete</Label>
                 </div>
               </RadioGroup>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="voice" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Volume2 className="h-5 w-5" />
+                Voice Settings
+              </CardTitle>
+              <CardDescription>
+                Add voice capabilities to your GPT using ElevenLabs technology. Users can hear responses spoken aloud and interact using voice commands.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="p-6 bg-muted/30 rounded-lg border-2 border-dashed border-muted-foreground/25">
+                  <div className="text-center mb-4">
+                    <Volume2 className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                    <h3 className="text-lg font-semibold">Voice Configuration</h3>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Configure voice settings for your GPT below. Users can optionally provide their own ElevenLabs API key for unlimited usage.
+                    </p>
+                  </div>
+                  
+                  <GPTVoiceControls 
+                    gptId={gptData.id}
+                    showSettings={true}
+                    className="mt-4"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">💡 Voice Features Include:</h4>
+                    <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <li>• Text-to-speech for AI responses</li>
+                      <li>• Multiple voice character options</li>
+                      <li>• Adjustable speech rate and settings</li>
+                      <li>• Customer API key support</li>
+                      <li>• Voice input recognition (coming soon)</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-2">🔑 API Key Options:</h4>
+                    <ul className="text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                      <li>• <strong>Default:</strong> Uses your system ElevenLabs API key</li>
+                      <li>• <strong>Customer:</strong> Allow users to input their own API key for unlimited usage</li>
+                      <li>• <strong>Hybrid:</strong> Fall back to default if customer key fails</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
