@@ -42,93 +42,8 @@ export const ThreatPredictionEngine = ({ securityContext }: ThreatPredictionEngi
     const generatePredictions = () => {
       setIsAnalyzing(true);
       
+      // No mock predictions - showing clean state
       const mockPredictions: ThreatPrediction[] = [];
-      
-      // Generate predictions based on current security context
-      if (securityContext) {
-        if (securityContext.criticalThreats > 0) {
-          mockPredictions.push({
-            id: 'pred-1',
-            threatType: 'Lateral Movement Attack',
-            probability: 85,
-            severity: 'critical',
-            estimatedTime: '4-6 hours',
-            confidence: 92,
-            indicators: [
-              'Unusual network traffic patterns',
-              'Multiple failed authentication attempts',
-              'Privilege escalation attempts detected'
-            ],
-            preventionSteps: [
-              'Implement network segmentation',
-              'Enable MFA for all privileged accounts',
-              'Monitor lateral movement indicators'
-            ]
-          });
-        }
-
-        if (securityContext.activeAlerts > 5) {
-          mockPredictions.push({
-            id: 'pred-2',
-            threatType: 'Ransomware Attack',
-            probability: 67,
-            severity: 'high',
-            estimatedTime: '12-24 hours',
-            confidence: 78,
-            indicators: [
-              'Suspicious file encryption activity',
-              'Backup system access attempts',
-              'Unusual process execution patterns'
-            ],
-            preventionSteps: [
-              'Backup critical data immediately',
-              'Isolate affected systems',
-              'Deploy endpoint protection updates'
-            ]
-          });
-        }
-
-        if (securityContext.complianceScore < 85) {
-          mockPredictions.push({
-            id: 'pred-3',
-            threatType: 'Compliance Violation',
-            probability: 73,
-            severity: 'medium',
-            estimatedTime: '24-48 hours',
-            confidence: 85,
-            indicators: [
-              'Unpatched vulnerabilities detected',
-              'Non-compliant access controls',
-              'Missing security documentation'
-            ],
-            preventionSteps: [
-              'Update security policies',
-              'Patch critical vulnerabilities',
-              'Conduct compliance audit'
-            ]
-          });
-        }
-      }
-
-      // Always include some emerging threat predictions
-      mockPredictions.push({
-        id: 'pred-4',
-        threatType: 'Supply Chain Attack',
-        probability: 34,
-        severity: 'medium',
-        estimatedTime: '7-14 days',
-        confidence: 65,
-        indicators: [
-          'Third-party vendor security alerts',
-          'Unusual software update requests',
-          'Anomalous network connections'
-        ],
-        preventionSteps: [
-          'Verify vendor security postures',
-          'Implement software integrity checks',
-          'Monitor third-party connections'
-        ]
-      });
 
       setTimeout(() => {
         setPredictions(mockPredictions);
@@ -196,6 +111,15 @@ export const ThreatPredictionEngine = ({ securityContext }: ThreatPredictionEngi
               <Brain className="h-6 w-6 animate-spin text-purple-400" />
               <span className="text-gray-300">Analyzing threat patterns...</span>
             </div>
+          </div>
+        ) : predictions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Shield className="h-12 w-12 text-green-400 mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">No Threats Detected</h3>
+            <p className="text-gray-400 max-w-md">
+              The AI-powered threat prediction engine is continuously monitoring your environment. 
+              No imminent threats have been identified at this time.
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
