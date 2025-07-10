@@ -630,14 +630,14 @@ const ProfilePage = () => {
                       <Shield className="w-4 h-4" />
                       Administrator Access
                     </h3>
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
-                      onClick={() => window.open('/admin', '_blank')}
-                    >
-                      <Shield className="w-4 h-4 mr-2" />
-                      Open Admin Portal
-                    </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-orange-200 text-orange-700 hover:bg-orange-50"
+                  onClick={() => navigate('/admin')}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Open Admin Portal
+                </Button>
                     <p className="text-xs text-muted-foreground">
                       Access administrative functions and system management tools.
                     </p>
