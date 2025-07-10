@@ -17,10 +17,24 @@ import {
   TrendingUp,
   Settings,
   Minimize2,
-  Maximize2
+  Maximize2,
+  Mic,
+  MicOff,
+  Zap,
+  Eye,
+  Activity,
+  Terminal
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+// Speech Recognition API types
+declare global {
+  interface Window {
+    webkitSpeechRecognition: any;
+    SpeechRecognition: any;
+  }
+}
 
 interface SecurityMessage {
   id: string;
@@ -79,8 +93,61 @@ How can I help secure your environment today?`,
   
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechRecognition, setSpeechRecognition] = useState<any>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Initialize voice recognition
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognitionAPI = window.webkitSpeechRecognition || window.SpeechRecognition;
+      const recognition = new SpeechRecognitionAPI();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInputMessage(transcript);
+        setIsListening(false);
+      };
+      
+      recognition.onerror = () => {
+        setIsListening(false);
+        toast({
+          title: "Voice Recognition Error",
+          description: "Could not process voice input. Please try again.",
+          variant: "destructive",
+        });
+      };
+      
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+      
+      setSpeechRecognition(recognition);
+    }
+  }, [toast]);
+
+  const toggleVoiceRecognition = () => {
+    if (!speechRecognition) {
+      toast({
+        title: "Voice Recognition Unavailable",
+        description: "Your browser doesn't support voice recognition.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isListening) {
+      speechRecognition.stop();
+      setIsListening(false);
+    } else {
+      speechRecognition.start();
+      setIsListening(true);
+    }
+  };
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -167,17 +234,20 @@ How can I help secure your environment today?`,
 
   if (isMinimized) {
     return (
-      <Card className="fixed bottom-4 right-4 w-16 h-16 cursor-pointer hover:shadow-lg transition-shadow z-50">
+      <Card className="fixed bottom-4 right-4 w-16 h-16 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 z-50 bg-gradient-to-br from-red-950 to-gray-900 border-red-800/50">
         <CardContent 
           className="p-0 flex items-center justify-center h-full"
           onClick={onToggleMinimize}
         >
           <div className="relative">
-            <Shield className="h-8 w-8 text-primary" />
+            <Shield className="h-8 w-8 text-red-400 animate-pulse" />
             {securityContext && securityContext.activeAlerts > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs bg-red-600 text-white animate-bounce">
                 {securityContext.activeAlerts}
               </Badge>
+            )}
+            {securityContext && securityContext.criticalThreats > 0 && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
             )}
           </div>
         </CardContent>
@@ -186,13 +256,19 @@ How can I help secure your environment today?`,
   }
 
   return (
-    <Card className="fixed bottom-4 right-4 w-96 h-[600px] flex flex-col shadow-xl z-50">
-      <CardHeader className="pb-3">
+    <Card className="fixed bottom-4 right-4 w-96 h-[600px] flex flex-col shadow-2xl z-50 bg-gradient-to-b from-gray-900 to-black border border-red-800/30 backdrop-blur-sm">
+      <CardHeader className="pb-3 border-b border-red-800/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">UltriumDefender AI</CardTitle>
-            <Badge variant="outline" className="text-xs">
+            <div className="relative">
+              <Shield className="h-5 w-5 text-red-400" />
+              <div className="absolute inset-0 animate-ping">
+                <Shield className="h-5 w-5 text-red-400/50" />
+              </div>
+            </div>
+            <CardTitle className="text-lg text-white">UltriumDefender AI</CardTitle>
+            <Badge className="text-xs bg-green-600/80 text-green-100 animate-pulse">
+              <Activity className="h-3 w-3 mr-1" />
               Live
             </Badge>
           </div>
@@ -201,25 +277,50 @@ How can I help secure your environment today?`,
               variant="ghost"
               size="sm"
               onClick={onToggleMinimize}
+              className="text-gray-400 hover:text-white hover:bg-red-900/20"
             >
               <Minimize2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              className="text-gray-400 hover:text-white hover:bg-red-900/20"
+            >
               <Settings className="h-4 w-4" />
             </Button>
           </div>
         </div>
+        
+        {/* Real-time threat indicators */}
+        <div className="flex gap-4 mt-3 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-red-400">{securityContext?.criticalThreats || 0} Critical</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-yellow-500 rounded-full" />
+            <span className="text-yellow-400">{securityContext?.activeAlerts || 0} Alerts</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full" />
+            <span className="text-blue-400">{securityContext?.openIncidents || 0} Incidents</span>
+          </div>
+        </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
+      <CardContent className="flex-1 flex flex-col p-0 bg-gradient-to-b from-gray-900/50 to-black/50">
         <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
-          <div className="space-y-4 pb-4">
+          <div className="space-y-4 pb-4 pt-4">
             {messages.map((message) => (
               <div key={message.id} className="flex gap-3">
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarFallback>
+                <Avatar className="h-8 w-8 flex-shrink-0 border border-red-800/30">
+                  <AvatarFallback className={
+                    message.role === 'assistant' 
+                      ? 'bg-red-900/50 text-red-300' 
+                      : 'bg-blue-900/50 text-blue-300'
+                  }>
                     {message.role === 'assistant' ? (
-                      <Bot className="h-4 w-4" />
+                      <Shield className="h-4 w-4" />
                     ) : (
                       <User className="h-4 w-4" />
                     )}
@@ -227,10 +328,10 @@ How can I help secure your environment today?`,
                 </Avatar>
                 
                 <div className="flex-1 space-y-2">
-                  <div className={`rounded-lg p-3 ${
+                  <div className={`rounded-lg p-3 backdrop-blur-sm border ${
                     message.role === 'assistant' 
-                      ? 'bg-muted' 
-                      : 'bg-primary text-primary-foreground'
+                      ? 'bg-gray-800/80 border-red-800/30 text-gray-100' 
+                      : 'bg-blue-900/50 border-blue-700/30 text-blue-100'
                   }`}>
                     <div className="flex items-start gap-2">
                       {message.role === 'assistant' && getSeverityIcon(message.content)}
@@ -245,7 +346,7 @@ How can I help secure your environment today?`,
                           key={index}
                           variant="outline"
                           size="sm"
-                          className="text-xs h-6"
+                          className="text-xs h-6 bg-gray-800/50 border-red-700/30 text-red-300 hover:bg-red-900/30"
                           onClick={() => setInputMessage(suggestion)}
                         >
                           {suggestion}
@@ -254,7 +355,7 @@ How can I help secure your environment today?`,
                     </div>
                   )}
                   
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-gray-400">
                     {message.timestamp.toLocaleTimeString()}
                   </p>
                 </div>
@@ -263,15 +364,15 @@ How can I help secure your environment today?`,
             
             {isLoading && (
               <div className="flex gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>
-                    <Bot className="h-4 w-4" />
+                <Avatar className="h-8 w-8 border border-red-800/30">
+                  <AvatarFallback className="bg-red-900/50 text-red-300">
+                    <Shield className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="bg-muted rounded-lg p-3">
+                <div className="bg-gray-800/80 border border-red-800/30 rounded-lg p-3 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Analyzing security data...</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-red-400" />
+                    <span className="text-sm text-gray-200">Analyzing security data...</span>
                   </div>
                 </div>
               </div>
@@ -279,22 +380,39 @@ How can I help secure your environment today?`,
           </div>
         </ScrollArea>
 
-        <div className="border-t p-4">
+        <div className="border-t border-red-800/20 p-4 bg-gradient-to-t from-black/50 to-transparent">
           <div className="flex gap-2">
             <Textarea
-              placeholder="Ask about threats, incidents, compliance..."
+              placeholder={isListening ? "🎤 Listening..." : "Ask about threats, incidents, compliance... or say 'Hey Defender'"}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               disabled={isLoading}
-              className="min-h-[40px] max-h-[100px] resize-none"
+              className="min-h-[40px] max-h-[100px] resize-none bg-gray-800/50 border-red-800/30 text-gray-100 placeholder:text-gray-400 focus:border-red-600"
               rows={1}
             />
+            <Button 
+              onClick={toggleVoiceRecognition}
+              disabled={isLoading}
+              size="icon"
+              variant="outline"
+              className={`h-10 w-10 flex-shrink-0 border-red-800/30 ${
+                isListening 
+                  ? 'bg-red-600 text-white animate-pulse' 
+                  : 'bg-gray-800/50 text-red-400 hover:bg-red-900/30'
+              }`}
+            >
+              {isListening ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </Button>
             <Button 
               onClick={sendMessage} 
               disabled={isLoading || !inputMessage.trim()}
               size="icon"
-              className="h-10 w-10 flex-shrink-0"
+              className="h-10 w-10 flex-shrink-0 bg-red-600 hover:bg-red-700 text-white"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -304,22 +422,33 @@ How can I help secure your environment today?`,
             </Button>
           </div>
           
-          <div className="flex gap-1 mt-2">
+          <div className="flex gap-1 mt-2 flex-wrap">
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs h-6"
+              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
               onClick={() => setInputMessage("What are my current security risks?")}
             >
+              <TrendingUp className="h-3 w-3 mr-1" />
               Risk Assessment
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs h-6"
+              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
               onClick={() => setInputMessage("Generate compliance report")}
             >
+              <CheckCircle className="h-3 w-3 mr-1" />
               Compliance
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
+              onClick={() => setInputMessage("Show active threats")}
+            >
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Threats
             </Button>
           </div>
         </div>
