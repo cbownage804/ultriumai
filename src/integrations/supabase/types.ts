@@ -487,6 +487,47 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_execution_logs: {
+        Row: {
+          actions_executed: Json | null
+          created_at: string
+          error_message: string | null
+          execution_status: string
+          execution_time_ms: number | null
+          id: string
+          rule_id: string
+          ticket_id: string
+        }
+        Insert: {
+          actions_executed?: Json | null
+          created_at?: string
+          error_message?: string | null
+          execution_status: string
+          execution_time_ms?: number | null
+          id?: string
+          rule_id: string
+          ticket_id: string
+        }
+        Update: {
+          actions_executed?: Json | null
+          created_at?: string
+          error_message?: string | null
+          execution_status?: string
+          execution_time_ms?: number | null
+          id?: string
+          rule_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_execution_logs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           client_id: string
@@ -1302,6 +1343,57 @@ export type Database = {
           },
         ]
       }
+      custom_ticket_fields: {
+        Row: {
+          created_at: string
+          default_value: string | null
+          description: string | null
+          field_type: string
+          id: string
+          is_active: boolean | null
+          label: string
+          name: string
+          options: Json | null
+          position: number | null
+          required: boolean | null
+          updated_at: string
+          user_id: string
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string
+          default_value?: string | null
+          description?: string | null
+          field_type: string
+          id?: string
+          is_active?: boolean | null
+          label: string
+          name: string
+          options?: Json | null
+          position?: number | null
+          required?: boolean | null
+          updated_at?: string
+          user_id: string
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string
+          default_value?: string | null
+          description?: string | null
+          field_type?: string
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          name?: string
+          options?: Json | null
+          position?: number | null
+          required?: boolean | null
+          updated_at?: string
+          user_id?: string
+          validation_rules?: Json | null
+        }
+        Relationships: []
+      }
       daily_analytics: {
         Row: {
           average_response_time_ms: number | null
@@ -1760,6 +1852,42 @@ export type Database = {
           updated_at?: string
           user_id?: string
           variables?: string[] | null
+        }
+        Relationships: []
+      }
+      escalation_rules: {
+        Row: {
+          created_at: string
+          description: string | null
+          escalation_levels: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          trigger_conditions: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          escalation_levels?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+          trigger_conditions?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          escalation_levels?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          trigger_conditions?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -7423,6 +7551,41 @@ export type Database = {
           },
         ]
       }
+      ticket_field_values: {
+        Row: {
+          created_at: string
+          field_id: string
+          id: string
+          ticket_id: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_id: string
+          id?: string
+          ticket_id: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_id?: string
+          id?: string
+          ticket_id?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_field_values_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "custom_ticket_fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_internal_notes: {
         Row: {
           agent_id: string
@@ -7849,6 +8012,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      workflow_automation_rules: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          name: string
+          trigger_event: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name: string
+          trigger_event: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name?: string
+          trigger_event?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       workflow_automations: {
         Row: {

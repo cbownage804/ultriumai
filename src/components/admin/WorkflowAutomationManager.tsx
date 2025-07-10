@@ -1,91 +1,105 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { 
-  Workflow, 
-  Plus, 
-  Play, 
-  Pause, 
-  Edit, 
-  Trash2, 
-  Clock, 
-  Zap,
-  Mail,
-  UserMinus,
-  DollarSign,
-  RefreshCw
-} from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Zap, Plus, Edit, Trash2, Play, Pause, BarChart } from "lucide-react";
 
-interface WorkflowAutomation {
+interface WorkflowRule {
   id: string;
+  user_id: string;
   name: string;
-  description: string;
-  trigger_type: string;
-  trigger_conditions: any;
-  actions: any;
+  description: string | null;
+  trigger_event: string;
+  conditions: any; // JSON from database
+  actions: any; // JSON from database
   is_active: boolean;
   execution_count: number;
-  last_executed_at: string;
-  created_by: string;
+  last_executed_at: string | null;
   created_at: string;
   updated_at: string;
 }
 
+const triggerEvents = [
+  { value: 'ticket_created', label: 'Ticket Created' },
+  { value: 'ticket_updated', label: 'Ticket Updated' },
+  { value: 'status_changed', label: 'Status Changed' },
+  { value: 'priority_changed', label: 'Priority Changed' },
+  { value: 'assigned', label: 'Ticket Assigned' },
+  { value: 'comment_added', label: 'Comment Added' },
+  { value: 'sla_breach_warning', label: 'SLA Breach Warning' },
+  { value: 'resolution_overdue', label: 'Resolution Overdue' },
+];
+
+const conditionFields = [
+  { value: 'status', label: 'Status' },
+  { value: 'priority', label: 'Priority' },
+  { value: 'category', label: 'Category' },
+  { value: 'assigned_to', label: 'Assigned To' },
+  { value: 'customer_id', label: 'Customer' },
+  { value: 'created_at', label: 'Created Date' },
+  { value: 'tags', label: 'Tags' },
+];
+
+const conditionOperators = [
+  { value: 'equals', label: 'Equals' },
+  { value: 'not_equals', label: 'Not Equals' },
+  { value: 'contains', label: 'Contains' },
+  { value: 'not_contains', label: 'Does Not Contain' },
+  { value: 'starts_with', label: 'Starts With' },
+  { value: 'ends_with', label: 'Ends With' },
+  { value: 'is_empty', label: 'Is Empty' },
+  { value: 'is_not_empty', label: 'Is Not Empty' },
+];
+
+const actionTypes = [
+  { value: 'set_status', label: 'Set Status' },
+  { value: 'set_priority', label: 'Set Priority' },
+  { value: 'assign_to', label: 'Assign To' },
+  { value: 'add_tag', label: 'Add Tag' },
+  { value: 'remove_tag', label: 'Remove Tag' },
+  { value: 'send_email', label: 'Send Email' },
+  { value: 'send_notification', label: 'Send Notification' },
+  { value: 'add_comment', label: 'Add Comment' },
+  { value: 'escalate', label: 'Escalate Ticket' },
+];
+
 export const WorkflowAutomationManager = () => {
-  const [workflows, setWorkflows] = useState<WorkflowAutomation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowAutomation | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    trigger_type: '',
-    trigger_conditions: {},
-    actions: []
-  });
+  const [rules, setRules] = useState<WorkflowRule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingRule, setEditingRule] = useState<WorkflowRule | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
   const { toast } = useToast();
 
-  const triggerTypes = [
-    { value: 'payment_failed', label: 'Payment Failed', icon: DollarSign },
-    { value: 'user_inactive', label: 'User Inactive', icon: UserMinus },
-    { value: 'subscription_expired', label: 'Subscription Expired', icon: Clock },
-    { value: 'new_user_signup', label: 'New User Signup', icon: Plus },
-    { value: 'api_error_rate', label: 'High API Error Rate', icon: Zap }
-  ];
+  useEffect(() => {
+    loadRules();
+  }, []);
 
-  const actionTypes = [
-    { value: 'send_email', label: 'Send Email', icon: Mail },
-    { value: 'suspend_user', label: 'Suspend User', icon: UserMinus },
-    { value: 'send_notification', label: 'Send Notification', icon: Zap },
-    { value: 'create_support_ticket', label: 'Create Support Ticket', icon: Plus },
-    { value: 'webhook_call', label: 'Call Webhook', icon: Zap }
-  ];
-
-  const fetchWorkflows = async () => {
-    setLoading(true);
+  const loadRules = async () => {
     try {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
+
       const { data, error } = await supabase
-        .from('workflow_automations')
+        .from('workflow_automation_rules')
         .select('*')
+        .eq('user_id', user.user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setWorkflows(data || []);
-
-    } catch (error: any) {
+      setRules(data || []);
+    } catch (error) {
+      console.error('Error loading workflow rules:', error);
       toast({
-        title: "Error fetching workflows",
-        description: error.message,
+        title: "Error",
+        description: "Failed to load workflow rules",
         variant: "destructive",
       });
     } finally {
@@ -93,413 +107,461 @@ export const WorkflowAutomationManager = () => {
     }
   };
 
-  const createSampleWorkflows = async () => {
+  const saveRule = async (ruleData: Partial<WorkflowRule>) => {
     try {
-      const sampleWorkflows = [
-        {
-          name: 'Failed Payment Recovery',
-          description: 'Automatically send recovery emails when payments fail and suspend account after 3 attempts',
-          trigger_type: 'payment_failed',
-          trigger_conditions: {
-            payment_attempts: 3,
-            time_window: '24h'
-          },
-          actions: [
-            {
-              type: 'send_email',
-              template: 'payment_failed',
-              delay: '0m'
-            },
-            {
-              type: 'suspend_user',
-              reason: 'Payment failure',
-              delay: '72h'
-            }
-          ]
-        },
-        {
-          name: 'Welcome New Users',
-          description: 'Send welcome email and create onboarding tasks for new user signups',
-          trigger_type: 'new_user_signup',
-          trigger_conditions: {
-            account_type: 'any'
-          },
-          actions: [
-            {
-              type: 'send_email',
-              template: 'welcome',
-              delay: '0m'
-            },
-            {
-              type: 'send_notification',
-              message: 'Complete your profile setup',
-              delay: '24h'
-            }
-          ]
-        },
-        {
-          name: 'Inactive User Re-engagement',
-          description: 'Send re-engagement emails to users who have been inactive for 30 days',
-          trigger_type: 'user_inactive',
-          trigger_conditions: {
-            inactive_days: 30,
-            exclude_churned: true
-          },
-          actions: [
-            {
-              type: 'send_email',
-              template: 'reengagement',
-              delay: '0m'
-            }
-          ]
-        }
-      ];
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return;
 
-      const { error } = await supabase
-        .from('workflow_automations')
-        .insert(sampleWorkflows);
-
-      if (error) throw error;
-
-      toast({
-        title: "Sample workflows created",
-        description: "Sample automation workflows have been added",
-      });
-
-      fetchWorkflows();
-    } catch (error: any) {
-      toast({
-        title: "Error creating sample workflows",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const saveWorkflow = async () => {
-    try {
-      const workflowData = {
-        ...formData,
-        trigger_conditions: JSON.stringify(formData.trigger_conditions),
-        actions: JSON.stringify(formData.actions)
-      };
-
-      if (selectedWorkflow) {
+      if (editingRule) {
         const { error } = await supabase
-          .from('workflow_automations')
-          .update(workflowData)
-          .eq('id', selectedWorkflow.id);
-        
+          .from('workflow_automation_rules')
+          .update({
+            name: ruleData.name,
+            description: ruleData.description,
+            trigger_event: ruleData.trigger_event,
+            conditions: ruleData.conditions,
+            actions: ruleData.actions,
+            is_active: ruleData.is_active,
+          })
+          .eq('id', editingRule.id);
+
         if (error) throw error;
-        
-        toast({
-          title: "Workflow updated",
-          description: "Workflow automation has been updated successfully",
-        });
       } else {
         const { error } = await supabase
-          .from('workflow_automations')
-          .insert([workflowData]);
-        
+          .from('workflow_automation_rules')
+          .insert({
+            user_id: user.user.id,
+            name: ruleData.name,
+            description: ruleData.description,
+            trigger_event: ruleData.trigger_event,
+            conditions: ruleData.conditions,
+            actions: ruleData.actions,
+            is_active: ruleData.is_active,
+            execution_count: 0,
+          });
+
         if (error) throw error;
-        
-        toast({
-          title: "Workflow created",
-          description: "New workflow automation has been created",
-        });
       }
 
-      setIsDialogOpen(false);
-      setSelectedWorkflow(null);
-      setFormData({
-        name: '',
-        description: '',
-        trigger_type: '',
-        trigger_conditions: {},
-        actions: []
-      });
-      fetchWorkflows();
-
-    } catch (error: any) {
       toast({
-        title: "Error saving workflow",
-        description: error.message,
+        title: "✅ Rule Saved",
+        description: `Workflow rule "${ruleData.name}" has been saved successfully`,
+      });
+
+      setShowDialog(false);
+      setEditingRule(null);
+      loadRules();
+    } catch (error) {
+      console.error('Error saving workflow rule:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save workflow rule",
         variant: "destructive",
       });
     }
   };
 
-  const toggleWorkflow = async (workflow: WorkflowAutomation) => {
+  const deleteRule = async (ruleId: string) => {
     try {
       const { error } = await supabase
-        .from('workflow_automations')
-        .update({ is_active: !workflow.is_active })
-        .eq('id', workflow.id);
-
-      if (error) throw error;
-
-      toast({
-        title: `Workflow ${!workflow.is_active ? 'activated' : 'deactivated'}`,
-        description: `${workflow.name} has been ${!workflow.is_active ? 'activated' : 'deactivated'}`,
-      });
-
-      fetchWorkflows();
-    } catch (error: any) {
-      toast({
-        title: "Error updating workflow",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteWorkflow = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('workflow_automations')
+        .from('workflow_automation_rules')
         .delete()
-        .eq('id', id);
+        .eq('id', ruleId);
 
       if (error) throw error;
 
       toast({
-        title: "Workflow deleted",
-        description: "Workflow automation has been deleted",
+        title: "✅ Rule Deleted",
+        description: "Workflow rule has been deleted successfully",
       });
 
-      fetchWorkflows();
-    } catch (error: any) {
+      loadRules();
+    } catch (error) {
+      console.error('Error deleting workflow rule:', error);
       toast({
-        title: "Error deleting workflow",
-        description: error.message,
+        title: "Error",
+        description: "Failed to delete workflow rule",
         variant: "destructive",
       });
     }
   };
 
-  const openEditDialog = (workflow: WorkflowAutomation) => {
-    setSelectedWorkflow(workflow);
-    setFormData({
-      name: workflow.name,
-      description: workflow.description,
-      trigger_type: workflow.trigger_type,
-      trigger_conditions: typeof workflow.trigger_conditions === 'string' 
-        ? JSON.parse(workflow.trigger_conditions) 
-        : workflow.trigger_conditions,
-      actions: typeof workflow.actions === 'string' 
-        ? JSON.parse(workflow.actions) 
-        : workflow.actions
-    });
-    setIsDialogOpen(true);
+  const toggleRuleStatus = async (ruleId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('workflow_automation_rules')
+        .update({ is_active: !isActive })
+        .eq('id', ruleId);
+
+      if (error) throw error;
+
+      toast({
+        title: isActive ? "Rule Disabled" : "Rule Enabled",
+        description: `Workflow rule has been ${isActive ? 'disabled' : 'enabled'}`,
+      });
+
+      loadRules();
+    } catch (error) {
+      console.error('Error toggling rule status:', error);
+    }
   };
 
-  const getTriggerIcon = (type: string) => {
-    const trigger = triggerTypes.find(t => t.value === type);
-    const Icon = trigger?.icon || Workflow;
-    return <Icon className="h-4 w-4" />;
-  };
-
-  useEffect(() => {
-    fetchWorkflows();
-  }, []);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Workflow Automation</h2>
-          <p className="text-muted-foreground">Automate business processes and user interactions</p>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Zap className="h-6 w-6 text-primary" />
+            Workflow Automation
+          </h2>
+          <p className="text-muted-foreground">
+            Create automated rules to streamline your ticket management
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={fetchWorkflows}
-            variant="outline"
-            size="sm"
-            disabled={loading}
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          {workflows.length === 0 && (
-            <Button
-              onClick={createSampleWorkflows}
-              variant="outline"
-              size="sm"
-            >
-              Create Sample Workflows
+        
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingRule(null)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Rule
             </Button>
-          )}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Workflow
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>
-                  {selectedWorkflow ? 'Edit Workflow' : 'Create New Workflow'}
-                </DialogTitle>
-                <DialogDescription>
-                  Configure automation triggers and actions
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Workflow Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Enter workflow name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="trigger_type">Trigger Type</Label>
-                    <Select 
-                      value={formData.trigger_type} 
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, trigger_type: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select trigger" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {triggerTypes.map((trigger) => (
-                          <SelectItem key={trigger.value} value={trigger.value}>
-                            <div className="flex items-center gap-2">
-                              <trigger.icon className="h-4 w-4" />
-                              {trigger.label}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe what this workflow does"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={saveWorkflow}>
-                    {selectedWorkflow ? 'Update' : 'Create'} Workflow
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingRule ? 'Edit Workflow Rule' : 'Create Workflow Rule'}
+              </DialogTitle>
+            </DialogHeader>
+            <WorkflowRuleForm
+              rule={editingRule}
+              onSave={saveRule}
+              onCancel={() => setShowDialog(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Workflow List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {workflows.map((workflow) => (
-          <Card key={workflow.id} className={`${!workflow.is_active ? 'opacity-60' : ''}`}>
-            <CardHeader>
+      {/* Rules List */}
+      <div className="grid grid-cols-1 gap-4">
+        {rules.map((rule) => (
+          <Card key={rule.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="pt-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {getTriggerIcon(workflow.trigger_type)}
-                  <CardTitle className="text-lg">{workflow.name}</CardTitle>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={workflow.is_active ? 'default' : 'secondary'}>
-                    {workflow.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                  <Switch
-                    checked={workflow.is_active}
-                    onCheckedChange={() => toggleWorkflow(workflow)}
-                  />
-                </div>
-              </div>
-              <CardDescription>{workflow.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Trigger</p>
-                    <p className="text-sm">
-                      {triggerTypes.find(t => t.value === workflow.trigger_type)?.label || workflow.trigger_type}
-                    </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium">{rule.name}</h3>
+                    <Badge variant={rule.is_active ? "default" : "secondary"}>
+                      {rule.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                    <Badge variant="outline">
+                      {triggerEvents.find(t => t.value === rule.trigger_event)?.label}
+                    </Badge>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Executions</p>
-                    <p className="text-sm">{workflow.execution_count}</p>
+                  
+                  {rule.description && (
+                    <p className="text-sm text-muted-foreground mb-2">{rule.description}</p>
+                  )}
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>📋 {Array.isArray(rule.conditions) ? rule.conditions.length : 0} conditions</span>
+                    <span>⚡ {Array.isArray(rule.actions) ? rule.actions.length : 0} actions</span>
+                    <span>🔢 Executed {rule.execution_count} times</span>
+                    {rule.last_executed_at && (
+                      <span>🕒 Last run: {new Date(rule.last_executed_at).toLocaleDateString()}</span>
+                    )}
                   </div>
                 </div>
                 
-                {workflow.last_executed_at && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Last Executed</p>
-                    <p className="text-sm">{format(new Date(workflow.last_executed_at), 'MMM dd, yyyy HH:mm')}</p>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>Created {format(new Date(workflow.created_at), 'MMM dd, yyyy')}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditDialog(workflow)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteWorkflow(workflow.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toggleRuleStatus(rule.id, rule.is_active)}
+                  >
+                    {rule.is_active ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingRule(rule);
+                      setShowDialog(true);
+                    }}
+                  >
+                    <Edit className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => deleteRule(rule.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
+
+        {rules.length === 0 && (
+          <div className="text-center py-12">
+            <Zap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-muted-foreground">No Workflow Rules</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Create your first automation rule to streamline ticket management
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface WorkflowRuleFormProps {
+  rule: WorkflowRule | null;
+  onSave: (data: Partial<WorkflowRule>) => void;
+  onCancel: () => void;
+}
+
+const WorkflowRuleForm = ({ rule, onSave, onCancel }: WorkflowRuleFormProps) => {
+  const [formData, setFormData] = useState({
+    name: rule?.name || '',
+    description: rule?.description || '',
+    trigger_event: rule?.trigger_event || 'ticket_created',
+    conditions: (Array.isArray(rule?.conditions) ? rule.conditions : []) as any[],
+    actions: (Array.isArray(rule?.actions) ? rule.actions : []) as any[],
+    is_active: rule?.is_active ?? true,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  const addCondition = () => {
+    setFormData(prev => ({
+      ...prev,
+      conditions: [...prev.conditions, { field: 'status', operator: 'equals', value: '' }]
+    }));
+  };
+
+  const updateCondition = (index: number, updates: any) => {
+    setFormData(prev => ({
+      ...prev,
+      conditions: prev.conditions.map((condition, i) => 
+        i === index ? { ...condition, ...updates } : condition
+      )
+    }));
+  };
+
+  const removeCondition = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      conditions: prev.conditions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addAction = () => {
+    setFormData(prev => ({
+      ...prev,
+      actions: [...prev.actions, { type: 'set_status', value: '' }]
+    }));
+  };
+
+  const updateAction = (index: number, updates: any) => {
+    setFormData(prev => ({
+      ...prev,
+      actions: prev.actions.map((action, i) => 
+        i === index ? { ...action, ...updates } : action
+      )
+    }));
+  };
+
+  const removeAction = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      actions: prev.actions.filter((_, i) => i !== index)
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Rule Name</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="trigger_event">Trigger Event</Label>
+          <Select
+            value={formData.trigger_event}
+            onValueChange={(value) => setFormData({ ...formData, trigger_event: value })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {triggerEvents.map(event => (
+                <SelectItem key={event.value} value={event.value}>
+                  {event.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      )}
+      <div>
+        <Label htmlFor="description">Description (Optional)</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={2}
+          placeholder="Describe what this rule does"
+        />
+      </div>
 
-      {!loading && workflows.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Workflow className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">No automation workflows</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first workflow to automate business processes
-            </p>
-            <div className="flex gap-2 justify-center">
-              <Button onClick={createSampleWorkflows} variant="outline">
-                Create Sample Workflows
-              </Button>
-              <Button onClick={() => setIsDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                New Workflow
+      {/* Conditions */}
+      <div>
+        <div className="flex justify-between items-center">
+          <Label>Conditions</Label>
+          <Button type="button" variant="outline" size="sm" onClick={addCondition}>
+            Add Condition
+          </Button>
+        </div>
+        
+        <div className="space-y-2 mt-2">
+          {formData.conditions.map((condition, index) => (
+            <div key={index} className="grid grid-cols-4 gap-2 p-3 border rounded">
+              <Select
+                value={condition.field}
+                onValueChange={(value) => updateCondition(index, { field: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {conditionFields.map(field => (
+                    <SelectItem key={field.value} value={field.value}>
+                      {field.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={condition.operator}
+                onValueChange={(value) => updateCondition(index, { operator: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {conditionOperators.map(op => (
+                    <SelectItem key={op.value} value={op.value}>
+                      {op.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                value={condition.value}
+                onChange={(e) => updateCondition(index, { value: e.target.value })}
+                placeholder="Value"
+              />
+
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => removeCondition(index)}
+              >
+                Remove
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div>
+        <div className="flex justify-between items-center">
+          <Label>Actions</Label>
+          <Button type="button" variant="outline" size="sm" onClick={addAction}>
+            Add Action
+          </Button>
+        </div>
+        
+        <div className="space-y-2 mt-2">
+          {formData.actions.map((action, index) => (
+            <div key={index} className="grid grid-cols-3 gap-2 p-3 border rounded">
+              <Select
+                value={action.type}
+                onValueChange={(value) => updateAction(index, { type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {actionTypes.map(type => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                value={action.value}
+                onChange={(e) => updateAction(index, { value: e.target.value })}
+                placeholder="Value"
+              />
+
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => removeAction(index)}
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="is_active"
+          checked={formData.is_active}
+          onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+        />
+        <Label htmlFor="is_active">Active Rule</Label>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit">
+          {rule ? 'Update Rule' : 'Create Rule'}
+        </Button>
+      </div>
+    </form>
   );
 };
