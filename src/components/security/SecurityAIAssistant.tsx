@@ -65,6 +65,7 @@ export const SecurityAIAssistant = ({
   onToggleMinimize,
   securityContext 
 }: SecurityAIAssistantProps) => {
+  // Cache-busting comment for browser refresh
   const [messages, setMessages] = useState<SecurityMessage[]>([
     {
       id: '1',
