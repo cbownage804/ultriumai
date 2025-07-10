@@ -99,13 +99,21 @@ export const EnhancedMSPManager = () => {
 
   const loadOnboardingData = async () => {
     try {
-      const { data, error } = await supabase
-        .from('client_onboarding_workflows')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOnboardings(data || []);
+      // Mock data until migration is run
+      const mockOnboardings: ClientOnboarding[] = [
+        {
+          id: '1',
+          msp_id: msps[0]?.id || '',
+          client_name: 'Acme Corp',
+          client_email: 'contact@acmecorp.com',
+          status: 'in_progress',
+          onboarding_stage: 'technical_setup',
+          assigned_to: 'john@msp.com',
+          due_date: '2024-01-15',
+          created_at: '2024-01-01'
+        }
+      ];
+      setOnboardings(mockOnboardings);
     } catch (error: any) {
       console.error('Error loading onboarding data:', error);
     }
@@ -113,20 +121,20 @@ export const EnhancedMSPManager = () => {
 
   const createOnboardingWorkflow = async (data: any) => {
     try {
-      const { error } = await supabase
-        .from('client_onboarding_workflows')
-        .insert({
-          msp_id: data.msp_id,
-          client_name: data.client_name,
-          client_email: data.client_email,
-          status: 'pending',
-          onboarding_stage: 'initial_contact',
-          assigned_to: data.assigned_to,
-          due_date: data.due_date,
-          workflow_steps: data.workflow_steps
-        });
+      // Mock creation until migration is run
+      const newOnboarding: ClientOnboarding = {
+        id: Math.random().toString(36).substr(2, 9),
+        msp_id: data.msp_id,
+        client_name: data.client_name,
+        client_email: data.client_email,
+        status: 'pending',
+        onboarding_stage: 'initial_contact',
+        assigned_to: data.assigned_to,
+        due_date: data.due_date,
+        created_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
+      setOnboardings(prev => [newOnboarding, ...prev]);
 
       toast({
         title: "Success",
@@ -134,7 +142,6 @@ export const EnhancedMSPManager = () => {
       });
       
       setShowOnboardingForm(false);
-      loadOnboardingData();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -462,7 +469,22 @@ const OnboardingForm = ({ msps, onSubmit }: { msps: MSPData[], onSubmit: (data: 
 };
 
 // Additional components would go here...
-const OnboardingDashboard = ({ onboardings, msps }: { onboardings: ClientOnboarding[], msps: MSPData[] }) => (
+const OnboardingDashboard = ({ onboardings, msps }: { onboardings: ClientOnboarding[], msps: MSPData[] }) => {
+  const getStatusBadge = (status: string) => {
+    const colors = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      in_progress: 'bg-blue-100 text-blue-800',
+      completed: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800'
+    };
+    return (
+      <Badge className={colors[status as keyof typeof colors] || colors.pending}>
+        {status.replace('_', ' ').toUpperCase()}
+      </Badge>
+    );
+  };
+
+  return (
   <div className="space-y-4">
     <h3 className="text-lg font-semibold">Client Onboarding Workflows</h3>
     {onboardings.length === 0 ? (
@@ -495,7 +517,8 @@ const OnboardingDashboard = ({ onboardings, msps }: { onboardings: ClientOnboard
       </div>
     )}
   </div>
-);
+  );
+};
 
 const MSPAnalytics = ({ msps }: { msps: MSPData[] }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -604,6 +627,4 @@ const MSPDetailsModal = ({ msp, onClose, onUpdate }: {
   </Dialog>
 );
 
-function getStatusBadge(status: string): React.ReactNode {
-  throw new Error('Function not implemented.');
-}
+// getStatusBadge function is already defined above
