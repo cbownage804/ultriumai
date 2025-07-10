@@ -92,25 +92,28 @@ const demoApps: DemoApp[] = [
     id: "ultrium-safescan",
     name: "Ultrium SafeScan™",
     category: "Document Security",
-    description: "Document analysis and content safety verification",
-    longDescription: "Advanced document scanner that analyzes files for malicious content, embedded threats, suspicious macros, and data security issues. Supports multiple file formats with detailed security assessments.",
+    description: "Revolutionary AI-powered multi-vector security scanning platform",
+    longDescription: "Next-generation security scanning platform that unifies email, document, and URL analysis with advanced AI behavioral analysis, real-time threat intelligence, and cross-reference detection capabilities for unprecedented security coverage.",
     icon: FileText,
     features: [
-      "Multi-format document scanning",
-      "Macro analysis", 
-      "Embedded threat detection",
-      "Content safety verification",
-      "Metadata analysis",
-      "Quarantine recommendations"
+      "Multi-vector AI analysis (Email + Document + URL)",
+      "Revolutionary behavioral pattern recognition", 
+      "Real-time threat intelligence integration",
+      "Cross-reference analysis between content types",
+      "Advanced social engineering detection",
+      "Predictive threat modeling",
+      "Global reputation scoring",
+      "Automated forensic reporting"
     ],
     demoUrl: "/demos/safescan",
     isLive: true,
-    tags: ["Document Security", "File Analysis", "Content Safety"],
+    tags: ["Document Security", "AI Behavioral Analysis", "Multi-Vector Scanning", "Revolutionary"],
     useCases: [
-      "Email attachment screening",
-      "File upload protection", 
-      "Document workflow security",
-      "Compliance verification"
+      "Unified email, document, and URL protection",
+      "Advanced threat intelligence analysis", 
+      "Cross-platform security scanning",
+      "AI-powered behavioral detection",
+      "Enterprise security automation"
     ]
   },
   {
@@ -320,27 +323,30 @@ const demoApps: DemoApp[] = [
   },
   {
     id: "ultrium-safeedr",
-    name: "Ultrium SafeEDR™",
-    category: "Managed Security",
-    description: "24/7 managed detection and response with expert analysts",
-    longDescription: "Comprehensive managed detection and response service providing 24/7 security monitoring, expert threat hunting, incident response, and continuous threat intelligence.",
+    name: "Ultrium SafeShield™",
+    category: "Revolutionary AI Security",
+    description: "World's first unified AI-powered security platform with revolutionary behavioral analysis",
+    longDescription: "Revolutionary AI-powered security platform that combines EDR, MDR, Antivirus, and Behavioral Analysis into one unified system. Features groundbreaking machine learning capabilities, autonomous threat hunting, and real-time AI response automation.",
     icon: Eye,
     features: [
-      "24/7 security monitoring",
-      "Expert threat hunting",
-      "Incident response",
-      "Threat intelligence",
-      "Forensic analysis",
-      "Compliance reporting"
+      "Revolutionary AI Behavioral Engine",
+      "Unified EDR + MDR + Antivirus platform",
+      "Autonomous 24/7 threat hunting",
+      "Real-time AI response automation",
+      "Advanced machine learning detection",
+      "Predictive threat modeling",
+      "Behavioral pattern recognition",
+      "Cross-platform threat correlation"
     ],
-    demoUrl: "/demos/safeedr",
+    demoUrl: "/safeshield",
     isLive: true,
-    tags: ["SafeEDR", "AI Behavioral Analysis", "Real-time Response"],
+    tags: ["SafeShield", "Revolutionary AI", "Unified Security", "Behavioral Analysis"],
     useCases: [
-      "Continuous security monitoring",
-      "Advanced threat detection",
-      "Incident response management",
-      "Compliance and reporting"
+      "Enterprise-wide unified security",
+      "AI-powered autonomous monitoring",
+      "Advanced behavioral threat detection",
+      "Predictive security automation",
+      "Multi-platform threat correlation"
     ]
   },
   {
@@ -373,7 +379,7 @@ const demoApps: DemoApp[] = [
 const LiveDemos = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Network Security", "Compliance Management", "Threat Intelligence", "Remote Management", "Service Management", "Endpoint Security", "Managed Security", "AI Assistant"];
+  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Network Security", "Compliance Management", "Threat Intelligence", "Remote Management", "Service Management", "Endpoint Security", "Revolutionary AI Security", "AI Assistant"];
   
   const filteredApps = selectedCategory === "all" 
     ? demoApps 

@@ -17,7 +17,9 @@ import {
   Upload,
   Loader2,
   Eye,
-  Download
+  Download,
+  Bot,
+  Activity
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -235,7 +237,107 @@ Your Bank`);
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* Introduction Section */}
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Shield className="h-6 w-6" />
+            SafeScan AI: Revolutionary Multi-Vector Security Platform
+          </CardTitle>
+          <CardDescription className="text-base">
+            Experience the next generation of security scanning with AI-powered threat detection that analyzes emails, 
+            documents, and URLs simultaneously using advanced behavioral analysis and real-time threat intelligence.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Mail className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-semibold mb-2">Email Intelligence</h3>
+              <p className="text-sm text-muted-foreground">
+                Advanced phishing detection with sender reputation analysis, social engineering pattern recognition, and malicious link identification
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FileText className="h-6 w-6 text-success" />
+              </div>
+              <h3 className="font-semibold mb-2">Document Forensics</h3>
+              <p className="text-sm text-muted-foreground">
+                Deep file analysis with macro detection, embedded threat scanning, and behavioral content analysis across all document types
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-info/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Link className="h-6 w-6 text-info" />
+              </div>
+              <h3 className="font-semibold mb-2">URL Intelligence</h3>
+              <p className="text-sm text-muted-foreground">
+                Real-time reputation analysis with domain aging detection, SSL validation, and threat actor infrastructure mapping
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Capabilities Highlight */}
+      <Card className="border-2 border-success/20 bg-success/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-6 w-6 text-success" />
+            Revolutionary AI Features
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Behavioral Analysis Engine
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-success" />
+                  Real-time pattern recognition across all content types
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-success" />
+                  Cross-reference analysis between emails, files, and URLs
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-success" />
+                  Adaptive learning from threat intelligence feeds
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Threat Intelligence Integration
+              </h4>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-success" />
+                  Live threat actor infrastructure monitoring
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-success" />
+                  Global reputation scoring with contextual analysis
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="h-3 w-3 text-success" />
+                  Predictive threat modeling and early warning systems
+                </li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Demo Interface */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="email" className="flex items-center gap-2">
