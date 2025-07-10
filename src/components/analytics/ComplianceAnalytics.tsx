@@ -17,40 +17,23 @@ interface ComplianceAnalyticsProps {
 }
 
 export const ComplianceAnalytics = ({ timeRange }: ComplianceAnalyticsProps) => {
-  // Mock compliance data - replace with actual analytics
+  // TODO: Replace with real compliance analytics data from Supabase
   const complianceData = {
-    frameworkScores: [
-      { name: 'ISO 27001', score: 96, trend: '+2', controls: 114, compliant: 109, gaps: 5 },
-      { name: 'SOC 2', score: 94, trend: '+1', controls: 64, compliant: 60, gaps: 4 },
-      { name: 'GDPR', score: 89, trend: '-1', controls: 99, compliant: 88, gaps: 11 },
-      { name: 'HIPAA', score: 92, trend: '+3', controls: 45, compliant: 41, gaps: 4 },
-      { name: 'PCI DSS', score: 87, trend: '+2', controls: 78, compliant: 68, gaps: 10 }
-    ],
+    frameworkScores: [],
     auditReadiness: {
-      lastAudit: '2023-09-15',
-      nextAudit: '2024-03-15',
-      daysUntilAudit: 45,
-      readinessScore: 92
+      lastAudit: '',
+      nextAudit: '',
+      daysUntilAudit: 0,
+      readinessScore: 0
     },
     evidenceCollection: {
-      total: 234,
-      collected: 187,
-      pending: 32,
-      missing: 15
+      total: 0,
+      collected: 0,
+      pending: 0,
+      missing: 0
     },
-    riskAssessment: [
-      { category: 'Data Protection', risk: 'low', score: 95, lastAssessed: '2024-01-10' },
-      { category: 'Access Control', risk: 'medium', score: 82, lastAssessed: '2024-01-08' },
-      { category: 'Network Security', risk: 'low', score: 94, lastAssessed: '2024-01-12' },
-      { category: 'Incident Response', risk: 'low', score: 89, lastAssessed: '2024-01-09' },
-      { category: 'Vendor Management', risk: 'medium', score: 78, lastAssessed: '2024-01-05' }
-    ],
-    recentActivity: [
-      { type: 'evidence_collected', description: 'Access control documentation updated', timestamp: '2 hours ago' },
-      { type: 'gap_identified', description: 'Missing encryption policy for GDPR Article 32', timestamp: '4 hours ago' },
-      { type: 'control_passed', description: 'SOC 2 CC6.1 - Logical access controls verified', timestamp: '6 hours ago' },
-      { type: 'audit_scheduled', description: 'Q1 2024 internal audit scheduled', timestamp: '1 day ago' }
-    ]
+    riskAssessment: [],
+    recentActivity: []
   };
 
   const getScoreColor = (score: number) => {

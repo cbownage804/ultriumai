@@ -20,45 +20,34 @@ interface PerformanceAnalyticsProps {
 }
 
 export const PerformanceAnalytics = ({ timeRange }: PerformanceAnalyticsProps) => {
-  // Mock performance data - replace with actual metrics
+  // TODO: Replace with real performance analytics data from Supabase
   const performanceData = {
     systemHealth: {
-      uptime: 99.97,
-      responseTime: 245,
-      throughput: 1847,
-      errorRate: 0.03
+      uptime: 0,
+      responseTime: 0,
+      throughput: 0,
+      errorRate: 0
     },
     resourceUtilization: {
-      cpu: 34,
-      memory: 67,
-      disk: 45,
-      network: 23
+      cpu: 0,
+      memory: 0,
+      disk: 0,
+      network: 0
     },
     userActivity: {
-      activeUsers: 1247,
-      peakUsers: 1892,
-      avgSessionDuration: 28.5,
-      bounceRate: 12.3
+      activeUsers: 0,
+      peakUsers: 0,
+      avgSessionDuration: 0,
+      bounceRate: 0
     },
-    systemComponents: [
-      { name: 'Web Servers', status: 'healthy', load: 45, responseTime: 234 },
-      { name: 'Database', status: 'healthy', load: 67, responseTime: 89 },
-      { name: 'API Gateway', status: 'warning', load: 78, responseTime: 456 },
-      { name: 'Load Balancer', status: 'healthy', load: 23, responseTime: 12 },
-      { name: 'Cache Layer', status: 'healthy', load: 34, responseTime: 5 }
-    ],
+    systemComponents: [],
     networkMetrics: {
-      bandwidth: 78,
-      latency: 45,
-      packetLoss: 0.02,
-      connections: 2847
+      bandwidth: 0,
+      latency: 0,
+      packetLoss: 0,
+      connections: 0
     },
-    applicationMetrics: [
-      { name: 'Authentication Service', availability: 99.9, errors: 3, requests: 12847 },
-      { name: 'Security Scanner', availability: 99.5, errors: 12, requests: 5643 },
-      { name: 'Report Generator', availability: 98.2, errors: 8, requests: 2341 },
-      { name: 'Notification Service', availability: 99.8, errors: 1, requests: 8932 }
-    ]
+    applicationMetrics: []
   };
 
   const getStatusColor = (status: string) => {

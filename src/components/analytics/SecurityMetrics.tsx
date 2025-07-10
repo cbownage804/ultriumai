@@ -17,39 +17,29 @@ interface SecurityMetricsProps {
 }
 
 export const SecurityMetrics = ({ timeRange }: SecurityMetricsProps) => {
-  // Mock security data - replace with actual metrics
+  // TODO: Replace with real security analytics data from Supabase
   const securityData = {
     threatDetection: {
-      malwareDetected: 127,
-      phishingBlocked: 89,
-      intrusionAttempts: 34,
-      suspiciousActivities: 156
+      malwareDetected: 0,
+      phishingBlocked: 0,
+      intrusionAttempts: 0,
+      suspiciousActivities: 0
     },
     vulnerabilityManagement: {
-      critical: 2,
-      high: 8,
-      medium: 23,
-      low: 45,
-      totalScanned: 1247
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      totalScanned: 0
     },
     networkSecurity: {
-      firewallBlocks: 2847,
-      dnsFiltering: 1923,
-      vpnConnections: 234,
-      bandwidthUsage: 78
+      firewallBlocks: 0,
+      dnsFiltering: 0,
+      vpnConnections: 0,
+      bandwidthUsage: 0
     },
-    endpointProtection: [
-      { name: 'Windows Endpoints', protected: 456, total: 467, percentage: 97.6 },
-      { name: 'macOS Endpoints', protected: 123, total: 125, percentage: 98.4 },
-      { name: 'Linux Servers', protected: 89, total: 89, percentage: 100 },
-      { name: 'Mobile Devices', protected: 234, total: 245, percentage: 95.5 }
-    ],
-    incidentResponse: [
-      { type: 'Malware', count: 12, avgResolutionTime: '4.2h', status: 'resolved' },
-      { type: 'Phishing', count: 8, avgResolutionTime: '2.1h', status: 'resolved' },
-      { type: 'Data Breach', count: 1, avgResolutionTime: '12.5h', status: 'investigating' },
-      { type: 'Unauthorized Access', count: 5, avgResolutionTime: '6.8h', status: 'resolved' }
-    ]
+    endpointProtection: [],
+    incidentResponse: []
   };
 
   const getSeverityColor = (severity: string) => {
