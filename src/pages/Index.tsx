@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Shield, Users, Building2, Zap, ArrowRight, CheckCircle, Globe, Lock, 
   Headphones, Menu, X, Star, TrendingUp, Clock, Award, Search, 
-  Database, Wifi, Monitor, Bot, FileText, Smartphone
+  Database, Wifi, Monitor, Bot, FileText, Smartphone, Eye
 } from 'lucide-react';
 import { useState } from 'react';
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
@@ -153,10 +153,11 @@ const Index = () => {
       {/* Solutions Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Solutions for Every Business Size</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              From startups to enterprise and managed service providers
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">💼 Choose Your Security Victory</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Every business size gets enterprise-grade protection. From startup to Fortune 500 - 
+              <strong>your competition wishes they had what you're about to get.</strong>
             </p>
           </div>
           
@@ -220,18 +221,37 @@ const Index = () => {
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Experience Our Platform</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Try our interactive demos and see how UltriumAI transforms security operations
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">🔥 Experience The Security Revolution</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Don't just protect your business - <strong>dominate cyber threats</strong> with our AI-powered security arsenal. 
+              These aren't just demos - they're your competitive advantage waiting to be unleashed.
             </p>
+            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-success/10 rounded-full border border-primary/20">
+              <Shield className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Join 50,000+ businesses already protected</span>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* SafeShield - Revolutionary Platform */}
+            <Card className="hover-scale border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+              <CardHeader>
+                <Shield className="h-8 w-8 text-primary mb-2" />
+                <CardTitle className="text-lg">🚀 SafeShield™ Platform</CardTitle>
+                <CardDescription className="font-medium text-primary/80">Revolutionary AI-powered security ecosystem</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/demos/safeshield">
+                  <Button variant="hero" className="w-full">Experience Revolution</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
             <Card className="hover-scale">
               <CardHeader>
                 <Bot className="h-8 w-8 text-primary mb-2" />
                 <CardTitle className="text-lg">UltriumGPT AI</CardTitle>
-                <CardDescription>Intelligent security assistant</CardDescription>
+                <CardDescription>Your intelligent security co-pilot</CardDescription>
               </CardHeader>
               <CardContent>
                 <Link to="/demos/ultriumgpt">
@@ -244,7 +264,7 @@ const Index = () => {
               <CardHeader>
                 <Lock className="h-8 w-8 text-primary mb-2" />
                 <CardTitle className="text-lg">SafePass Manager</CardTitle>
-                <CardDescription>Advanced password security</CardDescription>
+                <CardDescription>Unbreakable password fortress</CardDescription>
               </CardHeader>
               <CardContent>
                 <Link to="/demos/safepass">
@@ -257,7 +277,7 @@ const Index = () => {
               <CardHeader>
                 <Wifi className="h-8 w-8 text-primary mb-2" />
                 <CardTitle className="text-lg">SafeNet Monitor</CardTitle>
-                <CardDescription>Network security surveillance</CardDescription>
+                <CardDescription>Network fortress protection</CardDescription>
               </CardHeader>
               <CardContent>
                 <Link to="/demos/safenet">
@@ -269,8 +289,8 @@ const Index = () => {
             <Card className="hover-scale">
               <CardHeader>
                 <Search className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">SafeScan Analyzer</CardTitle>
-                <CardDescription>Document and file scanning</CardDescription>
+                <CardTitle className="text-lg">SafeScan™ Analyzer</CardTitle>
+                <CardDescription>Advanced threat detection engine</CardDescription>
               </CardHeader>
               <CardContent>
                 <Link to="/demos/safescan">
@@ -281,25 +301,12 @@ const Index = () => {
 
             <Card className="hover-scale">
               <CardHeader>
-                <Database className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">SafeWeb Monitor</CardTitle>
-                <CardDescription>Dark web monitoring</CardDescription>
+                <Eye className="h-8 w-8 text-primary mb-2" />
+                <CardTitle className="text-lg">SafeIntel™ Monitor</CardTitle>
+                <CardDescription>Elite threat intelligence platform</CardDescription>
               </CardHeader>
               <CardContent>
-                <Link to="/demos/safeweb">
-                  <Button variant="outline" className="w-full">Try Demo</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale">
-              <CardHeader>
-                <Monitor className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">RMM Platform</CardTitle>
-                <CardDescription>Remote management tools</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/demos/rmm">
+                <Link to="/demos/safeintel">
                   <Button variant="outline" className="w-full">Try Demo</Button>
                 </Link>
               </CardContent>
@@ -308,10 +315,13 @@ const Index = () => {
 
           <div className="text-center">
             <Link to="/demos">
-              <Button size="lg" variant="hero" className="px-8">
-                View All Demos <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" variant="hero" className="px-8 py-4 text-lg">
+                🚀 Experience All Revolutionary Tools <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
+            <p className="text-sm text-muted-foreground mt-3">
+              See why competitors can't keep up with businesses using UltriumAI
+            </p>
           </div>
         </div>
       </section>

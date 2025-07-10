@@ -33,53 +33,53 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
 const MSPDemos = () => {
-  const [selectedDemo, setSelectedDemo] = useState('security-scanning');
+  const [selectedDemo, setSelectedDemo] = useState('safeshield-platform');
 
   const platformFeatures = [
     {
-      id: 'security-scanning',
-      name: 'Security Scanning Suite',
-      description: 'Complete document, email, and web scanning in one unified platform',
-      demoUrl: '/demos/safedoc',
+      id: 'safeshield-platform',
+      name: '🛡️ SafeShield™ Complete Security Platform',
+      description: 'Revolutionary AI-powered security ecosystem - the only cybersecurity platform your clients will ever need',
+      demoUrl: '/demos/safeshield',
       features: [
-        'SafeDoc - Document malware scanning',
-        'SafeMail - Email threat detection', 
-        'SafeLink - URL security analysis',
-        'Real-time threat intelligence',
-        'Unified security dashboard'
+        '🧠 SafeShield AI - Predictive threat intelligence that stops attacks before they happen',
+        '🎯 Security Dashboard - Real-time threat visualization & automated response',
+        '🔒 SafeAV - Next-gen antivirus with behavioral analysis',
+        '🚨 SafeEDR - Advanced endpoint detection & response',
+        '🛡️ SafeMDR - 24/7 managed detection & response service'
       ],
       icon: Shield,
-      color: 'green'
+      color: 'primary'
     },
     {
-      id: 'threat-monitoring',
-      name: 'Threat Intelligence & Monitoring',
-      description: 'Dark web monitoring and network security assessment',
-      demoUrl: '/demos/darkweb',
+      id: 'safescan-suite',
+      name: '🔍 SafeScan™ Advanced Threat Detection',
+      description: 'Military-grade scanning suite that competitors fear and clients demand',
+      demoUrl: '/demos/safescan',
       features: [
-        'Dark web credential monitoring',
-        'Network vulnerability scanning',
-        'Real-time threat intelligence',
-        'Automated security scoring',
-        'Comprehensive risk assessment'
+        'SafeDoc - Advanced document malware detection with 99.8% accuracy',
+        'SafeMail - Email threat prevention that blocks what others miss', 
+        'SafeLink - URL security analysis with real-time reputation scoring',
+        'Multi-layered threat intelligence from 500+ security sources',
+        'Unified threat dashboard with predictive analytics'
+      ],
+      icon: Search,
+      color: 'blue'
+    },
+    {
+      id: 'safeintel-monitoring',
+      name: '🕵️ SafeIntel™ Elite Threat Intelligence',
+      description: 'Dark web monitoring so advanced, hackers fear being exposed before they strike',
+      demoUrl: '/demos/safeintel',
+      features: [
+        'Deep & Dark web credential breach monitoring',
+        'Advanced persistent threat (APT) tracking',
+        'Stolen data marketplace surveillance',
+        'Executive protection & brand monitoring',
+        'Real-time threat actor intelligence feeds'
       ],
       icon: Eye,
       color: 'red'
-    },
-    {
-      id: 'ai-assistant',
-      name: 'AI-Powered Security Assistant',
-      description: 'UltriumGPT integrated with all security tools for intelligent analysis',
-      demoUrl: '/demos/ultriumgpt',
-      features: [
-        'Natural language security queries',
-        'Intelligent threat analysis',
-        'Automated report generation',
-        'Cross-platform data correlation',
-        'Client-specific AI customization'
-      ],
-      icon: MessageSquare,
-      color: 'purple'
     },
     {
       id: 'rmm-platform',
@@ -115,15 +115,15 @@ const MSPDemos = () => {
 
   // Platform overview
   const platformOverview = {
-    name: 'UltriumAI Complete Platform',
-    description: 'Unified cybersecurity platform - all tools in one integrated solution',
-    monthlyRevenue: '$150/client',
-    setupTime: '30 minutes',
-    marketSize: '32M+ businesses need cybersecurity',
+    name: '🚀 UltriumAI Complete Security Domination Platform',
+    description: 'The only cybersecurity platform that makes your competition irrelevant',
+    monthlyRevenue: '$500/client',
+    setupTime: '15 minutes to market domination',
+    marketSize: '32M+ businesses desperately need what you offer',
     revenueModel: {
-      charge: 200,
-      pay: 50, 
-      profit: 150
+      charge: 750,
+      pay: 250, 
+      profit: 500
     }
   };
 
@@ -136,54 +136,54 @@ const MSPDemos = () => {
       
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
-        <div className="text-center space-y-6 mb-12">
+          <div className="text-center space-y-6 mb-12">
           <div className="flex items-center justify-center gap-2">
             <Users className="h-8 w-8 text-primary" />
             <h1 className="text-4xl font-bold text-gradient">
-              MSP Demo Center
+              🚀 MSP Revenue Explosion Center
             </h1>
           </div>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Offer the complete UltriumAI cybersecurity platform to your clients. One unified solution, 
-            one login, one purchase - delivering comprehensive security with maximum recurring revenue potential.
+          <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
+            <strong>Stop competing on price. Start dominating with technology.</strong> Deploy the complete UltriumAI 
+            cybersecurity platform and watch your clients beg their competitors to explain why they're so far behind.
           </p>
           <div className="flex justify-center gap-4 flex-wrap">
-            <Badge variant="secondary" className="text-lg px-4 py-2">
+            <Badge variant="secondary" className="text-lg px-4 py-2 bg-success/20 text-success border-success/30">
               <TrendingUp className="h-4 w-4 mr-2" />
-              $1000+/month potential
+              $5000+/month potential per MSP
             </Badge>
-            <Badge variant="outline" className="text-lg px-4 py-2">
+            <Badge variant="outline" className="text-lg px-4 py-2 border-primary/30 text-primary">
               <Target className="h-4 w-4 mr-2" />
-              32M+ target businesses
+              Unlimited client capacity
             </Badge>
-            <Badge variant="outline" className="text-lg px-4 py-2">
+            <Badge variant="outline" className="text-lg px-4 py-2 border-warning/30 text-warning">
               <Star className="h-4 w-4 mr-2" />
-              Recurring revenue model
+              Competition-crushing technology
             </Badge>
           </div>
         </div>
 
         {/* MSP Value Proposition */}
-        <Card className="mb-12 border-2 border-success/20 bg-success/5">
+        <Card className="mb-12 border-2 border-success/20 bg-gradient-to-r from-success/5 to-primary/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-success-foreground">
-              <Crown className="h-6 w-6" />
-              Why MSPs Choose Ultrium
+            <CardTitle className="flex items-center gap-2 text-success-foreground text-2xl">
+              <Crown className="h-8 w-8 text-warning" />
+              Why MSPs Choose UltriumAI - And Why Their Clients Can't Live Without Them
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-success mb-2">Unified Platform</div>
-                <p className="text-muted-foreground">All security tools in one integrated solution - one login, maximum value</p>
+                <div className="text-4xl font-bold text-success mb-2">🏆 Market Domination</div>
+                <p className="text-muted-foreground">Complete platform integration - your clients get everything, competitors get nothing</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary mb-2">Quick Setup</div>
-                <p className="text-muted-foreground">Deploy to clients in minutes, not weeks</p>
+                <div className="text-4xl font-bold text-primary mb-2">⚡ Instant Deployment</div>
+                <p className="text-muted-foreground">15-minute setup that makes you look like a cybersecurity genius</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-info mb-2">High Margins</div>
-                <p className="text-muted-foreground">60-70% profit margins on all solutions</p>
+                <div className="text-4xl font-bold text-warning mb-2">💰 Profit Explosion</div>
+                <p className="text-muted-foreground">70-80% profit margins that make other MSPs weep with envy</p>
               </div>
             </div>
           </CardContent>

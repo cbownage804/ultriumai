@@ -76,24 +76,27 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Security Products */}
+          {/* AI Security Apps */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">AI Security Apps</h3>
+            <h3 className="font-semibold text-foreground">Revolutionary Security Platform</h3>
             <div className="space-y-2">
+              <button onClick={() => handleNavigation('/products/safeshield')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                🛡️ SafeShield™ - Complete Security Platform
+              </button>
               <button onClick={() => handleNavigation('/products/safescan')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeScan™
+                🔍 SafeScan™ - Advanced Threat Detection
               </button>
               <button onClick={() => handleNavigation('/products/safepass')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafePass™
+                🔐 SafePass™ - Password Security
               </button>
               <button onClick={() => handleNavigation('/products/safenet')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeNet™
+                🌐 SafeNet™ - Network Protection
               </button>
               <button onClick={() => handleNavigation('/products/safescore')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeScore™
+                📊 SafeScore™ - Security Assessment
               </button>
-              <button onClick={() => handleNavigation('/products/safeweb')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                SafeWeb™
+              <button onClick={() => handleNavigation('/products/safeintel')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                🕵️ SafeIntel™ - Threat Intelligence
               </button>
             </div>
           </div>
