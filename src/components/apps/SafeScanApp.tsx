@@ -26,7 +26,8 @@ import {
   Eye,
   Zap,
   Upload,
-  ArrowLeft
+  ArrowLeft,
+  Info
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -1112,7 +1113,13 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
         <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Scans</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>Recent Scans</span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-normal">
+                  <Info className="h-3 w-3" />
+                  <span>Only 20 most recent scans kept</span>
+                </div>
+              </CardTitle>
               <CardDescription>
                 Your recent security scan history
               </CardDescription>
