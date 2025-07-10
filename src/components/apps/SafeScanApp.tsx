@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { SafeScanBookmarklet } from "@/components/SafeScanBookmarklet";
 import { BulkDocumentScanner } from "@/components/BulkDocumentScanner";
+import { APIKeyManager } from "@/components/APIKeyManager";
 
 interface ScanResult {
   type: 'email' | 'document' | 'url';
@@ -487,11 +488,12 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-6' : 'grid-cols-5'}`}>
+        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-7' : 'grid-cols-6'}`}>
           <TabsTrigger value="email">Email Security</TabsTrigger>
           <TabsTrigger value="document">Document Scanning</TabsTrigger>
           <TabsTrigger value="bulk">Bulk Scanner</TabsTrigger>
           <TabsTrigger value="url">URL Analysis</TabsTrigger>
+          <TabsTrigger value="api">API Access</TabsTrigger>
           <TabsTrigger value="history">Scan History</TabsTrigger>
           {isMSPContext && <TabsTrigger value="deployment">Client Deployment</TabsTrigger>}
         </TabsList>
@@ -1230,6 +1232,10 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="api" className="space-y-4">
+          <APIKeyManager />
         </TabsContent>
 
         {/* MSP Client Deployment Tab */}

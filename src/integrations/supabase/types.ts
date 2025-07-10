@@ -2903,6 +2903,51 @@ export type Database = {
         }
         Relationships: []
       }
+      msp_billing_usage: {
+        Row: {
+          billing_period: string | null
+          client_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          msp_id: string
+          processed: boolean | null
+          quantity: number
+          service_type: string
+          total_cost: number
+          unit_cost: number
+          usage_type: string
+        }
+        Insert: {
+          billing_period?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          msp_id: string
+          processed?: boolean | null
+          quantity?: number
+          service_type: string
+          total_cost?: number
+          unit_cost?: number
+          usage_type: string
+        }
+        Update: {
+          billing_period?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          msp_id?: string
+          processed?: boolean | null
+          quantity?: number
+          service_type?: string
+          total_cost?: number
+          unit_cost?: number
+          usage_type?: string
+        }
+        Relationships: []
+      }
       msp_client_endpoints: {
         Row: {
           assigned_technician: string | null
@@ -8270,7 +8315,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      msp_billing_summary: {
+        Row: {
+          billing_period: string | null
+          msp_id: string | null
+          period_end: string | null
+          period_start: string | null
+          service_type: string | null
+          total_cost: number | null
+          total_quantity: number | null
+          transaction_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       binary_quantize: {
@@ -8389,6 +8446,14 @@ export type Database = {
       sparsevec_typmod_in: {
         Args: { "": unknown[] }
         Returns: number
+      }
+      validate_api_key: {
+        Args: { key_hash: string }
+        Returns: {
+          user_id: string
+          is_valid: boolean
+          rate_limit_rpd: number
+        }[]
       }
       vector_avg: {
         Args: { "": number[] }
