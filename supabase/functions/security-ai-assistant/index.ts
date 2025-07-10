@@ -107,10 +107,10 @@ ${conversationHistory ? JSON.stringify(conversationHistory.slice(0, 5), null, 2)
 - Provide follow-up investigation steps`;
 
     // Prepare conversation history for context
-    const conversationHistory = context.conversation_history || [];
+    const contextHistory = context.conversation_history || [];
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...conversationHistory.slice(-8), // Last 8 messages for context
+      ...contextHistory.slice(-8), // Last 8 messages for context
       { role: 'user', content: message }
     ];
 
