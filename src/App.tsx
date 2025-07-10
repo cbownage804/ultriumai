@@ -77,7 +77,7 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
-import { EnhancedVoiceAssistant } from '@/components/voice/EnhancedVoiceAssistant';
+
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
@@ -357,7 +357,7 @@ export default function App() {
       <VoiceAssistantProvider>
         <Router>
           <AppRouter />
-          <EnhancedVoiceAssistant />
+          
           <Toaster />
         </Router>
       </VoiceAssistantProvider>
