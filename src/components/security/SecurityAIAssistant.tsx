@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,24 +10,19 @@ import {
   Shield, 
   Send, 
   Loader2, 
-  Bot, 
   User, 
   AlertTriangle, 
   CheckCircle,
   TrendingUp,
   Settings,
   Minimize2,
-  Maximize2,
   Mic,
   MicOff,
-  Zap,
-  Eye,
   Activity,
-  Terminal,
   Upload,
   FileText,
   Image,
-  Network
+  X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -101,7 +96,6 @@ How can I help secure your environment today?`,
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProactiveMode, setIsProactiveMode] = useState(true);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('connected');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -230,9 +224,7 @@ Would you like me to analyze these threats and recommend response actions?`,
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Remove problematic WebSocket connection for now
-  // Using stable HTTP function instead
-
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
@@ -255,7 +247,7 @@ Would you like me to analyze these threats and recommend response actions?`,
     setIsLoading(true);
 
     try {
-      // Use the original edge function for now until WebSocket is fixed
+      // Use the stable edge function for responses
       const { data, error } = await supabase.functions.invoke('security-ai-assistant', {
         body: {
           message: messageToSend,
@@ -423,15 +415,16 @@ Would you like me to analyze these threats and recommend response actions?`,
                       <p className="text-sm whitespace-pre-wrap flex-1">{message.content}</p>
                     </div>
                   </div>
-                  
+
+                  {/* Context suggestions */}
                   {message.context?.suggestions && (
-                    <div className="space-y-1">
-                      {message.context.suggestions.map((suggestion, index) => (
+                    <div className="flex flex-wrap gap-1">
+                      {message.context.suggestions.map((suggestion, idx) => (
                         <Button
-                          key={index}
+                          key={idx}
                           variant="outline"
                           size="sm"
-                          className="text-xs h-6 bg-gray-800/50 border-red-700/30 text-red-300 hover:bg-red-900/30"
+                          className="text-xs h-6 bg-red-900/20 border-red-700/30 text-red-300 hover:bg-red-800/30"
                           onClick={() => setInputMessage(suggestion)}
                         >
                           {suggestion}
@@ -439,27 +432,25 @@ Would you like me to analyze these threats and recommend response actions?`,
                       ))}
                     </div>
                   )}
-                  
-                  <p className="text-xs text-gray-400">
-                    {message.timestamp.toLocaleTimeString()}
-                  </p>
                 </div>
               </div>
             ))}
-            
-            {/* Removed streaming response display */}
-            
+
+            {/* Loading indicator */}
             {isLoading && (
               <div className="flex gap-3">
-                <Avatar className="h-8 w-8 border border-red-800/30">
+                <Avatar className="h-8 w-8 flex-shrink-0 border border-red-800/30">
                   <AvatarFallback className="bg-red-900/50 text-red-300">
                     <Shield className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="bg-gray-800/80 border border-red-800/30 rounded-lg p-3 backdrop-blur-sm">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-red-400" />
-                    <span className="text-sm text-gray-200">Connecting to AI service...</span>
+                
+                <div className="flex-1">
+                  <div className="bg-gray-800/80 border border-red-800/30 rounded-lg p-3 backdrop-blur-sm text-gray-100">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-red-400" />
+                      <span className="text-sm">UltriumDefender AI analyzing...</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -467,134 +458,80 @@ Would you like me to analyze these threats and recommend response actions?`,
           </div>
         </ScrollArea>
 
-        <div className="border-t border-red-800/20 p-4 bg-gradient-to-t from-black/50 to-transparent">
-          {/* File upload section */}
-          {uploadedFiles.length > 0 && (
-            <div className="mb-3 space-y-1">
-              <div className="text-xs text-gray-400 mb-2">Uploaded Files for Analysis:</div>
+        {/* File upload area */}
+        {uploadedFiles.length > 0 && (
+          <div className="px-4 py-2 border-t border-red-800/20 bg-gray-900/50">
+            <div className="flex flex-wrap gap-2">
               {uploadedFiles.map((file, index) => (
-                <div key={index} className="flex items-center gap-2 bg-gray-800/30 rounded p-2 border border-red-800/20">
-                  <div className="flex items-center gap-1 flex-1">
-                    {file.type.startsWith('image/') ? (
-                      <Image className="h-3 w-3 text-blue-400" />
-                    ) : file.name.endsWith('.log') || file.type.includes('text') ? (
-                      <FileText className="h-3 w-3 text-green-400" />
-                    ) : (
-                      <Network className="h-3 w-3 text-purple-400" />
-                    )}
-                    <span className="text-xs text-gray-300 truncate">{file.name}</span>
-                    <span className="text-xs text-gray-500">({Math.round(file.size / 1024)}KB)</span>
-                  </div>
+                <div key={index} className="flex items-center gap-1 bg-red-900/20 border border-red-700/30 rounded px-2 py-1 text-xs text-red-300">
+                  <FileText className="h-3 w-3" />
+                  <span className="truncate max-w-20">{file.name}</span>
                   <Button
-                    size="sm"
                     variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 text-red-400 hover:text-red-300"
                     onClick={() => removeFile(index)}
-                    className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
                   >
-                    ×
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
+        {/* Input area */}
+        <div className="p-4 border-t border-red-800/20 bg-gray-900/80 backdrop-blur-sm">
           <div className="flex gap-2">
-            <Textarea
-              placeholder={isListening ? "🎤 Listening..." : "Ask about threats, incidents, compliance... or say 'Hey Defender'"}
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              className="min-h-[40px] max-h-[100px] resize-none bg-gray-800/50 border-red-800/30 text-gray-100 placeholder:text-gray-400 focus:border-red-600"
-              rows={1}
-            />
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              multiple
-              accept=".log,.txt,.csv,.json,.xml,.png,.jpg,.jpeg,.gif,.webp,.pdf,.pcap"
-              className="hidden"
-            />
-            <Button 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
-              size="icon"
-              variant="outline"
-              className="h-10 w-10 flex-shrink-0 border-red-800/30 bg-gray-800/50 text-orange-400 hover:bg-orange-900/30"
-              title="Upload security logs, screenshots, or network captures"
-            >
-              <Upload className="h-4 w-4" />
-            </Button>
-            <Button 
-              onClick={toggleVoiceRecognition}
-              disabled={isLoading}
-              size="icon"
-              variant="outline"
-              className={`h-10 w-10 flex-shrink-0 border-red-800/30 ${
-                isListening 
-                  ? 'bg-red-600 text-white animate-pulse' 
-                  : 'bg-gray-800/50 text-red-400 hover:bg-red-900/30'
-              }`}
-            >
-              {isListening ? (
-                <MicOff className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
-            </Button>
-            <Button 
-              onClick={sendMessage} 
-              disabled={isLoading || !inputMessage.trim()}
-              size="icon"
-              className="h-10 w-10 flex-shrink-0 bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+            <div className="flex-1 relative">
+              <Textarea
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask UltriumDefender AI about security threats, compliance, or incidents..."
+                className="min-h-[40px] resize-none bg-gray-800/50 border-red-800/30 text-gray-100 placeholder-gray-400 focus:border-red-600 focus:ring-red-600/50"
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div className="flex flex-col gap-1">
+              <Button
+                onClick={sendMessage}
+                disabled={!inputMessage.trim() || isLoading}
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white border-red-500"
+              >
                 <Send className="h-4 w-4" />
-              )}
-            </Button>
+              </Button>
+              
+              <Button
+                onClick={toggleVoiceRecognition}
+                variant="outline"
+                size="sm"
+                className={`border-red-700/30 ${isListening ? 'bg-red-600 text-white' : 'text-red-400 hover:bg-red-900/20'}`}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </Button>
+              
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+                size="sm"
+                className="text-red-400 border-red-700/30 hover:bg-red-900/20"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           
-          <div className="flex gap-1 mt-2 flex-wrap">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
-              onClick={() => setInputMessage("What are my current security risks?")}
-            >
-              <TrendingUp className="h-3 w-3 mr-1" />
-              Risk Assessment
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
-              onClick={() => setInputMessage("Generate compliance report")}
-            >
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Compliance
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
-              onClick={() => setInputMessage("Show active threats")}
-            >
-              <AlertTriangle className="h-3 w-3 mr-1" />
-              Threats
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
-              onClick={() => setIsProactiveMode(!isProactiveMode)}
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              {isProactiveMode ? 'Proactive ON' : 'Proactive OFF'}
-            </Button>
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".log,.txt,.csv,.json,.xml,.pdf,.png,.jpg,.jpeg,.gif,.webp,.pcap"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
         </div>
       </CardContent>
     </Card>
