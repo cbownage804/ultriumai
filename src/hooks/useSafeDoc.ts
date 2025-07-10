@@ -75,7 +75,22 @@ export const useSafeDoc = () => {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   };
 
-  // Scan document
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64 = reader.result as string;
+        // Remove the data:mime/type;base64, prefix
+        const base64Data = base64.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Scan document with real file upload and virus scanning
   const scanDocument = async (
     file: File, 
     mspId: string, 
@@ -83,26 +98,57 @@ export const useSafeDoc = () => {
     userEmail: string
   ) => {
     try {
-      const fileHash = await calculateFileHash(file);
+      // Convert file to base64 for upload
+      const fileData = await fileToBase64(file);
 
-      const { data, error } = await supabase.functions.invoke('safedoc-scanner', {
+      const { data, error } = await supabase.functions.invoke('ultrium-safedoc-scanner', {
         body: {
-          fileHash,
-          fileName: file.name,
-          fileSize: file.size,
-          mimeType: file.type,
-          mspId,
-          clientId,
-          userEmail
+          file_data: fileData,
+          filename: file.name,
+          file_size: file.size,
+          file_type: file.type,
+          user_id: user?.id,
+          msp_id: mspId,
+          client_id: clientId,
+          user_email: userEmail
         }
       });
 
       if (error) throw error;
 
       toast({
-        title: "Scan Started",
-        description: `Document "${file.name}" is being scanned for threats`,
+        title: "Scan Completed",
+        description: `Document "${file.name}" has been scanned with ${data.scan_details?.malware_detections || 0} threats detected`,
+        variant: data.safe ? "default" : "destructive"
       });
+
+      // Create scan record in database
+      const { error: dbError } = await supabase
+        .from('safedoc_scans')
+        .insert({
+          msp_id: mspId,
+          client_id: clientId,
+          user_email: userEmail,
+          file_name: file.name,
+          file_size: file.size,
+          file_hash: data.file_info?.hash || '',
+          mime_type: file.type,
+          scan_status: 'completed',
+          threat_level: data.safe ? 'clean' : data.risk_level,
+          threats_found: data.threats_detected?.length || 0,
+          scan_results: data,
+          scan_engine: 'VirusTotal + Heuristic',
+          metadata: {
+            scan_details: data.scan_details,
+            recommendations: data.recommendations
+          },
+          completed_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+        });
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+      }
 
       // Reload scans to show new scan
       await loadScans();
@@ -112,7 +158,7 @@ export const useSafeDoc = () => {
       console.error('Error scanning document:', error);
       toast({
         title: "Scan Failed",
-        description: "Failed to start document scan",
+        description: "Failed to scan document. Please try again.",
         variant: "destructive",
       });
       throw error;
