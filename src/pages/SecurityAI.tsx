@@ -33,12 +33,66 @@ const SecurityAI = () => {
 
   useEffect(() => {
     loadSecurityMetrics();
+    
+    // Set up real-time subscriptions for live data updates
+    const securityEventsChannel = supabase
+      .channel('security-events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'security_events'
+        },
+        () => loadSecurityMetrics()
+      )
+      .subscribe();
+
+    const edrAlertsChannel = supabase
+      .channel('edr-alerts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'edr_realtime_alerts'
+        },
+        () => loadSecurityMetrics()
+      )
+      .subscribe();
+
+    const incidentsChannel = supabase
+      .channel('incidents-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'incidents'
+        },
+        () => loadSecurityMetrics()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(securityEventsChannel);
+      supabase.removeChannel(edrAlertsChannel);
+      supabase.removeChannel(incidentsChannel);
+    };
   }, []);
 
   const loadSecurityMetrics = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setSecurityMetrics({
+          activeAlerts: 0,
+          criticalThreats: 0,
+          openIncidents: 0,
+          complianceScore: 0
+        });
+        return;
+      }
 
       // Get real security events
       const { data: securityEvents } = await supabase
@@ -79,16 +133,16 @@ const SecurityAI = () => {
         activeAlerts,
         criticalThreats,
         openIncidents: incidents?.length || 0,
-        complianceScore: compliance?.[0]?.score || 100
+        complianceScore: compliance?.[0]?.score || 0
       });
     } catch (error) {
       console.error('Error loading security metrics:', error);
-      // Fallback to default values if there's an error
+      // For live environment, show actual zero state when no data
       setSecurityMetrics({
         activeAlerts: 0,
         criticalThreats: 0,
         openIncidents: 0,
-        complianceScore: 100
+        complianceScore: 0
       });
     } finally {
       setIsLoading(false);
