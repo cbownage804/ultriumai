@@ -64,7 +64,7 @@ export const EmailTemplateManager = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) return;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('email_templates')
         .select('*')
         .eq('user_id', user.user.id)
@@ -90,7 +90,7 @@ export const EmailTemplateManager = () => {
       if (!user.user) return;
 
       if (editingTemplate) {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from('email_templates')
           .update({
             name: templateData.name,
@@ -105,7 +105,7 @@ export const EmailTemplateManager = () => {
 
         if (error) throw error;
       } else {
-        const { error } = await (supabase as any)
+        const { error } = await supabase
           .from('email_templates')
           .insert({
             user_id: user.user.id,
@@ -141,7 +141,7 @@ export const EmailTemplateManager = () => {
 
   const deleteTemplate = async (templateId: string) => {
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('email_templates')
         .delete()
         .eq('id', templateId);

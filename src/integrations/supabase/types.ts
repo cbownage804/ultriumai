@@ -1721,6 +1721,48 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          body_html: string
+          body_text: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          subject: string
+          template_type: string
+          updated_at: string
+          user_id: string
+          variables: string[] | null
+        }
+        Insert: {
+          body_html: string
+          body_text: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subject: string
+          template_type: string
+          updated_at?: string
+          user_id: string
+          variables?: string[] | null
+        }
+        Update: {
+          body_html?: string
+          body_text?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string
+          user_id?: string
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       event_correlations: {
         Row: {
           confidence_score: number | null
@@ -2290,6 +2332,51 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      knowledge_articles: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          helpful_count: number | null
+          id: string
+          is_published: boolean | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_published?: boolean | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_published?: boolean | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          view_count?: number | null
         }
         Relationships: []
       }
@@ -3335,6 +3422,51 @@ export type Database = {
           target_ip?: string
           user_id?: string | null
           vulnerabilities_found?: number | null
+        }
+        Relationships: []
+      }
+      notification_settings: {
+        Row: {
+          created_at: string
+          email_enabled: boolean | null
+          escalation: boolean | null
+          id: string
+          push_enabled: boolean | null
+          sla_breach: boolean | null
+          sms_enabled: boolean | null
+          ticket_assigned: boolean | null
+          ticket_created: boolean | null
+          ticket_updated: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean | null
+          escalation?: boolean | null
+          id?: string
+          push_enabled?: boolean | null
+          sla_breach?: boolean | null
+          sms_enabled?: boolean | null
+          ticket_assigned?: boolean | null
+          ticket_created?: boolean | null
+          ticket_updated?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean | null
+          escalation?: boolean | null
+          id?: string
+          push_enabled?: boolean | null
+          sla_breach?: boolean | null
+          sms_enabled?: boolean | null
+          ticket_assigned?: boolean | null
+          ticket_created?: boolean | null
+          ticket_updated?: boolean | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -7381,6 +7513,48 @@ export type Database = {
           tags?: string[] | null
           title_template?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      time_entries: {
+        Row: {
+          billable: boolean | null
+          created_at: string
+          description: string
+          hourly_rate: number | null
+          hours_worked: number
+          id: string
+          ticket_id: string | null
+          total_cost: number | null
+          updated_at: string
+          user_id: string
+          work_date: string
+        }
+        Insert: {
+          billable?: boolean | null
+          created_at?: string
+          description: string
+          hourly_rate?: number | null
+          hours_worked: number
+          id?: string
+          ticket_id?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id: string
+          work_date: string
+        }
+        Update: {
+          billable?: boolean | null
+          created_at?: string
+          description?: string
+          hourly_rate?: number | null
+          hours_worked?: number
+          id?: string
+          ticket_id?: string | null
+          total_cost?: number | null
+          updated_at?: string
+          user_id?: string
+          work_date?: string
         }
         Relationships: []
       }
