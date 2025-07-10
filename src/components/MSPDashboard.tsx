@@ -125,10 +125,10 @@ export const MSPDashboard = () => {
       color: "bg-green-500",
     },
     {
-      title: "Security Dashboard",
-      description: "View threat intelligence",
+      title: "SafeScan Security",
+      description: "Run security scans for clients",
       icon: Shield,
-      action: () => window.open("/security-dashboard", "_blank"),
+      action: () => window.open("/dashboard/safescan", "_blank"),
       color: "bg-red-500",
     },
     {

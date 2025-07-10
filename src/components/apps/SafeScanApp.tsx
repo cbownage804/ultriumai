@@ -57,6 +57,9 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   const { toast } = useToast();
   const navigate = useNavigate();
   
+  // Check if this is MSP context (could be enhanced with proper MSP detection)
+  const isMSPContext = location.pathname.includes('/msp/') || window.location.hostname.includes('msp');
+  
   const [activeTab, setActiveTab] = useState('email');
   const [emailContent, setEmailContent] = useState('');
   const [urlInput, setUrlInput] = useState('');
@@ -367,15 +370,19 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            {isMSPContext ? "Back to MSP Dashboard" : "Back to Dashboard"}
           </Button>
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Shield className="h-8 w-8" style={{ color: brandColor }} />
               {isWhiteLabeled ? brandName : 'Ultrium'} SafeScan
+              {isMSPContext && <Badge variant="secondary">MSP Edition</Badge>}
             </h1>
             <p className="text-muted-foreground">
-              Comprehensive security scanning for emails, documents, and URLs
+              {isMSPContext 
+                ? "MSP security scanning for client emails, documents, and URLs" 
+                : "Comprehensive security scanning for emails, documents, and URLs"
+              }
             </p>
           </div>
         </div>

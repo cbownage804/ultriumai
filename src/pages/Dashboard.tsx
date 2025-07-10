@@ -36,6 +36,7 @@ import { SafeMailApp } from "@/components/apps/SafeMailApp";
 import { SafeKBApp } from "@/components/apps/SafeKBApp";
 import { SafeLinkApp } from "@/components/apps/SafeLinkApp";
 import { SafeNetApp } from "@/components/apps/SafeNetApp";
+import { SafeScanApp } from "@/components/apps/SafeScanApp";
 import { SafeWebDashboard } from "@/components/SafeWebDashboard";
 import { SafePassDashboard } from "@/components/shield/SafePassDashboard";
 import { SafeMailDashboard } from "@/components/shield/SafeMailDashboard";
@@ -113,6 +114,7 @@ const Dashboard = () => {
   const isSafePassDashboard = location.pathname.includes('/safepass') && !location.pathname.includes('/app');
   const isSafeMailDashboard = location.pathname.includes('/safemail') && !location.pathname.includes('/app');
   const isSafeNetDashboard = location.pathname.includes('/safenet') && !location.pathname.includes('/app');
+  const isSafeScanPage = location.pathname.includes('/safescan');
   
   const getPageTitle = () => {
     if (isDashboardOverview) return "Dashboard";
@@ -148,6 +150,7 @@ const Dashboard = () => {
     if (isSafeLinkPage) return "SafeLink URL Security";
     if (isSafeNetPage) return "SafeNet Network Security";
     if (isSafeIntelPage) return "SafeIntel Dark Web Monitoring";
+    if (isSafeScanPage) return "SafeScan Security Scanner";
     if (isSafePassDashboard) return "SafePass";
     if (isSafeMailDashboard) return "SafeMail";
     if (isSafeNetDashboard) return "SafeNet";
@@ -191,6 +194,7 @@ const Dashboard = () => {
     if (isSafeLinkPage) return <SafeLinkApp />;
     if (isSafeNetPage) return <SafeNetApp />;
     if (isSafeIntelPage) return <div className="p-6"><SafeWebDashboard /></div>;
+    if (isSafeScanPage) return <SafeScanApp />;
     if (isSafePassDashboard) return <div className="p-6"><SafePassDashboard /></div>;
     if (isSafeMailDashboard) return <div className="p-6"><SafeMailDashboard /></div>;
     if (isSafeNetDashboard) return <div className="p-6"><SafeNetDashboard /></div>;
