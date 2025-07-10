@@ -104,6 +104,7 @@ const Dashboard = () => {
   const isSafeLinkPage = location.pathname.includes('/safelink');
   const isSafeNetPage = location.pathname.includes('/safenet');
   const isSafeIntelPage = location.pathname.includes('/safeintel');
+  const isSafeScanEmbedPage = location.pathname.includes('/safescan-embed');
   const isChatPage = location.pathname === '/dashboard/chat';
   const isGPTDashboard = location.pathname === '/dashboard/gpt';
   const isRMMPage = location.pathname.includes('/rmm');
@@ -195,6 +196,7 @@ const Dashboard = () => {
     if (isSafeNetPage) return <SafeNetApp />;
     if (isSafeIntelPage) return <div className="p-6"><SafeWebDashboard /></div>;
     if (isSafeScanPage) return <SafeScanApp />;
+    if (isSafeScanEmbedPage) return <SafeScanApp isWhiteLabeled={true} brandName="Security Scanner" />;
     if (isSafePassDashboard) return <div className="p-6"><SafePassDashboard /></div>;
     if (isSafeMailDashboard) return <div className="p-6"><SafeMailDashboard /></div>;
     if (isSafeNetDashboard) return <div className="p-6"><SafeNetDashboard /></div>;
