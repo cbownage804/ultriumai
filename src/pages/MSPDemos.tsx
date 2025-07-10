@@ -53,8 +53,8 @@ const MSPDemos = () => {
     },
     {
       id: 'safescan-suite',
-      name: '🔍 SafeScan™ Advanced Threat Detection',
-      description: 'Military-grade scanning suite that competitors fear and clients demand',
+      name: '🔍 SafeScan™ AI-Powered Threat Detection',
+      description: 'AI-powered scanning suite that competitors fear and clients demand',
       demoUrl: '/demos/safescan',
       features: [
         'SafeDoc - Advanced document malware detection with 99.8% accuracy',
