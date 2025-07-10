@@ -166,16 +166,22 @@ serve(async (req) => {
     let riskScore = 0;
     riskScore += malwareDetections * 10;
     riskScore += threats.length * 20;
-    riskScore += suspiciousIndicators.length * 5;
+    riskScore += suspiciousIndicators.length * 3; // Reduced weight for suspicious indicators
 
     if (malwareDetections > 0) {
       threats.push(`Malware detected by ${malwareDetections} engines`);
       riskLevel = malwareDetections > 5 ? 'critical' : 'high';
-    } else if (riskScore >= 40) {
-      riskLevel = 'high';
-    } else if (riskScore >= 20) {
-      riskLevel = 'medium';
-    } else if (riskScore >= 10) {
+    } else if (threats.length > 0) {
+      // Only elevate risk if there are actual threats, not just indicators
+      if (riskScore >= 40) {
+        riskLevel = 'high';
+      } else if (riskScore >= 20) {
+        riskLevel = 'medium';
+      } else {
+        riskLevel = 'low';
+      }
+    } else if (suspiciousIndicators.length >= 3) {
+      // Only mark as low risk if there are multiple suspicious indicators
       riskLevel = 'low';
     }
 

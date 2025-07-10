@@ -80,23 +80,34 @@ serve(async (req) => {
         riskLevel = 'medium';
         reputationScore = 60;
         threats.push('Large file size - potential for hidden content');
+        recommendations = [
+          'Large file detected - scan with antivirus before opening',
+          'Be cautious of embedded content in large files',
+          'Verify file source if unexpected'
+        ];
       } else if (file_name.toLowerCase().includes('urgent') || 
                  file_name.toLowerCase().includes('invoice') ||
-                 file_name.toLowerCase().includes('payment')) {
+                 file_name.toLowerCase().includes('payment') ||
+                 file_name.toLowerCase().includes('refund') ||
+                 file_name.toLowerCase().includes('tax') ||
+                 file_name.toLowerCase().includes('bank')) {
         riskLevel = 'medium';
         reputationScore = 55;
-        threats.push('Suspicious filename pattern');
+        threats.push('Suspicious filename pattern commonly used in phishing');
+        recommendations = [
+          'Suspicious filename detected - verify sender authenticity',
+          'Scan with antivirus before opening',
+          'Be extremely cautious of macros or embedded content'
+        ];
       } else {
-        riskLevel = 'low';
-        reputationScore = 75;
-        threats.push('Document requires caution');
+        // Normal documents from trusted sources should be safe
+        riskLevel = 'safe';
+        reputationScore = 90;
+        recommendations = [
+          'Document appears safe to open',
+          'File type and name show no suspicious indicators'
+        ];
       }
-      
-      recommendations = [
-        'Scan with antivirus before opening',
-        'Be cautious of macros or embedded content',
-        'Verify sender authenticity'
-      ];
     }
 
     // Store scan result in database
