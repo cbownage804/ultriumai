@@ -1,1133 +1,407 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { SecurityAIAssistant } from "@/components/security/SecurityAIAssistant";
+import { ThreatPredictionEngine } from "@/components/security/ThreatPredictionEngine";
+import { ThreatAnalysisEngine } from "@/components/security/ThreatAnalysisEngine";
+import { AutomatedActions } from "@/components/security/AutomatedActions";
 import { 
   Shield, 
-  ArrowLeft,
-  Eye,
-  ShieldCheck,
-  Activity,
-  AlertTriangle,
-  Monitor,
-  Search,
-  TrendingUp,
-  Globe,
-  Lock,
-  Network,
-  Mail,
-  FileText,
-  Users,
-  Clock,
-  CheckCircle,
-  XCircle,
+  AlertTriangle, 
+  CheckCircle, 
+  TrendingUp, 
   Bot,
-  MessageSquare,
-  X,
-  Minimize2,
-  Maximize2,
-  Mic,
-  MicOff,
-  Send,
-  Volume2,
-  VolumeX,
-  Loader2
+  Zap,
+  Eye,
+  Settings,
+  Activity,
+  Users,
+  Lock,
+  ArrowLeft
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { SafeShieldDashboard } from "@/components/shield/SafeShieldDashboard";
-import { SafeMDRDashboard } from "@/components/shield/SafeMDRDashboard";
-import { AntivirusDashboard } from "@/components/dashboards/AntivirusDashboard";
-
-interface SecurityMetrics {
-  total_threats: number;
-  active_incidents: number;
-  protected_endpoints: number;
-  security_score: number;
-  threats_blocked_24h: number;
-  emails_scanned: number;
-  vulnerabilities_found: number;
-  compliance_score: number;
-}
-
-interface SecurityIncident {
-  id: string;
-  title: string;
-  severity: string;
-  status: string;
-  source_system: string;
-  first_detected_at: string;
-  assigned_to: string;
-  affected_assets: any;
-}
-
-interface ThreatIntelligence {
-  id: string;
-  user_id: string;
-  indicator_type: string;
-  indicator_value: string;
-  reputation: string;
-  score: number;
-  threats: any;
-  sources: any;
-  last_analyzed: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ChatMessage {
-  id: string;
-  type: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-  isAudio?: boolean;
-}
+import { useNavigate } from "react-router-dom";
 
 export const SafeShieldApp = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [loading, setLoading] = useState(true);
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
-  const [aiMinimized, setAiMinimized] = useState(false);
-  
-  // Chat state
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
-  const chatMessagesRef = useRef<HTMLDivElement>(null);
-  
-  const [metrics, setMetrics] = useState<SecurityMetrics>({
-    total_threats: 0,
-    active_incidents: 0,
-    protected_endpoints: 0,
-    security_score: 85,
-    threats_blocked_24h: 0,
-    emails_scanned: 0,
-    vulnerabilities_found: 0,
-    compliance_score: 0
+  const [isAIMinimized, setIsAIMinimized] = useState(false);
+  const [securityMetrics, setSecurityMetrics] = useState({
+    activeAlerts: 0,
+    criticalThreats: 0,
+    openIncidents: 0,
+    complianceScore: 85
   });
-  const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
-  const [threatIntel, setThreatIntel] = useState<ThreatIntelligence[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadSecurityData();
-    // Initialize chat with welcome message
-    const welcomeMessage: ChatMessage = {
-      id: 'welcome-1',
-      type: 'assistant',
-      content: "Welcome to SafeShield AI! I'm here to help you understand your security metrics and provide automated responses. I can analyze your current security posture, explain threat patterns, and suggest remediation actions.",
-      timestamp: new Date(),
+    loadSecurityMetrics();
+    
+    // Set up real-time subscriptions for live data updates
+    const securityEventsChannel = supabase
+      .channel('security-events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'security_events'
+        },
+        () => loadSecurityMetrics()
+      )
+      .subscribe();
+
+    const edrAlertsChannel = supabase
+      .channel('edr-alerts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'edr_realtime_alerts'
+        },
+        () => loadSecurityMetrics()
+      )
+      .subscribe();
+
+    const incidentsChannel = supabase
+      .channel('incidents-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'incidents'
+        },
+        () => loadSecurityMetrics()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(securityEventsChannel);
+      supabase.removeChannel(edrAlertsChannel);
+      supabase.removeChannel(incidentsChannel);
     };
-    setChatMessages([welcomeMessage]);
   }, []);
 
-  const loadSecurityData = async () => {
+  const loadSecurityMetrics = async () => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
-
-      // Load security incidents
-      const { data: incidentsData } = await supabase
-        .from('security_incidents')
-        .select('*')
-        .eq('user_id', user.user.id)
-        .order('first_detected_at', { ascending: false })
-        .limit(10);
-
-      // Load threat intelligence
-      const { data: threatData, error: threatError } = await supabase
-        .from('threat_intelligence')
-        .select('*')
-        .eq('user_id', user.user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (threatError) {
-        console.log('Threat intelligence loading error (expected if table missing):', threatError);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setSecurityMetrics({
+          activeAlerts: 0,
+          criticalThreats: 0,
+          openIncidents: 0,
+          complianceScore: 0
+        });
+        return;
       }
 
-      // Calculate metrics from various sources
-      const [
-        { data: endpoints },
-        { data: threats },
-        { data: vulnerabilities },
-        { data: safeMailThreats },
-        { data: complianceStatus }
-      ] = await Promise.all([
-        supabase.from('safe_shield_endpoints').select('*').eq('user_id', user.user.id),
-        supabase.from('safe_shield_threats').select('*').eq('user_id', user.user.id),
-        supabase.from('safenet_vulnerabilities').select('*').eq('user_id', user.user.id),
-        supabase.from('safemail_threats').select('*').eq('user_id', user.user.id),
-        supabase.from('compliance_status').select('*').eq('user_id', user.user.id)
-      ]);
+      // Get real security events
+      const { data: securityEvents } = await supabase
+        .from('security_events')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'active');
 
-      // Calculate aggregated metrics
-      const calculatedMetrics: SecurityMetrics = {
-        total_threats: (threats?.length || 0) + (safeMailThreats?.length || 0),
-        active_incidents: incidentsData?.filter(i => i.status === 'open' || i.status === 'investigating').length || 0,
-        protected_endpoints: endpoints?.length || 0,
-        security_score: 85, // Base security score
-        threats_blocked_24h: Math.floor(Math.random() * 50) + 10, // Simulated for demo
-        emails_scanned: Math.floor(Math.random() * 1000) + 500, // Simulated for demo
-        vulnerabilities_found: vulnerabilities?.length || 0,
-        compliance_score: complianceStatus?.reduce((acc, cs) => acc + (cs.score || 0), 0) / (complianceStatus?.length || 1) || 78
-      };
+      // Get real EDR alerts
+      const { data: edrAlerts } = await supabase
+        .from('edr_realtime_alerts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'new');
 
-      setMetrics(calculatedMetrics);
-      setIncidents(incidentsData || []);
-      setThreatIntel(threatData || []);
-    } catch (error) {
-      console.error('Error loading security data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load security data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Get real incidents
+      const { data: incidents } = await supabase
+        .from('incidents')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['open', 'investigating', 'escalated']);
 
-  const acknowledgeIncident = async (incidentId: string) => {
-    try {
-      const { error } = await supabase
-        .from('security_incidents')
-        .update({ 
-          status: 'investigating',
-          acknowledged_at: new Date().toISOString()
-        })
-        .eq('id', incidentId);
+      // Get compliance status
+      const { data: compliance } = await supabase
+        .from('compliance_status')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1);
 
-      if (error) throw error;
-
-      toast({
-        title: "✅ Incident Acknowledged",
-        description: "Incident has been acknowledged and is being investigated",
-      });
-
-      loadSecurityData();
-    } catch (error) {
-      console.error('Error acknowledging incident:', error);
-      toast({
-        title: "Error",
-        description: "Failed to acknowledge incident",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'destructive';
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
-      default: return 'outline';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open': return 'destructive';
-      case 'investigating': return 'secondary';
-      case 'contained': return 'default';
-      case 'resolved': return 'default';
-      default: return 'outline';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Chat functionality
-  const scrollToBottom = () => {
-    if (chatMessagesRef.current) {
-      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
-    }
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [chatMessages]);
-
-  const sendMessage = async (message: string) => {
-    if (!message.trim()) return;
-
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      type: 'user',
-      content: message,
-      timestamp: new Date(),
-    };
-
-    setChatMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsProcessing(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('safeshield-voice-chat', {
-        body: {
-          action: 'chat',
-          message: message,
-          context: { activeTab },
-          metrics: metrics
-        }
-      });
-
-      if (error) throw error;
-
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        type: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-      };
-
-      setChatMessages(prev => [...prev, assistantMessage]);
-
-      // Convert response to speech
-      await speakText(data.response);
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const speakText = async (text: string) => {
-    try {
-      setIsSpeaking(true);
-      const { data, error } = await supabase.functions.invoke('safeshield-voice-chat', {
-        body: {
-          action: 'text-to-speech',
-          text: text,
-          voice: 'Sarah'
-        }
-      });
-
-      if (error) throw error;
-
-      // Play the audio
-      const audio = new Audio(`data:audio/mpeg;base64,${data.audioContent}`);
-      audio.onended = () => setIsSpeaking(false);
-      await audio.play();
-
-    } catch (error) {
-      console.error('Error converting text to speech:', error);
-      setIsSpeaking(false);
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          sampleRate: 16000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-
-      const recorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-
-      const chunks: Blob[] = [];
+      const activeAlerts = (securityEvents?.length || 0) + (edrAlerts?.length || 0);
+      const criticalThreats = [
+        ...(securityEvents?.filter(e => e.severity === 'critical') || []),
+        ...(edrAlerts?.filter(a => a.severity === 'critical') || [])
+      ].length;
       
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data);
-        }
-      };
-
-      recorder.onstop = async () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
-        await processAudioInput(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-
-      recorder.start();
-      setMediaRecorder(recorder);
-      setIsRecording(true);
-      setAudioChunks(chunks);
-
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      toast({
-        title: "Error",
-        description: "Failed to access microphone",
-        variant: "destructive",
+      setSecurityMetrics({
+        activeAlerts,
+        criticalThreats,
+        openIncidents: incidents?.length || 0,
+        complianceScore: compliance?.[0]?.score || 0
       });
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
-      setIsRecording(false);
-      setMediaRecorder(null);
-    }
-  };
-
-  const processAudioInput = async (audioBlob: Blob) => {
-    try {
-      setIsProcessing(true);
-      
-      // Convert blob to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      reader.onloadend = async () => {
-        const base64Audio = reader.result?.toString().split(',')[1];
-        
-        if (!base64Audio) {
-          throw new Error('Failed to convert audio to base64');
-        }
-
-        // Send to speech-to-text
-        const { data, error } = await supabase.functions.invoke('safeshield-voice-chat', {
-          body: {
-            action: 'speech-to-text',
-            audio: base64Audio
-          }
-        });
-
-        if (error) throw error;
-
-        if (data.text && data.text.trim()) {
-          await sendMessage(data.text);
-        } else {
-          toast({
-            title: "No speech detected",
-            description: "Please try speaking more clearly",
-            variant: "destructive",
-          });
-        }
-      };
-
     } catch (error) {
-      console.error('Error processing audio:', error);
-      toast({
-        title: "Error",
-        description: "Failed to process audio input",
-        variant: "destructive",
+      console.error('Error loading security metrics:', error);
+      // For live environment, show actual zero state when no data
+      setSecurityMetrics({
+        activeAlerts: 0,
+        criticalThreats: 0,
+        openIncidents: 0,
+        complianceScore: 0
       });
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
+
+  const features = [
+    {
+      icon: <Zap className="h-8 w-8 text-yellow-500" />,
+      title: "Real-Time Threat Analysis",
+      description: "Continuously monitors and analyzes security events, identifying threats as they emerge with AI-powered detection algorithms."
+    },
+    {
+      icon: <Eye className="h-8 w-8 text-blue-500" />,
+      title: "Contextual Security Intelligence",
+      description: "Provides security insights based on your current infrastructure, policies, and threat landscape for personalized recommendations."
+    },
+    {
+      icon: <Bot className="h-8 w-8 text-green-500" />,
+      title: "Automated Response Actions",
+      description: "Suggests and can execute automated security responses, from quarantining files to blocking network traffic."
+    },
+    {
+      icon: <TrendingUp className="h-8 w-8 text-purple-500" />,
+      title: "Predictive Security Analytics",
+      description: "Uses machine learning to predict potential security incidents and recommend proactive mitigation strategies."
+    },
+    {
+      icon: <Users className="h-8 w-8 text-orange-500" />,
+      title: "Multi-Tenant Awareness",
+      description: "Understands MSP environments with role-based intelligence for different security contexts and client needs."
+    },
+    {
+      icon: <Lock className="h-8 w-8 text-red-500" />,
+      title: "Compliance Automation",
+      description: "Continuously monitors compliance status and generates automated reports for various security frameworks."
+    }
+  ];
+
+  const aiCapabilities = [
+    "🔍 **Threat Hunting**: Proactively searches for advanced persistent threats",
+    "🛡️ **Incident Response**: Guides through structured incident response procedures",
+    "📊 **Risk Assessment**: Calculates and prioritizes security risks across your environment", 
+    "📋 **Compliance Monitoring**: Tracks adherence to security frameworks (SOC2, ISO27001, etc.)",
+    "🔒 **Vulnerability Management**: Identifies and prioritizes security vulnerabilities",
+    "📈 **Security Reporting**: Generates executive and technical security reports",
+    "⚡ **Automated Remediation**: Suggests and implements security fixes automatically",
+    "🌐 **Network Security**: Monitors and analyzes network traffic for anomalies"
+  ];
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
+    <div className="container mx-auto px-4 py-8 space-y-8">
+      {/* Back Navigation */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Shield className="h-8 w-8 text-primary" />
-              SafeShield AI
-            </h1>
-            <p className="text-muted-foreground">
-              Comprehensive AI-powered security platform
-            </p>
-          </div>
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/dashboard')}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+      </div>
+
+      {/* Header Section */}
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <Shield className="h-12 w-12 text-primary" />
+          <h1 className="text-4xl font-bold">SafeShield AI</h1>
+        </div>
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          Your dedicated AI security analyst with real-time access to your security infrastructure. 
+          Get instant threat analysis, automated responses, and proactive security insights.
+        </p>
+        
+        <div className="flex items-center justify-center gap-6 mt-6">
+          <Badge variant="outline" className="px-4 py-2">
+            <Activity className="h-4 w-4 mr-2" />
+            Live Security Monitoring
+          </Badge>
+          <Badge variant="outline" className="px-4 py-2">
+            <Bot className="h-4 w-4 mr-2" />
+            AI-Powered Analysis
+          </Badge>
+          <Badge variant="outline" className="px-4 py-2">
+            <Zap className="h-4 w-4 mr-2" />
+            Automated Response
+          </Badge>
         </div>
       </div>
 
-      {/* Security Metrics Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-            <Shield className="h-5 w-5 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{metrics.security_score}/100</div>
-            <p className="text-xs text-green-600 mt-2">
-              Overall security posture
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-900/20 dark:to-red-800/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Incidents</CardTitle>
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{metrics.active_incidents}</div>
-            <p className="text-xs text-red-600 mt-2">
-              Requiring attention
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protected Endpoints</CardTitle>
-            <Monitor className="h-5 w-5 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{metrics.protected_endpoints}</div>
-            <p className="text-xs text-blue-600 mt-2">
-              Monitored devices
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Threats Blocked (24h)</CardTitle>
-            <Activity className="h-5 w-5 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{metrics.threats_blocked_24h}</div>
-            <p className="text-xs text-purple-600 mt-2">
-              Last 24 hours
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Tabs */}
-      <div className="relative">
-        {/* Floating AI Assistant Button */}
-        <Button
-          onClick={() => setAiAssistantOpen(true)}
-          className="fixed bottom-6 right-6 z-50 rounded-full w-14 h-14 shadow-lg bg-primary hover:bg-primary/90"
-          size="icon"
-        >
-          <Bot className="h-6 w-6" />
-        </Button>
-
-        {/* AI Assistant Dialog */}
-        <Dialog open={aiAssistantOpen} onOpenChange={setAiAssistantOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                SafeShield AI Assistant
-              </DialogTitle>
-              <DialogDescription>
-                Get AI-powered insights and automated responses for your security metrics
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-h-[60vh] overflow-y-auto">
-              {/* AI Chat Interface */}
-              <div className="lg:col-span-2 space-y-4">
-                {/* Chat Messages */}
-                <div 
-                  ref={chatMessagesRef}
-                  className="bg-muted/30 rounded-lg p-4 min-h-[300px] max-h-[400px] overflow-y-auto space-y-3"
-                >
-                  {chatMessages.map((message) => (
-                    <div key={message.id} className="flex items-start gap-3">
-                      <div className={`rounded-full p-2 ${
-                        message.type === 'assistant' 
-                          ? 'bg-primary' 
-                          : 'bg-secondary'
-                      }`}>
-                        {message.type === 'assistant' ? (
-                          <Shield className="h-4 w-4 text-primary-foreground" />
-                        ) : (
-                          <Users className="h-4 w-4 text-secondary-foreground" />
-                        )}
-                      </div>
-                      <div className={`rounded-lg p-3 max-w-[80%] ${
-                        message.type === 'assistant' 
-                          ? 'bg-background' 
-                          : 'bg-primary text-primary-foreground'
-                      }`}>
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {message.timestamp.toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {isProcessing && (
-                    <div className="flex items-start gap-3">
-                      <div className="bg-primary rounded-full p-2">
-                        <Shield className="h-4 w-4 text-primary-foreground" />
-                      </div>
-                      <div className="bg-background rounded-lg p-3">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">Analyzing...</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Chat Input */}
-                <div className="flex gap-2">
-                  <Input
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Ask about your security posture..."
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage(inputMessage);
-                      }
-                    }}
-                    disabled={isProcessing || isRecording}
-                    className="flex-1"
-                  />
-                  <Button
-                    variant={isRecording ? "destructive" : "outline"}
-                    size="icon"
-                    onClick={isRecording ? stopRecording : startRecording}
-                    disabled={isProcessing}
-                  >
-                    {isRecording ? (
-                      <MicOff className="h-4 w-4" />
-                    ) : (
-                      <Mic className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    size="icon"
-                    onClick={() => sendMessage(inputMessage)}
-                    disabled={!inputMessage.trim() || isProcessing || isRecording}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Voice Status */}
-                {(isRecording || isSpeaking) && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {isRecording && (
-                      <>
-                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                        Recording... (Click mic to stop)
-                      </>
-                    )}
-                    {isSpeaking && (
-                      <>
-                        <Volume2 className="h-4 w-4" />
-                        Speaking...
-                      </>
-                    )}
-                  </div>
-                )}
-                
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-left justify-start"
-                    onClick={() => sendMessage(`Analyze my current ${activeTab} metrics and provide insights`)}
-                    disabled={isProcessing}
-                  >
-                    📊 Analyze Current Tab
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-left justify-start"
-                    onClick={() => sendMessage("What are my top security priorities right now?")}
-                    disabled={isProcessing}
-                  >
-                    🚨 Priority Recommendations
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-left justify-start"
-                    onClick={() => sendMessage("Explain my security metrics in simple terms")}
-                    disabled={isProcessing}
-                  >
-                    🔍 Explain Metrics
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-left justify-start"
-                    onClick={() => sendMessage("What automated responses can you set up for me?")}
-                    disabled={isProcessing}
-                  >
-                    🛡️ Automated Response
-                  </Button>
-                </div>
-              </div>
-
-              {/* AI Recommendations Panel */}
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">AI Recommendations</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-2">
-                        <div className="bg-yellow-100 dark:bg-yellow-900/20 p-1 rounded">
-                          <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-medium">Update Endpoint Policies</p>
-                          <p className="text-muted-foreground">2 endpoints need policy updates</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <div className="bg-blue-100 dark:bg-blue-900/20 p-1 rounded">
-                          <Shield className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-medium">Review Threat Intelligence</p>
-                          <p className="text-muted-foreground">5 new IOCs detected</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <div className="bg-green-100 dark:bg-green-900/20 p-1 rounded">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-medium">Security Posture Strong</p>
-                          <p className="text-muted-foreground">All critical systems protected</p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Automated Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <Button className="w-full justify-start" size="sm">
-                        🤖 Enable Auto-Remediation
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start" size="sm">
-                        📧 Configure Alert Notifications
-                      </Button>
-                      <Button variant="outline" className="w-full justify-start" size="sm">
-                        🔄 Schedule Security Scan
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+      {/* Current Security Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Current Security Status
+          </CardTitle>
+          <CardDescription>
+            Real-time security metrics from your environment
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 rounded-lg border">
+              <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
+              <div className="text-2xl font-bold">{securityMetrics.activeAlerts}</div>
+              <div className="text-sm text-muted-foreground">Active Alerts</div>
             </div>
-          </DialogContent>
-        </Dialog>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="incidents" className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4" />
-            Incidents
-          </TabsTrigger>
-          <TabsTrigger value="edr" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            EDR
-          </TabsTrigger>
-          <TabsTrigger value="mdr" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            MDR
-          </TabsTrigger>
-          <TabsTrigger value="antivirus" className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4" />
-            Antivirus
-          </TabsTrigger>
-          <TabsTrigger value="intelligence" className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            Threat Intel
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  Email Security
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Emails Scanned (24h):</span>
-                    <span className="font-medium">{metrics.emails_scanned}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Threats Blocked:</span>
-                    <span className="font-medium text-red-600">{Math.floor(metrics.emails_scanned * 0.02)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Phishing Attempts:</span>
-                    <span className="font-medium text-orange-600">{Math.floor(metrics.emails_scanned * 0.01)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Network className="h-5 w-5" />
-                  Network Security
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Vulnerabilities Found:</span>
-                    <span className="font-medium text-yellow-600">{metrics.vulnerabilities_found}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Critical Vulnerabilities:</span>
-                    <span className="font-medium text-red-600">{Math.floor(metrics.vulnerabilities_found * 0.2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Patched This Week:</span>
-                    <span className="font-medium text-green-600">{Math.floor(metrics.vulnerabilities_found * 0.6)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5" />
-                  Endpoint Protection
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Protected Endpoints:</span>
-                    <span className="font-medium">{metrics.protected_endpoints}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Real-time Protection:</span>
-                    <span className="font-medium text-green-600">Active</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Quarantined Files:</span>
-                    <span className="font-medium text-orange-600">{Math.floor(Math.random() * 10) + 5}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Compliance Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Overall Compliance:</span>
-                    <span className="font-medium text-green-600">{Math.floor(metrics.compliance_score)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Active Frameworks:</span>
-                    <span className="font-medium text-blue-600">4</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Evidence Collected:</span>
-                    <span className="font-medium text-purple-600">12</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="text-center p-4 rounded-lg border">
+              <Shield className="h-8 w-8 mx-auto mb-2 text-red-500" />
+              <div className="text-2xl font-bold">{securityMetrics.criticalThreats}</div>
+              <div className="text-sm text-muted-foreground">Critical Threats</div>
+            </div>
+            <div className="text-center p-4 rounded-lg border">
+              <Settings className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+              <div className="text-2xl font-bold">{securityMetrics.openIncidents}</div>
+              <div className="text-sm text-muted-foreground">Open Incidents</div>
+            </div>
+            <div className="text-center p-4 rounded-lg border">
+              <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-500" />
+              <div className="text-2xl font-bold">{securityMetrics.complianceScore}%</div>
+              <div className="text-sm text-muted-foreground">Compliance Score</div>
+            </div>
           </div>
-        </TabsContent>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="incidents" className="space-y-4">
-          <Card>
+      {/* AI Capabilities */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            AI Security Capabilities
+          </CardTitle>
+          <CardDescription>
+            Advanced security operations powered by artificial intelligence
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {aiCapabilities.map((capability, index) => (
+              <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                <div className="text-sm">{capability}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Advanced Threat Analysis */}
+      <ThreatAnalysisEngine securityContext={securityMetrics} />
+
+      {/* Automated Actions */}
+      <AutomatedActions />
+
+      {/* Threat Prediction Engine */}
+      <ThreatPredictionEngine securityContext={securityMetrics} />
+
+      {/* Feature Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {features.map((feature, index) => (
+          <Card key={index} className="hover:shadow-lg transition-shadow">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                Active Security Incidents
-              </CardTitle>
-              <CardDescription>
-                Monitor and manage security incidents across all systems
-              </CardDescription>
+              <div className="flex items-center gap-3">
+                {feature.icon}
+                <CardTitle className="text-lg">{feature.title}</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <IncidentsTable 
-                incidents={incidents}
-                onAcknowledge={acknowledgeIncident}
-                getSeverityColor={getSeverityColor}
-                getStatusColor={getStatusColor}
-              />
+              <p className="text-muted-foreground">{feature.description}</p>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="intelligence" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                Threat Intelligence Feed
-              </CardTitle>
-              <CardDescription>
-                Real-time threat indicators and intelligence updates
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ThreatIntelTable 
-                threats={threatIntel}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="edr" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                SafeShield EDR - Endpoint Detection & Response
-              </CardTitle>
-              <CardDescription>
-                AI-powered behavioral analysis and automated threat response
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="-mt-6">
-                <SafeShieldDashboard />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="mdr" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Eye className="h-5 w-5" />
-                SafeMDR - Managed Detection & Response
-              </CardTitle>
-              <CardDescription>
-                24/7 SOC services with expert security analysts
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="-mt-6">
-                <SafeMDRDashboard />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="antivirus" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5" />
-                SafeAV - Advanced Antivirus Protection
-              </CardTitle>
-              <CardDescription>
-                Multi-layered malware protection with real-time scanning
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="-mt-6">
-                <AntivirusDashboard />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        ))}
       </div>
-    </div>
-  );
-};
 
-// Incidents table component
-const IncidentsTable = ({ incidents, onAcknowledge, getSeverityColor, getStatusColor }: any) => {
-  if (incidents.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No active security incidents
-      </div>
-    );
-  }
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Security Actions</CardTitle>
+          <CardDescription>
+            Common security tasks you can ask SafeShield AI about
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto p-4"
+              onClick={() => setIsAIMinimized(false)}
+            >
+              <div className="text-left">
+                <div className="font-medium">Security Health Check</div>
+                <div className="text-sm text-muted-foreground">Get overall security status</div>
+              </div>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto p-4"
+              onClick={() => setIsAIMinimized(false)}
+            >
+              <div className="text-left">
+                <div className="font-medium">Threat Investigation</div>
+                <div className="text-sm text-muted-foreground">Analyze current threats</div>
+              </div>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto p-4"
+              onClick={() => setIsAIMinimized(false)}
+            >
+              <div className="text-left">
+                <div className="font-medium">Compliance Report</div>
+                <div className="text-sm text-muted-foreground">Generate compliance summary</div>
+              </div>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto p-4"
+              onClick={() => setIsAIMinimized(false)}
+            >
+              <div className="text-left">
+                <div className="font-medium">Incident Response</div>
+                <div className="text-sm text-muted-foreground">Get response guidance</div>
+              </div>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto p-4"
+              onClick={() => setIsAIMinimized(false)}
+            >
+              <div className="text-left">
+                <div className="font-medium">Risk Assessment</div>
+                <div className="text-sm text-muted-foreground">Calculate security risks</div>
+              </div>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="justify-start h-auto p-4"
+              onClick={() => setIsAIMinimized(false)}
+            >
+              <div className="text-left">
+                <div className="font-medium">Security Recommendations</div>
+                <div className="text-sm text-muted-foreground">Get actionable advice</div>
+              </div>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left p-2">Incident</th>
-            <th className="text-left p-2">Severity</th>
-            <th className="text-left p-2">Status</th>
-            <th className="text-left p-2">Source</th>
-            <th className="text-left p-2">Detected</th>
-            <th className="text-left p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {incidents.map((incident: any) => (
-            <tr key={incident.id} className="border-b hover:bg-muted/50">
-              <td className="p-2">
-                <div className="font-medium">{incident.title}</div>
-                <div className="text-sm text-muted-foreground">
-                  Affects {incident.affected_assets?.length || 0} assets
-                </div>
-              </td>
-              <td className="p-2">
-                <Badge variant={getSeverityColor(incident.severity)}>
-                  {incident.severity}
-                </Badge>
-              </td>
-              <td className="p-2">
-                <Badge variant={getStatusColor(incident.status)}>
-                  {incident.status}
-                </Badge>
-              </td>
-              <td className="p-2">
-                <span className="text-sm">{incident.source_system}</span>
-              </td>
-              <td className="p-2">
-                <span className="text-sm">
-                  {new Date(incident.first_detected_at).toLocaleString()}
-                </span>
-              </td>
-              <td className="p-2">
-                <div className="flex gap-1">
-                  {incident.status === 'open' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onAcknowledge(incident.id)}
-                    >
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Acknowledge
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="sm">
-                    <Eye className="h-3 w-3" />
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
-// Threat intelligence table component
-const ThreatIntelTable = ({ threats }: any) => {
-  if (threats.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No threat intelligence available
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b">
-            <th className="text-left p-2">Threat Type</th>
-            <th className="text-left p-2">IOC</th>
-            <th className="text-left p-2">Threat Level</th>
-            <th className="text-left p-2">Confidence</th>
-            <th className="text-left p-2">Source</th>
-            <th className="text-left p-2">Last Seen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {threats.map((threat: any) => (
-            <tr key={threat.id} className="border-b hover:bg-muted/50">
-              <td className="p-2">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                  <span className="capitalize">
-                    {Array.isArray(threat.threats) 
-                      ? threat.threats.map((t: any) => t.category || 'unknown').join(', ') 
-                      : 'unknown'
-                    }
-                  </span>
-                </div>
-              </td>
-              <td className="p-2">
-                <div>
-                  <div className="font-mono text-sm">{threat.indicator_value}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{threat.indicator_type}</div>
-                </div>
-              </td>
-              <td className="p-2">
-                <Badge variant="outline" className={
-                  threat.reputation === 'malicious' ? 'text-red-600' : 
-                  threat.reputation === 'suspicious' ? 'text-orange-600' : 
-                  threat.reputation === 'questionable' ? 'text-yellow-600' : 'text-green-600'
-                }>
-                  {threat.reputation}
-                </Badge>
-              </td>
-              <td className="p-2">
-                <span className="text-sm">{threat.score}%</span>
-              </td>
-              <td className="p-2">
-                <span className="text-sm">
-                  {Array.isArray(threat.sources) ? threat.sources.join(', ') : 'Unknown'}
-                </span>
-              </td>
-              <td className="p-2">
-                <div className="text-sm">
-                  <div>{new Date(threat.last_analyzed).toLocaleDateString()}</div>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* AI Assistant */}
+      <SecurityAIAssistant 
+        isMinimized={isAIMinimized}
+        onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
+        securityContext={securityMetrics}
+      />
     </div>
   );
 };
