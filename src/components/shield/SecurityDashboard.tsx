@@ -119,9 +119,9 @@ export const SecurityDashboard = () => {
         total_threats: (threats?.length || 0) + (safeMailThreats?.length || 0),
         active_incidents: incidentsData?.filter(i => i.status === 'open' || i.status === 'investigating').length || 0,
         protected_endpoints: endpoints?.length || 0,
-        security_score: Math.floor(Math.random() * 20) + 75, // Demo calculation
-        threats_blocked_24h: Math.floor(Math.random() * 50) + 10,
-        emails_scanned: Math.floor(Math.random() * 1000) + 500,
+        security_score: 0, // No mock data
+        threats_blocked_24h: 0, // No mock data
+        emails_scanned: 0, // No mock data
         vulnerabilities_found: vulnerabilities?.length || 0,
         compliance_score: complianceStatus?.reduce((acc, cs) => acc + (cs.score || 0), 0) / (complianceStatus?.length || 1) || 0
       };
