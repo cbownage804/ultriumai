@@ -6,6 +6,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Index from '@/pages/Index';
+import Reports from '@/pages/Reports';
+import Analytics from '@/pages/Analytics';
 import Auth from '@/pages/Auth';
 import Dashboard from '@/pages/Dashboard';
 import GPTChat from '@/pages/GPTChat';
@@ -215,6 +217,19 @@ function AppRouter() {
           <AdvancedHelpdeskAdmin />
         </ProtectedRoute>
       } />
+      
+      {/* Reports & Analytics Routes */}
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <Reports />
+        </ProtectedRoute>
+      } />
+      <Route path="/analytics" element={
+        <ProtectedRoute>
+          <Analytics />
+        </ProtectedRoute>
+      } />
+      
       
       {/* Protected Routes */}
       <Route path="/dashboard" element={

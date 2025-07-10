@@ -21,16 +21,22 @@ export const Header = () => {
                 Dashboard
               </Button>
             </Link>
+            <Link to="/reports">
+              <Button variant="ghost" size="sm">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Reports
+              </Button>
+            </Link>
+            <Link to="/analytics">
+              <Button variant="ghost" size="sm">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Analytics
+              </Button>
+            </Link>
             <Link to="/admin/helpdesk">
               <Button variant="ghost" size="sm">
                 <Users className="h-4 w-4 mr-2" />
                 Helpdesk
-              </Button>
-            </Link>
-            <Link to="/admin/analytics">
-              <Button variant="ghost" size="sm">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
               </Button>
             </Link>
           </nav>
