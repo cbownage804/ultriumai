@@ -248,531 +248,639 @@ const MSPControlCenter = () => {
   const metrics = calculateMetrics();
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Crown className="h-8 w-8 text-primary" />
-            {msp.company_name} Control Center
-          </h1>
-          <p className="text-muted-foreground">
-            Manage all your security services and track revenue
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
-          <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Client
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add New Client</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="client_company">Company Name</Label>
-                    <Input
-                      id="client_company"
-                      value={clientForm.company_name}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, company_name: e.target.value }))}
-                      placeholder="ABC Corporation"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client_domain">Website Domain</Label>
-                    <Input
-                      id="client_domain"
-                      value={clientForm.domain}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, domain: e.target.value }))}
-                      placeholder="abccorp.com"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contact_name">Contact Name</Label>
-                    <Input
-                      id="contact_name"
-                      value={clientForm.contact_name}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, contact_name: e.target.value }))}
-                      placeholder="John Smith"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client_email">Contact Email</Label>
-                    <Input
-                      id="client_email"
-                      type="email"
-                      value={clientForm.contact_email}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, contact_email: e.target.value }))}
-                      placeholder="john@abccorp.com"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="max_users">Max Users</Label>
-                    <Input
-                      id="max_users"
-                      type="number"
-                      value={clientForm.max_users}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, max_users: parseInt(e.target.value) }))}
-                      min="1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="monthly_rate">Rate per User</Label>
-                    <Input
-                      id="monthly_rate"
-                      type="number"
-                      step="0.01"
-                      value={clientForm.monthly_rate}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, monthly_rate: parseFloat(e.target.value) }))}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="client_phone">Phone</Label>
-                    <Input
-                      id="client_phone"
-                      value={clientForm.phone}
-                      onChange={(e) => setClientForm(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="(555) 987-6543"
-                    />
-                  </div>
-                </div>
-
-                <Button 
-                  onClick={handleCreateClient} 
-                  className="w-full"
-                  disabled={!clientForm.company_name || !clientForm.contact_name || !clientForm.contact_email}
-                >
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      <div className="space-y-8 p-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent flex items-center gap-3">
+              <Crown className="h-10 w-10 text-primary" />
+              {msp.company_name}
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              MSP Control Center • {metrics.totalClients} clients • ${metrics.monthlyRevenue.toFixed(0)} MRR
+            </p>
+            <div className="flex items-center gap-4 text-sm">
+              <Badge variant="outline" className="bg-success/10 text-success border-success/30">
+                <Activity className="h-3 w-3 mr-1" />
+                {metrics.activeClients} Active
+              </Badge>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                <Users className="h-3 w-3 mr-1" />
+                {metrics.totalUsers} Users
+              </Badge>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" className="bg-card/50 hover:bg-card">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </Button>
+            <Button variant="outline" onClick={() => handleNavigation('/msp-security-dashboard')}>
+              <Shield className="h-4 w-4 mr-2" />
+              Security Center
+            </Button>
+            <Dialog open={showCreateClient} onOpenChange={setShowCreateClient}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-primary to-secondary hover:opacity-90">
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Client
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      {/* Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalClients}</div>
-            <p className="text-xs text-muted-foreground">
-              {metrics.activeClients} active
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all clients
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${metrics.monthlyRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              Client payments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Your Profit</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">${metrics.monthlyProfit.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              {((msp.commission_rate || 0.6667) * 100).toFixed(1)}% commission
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Tabs defaultValue="clients" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="safedoc">SafeDoc</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="integrations">Security Apps</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="clients" className="space-y-4">
-          <div className="grid gap-4">
-            {clients.map((client) => (
-              <Card key={client.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Add New Client
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5" />
-                        {client.company_name}
-                      </CardTitle>
-                      <CardDescription>
-                        {client.contact_name} • {client.contact_email}
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={client.billing_status === 'active' ? 'default' : 'secondary'}>
-                        {client.billing_status}
-                      </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyEmbedCode(client)}
-                      >
-                        <Code className="h-4 w-4 mr-2" />
-                        Embed Code
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Users</div>
-                      <div className="font-medium">{client.current_users}/{client.max_users}</div>
+                      <Label htmlFor="client_company">Company Name</Label>
+                      <Input
+                        id="client_company"
+                        value={clientForm.company_name}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, company_name: e.target.value }))}
+                        placeholder="ABC Corporation"
+                      />
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Monthly Rate</div>
-                      <div className="font-medium">${client.monthly_rate}/user</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Monthly Revenue</div>
-                      <div className="font-medium text-green-600">
-                        ${(client.current_users * client.monthly_rate).toFixed(2)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Domain</div>
-                      <div className="font-medium">{client.domain || 'Not set'}</div>
+                      <Label htmlFor="client_domain">Website Domain</Label>
+                      <Input
+                        id="client_domain"
+                        value={clientForm.domain}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, domain: e.target.value }))}
+                        placeholder="abccorp.com"
+                      />
                     </div>
                   </div>
                   
-                  <div className="flex gap-2 mt-4">
-                    <Button variant="outline" size="sm">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configure
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="contact_name">Contact Name</Label>
+                      <Input
+                        id="contact_name"
+                        value={clientForm.contact_name}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, contact_name: e.target.value }))}
+                        placeholder="John Smith"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="client_email">Contact Email</Label>
+                      <Input
+                        id="client_email"
+                        type="email"
+                        value={clientForm.contact_email}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, contact_email: e.target.value }))}
+                        placeholder="john@abccorp.com"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="max_users">Max Users</Label>
+                      <Input
+                        id="max_users"
+                        type="number"
+                        value={clientForm.max_users}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, max_users: parseInt(e.target.value) }))}
+                        min="1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="monthly_rate">Rate per User</Label>
+                      <Input
+                        id="monthly_rate"
+                        type="number"
+                        step="0.01"
+                        value={clientForm.monthly_rate}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, monthly_rate: parseFloat(e.target.value) }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="client_phone">Phone</Label>
+                      <Input
+                        id="client_phone"
+                        value={clientForm.phone}
+                        onChange={(e) => setClientForm(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="(555) 987-6543"
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={handleCreateClient} 
+                    className="w-full"
+                    disabled={!clientForm.company_name || !clientForm.contact_name || !clientForm.contact_email}
+                  >
+                    Add Client
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Security Scan</h3>
+                  <p className="text-sm text-muted-foreground">Run comprehensive scans</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-4" onClick={() => handleNavigation('/dashboard/safedoc')}>
+                Launch SafeDoc
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-secondary/5 to-secondary/10 border-secondary/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-secondary/10 group-hover:bg-secondary/20 transition-colors">
+                  <BarChart3 className="h-6 w-6 text-secondary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Analytics</h3>
+                  <p className="text-sm text-muted-foreground">View detailed reports</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-4">
+                View Reports
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-accent/10 group-hover:bg-accent/20 transition-colors">
+                  <Globe className="h-6 w-6 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Deploy Widget</h3>
+                  <p className="text-sm text-muted-foreground">Install on client sites</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-4">
+                Get Embed Code
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-success/5 to-success/10 border-success/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-success/10 group-hover:bg-success/20 transition-colors">
+                  <Target className="h-6 w-6 text-success" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">RMM Agent</h3>
+                  <p className="text-sm text-muted-foreground">Deploy monitoring</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full mt-4">
+                Deploy Agent
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Metrics Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-muted/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Clients</CardTitle>
+              <Building2 className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">{metrics.totalClients}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                <span className="text-success">{metrics.activeClients}</span> active
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-muted/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-secondary/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-secondary" />
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">{metrics.totalUsers}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Across all clients
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-muted/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Monthly Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold">${metrics.monthlyRevenue.toFixed(0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Client payments
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-card via-card to-muted/20">
+            <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Your Profit</CardTitle>
+              <TrendingUp className="h-4 w-4 text-success" />
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="text-3xl font-bold text-success">${metrics.monthlyProfit.toFixed(0)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {((msp.commission_rate || 0.6667) * 100).toFixed(1)}% commission
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <Tabs defaultValue="clients" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="clients">Clients</TabsTrigger>
+            <TabsTrigger value="safedoc">SafeDoc</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="integrations">Security Apps</TabsTrigger>
+            <TabsTrigger value="billing">Billing</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="clients" className="space-y-6">
+            <div className="grid gap-6">
+              {clients.length === 0 ? (
+                <Card className="border-dashed border-2 border-muted">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No clients yet</h3>
+                    <p className="text-muted-foreground text-center mb-4">
+                      Add your first client to start managing their security services
+                    </p>
+                    <Button onClick={() => setShowCreateClient(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Your First Client
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View Portal
+                  </CardContent>
+                </Card>
+              ) : (
+                clients.map((client) => (
+                  <Card key={client.id} className="group hover:shadow-lg transition-all duration-300">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10">
+                              <Building2 className="h-5 w-5 text-primary" />
+                            </div>
+                            {client.company_name}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-2">
+                            <span>{client.contact_name}</span>
+                            <span>•</span>
+                            <span>{client.contact_email}</span>
+                            {client.domain && (
+                              <>
+                                <span>•</span>
+                                <span className="text-primary">{client.domain}</span>
+                              </>
+                            )}
+                          </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant={client.billing_status === 'active' ? 'default' : 'secondary'} 
+                                 className={client.billing_status === 'active' ? 'bg-success/10 text-success border-success/30' : ''}>
+                            {client.billing_status}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyEmbedCode(client)}
+                            className="bg-card/50 hover:bg-card"
+                          >
+                            <Code className="h-4 w-4 mr-2" />
+                            Embed Code
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-4">
+                        <div className="text-center p-3 rounded-lg bg-muted/30">
+                          <div className="text-muted-foreground text-sm">Users</div>
+                          <div className="font-semibold text-lg">{client.current_users}/{client.max_users}</div>
+                        </div>
+                        <div className="text-center p-3 rounded-lg bg-muted/30">
+                          <div className="text-muted-foreground text-sm">Rate per User</div>
+                          <div className="font-semibold text-lg">${client.monthly_rate}</div>
+                        </div>
+                        <div className="text-center p-3 rounded-lg bg-success/10">
+                          <div className="text-muted-foreground text-sm">Monthly Revenue</div>
+                          <div className="font-semibold text-lg text-success">
+                            ${(client.current_users * client.monthly_rate).toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="text-center p-3 rounded-lg bg-muted/30">
+                          <div className="text-muted-foreground text-sm">Domain</div>
+                          <div className="font-semibold text-lg">{client.domain || 'Not set'}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 mt-4">
+                        <Button variant="outline" size="sm">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Configure
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Portal
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          Analytics
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="safedoc" className="space-y-4">
+            <div className="grid gap-6">
+              {clients.map((client) => (
+                <Card key={client.id}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      {client.company_name} - Document Security
+                    </CardTitle>
+                    <CardDescription>
+                      SafeDoc scanner for {client.company_name}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SafeDocScanner 
+                      mspId={msp.id}
+                      clientId={client.id}
+                      userEmail={client.contact_email}
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {clients.length === 0 && (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Clients Yet</h3>
+                    <p className="text-muted-foreground mb-4">Add clients to start using SafeDoc</p>
+                    <Button onClick={() => setShowCreateClient(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add First Client
                     </Button>
-                    <Button variant="outline" size="sm">
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Analytics
-                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue Trend</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-success mb-2">
+                    ${metrics.monthlyRevenue.toFixed(2)}/month
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Average of ${metrics.averageRevenuePerClient.toFixed(2)} per client
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Growth Metrics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">Client Retention</span>
+                      <span className="text-sm font-medium">95%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Avg Users/Client</span>
+                      <span className="text-sm font-medium">
+                        {metrics.activeClients > 0 ? (metrics.totalUsers / metrics.activeClients).toFixed(1) : '0'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Monthly Growth</span>
+                      <span className="text-sm font-medium text-success">+12%</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-            
-            {clients.length === 0 && (
+            </div>
+          </TabsContent>
+
+          <TabsContent value="integrations" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Clients Yet</h3>
-                  <p className="text-muted-foreground mb-4">Add your first client to start generating revenue</p>
-                  <Button onClick={() => setShowCreateClient(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add First Client
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    SafePass
+                  </CardTitle>
+                  <CardDescription>
+                    Password management and vault services
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-success" />
+                    <span className="text-sm">Active</span>
+                  </div>
+                  <Button className="w-full">
+                    <Code className="h-4 w-4 mr-2" />
+                    Get Embed Code
                   </Button>
                 </CardContent>
               </Card>
-            )}
-          </div>
-        </TabsContent>
 
-        <TabsContent value="safedoc" className="space-y-4">
-          <div className="grid gap-6">
-            {clients.map((client) => (
-              <Card key={client.id}>
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5" />
-                    {client.company_name} - Document Security
+                    SafeDoc
                   </CardTitle>
                   <CardDescription>
-                    SafeDoc scanner for {client.company_name}
+                    Document security scanning and threat detection
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <SafeDocScanner 
-                    mspId={msp.id}
-                    clientId={client.id}
-                    userEmail={client.contact_email}
-                  />
-                </CardContent>
-              </Card>
-            ))}
-            
-            {clients.length === 0 && (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Clients Yet</h3>
-                  <p className="text-muted-foreground mb-4">Add clients to start using SafeDoc</p>
-                  <Button onClick={() => setShowCreateClient(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add First Client
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-success" />
+                    <span className="text-sm">Active</span>
+                  </div>
+                  <Button className="w-full">
+                    <Code className="h-4 w-4 mr-2" />
+                    Integration Guide
                   </Button>
                 </CardContent>
               </Card>
-            )}
-          </div>
-        </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="opacity-60">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    SafeMail
+                  </CardTitle>
+                  <CardDescription>
+                    Email security and phishing protection
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Coming Soon</span>
+                  </div>
+                  <Button variant="outline" className="w-full" disabled>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Not Available
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="opacity-60">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    SafeLink
+                  </CardTitle>
+                  <CardDescription>
+                    URL scanning and link protection
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Coming Soon</span>
+                  </div>
+                  <Button variant="outline" className="w-full" disabled>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Not Available
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="opacity-60">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    SafeScore
+                  </CardTitle>
+                  <CardDescription>
+                    Compliance monitoring and reporting
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Coming Soon</span>
+                  </div>
+                  <Button variant="outline" className="w-full" disabled>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Not Available
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="opacity-60">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5" />
+                    SafeNet
+                  </CardTitle>
+                  <CardDescription>
+                    Network security monitoring
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">Coming Soon</span>
+                  </div>
+                  <Button variant="outline" className="w-full" disabled>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Not Available
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="billing" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Revenue Trend</CardTitle>
+                <CardTitle>Billing Overview</CardTitle>
+                <CardDescription>
+                  Your commission and payment details
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600 mb-2">
-                  ${metrics.monthlyRevenue.toFixed(2)}/month
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Average of ${metrics.averageRevenuePerClient.toFixed(2)} per client
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Growth Metrics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Client Retention</span>
-                    <span className="text-sm font-medium">95%</span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">This Month</div>
+                    <div className="text-2xl font-bold text-success">
+                      ${metrics.monthlyProfit.toFixed(2)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      From {metrics.totalUsers} users
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Avg Users/Client</span>
-                    <span className="text-sm font-medium">
-                      {metrics.activeClients > 0 ? (metrics.totalUsers / metrics.activeClients).toFixed(1) : '0'}
-                    </span>
+                  <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">Commission Rate</div>
+                    <div className="text-2xl font-bold">
+                      {((msp.commission_rate || 0.6667) * 100).toFixed(1)}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      You keep ${((msp.monthly_rate_per_user || 15) * (msp.commission_rate || 0.6667)).toFixed(2)} per user
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Monthly Growth</span>
-                    <span className="text-sm font-medium text-green-600">+12%</span>
+                  <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">Next Payout</div>
+                    <div className="text-2xl font-bold">Dec 1st</div>
+                    <div className="text-xs text-muted-foreground">
+                      Monthly automatic transfer
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="integrations" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  SafePass
-                </CardTitle>
-                <CardDescription>
-                  Password management and vault services
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Active</span>
-                </div>
-                <Button className="w-full">
-                  <Code className="h-4 w-4 mr-2" />
-                  Get Embed Code
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  SafeDoc
-                </CardTitle>
-                <CardDescription>
-                  Document security scanning and threat detection
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">Active</span>
-                </div>
-                <Button className="w-full">
-                  <Code className="h-4 w-4 mr-2" />
-                  Integration Guide
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="opacity-60">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  SafeMail
-                </CardTitle>
-                <CardDescription>
-                  Email security and phishing protection
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Coming Soon</span>
-                </div>
-                <Button variant="outline" className="w-full" disabled>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Not Available
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="opacity-60">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
-                  SafeLink
-                </CardTitle>
-                <CardDescription>
-                  URL scanning and link protection
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Coming Soon</span>
-                </div>
-                <Button variant="outline" className="w-full" disabled>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Not Available
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="opacity-60">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  SafeScore
-                </CardTitle>
-                <CardDescription>
-                  Compliance monitoring and reporting
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Coming Soon</span>
-                </div>
-                <Button variant="outline" className="w-full" disabled>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Not Available
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="opacity-60">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  SafeNet
-                </CardTitle>
-                <CardDescription>
-                  Network security monitoring
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Coming Soon</span>
-                </div>
-                <Button variant="outline" className="w-full" disabled>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Not Available
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="billing" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing Overview</CardTitle>
-              <CardDescription>
-                Your commission and payment details
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">This Month</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    ${metrics.monthlyProfit.toFixed(2)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    From {metrics.totalUsers} users
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">Commission Rate</div>
-                  <div className="text-2xl font-bold">
-                    {((msp.commission_rate || 0.6667) * 100).toFixed(1)}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    You keep ${((msp.monthly_rate_per_user || 15) * (msp.commission_rate || 0.6667)).toFixed(2)} per user
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">Next Payout</div>
-                  <div className="text-2xl font-bold">Dec 1st</div>
-                  <div className="text-xs text-muted-foreground">
-                    Monthly automatic transfer
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };
