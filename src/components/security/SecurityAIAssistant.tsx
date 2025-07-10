@@ -101,9 +101,7 @@ How can I help secure your environment today?`,
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProactiveMode, setIsProactiveMode] = useState(true);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
-  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
-  const [streamingMessage, setStreamingMessage] = useState<string>("");
-  const [isStreaming, setIsStreaming] = useState(false);
+  // Removed WebSocket state variables
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -239,7 +237,7 @@ Would you like me to analyze these threats and recommend response actions?`,
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [messages, streamingMessage]);
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -449,28 +447,9 @@ Would you like me to analyze these threats and recommend response actions?`,
               </div>
             ))}
             
-            {/* Show streaming response */}
-            {isStreaming && streamingMessage && (
-              <div className="flex gap-3">
-                <Avatar className="h-8 w-8 flex-shrink-0 border border-red-800/30">
-                  <AvatarFallback className="bg-red-900/50 text-red-300">
-                    <Shield className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-                
-                <div className="flex-1 space-y-2">
-                  <div className="bg-gray-800/80 border border-red-800/30 rounded-lg p-3 backdrop-blur-sm text-gray-100">
-                    <div className="flex items-start gap-2">
-                      {getSeverityIcon(streamingMessage)}
-                      <p className="text-sm whitespace-pre-wrap flex-1">{streamingMessage}</p>
-                      <div className="w-2 h-4 bg-red-400 animate-pulse ml-1" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Removed streaming response display */}
             
-            {isLoading && !isStreaming && (
+            {isLoading && (
               <div className="flex gap-3">
                 <Avatar className="h-8 w-8 border border-red-800/30">
                   <AvatarFallback className="bg-red-900/50 text-red-300">
