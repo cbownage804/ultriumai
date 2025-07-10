@@ -23,7 +23,11 @@ import {
   Zap,
   Eye,
   Activity,
-  Terminal
+  Terminal,
+  Upload,
+  FileText,
+  Image,
+  Network
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -94,7 +98,10 @@ How can I help secure your environment today?`,
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isProactiveMode, setIsProactiveMode] = useState(true);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -147,6 +154,79 @@ How can I help secure your environment today?`,
       speechRecognition.start();
       setIsListening(true);
     }
+  };
+
+  // Proactive threat monitoring
+  useEffect(() => {
+    if (!isProactiveMode) return;
+    
+    const monitorThreats = async () => {
+      if (securityContext && securityContext.criticalThreats > 0) {
+        const proactiveMessage: SecurityMessage = {
+          id: `proactive-${Date.now()}`,
+          role: 'assistant',
+          content: `🔴 **PROACTIVE ALERT**: I've detected ${securityContext.criticalThreats} critical threats in your environment. 
+
+**Immediate Action Required:**
+• Review threat details and assess impact
+• Initiate containment procedures
+• Document incident for compliance
+
+Would you like me to analyze these threats and recommend response actions?`,
+          timestamp: new Date(),
+          context: {
+            activeAlerts: securityContext.activeAlerts,
+            criticalThreats: securityContext.criticalThreats,
+            openIncidents: securityContext.openIncidents,
+            complianceScore: securityContext.complianceScore,
+            suggestions: ["Analyze critical threats", "Show containment options", "Generate incident report"]
+          }
+        };
+        
+        setMessages(prev => {
+          // Only add if we don't already have a proactive message
+          if (!prev.some(msg => msg.id.startsWith('proactive-'))) {
+            return [...prev, proactiveMessage];
+          }
+          return prev;
+        });
+      }
+    };
+
+    const timer = setTimeout(monitorThreats, 3000); // Check after 3 seconds
+    return () => clearTimeout(timer);
+  }, [securityContext, isProactiveMode]);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    const validFiles = files.filter(file => {
+      const validTypes = [
+        'text/plain', 'text/csv', 'application/json', 'application/xml',
+        'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+        'application/pdf', 'text/log'
+      ];
+      return validTypes.includes(file.type) || file.name.endsWith('.log') || file.name.endsWith('.pcap');
+    });
+
+    if (validFiles.length > 0) {
+      setUploadedFiles(prev => [...prev, ...validFiles]);
+      toast({
+        title: "Files Uploaded",
+        description: `${validFiles.length} file(s) ready for analysis`,
+      });
+    }
+
+    if (files.length > validFiles.length) {
+      toast({
+        title: "Some Files Rejected",
+        description: "Only security logs, images, and supported formats are allowed",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   useEffect(() => {
@@ -381,6 +461,36 @@ How can I help secure your environment today?`,
         </ScrollArea>
 
         <div className="border-t border-red-800/20 p-4 bg-gradient-to-t from-black/50 to-transparent">
+          {/* File upload section */}
+          {uploadedFiles.length > 0 && (
+            <div className="mb-3 space-y-1">
+              <div className="text-xs text-gray-400 mb-2">Uploaded Files for Analysis:</div>
+              {uploadedFiles.map((file, index) => (
+                <div key={index} className="flex items-center gap-2 bg-gray-800/30 rounded p-2 border border-red-800/20">
+                  <div className="flex items-center gap-1 flex-1">
+                    {file.type.startsWith('image/') ? (
+                      <Image className="h-3 w-3 text-blue-400" />
+                    ) : file.name.endsWith('.log') || file.type.includes('text') ? (
+                      <FileText className="h-3 w-3 text-green-400" />
+                    ) : (
+                      <Network className="h-3 w-3 text-purple-400" />
+                    )}
+                    <span className="text-xs text-gray-300 truncate">{file.name}</span>
+                    <span className="text-xs text-gray-500">({Math.round(file.size / 1024)}KB)</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeFile(index)}
+                    className="h-6 w-6 p-0 text-gray-400 hover:text-red-400"
+                  >
+                    ×
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Textarea
               placeholder={isListening ? "🎤 Listening..." : "Ask about threats, incidents, compliance... or say 'Hey Defender'"}
@@ -391,6 +501,24 @@ How can I help secure your environment today?`,
               className="min-h-[40px] max-h-[100px] resize-none bg-gray-800/50 border-red-800/30 text-gray-100 placeholder:text-gray-400 focus:border-red-600"
               rows={1}
             />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              multiple
+              accept=".log,.txt,.csv,.json,.xml,.png,.jpg,.jpeg,.gif,.webp,.pdf,.pcap"
+              className="hidden"
+            />
+            <Button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading}
+              size="icon"
+              variant="outline"
+              className="h-10 w-10 flex-shrink-0 border-red-800/30 bg-gray-800/50 text-orange-400 hover:bg-orange-900/30"
+              title="Upload security logs, screenshots, or network captures"
+            >
+              <Upload className="h-4 w-4" />
+            </Button>
             <Button 
               onClick={toggleVoiceRecognition}
               disabled={isLoading}
@@ -449,6 +577,15 @@ How can I help secure your environment today?`,
             >
               <AlertTriangle className="h-3 w-3 mr-1" />
               Threats
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-6 text-gray-400 hover:text-white hover:bg-red-900/20"
+              onClick={() => setIsProactiveMode(!isProactiveMode)}
+            >
+              <Eye className="h-3 w-3 mr-1" />
+              {isProactiveMode ? 'Proactive ON' : 'Proactive OFF'}
             </Button>
           </div>
         </div>
