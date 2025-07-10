@@ -22,10 +22,13 @@ import {
   Upload,
   FileText,
   Image,
-  X
+  X,
+  Volume2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { VoiceControls } from './VoiceControls';
+import { useVoiceInterface } from '@/hooks/useVoiceInterface';
 
 // Speech Recognition API types
 declare global {
@@ -100,6 +103,7 @@ How can I help secure your environment today?`,
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { speak, settings: voiceSettings } = useVoiceInterface();
 
   // Initialize voice recognition
   useEffect(() => {
@@ -270,6 +274,11 @@ Would you like me to analyze these threats and recommend response actions?`,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Auto-speak the response if enabled
+      if (voiceSettings.autoSpeak && data.response) {
+        await speak(data.response);
+      }
 
       if (data.suggested_actions?.length > 0) {
         toast({
@@ -480,6 +489,16 @@ Would you like me to analyze these threats and recommend response actions?`,
             </div>
           </div>
         )}
+
+        {/* Voice Controls */}
+        <div className="px-4 py-2 border-t border-red-800/20 bg-gray-900/90">
+          <VoiceControls 
+            onVoiceMessage={(message) => {
+              setInputMessage(message);
+            }}
+            className="mb-2"
+          />
+        </div>
 
         {/* Input area */}
         <div className="p-4 border-t border-red-800/20 bg-gray-900/80 backdrop-blur-sm">
