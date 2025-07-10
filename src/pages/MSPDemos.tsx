@@ -337,8 +337,8 @@ const MSPDemos = () => {
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Discover how to create new recurring revenue streams by offering Ultrium's solutions 
-            as white-label services to your clients
+            Discover how to offer the complete UltriumAI platform as your white-label cybersecurity solution. 
+            All tools bundled together for maximum client value and your recurring revenue success.
           </p>
           <div className="flex justify-center gap-4 flex-wrap">
             <Badge variant="secondary" className="text-lg px-4 py-2">
@@ -367,8 +367,8 @@ const MSPDemos = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-success mb-2">White-Label</div>
-                <p className="text-muted-foreground">Complete branding control - it's YOUR service</p>
+                <div className="text-3xl font-bold text-success mb-2">Complete Platform</div>
+                <p className="text-muted-foreground">All tools included - one price, maximum value</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary mb-2">Quick Setup</div>

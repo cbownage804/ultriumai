@@ -402,19 +402,55 @@ const LiveDemos = () => {
         <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-6">
-              AI Security Demos
+              UltriumAI Complete Platform Demo
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
-              Experience our AI-powered security applications in action. Each demo showcases real capabilities you can integrate into your business today.
+              Experience our unified cybersecurity platform. All tools work together seamlessly - purchase once, access everything, manage from one dashboard.
             </p>
-            <div className="flex items-center justify-center gap-2 text-lg font-medium text-primary">
-              <Shield className="h-6 w-6" />
-              <span>Production-Ready • API Available • Enterprise-Grade</span>
+            <div className="flex items-center justify-center gap-6 text-lg font-medium">
+              <div className="flex items-center gap-2 text-primary">
+                <Shield className="h-6 w-6" />
+                <span>Complete Platform • Single Login • Unified Dashboard</span>
+              </div>
+            </div>
+            <div className="mt-6 p-4 bg-primary/10 rounded-lg max-w-2xl mx-auto">
+              <p className="text-lg font-semibold text-primary">🎯 One Platform, All Tools Included</p>
+              <p className="text-muted-foreground">No more managing multiple vendors - everything you need in one place</p>
             </div>
           </div>
         </section>
 
-        {/* Category Filter */}
+        {/* Platform Overview */}
+        <section className="py-12 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4">Complete Security Platform</h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                All these tools are included in every UltriumAI plan. No add-ons, no extra fees - just one comprehensive platform.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div className="p-4 bg-card rounded-lg">
+                <div className="text-2xl font-bold text-primary">12+</div>
+                <div className="text-sm text-muted-foreground">Security Tools</div>
+              </div>
+              <div className="p-4 bg-card rounded-lg">
+                <div className="text-2xl font-bold text-success">1</div>
+                <div className="text-sm text-muted-foreground">Dashboard</div>
+              </div>
+              <div className="p-4 bg-card rounded-lg">
+                <div className="text-2xl font-bold text-info">1</div>
+                <div className="text-sm text-muted-foreground">Login</div>
+              </div>
+              <div className="p-4 bg-card rounded-lg">
+                <div className="text-2xl font-bold text-warning">1</div>
+                <div className="text-sm text-muted-foreground">Price</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Tool Categories */}
         <section className="py-8 border-b border-border/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-wrap gap-2 justify-center">
@@ -425,16 +461,20 @@ const LiveDemos = () => {
                   onClick={() => setSelectedCategory(category)}
                   className="capitalize"
                 >
-                  {category === "all" ? "All Demos" : category}
+                  {category === "all" ? "All Tools" : category}
                 </Button>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Demo Grid */}
+        {/* Tools Grid */}
         <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Explore Each Tool</h2>
+              <p className="text-lg text-muted-foreground">Every tool is part of your UltriumAI platform - try them individually or use them together</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredApps.map((app) => (
                 <Card key={app.id} className="card-glow hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105">
