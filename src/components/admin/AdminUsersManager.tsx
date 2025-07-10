@@ -87,14 +87,29 @@ export const AdminUsersManager = () => {
     };
   }, []);
 
-  const handleUpdateUser = async (userId: string, updates: any) => {
+  const handleUpdateUser = async (userId: string, updates: any, subscriptionUpdates?: any) => {
     try {
-      const { error } = await supabase
+      // Update profile
+      const { error: profileError } = await supabase
         .from('profiles')
         .update(updates)
         .eq('id', userId);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update subscription if provided
+      if (subscriptionUpdates) {
+        const { error: subscriptionError } = await supabase
+          .from('subscribers')
+          .upsert({
+            user_id: userId,
+            email: editingUser.email,
+            ...subscriptionUpdates,
+            updated_at: new Date().toISOString()
+          });
+
+        if (subscriptionError) throw subscriptionError;
+      }
 
       toast({
         title: "Success",
@@ -349,6 +364,60 @@ export const AdminUsersManager = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="subscription_status">Subscription Status</Label>
+                  <Select 
+                    value={editingUser.subscribers?.[0]?.subscribed ? 'true' : 'false'} 
+                    onValueChange={(value) => {
+                      const subscriber = editingUser.subscribers?.[0] || {};
+                      setEditingUser({
+                        ...editingUser, 
+                        subscribers: [{
+                          ...subscriber,
+                          subscribed: value === 'true',
+                          user_id: editingUser.user_id
+                        }]
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subscription_tier">Subscription Tier</Label>
+                  <Select 
+                    value={editingUser.subscribers?.[0]?.subscription_tier || 'free'} 
+                    onValueChange={(value) => {
+                      const subscriber = editingUser.subscribers?.[0] || {};
+                      setEditingUser({
+                        ...editingUser, 
+                        subscribers: [{
+                          ...subscriber,
+                          subscription_tier: value,
+                          user_id: editingUser.user_id
+                        }]
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="basic">Basic</SelectItem>
+                      <SelectItem value="premium">Premium</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingUser(null)}>
                   Cancel
@@ -357,6 +426,9 @@ export const AdminUsersManager = () => {
                   full_name: editingUser.full_name,
                   company_name: editingUser.company_name,
                   account_type: editingUser.account_type
+                }, {
+                  subscribed: editingUser.subscribers?.[0]?.subscribed || false,
+                  subscription_tier: editingUser.subscribers?.[0]?.subscription_tier || 'free'
                 })}>
                   Save Changes
                 </Button>
