@@ -65,36 +65,48 @@ serve(async (req) => {
     if (positives > 0) {
       const riskPercentage = (positives / total) * 100;
       
-      if (riskPercentage >= 50) {
+      // More conservative risk assessment to reduce false positives
+      if (positives >= 10 && riskPercentage >= 30) {
         riskLevel = 'critical';
-      } else if (riskPercentage >= 25) {
+      } else if (positives >= 5 && riskPercentage >= 20) {
         riskLevel = 'high';
-      } else if (riskPercentage >= 10) {
+      } else if (positives >= 3 && riskPercentage >= 10) {
         riskLevel = 'medium';
-      } else {
+      } else if (positives >= 1) {
         riskLevel = 'low';
       }
 
-      // Extract threat details
+      // Extract threat details only from engines that detected something
       if (reportData.scans) {
-        threats = Object.entries(reportData.scans)
+        const detectedThreats = Object.entries(reportData.scans)
           .filter(([_, scan]: [string, any]) => scan.detected)
-          .map(([engine, scan]: [string, any]) => `${engine}: ${scan.result}`)
-          .slice(0, 5); // Limit to top 5 threats
+          .map(([engine, scan]: [string, any]) => `${engine}: ${scan.result}`);
+        
+        // Only show threats if there are significant detections
+        if (positives >= 3 || riskLevel === 'high' || riskLevel === 'critical') {
+          threats = detectedThreats.slice(0, 5); // Limit to top 5 threats
+        } else {
+          // For low-level detections, show a generic message
+          threats = [`${positives} security engine(s) flagged this URL for review`];
+        }
       }
     }
 
-    const reputationScore = Math.max(0, 100 - (positives * 10));
+    const reputationScore = Math.max(0, 100 - (positives >= 5 ? positives * 8 : positives * 3));
 
     // Generate recommendations
     const recommendations = [];
     if (riskLevel === 'safe') {
       recommendations.push('URL appears safe to visit');
-      recommendations.push('No known security threats detected');
+      recommendations.push('No significant security threats detected');
+    } else if (riskLevel === 'low') {
+      recommendations.push('URL has minimal security concerns');
+      recommendations.push('Consider verifying the website source');
+      recommendations.push('Proceed with normal caution');
     } else {
       recommendations.push('Exercise caution when accessing this URL');
       recommendations.push('Consider using alternative trusted sources');
-      if (positives > 5) {
+      if (positives >= 5) {
         recommendations.push('This URL has been flagged by multiple security vendors');
         recommendations.push('Avoid entering sensitive information');
       }
