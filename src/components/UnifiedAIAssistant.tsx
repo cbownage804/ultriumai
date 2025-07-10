@@ -28,6 +28,10 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserCredits } from "@/hooks/useUserCredits";
+import { useSubscription } from "@/hooks/useSubscription";
+import { deductCredits } from "@/utils/creditUtils";
+import { CREDIT_COSTS } from "@/types/credits";
 
 interface Message {
   id: string;
@@ -60,6 +64,8 @@ export const UnifiedAIAssistant = ({
 }: UnifiedAIAssistantProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { credits, remainingCredits, refreshCredits } = useUserCredits();
+  const { subscription } = useSubscription();
   const [activeTab, setActiveTab] = useState<'ultrium' | 'security' | 'helpdesk' | 'safescan' | 'rmm'>(defaultSource);
   const [messages, setMessages] = useState<Message[]>([{
     id: '1',
@@ -130,8 +136,48 @@ Select a tab above or ask me anything!`,
     return configs[source as keyof typeof configs] || configs.ultrium;
   };
 
+  const getCreditCost = (source: string) => {
+    switch (source) {
+      case 'ultrium': return CREDIT_COSTS.CHAT_MESSAGE_ADVANCED;
+      case 'security': return CREDIT_COSTS.CHAT_MESSAGE_ADVANCED; 
+      case 'helpdesk': return CREDIT_COSTS.CHAT_MESSAGE_BASIC;
+      case 'safescan': return CREDIT_COSTS.CHAT_MESSAGE_ADVANCED;
+      case 'rmm': return CREDIT_COSTS.CHAT_MESSAGE_BASIC;
+      default: return CREDIT_COSTS.CHAT_MESSAGE_BASIC;
+    }
+  };
+
+  const checkSubscriptionAccess = (source: string) => {
+    // Premium features require subscription
+    if (['security', 'safescan', 'rmm'].includes(source)) {
+      return subscription.subscribed && ['premium', 'enterprise'].includes(subscription.subscription_tier);
+    }
+    return true;
+  };
+
   const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !user) return;
+
+    // Check subscription access
+    if (!checkSubscriptionAccess(activeTab)) {
+      toast({
+        title: "Premium Feature",
+        description: `${getSourceConfig(activeTab).label} requires a premium subscription.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check credit availability
+    const creditsNeeded = getCreditCost(activeTab);
+    if (remainingCredits < creditsNeeded) {
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${creditsNeeded} credits to use ${getSourceConfig(activeTab).label}. You have ${remainingCredits} remaining.`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -147,14 +193,30 @@ Select a tab above or ask me anything!`,
     setInput("");
 
     try {
+      // Deduct credits before making the call
+      const creditResult = await deductCredits(user.id, 'CHAT_MESSAGE_ADVANCED', creditsNeeded);
+      if (!creditResult.success) {
+        throw new Error(creditResult.error || 'Failed to deduct credits');
+      }
+
       const sourceConfig = getSourceConfig(activeTab);
       
+      // Get MSP context if applicable
+      const { data: mspData } = await supabase
+        .from('msps')
+        .select('id, company_name, brand_name')
+        .eq('user_id', user.id)
+        .single();
+
       const { data, error } = await supabase.functions.invoke(sourceConfig.function, {
         body: {
           message: userInput,
           userId: user?.id,
           context: context,
-          source: activeTab
+          source: activeTab,
+          mspId: mspData?.id,
+          mspName: mspData?.company_name || mspData?.brand_name,
+          subscriptionTier: subscription.subscription_tier
         }
       });
 
@@ -167,11 +229,15 @@ Select a tab above or ask me anything!`,
         timestamp: new Date(),
         metadata: {
           source: activeTab as any,
+          creditsUsed: creditsNeeded,
           ...data.metadata
         }
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Refresh credits to show updated balance
+      refreshCredits();
 
       // Handle different response types
       if (data.metadata?.ticketCreated) {
@@ -241,10 +307,15 @@ Select a tab above or ask me anything!`,
       }`}>
         <CardHeader className="pb-3 border-b bg-gradient-to-r from-primary/5 to-secondary/5">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Bot className="h-5 w-5 text-primary" />
-              AI Assistant
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Bot className="h-5 w-5 text-primary" />
+                AI Assistant
+              </CardTitle>
+              <Badge variant="outline" className="text-xs">
+                {remainingCredits} credits
+              </Badge>
+            </div>
             <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
