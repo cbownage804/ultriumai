@@ -38,7 +38,7 @@ const gptItems = [
   { title: "Deploy", url: "/dashboard/gpt/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
 ];
 
-const securityItems = [
+const safeSuiteItems = [
   { title: "UltriumDefender AI", url: "/security-ai", icon: Bot, tooltip: "AI-powered security analyst and threat management center" },
   { title: "Security Center", url: "/dashboard/security-center", icon: Shield, tooltip: "Unified security monitoring and threat management" },
   { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Enterprise password management and security" },
@@ -49,12 +49,12 @@ const securityItems = [
   { title: "SafeLink", url: "/dashboard/safelink", icon: Link, tooltip: "URL safety checking and phishing protection" },
   { title: "SafeWeb", url: "/dashboard/safeweb", icon: Shield, tooltip: "Dark web monitoring and threat intelligence" },
   { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
+  { title: "SafeAV", url: "/dashboard/antivirus", icon: Shield, tooltip: "AI-powered antivirus protection and threat detection" },
+  { title: "SafeEDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
 ];
 
 const managedServicesItems = [
   { title: "RMM", url: "/dashboard/rmm", icon: Server, tooltip: "Remote Monitoring and Management" },
-  { title: "SafeAV", url: "/dashboard/antivirus", icon: Shield, tooltip: "AI-powered antivirus protection and threat detection" },
-  { title: "SafeEDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
   { title: "Helpdesk", url: "/dashboard/helpdesk", icon: HeadphonesIcon, tooltip: "AI-powered helpdesk and ticketing system" },
 ];
 
@@ -201,14 +201,14 @@ export function AppSidebar() {
           </SidebarGroup>
         </Collapsible>
 
-        {/* Security Tools Section */}
+        {/* SafeSuite Section */}
         <Collapsible open={openSections.security} onOpenChange={() => toggleSection('security')}>
           <SidebarGroup>
             <SidebarGroupLabel asChild>
               <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
                 <span className="flex items-center gap-2">
                   <Shield className="h-4 w-4" />
-                  {!isCollapsed && "Security Tools"}
+                  {!isCollapsed && "SafeSuite"}
                 </span>
                 {!isCollapsed && (
                   openSections.security ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
@@ -218,7 +218,7 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {securityItems.map((item) => (
+                  {safeSuiteItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild tooltip={item.tooltip}>
                         <NavLink to={item.url} className={getNavClass}>
