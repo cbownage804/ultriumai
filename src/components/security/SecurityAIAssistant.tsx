@@ -101,7 +101,7 @@ How can I help secure your environment today?`,
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProactiveMode, setIsProactiveMode] = useState(true);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
-  // Removed WebSocket state variables
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'error'>('connected');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
