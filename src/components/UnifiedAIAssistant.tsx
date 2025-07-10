@@ -148,11 +148,10 @@ Select a tab above or ask me anything!`,
   };
 
   const checkSubscriptionAccess = (source: string) => {
-    // Only advanced security and RMM features require subscription
-    if (['security', 'rmm'].includes(source)) {
+    // Premium features require subscription
+    if (['security', 'safescan', 'rmm'].includes(source)) {
       return subscription.subscribed && ['premium', 'enterprise'].includes(subscription.subscription_tier);
     }
-    // SafeScan and basic features are available to all users
     return true;
   };
 
