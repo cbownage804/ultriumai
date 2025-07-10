@@ -6555,6 +6555,48 @@ export type Database = {
           },
         ]
       }
+      scheduled_scans: {
+        Row: {
+          created_at: string
+          frequency: string
+          id: string
+          is_active: boolean
+          last_run_at: string | null
+          next_run_at: string
+          scan_target: string
+          scan_type: string
+          schedule_time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          frequency: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at: string
+          scan_target: string
+          scan_type: string
+          schedule_time?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          next_run_at?: string
+          scan_target?: string
+          scan_type?: string
+          schedule_time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       script_executions: {
         Row: {
           completed_at: string | null
@@ -8333,6 +8375,10 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      calculate_next_run: {
+        Args: { frequency: string; schedule_time: string }
+        Returns: string
       }
       get_helpdesk_role: {
         Args: { _user_id: string; _context_id?: string }
