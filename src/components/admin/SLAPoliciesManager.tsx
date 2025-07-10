@@ -14,19 +14,16 @@ import { Clock, Plus, Edit, Trash2, AlertTriangle, Timer } from "lucide-react";
 
 interface SLAPolicy {
   id: string;
-  user_id: string;
   name: string;
   description: string | null;
   priority_level: string;
-  response_hours: number;
+  first_response_hours: number;
   resolution_hours: number;
-  business_hours_only: boolean;
-  escalation_enabled: boolean;
+  business_hours_only: boolean | null;
   escalation_hours: number | null;
-  notification_intervals: number[];
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  is_active: boolean | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 const priorityLevels = [
@@ -49,13 +46,9 @@ export const SLAPoliciesManager = () => {
 
   const loadPolicies = async () => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
-
       const { data, error } = await supabase
         .from('sla_policies')
         .select('*')
-        .eq('user_id', user.user.id)
         .order('priority_level', { ascending: true });
 
       if (error) throw error;
@@ -74,9 +67,6 @@ export const SLAPoliciesManager = () => {
 
   const savePolicy = async (policyData: Partial<SLAPolicy>) => {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return;
-
       if (editingPolicy) {
         const { error } = await supabase
           .from('sla_policies')
@@ -84,12 +74,10 @@ export const SLAPoliciesManager = () => {
             name: policyData.name,
             description: policyData.description,
             priority_level: policyData.priority_level,
-            response_hours: policyData.response_hours,
+            first_response_hours: policyData.first_response_hours,
             resolution_hours: policyData.resolution_hours,
             business_hours_only: policyData.business_hours_only,
-            escalation_enabled: policyData.escalation_enabled,
             escalation_hours: policyData.escalation_hours,
-            notification_intervals: policyData.notification_intervals,
             is_active: policyData.is_active,
           })
           .eq('id', editingPolicy.id);
@@ -99,16 +87,13 @@ export const SLAPoliciesManager = () => {
         const { error } = await supabase
           .from('sla_policies')
           .insert({
-            user_id: user.user.id,
             name: policyData.name,
             description: policyData.description,
             priority_level: policyData.priority_level,
-            response_hours: policyData.response_hours,
+            first_response_hours: policyData.first_response_hours,
             resolution_hours: policyData.resolution_hours,
             business_hours_only: policyData.business_hours_only,
-            escalation_enabled: policyData.escalation_enabled,
             escalation_hours: policyData.escalation_hours,
-            notification_intervals: policyData.notification_intervals,
             is_active: policyData.is_active,
           });
 
@@ -254,7 +239,7 @@ export const SLAPoliciesManager = () => {
                       <Timer className="h-4 w-4 text-blue-500" />
                       <div>
                         <p className="font-medium">Response Time</p>
-                        <p className="text-muted-foreground">{policy.response_hours}h</p>
+                        <p className="text-muted-foreground">{policy.first_response_hours}h</p>
                       </div>
                     </div>
                     
@@ -271,15 +256,10 @@ export const SLAPoliciesManager = () => {
                     {policy.business_hours_only && (
                       <Badge variant="outline">Business Hours Only</Badge>
                     )}
-                    {policy.escalation_enabled && (
+                    {policy.escalation_hours && (
                       <Badge variant="outline">
                         <AlertTriangle className="h-3 w-3 mr-1" />
-                        Escalation Enabled
-                      </Badge>
-                    )}
-                    {policy.notification_intervals.length > 0 && (
-                      <Badge variant="outline">
-                        {policy.notification_intervals.length} Reminders
+                        Escalation in {policy.escalation_hours}h
                       </Badge>
                     )}
                   </div>
@@ -343,41 +323,16 @@ const SLAPolicyForm = ({ policy, onSave, onCancel }: SLAPolicyFormProps) => {
     name: policy?.name || '',
     description: policy?.description || '',
     priority_level: policy?.priority_level || 'medium',
-    response_hours: policy?.response_hours || 4,
+    first_response_hours: policy?.first_response_hours || 4,
     resolution_hours: policy?.resolution_hours || 24,
     business_hours_only: policy?.business_hours_only ?? true,
-    escalation_enabled: policy?.escalation_enabled ?? true,
-    escalation_hours: policy?.escalation_hours || 2,
-    notification_intervals: policy?.notification_intervals || [1, 4, 24],
+    escalation_hours: policy?.escalation_hours || null,
     is_active: policy?.is_active ?? true,
   });
 
-  const [intervalInput, setIntervalInput] = useState('');
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...formData,
-      escalation_hours: formData.escalation_enabled ? formData.escalation_hours : null,
-    });
-  };
-
-  const addInterval = () => {
-    const hours = parseInt(intervalInput);
-    if (hours > 0 && !formData.notification_intervals.includes(hours)) {
-      setFormData(prev => ({
-        ...prev,
-        notification_intervals: [...prev.notification_intervals, hours].sort((a, b) => a - b)
-      }));
-      setIntervalInput('');
-    }
-  };
-
-  const removeInterval = (hours: number) => {
-    setFormData(prev => ({
-      ...prev,
-      notification_intervals: prev.notification_intervals.filter(h => h !== hours)
-    }));
+    onSave(formData);
   };
 
   return (
@@ -425,13 +380,13 @@ const SLAPolicyForm = ({ policy, onSave, onCancel }: SLAPolicyFormProps) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="response_hours">Response Time (Hours)</Label>
+          <Label htmlFor="first_response_hours">First Response Time (Hours)</Label>
           <Input
-            id="response_hours"
+            id="first_response_hours"
             type="number"
             min="1"
-            value={formData.response_hours}
-            onChange={(e) => setFormData({ ...formData, response_hours: parseInt(e.target.value) || 1 })}
+            value={formData.first_response_hours}
+            onChange={(e) => setFormData({ ...formData, first_response_hours: parseInt(e.target.value) || 1 })}
             required
           />
         </div>
@@ -451,56 +406,22 @@ const SLAPolicyForm = ({ policy, onSave, onCancel }: SLAPolicyFormProps) => {
       <div className="flex items-center space-x-2">
         <Switch
           id="business_hours_only"
-          checked={formData.business_hours_only}
+          checked={!!formData.business_hours_only}
           onCheckedChange={(checked) => setFormData({ ...formData, business_hours_only: checked })}
         />
         <Label htmlFor="business_hours_only">Business Hours Only</Label>
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="escalation_enabled"
-            checked={formData.escalation_enabled}
-            onCheckedChange={(checked) => setFormData({ ...formData, escalation_enabled: checked })}
-          />
-          <Label htmlFor="escalation_enabled">Enable Escalation</Label>
-        </div>
-        
-        {formData.escalation_enabled && (
-          <div>
-            <Label htmlFor="escalation_hours">Escalation Time (Hours)</Label>
-            <Input
-              id="escalation_hours"
-              type="number"
-              min="1"
-              value={formData.escalation_hours}
-              onChange={(e) => setFormData({ ...formData, escalation_hours: parseInt(e.target.value) || 1 })}
-            />
-          </div>
-        )}
-      </div>
-
       <div>
-        <Label>Notification Intervals (Hours before SLA breach)</Label>
-        <div className="flex gap-2 mt-1">
-          <Input
-            type="number"
-            min="1"
-            value={intervalInput}
-            onChange={(e) => setIntervalInput(e.target.value)}
-            placeholder="Hours"
-            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInterval())}
-          />
-          <Button type="button" onClick={addInterval}>Add</Button>
-        </div>
-        <div className="flex flex-wrap gap-1 mt-2">
-          {formData.notification_intervals.map((hours) => (
-            <Badge key={hours} variant="secondary" className="cursor-pointer" onClick={() => removeInterval(hours)}>
-              {hours}h ×
-            </Badge>
-          ))}
-        </div>
+        <Label htmlFor="escalation_hours">Escalation Time (Hours, optional)</Label>
+        <Input
+          id="escalation_hours"
+          type="number"
+          min="1"
+          value={formData.escalation_hours || ''}
+          onChange={(e) => setFormData({ ...formData, escalation_hours: e.target.value ? parseInt(e.target.value) : null })}
+          placeholder="Enter hours for escalation"
+        />
       </div>
 
       <div className="flex items-center space-x-2">
