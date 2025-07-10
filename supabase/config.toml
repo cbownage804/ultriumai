@@ -20,3 +20,37 @@ verify_jwt = true
 
 [functions.ai-remote-assistant]
 verify_jwt = true
+
+# Security Tools Configuration
+[functions.siem-event-collector]
+verify_jwt = false
+
+[functions.siem-alert-processor]
+verify_jwt = false
+
+[functions.threat-intelligence-updater]
+verify_jwt = false
+
+[functions.ai-edr-behavioral-engine]
+verify_jwt = false
+
+[functions.incident-manager]
+verify_jwt = false
+
+[functions.safedoc-scanner]
+verify_jwt = false
+
+[functions.safemail-scanner]
+verify_jwt = false
+
+[functions.safenet-scanner]
+verify_jwt = false
+
+[functions.security-data-pipeline]
+verify_jwt = false
+
+[functions.security-automation-orchestrator]
+verify_jwt = false
+
+[functions.activate-security-suite]
+verify_jwt = false
