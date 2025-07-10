@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   Shield, 
@@ -33,7 +34,12 @@ import {
   RefreshCw,
   Bot,
   Zap,
-  Brain
+  Brain,
+  TrendingUp,
+  Star,
+  Clock,
+  MessageSquare,
+  Database
 } from "lucide-react";
 
 interface MSPClient {
@@ -81,6 +87,7 @@ interface MSPMetrics {
 }
 
 export const MSPDashboard = () => {
+  const { user } = useAuth();
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<MSPClient | null>(null);
   const [metrics, setMetrics] = useState<MSPMetrics>({
@@ -101,6 +108,44 @@ export const MSPDashboard = () => {
     max_users: 5
   });
   const { toast } = useToast();
+
+  const quickActions = [
+    {
+      title: "Add New Client",
+      description: "Onboard a new MSP client",
+      icon: Plus,
+      action: () => setShowAddClient(true),
+      color: "bg-blue-500",
+    },
+    {
+      title: "Deploy RMM Agent",
+      description: "Install monitoring agent",
+      icon: Download,
+      action: () => toast({ title: "Select a client first" }),
+      color: "bg-green-500",
+    },
+    {
+      title: "Security Dashboard",
+      description: "View threat intelligence",
+      icon: Shield,
+      action: () => window.open("/security-dashboard", "_blank"),
+      color: "bg-red-500",
+    },
+    {
+      title: "AI Helpdesk",
+      description: "Manage support tickets",
+      icon: Bot,
+      action: () => toast({ title: "Opening AI Helpdesk..." }),
+      color: "bg-purple-500",
+    },
+  ];
+
+  const recentActivity = [
+    { action: "New client onboarded: TechCorp", time: "1 hour ago", type: "client" },
+    { action: "Critical alert resolved for Acme Inc", time: "3 hours ago", type: "alert" },
+    { action: "RMM agent deployed to 5 endpoints", time: "6 hours ago", type: "deploy" },
+    { action: "Monthly billing processed", time: "1 day ago", type: "billing" },
+  ];
 
   useEffect(() => {
     loadMSPDashboard();
@@ -320,13 +365,58 @@ export const MSPDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">MSP Dashboard</h1>
-          <p className="text-muted-foreground">Manage all your clients from one unified platform</p>
+    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Welcome Section */}
+      <div className="space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          Manage all your MSP clients with AI-powered tools and automation
+        </p>
+        <div className="text-sm text-muted-foreground">
+          {metrics.totalClients > 0 ? (
+            <span className="text-success">Managing {metrics.totalClients} active clients • ${metrics.monthlyRevenue.toLocaleString()} MRR</span>
+          ) : (
+            <span className="text-muted-foreground">Ready to onboard your first client</span>
+          )}
         </div>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>
+            Common MSP management tasks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {quickActions.map((action, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                className="h-auto p-4 flex-col space-y-2"
+                onClick={action.action}
+              >
+                <div className={`p-2 rounded-full ${action.color}`}>
+                  <action.icon className="h-4 w-4 text-white" />
+                </div>
+                <div className="text-center">
+                  <div className="font-medium">{action.title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {action.description}
+                  </div>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Header Actions */}
+      <div className="flex items-center justify-between">
         <div className="flex space-x-2">
           <Dialog open={showAddClient} onOpenChange={setShowAddClient}>
             <DialogTrigger asChild>
@@ -500,6 +590,88 @@ export const MSPDashboard = () => {
             <p className="text-xs text-muted-foreground">
               Platform uptime
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Clients */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Recent Clients
+            </CardTitle>
+            <CardDescription>
+              Your latest MSP clients
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {clients.slice(0, 4).map((client) => (
+                <div key={client.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-8 h-8 rounded flex items-center justify-center text-white text-sm font-medium bg-primary"
+                    >
+                      {client.company_name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-medium">{client.company_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {client.endpoints?.length || 0} endpoints
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant={client.billing_status === 'active' ? "default" : "secondary"}>
+                    {client.billing_status}
+                  </Badge>
+                </div>
+              ))}
+              {clients.length === 0 && (
+                <div className="text-center py-8">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Clients Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Add your first MSP client to get started.
+                  </p>
+                  <Button onClick={() => setShowAddClient(true)}>
+                    Add Your First Client
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+            <CardDescription>
+              Latest actions on your MSP platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
+                  <div className="p-1.5 rounded-full bg-muted">
+                    {activity.type === 'client' && <Users className="h-3 w-3" />}
+                    {activity.type === 'alert' && <AlertTriangle className="h-3 w-3" />}
+                    {activity.type === 'deploy' && <Download className="h-3 w-3" />}
+                    {activity.type === 'billing' && <Activity className="h-3 w-3" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{activity.action}</p>
+                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
