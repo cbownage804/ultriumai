@@ -39,7 +39,6 @@ const gptItems = [
 ];
 
 const safeSuiteItems = [
-  { title: "SafeShield AI", url: "/security-ai", icon: Bot, tooltip: "AI-powered security analyst and threat management center" },
   { title: "SafeShield", url: "/dashboard/safeshield", icon: Shield, tooltip: "Unified endpoint security platform with EDR, MDR, and Antivirus" },
   { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Enterprise password management and security" },
   { title: "SafeScan", url: "/dashboard/safescan", icon: Shield, tooltip: "Comprehensive security scanning for emails, documents, and URLs" },
