@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SecurityAIAssistant } from "@/components/security/SecurityAIAssistant";
+
 import { ThreatPredictionEngine } from "@/components/security/ThreatPredictionEngine";
 import { ThreatAnalysisEngine } from "@/components/security/ThreatAnalysisEngine";
 import { AutomatedActions } from "@/components/security/AutomatedActions";
@@ -478,12 +478,6 @@ export const SafeShieldApp = () => {
         </TabsContent>
       </Tabs>
 
-      {/* AI Assistant - Available on all tabs */}
-      <SecurityAIAssistant 
-        isMinimized={isAIMinimized}
-        onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
-        securityContext={securityMetrics}
-      />
     </div>
   );
 };

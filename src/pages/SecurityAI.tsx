@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SecurityAIAssistant } from "@/components/security/SecurityAIAssistant";
+
 import { ThreatPredictionEngine } from "@/components/security/ThreatPredictionEngine";
 import { ThreatAnalysisEngine } from "@/components/security/ThreatAnalysisEngine";
 import { AutomatedActions } from "@/components/security/AutomatedActions";
@@ -396,12 +396,6 @@ const SecurityAI = () => {
         </CardContent>
       </Card>
 
-      {/* AI Assistant */}
-      <SecurityAIAssistant 
-        isMinimized={isAIMinimized}
-        onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
-        securityContext={securityMetrics}
-      />
     </div>
   );
 };
