@@ -28,15 +28,25 @@ except ImportError:
 
 # Update these values for your deployment
 SUPABASE_FUNCTIONS_BASE = "https://nsyobmjpdpvesjwdphlh.functions.supabase.co"
-API_KEY = "your-ultrium-secret-key"  # Replace with your actual API key
+API_KEY = "ultrium_rmm_7K9mP3xQ8vN2wR5tY6uI1oE4aS9dF7gH2jK5lM8nB3vC6xZ"  # Your Ultrium API key
 HOSTNAME = socket.gethostname()
 POLL_INTERVAL = 60  # seconds
 COMMAND_TIMEOUT = 300  # 5 minutes max per command
 
+# Deployment Configuration
+DEPLOYMENT_TYPE = "direct"  # Options: "direct" or "msp_client"
+MSP_CLIENT_ID = None  # Set this for MSP client deployments
+
+# Build headers based on deployment type
 HEADERS = {
     "Content-Type": "application/json",
-    "x-ultrium-key": API_KEY
+    "x-ultrium-key": API_KEY,
+    "x-deployment-type": DEPLOYMENT_TYPE
 }
+
+# Add MSP client header if configured
+if DEPLOYMENT_TYPE == "msp_client" and MSP_CLIENT_ID:
+    HEADERS["x-msp-client-id"] = MSP_CLIENT_ID
 
 # ============================
 # LOGGING SETUP

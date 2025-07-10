@@ -26,7 +26,17 @@ serve(async (req) => {
     )
 
     const data = await req.json()
-    console.log('📥 Device check-in received:', { hostname: data.hostname, ip: data.ip_address })
+    
+    // Get deployment configuration from headers
+    const deploymentType = req.headers.get('x-deployment-type') || 'direct' // 'direct' or 'msp_client'
+    const mspClientId = req.headers.get('x-msp-client-id') // Client ID for MSP deployments
+    
+    console.log('📥 Device check-in received:', { 
+      hostname: data.hostname, 
+      ip: data.ip_address,
+      deploymentType,
+      mspClientId: mspClientId ? mspClientId.substring(0, 8) + '...' : null
+    })
 
     const {
       hostname,
@@ -47,6 +57,26 @@ serve(async (req) => {
       )
     }
 
+    // For MSP deployments, validate client exists and get customer_id
+    let assignedCustomerId = null
+    if (deploymentType === 'msp_client' && mspClientId) {
+      const { data: client } = await supabase
+        .from('msp_clients')
+        .select('id')
+        .eq('id', mspClientId)
+        .maybeSingle()
+      
+      if (!client) {
+        console.error('❌ Invalid MSP client ID:', mspClientId)
+        return new Response(
+          JSON.stringify({ error: 'Invalid MSP client configuration' }), 
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      assignedCustomerId = mspClientId
+      console.log('✅ MSP client validated:', mspClientId.substring(0, 8) + '...')
+    }
+
     // Upsert device in rmm_devices table
     const { data: device, error: upsertError } = await supabase
       .from('rmm_devices')
@@ -55,6 +85,7 @@ serve(async (req) => {
         ip_address,
         os_info: os,
         rustdesk_id,
+        customer_id: assignedCustomerId, // Assign to MSP client if specified
         last_seen: new Date().toISOString(),
         status: 'online',
         cpu_usage: Math.round(cpu_usage || 0),
@@ -105,7 +136,9 @@ serve(async (req) => {
       JSON.stringify({ 
         status: 'ok', 
         device_id: device.id,
-        message: `Device ${hostname} checked in successfully`
+        deployment_type: deploymentType,
+        client_assigned: !!assignedCustomerId,
+        message: `Device ${hostname} checked in successfully (${deploymentType})`
       }), 
       { 
         status: 200, 
