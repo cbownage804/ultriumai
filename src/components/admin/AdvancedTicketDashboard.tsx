@@ -88,68 +88,73 @@ export const AdvancedTicketDashboard = () => {
     try {
       setLoading(true);
       
-      // Since we don't have actual ticket data, we'll simulate metrics
-      // In a real app, you'd query your helpdesk_tickets table
-      const mockMetrics: TicketMetrics = {
-        totalTickets: 156,
-        openTickets: 23,
-        closedTickets: 133,
-        avgResponseTime: 2.5, // hours
-        avgResolutionTime: 18.5, // hours
-        slaBreaches: 8,
-        satisfactionScore: 4.2,
+      // Try to load real ticket data from the database
+      let totalTickets = 0;
+      let openTickets = 0;
+      let closedTickets = 0;
+      let recentActivity: TicketActivity[] = [];
+
+      try {
+        // Query support_tickets table
+        const { data: tickets, error } = await supabase
+          .from('support_tickets')
+          .select('*')
+          .gte('created_at', dateRange.from.toISOString())
+          .lte('created_at', dateRange.to.toISOString());
+
+        if (!error && tickets) {
+          totalTickets = tickets.length;
+          openTickets = tickets.filter(t => ['open', 'in-progress', 'pending'].includes(t.status)).length;
+          closedTickets = tickets.filter(t => ['resolved', 'closed'].includes(t.status)).length;
+          
+          // Create recent activity from actual tickets
+          recentActivity = tickets
+            .slice(0, 5)
+            .map(ticket => ({
+              id: ticket.id,
+              type: 'created' as const,
+              ticketId: ticket.id.slice(0, 8),
+              title: ticket.title,
+              priority: ticket.priority,
+              timestamp: ticket.created_at,
+            }));
+        }
+      } catch (dbError) {
+        console.log('No tickets found or table not available');
+      }
+
+      const metricsData: TicketMetrics = {
+        totalTickets,
+        openTickets,
+        closedTickets,
+        avgResponseTime: 0,
+        avgResolutionTime: 0,
+        slaBreaches: 0,
+        satisfactionScore: 0,
         ticketsByPriority: {
-          low: 45,
-          medium: 67,
-          high: 32,
-          critical: 12,
+          low: 0,
+          medium: 0,
+          high: 0,
+          critical: 0,
         },
         ticketsByStatus: {
-          open: 23,
-          'in-progress': 15,
-          pending: 8,
-          resolved: 45,
-          closed: 65,
+          open: openTickets,
+          'in-progress': 0,
+          pending: 0,
+          resolved: 0,
+          closed: closedTickets,
         },
         ticketsByCategory: {
-          'Technical Support': 78,
-          'Account Management': 23,
-          'Billing': 19,
-          'Feature Request': 15,
-          'Bug Report': 21,
+          'Technical Support': 0,
+          'Account Management': 0,
+          'Billing': 0,
+          'Feature Request': 0,
+          'Bug Report': 0,
         },
-        recentActivity: [
-          {
-            id: '1',
-            type: 'created',
-            ticketId: 'T-001',
-            title: 'Unable to login to dashboard',
-            priority: 'high',
-            timestamp: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            type: 'closed',
-            ticketId: 'T-002',
-            title: 'Password reset issue',
-            priority: 'medium',
-            timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-            agent: 'John Doe',
-          },
-          {
-            id: '3',
-            type: 'escalated',
-            ticketId: 'T-003',
-            title: 'Critical server outage',
-            priority: 'critical',
-            timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-          },
-        ],
+        recentActivity,
       };
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setMetrics(mockMetrics);
+      setMetrics(metricsData);
     } catch (error) {
       console.error('Error loading metrics:', error);
       toast({
@@ -303,10 +308,15 @@ export const AdvancedTicketDashboard = () => {
               </div>
               <Users className="h-8 w-8 text-blue-500" />
             </div>
-            <div className="flex items-center mt-2">
-              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-              <span className="text-sm text-green-600">+12% from last month</span>
-            </div>
+            {metrics.totalTickets > 0 ? (
+              <div className="flex items-center mt-2">
+                <span className="text-sm text-muted-foreground">Total tickets in period</span>
+              </div>
+            ) : (
+              <div className="flex items-center mt-2">
+                <span className="text-sm text-muted-foreground">No tickets found</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -320,8 +330,7 @@ export const AdvancedTicketDashboard = () => {
               <AlertTriangle className="h-8 w-8 text-orange-500" />
             </div>
             <div className="flex items-center mt-2">
-              <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
-              <span className="text-sm text-red-600">-5% from last month</span>
+              <span className="text-sm text-muted-foreground">Tickets requiring attention</span>
             </div>
           </CardContent>
         </Card>
@@ -336,8 +345,7 @@ export const AdvancedTicketDashboard = () => {
               <Timer className="h-8 w-8 text-purple-500" />
             </div>
             <div className="flex items-center mt-2">
-              <TrendingDown className="h-4 w-4 text-green-500 mr-1" />
-              <span className="text-sm text-green-600">-0.5h from last month</span>
+              <span className="text-sm text-muted-foreground">Average response time</span>
             </div>
           </CardContent>
         </Card>
@@ -352,8 +360,7 @@ export const AdvancedTicketDashboard = () => {
               <Target className="h-8 w-8 text-red-500" />
             </div>
             <div className="flex items-center mt-2">
-              <TrendingUp className="h-4 w-4 text-red-500 mr-1" />
-              <span className="text-sm text-red-600">+2 from last month</span>
+              <span className="text-sm text-muted-foreground">Service level breaches</span>
             </div>
           </CardContent>
         </Card>
