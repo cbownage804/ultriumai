@@ -109,7 +109,6 @@ const Dashboard = () => {
   const isHelpdeskPage = location.pathname.includes('/helpdesk');
   const isDashboardOverview = location.pathname === '/dashboard';
   const isUltriumGPTPage = location.pathname === '/dashboard/ultrium-gpt';
-  const isSecurityCenterPage = location.pathname.includes('/security-center');
   const isSecurityPage = location.pathname === '/dashboard/security';
   const isSafePassDashboard = location.pathname.includes('/safepass') && !location.pathname.includes('/app');
   const isSafeMailDashboard = location.pathname.includes('/safemail') && !location.pathname.includes('/app');
@@ -149,7 +148,6 @@ const Dashboard = () => {
     if (isSafeLinkPage) return "SafeLink URL Security";
     if (isSafeNetPage) return "SafeNet Network Security";
     if (isSafeWebPage) return "SafeWeb Dark Web Monitoring";
-    if (isSecurityCenterPage) return "Security Center";
     if (isSafePassDashboard) return "SafePass";
     if (isSafeMailDashboard) return "SafeMail";
     if (isSafeNetDashboard) return "SafeNet";
@@ -193,7 +191,6 @@ const Dashboard = () => {
     if (isSafeLinkPage) return <SafeLinkApp />;
     if (isSafeNetPage) return <SafeNetApp />;
     if (isSafeWebPage) return <div className="p-6"><SafeWebDashboard /></div>;
-    if (isSecurityCenterPage) return <div className="p-6"><SecurityDashboard /></div>;
     if (isSafePassDashboard) return <div className="p-6"><SafePassDashboard /></div>;
     if (isSafeMailDashboard) return <div className="p-6"><SafeMailDashboard /></div>;
     if (isSafeNetDashboard) return <div className="p-6"><SafeNetDashboard /></div>;
