@@ -26,33 +26,8 @@ const Reports = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Mock data - replace with actual data from Supabase
-  const [recentReports] = useState([
-    {
-      id: '1',
-      title: 'Security Summary - Weekly',
-      type: 'security',
-      status: 'completed',
-      generated_at: new Date().toISOString(),
-      file_url: '#'
-    },
-    {
-      id: '2',
-      title: 'Compliance Assessment - Q4',
-      type: 'compliance',
-      status: 'generating',
-      generated_at: null,
-      file_url: null
-    },
-    {
-      id: '3',
-      title: 'Performance Analytics - Monthly',
-      type: 'performance',
-      status: 'completed',
-      generated_at: new Date(Date.now() - 86400000).toISOString(),
-      file_url: '#'
-    }
-  ]);
+  // TODO: Replace with actual data from Supabase
+  const [recentReports] = useState([]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -127,51 +102,66 @@ const Reports = () => {
           <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
         </TabsList>
 
-        {/* Recent Reports */}
         <TabsContent value="recent" className="space-y-4">
           <div className="grid gap-4">
-            {recentReports.map((report) => (
-              <Card key={report.id} className="hover-scale">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="text-2xl">
-                        {getTypeIcon(report.type)}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold">{report.title}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge className={getStatusColor(report.status)}>
-                            {report.status}
-                          </Badge>
-                          {report.generated_at && (
-                            <span className="text-sm text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {new Date(report.generated_at).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {report.status === 'completed' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => downloadReport(report.id)}
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          Download
-                        </Button>
-                      )}
-                      <Button variant="outline" size="sm">
-                        <Settings className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+            {recentReports.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Reports Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Generate your first report to get started with analytics and insights.
+                  </p>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Generate Report
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
+            ) : (
+              recentReports.map((report) => (
+                <Card key={report.id} className="hover-scale">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="text-2xl">
+                          {getTypeIcon(report.type)}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{report.title}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge className={getStatusColor(report.status)}>
+                              {report.status}
+                            </Badge>
+                            {report.generated_at && (
+                              <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(report.generated_at).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {report.status === 'completed' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadReport(report.id)}
+                          >
+                            <Download className="h-4 w-4 mr-1" />
+                            Download
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm">
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
 

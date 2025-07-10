@@ -55,63 +55,9 @@ const SafeWebMSPDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Mock MSP client data
-    const mockClients: MSPClient[] = [
-      {
-        id: '1',
-        name: 'Acme Corporation',
-        domain: 'acme-corp.com',
-        status: 'active',
-        threats: 12,
-        assets: 45,
-        plan: 'professional',
-        monthlyRevenue: 899,
-        lastScan: '2024-01-15T10:30:00Z'
-      },
-      {
-        id: '2',
-        name: 'TechStart Inc',
-        domain: 'techstart.io',
-        status: 'trial',
-        threats: 3,
-        assets: 18,
-        plan: 'basic',
-        monthlyRevenue: 299,
-        lastScan: '2024-01-15T09:15:00Z'
-      },
-      {
-        id: '3',
-        name: 'Global Finance Ltd',
-        domain: 'globalfinance.com',
-        status: 'active',
-        threats: 28,
-        assets: 124,
-        plan: 'enterprise',
-        monthlyRevenue: 1899,
-        lastScan: '2024-01-15T11:45:00Z'
-      },
-      {
-        id: '4',
-        name: 'Local Law Firm',
-        domain: 'locallegal.com',
-        status: 'active',
-        threats: 7,
-        assets: 32,
-        plan: 'professional',
-        monthlyRevenue: 599,
-        lastScan: '2024-01-15T08:20:00Z'
-      }
-    ];
-
-    const mockThreatSummary: ThreatSummary[] = [
-      { clientId: '1', clientName: 'Acme Corporation', criticalThreats: 3, highThreats: 5, totalThreats: 12, lastUpdated: '2024-01-15T10:30:00Z' },
-      { clientId: '2', clientName: 'TechStart Inc', criticalThreats: 0, highThreats: 1, totalThreats: 3, lastUpdated: '2024-01-15T09:15:00Z' },
-      { clientId: '3', clientName: 'Global Finance Ltd', criticalThreats: 8, highThreats: 12, totalThreats: 28, lastUpdated: '2024-01-15T11:45:00Z' },
-      { clientId: '4', clientName: 'Local Law Firm', criticalThreats: 1, highThreats: 3, totalThreats: 7, lastUpdated: '2024-01-15T08:20:00Z' }
-    ];
-
-    setClients(mockClients);
-    setThreatSummary(mockThreatSummary);
+    // TODO: Replace with real MSP client data from Supabase
+    setClients([]);
+    setThreatSummary([]);
   }, []);
 
   const filteredClients = clients.filter(client => 

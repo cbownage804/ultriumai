@@ -67,95 +67,11 @@ const SafeWebDashboard = () => {
   const [newAsset, setNewAsset] = useState('');
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
 
-  // Mock data for production demo
+  // TODO: Replace with real data from Supabase
   useEffect(() => {
-    const mockThreats: ThreatIntelligence[] = [
-      {
-        id: '1',
-        type: 'credential',
-        title: 'Corporate Email Credentials Exposed',
-        description: 'Employee credentials found in dark web marketplace',
-        severity: 'critical',
-        source: 'Underground Forum - DataLeaks',
-        date: '2024-01-15',
-        status: 'new',
-        affectedAssets: ['admin@company.com', 'sales@company.com'],
-        confidence: 95,
-        tags: ['credentials', 'breach', 'corporate']
-      },
-      {
-        id: '2',
-        type: 'data_breach',
-        title: 'Customer Database Leak Detected',
-        description: 'Company customer data appears in breach collection',
-        severity: 'high',
-        source: 'Dark Web Database - BlackMarket',
-        date: '2024-01-12',
-        status: 'investigating',
-        affectedAssets: ['customer-db', 'user-profiles'],
-        confidence: 87,
-        tags: ['database', 'customers', 'pii']
-      },
-      {
-        id: '3',
-        type: 'threat_actor',
-        title: 'Targeted Reconnaissance Activity',
-        description: 'Threat actors discussing company as potential target',
-        severity: 'medium',
-        source: 'Encrypted Chat Forum',
-        date: '2024-01-10',
-        status: 'new',
-        affectedAssets: ['company-domain.com'],
-        confidence: 72,
-        tags: ['reconnaissance', 'targeting', 'planning']
-      },
-      {
-        id: '4',
-        type: 'brand_mention',
-        title: 'Brand Impersonation Detected',
-        description: 'Fake company website used in phishing campaign',
-        severity: 'high',
-        source: 'Phishing Tracker Network',
-        date: '2024-01-08',
-        status: 'resolved',
-        affectedAssets: ['company-brand'],
-        confidence: 93,
-        tags: ['phishing', 'impersonation', 'brand']
-      }
-    ];
-
-    const mockAssets: MonitoredAsset[] = [
-      {
-        id: '1',
-        type: 'domain',
-        value: 'company.com',
-        status: 'active',
-        threatsFound: 3,
-        lastScan: '2024-01-15T10:30:00Z',
-        addedDate: '2024-01-01'
-      },
-      {
-        id: '2',
-        type: 'email',
-        value: 'admin@company.com',
-        status: 'active',
-        threatsFound: 2,
-        lastScan: '2024-01-15T09:15:00Z',
-        addedDate: '2024-01-01'
-      },
-      {
-        id: '3',
-        type: 'brand',
-        value: 'CompanyBrand',
-        status: 'active',
-        threatsFound: 1,
-        lastScan: '2024-01-15T08:45:00Z',
-        addedDate: '2024-01-02'
-      }
-    ];
-
-    setThreats(mockThreats);
-    setAssets(mockAssets);
+    // Load real threat intelligence and monitored assets here
+    setThreats([]);
+    setAssets([]);
   }, []);
 
   const getSeverityColor = (severity: string) => {

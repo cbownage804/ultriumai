@@ -23,62 +23,14 @@ import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 import { SecurityMetrics } from "@/components/analytics/SecurityMetrics";
 import { ComplianceAnalytics } from "@/components/analytics/ComplianceAnalytics";
 import { PerformanceAnalytics } from "@/components/analytics/PerformanceAnalytics";
+import { Header } from "@/components/layout/Header";
 
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('7_days');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Mock key metrics data
-  const keyMetrics = [
-    {
-      title: 'Security Score',
-      value: '94%',
-      change: '+2.1%',
-      trend: 'up',
-      icon: Shield,
-      color: 'text-green-500'
-    },
-    {
-      title: 'Active Threats',
-      value: '12',
-      change: '-8',
-      trend: 'down',
-      icon: AlertTriangle,
-      color: 'text-red-500'
-    },
-    {
-      title: 'Compliance Rate',
-      value: '98.5%',
-      change: '+1.2%',
-      trend: 'up',
-      icon: CheckCircle,
-      color: 'text-blue-500'
-    },
-    {
-      title: 'Avg Response Time',
-      value: '4.2m',
-      change: '-1.8m',
-      trend: 'down',
-      icon: Clock,
-      color: 'text-orange-500'
-    },
-    {
-      title: 'Active Users',
-      value: '1,247',
-      change: '+89',
-      trend: 'up',
-      icon: Users,
-      color: 'text-purple-500'
-    },
-    {
-      title: 'System Uptime',
-      value: '99.9%',
-      change: '+0.1%',
-      trend: 'up',
-      icon: Activity,
-      color: 'text-green-500'
-    }
-  ];
+  // TODO: Replace with real analytics data from Supabase
+  const keyMetrics = [];
 
   const refreshData = async () => {
     setRefreshing(true);
@@ -88,7 +40,9 @@ const Analytics = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <div className="container mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -129,32 +83,46 @@ const Analytics = () => {
 
       {/* Key Metrics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {keyMetrics.map((metric, index) => {
-          const IconComponent = metric.icon;
-          const isPositive = metric.trend === 'up';
-          const TrendIcon = isPositive ? TrendingUp : TrendingDown;
-          
-          return (
-            <Card key={index} className="hover-scale">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <IconComponent className={`h-5 w-5 ${metric.color}`} />
-                  <TrendIcon className={`h-4 w-4 ${isPositive ? 'text-green-500' : 'text-red-500'}`} />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{metric.value}</p>
-                  <p className="text-xs text-muted-foreground">{metric.title}</p>
-                  <div className="flex items-center gap-1">
-                    <span className={`text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                      {metric.change}
-                    </span>
-                    <span className="text-xs text-muted-foreground">vs last period</span>
-                  </div>
-                </div>
+        {keyMetrics.length === 0 ? (
+          <div className="col-span-full">
+            <Card>
+              <CardContent className="p-12 text-center">
+                <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Analytics Data</h3>
+                <p className="text-muted-foreground">
+                  Analytics data will appear here once you start using the platform.
+                </p>
               </CardContent>
             </Card>
-          );
-        })}
+          </div>
+        ) : (
+          keyMetrics.map((metric, index) => {
+            const IconComponent = metric.icon;
+            const isPositive = metric.trend === 'up';
+            const TrendIcon = isPositive ? TrendingUp : TrendingDown;
+            
+            return (
+              <Card key={index} className="hover-scale">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <IconComponent className={`h-5 w-5 ${metric.color}`} />
+                    <TrendIcon className={`h-4 w-4 ${isPositive ? 'text-green-500' : 'text-red-500'}`} />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-2xl font-bold">{metric.value}</p>
+                    <p className="text-xs text-muted-foreground">{metric.title}</p>
+                    <div className="flex items-center gap-1">
+                      <span className={`text-xs font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                        {metric.change}
+                      </span>
+                      <span className="text-xs text-muted-foreground">vs last period</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
       </div>
 
       {/* Main Analytics Tabs */}
@@ -182,6 +150,7 @@ const Analytics = () => {
           <PerformanceAnalytics timeRange={timeRange} />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 };

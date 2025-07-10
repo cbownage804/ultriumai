@@ -77,63 +77,17 @@ const SecurityDashboard = () => {
   const navigate = useNavigate();
   
   const [metrics, setMetrics] = useState<SecurityMetrics>({
-    overallScore: 92,
-    totalEvents: 1247,
-    activeThreats: 8,
-    resolvedIncidents: 156,
-    systemsMonitored: 12,
-    averageResponseTime: 8.2,
-    threatTrend: -12,
-    eventTrend: 15
+    overallScore: 0,
+    totalEvents: 0,
+    activeThreats: 0,
+    resolvedIncidents: 0,
+    systemsMonitored: 0,
+    averageResponseTime: 0,
+    threatTrend: 0,
+    eventTrend: 0
   });
 
-  const [securityApps, setSecurityApps] = useState<SecurityAppStatus[]>([
-    {
-      name: 'SafeDoc',
-      status: 'operational',
-      icon: FileText,
-      lastCheck: '2 minutes ago',
-      eventsToday: 234,
-      threatsBlocked: 12,
-      uptime: 99.9
-    },
-    {
-      name: 'SafeMail',
-      status: 'operational',
-      icon: Mail,
-      lastCheck: '1 minute ago',
-      eventsToday: 445,
-      threatsBlocked: 28,
-      uptime: 99.8
-    },
-    {
-      name: 'SafeLink',
-      status: 'degraded',
-      icon: Link,
-      lastCheck: '3 minutes ago',
-      eventsToday: 123,
-      threatsBlocked: 5,
-      uptime: 98.2
-    },
-    {
-      name: 'SafePass',
-      status: 'operational',
-      icon: Key,
-      lastCheck: '1 minute ago',
-      eventsToday: 89,
-      threatsBlocked: 3,
-      uptime: 99.9
-    },
-    {
-      name: 'SafeNet',
-      status: 'operational',
-      icon: Network,
-      lastCheck: '30 seconds ago',
-      eventsToday: 356,
-      threatsBlocked: 15,
-      uptime: 99.7
-    }
-  ]);
+  const [securityApps, setSecurityApps] = useState<SecurityAppStatus[]>([]);
 
   const [recentEvents, setRecentEvents] = useState<RecentEvent[]>([]);
   const [realTimeEnabled, setRealTimeEnabled] = useState(true);

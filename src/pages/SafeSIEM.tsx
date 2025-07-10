@@ -93,14 +93,14 @@ const SafeSIEM = () => {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
 
   const [metrics, setMetrics] = useState<DashboardMetrics>({
-    events_today: 1247,
-    events_last_hour: 23,
-    active_threats: 8,
-    resolved_incidents: 156,
-    false_positives: 12,
-    avg_response_time_minutes: 8.5,
-    threat_score: 7.2,
-    coverage_percentage: 94
+    events_today: 0,
+    events_last_hour: 0,
+    active_threats: 0,
+    resolved_incidents: 0,
+    false_positives: 0,
+    avg_response_time_minutes: 0,
+    threat_score: 0,
+    coverage_percentage: 0
   });
 
   const [threatFeeds, setThreatFeeds] = useState<ThreatFeed[]>([]);
