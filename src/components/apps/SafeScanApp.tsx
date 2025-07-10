@@ -175,15 +175,19 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
         throw error;
       }
 
-      // Ensure we have a valid result structure
+      // Map the actual response structure to our expected format
+      const scanResult = data?.scanResult || data;
       const result = {
         type: type,
         content: typeof content === 'string' ? content.substring(0, 100) : (content as File).name,
-        safe: data?.safe ?? false,
-        risk_level: data?.risk_level || 'unknown',
-        threats_detected: data?.threats_detected || [],
+        safe: scanResult?.isClean ?? data?.safe ?? false,
+        risk_level: scanResult?.threatLevel === 'clean' ? 'safe' : 
+                   scanResult?.threatLevel === 'suspicious' ? 'medium' :
+                   scanResult?.threatLevel === 'malicious' ? 'high' :
+                   data?.risk_level || 'unknown',
+        threats_detected: scanResult?.detectedThreats || data?.threats_detected || [],
         reputation_score: data?.reputation_score || 50,
-        scan_details: data?.scan_details || {},
+        scan_details: scanResult || data?.scan_details || {},
         scan_date: new Date().toISOString(),
         recommendations: data?.recommendations || []
       };
