@@ -362,7 +362,7 @@ export function AppSidebar() {
         )}
 
         {/* Enterprise Upgrade Section */}
-        {subscription.subscription_tier !== "enterprise" && !isCollapsed && (
+        {subscription.subscription_tier === "free" && !isCollapsed && (
           <SidebarGroup>
             <SidebarGroupContent>
               <Card className="mx-2 mb-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
