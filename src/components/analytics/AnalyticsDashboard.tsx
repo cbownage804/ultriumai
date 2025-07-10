@@ -17,32 +17,17 @@ interface AnalyticsDashboardProps {
 }
 
 export const AnalyticsDashboard = ({ timeRange }: AnalyticsDashboardProps) => {
-  // Mock data - replace with actual analytics data
+  // TODO: Replace with real analytics data from Supabase
   const dashboardData = {
     securityOverview: {
-      threatsPrevented: 1847,
-      incidentsResolved: 45,
-      vulnerabilitiesPatched: 23,
-      securityScore: 94
+      threatsPrevented: 0,
+      incidentsResolved: 0,
+      vulnerabilitiesPatched: 0,
+      securityScore: 0
     },
-    systemHealth: [
-      { name: 'Firewall', status: 'healthy', uptime: 99.9 },
-      { name: 'IDS/IPS', status: 'healthy', uptime: 99.8 },
-      { name: 'Endpoint Protection', status: 'warning', uptime: 98.5 },
-      { name: 'Email Security', status: 'healthy', uptime: 99.7 },
-      { name: 'Network Monitor', status: 'healthy', uptime: 99.9 }
-    ],
-    recentAlerts: [
-      { id: 1, type: 'critical', message: 'Suspicious login attempt detected', time: '2 min ago', status: 'investigating' },
-      { id: 2, type: 'warning', message: 'High bandwidth usage on endpoint', time: '15 min ago', status: 'resolved' },
-      { id: 3, type: 'info', message: 'Security patch deployed successfully', time: '1 hour ago', status: 'completed' }
-    ],
-    complianceStatus: [
-      { framework: 'ISO 27001', score: 96, status: 'compliant' },
-      { framework: 'SOC 2', score: 94, status: 'compliant' },
-      { framework: 'GDPR', score: 89, status: 'minor_gaps' },
-      { framework: 'HIPAA', score: 92, status: 'compliant' }
-    ]
+    systemHealth: [],
+    recentAlerts: [],
+    complianceStatus: []
   };
 
   const getStatusColor = (status: string) => {
