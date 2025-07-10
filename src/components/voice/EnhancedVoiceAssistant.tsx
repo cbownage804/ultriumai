@@ -50,6 +50,13 @@ const VOICE_COMMANDS = {
 };
 
 export const EnhancedVoiceAssistant = () => {
+  const { user } = useAuth();
+  
+  // Don't show the assistant if user is not authenticated - CHECK THIS FIRST!
+  if (!user) {
+    return null;
+  }
+
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -69,14 +76,8 @@ export const EnhancedVoiceAssistant = () => {
   const { speak, stopSpeaking, isPlaying, isLoading: voiceLoading, settings } = useVoiceInterface();
   const { messages, addMessage, clearHistory } = useVoiceHistory();
   const { toast } = useToast();
-  const { user } = useAuth();
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Don't show the assistant if user is not authenticated
-  if (!user) {
-    return null;
-  }
 
   // Load settings from localStorage
   useEffect(() => {
