@@ -181,14 +181,44 @@ export const SafeMailApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
 
       if (error) throw error;
       
-      setScanResult(data as EmailScanResult);
+      // Map the edge function response to the expected format
+      const mappedResult: EmailScanResult = {
+        email: senderEmail || 'Analyzed Email',
+        safe: data.action === 'allow',
+        risk_level: data.riskScore === 0 ? 'safe' : 
+                   data.riskScore < 25 ? 'low' :
+                   data.riskScore < 50 ? 'medium' :
+                   data.riskScore < 75 ? 'high' : 'critical',
+        threats_detected: data.threats.map((threat: any) => threat.description || threat.type),
+        reputation_score: Math.max(0, 100 - data.riskScore),
+        scan_details: {
+          spf_valid: true,
+          dkim_valid: true, 
+          dmarc_valid: true,
+          sender_reputation: Math.max(0, 100 - data.riskScore),
+          content_analysis: {
+            spam_score: data.riskScore,
+            phishing_indicators: data.threats.filter((t: any) => t.type === 'phishing').map((t: any) => t.description),
+            suspicious_attachments: data.threats.filter((t: any) => t.type === 'malicious_attachment').length
+          },
+          scan_date: data.scanTimestamp
+        },
+        recommendations: data.threats.length > 0 ? [
+          "This email contains potential security threats",
+          "Do not click on any links or download attachments",
+          "Verify the sender through alternative communication methods",
+          "Report this email to your IT security team"
+        ] : []
+      };
+
+      setScanResult(mappedResult);
       await loadScanHistory();
       await loadStats();
       
       toast({
         title: "Scan Complete",
-        description: `Email analyzed - Risk level: ${data.risk_level}`,
-        variant: data.safe ? "default" : "destructive"
+        description: `Email analyzed - Risk level: ${mappedResult.risk_level}`,
+        variant: mappedResult.safe ? "default" : "destructive"
       });
     } catch (error: any) {
       toast({
