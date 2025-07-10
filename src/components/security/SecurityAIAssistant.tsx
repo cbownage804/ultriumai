@@ -388,9 +388,9 @@ Would you like me to analyze these threats and recommend response actions?`,
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0 bg-gradient-to-b from-gray-900/50 to-black/50">
-        <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
-          <div className="space-y-4 pb-4 pt-4">
+      <CardContent className="flex-1 flex flex-col p-0 bg-gradient-to-b from-gray-900/50 to-black/50 overflow-hidden">
+        <ScrollArea className="flex-1 px-4 max-h-[400px] overflow-y-auto" ref={scrollAreaRef}>
+          <div className="space-y-4 pb-4 pt-4 min-h-0">
             {messages.map((message) => (
               <div key={message.id} className="flex gap-3">
                 <Avatar className="h-8 w-8 flex-shrink-0 border border-red-800/30">
