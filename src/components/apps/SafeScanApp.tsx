@@ -151,7 +151,13 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
       switch (type) {
         case 'email':
           functionName = 'safemail-scanner';
-          body.email_content = content;
+          body.action = 'scan_email';
+          body.email = {
+            subject: 'Email Scan',
+            sender: 'unknown@example.com',
+            content: content,
+            timestamp: new Date().toISOString()
+          };
           break;
         case 'url':
           functionName = 'ultrium-safelink-scanner';
