@@ -94,22 +94,29 @@ serve(async (req) => {
 
     const reputationScore = Math.max(0, 100 - (positives >= 5 ? positives * 8 : positives * 3));
 
-    // Generate recommendations
+    // Generate recommendations based on actual risk level
     const recommendations = [];
     if (riskLevel === 'safe') {
       recommendations.push('URL appears safe to visit');
       recommendations.push('No significant security threats detected');
     } else if (riskLevel === 'low') {
       recommendations.push('URL has minimal security concerns');
-      recommendations.push('Consider verifying the website source');
+      recommendations.push('One or few security engines flagged this URL');
       recommendations.push('Proceed with normal caution');
-    } else {
+    } else if (riskLevel === 'medium') {
       recommendations.push('Exercise caution when accessing this URL');
+      recommendations.push('Multiple security engines detected potential issues');
+      recommendations.push('Verify the website legitimacy before proceeding');
+    } else if (riskLevel === 'high') {
+      recommendations.push('Strong caution advised for this URL');
+      recommendations.push('Significant security concerns detected');
+      recommendations.push('Avoid entering sensitive information');
       recommendations.push('Consider using alternative trusted sources');
-      if (positives >= 5) {
-        recommendations.push('This URL has been flagged by multiple security vendors');
-        recommendations.push('Avoid entering sensitive information');
-      }
+    } else if (riskLevel === 'critical') {
+      recommendations.push('DO NOT VISIT - Critical security threat detected');
+      recommendations.push('This URL has been flagged by multiple security vendors as malicious');
+      recommendations.push('Avoid this website completely');
+      recommendations.push('Contact your security team if you received this link unexpectedly');
     }
 
     const scanResult = {
