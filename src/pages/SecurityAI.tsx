@@ -79,7 +79,7 @@ const SecurityAI = () => {
         activeAlerts,
         criticalThreats,
         openIncidents: incidents?.length || 0,
-        complianceScore: compliance?.[0]?.score || 85
+        complianceScore: compliance?.[0]?.score || 100
       });
     } catch (error) {
       console.error('Error loading security metrics:', error);
@@ -88,7 +88,7 @@ const SecurityAI = () => {
         activeAlerts: 0,
         criticalThreats: 0,
         openIncidents: 0,
-        complianceScore: 85
+        complianceScore: 100
       });
     } finally {
       setIsLoading(false);
