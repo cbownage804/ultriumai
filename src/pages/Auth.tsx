@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { useToast } from '@/hooks/use-toast';
 import type { AccountType } from '@/hooks/useAccountType';
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
@@ -23,14 +24,16 @@ const Auth = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getRedirectPath, shouldRedirectToRole } = useRoleBasedRedirect();
   const { toast } = useToast();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (user) {
-      navigate('/');
+    if (shouldRedirectToRole()) {
+      const redirectPath = getRedirectPath();
+      navigate(redirectPath);
     }
-  }, [user, navigate]);
+  }, [shouldRedirectToRole, getRedirectPath, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,9 +92,17 @@ const Auth = () => {
           description: "Your account has been created successfully. Check your email for getting started tips!",
         });
         
-        // Navigate to dashboard if user is signed in, otherwise wait for confirmation
+        // Navigate to appropriate dashboard based on role
         if (data.session) {
-          navigate('/');
+          // Small delay to allow role data to be set up
+          setTimeout(() => {
+            if (shouldRedirectToRole()) {
+              const redirectPath = getRedirectPath();
+              navigate(redirectPath);
+            } else {
+              navigate('/');
+            }
+          }, 500);
         }
       }
     } catch (err: any) {
@@ -120,7 +131,15 @@ const Auth = () => {
           title: "Welcome back!",
           description: "You've been successfully signed in.",
         });
-        navigate('/');
+        // Small delay to allow role data to be fetched
+        setTimeout(() => {
+          if (shouldRedirectToRole()) {
+            const redirectPath = getRedirectPath();
+            navigate(redirectPath);
+          } else {
+            navigate('/');
+          }
+        }, 500);
       }
     } catch (err: any) {
       setError(err.message);

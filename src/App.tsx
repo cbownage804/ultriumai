@@ -4,6 +4,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { NotificationProvider } from '@/hooks/useNotifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
+import { RoleBasedRedirect } from '@/components/RoleBasedRedirect';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Index from '@/pages/Index';
@@ -86,6 +88,7 @@ import { useLocation } from 'react-router-dom';
 
 function AppRouter() {
   const { user, loading } = useAuth();
+  const { getRedirectPath, shouldRedirectToRole } = useRoleBasedRedirect();
   const location = useLocation();
   const [isAIMinimized, setIsAIMinimized] = useState(true);
   useScrollToTop();
@@ -119,7 +122,7 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/agent" element={<Agent />} />
-        <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
+        <Route path="/auth" element={user ? <RoleBasedRedirect /> : <Auth />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/msp-pricing" element={<MSPPricing />} />
         <Route path="/contact" element={<Contact />} />
