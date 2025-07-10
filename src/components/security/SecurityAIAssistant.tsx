@@ -232,81 +232,8 @@ Would you like me to analyze these threats and recommend response actions?`,
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // WebSocket connection for real-time streaming
-  useEffect(() => {
-    const connectWebSocket = () => {
-      const wsUrl = `wss://nsyobmjpdpvesjwdphlh.functions.supabase.co/security-ai-realtime`;
-      console.log('Connecting to WebSocket:', wsUrl);
-      const ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        console.log('Connected to UltriumDefender AI real-time service');
-        setWebSocket(ws);
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log('Received WebSocket message:', data.type);
-
-        if (data.type === 'response.text.delta') {
-          setStreamingMessage(prev => prev + data.delta);
-          setIsStreaming(true);
-        } else if (data.type === 'response.text.done' || data.type === 'response.done') {
-          // Finalize the streaming message
-          if (streamingMessage) {
-            const assistantMessage: SecurityMessage = {
-              id: Date.now().toString(),
-              role: 'assistant',
-              content: streamingMessage,
-              timestamp: new Date(),
-              context: {
-                activeAlerts: securityContext?.activeAlerts,
-                criticalThreats: securityContext?.criticalThreats,
-                openIncidents: securityContext?.openIncidents,
-                complianceScore: securityContext?.complianceScore
-              }
-            };
-            
-            setMessages(prev => [...prev, assistantMessage]);
-            setStreamingMessage("");
-            setIsStreaming(false);
-            setIsLoading(false);
-          }
-        } else if (data.type === 'error') {
-          console.error('WebSocket error:', data.error);
-          toast({
-            title: "Connection Error",
-            description: data.error || "Failed to connect to AI service",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          setIsStreaming(false);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        toast({
-          title: "Connection Error", 
-          description: "Failed to connect to UltriumDefender AI real-time service",
-          variant: "destructive",
-        });
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket connection closed');
-        setWebSocket(null);
-        // Attempt to reconnect after 3 seconds
-        setTimeout(connectWebSocket, 3000);
-      };
-    };
-
-    connectWebSocket();
-
-    return () => {
-      webSocket?.close();
-    };
-  }, [toast, securityContext]);
+  // Remove problematic WebSocket connection for now
+  // Using stable HTTP function instead
 
   useEffect(() => {
     if (scrollAreaRef.current) {
