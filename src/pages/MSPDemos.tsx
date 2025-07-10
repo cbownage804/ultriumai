@@ -200,23 +200,23 @@ const MSPDemos = () => {
     },
     {
       id: 'security-suite',
-      name: 'Security Apps Bundle for MSP',
-      description: 'Complete cybersecurity toolkit for SMBs',
-      monthlyRevenue: '$50/client',
+      name: 'UltriumAI Complete Platform',
+      description: 'Unified cybersecurity platform - all tools in one integrated solution',
+      monthlyRevenue: '$75/client',
       setupTime: '15 minutes',
       marketSize: '32M small businesses in US',
       demoUrl: '/demos',
       features: [
-        'SafeLink URL scanning',
-        'SafeMail threat detection',
-        'SafeDoc malware analysis',
-        'DarkWeb monitoring',
-        'Centralized dashboard'
+        'Integrated security scanning suite',
+        'Unified threat intelligence dashboard',
+        'Single sign-on for all tools',
+        'Comprehensive reporting & analytics',
+        'One purchase, complete protection'
       ],
       revenueModel: {
-        charge: 75,
+        charge: 100,
         pay: 25,
-        profit: 50
+        profit: 75
       },
       icon: Building2,
       color: 'purple'
@@ -337,8 +337,8 @@ const MSPDemos = () => {
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Discover how to offer the complete UltriumAI platform as your white-label cybersecurity solution. 
-            All tools bundled together for maximum client value and your recurring revenue success.
+            Offer the complete UltriumAI cybersecurity platform to your clients. One unified solution, 
+            one login, one purchase - delivering comprehensive security with maximum recurring revenue potential.
           </p>
           <div className="flex justify-center gap-4 flex-wrap">
             <Badge variant="secondary" className="text-lg px-4 py-2">
@@ -367,8 +367,8 @@ const MSPDemos = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-success mb-2">Complete Platform</div>
-                <p className="text-muted-foreground">All tools included - one price, maximum value</p>
+                <div className="text-3xl font-bold text-success mb-2">Unified Platform</div>
+                <p className="text-muted-foreground">All security tools in one integrated solution - one login, maximum value</p>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary mb-2">Quick Setup</div>
