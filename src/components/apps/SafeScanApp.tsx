@@ -80,18 +80,52 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
 
   const loadScanHistory = async () => {
     try {
-      const { data } = await supabase
+      // Load from document_scans table for document scans
+      const { data: docScans } = await supabase
+        .from('document_scans')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      // Load from gpt_analytics table for URL and other scans
+      const { data: analyticsData } = await supabase
         .from('gpt_analytics')
         .select('*')
         .eq('user_id', user?.id)
         .eq('interaction_type', 'security_scan')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(5);
       
-      if (data) {
-        const results = data.map(item => {
+      const results: ScanResult[] = [];
+      
+      // Process document scans
+      if (docScans) {
+        docScans.forEach(scan => {
+          const scanResult = scan.scan_result as any;
+          results.push({
+            type: 'document',
+            content: scan.file_name,
+            safe: scan.threat_level === 'safe',
+            risk_level: scan.threat_level as any,
+            threats_detected: scanResult?.threats || [],
+            reputation_score: scanResult?.reputation_score || 50,
+            scan_details: {
+              file_type: scan.file_name.split('.').pop() || 'unknown',
+              file_size: scan.file_size,
+              scan_date: scan.created_at
+            },
+            scan_date: scan.created_at,
+            recommendations: scanResult?.recommendations || []
+          });
+        });
+      }
+      
+      // Process analytics data (URLs, etc)
+      if (analyticsData) {
+        analyticsData.forEach(item => {
           const metadata = item.metadata as any;
-          return {
+          results.push({
             type: metadata?.scan_type || 'unknown',
             content: metadata?.content || 'Security scan',
             safe: metadata?.risk_level === 'safe',
@@ -101,11 +135,14 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
             scan_details: metadata?.scan_details || {},
             scan_date: item.created_at,
             recommendations: metadata?.recommendations || []
-          };
-        }) as ScanResult[];
-        
-        setScanHistory(results);
+          });
+        });
       }
+      
+      // Sort combined results by date
+      results.sort((a, b) => new Date(b.scan_date).getTime() - new Date(a.scan_date).getTime());
+      
+      setScanHistory(results.slice(0, 10));
     } catch (error) {
       console.error('Error loading scan history:', error);
     }
