@@ -66,13 +66,13 @@ serve(async (req) => {
       }
     }
 
-    // Skip Brandon's test account - preserve enterprise status
-    if (user.email === 'brandon.howard@kwccpa.com') {
-      logStep("Skipping Brandon's test account - preserving enterprise status");
+    // Give all UltriumAI employees enterprise status
+    if (user.email.endsWith('@ultriumai.com') || user.email === 'brandon.howard@kwccpa.com') {
+      logStep("UltriumAI employee detected - granting enterprise status", { email: user.email });
       return new Response(JSON.stringify({
-        subscribed: dbSubscription?.subscribed || true,
-        subscription_tier: dbSubscription?.subscription_tier || "enterprise",
-        subscription_end: dbSubscription?.subscription_end
+        subscribed: true,
+        subscription_tier: "enterprise",
+        subscription_end: null // No expiration for admins
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
