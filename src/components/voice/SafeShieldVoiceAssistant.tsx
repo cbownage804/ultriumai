@@ -20,6 +20,7 @@ import {
 import { useVoiceInterface } from '@/hooks/useVoiceInterface';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -40,8 +41,14 @@ export const SafeShieldVoiceAssistant = () => {
   
   const { speak, stopSpeaking, isPlaying, isLoading: voiceLoading, settings } = useVoiceInterface();
   const { toast } = useToast();
+  const { user } = useAuth();
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Don't show the assistant if user is not authenticated
+  if (!user) {
+    return null;
+  }
 
   // Initialize speech recognition
   useEffect(() => {
