@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   Shield, 
   Mic, 
@@ -13,7 +14,8 @@ import {
   Bot,
   Zap,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Send
 } from 'lucide-react';
 import { useVoiceInterface } from '@/hooks/useVoiceInterface';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +36,7 @@ export const SafeShieldVoiceAssistant = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentTranscript, setCurrentTranscript] = useState('');
+  const [textInput, setTextInput] = useState('');
   
   const { speak, stopSpeaking, isPlaying, isLoading: voiceLoading, settings } = useVoiceInterface();
   const { toast } = useToast();
@@ -172,6 +175,21 @@ export const SafeShieldVoiceAssistant = () => {
     setMessages([]);
   };
 
+  const handleTextSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (textInput.trim()) {
+      handleVoiceMessage(textInput);
+      setTextInput('');
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleTextSubmit(e as any);
+    }
+  };
+
   const toggleMinimize = () => {
     setIsMinimized(!isMinimized);
   };
@@ -237,7 +255,7 @@ export const SafeShieldVoiceAssistant = () => {
         {!isMinimized && (
           <>
             {/* Messages Area */}
-            <CardContent className="p-0 h-[480px] overflow-y-auto bg-black/40">
+            <CardContent className="p-0 h-[400px] overflow-y-auto bg-black/40">
               <div className="p-4 space-y-3">
                 {messages.length === 0 && (
                   <div className="text-center text-gray-400 py-8">
@@ -305,8 +323,28 @@ export const SafeShieldVoiceAssistant = () => {
               </div>
             </CardContent>
 
-            {/* Controls */}
-            <div className="p-4 border-t border-red-500/20 bg-gradient-to-r from-gray-900/50 to-black/50">
+            {/* Text Input */}
+            <div className="p-3 border-t border-red-500/20 bg-gradient-to-r from-gray-900/50 to-black/50">
+              <form onSubmit={handleTextSubmit} className="flex gap-2 mb-3">
+                <Input
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your security question..."
+                  className="flex-1 bg-gray-800/50 border-gray-600 text-white placeholder-gray-400 focus:border-red-500"
+                  disabled={isProcessing}
+                />
+                <Button 
+                  type="submit" 
+                  size="sm"
+                  disabled={!textInput.trim() || isProcessing}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+
+              {/* Voice Controls */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Button
