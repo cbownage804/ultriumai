@@ -44,7 +44,7 @@ const safeSuiteItems = [
   { title: "SafeScan", url: "/dashboard/safescan", icon: Shield, tooltip: "Comprehensive security scanning for emails, documents, and URLs" },
   { title: "SafeNet", url: "/dashboard/safenet", icon: Network, tooltip: "Advanced network monitoring and vulnerability management" },
   { title: "SafeKB", url: "/dashboard/safekb", icon: Database, tooltip: "Knowledge base, asset management, and documentation" },
-  { title: "SafeWeb", url: "/dashboard/safeweb", icon: Shield, tooltip: "Dark web monitoring and threat intelligence" },
+  { title: "SafeIntel", url: "/dashboard/safeintel", icon: Eye, tooltip: "Dark web monitoring and threat intelligence gathering" },
   { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
 ];
 
