@@ -125,7 +125,7 @@ const MSPDemos = () => {
       pay: 50, 
       profit: 150
     }
-  ];
+  };
 
   const currentFeature = platformFeatures.find(f => f.id === selectedDemo) || platformFeatures[0];
   const Icon = currentFeature.icon;
