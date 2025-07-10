@@ -168,8 +168,8 @@ const SettingsPage = () => {
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your UltriumGPT preferences and account settings.</p>
+        <h1 className="text-3xl font-bold">UltriumGPT Settings</h1>
+        <p className="text-muted-foreground">Configure your UltriumGPT experience, AI preferences, and account settings.</p>
       </div>
 
       <Tabs defaultValue="general" className="w-full">
