@@ -46,81 +46,71 @@ export const ThreatAnalysisEngine = ({ securityContext }: ThreatAnalysisEnginePr
 
   useEffect(() => {
     loadThreats();
-    // Simulate real-time threat detection
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7) {
-        generateSimulatedThreat();
-      }
-    }, 30000); // Check every 30 seconds
+    
+    // Set up real-time subscription for actual security events
+    const threatsChannel = supabase
+      .channel('threat-analysis-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'edr_behavioral_analysis'
+        },
+        () => loadThreats()
+      )
+      .subscribe();
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(threatsChannel);
+    };
   }, []);
 
   const loadThreats = async () => {
-    // In a real implementation, this would fetch from your security data
-    const simulatedThreats: ThreatAnalysis[] = [
-      {
-        id: '1',
-        threatType: 'Advanced Persistent Threat',
-        severity: 'critical',
-        confidence: 92,
-        description: 'Suspicious lateral movement detected across multiple endpoints with credential harvesting indicators',
-        mitreIds: ['T1021', 'T1078', 'T1003'],
-        affectedAssets: ['DC-01', 'FS-MAIN', 'WS-DEV-15'],
-        timeline: '2 hours ago',
-        status: 'analyzing',
-        aiRecommendations: [
-          'Isolate affected endpoints immediately',
-          'Reset credentials for compromised accounts',
-          'Deploy additional monitoring on critical systems'
-        ]
-      },
-      {
-        id: '2',
-        threatType: 'Malware C2 Communication',
-        severity: 'high',
-        confidence: 87,
-        description: 'Encrypted communication to known malicious domains detected from endpoint WS-USER-42',
-        mitreIds: ['T1071', 'T1090'],
-        affectedAssets: ['WS-USER-42'],
-        timeline: '45 minutes ago',
-        status: 'confirmed',
-        aiRecommendations: [
-          'Block C2 domains at firewall level',
-          'Quarantine infected endpoint',
-          'Scan for additional indicators of compromise'
-        ]
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setThreats([]);
+        return;
       }
-    ];
-    setThreats(simulatedThreats);
+
+      // Load real threat analysis data from EDR behavioral analysis
+      const { data: edrAnalysis } = await supabase
+        .from('edr_behavioral_analysis')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'monitoring')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (edrAnalysis && edrAnalysis.length > 0) {
+        const realThreats: ThreatAnalysis[] = edrAnalysis.map(analysis => ({
+          id: analysis.id,
+          threatType: analysis.threat_classification || 'Unknown Threat',
+          severity: analysis.behavior_score > 80 ? 'critical' : 
+                   analysis.behavior_score > 60 ? 'high' :
+                   analysis.behavior_score > 40 ? 'medium' : 'low',
+          confidence: Math.round(analysis.ai_confidence_score * 100) || 0,
+          description: `Behavioral analysis detected suspicious activity in process ${analysis.process_name}`,
+          mitreIds: Array.isArray(analysis.mitre_techniques) ? analysis.mitre_techniques : [],
+          affectedAssets: analysis.endpoint_id ? [`Endpoint-${analysis.endpoint_id.slice(0, 8)}`] : [],
+          timeline: new Date(analysis.created_at).toLocaleString(),
+          status: 'analyzing',
+          aiRecommendations: Array.isArray(analysis.detection_rules_triggered) && analysis.detection_rules_triggered.length > 0 
+            ? ['Review detection rules', 'Investigate process behavior', 'Check for lateral movement']
+            : ['Monitor for escalation', 'Collect additional evidence']
+        }));
+        
+        setThreats(realThreats);
+      } else {
+        setThreats([]);
+      }
+    } catch (error) {
+      console.error('Error loading threat analysis:', error);
+      setThreats([]);
+    }
   };
 
-  const generateSimulatedThreat = () => {
-    const threatTypes = [
-      'Phishing Campaign',
-      'Ransomware Activity', 
-      'Data Exfiltration',
-      'Privilege Escalation',
-      'Network Reconnaissance'
-    ];
-    
-    const severities: ('low' | 'medium' | 'high' | 'critical')[] = ['low', 'medium', 'high', 'critical'];
-    
-    const newThreat: ThreatAnalysis = {
-      id: Date.now().toString(),
-      threatType: threatTypes[Math.floor(Math.random() * threatTypes.length)],
-      severity: severities[Math.floor(Math.random() * severities.length)],
-      confidence: Math.floor(Math.random() * 30) + 70,
-      description: 'AI-detected anomalous behavior requiring immediate attention',
-      mitreIds: ['T1059', 'T1055'],
-      affectedAssets: [`WS-${Math.floor(Math.random() * 100)}`],
-      timeline: 'Just now',
-      status: 'detecting',
-      aiRecommendations: ['Investigate immediately', 'Monitor for escalation']
-    };
-
-    setThreats(prev => [newThreat, ...prev].slice(0, 10)); // Keep latest 10
-  };
 
   const runDeepAnalysis = async (threatId: string) => {
     setIsAnalyzing(true);
