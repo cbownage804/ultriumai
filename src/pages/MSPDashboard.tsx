@@ -272,10 +272,102 @@ const MSPControlCenter = () => {
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="bg-card/50 hover:bg-card">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="bg-card/50 hover:bg-card">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    MSP Profile Settings
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit_company_name">Company Name</Label>
+                      <Input
+                        id="edit_company_name"
+                        defaultValue={msp.company_name}
+                        placeholder="Your Company Name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit_domain">Domain Prefix</Label>
+                      <Input
+                        id="edit_domain"
+                        defaultValue={msp.domain}
+                        placeholder="yourcompany"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit_contact_email">Contact Email</Label>
+                      <Input
+                        id="edit_contact_email"
+                        type="email"
+                        defaultValue={msp.contact_email}
+                        placeholder="admin@yourcompany.com"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit_phone">Phone</Label>
+                      <Input
+                        id="edit_phone"
+                        defaultValue={msp.phone}
+                        placeholder="(555) 123-4567"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="edit_brand_name">Brand Name</Label>
+                      <Input
+                        id="edit_brand_name"
+                        defaultValue={msp.brand_name}
+                        placeholder="SafePass"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edit_brand_color">Brand Color</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="edit_brand_color"
+                          type="color"
+                          defaultValue={msp.brand_color}
+                          className="w-16"
+                        />
+                        <Input
+                          defaultValue={msp.brand_color}
+                          placeholder="#3b82f6"
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <div className="flex gap-3">
+                      <Button className="flex-1">
+                        Save Changes
+                      </Button>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          Cancel
+                        </Button>
+                      </DialogTrigger>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button variant="outline" onClick={() => handleNavigation('/msp-security-dashboard')}>
               <Shield className="h-4 w-4 mr-2" />
               Security Center
