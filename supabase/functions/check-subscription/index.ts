@@ -40,7 +40,7 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Give all UltriumAI employees enterprise status - check this FIRST before cache
-    if (user.email.endsWith('@ultriumai.com') || user.email === 'brandon.howard@kwccpa.com' || user.email === 'brandon@ultriumllc.com') {
+    if (user.email.endsWith('@ultriumai.com') || user.email === 'brandon.howard@kwccpa.com') {
       logStep("UltriumAI employee detected - granting enterprise status", { email: user.email });
       
       // Update database to reflect enterprise status
