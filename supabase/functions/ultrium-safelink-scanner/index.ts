@@ -50,7 +50,7 @@ serve(async (req) => {
 
     const reportResponse = await fetch(`https://www.virustotal.com/vtapi/v2/url/report?apikey=${virusTotalApiKey}&resource=${encodeURIComponent(url)}`);
     const reportData = await reportResponse.json();
-    console.log('VirusTotal report:', reportData);
+    console.log('VirusTotal report for', url, ':', JSON.stringify(reportData, null, 2));
 
     // Analyze the results
     const positives = reportData.positives || 0;
@@ -58,12 +58,15 @@ serve(async (req) => {
     const scanDate = reportData.scan_date || new Date().toISOString();
     const permalink = reportData.permalink;
 
+    console.log(`URL: ${url} | Positives: ${positives} | Total: ${total} | Response Code: ${reportData.response_code}`);
+
     // Determine risk level
     let riskLevel: 'safe' | 'low' | 'medium' | 'high' | 'critical' = 'safe';
     let threats: string[] = [];
     
     if (positives > 0) {
       const riskPercentage = (positives / total) * 100;
+      console.log(`Risk calculation: ${positives} positives out of ${total} engines = ${riskPercentage}%`);
       
       // More conservative risk assessment to reduce false positives
       if (positives >= 10 && riskPercentage >= 30) {
@@ -90,9 +93,14 @@ serve(async (req) => {
           threats = [`${positives} security engine(s) flagged this URL for review`];
         }
       }
+    } else {
+      console.log('No threats detected - marking as safe');
     }
+    
+    console.log(`Final risk assessment: ${riskLevel}`);
 
     const reputationScore = Math.max(0, 100 - (positives >= 5 ? positives * 8 : positives * 3));
+    console.log(`Reputation score calculated: ${reputationScore} (based on ${positives} positives)`);
 
     // Generate recommendations based on actual risk level
     const recommendations = [];
