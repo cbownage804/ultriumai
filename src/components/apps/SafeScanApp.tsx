@@ -33,6 +33,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { SafeScanBookmarklet } from "@/components/SafeScanBookmarklet";
 
 interface ScanResult {
   type: 'email' | 'document' | 'url';
@@ -392,8 +393,17 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             onClick={() => window.open('/safescan-embed-demo', '_blank')}
           >
             <Globe className="h-4 w-4 mr-2" />
-            MSP Widget Demo
+            Widget Demo
           </Button>
+          {isMSPContext && (
+            <Button 
+              variant="outline"
+              onClick={() => setActiveTab('deployment')}
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Client Deployment
+            </Button>
+          )}
         </div>
       </div>
 
@@ -452,11 +462,12 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-5' : 'grid-cols-4'}`}>
           <TabsTrigger value="email">Email Security</TabsTrigger>
           <TabsTrigger value="document">Document Scanning</TabsTrigger>
           <TabsTrigger value="url">URL Analysis</TabsTrigger>
           <TabsTrigger value="history">Scan History</TabsTrigger>
+          {isMSPContext && <TabsTrigger value="deployment">Client Deployment</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="email" className="space-y-4">
@@ -1159,6 +1170,13 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* MSP Client Deployment Tab */}
+        {isMSPContext && (
+          <TabsContent value="deployment">
+            <SafeScanBookmarklet />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
