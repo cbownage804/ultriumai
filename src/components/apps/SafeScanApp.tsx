@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { SafeScanBookmarklet } from "@/components/SafeScanBookmarklet";
+import { BulkDocumentScanner } from "@/components/BulkDocumentScanner";
 
 interface ScanResult {
   type: 'email' | 'document' | 'url';
@@ -246,6 +247,30 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
 
       console.log('Setting scan result:', result);
       setScanResult(result);
+      
+      // Send email notification for threats or if configured for all scans
+      if (!result.safe || result.threats_detected.length > 0) {
+        try {
+          await supabase.functions.invoke('send-scan-notification', {
+            body: {
+              userEmail: user?.email || 'user@example.com',
+              userName: user?.user_metadata?.full_name || 'User',
+              scanType: type,
+              threatCount: result.threats_detected.length,
+              safe: result.safe,
+              riskLevel: result.risk_level,
+              fileName: type === 'document' ? (content as File).name : undefined,
+              scanDetails: result.scan_details,
+              isMSP: isMSPContext,
+              clientName: isMSPContext ? 'Demo Client' : undefined
+            }
+          });
+          console.log('Email notification sent successfully');
+        } catch (notificationError) {
+          console.error('Failed to send email notification:', notificationError);
+          // Don't fail the scan if email fails
+        }
+      }
       
       await loadScanHistory();
       await loadStats();
@@ -462,9 +487,10 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-5' : 'grid-cols-4'}`}>
+        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-6' : 'grid-cols-5'}`}>
           <TabsTrigger value="email">Email Security</TabsTrigger>
           <TabsTrigger value="document">Document Scanning</TabsTrigger>
+          <TabsTrigger value="bulk">Bulk Scanner</TabsTrigger>
           <TabsTrigger value="url">URL Analysis</TabsTrigger>
           <TabsTrigger value="history">Scan History</TabsTrigger>
           {isMSPContext && <TabsTrigger value="deployment">Client Deployment</TabsTrigger>}
@@ -697,9 +723,9 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                   <FileText className="h-5 w-5" />
                   Document Security Scanner
                 </CardTitle>
-                <CardDescription>
-                  Scan documents for malware and threats
-                </CardDescription>
+                 <CardDescription>
+                   Scan documents for malware and threats. Supports 25+ file types including PDFs, Office docs, images, and archives.
+                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -709,7 +735,7 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                       id="document-upload"
                       type="file"
                       onChange={handleFileSelect}
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.html,.htm,.xml,.json,.jpg,.jpeg,.png,.gif,.bmp,.tiff,.tif,.zip,.rar,.7z,.tar,.gz"
                       className="hidden"
                     />
                     <label 
@@ -911,6 +937,41 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="bulk" className="space-y-4">
+          <BulkDocumentScanner 
+            isMSPContext={isMSPContext}
+            onScanComplete={(results) => {
+              // Send email notifications for bulk scans
+              results.forEach(async (result, index) => {
+                if (!result.error && result.result) {
+                  try {
+                    await supabase.functions.invoke('send-scan-notification', {
+                      body: {
+                        userEmail: user?.email || 'user@example.com',
+                        userName: user?.user_metadata?.full_name || 'User',
+                        scanType: 'bulk',
+                        threatCount: result.result.threats_detected?.length || 0,
+                        safe: result.result.safe,
+                        riskLevel: result.result.risk_level || 'unknown',
+                        fileName: result.file.name,
+                        scanDetails: result.result.scan_details,
+                        isMSP: isMSPContext,
+                        clientName: isMSPContext ? 'Demo Client' : undefined
+                      }
+                    });
+                  } catch (error) {
+                    console.error('Failed to send notification for bulk scan result:', error);
+                  }
+                }
+              });
+              
+              // Refresh stats after bulk scan
+              loadStats();
+              loadScanHistory();
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="url" className="space-y-4">
