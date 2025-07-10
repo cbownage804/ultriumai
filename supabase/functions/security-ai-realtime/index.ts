@@ -8,6 +8,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Security AI Realtime request received:', req.method, req.url);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -15,8 +17,11 @@ serve(async (req) => {
 
   const { headers } = req;
   const upgradeHeader = headers.get("upgrade") || "";
+  
+  console.log('Upgrade header:', upgradeHeader);
 
   if (upgradeHeader.toLowerCase() !== "websocket") {
+    console.log('Not a WebSocket request, returning 400');
     return new Response("Expected WebSocket connection", { status: 400 });
   }
 

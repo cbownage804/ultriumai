@@ -235,7 +235,9 @@ Would you like me to analyze these threats and recommend response actions?`,
   // WebSocket connection for real-time streaming
   useEffect(() => {
     const connectWebSocket = () => {
-      const ws = new WebSocket(`wss://nsyobmjpdpvesjwdphlh.functions.supabase.co/security-ai-realtime`);
+      const wsUrl = `wss://nsyobmjpdpvesjwdphlh.functions.supabase.co/security-ai-realtime`;
+      console.log('Connecting to WebSocket:', wsUrl);
+      const ws = new WebSocket(wsUrl);
       
       ws.onopen = () => {
         console.log('Connected to UltriumDefender AI real-time service');
@@ -313,7 +315,7 @@ Would you like me to analyze these threats and recommend response actions?`,
   }, [messages, streamingMessage]);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading || !webSocket) return;
+    if (!inputMessage.trim() || isLoading) return;
 
     const userMessage: SecurityMessage = {
       id: Date.now().toString(),
@@ -326,14 +328,37 @@ Would you like me to analyze these threats and recommend response actions?`,
     const messageToSend = inputMessage;
     setInputMessage("");
     setIsLoading(true);
-    setStreamingMessage("");
 
     try {
-      // Send message via WebSocket for real-time streaming
-      webSocket.send(JSON.stringify({
-        type: 'send_text',
-        text: messageToSend
-      }));
+      // Use the original edge function for now until WebSocket is fixed
+      const { data, error } = await supabase.functions.invoke('security-ai-assistant', {
+        body: {
+          message: messageToSend,
+          context: {
+            security_state: securityContext,
+            conversation_history: messages.slice(-5)
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      const assistantMessage: SecurityMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date(),
+        context: data.context
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      if (data.suggested_actions?.length > 0) {
+        toast({
+          title: "AI Recommendations Available",
+          description: `${data.suggested_actions.length} security actions suggested`,
+        });
+      }
 
     } catch (error) {
       console.error('Security AI error:', error);
@@ -342,6 +367,7 @@ Would you like me to analyze these threats and recommend response actions?`,
         description: "Failed to communicate with UltriumDefender AI",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
