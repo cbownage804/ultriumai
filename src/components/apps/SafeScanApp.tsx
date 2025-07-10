@@ -38,6 +38,7 @@ import { BulkDocumentScanner } from "@/components/BulkDocumentScanner";
 import { APIKeyManager } from "@/components/APIKeyManager";
 import { ScheduledScans } from "@/components/ScheduledScans";
 import { SafeScanBranding } from "@/components/SafeScanBranding";
+import { SafeScanAI } from "@/components/SafeScanAI";
 
 interface ScanResult {
   type: 'email' | 'document' | 'url';
@@ -490,11 +491,12 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-9' : 'grid-cols-8'}`}>
+        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-10' : 'grid-cols-9'}`}>
           <TabsTrigger value="email">Email Security</TabsTrigger>
           <TabsTrigger value="document">Document Scanning</TabsTrigger>
           <TabsTrigger value="bulk">Bulk Scanner</TabsTrigger>
           <TabsTrigger value="url">URL Analysis</TabsTrigger>
+          <TabsTrigger value="ai">AI Assistant</TabsTrigger>
           <TabsTrigger value="api">API Access</TabsTrigger>
           <TabsTrigger value="scheduled">Scheduling</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
@@ -1236,6 +1238,10 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-4">
+          <SafeScanAI />
         </TabsContent>
 
         <TabsContent value="api" className="space-y-4">
