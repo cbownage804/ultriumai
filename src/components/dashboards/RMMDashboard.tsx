@@ -22,20 +22,33 @@ import { AddDeviceDialog } from "@/components/rmm/AddDeviceDialog";
 import { RealTimeMonitor } from "@/components/rmm/RealTimeMonitor";
 import { AlertCenter } from "@/components/rmm/AlertCenter";
 import { RemoteAccess } from "@/components/rmm/RemoteAccess";
-import { useRMMData } from "@/hooks/useRMMData";
+import { useRMMDevices } from "@/hooks/useRMMDevices";
 
 export const RMMDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const { 
     devices, 
-    customers, 
-    tickets, 
-    stats, 
     isLoading, 
     getCriticalDevices, 
-    getDevicesByType 
-  } = useRMMData();
+    getDevicesByType,
+    getDeviceStats
+  } = useRMMDevices();
 
+  const deviceStats = getDeviceStats();
+  
+  // Transform stats to match RMMOverview expectations
+  const stats = {
+    totalDevices: deviceStats.total,
+    onlineDevices: deviceStats.online,
+    offlineDevices: deviceStats.offline,
+    alertsCount: deviceStats.critical,
+    serversCount: deviceStats.servers,
+    workstationsCount: deviceStats.workstations,
+    networkDevicesCount: 0, // placeholder
+    criticalAlerts: deviceStats.critical,
+    pendingPatches: 0, // placeholder
+    scriptsRunning: 0, // placeholder
+  };
   console.log('Current active tab:', activeTab);
 
   // Get devices by type for component props
