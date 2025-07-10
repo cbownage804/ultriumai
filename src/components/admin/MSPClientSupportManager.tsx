@@ -74,7 +74,7 @@ interface MSPClient {
   timezone?: string;
   business_hours?: any;
   msp_organizations?: {
-    organization_name: string;
+    name: string;
   } | null;
 }
 
@@ -277,7 +277,7 @@ export const MSPClientSupportManager = () => {
         .select(`
           *,
           msp_organizations (
-            organization_name
+            name
           )
         `)
         .order('created_at', { ascending: false });
@@ -815,7 +815,7 @@ export const MSPClientSupportManager = () => {
                             <p className="text-sm text-muted-foreground">{client.contact_email}</p>
                             {client.msp_organizations && (
                               <p className="text-xs text-muted-foreground">
-                                MSP: {client.msp_organizations.organization_name}
+                                MSP: {client.msp_organizations.name}
                               </p>
                             )}
                           </div>
