@@ -27,20 +27,34 @@ export const AdminUsersManager = () => {
     try {
       console.log('🔍 Fetching users for admin dashboard...');
       
-      // Enhanced query to get more user data
-      const { data, error } = await supabase
+      // Fetch profiles first, then join with related data
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          subscribers:subscribers(subscription_tier, subscribed),
-          user_credits:user_credits(credits_used, credits_limit)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('👥 Users data:', { count: data?.length, error: error?.message });
+      if (profilesError) throw profilesError;
 
-      if (error) throw error;
-      setUsers(data || []);
+      // Get subscription data for all users
+      const { data: subscriptionsData } = await supabase
+        .from('subscribers')
+        .select('user_id, subscription_tier, subscribed');
+
+      // Get credits data for all users  
+      const { data: creditsData } = await supabase
+        .from('user_credits')
+        .select('user_id, credits_used, credits_limit');
+
+      // Combine the data
+      const combinedData = profilesData?.map(profile => ({
+        ...profile,
+        subscribers: subscriptionsData?.filter(sub => sub.user_id === profile.user_id) || [],
+        user_credits: creditsData?.filter(credit => credit.user_id === profile.user_id) || []
+      })) || [];
+
+      console.log('👥 Users data:', { count: combinedData?.length });
+
+      setUsers(combinedData || []);
     } catch (error: any) {
       console.error('❌ Error fetching users:', error);
       toast({
