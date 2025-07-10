@@ -10,6 +10,17 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  // Validate API key
+  const reqKey = req.headers.get('x-ultrium-key')
+  const expectedKey = Deno.env.get('ULTRIUM_AGENT_KEY')
+
+  if (!reqKey || reqKey !== expectedKey) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const url = new URL(req.url)

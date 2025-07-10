@@ -8,6 +8,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Validate API key
+  const reqKey = req.headers.get('x-ultrium-key')
+  const expectedKey = Deno.env.get('ULTRIUM_AGENT_KEY')
+
+  if (!reqKey || reqKey !== expectedKey) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { 
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -25,13 +36,13 @@ serve(async (req) => {
       ram_usage,
       disk_usage,
       rustdesk_id,
-      user_id // Required for RLS policies
+      user_id // Optional - for associating device with specific user
     } = data
 
-    if (!user_id) {
-      console.error('❌ Missing user_id in check-in request')
+    if (!hostname) {
+      console.error('❌ Missing hostname in check-in request')
       return new Response(
-        JSON.stringify({ error: 'user_id is required' }), 
+        JSON.stringify({ error: 'hostname is required' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -67,27 +78,27 @@ serve(async (req) => {
 
     console.log('✅ Device upserted:', device.id)
 
-    // Insert historical metrics into rmm_metrics table
-    const { error: metricsError } = await supabase
-      .from('rmm_metrics')
-      .insert({
-        user_id,
-        device_id: device.id,
-        cpu_usage: cpu_usage || 0,
-        ram_usage: ram_usage || 0,
-        disk_usage: disk_usage || 0,
-        timestamp: new Date().toISOString()
-      })
+    // Insert historical metrics into rmm_metrics table (if user_id provided)
+    if (user_id) {
+      const { error: metricsError } = await supabase
+        .from('rmm_metrics')
+        .insert({
+          user_id,
+          device_id: device.id,
+          cpu_usage: cpu_usage || 0,
+          ram_usage: ram_usage || 0,
+          disk_usage: disk_usage || 0,
+          timestamp: new Date().toISOString()
+        })
 
-    if (metricsError) {
-      console.error('❌ Metrics insert error:', metricsError)
-      return new Response(
-        JSON.stringify({ error: metricsError.message }), 
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      if (metricsError) {
+        console.error('❌ Metrics insert error:', metricsError)
+        // Don't fail the whole request for metrics error
+      } else {
+        console.log('✅ Metrics recorded for device:', hostname)
+      }
     }
 
-    console.log('✅ Metrics recorded for device:', hostname)
 
     // Return success response
     return new Response(
