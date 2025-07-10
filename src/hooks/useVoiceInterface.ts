@@ -12,7 +12,7 @@ export const useVoiceInterface = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [settings, setSettings] = useState<VoiceSettings>({
-    voice: '9BWtsMINqrJLrRacOk9x', // Aria voice
+    voice: 'CwhRBWXzGAHq8TQ4Fs17', // Roger voice as default
     autoSpeak: true,
     speechRate: 1.0
   });

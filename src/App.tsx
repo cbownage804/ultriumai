@@ -77,7 +77,7 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
-import { SafeShieldVoiceAssistant } from '@/components/voice/SafeShieldVoiceAssistant';
+import { EnhancedVoiceAssistant } from '@/components/voice/EnhancedVoiceAssistant';
 import { Loader2 } from 'lucide-react';
 
 function AppRouter() {
@@ -326,7 +326,7 @@ export default function App() {
       <VoiceAssistantProvider>
         <Router>
           <AppRouter />
-          <SafeShieldVoiceAssistant />
+          <EnhancedVoiceAssistant />
           <Toaster />
         </Router>
       </VoiceAssistantProvider>
