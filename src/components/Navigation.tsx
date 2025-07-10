@@ -87,10 +87,7 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => handleNavigation('/ultriumgpt')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              UltriumGPT
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
+            {/* UltriumGPT now unified in the AI Assistant */}
             <button onClick={() => handleNavigation('/solutions')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -203,9 +200,7 @@ const Navigation = () => {
               <button onClick={() => handleNavigationWithMenuClose('/enterprise')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Enterprise
               </button>
-              <button onClick={() => handleNavigationWithMenuClose('/ultriumgpt')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                UltriumGPT
-              </button>
+              {/* UltriumGPT now unified in AI Assistant */}
               <button onClick={() => handleNavigationWithMenuClose('/solutions')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Solutions
               </button>
