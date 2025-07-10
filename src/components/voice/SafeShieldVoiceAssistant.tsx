@@ -196,8 +196,8 @@ export const SafeShieldVoiceAssistant = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <Card className={cn(
-        "w-80 shadow-2xl bg-gradient-to-b from-gray-900 to-black border-red-500/20 transition-all duration-300",
-        isMinimized ? "h-16" : "h-96"
+        "w-96 shadow-2xl bg-gradient-to-b from-gray-900 to-black border-red-500/20 transition-all duration-300",
+        isMinimized ? "h-16" : "h-[600px]"
       )}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-red-500/20 bg-gradient-to-r from-red-900/20 to-red-800/20">
@@ -237,7 +237,7 @@ export const SafeShieldVoiceAssistant = () => {
         {!isMinimized && (
           <>
             {/* Messages Area */}
-            <CardContent className="p-0 h-64 overflow-y-auto bg-black/40">
+            <CardContent className="p-0 h-[480px] overflow-y-auto bg-black/40">
               <div className="p-4 space-y-3">
                 {messages.length === 0 && (
                   <div className="text-center text-gray-400 py-8">
