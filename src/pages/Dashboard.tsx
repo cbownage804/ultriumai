@@ -1,7 +1,7 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import ChatInterface from "@/components/ChatInterface";
-import SettingsPage from "@/pages/SettingsPage";
+
 import ProfilePage from "@/pages/ProfilePage";
 import CustomGPTBuild from "@/components/CustomGPTBuild";
 import APIAccessConfig from "@/components/APIAccessConfig";
@@ -75,7 +75,7 @@ const Dashboard = () => {
   }
 
   // Determine which page to show based on the path
-  const isSettingsPage = location.pathname.includes('/settings');
+  
   const isProfilePage = location.pathname.includes('/profile');
   const isHistoryPage = location.pathname.includes('/history');
   const isCustomGPTBuildPage = location.pathname.includes('/gpt/build');
@@ -122,7 +122,7 @@ const Dashboard = () => {
     if (isDashboardOverview) return "Dashboard";
     if (isUltriumGPTPage) return "UltriumGPT";
     if (isChatPage) return "Chat";
-    if (isSettingsPage) return "Settings";
+    
     if (isProfilePage) return "Profile"; 
     if (isHistoryPage) return "History";
     if (isCustomGPTBuildPage) return "Build Custom GPT";
@@ -166,7 +166,7 @@ const Dashboard = () => {
     if (isRMMPage) return <RMMDashboard />;
     if (isHelpdeskPage) return <HelpdeskDashboard />;
     if (isChatPage) return <ChatInterface />;
-    if (isSettingsPage) return <SettingsPage />;
+    
     if (isProfilePage) return <ProfilePage />;
     if (isHistoryPage) return <ConversationHistory />;
     if (isCustomGPTBuildPage) return <div className="p-6"><CustomGPTBuild /></div>;
@@ -215,7 +215,7 @@ const Dashboard = () => {
               <h1 className="text-lg font-semibold">{getPageTitle()}</h1>
             </div>
           </header>
-          <div className={`flex flex-1 flex-col ${!isSettingsPage ? 'h-[calc(100vh-4rem)]' : ''}`}>
+          <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
             {renderContent()}
           </div>
         </SidebarInset>

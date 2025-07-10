@@ -36,7 +36,6 @@ const gptItems = [
   { title: "Chat", url: "/dashboard/gpt/chat", icon: MessageSquare, tooltip: "Test and interact with your custom GPTs" },
   { title: "Analyze", url: "/dashboard/gpt/analyze", icon: BarChart3, tooltip: "View GPT performance and analytics" },
   { title: "Deploy", url: "/dashboard/gpt/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
-  { title: "Settings", url: "/dashboard/settings", icon: Settings, tooltip: "UltriumGPT settings and preferences" },
 ];
 
 const safeSuiteItems = [

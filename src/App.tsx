@@ -15,7 +15,7 @@ import Dashboard from '@/pages/Dashboard';
 import GPTChat from '@/pages/GPTChat';
 import NotFound from '@/pages/NotFound';
 import ProfilePage from '@/pages/ProfilePage';
-import SettingsPage from '@/pages/SettingsPage';
+
 import Pricing from '@/pages/Pricing';
 import MSPPricing from '@/pages/MSPPricing';
 import UltriumGPT from '@/pages/UltriumGPT';
@@ -274,11 +274,6 @@ function AppRouter() {
         <Route path="/profile" element={
           <ProtectedRoute>
             <ProfilePage />
-          </ProtectedRoute>
-        } />
-        <Route path="/settings" element={
-          <ProtectedRoute>
-            <SettingsPage />
           </ProtectedRoute>
         } />
         <Route path="/admin" element={
