@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -101,6 +101,9 @@ How can I help secure your environment today?`,
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isProactiveMode, setIsProactiveMode] = useState(true);
   const [speechRecognition, setSpeechRecognition] = useState<any>(null);
+  const [webSocket, setWebSocket] = useState<WebSocket | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -229,14 +232,88 @@ Would you like me to analyze these threats and recommend response actions?`,
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // WebSocket connection for real-time streaming
+  useEffect(() => {
+    const connectWebSocket = () => {
+      const ws = new WebSocket(`wss://nsyobmjpdpvesjwdphlh.functions.supabase.co/security-ai-realtime`);
+      
+      ws.onopen = () => {
+        console.log('Connected to UltriumDefender AI real-time service');
+        setWebSocket(ws);
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received WebSocket message:', data.type);
+
+        if (data.type === 'response.text.delta') {
+          setStreamingMessage(prev => prev + data.delta);
+          setIsStreaming(true);
+        } else if (data.type === 'response.text.done' || data.type === 'response.done') {
+          // Finalize the streaming message
+          if (streamingMessage) {
+            const assistantMessage: SecurityMessage = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: streamingMessage,
+              timestamp: new Date(),
+              context: {
+                activeAlerts: securityContext?.activeAlerts,
+                criticalThreats: securityContext?.criticalThreats,
+                openIncidents: securityContext?.openIncidents,
+                complianceScore: securityContext?.complianceScore
+              }
+            };
+            
+            setMessages(prev => [...prev, assistantMessage]);
+            setStreamingMessage("");
+            setIsStreaming(false);
+            setIsLoading(false);
+          }
+        } else if (data.type === 'error') {
+          console.error('WebSocket error:', data.error);
+          toast({
+            title: "Connection Error",
+            description: data.error || "Failed to connect to AI service",
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          setIsStreaming(false);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        toast({
+          title: "Connection Error", 
+          description: "Failed to connect to UltriumDefender AI real-time service",
+          variant: "destructive",
+        });
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket connection closed');
+        setWebSocket(null);
+        // Attempt to reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
+    };
+
+    connectWebSocket();
+
+    return () => {
+      webSocket?.close();
+    };
+  }, [toast, securityContext]);
+
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, streamingMessage]);
 
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if (!inputMessage.trim() || isLoading || !webSocket) return;
 
     const userMessage: SecurityMessage = {
       id: Date.now().toString(),
@@ -246,39 +323,17 @@ Would you like me to analyze these threats and recommend response actions?`,
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = inputMessage;
     setInputMessage("");
     setIsLoading(true);
+    setStreamingMessage("");
 
     try {
-      const { data, error } = await supabase.functions.invoke('security-ai-assistant', {
-        body: {
-          message: inputMessage,
-          context: {
-            security_state: securityContext,
-            conversation_history: messages.slice(-5) // Last 5 messages for context
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      const assistantMessage: SecurityMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-        context: data.context
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // Handle any automated actions suggested by the AI
-      if (data.suggested_actions?.length > 0) {
-        toast({
-          title: "AI Recommendations Available",
-          description: `${data.suggested_actions.length} security actions suggested`,
-        });
-      }
+      // Send message via WebSocket for real-time streaming
+      webSocket.send(JSON.stringify({
+        type: 'send_text',
+        text: messageToSend
+      }));
 
     } catch (error) {
       console.error('Security AI error:', error);
@@ -287,7 +342,6 @@ Would you like me to analyze these threats and recommend response actions?`,
         description: "Failed to communicate with UltriumDefender AI",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -442,7 +496,28 @@ Would you like me to analyze these threats and recommend response actions?`,
               </div>
             ))}
             
-            {isLoading && (
+            {/* Show streaming response */}
+            {isStreaming && streamingMessage && (
+              <div className="flex gap-3">
+                <Avatar className="h-8 w-8 flex-shrink-0 border border-red-800/30">
+                  <AvatarFallback className="bg-red-900/50 text-red-300">
+                    <Shield className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                
+                <div className="flex-1 space-y-2">
+                  <div className="bg-gray-800/80 border border-red-800/30 rounded-lg p-3 backdrop-blur-sm text-gray-100">
+                    <div className="flex items-start gap-2">
+                      {getSeverityIcon(streamingMessage)}
+                      <p className="text-sm whitespace-pre-wrap flex-1">{streamingMessage}</p>
+                      <div className="w-2 h-4 bg-red-400 animate-pulse ml-1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {isLoading && !isStreaming && (
               <div className="flex gap-3">
                 <Avatar className="h-8 w-8 border border-red-800/30">
                   <AvatarFallback className="bg-red-900/50 text-red-300">
@@ -452,7 +527,7 @@ Would you like me to analyze these threats and recommend response actions?`,
                 <div className="bg-gray-800/80 border border-red-800/30 rounded-lg p-3 backdrop-blur-sm">
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-red-400" />
-                    <span className="text-sm text-gray-200">Analyzing security data...</span>
+                    <span className="text-sm text-gray-200">Connecting to AI service...</span>
                   </div>
                 </div>
               </div>
