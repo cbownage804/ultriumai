@@ -119,6 +119,9 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
     };
   }, [sessionId, sessions, connectWebSocket, toast]);
 
+  // Handle screen frame data from WebSocket
+  const [screenFrameHandler, setScreenFrameHandler] = useState<((frameData: string) => void) | null>(null);
+
   // Setup canvas for displaying remote screen
   const setupCanvasRendering = useCallback((ws: WebSocket) => {
     ws.onmessage = (event) => {
@@ -127,7 +130,9 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
         
         switch (message.type) {
           case 'screen_frame':
-            // This would be handled by the canvas component
+            if (screenFrameHandler && message.data) {
+              screenFrameHandler(message.data);
+            }
             break;
           case 'cursor_position':
             console.log('Cursor position:', message.data);
@@ -143,7 +148,12 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
         console.error('Error processing WebSocket message:', error);
       }
     };
-  }, [deviceName, toast]);
+  }, [deviceName, toast, screenFrameHandler]);
+
+  // Handle screen frame callback
+  const handleScreenFrame = useCallback((handler: (frameData: string) => void) => {
+    setScreenFrameHandler(() => handler);
+  }, []);
 
   // Toggle fullscreen
   const toggleFullscreen = useCallback(() => {
@@ -199,6 +209,7 @@ export const RemoteDesktopViewer = ({ sessionId, deviceId, deviceName, onClose }
                 isFullscreen={isFullscreen}
                 onMouseEvent={handleMouseEvent}
                 onKeyboardEvent={handleKeyboardEvent}
+                onScreenFrame={handleScreenFrame}
               />
             </TabsContent>
 

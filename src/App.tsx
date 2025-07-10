@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Index from '@/pages/Index';
+import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
 import Analytics from '@/pages/Analytics';
 import Auth from '@/pages/Auth';
@@ -94,6 +95,7 @@ function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<Index />} />
+      <Route path="/agent" element={<Agent />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <Auth />} />
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/msp-pricing" element={<MSPPricing />} />

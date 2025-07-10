@@ -270,7 +270,7 @@ export const useRemoteAccess = () => {
   const connectWebSocket = async (sessionToken: string) => {
     try {
       console.log('Connecting WebSocket with token:', sessionToken);
-      const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-remote-session?token=${sessionToken}`;
+      const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-realtime?token=${sessionToken}`;
       console.log('WebSocket URL:', wsUrl);
       
       // Add a timeout to the WebSocket connection

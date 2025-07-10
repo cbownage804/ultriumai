@@ -8,7 +8,7 @@ interface RemoteDesktopCanvasProps {
   isFullscreen: boolean;
   onMouseEvent: (event: React.MouseEvent<HTMLCanvasElement>) => void;
   onKeyboardEvent: (event: React.KeyboardEvent) => void;
-  onScreenFrame?: (frameData: any) => void;
+  onScreenFrame?: (callback: (frameData: string) => void) => void;
 }
 
 export const RemoteDesktopCanvas = ({ 
@@ -23,14 +23,14 @@ export const RemoteDesktopCanvas = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Render screen frame on canvas
-  const renderScreenFrame = useCallback((ctx: CanvasRenderingContext2D, frameData: any) => {
-    if (frameData.imageData) {
+  const renderScreenFrame = useCallback((ctx: CanvasRenderingContext2D, frameData: string) => {
+    if (frameData) {
       const img = new Image();
       img.onload = () => {
         ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.drawImage(img, 0, 0, ctx.canvas.width, ctx.canvas.height);
       };
-      img.src = `data:image/jpeg;base64,${frameData.imageData}`;
+      img.src = frameData; // frameData is already a data URL
     }
   }, []);
 
@@ -42,9 +42,23 @@ export const RemoteDesktopCanvas = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // This would be connected to the WebSocket message handler
+    // Setup screen frame handler
     if (onScreenFrame) {
-      onScreenFrame((frameData: any) => renderScreenFrame(ctx, frameData));
+      onScreenFrame((frameData: string) => renderScreenFrame(ctx, frameData));
+    } else {
+      // Render simulation screen
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#333';
+      ctx.font = '48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('Remote Desktop Simulation', canvas.width / 2, canvas.height / 2 - 50);
+      
+      ctx.fillStyle = '#666';
+      ctx.font = '24px Arial';
+      ctx.fillText(deviceName, canvas.width / 2, canvas.height / 2 + 20);
+      ctx.fillText('Screen sharing will appear here when connected', canvas.width / 2, canvas.height / 2 + 60);
     }
   }, [renderScreenFrame, onScreenFrame]);
 
