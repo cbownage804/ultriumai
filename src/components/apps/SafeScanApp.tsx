@@ -186,19 +186,29 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
 
       // Map the actual response structure to our expected format
       const scanResult = data?.scanResult || data;
+      
+      // Extract threat information and determine risk level
+      const threats = scanResult?.threats || data?.threats_detected || [];
+      const highestSeverity = scanResult?.summary?.highestSeverity || 'low';
+      const riskScore = scanResult?.riskScore || data?.reputation_score || 50;
+      
+      // Determine risk level based on various factors
+      let riskLevel: 'safe' | 'low' | 'medium' | 'high' | 'critical' = 'safe';
+      if (riskScore >= 80) riskLevel = 'critical';
+      else if (riskScore >= 60 || highestSeverity === 'high') riskLevel = 'high';
+      else if (riskScore >= 40 || highestSeverity === 'medium') riskLevel = 'medium';
+      else if (riskScore >= 20 || threats.length > 0) riskLevel = 'low';
+      
       const result = {
         type: type,
         content: typeof content === 'string' ? content.substring(0, 100) : (content as File).name,
-        safe: scanResult?.isClean ?? data?.safe ?? false,
-        risk_level: scanResult?.threatLevel === 'clean' ? 'safe' : 
-                   scanResult?.threatLevel === 'suspicious' ? 'medium' :
-                   scanResult?.threatLevel === 'malicious' ? 'high' :
-                   data?.risk_level || 'unknown',
-        threats_detected: scanResult?.detectedThreats || data?.threats_detected || [],
-        reputation_score: data?.reputation_score || 50,
+        safe: riskLevel === 'safe' && threats.length === 0,
+        risk_level: riskLevel,
+        threats_detected: threats.map((t: any) => t.description || t.type || 'Unknown threat'),
+        reputation_score: riskScore,
         scan_details: scanResult || data?.scan_details || {},
         scan_date: new Date().toISOString(),
-        recommendations: data?.recommendations || []
+        recommendations: data?.recommendations || (riskLevel !== 'safe' ? ['Exercise caution with this content'] : ['Content appears safe'])
       };
 
       console.log('Setting scan result:', result);
