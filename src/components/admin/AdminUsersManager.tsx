@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Mail, KeyRound, MoreHorizontal, Ban, UserCheck, Calendar } from 'lucide-react';
+import { Edit, Mail, KeyRound, MoreHorizontal, Ban, UserCheck, Calendar, CheckCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { DataTableWithSearch } from './DataTableWithSearch';
 import { format } from 'date-fns';
@@ -170,6 +170,27 @@ export const AdminUsersManager = () => {
       toast({
         title: "Error",
         description: "Failed to send password reset email",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConfirmEmail = async (user: any) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-confirm-user', {
+        body: { email: user.email }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Email confirmed for ${user.email}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to confirm email: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -458,6 +479,13 @@ export const AdminUsersManager = () => {
           >
             <KeyRound className="h-4 w-4" />
             Reset Password
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={() => handleConfirmEmail(user)}
+            className="flex items-center gap-2 text-green-600"
+          >
+            <CheckCircle className="h-4 w-4" />
+            Confirm Email
           </DropdownMenuItem>
           <DropdownMenuItem 
             onClick={() => handleSuspendUser(user)}
