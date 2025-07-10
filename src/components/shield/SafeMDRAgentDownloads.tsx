@@ -29,7 +29,7 @@ interface EDRAgentDownload {
   download_count: number;
 }
 
-export const SafeEDRAgentDownloads = () => {
+export const SafeMDRAgentDownloads = () => {
   const [downloads, setDownloads] = useState<EDRAgentDownload[]>([]);
   const [licenseKey, setLicenseKey] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ export const SafeEDRAgentDownloads = () => {
 
   const loadAgentDownloads = async () => {
     try {
-      // Mock data for SafeEDR agents - in production this would come from database
+      // Mock data for SafeMDR agents - in production this would come from database
       const mockDownloads: EDRAgentDownload[] = [
         {
           id: '1',
@@ -91,7 +91,7 @@ export const SafeEDRAgentDownloads = () => {
     try {
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
-        // Generate a unique license key for SafeEDR
+        // Generate a unique license key for SafeMDR
         const key = `SEDR-${user.user.id.substring(0, 8).toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
         setLicenseKey(key);
       }
@@ -109,14 +109,14 @@ export const SafeEDRAgentDownloads = () => {
     try {
       toast({
         title: "Download Started",
-        description: `SafeEDR agent for ${platform} is downloading...`,
+        description: `SafeMDR agent for ${platform} is downloading...`,
       });
 
       // Simulate download tracking
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
         // In production, track download in database
-        console.log(`User ${user.user.id} downloaded SafeEDR agent for ${platform}`);
+        console.log(`User ${user.user.id} downloaded SafeMDR agent for ${platform}`);
       }
 
       // In production, this would trigger actual file download
@@ -164,7 +164,7 @@ export const SafeEDRAgentDownloads = () => {
       <div>
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <Eye className="h-6 w-6" />
-          SafeEDR Agent Downloads
+          SafeMDR Agent Downloads
         </h2>
         <p className="text-muted-foreground">
           Deploy AI-powered endpoint detection and response agents to monitor and protect your systems
@@ -218,7 +218,7 @@ export const SafeEDRAgentDownloads = () => {
           <Alert>
             <Shield className="h-4 w-4" />
             <AlertDescription>
-              Use this license key when installing SafeEDR agents on your endpoints. 
+              Use this license key when installing SafeMDR agents on your endpoints. 
               This key links agents to your management console and enables AI behavioral analysis.
             </AlertDescription>
           </Alert>
@@ -339,7 +339,7 @@ export const SafeEDRAgentDownloads = () => {
         <Eye className="h-4 w-4" />
         <AlertDescription>
           <strong>Next Steps:</strong> Once agents are installed, they will automatically begin sending 
-          behavioral data to our AI analysis engine. View real-time detections and alerts in the SafeEDR dashboard.
+          behavioral data to our AI analysis engine. View real-time detections and alerts in the SafeMDR dashboard.
         </AlertDescription>
       </Alert>
     </div>

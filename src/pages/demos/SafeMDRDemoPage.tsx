@@ -1,11 +1,11 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import SafeEDRDemo from "@/components/demos/SafeEDRDemo";
+import SafeMDRDemo from "@/components/demos/SafeMDRDemo";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const SafeEDRDemoPage = () => {
+const SafeMDRDemoPage = () => {
   const navigate = useNavigate();
   
   return (
@@ -37,7 +37,7 @@ const SafeEDRDemoPage = () => {
         
         <main className="pb-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <SafeEDRDemo />
+            <SafeMDRDemo />
           </div>
         </main>
       </div>
@@ -46,4 +46,4 @@ const SafeEDRDemoPage = () => {
   );
 };
 
-export default SafeEDRDemoPage;
+export default SafeMDRDemoPage;

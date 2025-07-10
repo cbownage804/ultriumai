@@ -24,7 +24,7 @@ import {
   Play,
   Download
 } from "lucide-react";
-import { SafeEDRAgentDownloads } from "./SafeEDRAgentDownloads";
+import { SafeMDRAgentDownloads } from "./SafeMDRAgentDownloads";
 
 interface EDRAlert {
   id: string;
@@ -67,7 +67,7 @@ interface DashboardStats {
   escalation_rate: number;
 }
 
-export const SafeEDRDashboard = () => {
+export const SafeMDRDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
     total_alerts: 0,
     new_alerts: 0,
@@ -141,10 +141,10 @@ export const SafeEDRDashboard = () => {
         escalation_rate: alertsData?.length ? ((alertsData.filter(a => a.severity === 'critical').length / alertsData.length) * 100) : 0
       });
     } catch (error) {
-      console.error('Error loading SafeEDR data:', error);
+      console.error('Error loading SafeMDR data:', error);
       toast({
         title: "Error",
-        description: "Failed to load SafeEDR data",
+        description: "Failed to load SafeMDR data",
         variant: "destructive",
       });
     } finally {
@@ -313,7 +313,7 @@ export const SafeEDRDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Eye className="h-8 w-8 text-primary" />
-            SafeEDR - AI-Powered Endpoint Detection & Response
+            SafeMDR - AI-Powered Managed Detection & Response
           </h1>
           <p className="text-muted-foreground">
             Real-time behavioral analysis • Automated threat response
@@ -660,7 +660,7 @@ export const SafeEDRDashboard = () => {
 
       {/* Agent Downloads View */}
       {activeView === 'agents' && (
-        <SafeEDRAgentDownloads />
+        <SafeMDRAgentDownloads />
       )}
     </div>
   );

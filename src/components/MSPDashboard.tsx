@@ -529,7 +529,7 @@ export const MSPDashboard = () => {
           </TabsTrigger>
           <TabsTrigger value="ai-mdr" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
-            AI SafeEDR
+            AI SafeMDR
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Bug className="w-4 h-4" />
@@ -1062,7 +1062,7 @@ export const MSPDashboard = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-semibold">AI-Powered SafeEDR & SafeAV</h3>
+                <h3 className="text-2xl font-semibold">AI-Powered SafeMDR & SafeAV</h3>
                 <p className="text-muted-foreground">Complete managed detection, response, and endpoint protection</p>
               </div>
               <Badge variant="secondary" className="bg-red-100 text-red-800">

@@ -136,7 +136,7 @@ const statusColors = {
   resolved: 'bg-green-100 text-green-800'
 };
 
-export const SafeEDRDemo = () => {
+export const SafeMDRDemo = () => {
   const [incidents] = useState<SecurityIncident[]>(mockIncidents);
   const [threatIntel] = useState<ThreatIntel[]>(mockThreatIntel);
   const [selectedIncident, setSelectedIncident] = useState<SecurityIncident | null>(null);
@@ -159,7 +159,7 @@ export const SafeEDRDemo = () => {
       <div className="text-center space-y-2 mb-6">
         <div className="flex items-center justify-center gap-2">
           <Eye className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">SafeEDR Demo</h1>
+          <h1 className="text-3xl font-bold">SafeMDR Demo</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl mx-auto">
           Experience AI-powered endpoint detection and response with real-time behavioral analysis and automated threat blocking
@@ -671,11 +671,11 @@ export const SafeEDRDemo = () => {
       <Alert>
         <Eye className="h-4 w-4" />
         <AlertDescription>
-          This is a demonstration of SafeEDR capabilities. In production, you would have AI-powered behavioral analysis continuously monitoring your endpoints with real-time threat detection and automated response.
+          This is a demonstration of SafeMDR capabilities. In production, you would have AI-powered behavioral analysis continuously monitoring your endpoints with real-time threat detection and automated response.
         </AlertDescription>
       </Alert>
     </div>
   );
 };
 
-export default SafeEDRDemo;
+export default SafeMDRDemo;

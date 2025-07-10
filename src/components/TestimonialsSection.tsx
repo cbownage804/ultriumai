@@ -76,7 +76,7 @@ const testimonials: Testimonial[] = [
     company: 'Enterprise Shield',
     companySize: '75+ employees',
     industry: 'Cybersecurity',
-    quote: "The SafeEDR service from Ultrium provides 24/7 coverage our team couldn't offer alone. Their expert analysts have caught threats we would have missed, protecting our clients' critical data.",
+    quote: "The SafeMDR service from Ultrium provides 24/7 coverage our team couldn't offer alone. Their expert analysts have caught threats we would have missed, protecting our clients' critical data.",
     rating: 5,
     results: [
       { metric: 'Threat Detection', value: '99.8%', improvement: 'accuracy' },

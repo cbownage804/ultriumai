@@ -49,7 +49,7 @@ const safeSuiteItems = [
   { title: "SafeWeb", url: "/dashboard/safeweb", icon: Shield, tooltip: "Dark web monitoring and threat intelligence" },
   { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
   { title: "SafeAV", url: "/dashboard/antivirus", icon: Shield, tooltip: "AI-powered antivirus protection and threat detection" },
-  { title: "SafeEDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
+  { title: "SafeMDR", url: "/dashboard/mdr", icon: Eye, tooltip: "Managed Detection and Response services" },
 ];
 
 const managedServicesItems = [

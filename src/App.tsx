@@ -41,7 +41,7 @@ import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
 import RMMDemoPage from '@/pages/demos/RMMDemoPage';
 import TicketingDemoPage from '@/pages/demos/TicketingDemoPage';
 import AntivirusDemoPage from '@/pages/demos/AntivirusDemoPage';
-import SafeEDRDemoPage from '@/pages/demos/SafeEDRDemoPage';
+import SafeMDRDemoPage from '@/pages/demos/SafeMDRDemoPage';
 import SafeMailPage from '@/pages/products/SafeMailPage';
 import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SafeLinkPage from '@/pages/products/SafeLinkPage';
@@ -52,7 +52,7 @@ import SafeScorePage from '@/pages/products/SafeScorePage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
 import TicketingPage from '@/pages/products/TicketingPage';
 import AntivirusPage from '@/pages/products/AntivirusPage';
-import SafeEDRPage from '@/pages/products/SafeEDRPage';
+import SafeMDRPage from '@/pages/products/SafeMDRPage';
 import AdvancedHelpdeskAdmin from '@/pages/admin/AdvancedHelpdeskAdmin';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
@@ -140,7 +140,7 @@ function AppRouter() {
       <Route path="/demos/rmm" element={<RMMDemoPage />} />
       <Route path="/demos/ticketing" element={<TicketingDemoPage />} />
       <Route path="/demos/antivirus" element={<AntivirusDemoPage />} />
-      <Route path="/demos/safeedr" element={<SafeEDRDemoPage />} />
+      <Route path="/demos/safemdr" element={<SafeMDRDemoPage />} />
       <Route path="/embed-demo" element={<EmbedDemo />} />
       <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
       <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
@@ -203,7 +203,7 @@ function AppRouter() {
       <Route path="/products/safenet" element={<SafeNetPage />} />
       <Route path="/products/ticketing" element={<TicketingPage />} />
       <Route path="/products/antivirus" element={<AntivirusPage />} />
-      <Route path="/products/safeedr" element={<SafeEDRPage />} />
+      <Route path="/products/safemdr" element={<SafeMDRPage />} />
       
       {/* Admin Routes */}
       <Route path="/admin/helpdesk" element={

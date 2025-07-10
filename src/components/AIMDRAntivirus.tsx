@@ -57,7 +57,7 @@ export const AIMDRAntivirus = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5" />
-            AI-Powered SafeEDR & SafeAV
+            AI-Powered SafeMDR & SafeAV
           </CardTitle>
           <CardDescription>
             Complete managed detection, response, and endpoint protection - Database schema updating...
@@ -66,7 +66,7 @@ export const AIMDRAntivirus = () => {
         <CardContent>
           <div className="text-center py-8">
             <Shield className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">AI SafeEDR & SafeAV system is being initialized</p>
+            <p className="text-muted-foreground">AI SafeMDR & SafeAV system is being initialized</p>
             <p className="text-sm text-muted-foreground mt-2">
               Please wait while the database schema updates complete
             </p>

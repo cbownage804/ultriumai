@@ -97,8 +97,8 @@ const MSPPricingCalculator = () => {
       description: 'AI-powered endpoint protection'
     },
     {
-      id: 'safeedr',
-      name: 'Ultrium SafeEDR',
+      id: 'safemdr',
+      name: 'Ultrium SafeMDR',
       chargePrice: 150,
       costPrice: 50,
       unit: 'client/month',

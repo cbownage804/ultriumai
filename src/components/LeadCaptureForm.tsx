@@ -98,7 +98,7 @@ const LeadCaptureForm = ({
     'RMM Platform',
     'Helpdesk/Ticketing',
     'SafeAV/Endpoint Protection',
-    'SafeEDR Services',
+    'SafeMDR Services',
     'Compliance Management'
   ];
 

@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, AlertTriangle, Shield, Activity, Clock, CheckCircle, XCircle } from "lucide-react";
 
-export const SafeEDRDashboard = () => {
+export const SafeMDRDashboard = () => {
   // Empty state - no mock data
   const stats = {
     threatsDetected: 0,
