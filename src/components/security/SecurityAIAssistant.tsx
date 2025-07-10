@@ -169,9 +169,8 @@ How can I help secure your environment today?`,
   const toggleVoiceRecognition = async () => {
     if (!speechRecognition) {
       toast({
-        title: "Voice Recognition Unavailable",
-        description: "Your browser doesn't support voice recognition. Try using Chrome or Edge.",
-        variant: "destructive",
+        title: "Voice Input Not Available",
+        description: "Voice input requires Chrome, Edge, or Safari. You can still type your questions below.",
       });
       return;
     }
@@ -191,8 +190,8 @@ How can I help secure your environment today?`,
         speechRecognition.start();
         setIsListening(true);
         toast({
-          title: "Listening...",
-          description: "Speak now, I'm listening for your command",
+          title: "🎤 Listening...",
+          description: "Speak your security question now",
         });
       } catch (error) {
         console.error('Error starting speech recognition:', error);
@@ -200,14 +199,14 @@ How can I help secure your environment today?`,
         
         if (error.name === 'NotAllowedError') {
           toast({
-            title: "Microphone Permission Required",
-            description: "Please allow microphone access to use voice input",
+            title: "Microphone Access Needed",
+            description: "Click the microphone icon in your browser's address bar to allow access",
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Voice Recognition Error",
-            description: "Could not start voice recognition. Please try again.",
+            title: "Voice Input Error",
+            description: "Try typing your question instead",
             variant: "destructive",
           });
         }
