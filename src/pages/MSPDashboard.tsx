@@ -611,7 +611,7 @@ const MSPControlCenter = () => {
             <TabsTrigger value="clients">Clients</TabsTrigger>
             <TabsTrigger value="safedoc">SafeDoc</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="integrations">Security Apps</TabsTrigger>
+            <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
           </TabsList>
 
