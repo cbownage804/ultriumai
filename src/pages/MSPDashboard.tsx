@@ -573,7 +573,7 @@ const MSPControlCenter = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" onClick={() => handleNavigation('/msp-security-dashboard')}>
+            <Button variant="outline" onClick={() => handleNavigation('/security-dashboard')}>
               <Shield className="h-4 w-4 mr-2" />
               Security Center
             </Button>
