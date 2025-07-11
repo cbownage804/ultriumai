@@ -609,7 +609,7 @@ const MSPControlCenter = () => {
         <Tabs defaultValue="clients" className="space-y-4">
           <TabsList>
             <TabsTrigger value="clients">Clients</TabsTrigger>
-            <TabsTrigger value="safedoc">SafeDoc</TabsTrigger>
+            <TabsTrigger value="safescan">SafeScan</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
@@ -715,25 +715,62 @@ const MSPControlCenter = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="safedoc" className="space-y-4">
+          <TabsContent value="safescan" className="space-y-4">
             <div className="grid gap-6">
               {clients.map((client) => (
                 <Card key={client.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <FileText className="h-5 w-5" />
-                      {client.company_name} - Document Security
+                      <Shield className="h-5 w-5" />
+                      {client.company_name} - SafeScan Security Suite
                     </CardTitle>
                     <CardDescription>
-                      SafeDoc scanner for {client.company_name}
+                      Complete security scanning for documents, emails, and links
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <SafeDocScanner 
-                      mspId={msp.id}
-                      clientId={client.id}
-                      userEmail={client.contact_email}
-                    />
+                  <CardContent className="space-y-6">
+                    {/* Document Scanning */}
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        Document Scanning (SafeDoc)
+                      </h4>
+                      <SafeDocScanner 
+                        mspId={msp.id}
+                        clientId={client.id}
+                        userEmail={client.contact_email}
+                      />
+                    </div>
+
+                    {/* Email Scanning */}
+                    <div className="border rounded-lg p-4 opacity-60">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        Email Scanning (SafeMail)
+                      </h4>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Phishing protection and email threat detection
+                      </p>
+                      <Button variant="outline" disabled className="w-full">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Coming Soon
+                      </Button>
+                    </div>
+
+                    {/* Link Scanning */}
+                    <div className="border rounded-lg p-4 opacity-60">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Link Scanning (SafeLink)
+                      </h4>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        URL reputation checking and malicious link detection
+                      </p>
+                      <Button variant="outline" disabled className="w-full">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Coming Soon
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -741,9 +778,9 @@ const MSPControlCenter = () => {
               {clients.length === 0 && (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
-                    <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                    <Shield className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">No Clients Yet</h3>
-                    <p className="text-muted-foreground mb-4">Add clients to start using SafeDoc</p>
+                    <p className="text-muted-foreground mb-4">Add clients to start using SafeScan</p>
                     <Button onClick={() => setShowCreateClient(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add First Client
@@ -823,11 +860,11 @@ const MSPControlCenter = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    SafeDoc
+                    <Shield className="h-5 w-5" />
+                    SafeScan
                   </CardTitle>
                   <CardDescription>
-                    Document security scanning and threat detection
+                    Comprehensive security scanning suite (docs, emails, links)
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -842,46 +879,24 @@ const MSPControlCenter = () => {
                 </CardContent>
               </Card>
 
-              <Card className="opacity-60">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
-                    SafeMail
+                    SafeShield
                   </CardTitle>
                   <CardDescription>
-                    Email security and phishing protection
+                    Advanced threat protection and endpoint security
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Coming Soon</span>
+                    <Activity className="h-4 w-4 text-success" />
+                    <span className="text-sm">Active</span>
                   </div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Not Available
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="opacity-60">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" />
-                    SafeLink
-                  </CardTitle>
-                  <CardDescription>
-                    URL scanning and link protection
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Coming Soon</span>
-                  </div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Not Available
+                  <Button className="w-full">
+                    <Code className="h-4 w-4 mr-2" />
+                    Get Embed Code
                   </Button>
                 </CardContent>
               </Card>
@@ -893,7 +908,7 @@ const MSPControlCenter = () => {
                     SafeScore
                   </CardTitle>
                   <CardDescription>
-                    Compliance monitoring and reporting
+                    Compliance monitoring and security scoring
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -915,7 +930,7 @@ const MSPControlCenter = () => {
                     SafeNet
                   </CardTitle>
                   <CardDescription>
-                    Network security monitoring
+                    Network security monitoring and analysis
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
