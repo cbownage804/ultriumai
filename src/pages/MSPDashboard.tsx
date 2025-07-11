@@ -50,6 +50,7 @@ import { MSPChurnPrediction } from '@/components/MSPChurnPrediction';
 import { MSPCompetitiveBenchmarks } from '@/components/MSPCompetitiveBenchmarks';
 import { MSPLeadScoring } from '@/components/MSPLeadScoring';
 import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
+import { UltriumGPTAssistant } from '@/components/UltriumGPTAssistant';
 
 const MSPControlCenter = () => {
   const { 
@@ -813,6 +814,10 @@ const MSPControlCenter = () => {
               <HeadphonesIcon className="h-4 w-4 mr-2" />
               SafeDesk
             </TabsTrigger>
+            <TabsTrigger value="ultriumgpt">
+              <Zap className="h-4 w-4 mr-2" />
+              UltriumGPT
+            </TabsTrigger>
             <TabsTrigger value="safescan">SafeScan</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -1031,6 +1036,10 @@ const MSPControlCenter = () => {
 
           <TabsContent value="safedesk" className="space-y-4">
             <HelpdeskDashboard />
+          </TabsContent>
+
+          <TabsContent value="ultriumgpt" className="space-y-4">
+            <UltriumGPTAssistant />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
