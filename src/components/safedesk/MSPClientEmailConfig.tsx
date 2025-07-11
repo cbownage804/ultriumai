@@ -34,6 +34,7 @@ interface ClientEmailConfig {
 }
 
 export const MSPClientEmailConfig = () => {
+  console.log('MSPClientEmailConfig component mounted');
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [emailConfigs, setEmailConfigs] = useState<ClientEmailConfig[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>('');
