@@ -104,9 +104,9 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
     try {
       setIsPlaying(true);
 
-      // Send to text-to-speech function
-      const { data, error } = await supabase.functions.invoke('ai-voice-tts', {
-        body: { text, voice: 'alloy' }
+      // Send to ElevenLabs text-to-speech function
+      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
+        body: { text, voice: '9BWtsMINqrJLrRacOk9x' } // Aria voice
       });
 
       if (error) throw error;
