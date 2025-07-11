@@ -103,7 +103,7 @@ export const MSPDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showAddClient, setShowAddClient] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("clients");
   const [newClient, setNewClient] = useState({
     company_name: '',
     contact_name: '',
@@ -750,8 +750,8 @@ export const MSPDashboard = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="clients" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-8">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="clients" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Clients
@@ -783,6 +783,10 @@ export const MSPDashboard = () => {
           <TabsTrigger value="branding" className="flex items-center gap-2">
             <Palette className="w-4 h-4" />
             Branding
+          </TabsTrigger>
+          <TabsTrigger value="email-settings" className="flex items-center gap-2">
+            <Mail className="w-4 h-4" />
+            Email Settings
           </TabsTrigger>
         </TabsList>
 
@@ -1501,6 +1505,10 @@ export const MSPDashboard = () => {
             <p className="text-muted-foreground">White-label customization</p>
             <p className="text-sm text-muted-foreground">Customize the platform with your branding</p>
           </div>
+        </TabsContent>
+
+        <TabsContent value="email-settings">
+          <MSPClientEmailConfig />
         </TabsContent>
       </Tabs>
     </div>
