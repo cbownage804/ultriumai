@@ -54,6 +54,7 @@ import { UltriumGPTAssistant } from '@/components/UltriumGPTAssistant';
 import { SecurityDashboard } from '@/components/dashboards/SecurityDashboard';
 import { BusinessIntelligence } from '@/components/dashboards/BusinessIntelligence';
 import { ClientPortal } from '@/components/client/ClientPortal';
+import { AnnouncementManager } from '@/components/announcements/AnnouncementManager';
 
 const MSPControlCenter = () => {
   const { 
@@ -816,13 +817,14 @@ const MSPControlCenter = () => {
             </TabsList>
             
             {/* Secondary Navigation */}
-            <TabsList className="grid grid-cols-4 lg:grid-cols-6 gap-1 h-auto p-1 bg-muted/20">
+            <TabsList className="grid grid-cols-4 lg:grid-cols-7 gap-1 h-auto p-1 bg-muted/20">
               <TabsTrigger value="benchmarks" className="h-10">Benchmarks</TabsTrigger>
               <TabsTrigger value="leads" className="h-10">Lead Scoring</TabsTrigger>
               <TabsTrigger value="analytics" className="h-10">Analytics</TabsTrigger>
               <TabsTrigger value="security" className="h-10">Security Center</TabsTrigger>
               <TabsTrigger value="business-intel" className="h-10">Business Intelligence</TabsTrigger>
               <TabsTrigger value="client-portal" className="h-10">Client Portal</TabsTrigger>
+              <TabsTrigger value="announcements" className="h-10">Announcements</TabsTrigger>
             </TabsList>
             
             {/* Apps Navigation */}
@@ -1069,6 +1071,10 @@ const MSPControlCenter = () => {
 
           <TabsContent value="client-portal" className="space-y-4">
             <ClientPortal />
+          </TabsContent>
+
+          <TabsContent value="announcements" className="space-y-4">
+            <AnnouncementManager />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">

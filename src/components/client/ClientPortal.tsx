@@ -145,23 +145,22 @@ export const ClientPortal = () => {
 
       setRecentTickets(tickets || []);
 
-      // Mock announcements
-      setAnnouncements([
-        {
-          id: 1,
-          title: 'Scheduled Maintenance Window',
-          content: 'System maintenance scheduled for this weekend',
-          date: '2024-01-15',
-          type: 'maintenance'
-        },
-        {
-          id: 2,
-          title: 'Security Update Complete',
-          content: 'All security patches have been successfully applied',
-          date: '2024-01-12',
-          type: 'security'
-        }
-      ]);
+      // Load real announcements
+      const { data: announcementsData, error: announcementsError } = await supabase
+        .from('client_announcements')
+        .select('*')
+        .eq('is_active', true)
+        .lte('scheduled_at', new Date().toISOString())
+        .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+        .order('scheduled_at', { ascending: false });
+
+      if (announcementsError) {
+        console.error('Error loading announcements:', announcementsError);
+        // Fall back to empty array if there's an error
+        setAnnouncements([]);
+      } else {
+        setAnnouncements(announcementsData || []);
+      }
 
     } catch (error) {
       console.error('Error loading client data:', error);
@@ -312,25 +311,39 @@ export const ClientPortal = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {announcements.map((announcement: any) => (
+                {announcements.length > 0 ? announcements.map((announcement: any) => (
                   <div key={announcement.id} className="p-3 border rounded-lg">
                     <div className="flex items-center justify-between">
                       <div className="font-medium">{announcement.title}</div>
-                      <Badge variant={
-                        announcement.type === 'security' ? 'default' :
-                        announcement.type === 'maintenance' ? 'secondary' : 'outline'
-                      }>
-                        {announcement.type}
-                      </Badge>
+                      <div className="flex gap-1">
+                        <Badge variant={
+                          announcement.announcement_type === 'security' ? 'default' :
+                          announcement.announcement_type === 'maintenance' ? 'secondary' : 'outline'
+                        }>
+                          {announcement.announcement_type}
+                        </Badge>
+                        {announcement.priority !== 'normal' && (
+                          <Badge variant={announcement.priority === 'high' ? 'destructive' : 'secondary'}>
+                            {announcement.priority}
+                          </Badge>
+                        )}
+                        {announcement.auto_generated && (
+                          <Badge variant="outline">AI</Badge>
+                        )}
+                      </div>
                     </div>
                     <div className="text-sm text-muted-foreground mt-1">
                       {announcement.content}
                     </div>
                     <div className="text-xs text-muted-foreground mt-2">
-                      {new Date(announcement.date).toLocaleDateString()}
+                      {new Date(announcement.scheduled_at).toLocaleDateString()}
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No announcements at this time
+                  </div>
+                )}
               </CardContent>
             </Card>
 

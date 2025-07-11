@@ -830,6 +830,57 @@ export type Database = {
         }
         Relationships: []
       }
+      client_announcements: {
+        Row: {
+          announcement_type: string
+          auto_generated: boolean
+          client_id: string | null
+          content: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          priority: string
+          scheduled_at: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement_type?: string
+          auto_generated?: boolean
+          client_id?: string | null
+          content: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          priority?: string
+          scheduled_at?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement_type?: string
+          auto_generated?: boolean
+          client_id?: string | null
+          content?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          priority?: string
+          scheduled_at?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_contacts: {
         Row: {
           client_id: string
