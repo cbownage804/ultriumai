@@ -378,7 +378,7 @@ async function searchKnowledge(query: string, supabase: any, userId: string): Pr
 }
 
 function createEnhancedSystemPrompt(originalPrompt: string, knowledge: KnowledgeDocument[], context: string): string {
-  let enhancedPrompt = originalPrompt || `You are UltriumAI's intelligent assistant. You help users with cybersecurity, MSP operations, helpdesk management, and business technology questions. Be concise and direct in your responses.`;
+  let enhancedPrompt = originalPrompt || `You are UltriumGPT's intelligent assistant. You help users with cybersecurity, MSP operations, helpdesk management, and business technology questions. Be concise and direct in your responses.`;
 
   if (knowledge.length > 0) {
     enhancedPrompt += `\n\n**RELEVANT KNOWLEDGE FROM MY MEMORY:**\n`;
