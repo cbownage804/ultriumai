@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,6 +115,7 @@ export const MSPDashboard = () => {
     max_users: 5
   });
   const { toast } = useToast();
+  const emailSettingsRef = useRef<HTMLDivElement>(null);
 
   const quickActions = [
     {
@@ -162,6 +163,12 @@ export const MSPDashboard = () => {
         console.log('Current activeTab before:', activeTab);
         setActiveTab("email-settings");
         console.log('Setting activeTab to: email-settings');
+        setTimeout(() => {
+          emailSettingsRef.current?.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }, 100);
       },
       color: "bg-indigo-500",
     },
@@ -1518,7 +1525,7 @@ export const MSPDashboard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="email-settings" className="mt-6">
+        <TabsContent value="email-settings" className="mt-6" ref={emailSettingsRef}>
           <div className="p-4">
             <h3 className="text-lg font-semibold mb-4">Email Settings</h3>
             <p className="text-muted-foreground mb-4">
