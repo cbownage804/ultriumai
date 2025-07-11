@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Send, Bot, User, Loader2, Volume2, VolumeX } from 'lucide-react';
 import VoiceControls from './VoiceControls';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;
@@ -35,7 +36,7 @@ const AVAILABLE_VOICES = [
   { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', description: 'Warm male voice' }
 ];
 
-const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
+const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({ 
   context = 'general', 
   title = 'AI Assistant' 
 }) => {
@@ -45,12 +46,105 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState('EXAVITQu4vr4xnSDxMaL'); // Default to Sarah
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Load or create conversation when component mounts
+  useEffect(() => {
+    if (user && !currentConversationId) {
+      loadOrCreateConversation();
+    }
+  }, [user]);
+
+  const loadOrCreateConversation = async () => {
+    if (!user) return;
+
+    try {
+      // Try to find an existing conversation for this context
+      const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select('id, title')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      let conversationId: string;
+
+      if (conversations && conversations.length > 0) {
+        // Use existing conversation
+        conversationId = conversations[0].id;
+        await loadMessages(conversationId);
+      } else {
+        // Create new conversation
+        const { data: newConversation, error: createError } = await supabase
+          .from('conversations')
+          .insert({
+            user_id: user.id,
+            title: `${title} Chat - ${new Date().toLocaleDateString()}`
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        conversationId = newConversation.id;
+      }
+
+      setCurrentConversationId(conversationId);
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load conversation history.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadMessages = async (conversationId: string) => {
+    try {
+      const { data: dbMessages, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const formattedMessages: Message[] = dbMessages.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        role: msg.role as 'user' | 'assistant',
+        timestamp: new Date(msg.created_at)
+      }));
+
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  const saveMessage = async (conversationId: string, content: string, role: 'user' | 'assistant') => {
+    try {
+      await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          content,
+          role,
+          user_id: user?.id
+        });
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+  };
 
   const handleVoiceTranscription = (text: string) => {
     setInput(text);
@@ -94,7 +188,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
 
   const sendMessage = async (messageContent?: string) => {
     const content = messageContent || input.trim();
-    if (!content || isLoading) return;
+    if (!content || isLoading || !user || !currentConversationId) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
@@ -106,6 +200,9 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+
+    // Save user message to database
+    await saveMessage(currentConversationId, userMessage.content, 'user');
 
     try {
       const { data, error } = await supabase.functions.invoke('ai-chat', {
@@ -128,7 +225,10 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Auto-speak the AI response if enabled
+      // Save AI message to database
+      await saveMessage(currentConversationId, assistantMessage.content, 'assistant');
+
+      // Auto-speak the response if enabled
       if (autoSpeak) {
         await speakText(assistantMessage.content);
       }
@@ -209,6 +309,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
               <div className="text-center py-8 text-muted-foreground">
                 <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Start a conversation with your AI assistant</p>
+                <p className="text-sm mt-2">Your conversation will be saved automatically</p>
               </div>
             )}
             
