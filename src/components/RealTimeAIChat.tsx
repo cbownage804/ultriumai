@@ -272,8 +272,10 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
               {context.toUpperCase()}
             </Badge>
             <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-              <SelectTrigger className="w-48 h-8">
-                <SelectValue />
+              <SelectTrigger className="w-32 h-8">
+                <SelectValue>
+                  {AVAILABLE_VOICES.find(v => v.id === selectedVoice)?.name || 'Select Voice'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {AVAILABLE_VOICES.map((voice) => (
