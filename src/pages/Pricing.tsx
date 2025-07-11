@@ -34,7 +34,8 @@ const Pricing = () => {
     {
       name: "Starter",
       description: "Perfect for small teams getting started with AI",
-      price: { monthly: 15, yearly: 150 },
+      platformFee: { monthly: 99, yearly: 990 },
+      perUserFee: { monthly: 15, yearly: 150 },
       trial: "14-day free trial",
       icon: Users,
       features: [
@@ -48,13 +49,13 @@ const Pricing = () => {
         "Basic analytics"
       ],
       current: subscription.subscription_tier === "starter",
-      popular: false,
-      perUser: true
+      popular: false
     },
     {
       name: "Professional",
       description: "Advanced features for growing businesses",
-      price: { monthly: 30, yearly: 300 },
+      platformFee: { monthly: 199, yearly: 1990 },
+      perUserFee: { monthly: 25, yearly: 250 },
       trial: "14-day free trial",
       icon: Crown,
       features: [
@@ -70,13 +71,13 @@ const Pricing = () => {
         "API access"
       ],
       current: subscription.subscription_tier === "professional",
-      popular: true,
-      perUser: true
+      popular: true
     },
     {
       name: "Enterprise",
       description: "Complete platform for large organizations",
-      price: { monthly: 50, yearly: 500 },
+      platformFee: { monthly: 399, yearly: 3990 },
+      perUserFee: { monthly: 35, yearly: 350 },
       trial: "30-day free trial",
       icon: Building2,
       features: [
@@ -94,8 +95,7 @@ const Pricing = () => {
         "Custom training"
       ],
       current: subscription.subscription_tier === "enterprise",
-      popular: false,
-      perUser: true
+      popular: false
     }
   ];
 
@@ -103,7 +103,7 @@ const Pricing = () => {
     {
       name: "Ultrium SafeSecure",
       description: "Advanced endpoint protection and threat response",
-      price: { monthly: 15, yearly: 150 },
+      perUserFee: { monthly: 15, yearly: 150 },
       icon: Shield,
       features: [
         "AI-powered SafeAV protection",
@@ -117,7 +117,7 @@ const Pricing = () => {
     {
       name: "Ultrium SafeCenter",
       description: "Complete service management platform",
-      price: { monthly: 25, yearly: 250 },
+      perUserFee: { monthly: 25, yearly: 250 },
       icon: Factory,
       features: [
         "Integrated ticketing system",
@@ -156,11 +156,10 @@ const Pricing = () => {
     return `$${price}`;
   };
 
-  const getSavings = (plan: any) => {
-    if (plan.price.yearly === 0) return null;
-    const monthlyCost = plan.price.monthly * 12;
-    const savings = monthlyCost - plan.price.yearly;
-    return savings;
+  const calculateTotalPrice = (plan: any, userCount: number = 1) => {
+    const platformCost = isYearly ? plan.platformFee.yearly : plan.platformFee.monthly;
+    const userCost = (isYearly ? plan.perUserFee.yearly : plan.perUserFee.monthly) * userCount;
+    return platformCost + userCost;
   };
 
   return (
@@ -208,7 +207,6 @@ const Pricing = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
             {plans.map((plan, index) => {
               const PlanIcon = plan.icon;
-              const savings = getSavings(plan);
               
               return (
                 <Card 
@@ -228,16 +226,24 @@ const Pricing = () => {
                     <CardTitle className="text-2xl">{plan.name}</CardTitle>
                     <CardDescription className="text-base">{plan.description}</CardDescription>
                     
-                    <div className="mt-4">
-                      <div className="text-4xl font-bold">
-                        {formatPrice(isYearly ? plan.price.yearly : plan.price.monthly)}
+                    <div className="mt-4 space-y-2">
+                      <div className="space-y-1">
+                        <div className="text-2xl font-bold text-primary">
+                          {formatPrice(isYearly ? plan.platformFee.yearly : plan.platformFee.monthly)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Platform fee/{isYearly ? 'year' : 'month'}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-lg font-medium text-foreground">
+                        + {formatPrice(isYearly ? plan.perUserFee.yearly : plan.perUserFee.monthly)}/user
+                      </div>
+                      <div className="text-xs text-muted-foreground">
                         per user/{isYearly ? 'year' : 'month'}
                       </div>
-                      {isYearly && savings && (
-                        <div className="text-sm text-green-600 font-medium mt-1">
-                          Save ${savings} per user/year
+                      {isYearly && (
+                        <div className="text-sm text-green-600 font-medium">
+                          Save 2 months with yearly billing
                         </div>
                       )}
                     </div>
@@ -285,7 +291,6 @@ const Pricing = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {additionalServices.map((service, index) => {
               const ServiceIcon = service.icon;
-              const savings = getSavings(service);
               
               return (
                 <Card key={index} className="relative">
@@ -297,17 +302,15 @@ const Pricing = () => {
                     <CardDescription className="text-base">{service.description}</CardDescription>
                     
                     <div className="mt-4">
-                      <div className="text-4xl font-bold">
-                        {formatPrice(isYearly ? service.price.yearly : service.price.monthly)}
+                      <div className="text-3xl font-bold">
+                        {formatPrice(isYearly ? service.perUserFee.yearly : service.perUserFee.monthly)}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         per user/{isYearly ? 'year' : 'month'}
                       </div>
-                      {isYearly && savings && (
-                        <div className="text-sm text-green-600 font-medium mt-1">
-                          Save ${savings} per user/year
-                        </div>
-                      )}
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Add-on to core platform
+                      </div>
                     </div>
                   </CardHeader>
 
