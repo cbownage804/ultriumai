@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,7 +24,18 @@ interface RealTimeAIChatProps {
   title?: string;
 }
 
-const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({ 
+// Available ElevenLabs voices
+const AVAILABLE_VOICES = [
+  { id: '9BWtsMINqrJLrRacOk9x', name: 'Aria', description: 'Professional female voice' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', description: 'Authoritative male voice' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', description: 'Friendly female voice' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', description: 'Deep male voice' },
+  { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam', description: 'Young male voice' },
+  { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', description: 'Clear female voice' },
+  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', description: 'Warm male voice' }
+];
+
+const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   context = 'general', 
   title = 'AI Assistant' 
 }) => {
@@ -32,6 +44,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('EXAVITQu4vr4xnSDxMaL'); // Default to Sarah
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +65,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
       const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
         body: { 
           text, 
-          voice: 'EXAVITQu4vr4xnSDxMaL' // Sarah voice
+          voice: selectedVoice
         }
       });
 
@@ -158,6 +171,21 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
             <Badge variant="outline" className={contextBadgeColor[context]}>
               {context.toUpperCase()}
             </Badge>
+            <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+              <SelectTrigger className="w-32 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {AVAILABLE_VOICES.map((voice) => (
+                  <SelectItem key={voice.id} value={voice.id}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{voice.name}</span>
+                      <span className="text-xs text-muted-foreground">{voice.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               size="sm"
               variant="ghost"
