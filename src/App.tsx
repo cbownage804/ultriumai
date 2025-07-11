@@ -37,6 +37,8 @@ import Contact from '@/pages/Contact';
 import About from '@/pages/About';
 import Features from '@/pages/Features';
 import Profile from '@/pages/Profile';
+import Blog from '@/pages/Blog';
+import Documentation from '@/pages/Documentation';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
 import SafeScanPage from '@/pages/SafeScanPage';
