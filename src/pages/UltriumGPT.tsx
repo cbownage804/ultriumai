@@ -183,7 +183,7 @@ const UltriumGPT = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/dashboard/ultrium-gpt'}>
+              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ai-studio'}>
                 <Play className="mr-2 h-5 w-5" />
                 Try UltriumGPT Now
               </Button>
@@ -377,9 +377,9 @@ const UltriumGPT = () => {
                 can transform your business operations and deliver real ROI.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/dashboard/ultrium-gpt'}>
+                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ai-studio'}>
                   <Lightbulb className="mr-2 h-5 w-5" />
-                  Start Using UltriumGPT
+                  Launch UltriumGPT Studio
                 </Button>
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/contact'}>
                   <Phone className="mr-2 h-5 w-5" />
