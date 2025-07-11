@@ -154,7 +154,10 @@ export const MSPDashboard = () => {
       title: "Email Settings",
       description: "Configure client email settings",
       icon: Mail,
-      action: () => setActiveTab("email-settings"),
+      action: () => {
+        console.log('Email Settings clicked, setting activeTab to email-settings');
+        setActiveTab("email-settings");
+      },
       color: "bg-indigo-500",
     },
   ];
