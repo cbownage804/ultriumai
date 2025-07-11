@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { MSPClientEmailConfig } from "@/components/safedesk/MSPClientEmailConfig";
 import { 
   Shield, 
   Server, 
@@ -40,7 +41,8 @@ import {
   Clock,
   MessageSquare,
   Database,
-  BarChart3
+  BarChart3,
+  Mail
 } from "lucide-react";
 
 interface MSPClient {
@@ -101,6 +103,7 @@ export const MSPDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showAddClient, setShowAddClient] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [newClient, setNewClient] = useState({
     company_name: '',
     contact_name: '',
@@ -146,6 +149,13 @@ export const MSPDashboard = () => {
       icon: MessageSquare,
       action: () => window.open("/dashboard/helpdesk", "_blank"),
       color: "bg-purple-500",
+    },
+    {
+      title: "Email Settings",
+      description: "Configure client email settings",
+      icon: Mail,
+      action: () => setActiveTab("email-settings"),
+      color: "bg-indigo-500",
     },
   ];
 
@@ -373,7 +383,7 @@ export const MSPDashboard = () => {
     );
   }
 
-  return (
+      return (
     <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
       {/* Welcome Section */}
       <div className="space-y-2">

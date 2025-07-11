@@ -24,11 +24,12 @@ interface ClientEmailConfig {
   incoming_email: string;
   outgoing_from_email: string;
   outgoing_from_name: string;
-  reply_signature: string;
-  auto_reply_enabled: boolean;
-  default_priority: string;
-  default_category: string;
+  email_signature?: string;
+  auto_response_enabled: boolean;
+  auto_response_template: string;
   is_active: boolean;
+  created_at: string;
+  updated_at: string;
   client_name?: string;
 }
 
@@ -40,10 +41,9 @@ export const MSPClientEmailConfig = () => {
     incoming_email: '',
     outgoing_from_email: '',
     outgoing_from_name: '',
-    reply_signature: '',
-    auto_reply_enabled: true,
-    default_priority: 'medium',
-    default_category: 'general',
+    email_signature: '',
+    auto_response_enabled: true,
+    auto_response_template: 'Thank you for contacting us. Your ticket has been created and we will respond shortly.',
     is_active: true
   });
   const [editingConfig, setEditingConfig] = useState<string | null>(null);
@@ -97,10 +97,10 @@ export const MSPClientEmailConfig = () => {
 
       if (error) throw error;
 
-      const formattedConfigs = data?.map(config => ({
+      const formattedConfigs = (data || []).map(config => ({
         ...config,
-        client_name: config.msp_clients?.company_name
-      })) || [];
+        client_name: (config as any).msp_clients?.company_name
+      })) as ClientEmailConfig[];
 
       setEmailConfigs(formattedConfigs);
     } catch (error) {
@@ -149,14 +149,13 @@ export const MSPClientEmailConfig = () => {
         toast.success('Email configuration created');
       }
 
-      setFormData({
+        setFormData({
         incoming_email: '',
         outgoing_from_email: '',
         outgoing_from_name: '',
-        reply_signature: '',
-        auto_reply_enabled: true,
-        default_priority: 'medium',
-        default_category: 'general',
+        email_signature: '',
+        auto_response_enabled: true,
+        auto_response_template: 'Thank you for contacting us. Your ticket has been created and we will respond shortly.',
         is_active: true
       });
       setSelectedClient('');
@@ -174,10 +173,9 @@ export const MSPClientEmailConfig = () => {
       incoming_email: config.incoming_email,
       outgoing_from_email: config.outgoing_from_email,
       outgoing_from_name: config.outgoing_from_name,
-      reply_signature: config.reply_signature,
-      auto_reply_enabled: config.auto_reply_enabled,
-      default_priority: config.default_priority,
-      default_category: config.default_category,
+      email_signature: config.email_signature || '',
+      auto_response_enabled: config.auto_response_enabled,
+      auto_response_template: config.auto_response_template,
       is_active: config.is_active
     });
   };
@@ -218,7 +216,7 @@ export const MSPClientEmailConfig = () => {
               <li><strong>From Name:</strong> ${config.outgoing_from_name}</li>
             </ul>
             <p>If you received this email, your configuration is working correctly!</p>
-            ${config.reply_signature ? `<br><br>${config.reply_signature}` : ''}
+            ${config.email_signature ? `<br><br>${config.email_signature}` : ''}
           `,
           textContent: `SafeDesk Email Configuration Test for ${config.client_name} - Configuration working correctly!`
         }
@@ -329,56 +327,36 @@ export const MSPClientEmailConfig = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Default Priority</Label>
-                <Select value={formData.default_priority} onValueChange={(value) => setFormData({ ...formData, default_priority: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Default Category</Label>
-                <Select value={formData.default_category} onValueChange={(value) => setFormData({ ...formData, default_category: value })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General</SelectItem>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="billing">Billing</SelectItem>
-                    <SelectItem value="security">Security</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="email_signature">Email Signature</Label>
+              <Textarea
+                id="email_signature"
+                value={formData.email_signature}
+                onChange={(e) => setFormData({ ...formData, email_signature: e.target.value })}
+                placeholder="Best regards,&#10;ACME Corp Support Team&#10;Phone: (555) 123-4567&#10;https://support.acmecorp.com"
+                rows={4}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reply_signature">Email Signature</Label>
+              <Label htmlFor="auto_response_template">Auto-Response Template</Label>
               <Textarea
-                id="reply_signature"
-                value={formData.reply_signature}
-                onChange={(e) => setFormData({ ...formData, reply_signature: e.target.value })}
-                placeholder="Best regards,&#10;ACME Corp Support Team&#10;Phone: (555) 123-4567&#10;https://support.acmecorp.com"
-                rows={4}
+                id="auto_response_template"
+                value={formData.auto_response_template}
+                onChange={(e) => setFormData({ ...formData, auto_response_template: e.target.value })}
+                placeholder="Thank you for contacting us. Your ticket has been created and we will respond shortly."
+                rows={3}
               />
             </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="auto_reply"
-                  checked={formData.auto_reply_enabled}
-                  onCheckedChange={(checked) => setFormData({ ...formData, auto_reply_enabled: checked })}
+                  id="auto_response"
+                  checked={formData.auto_response_enabled}
+                  onCheckedChange={(checked) => setFormData({ ...formData, auto_response_enabled: checked })}
                 />
-                <Label htmlFor="auto_reply">Enable Auto-Reply</Label>
+                <Label htmlFor="auto_response">Enable Auto-Response</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
@@ -402,10 +380,9 @@ export const MSPClientEmailConfig = () => {
                       incoming_email: '',
                       outgoing_from_email: '',
                       outgoing_from_name: '',
-                      reply_signature: '',
-                      auto_reply_enabled: true,
-                      default_priority: 'medium',
-                      default_category: 'general',
+                      email_signature: '',
+                      auto_response_enabled: true,
+                      auto_response_template: 'Thank you for contacting us. Your ticket has been created and we will respond shortly.',
                       is_active: true
                     });
                   }}
@@ -473,9 +450,7 @@ export const MSPClientEmailConfig = () => {
                   </div>
 
                   <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>Priority: {config.default_priority}</span>
-                    <span>Category: {config.default_category}</span>
-                    <span>Auto-reply: {config.auto_reply_enabled ? 'Yes' : 'No'}</span>
+                    <span>Auto-response: {config.auto_response_enabled ? 'Enabled' : 'Disabled'}</span>
                   </div>
                 </div>
 
