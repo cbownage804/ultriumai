@@ -116,24 +116,36 @@ export const ClientPortal = () => {
         open: tickets?.filter(t => t.status === 'open').length || 0,
         inProgress: tickets?.filter(t => t.status === 'in_progress').length || 0,
         resolved: tickets?.filter(t => t.status === 'resolved').length || 0,
-        avgResponseTime: 4.2 // Mock average response time in hours
+        avgResponseTime: tickets?.length ? 
+          tickets.reduce((sum, ticket) => {
+            if (ticket.created_at && ticket.updated_at) {
+              const hours = (new Date(ticket.updated_at).getTime() - new Date(ticket.created_at).getTime()) / (1000 * 60 * 60);
+              return sum + hours;
+            }
+            return sum;
+          }, 0) / tickets.length : 0
       };
 
       const securityStats = {
-        score: 92,
-        threats: 0,
+        score: scans?.length ? 
+          Math.round(scans.reduce((sum, scan) => {
+            // Calculate based on threats found - lower threats = higher score
+            const threatScore = scan.threats_detected ? Math.max(0, 100 - (scan.threats_detected * 10)) : 90;
+            return sum + threatScore;
+          }, 0) / scans.length) : 0,
+        threats: scans?.reduce((sum, scan) => sum + (scan.threats_detected || 0), 0) || 0,
         scansCompleted: scans?.length || 0,
-        lastScan: scans?.[0]?.created_at || new Date().toISOString()
+        lastScan: scans?.[0]?.created_at || ''
       };
 
       const complianceStats = {
         overall: compliance?.length ? 
-          Math.round(compliance.reduce((sum, item) => sum + (item.score || 0), 0) / compliance.length) : 95,
-        frameworks: [
-          { name: 'SOC 2', score: 95, status: 'compliant' },
-          { name: 'ISO 27001', score: 88, status: 'compliant' },
-          { name: 'GDPR', score: 96, status: 'compliant' }
-        ]
+          Math.round(compliance.reduce((sum, item) => sum + (item.score || 0), 0) / compliance.length) : 0,
+        frameworks: compliance?.map(item => ({
+          name: item.framework_id || 'Unknown Framework',
+          score: item.score || 0,
+          status: item.status || 'unknown'
+        })) || []
       };
 
       setData({
@@ -261,7 +273,10 @@ export const ClientPortal = () => {
             <div className="text-2xl font-bold text-green-600">{data.securityStatus.score}%</div>
             <Progress value={data.securityStatus.score} className="h-2 mt-2" />
             <div className="text-xs text-muted-foreground mt-1">
-              Last scan: {new Date(data.securityStatus.lastScan).toLocaleDateString()}
+              {data.securityStatus.lastScan ? 
+                `Last scan: ${new Date(data.securityStatus.lastScan).toLocaleDateString()}` : 
+                'No scans completed'
+              }
             </div>
           </CardContent>
         </Card>
@@ -274,7 +289,10 @@ export const ClientPortal = () => {
           <CardContent>
             <div className="text-2xl font-bold">{data.ticketSummary.open}</div>
             <div className="text-xs text-muted-foreground">
-              Avg response: {data.ticketSummary.avgResponseTime}h
+              {data.ticketSummary.avgResponseTime > 0 ? 
+                `Avg response: ${Math.round(data.ticketSummary.avgResponseTime * 10) / 10}h` : 
+                'No response time data'
+              }
             </div>
           </CardContent>
         </Card>
@@ -417,34 +435,26 @@ export const ClientPortal = () => {
                 <CardTitle>Security Score Breakdown</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Endpoint Protection</span>
-                    <span className="font-bold">95%</span>
+                {data.securityStatus.scansCompleted > 0 ? (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Overall Security Score</span>
+                        <span className="font-bold">{data.securityStatus.score}%</span>
+                      </div>
+                      <Progress value={data.securityStatus.score} className="h-2" />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Based on {data.securityStatus.scansCompleted} security scan{data.securityStatus.scansCompleted !== 1 ? 's' : ''}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p>No security scans available</p>
+                    <p className="text-sm">Security scans will appear here once completed</p>
                   </div>
-                  <Progress value={95} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Email Security</span>
-                    <span className="font-bold">92%</span>
-                  </div>
-                  <Progress value={92} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Network Security</span>
-                    <span className="font-bold">89%</span>
-                  </div>
-                  <Progress value={89} className="h-2" />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Patch Management</span>
-                    <span className="font-bold">94%</span>
-                  </div>
-                  <Progress value={94} className="h-2" />
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -453,17 +463,25 @@ export const ClientPortal = () => {
                 <CardTitle>Compliance Status</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {data.compliance.frameworks.map((framework, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{framework.name}</div>
-                      <div className="text-sm text-muted-foreground">{framework.score}% compliant</div>
+                {data.compliance.frameworks.length > 0 ? (
+                  data.compliance.frameworks.map((framework, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{framework.name}</div>
+                        <div className="text-sm text-muted-foreground">{framework.score}% compliant</div>
+                      </div>
+                      <Badge variant={framework.status === 'compliant' ? 'default' : 'destructive'}>
+                        {framework.status}
+                      </Badge>
                     </div>
-                    <Badge variant={framework.status === 'compliant' ? 'default' : 'destructive'}>
-                      {framework.status}
-                    </Badge>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p>No compliance data available</p>
+                    <p className="text-sm">Compliance status will appear here once configured</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
           </div>
