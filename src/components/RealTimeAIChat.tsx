@@ -7,7 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, Bot, User, Loader2, Mic, MicOff } from 'lucide-react';
+import { Send, Bot, User, Loader2 } from 'lucide-react';
+import VoiceControls from './VoiceControls';
 
 interface Message {
   id: string;
@@ -29,63 +30,15 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    // Initialize speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-
-      recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-
-      recognitionRef.current.onerror = () => {
-        setIsListening(false);
-        toast({
-          title: "Speech Recognition Error",
-          description: "Could not capture audio. Please try again.",
-          variant: "destructive",
-        });
-      };
-    }
-  }, [toast]);
-
-  const startListening = () => {
-    if (recognitionRef.current) {
-      setIsListening(true);
-      recognitionRef.current.start();
-    } else {
-      toast({
-        title: "Speech Recognition Unavailable",
-        description: "Your browser doesn't support speech recognition.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsListening(false);
+  const handleVoiceTranscription = (text: string) => {
+    setInput(text);
   };
 
   const sendMessage = async (messageContent?: string) => {
@@ -237,31 +190,16 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
           </div>
         </ScrollArea>
         
-        <div className="border-t p-4">
+        <div className="border-t p-4 space-y-3">
           <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                disabled={isLoading}
-                className="pr-12"
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
-                onClick={isListening ? stopListening : startListening}
-                disabled={isLoading}
-              >
-                {isListening ? (
-                  <MicOff className="h-4 w-4 text-red-500" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              disabled={isLoading}
+              className="flex-1"
+            />
             <Button
               onClick={() => sendMessage()}
               disabled={isLoading || !input.trim()}
@@ -270,12 +208,12 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          {isListening && (
-            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              Listening... Speak now
-            </p>
-          )}
+          
+          {/* Voice Controls */}
+          <VoiceControls 
+            onTranscription={handleVoiceTranscription}
+            disabled={isLoading}
+          />
         </div>
       </CardContent>
     </Card>
