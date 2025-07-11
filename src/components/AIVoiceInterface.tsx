@@ -9,14 +9,117 @@ import { supabase } from '@/integrations/supabase/client';
 import VoiceControls from './VoiceControls';
 import { ModeSelector, AIMode, AI_MODES } from './ModeSelector';
 
+interface ChatMessage {
+  id: string;
+  type: 'user' | 'ai';
+  content: string;
+  timestamp: Date;
+}
+
+interface ChatHistory {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  mode: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export const AIVoiceInterface = () => {
   const [textInput, setTextInput] = useState('');
-  const [conversation, setConversation] = useState<Array<{id: string, type: 'user' | 'ai', content: string}>>([]);
+  const [conversation, setConversation] = useState<ChatMessage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [volume, setVolume] = useState(75);
   const [selectedMode, setSelectedMode] = useState<AIMode>(AI_MODES[0]);
   const [showModeSelector, setShowModeSelector] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [showChatHistory, setShowChatHistory] = useState(false);
   const { toast } = useToast();
+
+  // Load chat history on component mount
+  React.useEffect(() => {
+    const saved = localStorage.getItem('ai-chat-history');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setChatHistory(parsed);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+      }
+    }
+  }, []);
+
+  // Save chat history when it changes
+  React.useEffect(() => {
+    localStorage.setItem('ai-chat-history', JSON.stringify(chatHistory));
+  }, [chatHistory]);
+
+  // Save current conversation when it changes
+  React.useEffect(() => {
+    if (currentChatId && conversation.length > 0) {
+      setChatHistory(prev => prev.map(chat => 
+        chat.id === currentChatId 
+          ? { ...chat, messages: conversation, updatedAt: new Date() }
+          : chat
+      ));
+    }
+  }, [conversation, currentChatId]);
+
+  const startNewChat = () => {
+    const newChatId = Date.now().toString();
+    const newChat: ChatHistory = {
+      id: newChatId,
+      title: `Chat with ${selectedMode.name}`,
+      messages: [],
+      mode: selectedMode.id,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    setChatHistory(prev => [newChat, ...prev]);
+    setCurrentChatId(newChatId);
+    setConversation([]);
+    setTextInput('');
+    
+    toast({
+      title: "New Chat Started",
+      description: `Started new ${selectedMode.name} conversation`,
+    });
+  };
+
+  const loadChat = (chatId: string) => {
+    const chat = chatHistory.find(c => c.id === chatId);
+    if (chat) {
+      setConversation(chat.messages);
+      setCurrentChatId(chatId);
+      
+      // Switch to the mode used in this chat
+      const mode = AI_MODES.find(m => m.id === chat.mode) || AI_MODES[0];
+      setSelectedMode(mode);
+      setShowChatHistory(false);
+      
+      toast({
+        title: "Chat Loaded",
+        description: `Loaded chat: ${chat.title}`,
+      });
+    }
+  };
+
+  const deleteChat = (chatId: string) => {
+    setChatHistory(prev => prev.filter(chat => chat.id !== chatId));
+    
+    if (currentChatId === chatId) {
+      setCurrentChatId(null);
+      setConversation([]);
+    }
+    
+    toast({
+      title: "Chat Deleted",
+      description: "Chat has been removed from history",
+      variant: "destructive",
+    });
+  };
 
   const handleVoiceTranscription = (text: string) => {
     setTextInput(text);
@@ -25,8 +128,18 @@ export const AIVoiceInterface = () => {
   const processMessage = async (message: string) => {
     if (!message.trim() || isProcessing) return;
 
+    // Start new chat if none exists
+    if (!currentChatId) {
+      startNewChat();
+    }
+
     setIsProcessing(true);
-    const userMessage = { id: Date.now().toString(), type: 'user' as const, content: message };
+    const userMessage: ChatMessage = { 
+      id: Date.now().toString(), 
+      type: 'user', 
+      content: message,
+      timestamp: new Date()
+    };
     setConversation(prev => [...prev, userMessage]);
     setTextInput('');
 
@@ -43,10 +156,11 @@ export const AIVoiceInterface = () => {
 
       if (error) throw error;
 
-      const aiMessage = { 
+      const aiMessage: ChatMessage = { 
         id: (Date.now() + 1).toString(), 
-        type: 'ai' as const, 
-        content: data.response 
+        type: 'ai', 
+        content: data.response,
+        timestamp: new Date()
       };
       setConversation(prev => [...prev, aiMessage]);
 
@@ -91,6 +205,12 @@ export const AIVoiceInterface = () => {
   const resetConversation = () => {
     setConversation([]);
     setTextInput('');
+    setCurrentChatId(null);
+    
+    toast({
+      title: "Conversation Cleared",
+      description: "Started fresh conversation",
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -110,15 +230,26 @@ export const AIVoiceInterface = () => {
               <Mic className="h-5 w-5" />
               AI Voice Interface
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowModeSelector(!showModeSelector)}
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              {showModeSelector ? 'Hide Modes' : 'Change Mode'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowChatHistory(!showChatHistory)}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                {showChatHistory ? 'Hide History' : 'Chat History'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowModeSelector(!showModeSelector)}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                {showModeSelector ? 'Hide Modes' : 'Change Mode'}
+              </Button>
+            </div>
           </CardTitle>
           <CardDescription className="flex items-center gap-2">
             <span>Current mode:</span>
@@ -128,6 +259,57 @@ export const AIVoiceInterface = () => {
             </Badge>
           </CardDescription>
         </CardHeader>
+        {showChatHistory && (
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Chat History</h3>
+                <Button onClick={startNewChat} size="sm">
+                  New Chat
+                </Button>
+              </div>
+              
+              {chatHistory.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {chatHistory.map((chat) => (
+                    <div
+                      key={chat.id}
+                      className={`p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
+                        currentChatId === chat.id ? 'bg-muted' : ''
+                      }`}
+                      onClick={() => loadChat(chat.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium truncate">{chat.title}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {chat.messages.length} messages • {new Date(chat.updatedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteChat(chat.id);
+                          }}
+                          className="ml-2 h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">
+                  No chat history yet. Start a new conversation!
+                </p>
+              )}
+            </div>
+          </CardContent>
+        )}
+        
         {showModeSelector && (
           <CardContent>
             <ModeSelector 
@@ -195,6 +377,13 @@ export const AIVoiceInterface = () => {
           <div className="flex gap-2 justify-end">
             <Button
               variant="outline"
+              onClick={startNewChat}
+              className="flex items-center gap-2"
+            >
+              New Chat
+            </Button>
+            <Button
+              variant="outline"
               onClick={resetConversation}
               className="flex items-center gap-2"
             >
@@ -216,23 +405,29 @@ export const AIVoiceInterface = () => {
       {conversation.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Conversation</CardTitle>
+            <CardTitle className="text-lg flex items-center justify-between">
+              Conversation
+              <Badge variant="outline">{conversation.length} messages</Badge>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-4 max-h-96 overflow-y-auto border rounded-lg p-4 bg-muted/20">
               {conversation.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[80%] rounded-lg p-3 break-words ${
                       message.type === 'user'
                         ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
+                        : 'bg-muted border'
                     }`}
                   >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    <div className="whitespace-pre-wrap overflow-wrap-anywhere">{message.content}</div>
+                    <div className="text-xs opacity-70 mt-2">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </div>
                     {message.type === 'ai' && (
                       <Button
                         size="sm"
