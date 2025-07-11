@@ -155,8 +155,9 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   };
 
   const speakText = async (text: string) => {
-    if (isPlaying) return;
-
+    // Stop any currently playing audio first
+    stopCurrentAudio();
+    
     try {
       setIsPlaying(true);
 
@@ -202,9 +203,9 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
     if (currentAudio) {
       currentAudio.pause();
       currentAudio.currentTime = 0;
-      setIsPlaying(false);
       setCurrentAudio(null);
     }
+    setIsPlaying(false);
   };
 
   const sendMessage = async (messageContent?: string) => {
