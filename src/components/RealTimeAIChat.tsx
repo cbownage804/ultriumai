@@ -272,7 +272,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
               {context.toUpperCase()}
             </Badge>
             <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-              <SelectTrigger className="w-32 h-8">
+              <SelectTrigger className="w-48 h-8">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
