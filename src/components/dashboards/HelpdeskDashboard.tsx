@@ -1,4 +1,6 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,61 +23,64 @@ import {
 } from "lucide-react";
 
 export const HelpdeskDashboard = () => {
-  const stats = {
-    openTickets: 23,
-    inProgress: 8,
-    resolved: 47,
-    avgResponseTime: "2.3h",
-    satisfaction: 4.7,
-    agentsOnline: 5,
-    totalAgents: 7
-  };
+  const [stats, setStats] = useState({
+    openTickets: 0,
+    inProgress: 0,
+    resolved: 0,
+    avgResponseTime: "0h",
+    satisfaction: 0,
+    agentsOnline: 0,
+    totalAgents: 0
+  });
 
-  const tickets = [
-    { 
-      id: "TKT-2024-001", 
-      title: "Password reset request", 
-      user: "john.doe@company.com", 
-      priority: "medium", 
-      status: "open", 
-      created: "10 min ago",
-      agent: "Sarah Wilson"
-    },
-    { 
-      id: "TKT-2024-002", 
-      title: "Email not working", 
-      user: "jane.smith@company.com", 
-      priority: "high", 
-      status: "in-progress", 
-      created: "25 min ago",
-      agent: "Mike Johnson"
-    },
-    { 
-      id: "TKT-2024-003", 
-      title: "Software installation help", 
-      user: "bob.brown@company.com", 
-      priority: "low", 
-      status: "resolved", 
-      created: "1 hour ago",
-      agent: "Lisa Chen"
+  const [tickets, setTickets] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [agents, setAgents] = useState([]);
+
+  useEffect(() => {
+    loadHelpdeskData();
+  }, []);
+
+  const loadHelpdeskData = async () => {
+    try {
+      const { data: ticketData, error } = await supabase
+        .from('helpdesk_tickets')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const formattedTickets = ticketData?.map(ticket => ({
+        id: ticket.id,
+        title: ticket.title || 'Untitled',
+        user: 'Unknown User', // Email field needs to be mapped correctly
+        priority: ticket.priority || 'medium',
+        status: ticket.status || 'open',
+        created: new Date(ticket.created_at).toLocaleString(),
+        agent: ticket.assigned_to || 'Unassigned'
+      })) || [];
+
+      const openTickets = ticketData?.filter(t => t.status === 'open').length || 0;
+      const inProgress = ticketData?.filter(t => t.status === 'in_progress').length || 0;
+      const resolved = ticketData?.filter(t => t.status === 'resolved' || t.status === 'closed').length || 0;
+
+      setTickets(formattedTickets);
+      setStats({
+        openTickets,
+        inProgress,
+        resolved,
+        avgResponseTime: "No data",
+        satisfaction: 0,
+        agentsOnline: 0,
+        totalAgents: 0
+      });
+      setCategories([]);
+      setAgents([]);
+    } catch (error) {
+      console.error('Error loading helpdesk data:', error);
     }
-  ];
-
-  const categories = [
-    { name: "Password Issues", count: 8, percentage: 35 },
-    { name: "Email Problems", count: 5, percentage: 22 },
-    { name: "Software Support", count: 4, percentage: 17 },
-    { name: "Hardware Issues", count: 3, percentage: 13 },
-    { name: "Network Access", count: 3, percentage: 13 }
-  ];
-
-  const agents = [
-    { name: "Sarah Wilson", status: "online", tickets: 5, rating: 4.9 },
-    { name: "Mike Johnson", status: "online", tickets: 3, rating: 4.8 },
-    { name: "Lisa Chen", status: "online", tickets: 4, rating: 4.7 },
-    { name: "David Park", status: "away", tickets: 2, rating: 4.6 },
-    { name: "Emma Davis", status: "online", tickets: 6, rating: 4.8 }
-  ];
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -213,31 +218,38 @@ export const HelpdeskDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {tickets.map((ticket) => (
-                  <div key={ticket.id} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(ticket.status)}
-                        <div>
-                          <h4 className="font-medium">{ticket.title}</h4>
-                          <p className="text-sm text-muted-foreground">#{ticket.id} • {ticket.user}</p>
+                {tickets.length > 0 ? (
+                  tickets.map((ticket) => (
+                    <div key={ticket.id} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(ticket.status)}
+                          <div>
+                            <h4 className="font-medium">{ticket.title}</h4>
+                            <p className="text-sm text-muted-foreground">#{ticket.id} • {ticket.user}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getPriorityColor(ticket.priority)}>
+                            {ticket.priority}
+                          </Badge>
+                          <Badge variant={ticket.status === 'resolved' ? 'default' : 'secondary'}>
+                            {ticket.status}
+                          </Badge>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getPriorityColor(ticket.priority)}>
-                          {ticket.priority}
-                        </Badge>
-                        <Badge variant={ticket.status === 'resolved' ? 'default' : 'secondary'}>
-                          {ticket.status}
-                        </Badge>
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>Created: {ticket.created}</span>
+                        <span>Assigned to: {ticket.agent}</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>Created: {ticket.created}</span>
-                      <span>Assigned to: {ticket.agent}</span>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No tickets found</p>
+                    <p className="text-sm">Create your first support ticket to get started</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -255,33 +267,40 @@ export const HelpdeskDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {agents.map((agent) => (
-                  <div key={agent.name} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(agent.status)}
-                        <div>
-                          <h4 className="font-medium">{agent.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {agent.tickets} active tickets
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            <span className="text-sm font-medium">{agent.rating}</span>
+                {agents.length > 0 ? (
+                  agents.map((agent) => (
+                    <div key={agent.name} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(agent.status)}
+                          <div>
+                            <h4 className="font-medium">{agent.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {agent.tickets} active tickets
+                            </p>
                           </div>
-                          <div className="text-xs text-muted-foreground">Rating</div>
                         </div>
-                        <Badge variant={agent.status === 'online' ? 'default' : 'secondary'}>
-                          {agent.status}
-                        </Badge>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 text-yellow-500" />
+                              <span className="text-sm font-medium">{agent.rating}</span>
+                            </div>
+                            <div className="text-xs text-muted-foreground">Rating</div>
+                          </div>
+                          <Badge variant={agent.status === 'online' ? 'default' : 'secondary'}>
+                            {agent.status}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No agents configured</p>
+                    <p className="text-sm">Add team members to start managing tickets</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -299,18 +318,25 @@ export const HelpdeskDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {categories.map((category) => (
-                  <div key={category.name} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium">{category.name}</h4>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{category.count}</span>
-                        <span className="text-xs text-muted-foreground">({category.percentage}%)</span>
+                {categories.length > 0 ? (
+                  categories.map((category) => (
+                    <div key={category.name} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-medium">{category.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium">{category.count}</span>
+                          <span className="text-xs text-muted-foreground">({category.percentage}%)</span>
+                        </div>
                       </div>
+                      <Progress value={category.percentage} className="h-2" />
                     </div>
-                    <Progress value={category.percentage} className="h-2" />
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No category data available</p>
+                    <p className="text-sm">Data will appear as tickets are categorized</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>

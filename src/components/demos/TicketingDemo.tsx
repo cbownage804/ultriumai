@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,65 +40,6 @@ interface TicketData {
   comments: number;
 }
 
-const mockTickets: TicketData[] = [
-  {
-    id: 'TKT-001',
-    title: 'Email not syncing on mobile device',
-    description: 'User reports email not syncing properly on iPhone. Receiving emails but not sending.',
-    status: 'open',
-    priority: 'high',
-    category: 'Email Issues',
-    client: 'AcmeTech Corp',
-    assignee: 'John Smith',
-    requester: 'Sarah Johnson',
-    created: '2024-01-15 09:30',
-    updated: '2024-01-15 14:22',
-    comments: 3
-  },
-  {
-    id: 'TKT-002',
-    title: 'Printer connection issues in accounting',
-    description: 'Network printer not responding. Users unable to print financial reports.',
-    status: 'in-progress',
-    priority: 'medium',
-    category: 'Hardware',
-    client: 'TechFlow Ltd',
-    assignee: 'Mike Davis',
-    requester: 'Robert Chen',
-    created: '2024-01-14 16:45',
-    updated: '2024-01-15 11:30',
-    comments: 5
-  },
-  {
-    id: 'TKT-003',
-    title: 'VPN connection timeout errors',
-    description: 'Remote workers experiencing frequent VPN disconnections affecting productivity.',
-    status: 'resolved',
-    priority: 'urgent',
-    category: 'Network',
-    client: 'GlobalCorp Inc',
-    assignee: 'Lisa Wang',
-    requester: 'David Brown',
-    created: '2024-01-13 08:15',
-    updated: '2024-01-15 10:00',
-    comments: 8
-  },
-  {
-    id: 'TKT-004',
-    title: 'Software installation request',
-    description: 'Need to install Adobe Creative Suite on 5 workstations for design team.',
-    status: 'open',
-    priority: 'low',
-    category: 'Software',
-    client: 'CreativeSpace',
-    assignee: 'Alex Turner',
-    requester: 'Emma Wilson',
-    created: '2024-01-15 13:20',
-    updated: '2024-01-15 13:20',
-    comments: 1
-  }
-];
-
 const priorityColors = {
   low: 'bg-green-100 text-green-800',
   medium: 'bg-yellow-100 text-yellow-800',
@@ -113,10 +55,46 @@ const statusColors = {
 };
 
 export const TicketingDemo = () => {
-  const [tickets, setTickets] = useState<TicketData[]>(mockTickets);
+  const [tickets, setTickets] = useState<TicketData[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<TicketData | null>(null);
   const [showNewTicket, setShowNewTicket] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+
+  const loadTickets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('helpdesk_tickets')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const formattedTickets = data?.map(ticket => ({
+        id: ticket.id,
+        title: ticket.title || 'Untitled',
+        description: ticket.description || '',
+        status: ticket.status as 'open' | 'in-progress' | 'resolved' | 'closed',
+        priority: ticket.priority as 'low' | 'medium' | 'high' | 'urgent',
+        category: ticket.category || 'General',
+        client: 'Unknown Client', // Will be mapped from client_id
+        assignee: ticket.assigned_to || 'Unassigned',
+        requester: 'Unknown User', // Will be mapped from user info
+        created: new Date(ticket.created_at).toLocaleString(),
+        updated: new Date(ticket.updated_at).toLocaleString(),
+        comments: 0 // Could be calculated from related comments table
+      })) || [];
+
+      setTickets(formattedTickets);
+    } catch (error) {
+      console.error('Error loading tickets:', error);
+      setTickets([]);
+    }
+  };
+
+  useEffect(() => {
+    loadTickets();
+  }, []);
 
   const filteredTickets = filterStatus === 'all' 
     ? tickets 
@@ -217,45 +195,52 @@ export const TicketingDemo = () => {
             {/* Ticket List */}
             <div className="space-y-4">
               <h3 className="font-semibold">Ticket Queue ({filteredTickets.length})</h3>
-              {filteredTickets.map((ticket) => (
-                <Card 
-                  key={ticket.id}
-                  className={`cursor-pointer transition-colors hover:bg-muted/50 ${
-                    selectedTicket?.id === ticket.id ? 'border-primary bg-primary/5' : ''
-                  }`}
-                  onClick={() => setSelectedTicket(ticket)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium">{ticket.id}</span>
-                          <Badge className={priorityColors[ticket.priority]}>
-                            {ticket.priority}
-                          </Badge>
-                          <Badge className={statusColors[ticket.status]}>
-                            {ticket.status}
-                          </Badge>
+              {filteredTickets.length > 0 ? (
+                filteredTickets.map((ticket) => (
+                  <Card 
+                    key={ticket.id}
+                    className={`cursor-pointer transition-colors hover:bg-muted/50 ${
+                      selectedTicket?.id === ticket.id ? 'border-primary bg-primary/5' : ''
+                    }`}
+                    onClick={() => setSelectedTicket(ticket)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">{ticket.id}</span>
+                            <Badge className={priorityColors[ticket.priority]}>
+                              {ticket.priority}
+                            </Badge>
+                            <Badge className={statusColors[ticket.status]}>
+                              {ticket.status}
+                            </Badge>
+                          </div>
+                          <h4 className="font-medium text-sm mb-1">{ticket.title}</h4>
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {ticket.description}
+                          </p>
                         </div>
-                        <h4 className="font-medium text-sm mb-1">{ticket.title}</h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {ticket.description}
-                        </p>
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <div className="flex items-center gap-4">
-                        <span>Client: {ticket.client}</span>
-                        <span className="flex items-center gap-1">
-                          <MessageSquare className="h-3 w-3" />
-                          {ticket.comments}
-                        </span>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4">
+                          <span>Client: {ticket.client}</span>
+                          <span className="flex items-center gap-1">
+                            <MessageSquare className="h-3 w-3" />
+                            {ticket.comments}
+                          </span>
+                        </div>
+                        <span>Updated: {ticket.updated}</span>
                       </div>
-                      <span>Updated: {ticket.updated}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No tickets found</p>
+                  <p className="text-sm">Create your first support ticket to get started</p>
+                </div>
+              )}
             </div>
 
             {/* Ticket Details */}
@@ -307,37 +292,12 @@ export const TicketingDemo = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        <span className="font-medium">Comments ({selectedTicket.comments})</span>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="p-3 bg-muted/50 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1">
-                            <User className="h-4 w-4" />
-                            <span className="font-medium text-sm">John Smith</span>
-                            <span className="text-xs text-muted-foreground">2 hours ago</span>
-                          </div>
-                          <p className="text-sm">I've identified the issue. The Exchange server settings need to be updated on the mobile device. Working on the solution now.</p>
-                        </div>
-                        <div className="p-3 bg-muted/50 rounded-lg">
-                          <div className="flex items-center gap-2 mb-1">
-                            <User className="h-4 w-4" />
-                            <span className="font-medium text-sm">Sarah Johnson</span>
-                            <span className="text-xs text-muted-foreground">4 hours ago</span>
-                          </div>
-                          <p className="text-sm">The issue started yesterday afternoon. I can receive emails but cannot send from my iPhone.</p>
-                        </div>
-                      </div>
-                      
-                      <div className="border-t pt-3">
-                        <Textarea placeholder="Add a comment..." className="mb-2" />
-                        <div className="flex gap-2">
-                          <Button size="sm">Add Comment</Button>
-                          <Button size="sm" variant="outline">Change Status</Button>
-                          <Button size="sm" variant="outline">Assign</Button>
-                        </div>
+                    <div className="border-t pt-3">
+                      <Textarea placeholder="Add a comment..." className="mb-2" />
+                      <div className="flex gap-2">
+                        <Button size="sm">Add Comment</Button>
+                        <Button size="sm" variant="outline">Change Status</Button>
+                        <Button size="sm" variant="outline">Assign</Button>
                       </div>
                     </div>
                   </div>
@@ -363,19 +323,19 @@ export const TicketingDemo = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span>Average Resolution Time</span>
-                  <span className="font-bold">2.3 hours</span>
+                  <span className="font-bold text-muted-foreground">No data</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>First Response Time</span>
-                  <span className="font-bold">15 minutes</span>
+                  <span className="font-bold text-muted-foreground">No data</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Customer Satisfaction</span>
-                  <span className="font-bold">4.8/5.0</span>
+                  <span className="font-bold text-muted-foreground">No data</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Tickets Resolved Today</span>
-                  <span className="font-bold">12</span>
+                  <span className="font-bold">{stats.resolved}</span>
                 </div>
               </CardContent>
             </Card>
@@ -388,26 +348,9 @@ export const TicketingDemo = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span>John Smith</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">8 tickets</span>
-                    <Badge className="bg-green-100 text-green-800">95% SLA</Badge>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Mike Davis</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">6 tickets</span>
-                    <Badge className="bg-green-100 text-green-800">92% SLA</Badge>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Lisa Wang</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">10 tickets</span>
-                    <Badge className="bg-green-100 text-green-800">98% SLA</Badge>
-                  </div>
+                <div className="text-center py-4 text-muted-foreground">
+                  <p>No team performance data available</p>
+                  <p className="text-sm">Data will appear when tickets are assigned to agents</p>
                 </div>
               </CardContent>
             </Card>
@@ -426,48 +369,16 @@ export const TicketingDemo = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Auto-Classification</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    AI automatically categorizes and prioritizes incoming tickets
-                  </p>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Smart Assignment</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Routes tickets to the best available technician based on skills
-                  </p>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Response Templates</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    AI suggests relevant response templates for common issues
-                  </p>
-                  <Badge className="bg-blue-100 text-blue-800">Learning</Badge>
-                </div>
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Escalation Rules</h4>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Automatic escalation based on SLA breaches and priority
-                  </p>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
-                </div>
-              </div>
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  SafeDesk is ready to receive and manage your support tickets. Create your first ticket to get started.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Demo Notice */}
-      <Alert>
-        <Ticket className="h-4 w-4" />
-        <AlertDescription>
-          This is a demonstration of SafeDesk capabilities. In production, you would see real-time tickets and full workflow automation.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 };

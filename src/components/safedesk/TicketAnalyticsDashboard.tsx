@@ -100,37 +100,47 @@ export const TicketAnalyticsDashboard = () => {
         percentage: totalTickets > 0 ? Math.round((count / totalTickets) * 100) : 0
       }));
 
-      // Category performance (simulated)
-      const categoryPerformance = [
-        { category: 'Hardware', tickets: 45, resolved: 42, avgTime: 180 },
-        { category: 'Software', tickets: 67, resolved: 61, avgTime: 120 },
-        { category: 'Network', tickets: 34, resolved: 30, avgTime: 240 },
-        { category: 'Email', tickets: 23, resolved: 22, avgTime: 90 },
-        { category: 'Security', tickets: 12, resolved: 11, avgTime: 300 }
-      ];
+      // Category performance - calculate from real data
+      const categoryCount: { [key: string]: { total: number; resolved: number } } = {};
+      tickets?.forEach(ticket => {
+        const category = ticket.category || 'Uncategorized';
+        categoryCount[category] = categoryCount[category] || { total: 0, resolved: 0 };
+        categoryCount[category].total++;
+        if (ticket.status === 'resolved' || ticket.status === 'closed') {
+          categoryCount[category].resolved++;
+        }
+      });
 
-      // Agent performance (simulated)
-      const agentPerformance = [
-        { agent: 'John Smith', tickets: 34, resolved: 32, satisfaction: 4.8, avgTime: 145 },
-        { agent: 'Sarah Johnson', tickets: 28, resolved: 26, satisfaction: 4.9, avgTime: 132 },
-        { agent: 'Mike Davis', tickets: 42, resolved: 39, satisfaction: 4.7, avgTime: 167 },
-        { agent: 'Lisa Wang', tickets: 31, resolved: 29, satisfaction: 4.6, avgTime: 156 }
-      ];
+      const categoryPerformance = Object.entries(categoryCount).map(([category, data]) => ({
+        category,
+        tickets: data.total,
+        resolved: data.resolved,
+        avgTime: Math.floor(Math.random() * 200) + 60 // Placeholder until we have real resolution times
+      }));
 
-      // Hourly volume (simulated)
-      const hourlyVolume = Array.from({ length: 24 }, (_, hour) => ({
+      // No agent performance data available yet
+      const agentPerformance = [];
+
+      // Hourly volume - calculate from ticket creation times
+      const hourlyCount = new Array(24).fill(0);
+      tickets?.forEach(ticket => {
+        const hour = new Date(ticket.created_at).getHours();
+        hourlyCount[hour]++;
+      });
+
+      const hourlyVolume = hourlyCount.map((count, hour) => ({
         hour: `${hour.toString().padStart(2, '0')}:00`,
-        tickets: Math.floor(Math.random() * 15) + 2
+        tickets: count
       }));
 
       setAnalytics({
         totalTickets,
         resolvedTickets,
         avgResolutionTime: Math.round(avgResolutionTime),
-        slaCompliance: 94, // Simulated
+        slaCompliance: 0, // No SLA data available yet
         aiResolvedPercentage: totalTickets > 0 ? Math.round((aiResolvedTickets / totalTickets) * 100) : 0,
-        customerSatisfaction: 4.7, // Simulated
-        activeAgents: 8, // Simulated
+        customerSatisfaction: 0, // No satisfaction data available yet
+        activeAgents: 0, // No agent data available yet
         trendData,
         priorityDistribution,
         categoryPerformance,
@@ -430,28 +440,35 @@ export const TicketAnalyticsDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analytics.agentPerformance.map((agent, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{agent.agent}</h4>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                        <span>{agent.tickets} tickets</span>
-                        <span>{agent.resolved} resolved</span>
-                        <span>{agent.avgTime}m avg</span>
+                {analytics.agentPerformance.length > 0 ? (
+                  analytics.agentPerformance.map((agent, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="font-semibold">{agent.agent}</h4>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                          <span>{agent.tickets} tickets</span>
+                          <span>{agent.resolved} resolved</span>
+                          <span>{agent.avgTime}m avg</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            {Math.round((agent.resolved / agent.tickets) * 100)}% resolved
+                          </Badge>
+                          <Badge variant="secondary">
+                            ⭐ {agent.satisfaction}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {Math.round((agent.resolved / agent.tickets) * 100)}% resolved
-                        </Badge>
-                        <Badge variant="secondary">
-                          ⭐ {agent.satisfaction}
-                        </Badge>
-                      </div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No agent performance data available</p>
+                    <p className="text-sm">Assign tickets to agents to see performance metrics</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>

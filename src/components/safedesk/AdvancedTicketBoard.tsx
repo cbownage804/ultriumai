@@ -82,12 +82,12 @@ export const AdvancedTicketBoard = () => {
         ...ticket,
         priority: ticket.priority as 'low' | 'medium' | 'high' | 'urgent',
         status: ticket.status as 'open' | 'in_progress' | 'pending' | 'resolved' | 'closed',
-        client_name: 'Sample Client', // Simulated
-        assignee_name: 'Unassigned', // Simulated
-        tags: [], // Simulated
-        attachments: Math.floor(Math.random() * 3), // Simulated
-        comments_count: Math.floor(Math.random() * 5), // Simulated
-        sla_due_at: new Date(Date.now() + Math.random() * 86400000 * 3).toISOString() // Simulated SLA
+        client_name: 'Unknown Client', // Will be mapped from client_id
+        assignee_name: ticket.assigned_to || 'Unassigned',
+        tags: [], // Will be calculated from actual tags
+        attachments: 0, // Will be calculated from actual attachments
+        comments_count: 0, // Will be calculated from actual comments
+        sla_due_at: ticket.sla_due_at || null
       })) || [];
 
       setTickets(formattedTickets);
