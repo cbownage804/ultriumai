@@ -44,7 +44,7 @@ const Pricing = () => {
         "Basic security scanning",
         "Email support",
         "Standard integrations",
-        "50GB storage",
+        "10GB storage",
         "Basic analytics"
       ],
       current: subscription.subscription_tier === "starter",
@@ -65,7 +65,7 @@ const Pricing = () => {
         "Full MSP dashboard",
         "Priority support",
         "Premium integrations",
-        "500GB storage",
+        "50GB storage",
         "Advanced analytics",
         "Custom workflows",
         "API access"
@@ -87,7 +87,7 @@ const Pricing = () => {
         "Dedicated account manager",
         "24/7 phone support",
         "Custom integrations",
-        "Unlimited storage",
+        "100GB storage + additional available",
         "Custom reporting",
         "SLA guarantees",
         "On-premise deployment",
