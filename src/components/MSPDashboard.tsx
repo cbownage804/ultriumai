@@ -154,7 +154,12 @@ export const MSPDashboard = () => {
       title: "Email Settings",
       description: "Configure client email settings",
       icon: Mail,
-      action: () => setActiveTab("email-settings"),
+      action: () => {
+        console.log('Email Settings button clicked!');
+        console.log('Current activeTab before:', activeTab);
+        setActiveTab("email-settings");
+        console.log('Setting activeTab to: email-settings');
+      },
       color: "bg-indigo-500",
     },
   ];
@@ -750,7 +755,10 @@ export const MSPDashboard = () => {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={(value) => {
+        console.log('Tab changed to:', value);
+        setActiveTab(value);
+      }} className="space-y-4">
         <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="clients" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
