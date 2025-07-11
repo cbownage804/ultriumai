@@ -5096,11 +5096,21 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           company_name: string | null
+          company_size: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
+          industry: string | null
+          job_title: string | null
+          onboarding_completed: boolean | null
           phone: string | null
+          stripe_customer_id: string | null
+          subscription_end_date: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
+          timezone: string | null
+          trial_ends_at: string | null
           updated_at: string
           user_id: string
           website: string | null
@@ -5110,11 +5120,21 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           company_name?: string | null
+          company_size?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id?: string
+          industry?: string | null
+          job_title?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
+          stripe_customer_id?: string | null
+          subscription_end_date?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          timezone?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id: string
           website?: string | null
@@ -5124,11 +5144,21 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           company_name?: string | null
+          company_size?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
+          industry?: string | null
+          job_title?: string | null
+          onboarding_completed?: boolean | null
           phone?: string | null
+          stripe_customer_id?: string | null
+          subscription_end_date?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
+          timezone?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
           website?: string | null

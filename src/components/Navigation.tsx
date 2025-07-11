@@ -96,6 +96,10 @@ const Navigation = () => {
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </button>
+            <button onClick={() => handleNavigation('/pricing')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+              Pricing
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </button>
             <div className="relative">
               <button 
                 onClick={() => setIsDemosDropdownOpen(!isDemosDropdownOpen)}

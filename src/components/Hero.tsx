@@ -222,19 +222,19 @@ const Hero = () => {
             <Button 
               size="lg" 
               className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 btn-glow"
-              onClick={() => handleNavigation('/live-demos')}
+              onClick={() => handleNavigation('/pricing')}
             >
-              <Play className="mr-2 h-5 w-5" />
-              See Our AI Security Demos
+              <Star className="mr-2 h-5 w-5" />
+              Get Started - $15/month
             </Button>
             <Button 
               variant="outline" 
               size="lg" 
               className="text-lg px-8 py-6 h-auto border-2 hover:bg-primary/5 hover:border-primary transition-all duration-300 hover:scale-105"
-              onClick={() => handleNavigation('#contact')}
+              onClick={() => handleNavigation('/live-demos')}
             >
-              <Calendar className="mr-2 h-5 w-5" />
-              Book a Demo
+              <Play className="mr-2 h-5 w-5" />
+              See Live Demos
             </Button>
           </div>
 
