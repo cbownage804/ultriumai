@@ -2948,6 +2948,57 @@ export type Database = {
         }
         Relationships: []
       }
+      msp_churn_predictions: {
+        Row: {
+          churn_risk_score: number
+          client_id: string
+          contract_renewal_date: string | null
+          contributing_factors: Json | null
+          created_at: string
+          id: string
+          last_engagement_date: string | null
+          msp_id: string
+          payment_history_score: number | null
+          recommended_actions: Json | null
+          risk_level: string
+          satisfaction_trend: string | null
+          support_ticket_trend: string | null
+          updated_at: string
+        }
+        Insert: {
+          churn_risk_score?: number
+          client_id: string
+          contract_renewal_date?: string | null
+          contributing_factors?: Json | null
+          created_at?: string
+          id?: string
+          last_engagement_date?: string | null
+          msp_id: string
+          payment_history_score?: number | null
+          recommended_actions?: Json | null
+          risk_level?: string
+          satisfaction_trend?: string | null
+          support_ticket_trend?: string | null
+          updated_at?: string
+        }
+        Update: {
+          churn_risk_score?: number
+          client_id?: string
+          contract_renewal_date?: string | null
+          contributing_factors?: Json | null
+          created_at?: string
+          id?: string
+          last_engagement_date?: string | null
+          msp_id?: string
+          payment_history_score?: number | null
+          recommended_actions?: Json | null
+          risk_level?: string
+          satisfaction_trend?: string | null
+          support_ticket_trend?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       msp_client_endpoints: {
         Row: {
           assigned_technician: string | null
@@ -3194,6 +3245,123 @@ export type Database = {
           },
         ]
       }
+      msp_competitive_benchmarks: {
+        Row: {
+          benchmark_date: string
+          created_at: string
+          data_source: string | null
+          id: string
+          industry_average: number | null
+          metric_name: string
+          metric_value: number
+          msp_id: string
+          percentile_rank: number | null
+          recommendations: Json | null
+          top_quartile: number | null
+          trend_direction: string | null
+          updated_at: string
+        }
+        Insert: {
+          benchmark_date: string
+          created_at?: string
+          data_source?: string | null
+          id?: string
+          industry_average?: number | null
+          metric_name: string
+          metric_value: number
+          msp_id: string
+          percentile_rank?: number | null
+          recommendations?: Json | null
+          top_quartile?: number | null
+          trend_direction?: string | null
+          updated_at?: string
+        }
+        Update: {
+          benchmark_date?: string
+          created_at?: string
+          data_source?: string | null
+          id?: string
+          industry_average?: number | null
+          metric_name?: string
+          metric_value?: number
+          msp_id?: string
+          percentile_rank?: number | null
+          recommendations?: Json | null
+          top_quartile?: number | null
+          trend_direction?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      msp_lead_scoring: {
+        Row: {
+          assigned_to: string | null
+          budget_range: string | null
+          company_name: string
+          company_size: string | null
+          created_at: string
+          email: string | null
+          engagement_level: string
+          id: string
+          industry: string | null
+          last_activity_date: string | null
+          lead_name: string
+          lead_score: number
+          lead_source: string | null
+          msp_id: string
+          next_action: string | null
+          pain_points: Json | null
+          phone: string | null
+          score_breakdown: Json | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          budget_range?: string | null
+          company_name: string
+          company_size?: string | null
+          created_at?: string
+          email?: string | null
+          engagement_level?: string
+          id?: string
+          industry?: string | null
+          last_activity_date?: string | null
+          lead_name: string
+          lead_score?: number
+          lead_source?: string | null
+          msp_id: string
+          next_action?: string | null
+          pain_points?: Json | null
+          phone?: string | null
+          score_breakdown?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          budget_range?: string | null
+          company_name?: string
+          company_size?: string | null
+          created_at?: string
+          email?: string | null
+          engagement_level?: string
+          id?: string
+          industry?: string | null
+          last_activity_date?: string | null
+          lead_name?: string
+          lead_score?: number
+          lead_source?: string | null
+          msp_id?: string
+          next_action?: string | null
+          pain_points?: Json | null
+          phone?: string | null
+          score_breakdown?: Json | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       msp_organizations: {
         Row: {
           address: string | null
@@ -3251,6 +3419,54 @@ export type Database = {
           updated_at?: string
           user_id?: string
           white_label_config?: Json | null
+        }
+        Relationships: []
+      }
+      msp_profit_analytics: {
+        Row: {
+          client_id: string
+          cost_breakdown: Json | null
+          costs: number
+          created_at: string
+          id: string
+          industry_benchmark: number | null
+          msp_id: string
+          optimization_suggestions: Json | null
+          period_end: string
+          period_start: string
+          profit_margin: number
+          revenue: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          cost_breakdown?: Json | null
+          costs?: number
+          created_at?: string
+          id?: string
+          industry_benchmark?: number | null
+          msp_id: string
+          optimization_suggestions?: Json | null
+          period_end: string
+          period_start: string
+          profit_margin?: number
+          revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          cost_breakdown?: Json | null
+          costs?: number
+          created_at?: string
+          id?: string
+          industry_benchmark?: number | null
+          msp_id?: string
+          optimization_suggestions?: Json | null
+          period_end?: string
+          period_start?: string
+          profit_margin?: number
+          revenue?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3392,6 +3608,60 @@ export type Database = {
           role?: Database["public"]["Enums"]["helpdesk_role"]
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      msp_upselling_opportunities: {
+        Row: {
+          action_items: Json | null
+          client_id: string
+          confidence_score: number
+          created_at: string
+          current_spend: number
+          estimated_close_date: string | null
+          id: string
+          msp_id: string
+          opportunity_type: string
+          potential_revenue: number
+          priority: string
+          reasons: Json | null
+          service_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          action_items?: Json | null
+          client_id: string
+          confidence_score?: number
+          created_at?: string
+          current_spend?: number
+          estimated_close_date?: string | null
+          id?: string
+          msp_id: string
+          opportunity_type: string
+          potential_revenue?: number
+          priority?: string
+          reasons?: Json | null
+          service_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          action_items?: Json | null
+          client_id?: string
+          confidence_score?: number
+          created_at?: string
+          current_spend?: number
+          estimated_close_date?: string | null
+          id?: string
+          msp_id?: string
+          opportunity_type?: string
+          potential_revenue?: number
+          priority?: string
+          reasons?: Json | null
+          service_name?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
