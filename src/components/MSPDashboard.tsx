@@ -1516,64 +1516,7 @@ export const MSPDashboard = () => {
         </TabsContent>
 
         <TabsContent value="email-settings" className="mt-6">
-          <div className="fixed top-4 right-4 z-50 p-4 bg-green-500 text-white rounded-lg shadow-lg max-w-sm">
-            <h3 className="font-bold text-lg">🎉 EMAIL SETTINGS WORKING!</h3>
-            <p>If you see this box, the tab is working!</p>
-            <p className="text-sm">Active: {activeTab}</p>
-          </div>
-          <div className="p-6 space-y-6">
-            <div className="border rounded-lg p-4 bg-green-50">
-              <h3 className="text-lg font-semibold text-green-800 mb-2">✅ Email Settings Tab Working!</h3>
-              <p className="text-green-700">The tab switching is working correctly. You should see this green box when clicking Email Settings.</p>
-              <p className="text-sm text-green-600 mt-2">Active tab: {activeTab}</p>
-            </div>
-            
-            <div className="border rounded-lg p-4">
-              <h4 className="font-semibold mb-4">Email Configuration (Demo)</h4>
-              <p className="text-muted-foreground mb-4">
-                This is where you would configure email settings for your MSP clients.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Incoming Email</label>
-                    <input 
-                      type="email" 
-                      placeholder="client-tickets@safedesk.io"
-                      className="w-full p-2 border rounded-md"
-                      disabled 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Outgoing Email</label>
-                    <input 
-                      type="email" 
-                      placeholder="support@clientdomain.com"
-                      className="w-full p-2 border rounded-md"
-                      disabled 
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">From Name</label>
-                  <input 
-                    type="text" 
-                    placeholder="ACME Corp Support Team"
-                    className="w-full p-2 border rounded-md"
-                    disabled 
-                  />
-                </div>
-                
-                <div className="pt-4">
-                  <button className="bg-primary text-white px-4 py-2 rounded-md" disabled>
-                    Save Configuration (Demo)
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <MSPClientEmailConfig />
         </TabsContent>
       </Tabs>
     </div>
