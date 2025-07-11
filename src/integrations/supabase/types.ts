@@ -2846,6 +2846,107 @@ export type Database = {
         }
         Relationships: []
       }
+      msp_api_keys: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          key_hash: string
+          key_name: string
+          key_prefix: string
+          last_used_at: string | null
+          msp_id: string
+          permissions: Json
+          rate_limit_per_day: number | null
+          rate_limit_per_hour: number | null
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash: string
+          key_name: string
+          key_prefix: string
+          last_used_at?: string | null
+          msp_id: string
+          permissions?: Json
+          rate_limit_per_day?: number | null
+          rate_limit_per_hour?: number | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_hash?: string
+          key_name?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          msp_id?: string
+          permissions?: Json
+          rate_limit_per_day?: number | null
+          rate_limit_per_hour?: number | null
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      msp_api_usage: {
+        Row: {
+          api_key_id: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          ip_address: unknown | null
+          method: string
+          request_size_bytes: number | null
+          response_size_bytes: number | null
+          response_status: number | null
+          response_time_ms: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          ip_address?: unknown | null
+          method: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_status?: number | null
+          response_time_ms?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          ip_address?: unknown | null
+          method?: string
+          request_size_bytes?: number | null
+          response_size_bytes?: number | null
+          response_status?: number | null
+          response_time_ms?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_api_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "msp_api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       msp_billing_records: {
         Row: {
           additional_charges: number | null
@@ -3061,6 +3162,56 @@ export type Database = {
             columns: ["msp_org_id"]
             isOneToOne: false
             referencedRelation: "msp_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msp_client_portal_access: {
+        Row: {
+          access_token_hash: string
+          client_id: string
+          created_at: string | null
+          id: string
+          invited_at: string | null
+          is_active: boolean | null
+          last_login_at: string | null
+          login_count: number | null
+          permissions: Json
+          updated_at: string | null
+          user_email: string
+        }
+        Insert: {
+          access_token_hash: string
+          client_id: string
+          created_at?: string | null
+          id?: string
+          invited_at?: string | null
+          is_active?: boolean | null
+          last_login_at?: string | null
+          login_count?: number | null
+          permissions?: Json
+          updated_at?: string | null
+          user_email: string
+        }
+        Update: {
+          access_token_hash?: string
+          client_id?: string
+          created_at?: string | null
+          id?: string
+          invited_at?: string | null
+          is_active?: boolean | null
+          last_login_at?: string | null
+          login_count?: number | null
+          permissions?: Json
+          updated_at?: string | null
+          user_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_client_portal_access_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
             referencedColumns: ["id"]
           },
         ]
@@ -3574,6 +3725,51 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string | null
           webhook_endpoint?: string | null
+        }
+        Relationships: []
+      }
+      msp_quickbooks_sync_log: {
+        Row: {
+          completed_at: string | null
+          entity_type: string
+          error_details: Json | null
+          id: string
+          metadata: Json | null
+          msp_id: string
+          records_failed: number | null
+          records_processed: number | null
+          records_succeeded: number | null
+          started_at: string | null
+          sync_status: string
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          entity_type: string
+          error_details?: Json | null
+          id?: string
+          metadata?: Json | null
+          msp_id: string
+          records_failed?: number | null
+          records_processed?: number | null
+          records_succeeded?: number | null
+          started_at?: string | null
+          sync_status?: string
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          entity_type?: string
+          error_details?: Json | null
+          id?: string
+          metadata?: Json | null
+          msp_id?: string
+          records_failed?: number | null
+          records_processed?: number | null
+          records_succeeded?: number | null
+          started_at?: string | null
+          sync_status?: string
+          sync_type?: string
         }
         Relationships: []
       }
