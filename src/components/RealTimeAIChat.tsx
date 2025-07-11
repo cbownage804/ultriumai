@@ -230,12 +230,12 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
     await saveMessage(currentConversationId, userMessage.content, 'user');
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-chat', {
+      const { data, error } = await supabase.functions.invoke('ai-web-browser', {
         body: {
           message: content,
           model: 'gpt-4o-mini',
           context,
-          systemPrompt: `You are UltriumAI's intelligent assistant. You help users with cybersecurity, MSP operations, helpdesk management, and business technology questions. Be concise and direct in your responses. Provide brief, clear answers unless the user specifically asks for detailed explanations. You have access to current information and can help with practical solutions. If you need more context about a specific situation, ask targeted follow-up questions.`
+          systemPrompt: `You are UltriumAI's intelligent assistant with web browsing and memory capabilities. You help users with cybersecurity, MSP operations, helpdesk management, and business technology questions. Be concise and direct in your responses. You have access to current information through web browsing and can learn from websites to build persistent knowledge. Available commands: /browse [url], /learn [url], /memory, /forget [topic]. If you need more context about a specific situation, ask targeted follow-up questions or suggest using web browsing commands.`
         }
       });
 
