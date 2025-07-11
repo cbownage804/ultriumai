@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, User, ChevronDown, Phone } from "lucide-react";
+import { Menu, LogOut, User, ChevronDown, Phone, Brain, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,10 +111,22 @@ const Navigation = () => {
               )}
             </div>
             {user ? (
-              <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-                KB
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-              </button>
+              <>
+                <button onClick={() => handleNavigation('/dashboard')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1">
+                  <LayoutDashboard className="h-3 w-3" />
+                  Dashboard
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </button>
+                <button onClick={() => handleNavigation('/ai-studio')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1">
+                  <Brain className="h-3 w-3" />
+                  AI Studio
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </button>
+                <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
+                  KB
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </button>
+              </>
             ) : null}
             {isUltriumEmployee ? (
               <button onClick={() => handleNavigation('/admin')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
@@ -232,9 +244,14 @@ const Navigation = () => {
                 </Button>
                 {user ? (
                   <div className="flex flex-col space-y-2">
-                    <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/dashboard')}>
-                      Dashboard
-                    </Button>
+                     <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/dashboard')}>
+                       <LayoutDashboard className="h-4 w-4 mr-2" />
+                       Dashboard
+                     </Button>
+                     <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/ai-studio')}>
+                       <Brain className="h-4 w-4 mr-2" />
+                       AI Studio
+                     </Button>
                     {isMSPOrMSSP && (
                       <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/msp-control-center')}>
                         MSP Control Center
