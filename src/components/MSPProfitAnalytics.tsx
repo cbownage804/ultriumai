@@ -28,55 +28,10 @@ export const MSPProfitAnalytics = ({ mspId }: MSPProfitAnalyticsProps) => {
   const [analytics, setAnalytics] = useState<ProfitAnalytics[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data for demonstration
   useEffect(() => {
-    const mockData: ProfitAnalytics[] = [
-      {
-        id: '1',
-        client_id: 'client-1',
-        period_start: '2024-01-01',
-        period_end: '2024-01-31',
-        revenue: 12500,
-        costs: 8750,
-        profit_margin: 30.0,
-        industry_benchmark: 25.0,
-        cost_breakdown: {
-          'Labor': 5000,
-          'Software Licenses': 2000,
-          'Infrastructure': 1500,
-          'Support': 250
-        },
-        optimization_suggestions: [
-          'Automate routine maintenance tasks to reduce labor costs',
-          'Negotiate better software licensing deals',
-          'Optimize cloud infrastructure usage'
-        ]
-      },
-      {
-        id: '2',
-        client_id: 'client-2',
-        period_start: '2024-02-01',
-        period_end: '2024-02-29',
-        revenue: 15600,
-        costs: 11700,
-        profit_margin: 25.0,
-        industry_benchmark: 25.0,
-        cost_breakdown: {
-          'Labor': 6500,
-          'Software Licenses': 2800,
-          'Infrastructure': 2100,
-          'Support': 300
-        },
-        optimization_suggestions: [
-          'Implement tiered support model',
-          'Bundle services for better margins',
-          'Review staff allocation efficiency'
-        ]
-      }
-    ];
-
+    // Load real analytics data from database when available
     setTimeout(() => {
-      setAnalytics(mockData);
+      setAnalytics([]);
       setIsLoading(false);
     }, 1000);
   }, [mspId]);
@@ -140,9 +95,8 @@ export const MSPProfitAnalytics = ({ mspId }: MSPProfitAnalyticsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-green-600">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              +12% vs last period
+            <div className="flex items-center text-xs text-muted-foreground">
+              {analytics.length > 0 ? 'Based on client data' : 'No data available'}
             </div>
           </CardContent>
         </Card>
@@ -154,9 +108,8 @@ export const MSPProfitAnalytics = ({ mspId }: MSPProfitAnalyticsProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${totalCosts.toLocaleString()}</div>
-            <div className="flex items-center text-xs text-red-600">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              +8% vs last period
+            <div className="flex items-center text-xs text-muted-foreground">
+              {analytics.length > 0 ? 'Based on client data' : 'No data available'}
             </div>
           </CardContent>
         </Card>
@@ -181,9 +134,9 @@ export const MSPProfitAnalytics = ({ mspId }: MSPProfitAnalyticsProps) => {
             <Lightbulb className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">85/100</div>
+            <div className="text-2xl font-bold">{analytics.length > 0 ? '85/100' : 'N/A'}</div>
             <Badge variant="secondary" className="mt-2">
-              Good
+              {analytics.length > 0 ? 'Good' : 'No Data'}
             </Badge>
           </CardContent>
         </Card>

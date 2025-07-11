@@ -1101,7 +1101,9 @@ const MSPControlCenter = () => {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm">Client Retention</span>
-                      <span className="text-sm font-medium">95%</span>
+                      <span className="text-sm font-medium">
+                        {metrics.activeClients > 0 ? '100%' : 'N/A'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">Avg Users/Client</span>
@@ -1111,7 +1113,9 @@ const MSPControlCenter = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">Monthly Growth</span>
-                      <span className="text-sm font-medium text-success">+12%</span>
+                      <span className="text-sm font-medium">
+                        {metrics.totalClients > 0 ? 'TBD' : 'N/A'}
+                      </span>
                     </div>
                   </div>
                 </CardContent>

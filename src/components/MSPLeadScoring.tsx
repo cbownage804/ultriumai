@@ -42,134 +42,10 @@ export const MSPLeadScoring = ({ mspId }: MSPLeadScoringProps) => {
   const [leads, setLeads] = useState<LeadScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data for demonstration
   useEffect(() => {
-    const mockData: LeadScore[] = [
-      {
-        id: '1',
-        lead_name: 'Sarah Johnson',
-        company_name: 'GrowthTech Solutions',
-        email: 'sarah.johnson@growthtech.com',
-        phone: '+1 (555) 123-4567',
-        lead_score: 92,
-        score_breakdown: {
-          company_size: 20,
-          industry_fit: 18,
-          budget_qualification: 15,
-          engagement_level: 16,
-          pain_points: 13,
-          decision_timeline: 10
-        },
-        lead_source: 'Website Form',
-        industry: 'Technology',
-        company_size: '50-200 employees',
-        budget_range: '$10,000-$25,000/month',
-        pain_points: [
-          'Recent security breach',
-          'Outdated IT infrastructure',
-          'Compliance requirements',
-          'Need 24/7 support'
-        ],
-        engagement_level: 'hot',
-        last_activity_date: '2024-01-15',
-        next_action: 'Schedule discovery call',
-        assigned_to: 'Mike Thompson',
-        status: 'contacted'
-      },
-      {
-        id: '2',
-        lead_name: 'David Chen',
-        company_name: 'ManufacturingPlus Inc',
-        email: 'd.chen@mfgplus.com',
-        phone: '+1 (555) 987-6543',
-        lead_score: 78,
-        score_breakdown: {
-          company_size: 18,
-          industry_fit: 15,
-          budget_qualification: 12,
-          engagement_level: 14,
-          pain_points: 11,
-          decision_timeline: 8
-        },
-        lead_source: 'LinkedIn',
-        industry: 'Manufacturing',
-        company_size: '200-500 employees',
-        budget_range: '$15,000-$30,000/month',
-        pain_points: [
-          'System downtime issues',
-          'Remote workforce support',
-          'Legacy system integration'
-        ],
-        engagement_level: 'warm',
-        last_activity_date: '2024-01-12',
-        next_action: 'Send capability presentation',
-        assigned_to: 'Lisa Rodriguez',
-        status: 'qualified'
-      },
-      {
-        id: '3',
-        lead_name: 'Emily Rodriguez',
-        company_name: 'HealthCare Partners',
-        email: 'e.rodriguez@hcpartners.com',
-        phone: '+1 (555) 456-7890',
-        lead_score: 85,
-        score_breakdown: {
-          company_size: 16,
-          industry_fit: 17,
-          budget_qualification: 14,
-          engagement_level: 15,
-          pain_points: 12,
-          decision_timeline: 11
-        },
-        lead_source: 'Referral',
-        industry: 'Healthcare',
-        company_size: '100-300 employees',
-        budget_range: '$8,000-$20,000/month',
-        pain_points: [
-          'HIPAA compliance',
-          'Patient data security',
-          'Electronic health records support',
-          'Network reliability'
-        ],
-        engagement_level: 'qualified',
-        last_activity_date: '2024-01-14',
-        next_action: 'Prepare compliance proposal',
-        assigned_to: 'Sarah Williams',
-        status: 'proposal'
-      },
-      {
-        id: '4',
-        lead_name: 'Robert Kim',
-        company_name: 'Legal Associates LLC',
-        email: 'r.kim@legalassoc.com',
-        phone: '+1 (555) 321-0987',
-        lead_score: 45,
-        score_breakdown: {
-          company_size: 8,
-          industry_fit: 12,
-          budget_qualification: 6,
-          engagement_level: 7,
-          pain_points: 8,
-          decision_timeline: 4
-        },
-        lead_source: 'Cold Outreach',
-        industry: 'Legal',
-        company_size: '10-50 employees',
-        budget_range: '$2,000-$5,000/month',
-        pain_points: [
-          'Basic IT support needed',
-          'Email security concerns'
-        ],
-        engagement_level: 'cold',
-        last_activity_date: '2024-01-08',
-        next_action: 'Follow-up email',
-        assigned_to: 'Mike Thompson',
-        status: 'new'
-      }
-    ];
-
+    // Load real lead data from database when available
     setTimeout(() => {
-      setLeads(mockData);
+      setLeads([]);
       setIsLoading(false);
     }, 1000);
   }, [mspId]);
@@ -240,8 +116,8 @@ export const MSPLeadScoring = ({ mspId }: MSPLeadScoringProps) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{leads.length}</div>
-            <div className="text-xs text-green-600">
-              +15 this month
+            <div className="text-xs text-muted-foreground">
+              {leads.length > 0 ? 'Active leads' : 'No leads yet'}
             </div>
           </CardContent>
         </Card>
@@ -521,73 +397,49 @@ export const MSPLeadScoring = ({ mspId }: MSPLeadScoringProps) => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lead Source Performance</CardTitle>
-                <CardDescription>Conversion rates by lead source</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Referrals</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={65} className="w-20" />
-                      <span className="text-sm font-semibold">65%</span>
-                    </div>
+          {leads.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Lead Source Performance</CardTitle>
+                  <CardDescription>Conversion rates by lead source</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p>Analytics will appear when you have lead data</p>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Website Form</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={45} className="w-20" />
-                      <span className="text-sm font-semibold">45%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">LinkedIn</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={28} className="w-20" />
-                      <span className="text-sm font-semibold">28%</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Cold Outreach</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={12} className="w-20" />
-                      <span className="text-sm font-semibold">12%</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pipeline Metrics</CardTitle>
+                  <CardDescription>Current sales funnel performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p>Pipeline metrics will appear when you have lead data</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
             <Card>
-              <CardHeader>
-                <CardTitle>Pipeline Metrics</CardTitle>
-                <CardDescription>Current sales funnel performance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Average Deal Size</span>
-                    <span className="font-semibold">$156,000</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Sales Cycle Length</span>
-                    <span className="font-semibold">42 days</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Win Rate</span>
-                    <span className="font-semibold text-green-600">32%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Pipeline Value</span>
-                    <span className="font-semibold">$2.4M</span>
-                  </div>
-                </div>
+              <CardContent className="text-center py-12">
+                <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No Lead Data Yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Import leads to start using AI-powered scoring and analytics
+                </p>
+                <Button>
+                  <Target className="w-4 h-4 mr-2" />
+                  Import Your First Leads
+                </Button>
               </CardContent>
             </Card>
-          </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

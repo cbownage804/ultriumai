@@ -50,93 +50,10 @@ interface SLAMetric {
   status: 'good' | 'warning' | 'critical';
 }
 
-const mockInvoices: Invoice[] = [
-  {
-    id: '1',
-    clientName: 'Acme Corp',
-    amount: 5000,
-    status: 'paid',
-    dueDate: '2024-01-15',
-    invoiceNumber: 'INV-001'
-  },
-  {
-    id: '2',
-    clientName: 'TechStart Inc',
-    amount: 3200,
-    status: 'pending',
-    dueDate: '2024-01-20',
-    invoiceNumber: 'INV-002'
-  },
-  {
-    id: '3',
-    clientName: 'Global Systems',
-    amount: 7500,
-    status: 'overdue',
-    dueDate: '2024-01-10',
-    invoiceNumber: 'INV-003'
-  }
-];
-
-const mockContracts: Contract[] = [
-  {
-    id: '1',
-    clientName: 'Acme Corp',
-    contractType: 'Managed IT Services',
-    value: 60000,
-    startDate: '2024-01-01',
-    endDate: '2024-12-31',
-    status: 'active'
-  },
-  {
-    id: '2',
-    clientName: 'TechStart Inc',
-    contractType: 'Security Monitoring',
-    value: 38400,
-    startDate: '2024-02-01',
-    endDate: '2025-01-31',
-    status: 'active'
-  }
-];
-
-const mockSLAMetrics: SLAMetric[] = [
-  {
-    id: '1',
-    metric: 'First Response Time',
-    target: 15,
-    current: 12,
-    unit: 'minutes',
-    status: 'good'
-  },
-  {
-    id: '2',
-    metric: 'Resolution Time',
-    target: 4,
-    current: 6,
-    unit: 'hours',
-    status: 'warning'
-  },
-  {
-    id: '3',
-    metric: 'Uptime',
-    target: 99.9,
-    current: 99.95,
-    unit: '%',
-    status: 'good'
-  },
-  {
-    id: '4',
-    metric: 'Customer Satisfaction',
-    target: 4.5,
-    current: 4.2,
-    unit: '/5',
-    status: 'warning'
-  }
-];
-
 export function MSPBusinessOperations() {
-  const [invoices] = useState<Invoice[]>(mockInvoices);
-  const [contracts] = useState<Contract[]>(mockContracts);
-  const [slaMetrics] = useState<SLAMetric[]>(mockSLAMetrics);
+  const [invoices] = useState<Invoice[]>([]);
+  const [contracts] = useState<Contract[]>([]);
+  const [slaMetrics] = useState<SLAMetric[]>([]);
   const { toast } = useToast();
 
   const getStatusBadge = (status: string, type: 'invoice' | 'contract' | 'sla' = 'invoice') => {
@@ -199,7 +116,7 @@ export function MSPBusinessOperations() {
           <CardContent>
             <div className="text-2xl font-bold">${paidRevenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              {invoices.filter(inv => inv.status === 'paid').length} of {invoices.length} invoices
             </p>
           </CardContent>
         </Card>
