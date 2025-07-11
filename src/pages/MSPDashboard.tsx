@@ -51,6 +51,9 @@ import { MSPCompetitiveBenchmarks } from '@/components/MSPCompetitiveBenchmarks'
 import { MSPLeadScoring } from '@/components/MSPLeadScoring';
 import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
 import { UltriumGPTAssistant } from '@/components/UltriumGPTAssistant';
+import { SecurityDashboard } from '@/components/dashboards/SecurityDashboard';
+import { BusinessIntelligence } from '@/components/dashboards/BusinessIntelligence';
+import { ClientPortal } from '@/components/client/ClientPortal';
 
 const MSPControlCenter = () => {
   const { 
@@ -819,6 +822,9 @@ const MSPControlCenter = () => {
               UltriumGPT
             </TabsTrigger>
             <TabsTrigger value="safescan">SafeScan</TabsTrigger>
+            <TabsTrigger value="security">Security Center</TabsTrigger>
+            <TabsTrigger value="business-intel">Business Intelligence</TabsTrigger>
+            <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -1040,6 +1046,18 @@ const MSPControlCenter = () => {
 
           <TabsContent value="ultriumgpt" className="space-y-4">
             <UltriumGPTAssistant />
+          </TabsContent>
+
+          <TabsContent value="security" className="space-y-4">
+            <SecurityDashboard />
+          </TabsContent>
+
+          <TabsContent value="business-intel" className="space-y-4">
+            <BusinessIntelligence />
+          </TabsContent>
+
+          <TabsContent value="client-portal" className="space-y-4">
+            <ClientPortal />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
