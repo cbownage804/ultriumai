@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Mail, Phone, MapPin, Clock, Send, MessageSquare,
   Building, Users, Shield, Headphones, ArrowRight,
@@ -29,26 +30,46 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject,
+            message: `Company: ${formData.company || 'Not provided'}\nPhone: ${formData.phone || 'Not provided'}\nInquiry Type: ${formData.inquiryType || 'General'}\n\nMessage:\n${formData.message}`,
+            status: 'new'
+          }
+        ]);
 
-    toast({
-      title: "Message Sent Successfully!",
-      description: "Thank you for contacting us. We'll get back to you within 24 hours.",
-    });
+      if (error) throw error;
 
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      company: '',
-      phone: '',
-      subject: '',
-      message: '',
-      inquiryType: ''
-    });
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Thank you for contacting us. We'll get back to you within 24 hours.",
+      });
 
-    setIsSubmitting(false);
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        company: '',
+        phone: '',
+        subject: '',
+        message: '',
+        inquiryType: ''
+      });
+    } catch (error: any) {
+      console.error('Error submitting contact form:', error);
+      toast({
+        title: "Error",
+        description: "Sorry, there was an error sending your message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactMethods = [
