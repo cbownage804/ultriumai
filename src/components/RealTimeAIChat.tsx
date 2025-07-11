@@ -234,6 +234,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
           message: content,
           model: 'gpt-4o-mini',
           context,
+          systemPrompt: 'You are a helpful AI assistant. Be concise and direct in your responses. Provide brief, clear answers unless the user specifically asks for detailed explanations. If more detail is needed, the user can ask follow-up questions.'
         }
       });
 
