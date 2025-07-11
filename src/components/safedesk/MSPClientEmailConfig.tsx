@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Settings, Save, Copy, TestTube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 interface MSPClient {
   id: string;
@@ -34,10 +34,11 @@ interface ClientEmailConfig {
 }
 
 export const MSPClientEmailConfig = () => {
-  console.log('MSPClientEmailConfig component mounted');
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [emailConfigs, setEmailConfigs] = useState<ClientEmailConfig[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     incoming_email: '',
     outgoing_from_email: '',
@@ -56,37 +57,29 @@ export const MSPClientEmailConfig = () => {
 
   const fetchClients = async () => {
     try {
-      // Get MSP ID first
-      const { data: mspData, error: mspError } = await supabase
-        .from('msps')
-        .select('id')
-        .single();
-
-      if (mspError) throw mspError;
-
+      setLoading(true);
+      // Simplified - get all msp_clients for now since we don't have auth context properly set up
       const { data, error } = await supabase
         .from('msp_clients')
         .select('id, company_name')
-        .eq('msp_id', mspData.id)
         .order('company_name');
 
       if (error) throw error;
       setClients(data || []);
     } catch (error) {
       console.error('Error fetching clients:', error);
-      toast.error('Failed to load clients');
+      toast({
+        title: "Error",
+        description: "Failed to load clients",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchEmailConfigs = async () => {
     try {
-      const { data: mspData, error: mspError } = await supabase
-        .from('msps')
-        .select('id')
-        .single();
-
-      if (mspError) throw mspError;
-
       // Fetch email configs
       const { data: configsData, error: configsError } = await supabase
         .from('client_email_configs')
@@ -98,8 +91,7 @@ export const MSPClientEmailConfig = () => {
       // Fetch MSP clients to get company names
       const { data: clientsData, error: clientsError } = await supabase
         .from('msp_clients')
-        .select('id, company_name')
-        .eq('msp_id', mspData.id);
+        .select('id, company_name');
 
       if (clientsError) throw clientsError;
 
@@ -114,7 +106,11 @@ export const MSPClientEmailConfig = () => {
       setEmailConfigs(formattedConfigs);
     } catch (error) {
       console.error('Error fetching email configs:', error);
-      toast.error('Failed to load email configurations');
+      toast({
+        title: "Error", 
+        description: "Failed to load email configurations",
+        variant: "destructive"
+      });
     }
   };
 
@@ -127,7 +123,11 @@ export const MSPClientEmailConfig = () => {
     e.preventDefault();
     
     if (!selectedClient) {
-      toast.error('Please select a client');
+      toast({
+        title: "Error",
+        description: "Please select a client",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -147,7 +147,10 @@ export const MSPClientEmailConfig = () => {
           .eq('id', editingConfig);
 
         if (error) throw error;
-        toast.success('Email configuration updated');
+        toast({
+          title: "Success",
+          description: "Email configuration updated"
+        });
         setEditingConfig(null);
       } else {
         const { error } = await supabase
@@ -155,7 +158,10 @@ export const MSPClientEmailConfig = () => {
           .insert(configData);
 
         if (error) throw error;
-        toast.success('Email configuration created');
+        toast({
+          title: "Success",
+          description: "Email configuration created"
+        });
       }
 
         setFormData({
@@ -171,7 +177,11 @@ export const MSPClientEmailConfig = () => {
       fetchEmailConfigs();
     } catch (error) {
       console.error('Error saving email config:', error);
-      toast.error('Failed to save email configuration');
+      toast({
+        title: "Error",
+        description: "Failed to save email configuration",
+        variant: "destructive"
+      });
     }
   };
 
@@ -197,17 +207,27 @@ export const MSPClientEmailConfig = () => {
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Configuration updated');
+      toast({
+        title: "Success",
+        description: "Configuration updated"
+      });
       fetchEmailConfigs();
     } catch (error) {
       console.error('Error updating config:', error);
-      toast.error('Failed to update configuration');
+      toast({
+        title: "Error",
+        description: "Failed to update configuration",
+        variant: "destructive"
+      });
     }
   };
 
   const copyEmail = (email: string) => {
     navigator.clipboard.writeText(email);
-    toast.success('Email address copied to clipboard');
+    toast({
+      title: "Success",
+      description: "Email address copied to clipboard"
+    });
   };
 
   const testEmailConfig = async (config: ClientEmailConfig) => {
@@ -232,10 +252,17 @@ export const MSPClientEmailConfig = () => {
       });
 
       if (error) throw error;
-      toast.success('Test email sent successfully');
+      toast({
+        title: "Success",
+        description: "Test email sent successfully"
+      });
     } catch (error) {
       console.error('Error sending test email:', error);
-      toast.error('Failed to send test email');
+      toast({
+        title: "Error",
+        description: "Failed to send test email",
+        variant: "destructive"
+      });
     }
   };
 
