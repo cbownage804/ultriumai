@@ -34,6 +34,9 @@ import MSPs from '@/pages/MSPs';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
+import About from '@/pages/About';
+import Features from '@/pages/Features';
+import Profile from '@/pages/Profile';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
 import SafeScanPage from '@/pages/SafeScanPage';
@@ -130,6 +133,8 @@ function AppRouter() {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/msp-pricing" element={<MSPPricing />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/features" element={<Features />} />
         <Route path="/credits" element={<CreditsPurchase />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
@@ -289,6 +294,11 @@ function AppRouter() {
           </ProtectedRoute>
         } />
         <Route path="/profile" element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile-old" element={
           <ProtectedRoute>
             <ProfilePage />
           </ProtectedRoute>
