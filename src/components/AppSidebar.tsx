@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight, Database } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight, Database, Building2, Bell, Workflow, DollarSign, Globe, CloudCog } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -53,6 +53,14 @@ const managedServicesItems = [
   { title: "Helpdesk", url: "/dashboard/helpdesk", icon: HeadphonesIcon, tooltip: "AI-powered helpdesk and ticketing system" },
 ];
 
+const mspItems = [
+  { title: "Notifications", url: "/dashboard/msp/notifications", icon: Bell, tooltip: "MSP notification management and alerts" },
+  { title: "Workflow Automation", url: "/dashboard/msp/workflow", icon: Workflow, tooltip: "Automate MSP workflows and processes" },
+  { title: "QuickBooks Integration", url: "/dashboard/msp/quickbooks", icon: DollarSign, tooltip: "Integrate with QuickBooks for billing and accounting" },
+  { title: "API Management", url: "/dashboard/msp/api-management", icon: CloudCog, tooltip: "Manage MSP APIs and integrations" },
+  { title: "Client Portal", url: "/dashboard/msp/client-portal", icon: Globe, tooltip: "Manage client self-service portals" },
+];
+
 const managementItems = [
   { title: "API Management", url: "/dashboard/api-management", icon: Key, tooltip: "Manage API keys, usage limits, and access permissions" },
   { title: "White-label", url: "/dashboard/white-label", icon: Palette, tooltip: "Customize branding and white-label your solutions" },
@@ -76,6 +84,7 @@ export function AppSidebar() {
     gpt: true,
     security: true,
     managed: true,
+    msp: false,
     management: false
   });
   
@@ -231,6 +240,39 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {managedServicesItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild tooltip={item.tooltip}>
+                        <NavLink to={item.url} className={getNavClass}>
+                          <item.icon className="h-4 w-4" />
+                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+
+        {/* MSP Features Section */}
+        <Collapsible open={openSections.msp} onOpenChange={() => toggleSection('msp')}>
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
+                <span className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  {!isCollapsed && "MSP Features"}
+                </span>
+                {!isCollapsed && (
+                  openSections.msp ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                )}
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {mspItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild tooltip={item.tooltip}>
                         <NavLink to={item.url} className={getNavClass}>
