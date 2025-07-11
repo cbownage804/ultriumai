@@ -39,7 +39,8 @@ import {
   Star,
   Clock,
   MessageSquare,
-  Database
+  Database,
+  BarChart3
 } from "lucide-react";
 
 interface MSPClient {
@@ -111,6 +112,14 @@ export const MSPDashboard = () => {
 
   const quickActions = [
     {
+      title: "UltriumGPT Assistant",
+      description: "AI-powered MSP operations",
+      icon: Bot,
+      action: () => window.open("/dashboard/ultrium-gpt", "_blank"),
+      color: "bg-gradient-to-r from-primary to-primary/80",
+      featured: true,
+    },
+    {
       title: "Add New Client",
       description: "Onboard a new MSP client",
       icon: Plus,
@@ -134,8 +143,8 @@ export const MSPDashboard = () => {
     {
       title: "AI Helpdesk",
       description: "Manage support tickets",
-      icon: Bot,
-      action: () => toast({ title: "Opening AI Helpdesk..." }),
+      icon: MessageSquare,
+      action: () => window.open("/dashboard/helpdesk", "_blank"),
       color: "bg-purple-500",
     },
   ];
@@ -383,6 +392,60 @@ export const MSPDashboard = () => {
         </div>
       </div>
 
+      {/* UltriumGPT Feature Highlight */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-primary to-primary/80">
+              <Bot className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">UltriumGPT AI Assistant</CardTitle>
+              <CardDescription>
+                Your intelligent MSP operations co-pilot - automate support, generate reports, and streamline workflows
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              <div>
+                <div className="font-medium text-sm">Smart Chat Assistant</div>
+                <div className="text-xs text-muted-foreground">Get instant answers about your MSP operations</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              <div>
+                <div className="font-medium text-sm">Automated Reports</div>
+                <div className="text-xs text-muted-foreground">Generate client reports and security summaries</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
+              <Zap className="h-5 w-5 text-primary" />
+              <div>
+                <div className="font-medium text-sm">Workflow Automation</div>
+                <div className="text-xs text-muted-foreground">Automate routine MSP tasks and processes</div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <Button 
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+              onClick={() => window.open("/dashboard/ultrium-gpt", "_blank")}
+            >
+              <Bot className="h-4 w-4 mr-2" />
+              Open UltriumGPT
+            </Button>
+            <Button variant="outline" onClick={() => window.open("/ultrium-gpt", "_blank")}>
+              Learn More
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Quick Actions */}
       <Card>
         <CardHeader>
@@ -392,19 +455,19 @@ export const MSPDashboard = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
                 variant="outline"
-                className="h-auto p-4 flex-col space-y-2"
+                className={`h-auto p-4 flex-col space-y-2 ${action.featured ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5' : ''}`}
                 onClick={action.action}
               >
                 <div className={`p-2 rounded-full ${action.color}`}>
                   <action.icon className="h-4 w-4 text-white" />
                 </div>
                 <div className="text-center">
-                  <div className="font-medium">{action.title}</div>
+                  <div className={`font-medium ${action.featured ? 'text-primary' : ''}`}>{action.title}</div>
                   <div className="text-xs text-muted-foreground">
                     {action.description}
                   </div>

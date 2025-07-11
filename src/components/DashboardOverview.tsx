@@ -25,10 +25,18 @@ export const DashboardOverview = () => {
 
   const quickActions = [
     {
+      title: "Open UltriumGPT",
+      description: "Launch AI assistant",
+      icon: Bot,
+      action: () => navigate("/dashboard/ultrium-gpt"),
+      color: "bg-gradient-to-r from-primary to-primary/80",
+      featured: true,
+    },
+    {
       title: "Create New GPT",
       description: "Build a custom AI assistant",
       icon: Bot,
-      action: () => navigate("/dashboard/custom-gpts/build"),
+      action: () => navigate("/dashboard/gpt/build"),
       color: "bg-blue-500",
     },
     {
@@ -76,9 +84,75 @@ export const DashboardOverview = () => {
           Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
         </h1>
         <p className="text-muted-foreground">
-          Here's what's happening with your AI assistants today.
+          Manage your AI assistants and explore UltriumGPT's powerful capabilities.
         </p>
       </div>
+
+      {/* UltriumGPT Feature Highlight */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-lg bg-gradient-to-r from-primary to-primary/80">
+              <Bot className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl">UltriumGPT AI Assistant</CardTitle>
+              <CardDescription className="text-base">
+                Your intelligent co-pilot for cybersecurity, operations, and business intelligence
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-4 mb-6">
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
+              <MessageSquare className="h-6 w-6 text-primary" />
+              <div>
+                <div className="font-medium">Smart Chat</div>
+                <div className="text-sm text-muted-foreground">Intelligent Q&A with memory</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
+              <Database className="h-6 w-6 text-primary" />
+              <div>
+                <div className="font-medium">Web Browsing</div>
+                <div className="text-sm text-muted-foreground">Real-time information access</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <div>
+                <div className="font-medium">Auto Reports</div>
+                <div className="text-sm text-muted-foreground">Generate insights & summaries</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
+              <Shield className="h-6 w-6 text-primary" />
+              <div>
+                <div className="font-medium">Security Focus</div>
+                <div className="text-sm text-muted-foreground">Cybersecurity expertise</div>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              size="lg"
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+              onClick={() => navigate("/dashboard/ultrium-gpt")}
+            >
+              <Bot className="h-5 w-5 mr-2" />
+              Open UltriumGPT
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate("/ultrium-gpt")}
+            >
+              Learn More
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -147,19 +221,19 @@ export const DashboardOverview = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
                 variant="outline"
-                className="h-auto p-4 flex-col space-y-2"
+                className={`h-auto p-4 flex-col space-y-2 ${action.featured ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5' : ''}`}
                 onClick={action.action}
               >
                 <div className={`p-2 rounded-full ${action.color}`}>
                   <action.icon className="h-4 w-4 text-white" />
                 </div>
                 <div className="text-center">
-                  <div className="font-medium">{action.title}</div>
+                  <div className={`font-medium ${action.featured ? 'text-primary' : ''}`}>{action.title}</div>
                   <div className="text-xs text-muted-foreground">
                     {action.description}
                   </div>

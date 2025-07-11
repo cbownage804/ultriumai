@@ -137,7 +137,8 @@ function AppRouter() {
             <OnboardingFlow />
           </ProtectedRoute>
         } />
-        {/* UltriumGPT now unified in the AI Assistant */}
+        {/* UltriumGPT Marketing and Access */}
+        <Route path="/ultrium-gpt" element={<UltriumGPT />} />
         <Route path="/small-business" element={<SmallBusiness />} />
         <Route path="/medium-business" element={<MediumBusiness />} />
         <Route path="/enterprise" element={<Enterprise />} />

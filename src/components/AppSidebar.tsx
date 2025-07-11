@@ -168,6 +168,14 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="UltriumGPT AI Assistant - Your intelligent security co-pilot">
+                  <NavLink to="/dashboard/ultrium-gpt" className={getNavClass}>
+                    <Bot className="h-4 w-4 text-primary" />
+                    {!isCollapsed && <span className="ml-2 font-semibold text-primary">UltriumGPT</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -96,11 +96,17 @@ const Index = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto text-center max-w-5xl">
           <div className="animate-fade-in">
+            <div className="space-y-2 mb-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full border border-primary/20">
+                <Bot className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium text-primary">Powered by UltriumGPT AI</span>
+              </div>
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              Complete Cybersecurity Platform for Modern Business
+              Complete Cybersecurity Platform with AI-Powered Intelligence
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              AI-powered security operations, comprehensive RMM tools, MSP management, and advanced threat detection - all unified in one powerful platform.
+              UltriumGPT AI-powered security operations, comprehensive RMM tools, MSP management, and advanced threat detection - all unified in one revolutionary platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link to="/auth">
@@ -126,11 +132,11 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="bg-gradient-to-br from-primary/10 to-secondary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Bot className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">AI-Powered Security</h3>
-              <p className="text-muted-foreground">Advanced threat detection and automated response</p>
+              <h3 className="text-xl font-semibold mb-2">UltriumGPT AI Assistant</h3>
+              <p className="text-muted-foreground">Intelligent security analysis and automated response with advanced reasoning</p>
             </div>
             <div className="text-center">
               <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -247,15 +253,28 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="hover-scale">
+            <Card className="hover-scale border-2 border-primary/50 bg-gradient-to-br from-primary/10 to-secondary/10">
               <CardHeader>
                 <Bot className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">UltriumGPT AI</CardTitle>
-                <CardDescription>Your intelligent security co-pilot</CardDescription>
+                <CardTitle className="text-lg">🚀 UltriumGPT AI Assistant</CardTitle>
+                <CardDescription className="font-medium text-primary/80">Revolutionary AI-powered intelligent assistant</CardDescription>
               </CardHeader>
               <CardContent>
                 <Link to="/demos/ultriumgpt">
-                  <Button variant="outline" className="w-full">Try Demo</Button>
+                  <Button variant="hero" className="w-full">Experience UltriumGPT</Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-scale">
+              <CardHeader>
+                <Bot className="h-8 w-8 text-primary mb-2" />
+                <CardTitle className="text-lg">UltriumGPT Chat</CardTitle>
+                <CardDescription>Your intelligent security co-pilot with web browsing & memory</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link to="/ultrium-gpt">
+                  <Button variant="outline" className="w-full">Try Interactive Chat</Button>
                 </Link>
               </CardContent>
             </Card>

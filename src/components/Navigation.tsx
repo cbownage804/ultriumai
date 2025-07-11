@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, User, ChevronDown, Phone, Brain, LayoutDashboard } from "lucide-react";
+import { Menu, LogOut, User, ChevronDown, Phone, Brain, LayoutDashboard, Bot } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,7 +87,11 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            {/* UltriumGPT now unified in the AI Assistant */}
+            <button onClick={() => handleNavigation('/ultrium-gpt')} className="text-sm font-medium text-primary hover:text-primary/80 transition-colors duration-200 relative group flex items-center gap-1">
+              <Bot className="h-3 w-3" />
+              UltriumGPT
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+            </button>
             <button onClick={() => handleNavigation('/solutions')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
               Solutions
               <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -212,7 +216,10 @@ const Navigation = () => {
               <button onClick={() => handleNavigationWithMenuClose('/enterprise')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Enterprise
               </button>
-              {/* UltriumGPT now unified in AI Assistant */}
+              <button onClick={() => handleNavigationWithMenuClose('/ultrium-gpt')} className="block w-full text-left px-3 py-2 text-primary hover:text-primary/80 font-medium flex items-center gap-2">
+                <Bot className="h-4 w-4" />
+                UltriumGPT
+              </button>
               <button onClick={() => handleNavigationWithMenuClose('/solutions')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 Solutions
               </button>
