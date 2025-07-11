@@ -174,12 +174,7 @@ export const MSPDashboard = () => {
     },
   ];
 
-  const recentActivity = [
-    { action: "New client onboarded: TechCorp", time: "1 hour ago", type: "client" },
-    { action: "Critical alert resolved for Acme Inc", time: "3 hours ago", type: "alert" },
-    { action: "RMM agent deployed to 5 endpoints", time: "6 hours ago", type: "deploy" },
-    { action: "Monthly billing processed", time: "1 day ago", type: "billing" },
-  ];
+  const recentActivity: any[] = [];
 
   useEffect(() => {
     loadMSPDashboard();
