@@ -50,6 +50,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
     return localStorage.getItem('ai-chat-voice') || 'EXAVITQu4vr4xnSDxMaL';
   });
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -171,9 +172,16 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
       const audioData = `data:audio/mp3;base64,${data.audioContent}`;
       const audio = new Audio(audioData);
       
-      audio.onended = () => setIsPlaying(false);
+      // Store reference to current audio
+      setCurrentAudio(audio);
+      
+      audio.onended = () => {
+        setIsPlaying(false);
+        setCurrentAudio(null);
+      };
       audio.onerror = () => {
         setIsPlaying(false);
+        setCurrentAudio(null);
         throw new Error('Audio playback failed');
       };
 
@@ -181,6 +189,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
     } catch (error) {
       console.error('Error with text-to-speech:', error);
       setIsPlaying(false);
+      setCurrentAudio(null);
       toast({
         title: "Text-to-Speech Failed",
         description: "Could not generate speech. Please try again.",
@@ -189,9 +198,21 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
     }
   };
 
+  const stopCurrentAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      setIsPlaying(false);
+      setCurrentAudio(null);
+    }
+  };
+
   const sendMessage = async (messageContent?: string) => {
     const content = messageContent || input.trim();
     if (!content || isLoading || !user || !currentConversationId) return;
+
+    // Stop any currently playing audio when sending a new message
+    stopCurrentAudio();
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
