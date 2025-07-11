@@ -335,8 +335,8 @@ function AppRouter() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {/* Global AI Assistant - Available on all authenticated pages */}
-      {user && (
+      {/* Global AI Assistant - Available on authenticated dashboard pages only */}
+      {user && location.pathname !== '/' && location.pathname.startsWith('/dashboard') && (
         <UnifiedAIAssistant
           isMinimized={isAIMinimized}
           onToggleMinimize={() => setIsAIMinimized(!isAIMinimized)}
