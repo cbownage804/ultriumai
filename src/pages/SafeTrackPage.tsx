@@ -107,6 +107,8 @@ const SafeTrackPage = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [showAddSoftware, setShowAddSoftware] = useState(false);
+  const [aiSearchMode, setAiSearchMode] = useState(false);
+  const [aiSearchLoading, setAiSearchLoading] = useState(false);
   
   const [assetForm, setAssetForm] = useState({
     name: '',
@@ -312,7 +314,65 @@ const SafeTrackPage = () => {
     }
   };
 
+  const handleAiSearch = async (query: string) => {
+    if (!query.trim()) return;
+    
+    setAiSearchLoading(true);
+    try {
+      // Use AI to search through assets with natural language
+      const { data, error } = await supabase.functions.invoke('ai-asset-search', {
+        body: { 
+          query,
+          assets: assets.map(asset => ({
+            id: asset.id,
+            name: asset.name,
+            model: asset.model,
+            manufacturer: asset.manufacturer,
+            category: asset.category?.name,
+            location: asset.location,
+            assigned_to: asset.assigned_to,
+            status: asset.status,
+            specifications: asset.specifications,
+            notes: asset.notes
+          }))
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.matches && data.matches.length > 0) {
+        const matchedIds = data.matches.map((match: any) => match.id);
+        setAssets(prev => prev.map(asset => ({
+          ...asset,
+          isAiMatch: matchedIds.includes(asset.id)
+        })));
+        
+        toast({
+          title: "AI Search Complete",
+          description: `Found ${data.matches.length} matching assets`,
+        });
+      } else {
+        toast({
+          title: "No matches found",
+          description: "Try a different search query",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('AI search error:', error);
+      toast({
+        title: "Search Error",
+        description: "AI search is temporarily unavailable",
+        variant: "destructive",
+      });
+    } finally {
+      setAiSearchLoading(false);
+    }
+  };
+
   const filteredAssets = assets.filter(asset => {
+    if (aiSearchMode && (asset as any).isAiMatch === false) return false;
+    
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          asset.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          asset.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase());
