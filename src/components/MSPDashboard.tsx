@@ -184,30 +184,56 @@ export const MSPDashboard = () => {
     try {
       setLoading(true);
 
+      // First get or create MSP organization for current user
+      const { data: mspOrg } = await supabase
+        .from('msp_organizations')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (!mspOrg) {
+        // No MSP organization exists yet, show empty state
+        setClients([]);
+        setMetrics({
+          totalClients: 0,
+          totalEndpoints: 0,
+          onlineEndpoints: 0,
+          criticalAlerts: 0,
+          totalTickets: 0,
+          monthlyRevenue: 0
+        });
+        return;
+      }
+
       // Load MSP clients
       const { data: clientsData } = await supabase
         .from('msp_clients')
         .select('*')
+        .eq('msp_id', mspOrg.id)
         .eq('is_active', true)
         .order('company_name');
 
       // Load RMM endpoints for each client
-      const { data: endpointsData } = await supabase
+      const clientIds = clientsData?.map(c => c.id) || [];
+      const { data: endpointsData } = clientIds.length > 0 ? await supabase
         .from('rmm_endpoints')
-        .select('*');
+        .select('*')
+        .in('client_id', clientIds) : { data: [] };
 
       // Load RMM alerts
-      const { data: alertsData } = await supabase
+      const { data: alertsData } = clientIds.length > 0 ? await supabase
         .from('rmm_alerts')
         .select('*')
+        .in('client_id', clientIds)
         .eq('status', 'open')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) : { data: [] };
 
       // Load support tickets
-      const { data: ticketsData } = await supabase
+      const { data: ticketsData } = clientIds.length > 0 ? await supabase
         .from('support_tickets')
         .select('*')
-        .eq('status', 'open');
+        .in('client_id', clientIds)
+        .eq('status', 'open') : { data: [] };
 
       // Combine data
       const clientsWithData = clientsData?.map(client => ({
@@ -246,11 +272,36 @@ export const MSPDashboard = () => {
 
   const addClient = async () => {
     try {
+      // First, get or create MSP organization for current user
+      const { data: mspOrg, error: mspError } = await supabase
+        .from('msp_organizations')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      let mspId = mspOrg?.id;
+
+      if (!mspOrg) {
+        // Create MSP organization for new user
+        const { data: newMsp, error: createMspError } = await supabase
+          .from('msp_organizations')
+          .insert({
+            user_id: user?.id,
+            name: user?.user_metadata?.company_name || 'My MSP',
+            contact_email: user?.email || '',
+          })
+          .select('id')
+          .single();
+
+        if (createMspError) throw createMspError;
+        mspId = newMsp.id;
+      }
+
       const { error } = await supabase
         .from('msp_clients')
         .insert({
           ...newClient,
-          msp_id: 'default-msp-id', // This should be the current MSP's ID
+          msp_id: mspId,
           monthly_rate: newClient.max_users * 15, // $15 per user
           trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
         });
@@ -740,20 +791,28 @@ export const MSPDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
-                  <div className="p-1.5 rounded-full bg-muted">
-                    {activity.type === 'client' && <Users className="h-3 w-3" />}
-                    {activity.type === 'alert' && <AlertTriangle className="h-3 w-3" />}
-                    {activity.type === 'deploy' && <Download className="h-3 w-3" />}
-                    {activity.type === 'billing' && <Activity className="h-3 w-3" />}
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
+                    <div className="p-1.5 rounded-full bg-muted">
+                      {activity.type === 'client' && <Users className="h-3 w-3" />}
+                      {activity.type === 'alert' && <AlertTriangle className="h-3 w-3" />}
+                      {activity.type === 'deploy' && <Download className="h-3 w-3" />}
+                      {activity.type === 'billing' && <Activity className="h-3 w-3" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{activity.action}</p>
+                      <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">No recent activity</p>
+                  <p className="text-sm text-muted-foreground">Activity will appear here as you start managing clients</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
