@@ -25,11 +25,8 @@ serve(async (req) => {
   try {
     logStep("Function started");
     
-    // Define minimum users
-    const minimumUsers = 5;
-    
-    const { planType, interval, userCount = minimumUsers } = await req.json();
-    logStep("Request data", { planType, interval, userCount });
+    const { priceId, planType, successUrl, cancelUrl } = await req.json();
+    logStep("Request data", { priceId, planType, successUrl, cancelUrl });
 
     const authHeader = req.headers.get("Authorization")!;
     const token = authHeader.replace("Bearer ", "");
@@ -47,89 +44,77 @@ serve(async (req) => {
       customerId = customers.data[0].id;
       logStep("Found existing customer", { customerId });
     } else {
-      logStep("No existing customer found");
+      // Create new customer
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { userId: user.id }
+      });
+      customerId = customer.id;
+      logStep("Created new customer", { customerId });
     }
 
-    // Define per-user pricing with 5 user minimum
-    const pricingPerUser = {
-      // Premium solutions: $20/user/month (min 5 users = $100/month)
-      "ai-knowledge": { monthly: 2000, yearly: 20000 }, // $20/user, $200/user/year (2 months free)
-      "basic-security": { monthly: 2000, yearly: 20000 },
-      "security-knowledge": { monthly: 2000, yearly: 20000 },
-      
-      // Enterprise solutions: $35/user/month (min 5 users = $175/month)
-      "custom-chatbot": { monthly: 3500, yearly: 35000 }, // $35/user, $350/user/year (2 months free)
-      "white-label": { monthly: 3500, yearly: 35000 },
-      "security-apps": { monthly: 3500, yearly: 35000 },
-      "security-portal": { monthly: 3500, yearly: 35000 },
-      
-      // True Enterprise solutions: $50-100/user/month
-      "enterprise-ai": { monthly: 5000, yearly: 50000 }, // $50/user, $500/user/year (2 months free)
-      "enterprise-security": { monthly: 9000, yearly: 90000 }, // $90/user, $900/user/year (2 months free)
-      "custom-enterprise": { monthly: 10000, yearly: 100000 }, // $100/user, $1000/user/year (2 months free)
-      
-      // Main platform plans (keep existing)
-      "premium": { monthly: 10000, yearly: 100000 },
-      "enterprise": { monthly: 50000, yearly: 500000 },
-      
-      // IT solutions
-      "it-documentation": { monthly: 2000, yearly: 20000 }
+    // Define price IDs for your plans - you'll need to create these in Stripe Dashboard
+    const priceIds = {
+      starter: {
+        monthly: priceId || "price_starter_monthly", // Replace with actual Stripe price ID
+        yearly: priceId || "price_starter_yearly"
+      },
+      professional: {
+        monthly: priceId || "price_professional_monthly", // Replace with actual Stripe price ID  
+        yearly: priceId || "price_professional_yearly"
+      },
+      enterprise: {
+        monthly: priceId || "price_enterprise_monthly", // Replace with actual Stripe price ID
+        yearly: priceId || "price_enterprise_yearly"
+      }
     };
 
-    // Define product names
-    const productNames = {
-      premium: "UltriumGPT Premium Plan",
-      enterprise: "UltriumGPT Enterprise Plan",
-      "ai-knowledge": "AI Knowledge Assistant",
-      "basic-security": "Basic Security Scanning",
-      "custom-chatbot": "Custom Business Chatbot",
-      "white-label": "White-Label AI Platform",
-      "security-knowledge": "Security Knowledge Base",
-      "security-apps": "Security Apps Suite",
-      "security-portal": "Client Security Portal",
-      "it-documentation": "IT Documentation Hub",
-      "enterprise-ai": "Enterprise AI Command Center",
-      "enterprise-security": "Enterprise Security Intelligence",
-      "custom-enterprise": "Custom Enterprise Platform"
-    };
-
-    const pricePerUser = pricingPerUser[planType as keyof typeof pricingPerUser][interval as keyof typeof pricingPerUser["ai-knowledge"]];
-    const totalUsers = Math.max(userCount, minimumUsers);
-    const totalAmount = pricePerUser * totalUsers;
+    let selectedPriceId = priceId;
     
-    logStep("Price calculated", { planType, interval, userCount: totalUsers, pricePerUser, totalAmount });
+    // If no priceId provided, create price on the fly
+    if (!priceId && planType) {
+      const planPricing = {
+        starter: { amount: 1900, name: "UltriumAI Starter" }, // $19/month
+        professional: { amount: 9900, name: "UltriumAI Professional" }, // $99/month
+        enterprise: { amount: 29900, name: "UltriumAI Enterprise" } // $299/month
+      };
+
+      const plan = planPricing[planType as keyof typeof planPricing];
+      if (plan) {
+        const price = await stripe.prices.create({
+          currency: 'usd',
+          unit_amount: plan.amount,
+          recurring: { interval: 'month' },
+          product_data: {
+            name: plan.name,
+            description: `${plan.name} Plan - Monthly subscription`
+          }
+        });
+        selectedPriceId = price.id;
+        logStep("Created price on the fly", { planType, priceId: selectedPriceId });
+      }
+    }
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
-      customer_email: customerId ? undefined : user.email,
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            product_data: { 
-              name: productNames[planType as keyof typeof productNames] || `UltriumGPT ${planType}`,
-              description: `${productNames[planType as keyof typeof productNames] || planType} - ${totalUsers} users - ${interval} billing`
-            },
-            unit_amount: totalAmount,
-            recurring: { interval: interval === "yearly" ? "year" : "month" },
-          },
+          price: selectedPriceId,
           quantity: 1,
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/pricing`,
+      success_url: successUrl || `${req.headers.get("origin")}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl || `${req.headers.get("origin")}/pricing`,
       metadata: {
-        user_id: user.id,
-        plan_type: planType,
-        interval: interval,
-        user_count: totalUsers
+        userId: user.id,
+        planType: planType || 'unknown'
       }
     });
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ url: session.url, sessionId: session.id }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

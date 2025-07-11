@@ -78,7 +78,7 @@ export const useSubscription = () => {
     }
   };
 
-  const createCheckout = async (planType: string, interval: string) => {
+  const createCheckout = async (planType: string, interval: string = "monthly") => {
     if (!user || !session) {
       toast({
         title: "Authentication required",
@@ -90,7 +90,12 @@ export const useSubscription = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { planType, interval },
+        body: { 
+          planType: planType.toLowerCase(), 
+          interval,
+          successUrl: `${window.location.origin}/dashboard?success=true`,
+          cancelUrl: `${window.location.origin}/pricing`,
+        },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },

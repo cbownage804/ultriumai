@@ -266,15 +266,32 @@ const Pricing = () => {
                   </CardContent>
 
                   <CardFooter>
-                    <Button 
-                      className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
-                      variant={plan.popular ? "default" : "outline"}
-                      onClick={() => handleSubscribe(plan.name)}
-                      disabled={isLoading}
-                    >
-                      Start {plan.trial}
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    {subscription.subscribed && plan.current ? (
+                      <div className="w-full space-y-2">
+                        <Button 
+                          className="w-full"
+                          variant="outline"
+                          onClick={openCustomerPortal}
+                          disabled={isLoading}
+                        >
+                          Manage Subscription
+                          <Settings className="w-4 h-4 ml-2" />
+                        </Button>
+                        <div className="text-center text-sm text-green-600 font-medium">
+                          Current Plan
+                        </div>
+                      </div>
+                    ) : (
+                      <Button 
+                        className={`w-full ${plan.popular ? 'bg-primary hover:bg-primary/90' : ''}`}
+                        variant={plan.popular ? "default" : "outline"}
+                        onClick={() => handleSubscribe(plan.name)}
+                        disabled={isLoading}
+                      >
+                        {subscription.subscribed ? `Upgrade to ${plan.name}` : `Start ${plan.trial}`}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    )}
                   </CardFooter>
                 </Card>
               );
