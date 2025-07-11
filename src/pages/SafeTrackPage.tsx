@@ -43,11 +43,16 @@ import {
   Trash2,
   MapPin,
   User,
-  Shield
+  Shield,
+  Zap,
+  Bell,
+  Target,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import SafeTrackAdvanced from '@/components/SafeTrackAdvanced';
 
 interface Asset {
   id: string;
@@ -876,9 +881,10 @@ const SafeTrackPage = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="hardware" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="hardware">Hardware Assets</TabsTrigger>
                 <TabsTrigger value="software">Software Licenses</TabsTrigger>
+                <TabsTrigger value="advanced">🚀 Advanced Features</TabsTrigger>
               </TabsList>
 
               <TabsContent value="hardware" className="space-y-4">
@@ -1038,6 +1044,11 @@ const SafeTrackPage = () => {
                     ))}
                   </div>
                 )}
+              </TabsContent>
+
+              {/* Advanced Features Tab */}
+              <TabsContent value="advanced" className="space-y-4">
+                <SafeTrackAdvanced />
               </TabsContent>
             </Tabs>
           </CardContent>
