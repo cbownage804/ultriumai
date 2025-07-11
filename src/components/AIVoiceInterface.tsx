@@ -121,6 +121,19 @@ export const AIVoiceInterface = () => {
     });
   };
 
+  const clearAllHistory = () => {
+    setChatHistory([]);
+    setCurrentChatId(null);
+    setConversation([]);
+    localStorage.removeItem('ai-chat-history');
+    
+    toast({
+      title: "History Cleared",
+      description: "All chat history has been deleted",
+      variant: "destructive",
+    });
+  };
+
   const handleVoiceTranscription = (text: string) => {
     setTextInput(text);
   };
@@ -238,7 +251,7 @@ export const AIVoiceInterface = () => {
                 className="flex items-center gap-2"
               >
                 <Settings className="h-4 w-4" />
-                {showChatHistory ? 'Hide History' : 'Chat History'}
+                {showChatHistory ? 'Hide History' : `Chat History (${chatHistory.length})`}
               </Button>
               <Button
                 variant="outline"
@@ -264,9 +277,20 @@ export const AIVoiceInterface = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Chat History</h3>
-                <Button onClick={startNewChat} size="sm">
-                  New Chat
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={startNewChat} size="sm">
+                    New Chat
+                  </Button>
+                  {chatHistory.length > 0 && (
+                    <Button 
+                      onClick={clearAllHistory} 
+                      size="sm" 
+                      variant="destructive"
+                    >
+                      Clear All
+                    </Button>
+                  )}
+                </div>
               </div>
               
               {chatHistory.length > 0 ? (
