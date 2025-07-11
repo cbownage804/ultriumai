@@ -42,7 +42,6 @@ const Pricing = () => {
         "Up to 10 team members",
         "5 Custom AI Agents",
         "Basic security scanning",
-        "Mobile technician app",
         "Email support",
         "Standard integrations",
         "50GB storage",
@@ -62,6 +61,7 @@ const Pricing = () => {
         "Up to 50 team members",
         "Unlimited Custom AI Agents",
         "Advanced security suite",
+        "Mobile technician apps (iOS & Android)",
         "Full MSP dashboard",
         "Priority support",
         "Premium integrations",
@@ -131,14 +131,13 @@ const Pricing = () => {
   ];
 
   const securityApps = [
-    { name: "SafeMail", description: "AI email threat detection" },
-    { name: "SafeKB", description: "Knowledge base & asset management" },
-    { name: "SafeLink", description: "URL analysis & protection" },
-    { name: "SafePass", description: "Password management" },
-    { name: "SafeNet", description: "Network discovery & mapping" },
-    { name: "SafeScore", description: "Compliance management" },
-    { name: "SafeWeb", description: "Dark web monitoring" },
-    { name: "SafeShield", description: "Unified security dashboard" }
+    { name: "SafeScan", description: "AI email, link & document threat detection", tier: "starter" },
+    { name: "SafePass", description: "Password management", tier: "professional" },
+    { name: "SafeKB", description: "Knowledge base & asset management", tier: "professional" },
+    { name: "SafeNet", description: "Network discovery & mapping", tier: "professional" },
+    { name: "SafeScore", description: "Compliance management", tier: "professional" },
+    { name: "SafeWeb", description: "Dark web monitoring", tier: "enterprise" },
+    { name: "SafeShield", description: "Unified security dashboard", tier: "enterprise" }
   ];
 
   const handleSubscribe = async (planName: string) => {
@@ -361,19 +360,19 @@ const Pricing = () => {
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
+                  <Badge variant="outline">Pro+</Badge>
                   <span className="text-sm">iOS & Android Technician Apps</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
+                  <Badge variant="outline">Pro+</Badge>
                   <span className="text-sm">GPS tracking & field operations</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline">Pro & MSP</Badge>
+                  <Badge variant="outline">Pro+</Badge>
                   <span className="text-sm">Real-time alerts & notifications</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline">MSP Only</Badge>
+                  <Badge variant="outline">Enterprise</Badge>
                   <span className="text-sm">White-label mobile apps</span>
                 </div>
               </div>
@@ -386,16 +385,23 @@ const Pricing = () => {
                 Security Applications
               </h3>
               <div className="space-y-2">
-                {securityApps.slice(0, 4).map((app, index) => (
+                {securityApps.filter(app => app.tier === "starter").map((app, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <Badge variant="secondary">Pro & MSP</Badge>
+                    <Badge variant="secondary">Starter+</Badge>
                     <span className="text-sm font-medium">{app.name}</span>
                     <span className="text-xs text-muted-foreground">- {app.description}</span>
                   </div>
                 ))}
-                {securityApps.slice(4).map((app, index) => (
+                {securityApps.filter(app => app.tier === "professional").map((app, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <Badge variant="default">MSP Only</Badge>
+                    <Badge variant="secondary">Pro+</Badge>
+                    <span className="text-sm font-medium">{app.name}</span>
+                    <span className="text-xs text-muted-foreground">- {app.description}</span>
+                  </div>
+                ))}
+                {securityApps.filter(app => app.tier === "enterprise").map((app, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <Badge variant="default">Enterprise</Badge>
                     <span className="text-sm font-medium">{app.name}</span>
                     <span className="text-xs text-muted-foreground">- {app.description}</span>
                   </div>
@@ -411,19 +417,19 @@ const Pricing = () => {
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
+                  <Badge variant="default">Enterprise</Badge>
                   <span className="text-sm">Client management portal</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
+                  <Badge variant="default">Enterprise</Badge>
                   <span className="text-sm">Co-managed service delivery</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
+                  <Badge variant="default">Enterprise</Badge>
                   <span className="text-sm">RMM & PSA integrations</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant="default">MSP Only</Badge>
+                  <Badge variant="default">Enterprise</Badge>
                   <span className="text-sm">SIEM & compliance dashboard</span>
                 </div>
               </div>
