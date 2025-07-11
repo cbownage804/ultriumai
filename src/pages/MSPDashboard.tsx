@@ -802,31 +802,42 @@ const MSPControlCenter = () => {
 
         {/* Main Content */}
         <Tabs defaultValue="clients" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="clients">Clients</TabsTrigger>
-            <TabsTrigger value="revenue">Revenue Optimizer</TabsTrigger>
-            <TabsTrigger value="scorecards">Risk Scorecards</TabsTrigger>
-            <TabsTrigger value="roi">ROI Calculator</TabsTrigger>
-            <TabsTrigger value="reports">Executive Reports</TabsTrigger>
-            <TabsTrigger value="profit-analytics">Profit Analytics</TabsTrigger>
-            <TabsTrigger value="upselling">Upselling Engine</TabsTrigger>
-            <TabsTrigger value="churn">Churn Prevention</TabsTrigger>
-            <TabsTrigger value="benchmarks">Benchmarks</TabsTrigger>
-            <TabsTrigger value="leads">Lead Scoring</TabsTrigger>
-            <TabsTrigger value="safedesk">
-              <HeadphonesIcon className="h-4 w-4 mr-2" />
-              SafeDesk
-            </TabsTrigger>
-            <TabsTrigger value="ultriumgpt">
-              <Zap className="h-4 w-4 mr-2" />
-              UltriumGPT
-            </TabsTrigger>
-            <TabsTrigger value="safescan">SafeScan</TabsTrigger>
-            <TabsTrigger value="security">Security Center</TabsTrigger>
-            <TabsTrigger value="business-intel">Business Intelligence</TabsTrigger>
-            <TabsTrigger value="client-portal">Client Portal</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
+          <div className="space-y-4">
+            {/* Primary Navigation */}
+            <TabsList className="grid grid-cols-5 lg:grid-cols-8 gap-1 h-auto p-1 bg-muted/30">
+              <TabsTrigger value="clients" className="h-10">Clients</TabsTrigger>
+              <TabsTrigger value="revenue" className="h-10">Revenue Optimizer</TabsTrigger>
+              <TabsTrigger value="scorecards" className="h-10">Risk Scorecards</TabsTrigger>
+              <TabsTrigger value="roi" className="h-10">ROI Calculator</TabsTrigger>
+              <TabsTrigger value="reports" className="h-10">Executive Reports</TabsTrigger>
+              <TabsTrigger value="profit-analytics" className="h-10">Profit Analytics</TabsTrigger>
+              <TabsTrigger value="upselling" className="h-10">Upselling Engine</TabsTrigger>
+              <TabsTrigger value="churn" className="h-10">Churn Prevention</TabsTrigger>
+            </TabsList>
+            
+            {/* Secondary Navigation */}
+            <TabsList className="grid grid-cols-4 lg:grid-cols-6 gap-1 h-auto p-1 bg-muted/20">
+              <TabsTrigger value="benchmarks" className="h-10">Benchmarks</TabsTrigger>
+              <TabsTrigger value="leads" className="h-10">Lead Scoring</TabsTrigger>
+              <TabsTrigger value="analytics" className="h-10">Analytics</TabsTrigger>
+              <TabsTrigger value="security" className="h-10">Security Center</TabsTrigger>
+              <TabsTrigger value="business-intel" className="h-10">Business Intelligence</TabsTrigger>
+              <TabsTrigger value="client-portal" className="h-10">Client Portal</TabsTrigger>
+            </TabsList>
+            
+            {/* Apps Navigation */}
+            <TabsList className="grid grid-cols-3 lg:grid-cols-3 gap-1 h-auto p-1 bg-muted/10">
+              <TabsTrigger value="safedesk" className="h-10 flex items-center gap-2">
+                <HeadphonesIcon className="h-4 w-4" />
+                SafeDesk
+              </TabsTrigger>
+              <TabsTrigger value="ultriumgpt" className="h-10 flex items-center gap-2">
+                <Zap className="h-4 w-4" />
+                UltriumGPT
+              </TabsTrigger>
+              <TabsTrigger value="safescan" className="h-10">SafeScan</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="clients" className="space-y-6">
             <div className="grid gap-6">
