@@ -13,7 +13,8 @@ import {
   Shield,
   Settings,
   Users,
-  Loader2
+  Loader2,
+  Mic
 } from "lucide-react";
 
 interface Message {
@@ -222,6 +223,15 @@ export const UltriumGPTDemo = () => {
           <p className="text-muted-foreground">
             Experience intelligent business automation with AI agents trained on your specific workflows
           </p>
+          <div className="mt-4">
+            <Button 
+              onClick={() => window.location.href = '/ai-studio?tab=voice'}
+              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            >
+              <Mic className="h-4 w-4 mr-2" />
+              Try Full Voice Interface in AI Studio
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
