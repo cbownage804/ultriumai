@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight, Database, Building2, Bell, Workflow, DollarSign, Globe, CloudCog, Monitor } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight, Database, Building2, Bell, Workflow, DollarSign, Globe, CloudCog, Monitor, Brain, Mic } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -74,6 +74,15 @@ const managementItems = [
   { title: "Team Management", url: "/dashboard/teams", icon: Users, tooltip: "Manage team members, roles, and permissions" },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3, tooltip: "View usage statistics and performance metrics" },
 ];
+
+const aiItems = [
+  { title: "AI Intelligence Hub", url: "/dashboard/ai/intelligence", icon: Brain, tooltip: "Advanced AI analysis and automation" },
+  { title: "AI Voice Interface", url: "/dashboard/ai/voice", icon: Mic, tooltip: "Voice-to-text and text-to-speech AI" },
+  { title: "AI Vision Analyzer", url: "/dashboard/ai/vision", icon: Eye, tooltip: "Computer vision and image analysis" },
+];
+
+// Add AI section to sidebar
+const sectionAI = { key: 'ai', items: aiItems, label: 'AI Features', icon: Brain };
 
 const accountItems = [
   { title: "Profile", url: "/dashboard/profile", icon: User, tooltip: "Manage your account profile and personal information" },

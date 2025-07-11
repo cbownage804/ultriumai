@@ -58,6 +58,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
+import { AIIntelligenceHub } from "@/components/AIIntelligenceHub";
+import { AIVoiceInterface } from "@/components/AIVoiceInterface";
+import { AIVisionAnalyzer } from "@/components/AIVisionAnalyzer";
 
 
 const Dashboard = () => {
@@ -139,6 +142,9 @@ const Dashboard = () => {
   const isMSPRoleManagementPage = location.pathname.includes('/msp/roles');
   const isMSPBusinessOpsPage = location.pathname.includes('/msp/business');
   const isMSPAdvancedAnalyticsPage = location.pathname.includes('/msp/analytics');
+  const isAIIntelligenceHubPage = location.pathname.includes('/ai/intelligence');
+  const isAIVoiceInterfacePage = location.pathname.includes('/ai/voice');
+  const isAIVisionAnalyzerPage = location.pathname.includes('/ai/vision');
   
   const getPageTitle = () => {
     if (isDashboardOverview) return "Dashboard";
@@ -188,6 +194,9 @@ const Dashboard = () => {
     if (isMSPRoleManagementPage) return "Role Management";
     if (isMSPBusinessOpsPage) return "Business Operations";
     if (isMSPAdvancedAnalyticsPage) return "Advanced Analytics";
+    if (isAIIntelligenceHubPage) return "AI Intelligence Hub";
+    if (isAIVoiceInterfacePage) return "AI Voice Interface";
+    if (isAIVisionAnalyzerPage) return "AI Vision Analyzer";
     
     return "Dashboard";
   };
@@ -244,6 +253,9 @@ const Dashboard = () => {
     if (isMSPRoleManagementPage) return <div className="p-6"><MSPRoleManagement /></div>;
     if (isMSPBusinessOpsPage) return <div className="p-6"><MSPBusinessOperations /></div>;
     if (isMSPAdvancedAnalyticsPage) return <div className="p-6"><MSPAdvancedAnalytics /></div>;
+    if (isAIIntelligenceHubPage) return <div className="p-6"><AIIntelligenceHub /></div>;
+    if (isAIVoiceInterfacePage) return <div className="p-6"><AIVoiceInterface /></div>;
+    if (isAIVisionAnalyzerPage) return <div className="p-6"><AIVisionAnalyzer /></div>;
     
     return <DashboardOverview />;
   };
