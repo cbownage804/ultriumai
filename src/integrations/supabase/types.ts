@@ -409,6 +409,260 @@ export type Database = {
           },
         ]
       }
+      asset_assignments: {
+        Row: {
+          asset_id: string | null
+          assigned_to_device: string | null
+          assigned_to_user: string | null
+          assignment_date: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          return_date: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          asset_id?: string | null
+          assigned_to_device?: string | null
+          assigned_to_user?: string | null
+          assignment_date?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          return_date?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          asset_id?: string | null
+          assigned_to_device?: string | null
+          assigned_to_user?: string | null
+          assignment_date?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          return_date?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_assignments_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      asset_history: {
+        Row: {
+          action: string
+          asset_id: string | null
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_values: Json | null
+          notes: string | null
+          old_values: Json | null
+        }
+        Insert: {
+          action: string
+          asset_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          notes?: string | null
+          old_values?: Json | null
+        }
+        Update: {
+          action?: string
+          asset_id?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          notes?: string | null
+          old_values?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_history_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      asset_maintenance: {
+        Row: {
+          asset_id: string | null
+          completed_date: string | null
+          cost: number | null
+          created_at: string
+          description: string
+          id: string
+          maintenance_type: string | null
+          next_maintenance_date: string | null
+          performed_by: string | null
+          scheduled_date: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_id?: string | null
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          maintenance_type?: string | null
+          next_maintenance_date?: string | null
+          performed_by?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_id?: string | null
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          maintenance_type?: string | null
+          next_maintenance_date?: string | null
+          performed_by?: string | null
+          scheduled_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_maintenance_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assets: {
+        Row: {
+          asset_tag: string | null
+          assigned_to: string | null
+          category_id: string | null
+          client_id: string | null
+          created_at: string
+          current_value: number | null
+          depreciation_rate: number | null
+          description: string | null
+          id: string
+          location: string | null
+          manufacturer: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          serial_number: string | null
+          specifications: Json | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          category_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          current_value?: number | null
+          depreciation_rate?: number | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_tag?: string | null
+          assigned_to?: string | null
+          category_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          current_value?: number | null
+          depreciation_rate?: number | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          serial_number?: string | null
+          specifications?: Json | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "asset_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -7715,6 +7969,69 @@ export type Database = {
         }
         Relationships: []
       }
+      software_assets: {
+        Row: {
+          client_id: string | null
+          compliance_status: string | null
+          cost_per_license: number | null
+          created_at: string
+          expiry_date: string | null
+          id: string
+          installation_count: number | null
+          license_key: string | null
+          license_type: string | null
+          name: string
+          purchase_date: string | null
+          seats_total: number | null
+          seats_used: number | null
+          support_expiry: string | null
+          updated_at: string
+          user_id: string
+          vendor: string | null
+          version: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          compliance_status?: string | null
+          cost_per_license?: number | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          installation_count?: number | null
+          license_key?: string | null
+          license_type?: string | null
+          name: string
+          purchase_date?: string | null
+          seats_total?: number | null
+          seats_used?: number | null
+          support_expiry?: string | null
+          updated_at?: string
+          user_id: string
+          vendor?: string | null
+          version?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          compliance_status?: string | null
+          cost_per_license?: number | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          installation_count?: number | null
+          license_key?: string | null
+          license_type?: string | null
+          name?: string
+          purchase_date?: string | null
+          seats_total?: number | null
+          seats_used?: number | null
+          support_expiry?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
       software_deployments: {
         Row: {
           client_id: string
@@ -7750,6 +8067,60 @@ export type Database = {
           started_by?: string | null
         }
         Relationships: []
+      }
+      software_installations: {
+        Row: {
+          asset_id: string | null
+          created_at: string
+          id: string
+          installation_date: string | null
+          installed_version: string | null
+          last_used: string | null
+          software_asset_id: string | null
+          status: string | null
+          usage_hours: number | null
+          user_id: string
+        }
+        Insert: {
+          asset_id?: string | null
+          created_at?: string
+          id?: string
+          installation_date?: string | null
+          installed_version?: string | null
+          last_used?: string | null
+          software_asset_id?: string | null
+          status?: string | null
+          usage_hours?: number | null
+          user_id: string
+        }
+        Update: {
+          asset_id?: string | null
+          created_at?: string
+          id?: string
+          installation_date?: string | null
+          installed_version?: string | null
+          last_used?: string | null
+          software_asset_id?: string | null
+          status?: string | null
+          usage_hours?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "software_installations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "software_installations_software_asset_id_fkey"
+            columns: ["software_asset_id"]
+            isOneToOne: false
+            referencedRelation: "software_assets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       software_inventory: {
         Row: {

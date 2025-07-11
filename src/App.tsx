@@ -81,6 +81,7 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import AIStudio from '@/pages/AIStudio';
+import SafeTrackPage from '@/pages/SafeTrackPage';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 
@@ -335,6 +336,11 @@ function AppRouter() {
         <Route path="/ai-studio" element={
           <ProtectedRoute>
             <AIStudio />
+          </ProtectedRoute>
+        } />
+        <Route path="/safetrack" element={
+          <ProtectedRoute>
+            <SafeTrackPage />
           </ProtectedRoute>
         } />
         

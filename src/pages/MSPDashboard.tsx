@@ -31,7 +31,8 @@ import {
   XCircle,
   Upload,
   Image as ImageIcon,
-  Trash2
+  Trash2,
+  Package
 } from 'lucide-react';
 import { useMSP, MSPClient } from '@/hooks/useMSP';
 import { useToast } from '@/hooks/use-toast';
@@ -681,7 +682,7 @@ const MSPControlCenter = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
@@ -689,12 +690,12 @@ const MSPControlCenter = () => {
                   <Shield className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Security Scan</h3>
-                  <p className="text-sm text-muted-foreground">Run comprehensive scans</p>
+                  <h3 className="font-semibold">Security Center</h3>
+                  <p className="text-sm text-muted-foreground">Monitor client security</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="w-full mt-4" onClick={() => handleNavigation('/dashboard/safedoc')}>
-                Launch SafeDoc
+              <Button variant="ghost" size="sm" className="w-full mt-4" onClick={() => handleNavigation('/msp-security-dashboard')}>
+                Open Security Center
               </Button>
             </CardContent>
           </Card>
@@ -703,15 +704,15 @@ const MSPControlCenter = () => {
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-full bg-secondary/10 group-hover:bg-secondary/20 transition-colors">
-                  <BarChart3 className="h-6 w-6 text-secondary" />
+                  <Package className="h-6 w-6 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Analytics</h3>
-                  <p className="text-sm text-muted-foreground">View detailed reports</p>
+                  <h3 className="font-semibold">SafeTrack</h3>
+                  <p className="text-sm text-muted-foreground">IT asset management</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="w-full mt-4">
-                View Reports
+              <Button variant="ghost" size="sm" className="w-full mt-4" onClick={() => handleNavigation('/safetrack')}>
+                Launch SafeTrack
               </Button>
             </CardContent>
           </Card>
@@ -720,32 +721,15 @@ const MSPControlCenter = () => {
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-full bg-accent/10 group-hover:bg-accent/20 transition-colors">
-                  <Globe className="h-6 w-6 text-accent" />
+                  <BarChart3 className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Deploy Widget</h3>
-                  <p className="text-sm text-muted-foreground">Install on client sites</p>
+                  <h3 className="font-semibold">Analytics</h3>
+                  <p className="text-sm text-muted-foreground">View detailed reports</p>
                 </div>
               </div>
               <Button variant="ghost" size="sm" className="w-full mt-4">
-                Get Embed Code
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="group hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-success/5 to-success/10 border-success/20">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-full bg-success/10 group-hover:bg-success/20 transition-colors">
-                  <Target className="h-6 w-6 text-success" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">RMM Agent</h3>
-                  <p className="text-sm text-muted-foreground">Deploy monitoring</p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" className="w-full mt-4">
-                Deploy Agent
+                View Reports
               </Button>
             </CardContent>
           </Card>
