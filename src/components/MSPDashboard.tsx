@@ -15,6 +15,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { MSPClientEmailConfig } from "@/components/safedesk/MSPClientEmailConfig";
+import { SecurityDashboard } from "@/components/dashboards/SecurityDashboard";
+import { ClientPortal } from "@/components/client/ClientPortal";
+import { BusinessIntelligence } from "@/components/dashboards/BusinessIntelligence";
+import { IntegrationHub } from "@/components/integrations/IntegrationHub";
+import { WorkflowBuilder } from "@/components/automation/WorkflowBuilder";
+import { MobileApp } from "@/components/mobile/MobileApp";
 import { 
   Shield, 
   Server, 
@@ -45,7 +51,10 @@ import {
   Database,
   BarChart3,
   Mail,
-  Save
+  Save,
+  Workflow,
+  Smartphone,
+  Link
 } from "lucide-react";
 
 interface MSPClient {
@@ -843,42 +852,54 @@ export const MSPDashboard = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-9">
-          <TabsTrigger value="clients" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
+        <TabsList className="grid w-full grid-cols-12 text-xs">
+          <TabsTrigger value="clients" className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
             Clients
           </TabsTrigger>
-          <TabsTrigger value="monitoring" className="flex items-center gap-2">
-            <Monitor className="w-4 h-4" />
-            Monitoring
-          </TabsTrigger>
-          <TabsTrigger value="ai-helpdesk" className="flex items-center gap-2">
-            <Bot className="w-4 h-4" />
-            AI Helpdesk
-          </TabsTrigger>
-          <TabsTrigger value="ai-patching" className="flex items-center gap-2">
-            <Zap className="w-4 h-4" />
-            AI Patching
-          </TabsTrigger>
-          <TabsTrigger value="ai-alerts" className="flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            AI Alerts
-          </TabsTrigger>
-          <TabsTrigger value="ai-mdr" className="flex items-center gap-2">
-            <Shield className="w-4 h-4" />
-            AI SafeMDR
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Bug className="w-4 h-4" />
+          <TabsTrigger value="security" className="flex items-center gap-1">
+            <Shield className="w-3 h-3" />
             Security
           </TabsTrigger>
-          <TabsTrigger value="branding" className="flex items-center gap-2">
-            <Palette className="w-4 h-4" />
+          <TabsTrigger value="business" className="flex items-center gap-1">
+            <BarChart3 className="w-3 h-3" />
+            Analytics
+          </TabsTrigger>
+          <TabsTrigger value="client-portal" className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            Portal
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className="flex items-center gap-1">
+            <Link className="w-3 h-3" />
+            Integrations
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="flex items-center gap-1">
+            <Workflow className="w-3 h-3" />
+            Automation
+          </TabsTrigger>
+          <TabsTrigger value="mobile" className="flex items-center gap-1">
+            <Smartphone className="w-3 h-3" />
+            Mobile
+          </TabsTrigger>
+          <TabsTrigger value="monitoring" className="flex items-center gap-1">
+            <Monitor className="w-3 h-3" />
+            RMM
+          </TabsTrigger>
+          <TabsTrigger value="ai-helpdesk" className="flex items-center gap-1">
+            <Bot className="w-3 h-3" />
+            AI Desk
+          </TabsTrigger>
+          <TabsTrigger value="ai-patching" className="flex items-center gap-1">
+            <Zap className="w-3 h-3" />
+            AI Patch
+          </TabsTrigger>
+          <TabsTrigger value="branding" className="flex items-center gap-1">
+            <Palette className="w-3 h-3" />
             Branding
           </TabsTrigger>
-          <TabsTrigger value="email-settings" className="flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            Email Settings
+          <TabsTrigger value="email-settings" className="flex items-center gap-1">
+            <Mail className="w-3 h-3" />
+            Email
           </TabsTrigger>
         </TabsList>
 
@@ -1597,6 +1618,30 @@ export const MSPDashboard = () => {
             <p className="text-muted-foreground">White-label customization</p>
             <p className="text-sm text-muted-foreground">Customize the platform with your branding</p>
           </div>
+        </TabsContent>
+
+        <TabsContent value="security">
+          <SecurityDashboard />
+        </TabsContent>
+
+        <TabsContent value="business">
+          <BusinessIntelligence />
+        </TabsContent>
+
+        <TabsContent value="client-portal">
+          <ClientPortal />
+        </TabsContent>
+
+        <TabsContent value="integrations">
+          <IntegrationHub />
+        </TabsContent>
+
+        <TabsContent value="automation">
+          <WorkflowBuilder />
+        </TabsContent>
+
+        <TabsContent value="mobile">
+          <MobileApp />
         </TabsContent>
 
         <TabsContent value="email-settings" className="mt-6" ref={emailSettingsRef}>
