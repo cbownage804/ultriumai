@@ -13,22 +13,26 @@ serve(async (req) => {
   }
 
   try {
-    const { message, model = 'gpt-4o-mini', context = 'general', stream = false } = await req.json();
+    const { message, model = 'gpt-4o-mini', context = 'general', systemPrompt, stream = false } = await req.json();
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Get system prompt based on context
-    const systemPrompts = {
-      security: "You are a cybersecurity expert AI assistant. Provide detailed, accurate security analysis and recommendations. Focus on threat detection, vulnerability assessment, and security best practices.",
+    // Get system prompt based on context or use provided systemPrompt
+    const defaultSystemPrompts = {
+      general: "You are a helpful AI assistant. Provide accurate, helpful, and engaging responses to any questions or topics.",
+      business: "You are a business intelligence AI specialist. Focus on data analysis, business strategy, market insights, and helping with business decisions. Provide actionable recommendations.",
+      security: "You are a cybersecurity expert AI. Analyze security threats, provide security recommendations, help with incident response, and explain security concepts clearly.",
+      developer: "You are a senior software engineer AI. Help with code review, debugging, architecture decisions, and best practices. Provide clean, efficient code solutions.",
+      creative: "You are a creative AI specialist. Help with content creation, copywriting, design concepts, marketing strategies, and creative problem-solving.",
+      research: "You are a research AI specialist. Conduct thorough analysis, provide detailed research insights, synthesize information from multiple perspectives, and present findings clearly.",
       helpdesk: "You are a technical support specialist. Help users troubleshoot issues, provide step-by-step solutions, and offer clear explanations for technical problems.",
-      rmm: "You are a remote monitoring and management expert. Assist with system monitoring, maintenance tasks, and infrastructure management.",
-      general: "You are a helpful AI assistant for UltriumAI. Provide accurate, helpful responses and assist users with their queries."
+      rmm: "You are a remote monitoring and management expert. Assist with system monitoring, maintenance tasks, and infrastructure management."
     };
 
-    const systemPrompt = systemPrompts[context as keyof typeof systemPrompts] || systemPrompts.general;
+    const finalSystemPrompt = systemPrompt || defaultSystemPrompts[context as keyof typeof defaultSystemPrompts] || defaultSystemPrompts.general;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -39,7 +43,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: finalSystemPrompt },
           { role: 'user', content: message }
         ],
         stream,

@@ -3,16 +3,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Volume2, VolumeX, Play, RotateCcw, Mic } from 'lucide-react';
+import { Volume2, VolumeX, Play, RotateCcw, Mic, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import VoiceControls from './VoiceControls';
+import { ModeSelector, AIMode, AI_MODES } from './ModeSelector';
 
 export const AIVoiceInterface = () => {
   const [textInput, setTextInput] = useState('');
   const [conversation, setConversation] = useState<Array<{id: string, type: 'user' | 'ai', content: string}>>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [volume, setVolume] = useState(75);
+  const [selectedMode, setSelectedMode] = useState<AIMode>(AI_MODES[0]);
+  const [showModeSelector, setShowModeSelector] = useState(false);
   const { toast } = useToast();
 
   const handleVoiceTranscription = (text: string) => {
@@ -28,12 +31,13 @@ export const AIVoiceInterface = () => {
     setTextInput('');
 
     try {
-      // Send to AI chat function
+      // Send to AI chat function with selected mode context
       const { data, error } = await supabase.functions.invoke('ai-chat', {
         body: {
           message: message,
           model: 'gpt-4o-mini',
-          context: 'general',
+          context: selectedMode.id,
+          systemPrompt: selectedMode.systemPrompt,
         }
       });
 
@@ -98,16 +102,56 @@ export const AIVoiceInterface = () => {
 
   return (
     <div className="space-y-6">
+      {/* Mode Selector Toggle */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mic className="h-5 w-5" />
+              AI Voice Interface
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowModeSelector(!showModeSelector)}
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              {showModeSelector ? 'Hide Modes' : 'Change Mode'}
+            </Button>
+          </CardTitle>
+          <CardDescription className="flex items-center gap-2">
+            <span>Current mode:</span>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              {selectedMode.icon}
+              {selectedMode.name}
+            </Badge>
+          </CardDescription>
+        </CardHeader>
+        {showModeSelector && (
+          <CardContent>
+            <ModeSelector 
+              selectedMode={selectedMode}
+              onModeChange={(mode) => {
+                setSelectedMode(mode);
+                setShowModeSelector(false);
+                toast({
+                  title: "Mode Changed",
+                  description: `Switched to ${mode.name} mode`,
+                });
+              }}
+            />
+          </CardContent>
+        )}
+      </Card>
+
       {/* Voice Controls */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5" />
-            AI Voice Interface
+            <Volume2 className="h-5 w-5" />
+            Voice Controls
           </CardTitle>
-          <CardDescription>
-            Interact with AI using voice commands and natural language
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <VoiceControls 
@@ -211,24 +255,30 @@ export const AIVoiceInterface = () => {
       {/* Features Overview */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Voice AI Capabilities</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            {selectedMode.icon}
+            {selectedMode.name} Capabilities
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <h4 className="font-medium">Speech Recognition</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• High-quality speech-to-text</li>
-                <li>• Real-time transcription</li>
-                <li>• Multiple audio formats</li>
-              </ul>
+              <h4 className="font-medium">Core Features</h4>
+              <div className="flex flex-wrap gap-2">
+                {selectedMode.features.map((feature) => (
+                  <Badge key={feature} variant="outline" className="text-sm">
+                    {feature}
+                  </Badge>
+                ))}
+              </div>
             </div>
             <div className="space-y-2">
-              <h4 className="font-medium">Voice Synthesis</h4>
+              <h4 className="font-medium">Voice Integration</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Natural-sounding voices</li>
-                <li>• Adjustable volume control</li>
-                <li>• Instant AI responses</li>
+                <li>• High-quality speech-to-text</li>
+                <li>• Natural voice responses (ElevenLabs)</li>
+                <li>• Real-time conversations</li>
+                <li>• Mode-specific responses</li>
               </ul>
             </div>
           </div>
