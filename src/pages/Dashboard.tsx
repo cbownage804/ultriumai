@@ -18,6 +18,11 @@ import GPTTemplatesMarketplace from "@/components/GPTTemplatesMarketplace";
 import TeamManagement from "@/components/TeamManagement";
 import TeamAnalytics from "@/components/TeamAnalytics";
 import SecuritySettings from "@/components/SecuritySettings";
+import { MSPNotifications } from "@/components/MSPNotifications";
+import { MSPWorkflowAutomation } from "@/components/MSPWorkflowAutomation";
+import { MSPQuickBooksIntegration } from "@/components/MSPQuickBooksIntegration";
+import { MSPAPIManagement } from "@/components/MSPAPIManagement";
+import { MSPClientPortal } from "@/components/MSPClientPortal";
 import { DashboardOverview } from "@/components/DashboardOverview";
 import { GPTDashboard } from "@/components/dashboards/GPTDashboard";
 import { RMMDashboard } from "@/components/dashboards/RMMDashboard";
@@ -118,6 +123,13 @@ const Dashboard = () => {
   const isSafeNetDashboard = location.pathname.includes('/safenet') && !location.pathname.includes('/app');
   const isSafeScanPage = location.pathname.includes('/safescan');
   
+  // MSP Feature Pages
+  const isMSPNotificationsPage = location.pathname.includes('/msp/notifications');
+  const isMSPWorkflowPage = location.pathname.includes('/msp/workflow');
+  const isMSPQuickBooksPage = location.pathname.includes('/msp/quickbooks');
+  const isMSPAPIManagementPage = location.pathname.includes('/msp/api-management');
+  const isMSPClientPortalPage = location.pathname.includes('/msp/client-portal');
+  
   const getPageTitle = () => {
     if (isDashboardOverview) return "Dashboard";
     if (isUltriumGPTPage) return "UltriumGPT";
@@ -156,6 +168,14 @@ const Dashboard = () => {
     if (isSafePassDashboard) return "SafePass";
     if (isSafeMailDashboard) return "SafeMail";
     if (isSafeNetDashboard) return "SafeNet";
+    
+    // MSP Feature Page Titles
+    if (isMSPNotificationsPage) return "MSP Notifications";
+    if (isMSPWorkflowPage) return "MSP Workflow Automation";
+    if (isMSPQuickBooksPage) return "QuickBooks Integration";
+    if (isMSPAPIManagementPage) return "MSP API Management";
+    if (isMSPClientPortalPage) return "Client Portal Management";
+    
     return "Dashboard";
   };
 
@@ -201,6 +221,14 @@ const Dashboard = () => {
     if (isSafePassDashboard) return <div className="p-6"><SafePassDashboard /></div>;
     if (isSafeMailDashboard) return <div className="p-6"><SafeMailDashboard /></div>;
     if (isSafeNetDashboard) return <div className="p-6"><SafeNetDashboard /></div>;
+    
+    // MSP Feature Pages
+    if (isMSPNotificationsPage) return <div className="p-6"><MSPNotifications mspId="temp-msp-id" /></div>;
+    if (isMSPWorkflowPage) return <div className="p-6"><MSPWorkflowAutomation mspId="temp-msp-id" /></div>;
+    if (isMSPQuickBooksPage) return <div className="p-6"><MSPQuickBooksIntegration mspId="temp-msp-id" /></div>;
+    if (isMSPAPIManagementPage) return <div className="p-6"><MSPAPIManagement mspId="temp-msp-id" /></div>;
+    if (isMSPClientPortalPage) return <div className="p-6"><MSPClientPortal /></div>;
+    
     return <DashboardOverview />;
   };
 
