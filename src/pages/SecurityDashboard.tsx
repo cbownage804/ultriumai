@@ -214,7 +214,15 @@ const SecurityDashboard = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => {
+              // Check if we came from MSP dashboard
+              if (document.referrer.includes('/msp-control-center') || 
+                  window.location.search.includes('from=msp')) {
+                navigate('/msp-control-center');
+              } else {
+                navigate('/dashboard');
+              }
+            }}
             className="shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -232,7 +240,15 @@ const SecurityDashboard = () => {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => {
+              // Check if we came from MSP dashboard
+              if (document.referrer.includes('/msp-control-center') || 
+                  window.location.search.includes('from=msp')) {
+                navigate('/msp-control-center');
+              } else {
+                navigate('/dashboard');
+              }
+            }}
           >
             <Home className="h-4 w-4 mr-2" />
             Dashboard
