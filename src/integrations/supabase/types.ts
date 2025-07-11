@@ -835,6 +835,48 @@ export type Database = {
           },
         ]
       }
+      client_email_configs: {
+        Row: {
+          auto_response_enabled: boolean | null
+          auto_response_template: string | null
+          client_id: string
+          created_at: string | null
+          email_signature: string | null
+          id: string
+          incoming_email: string
+          is_active: boolean | null
+          outgoing_from_email: string
+          outgoing_from_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_response_enabled?: boolean | null
+          auto_response_template?: string | null
+          client_id: string
+          created_at?: string | null
+          email_signature?: string | null
+          id?: string
+          incoming_email: string
+          is_active?: boolean | null
+          outgoing_from_email: string
+          outgoing_from_name?: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_response_enabled?: boolean | null
+          auto_response_template?: string | null
+          client_id?: string
+          created_at?: string | null
+          email_signature?: string | null
+          id?: string
+          incoming_email?: string
+          is_active?: boolean | null
+          outgoing_from_email?: string
+          outgoing_from_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       client_users: {
         Row: {
           client_id: string
