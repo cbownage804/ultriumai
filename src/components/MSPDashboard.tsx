@@ -1508,7 +1508,11 @@ export const MSPDashboard = () => {
         </TabsContent>
 
         <TabsContent value="email-settings">
-          <MSPClientEmailConfig />
+          <div className="p-4 border rounded-lg bg-blue-50">
+            <h3 className="text-lg font-semibold mb-4">Email Settings Debug</h3>
+            <p>This tab is working! Current activeTab: {activeTab}</p>
+            <MSPClientEmailConfig />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
