@@ -34,8 +34,8 @@ const Pricing = () => {
     {
       name: "Starter",
       description: "Perfect for small teams getting started with AI",
-      platformFee: { monthly: 99, yearly: 990 },
-      perUserFee: { monthly: 15, yearly: 150 },
+      platformFee: { monthly: 149, yearly: 1490 },
+      perUserFee: { monthly: 25, yearly: 250 },
       trial: "14-day free trial",
       icon: Users,
       features: [
@@ -54,8 +54,8 @@ const Pricing = () => {
     {
       name: "Professional",
       description: "Advanced features for growing businesses",
-      platformFee: { monthly: 199, yearly: 1990 },
-      perUserFee: { monthly: 25, yearly: 250 },
+      platformFee: { monthly: 299, yearly: 2990 },
+      perUserFee: { monthly: 39, yearly: 390 },
       trial: "14-day free trial",
       icon: Crown,
       features: [
@@ -76,8 +76,8 @@ const Pricing = () => {
     {
       name: "Enterprise",
       description: "Complete platform for large organizations",
-      platformFee: { monthly: 399, yearly: 3990 },
-      perUserFee: { monthly: 35, yearly: 350 },
+      platformFee: { monthly: 599, yearly: 5990 },
+      perUserFee: { monthly: 49, yearly: 490 },
       trial: "30-day free trial",
       icon: Building2,
       features: [
