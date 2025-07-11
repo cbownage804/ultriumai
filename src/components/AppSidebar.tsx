@@ -89,12 +89,19 @@ const accountItems = [
   { title: "Security", url: "/dashboard/security", icon: Shield, tooltip: "Configure security settings and two-factor authentication" },
 ];
 
+const adminItems = [
+  { title: "Platform Admin", url: "/admin", icon: Crown, tooltip: "Platform-wide administration and management" },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription } = useSubscription();
   const { toast } = useToast();
+  
+  // Check if user is admin (UltriumAI employee)
+  const isAdmin = user?.email?.endsWith('@ultriumai.com');
   
   const [openSections, setOpenSections] = useState({
     gpt: true,
@@ -470,6 +477,27 @@ export function AppSidebar() {
                   </Button>
                 </CardContent>
               </Card>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Admin Section - Only for UltriumAI employees */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administration</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild tooltip={item.tooltip}>
+                      <NavLink to={item.url} className={getNavClass}>
+                        <item.icon className="h-4 w-4 text-orange-500" />
+                        {!isCollapsed && <span className="ml-2 font-semibold text-orange-500">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}

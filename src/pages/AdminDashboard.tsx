@@ -1,189 +1,443 @@
-import { useState } from 'react';
-import { useAccountType } from '@/hooks/useAccountType';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Users, Building2, CreditCard, Bot, Database, Settings, TrendingUp } from 'lucide-react';
-import { AdminUsersManager } from '@/components/admin/AdminUsersManager';
-import { AdminMSPsManager } from '@/components/admin/AdminMSPsManager';
-import { AdminSubscriptionsManager } from '@/components/admin/AdminSubscriptionsManager';
-import { AdminGPTsManager } from '@/components/admin/AdminGPTsManager';
-import { AdminAnalytics } from '@/components/admin/AdminAnalytics';
-import { AdminNotifications } from '@/components/admin/AdminNotifications';
-import { DataExporter } from '@/components/admin/DataExporter';
-import { AuditTrailsViewer } from '@/components/admin/AuditTrailsViewer';
-import { AdminDashboardOverview } from '@/components/admin/AdminDashboardOverview';
-import BulkOperations from '@/components/admin/BulkOperations';
-import { SystemMonitoring } from '@/components/admin/SystemMonitoring';
-import { GlobalSearch } from '@/components/admin/GlobalSearch';
-import { UserActivityDashboard } from '@/components/admin/UserActivityDashboard';
-import { RevenueAnalyticsDashboard } from '@/components/admin/RevenueAnalyticsDashboard';
-import { SystemHealthMonitoring } from '@/components/admin/SystemHealthMonitoring';
-import { WorkflowAutomationManager } from '@/components/admin/WorkflowAutomationManager';
-import { MSPClientSupportManager } from '@/components/admin/MSPClientSupportManager';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Users,
+  Building2,
+  CreditCard,
+  AlertTriangle,
+  TrendingUp,
+  Activity,
+  ArrowLeft,
+  Home,
+  Shield,
+  Settings,
+  DollarSign,
+  UserCheck,
+  Clock
+} from 'lucide-react';
+
+interface AdminStats {
+  totalMSPs: number;
+  totalUsers: number;
+  activeSubscriptions: number;
+  monthlyRevenue: number;
+  pendingTickets: number;
+  systemHealth: string;
+}
+
+interface MSPData {
+  id: string;
+  company_name: string;
+  created_at: string;
+  user_email: string;
+  subscription_status: string;
+  client_count: number;
+  last_active: string;
+}
+
+interface UserData {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string;
+  account_type: string;
+  is_active: boolean;
+}
 
 const AdminDashboard = () => {
-  const { isUltriumEmployee, loading } = useAccountType();
-  const [activeTab, setActiveTab] = useState('overview');
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [stats, setStats] = useState<AdminStats>({
+    totalMSPs: 0,
+    totalUsers: 0,
+    activeSubscriptions: 0,
+    monthlyRevenue: 0,
+    pendingTickets: 0,
+    systemHealth: 'healthy'
+  });
+  const [msps, setMSPs] = useState<MSPData[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    checkAdminAccess();
+  }, []);
 
-  if (!isUltriumEmployee) {
+  const checkAdminAccess = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+
+      // Check if user is admin (UltriumAI employee)
+      const isUltriumEmployee = user.email?.endsWith('@ultriumai.com');
+      if (!isUltriumEmployee) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have admin privileges.",
+          variant: "destructive",
+        });
+        navigate('/dashboard');
+        return;
+      }
+
+      setIsAdmin(true);
+      await loadAdminData();
+    } catch (error) {
+      console.error('Admin access check failed:', error);
+      navigate('/dashboard');
+    }
+  };
+
+  const loadAdminData = async () => {
+    try {
+      setLoading(true);
+      
+      // Load MSPs with user data
+      const { data: mspData, error: mspError } = await supabase
+        .from('msps')
+        .select(`
+          id,
+          company_name,
+          created_at,
+          profiles!inner(email),
+          subscribers(subscribed, subscription_tier)
+        `);
+
+      if (mspError) throw mspError;
+
+      // Load all users
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('id, email, created_at, account_type')
+        .order('created_at', { ascending: false });
+
+      if (userError) throw userError;
+
+      // Process MSP data
+      const processedMSPs = mspData?.map(msp => ({
+        id: msp.id,
+        company_name: msp.company_name,
+        created_at: msp.created_at,
+        user_email: (msp.profiles as any)?.email || 'Unknown',
+        subscription_status: (msp.subscribers as any)?.subscribed ? 'Active' : 'Inactive',
+        client_count: 0, // TODO: Add client count query
+        last_active: new Date().toISOString() // TODO: Add real last active tracking
+      })) || [];
+
+      // Process user data
+      const processedUsers = userData?.map(user => ({
+        id: user.id,
+        email: user.email,
+        created_at: user.created_at,
+        last_sign_in_at: user.created_at, // Using created_at as fallback
+        account_type: user.account_type || 'business',
+        is_active: true // TODO: Add real active status
+      })) || [];
+
+      // Calculate stats
+      const activeSubscriptions = processedMSPs.filter(msp => msp.subscription_status === 'Active').length;
+      
+      setStats({
+        totalMSPs: processedMSPs.length,
+        totalUsers: processedUsers.length,
+        activeSubscriptions,
+        monthlyRevenue: activeSubscriptions * 79, // Estimated based on basic plan
+        pendingTickets: 0, // TODO: Add ticket count
+        systemHealth: 'healthy'
+      });
+
+      setMSPs(processedMSPs);
+      setUsers(processedUsers);
+
+    } catch (error) {
+      console.error('Failed to load admin data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load admin data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isAdmin === null || loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <Card className="max-w-md mx-auto">
-            <CardHeader className="text-center">
-              <Shield className="h-12 w-12 text-destructive mx-auto mb-4" />
-              <CardTitle>Access Denied</CardTitle>
-              <CardDescription>
-                This area is restricted to UltriumAI employees only.
-              </CardDescription>
-            </CardHeader>
-          </Card>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Activity className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading admin dashboard...</p>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-3 mb-8">
-          <Shield className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-            <p className="text-muted-foreground">UltriumAI Employee Management Portal</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <DataExporter entityType="analytics" />
-            <AdminNotifications />
-            <Badge variant="secondary">
-              <Shield className="h-3 w-3 mr-1" />
-              Admin Access
-            </Badge>
+      {/* Navigation Header */}
+      <div className="bg-muted/30 border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                className="shrink-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate('/dashboard')}
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              <span className="font-semibold">Admin Portal</span>
+            </div>
           </div>
         </div>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-12">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="search" className="flex items-center gap-2">
-              <Database className="h-4 w-4" />
-              Search
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Activity
-            </TabsTrigger>
-            <TabsTrigger value="revenue" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Revenue
-            </TabsTrigger>
-            <TabsTrigger value="health" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Health
-            </TabsTrigger>
-            <TabsTrigger value="automation" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Automation
-            </TabsTrigger>
-            <TabsTrigger value="msp-support" className="flex items-center gap-2">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <Shield className="h-8 w-8 text-primary" />
+            Platform Administration
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Manage your entire UltriumAI platform from here
+          </p>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Total MSPs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalMSPs}</div>
+              <p className="text-xs text-muted-foreground">Active partners</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Total Users
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">Platform users</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Active Subs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.activeSubscriptions}</div>
+              <p className="text-xs text-muted-foreground">Paying customers</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Monthly Revenue
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${stats.monthlyRevenue}</div>
+              <p className="text-xs text-muted-foreground">Estimated MRR</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Pending
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.pendingTickets}</div>
+              <p className="text-xs text-muted-foreground">Support tickets</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                System Health
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                <span className="text-sm font-medium">Healthy</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="msps" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="msps" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
-              MSP Support
+              MSP Partners
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Users
+              All Users
             </TabsTrigger>
-            <TabsTrigger value="subscriptions" className="flex items-center gap-2">
+            <TabsTrigger value="billing" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Billing
             </TabsTrigger>
-            <TabsTrigger value="gpts" className="flex items-center gap-2">
-              <Bot className="h-4 w-4" />
-              GPTs
-            </TabsTrigger>
-            <TabsTrigger value="bulk" className="flex items-center gap-2">
+            <TabsTrigger value="system" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              Bulk Ops
-            </TabsTrigger>
-            <TabsTrigger value="audit" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Audit
+              System
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <AdminDashboardOverview onTabChange={setActiveTab} />
+          <TabsContent value="msps" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>MSP Partners</CardTitle>
+                <CardDescription>
+                  Manage all MSP partners on your platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {msps.map((msp) => (
+                    <div key={msp.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{msp.company_name}</div>
+                        <div className="text-sm text-muted-foreground">{msp.user_email}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Created: {new Date(msp.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={msp.subscription_status === 'Active' ? 'default' : 'secondary'}>
+                          {msp.subscription_status}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          Manage
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="search">
-            <GlobalSearch />
+          <TabsContent value="users" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Platform Users</CardTitle>
+                <CardDescription>
+                  View and manage all users across the platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {users.slice(0, 20).map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{user.email}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Account Type: {user.account_type}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={user.is_active ? 'default' : 'secondary'}>
+                          {user.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="activity">
-            <UserActivityDashboard />
+          <TabsContent value="billing" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Billing Overview</CardTitle>
+                <CardDescription>
+                  Monitor subscription and billing status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Advanced billing management coming soon
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
-          <TabsContent value="revenue">
-            <RevenueAnalyticsDashboard />
-          </TabsContent>
-
-          <TabsContent value="health">
-            <SystemHealthMonitoring />
-          </TabsContent>
-
-          <TabsContent value="automation">
-            <WorkflowAutomationManager />
-          </TabsContent>
-
-          <TabsContent value="msp-support">
-            <MSPClientSupportManager />
-          </TabsContent>
-
-          <TabsContent value="users">
-            <AdminUsersManager />
-          </TabsContent>
-
-          <TabsContent value="subscriptions">
-            <AdminSubscriptionsManager />
-          </TabsContent>
-
-          <TabsContent value="gpts">
-            <AdminGPTsManager />
-          </TabsContent>
-
-          <TabsContent value="bulk">
-            <BulkOperations />
-          </TabsContent>
-
-          <TabsContent value="monitoring">
-            <SystemMonitoring />
-          </TabsContent>
-
-          <TabsContent value="audit">
-            <AuditTrailsViewer />
+          <TabsContent value="system" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>System Management</CardTitle>
+                <CardDescription>
+                  Platform configuration and monitoring
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Settings className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    System management tools coming soon
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
-
-      <Footer />
     </div>
   );
 };
