@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight, Database, Building2, Bell, Workflow, DollarSign, Globe, CloudCog } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight, Database, Building2, Bell, Workflow, DollarSign, Globe, CloudCog, Monitor } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -54,10 +54,14 @@ const managedServicesItems = [
 ];
 
 const mspItems = [
+  { title: "Real-time Events", url: "/dashboard/msp/real-time-events", icon: Activity, tooltip: "Live security event streaming and monitoring" },
+  { title: "Security Hub", url: "/dashboard/msp/security-hub", icon: Shield, tooltip: "Advanced security monitoring and compliance" },
+  { title: "Asset Management", url: "/dashboard/msp/asset-management", icon: Monitor, tooltip: "IT asset tracking and lifecycle management" },
+  { title: "Integrations Hub", url: "/dashboard/msp/integrations", icon: CloudCog, tooltip: "Connect and manage business tools" },
   { title: "Notifications", url: "/dashboard/msp/notifications", icon: Bell, tooltip: "MSP notification management and alerts" },
   { title: "Workflow Automation", url: "/dashboard/msp/workflow", icon: Workflow, tooltip: "Automate MSP workflows and processes" },
   { title: "QuickBooks Integration", url: "/dashboard/msp/quickbooks", icon: DollarSign, tooltip: "Integrate with QuickBooks for billing and accounting" },
-  { title: "API Management", url: "/dashboard/msp/api-management", icon: CloudCog, tooltip: "Manage MSP APIs and integrations" },
+  { title: "API Management", url: "/dashboard/msp/api-management", icon: Key, tooltip: "Manage MSP APIs and integrations" },
   { title: "Client Portal", url: "/dashboard/msp/client-portal", icon: Globe, tooltip: "Manage client self-service portals" },
 ];
 
