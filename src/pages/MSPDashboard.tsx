@@ -32,7 +32,8 @@ import {
   Upload,
   Image as ImageIcon,
   Trash2,
-  Package
+  Package,
+  HeadphonesIcon
 } from 'lucide-react';
 import { useMSP, MSPClient } from '@/hooks/useMSP';
 import { useToast } from '@/hooks/use-toast';
@@ -48,6 +49,7 @@ import { MSPUpsellingEngine } from '@/components/MSPUpsellingEngine';
 import { MSPChurnPrediction } from '@/components/MSPChurnPrediction';
 import { MSPCompetitiveBenchmarks } from '@/components/MSPCompetitiveBenchmarks';
 import { MSPLeadScoring } from '@/components/MSPLeadScoring';
+import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
 
 const MSPControlCenter = () => {
   const { 
@@ -807,6 +809,10 @@ const MSPControlCenter = () => {
             <TabsTrigger value="churn">Churn Prevention</TabsTrigger>
             <TabsTrigger value="benchmarks">Benchmarks</TabsTrigger>
             <TabsTrigger value="leads">Lead Scoring</TabsTrigger>
+            <TabsTrigger value="safedesk">
+              <HeadphonesIcon className="h-4 w-4 mr-2" />
+              SafeDesk
+            </TabsTrigger>
             <TabsTrigger value="safescan">SafeScan</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -1021,6 +1027,10 @@ const MSPControlCenter = () => {
 
           <TabsContent value="leads" className="space-y-4">
             <MSPLeadScoring mspId={msp?.id || ''} />
+          </TabsContent>
+
+          <TabsContent value="safedesk" className="space-y-4">
+            <HelpdeskDashboard />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
