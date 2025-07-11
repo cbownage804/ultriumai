@@ -50,17 +50,21 @@ serve(async (req) => {
       throw new Error(`ElevenLabs API error: ${response.status} - ${errorText}`);
     }
 
-    // Convert audio to base64 - process in chunks to avoid stack overflow
+    // Convert audio to base64 using a more reliable method
     const audioBuffer = await response.arrayBuffer();
-    const bytes = new Uint8Array(audioBuffer);
     
-    // Process in chunks to avoid "Maximum call stack size exceeded"
+    // Use TextDecoder and btoa for safer conversion
+    const bytes = new Uint8Array(audioBuffer);
     let binary = '';
-    const chunkSize = 32768; // 32KB chunks
+    
+    // Process in smaller chunks to avoid stack overflow
+    const chunkSize = 8192; // 8KB chunks
     for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.slice(i, i + chunkSize);
-      binary += String.fromCharCode(...chunk);
+      const end = Math.min(i + chunkSize, bytes.length);
+      const chunk = bytes.subarray(i, end);
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
     }
+    
     const base64Audio = btoa(binary);
 
     console.log('Successfully generated audio, size:', audioBuffer.byteLength);
