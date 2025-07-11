@@ -44,6 +44,7 @@ import { useUserCredits } from "@/hooks/useUserCredits";
 import { useSubscription } from "@/hooks/useSubscription";
 import { deductCredits } from "@/utils/creditUtils";
 import { CREDIT_COSTS } from "@/types/credits";
+import ultriumBotIcon from "@/assets/ultrium-bot-icon.jpg";
 
 interface Message {
   id: string;
@@ -755,10 +756,11 @@ I'm ready to help with your ${getSourceConfig(activeTab).label} needs.`,
                       {message.role === 'user' ? (
                         <User className="h-4 w-4" />
                       ) : (
-                        (() => {
-                          const config = getSourceConfig(message.metadata?.source || activeTab);
-                          return <config.icon className={`h-4 w-4 ${config.color}`} />;
-                        })()
+                        <img 
+                          src={ultriumBotIcon} 
+                          alt="UltriumGPT Bot" 
+                          className="h-6 w-6 rounded-full object-cover"
+                        />
                       )}
                     </div>
                     
@@ -797,10 +799,12 @@ I'm ready to help with your ${getSourceConfig(activeTab).label} needs.`,
                 
                 {isLoading && (
                   <div className="flex gap-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      getSourceConfig(activeTab).bgColor
-                    }`}>
-                      <Loader2 className={`h-4 w-4 animate-spin ${getSourceConfig(activeTab).color}`} />
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-muted">
+                      <img 
+                        src={ultriumBotIcon} 
+                        alt="UltriumGPT Bot" 
+                        className="h-6 w-6 rounded-full object-cover opacity-50"
+                      />
                     </div>
                     <div className="flex-1 max-w-[85%]">
                       <div className="bg-muted rounded-lg p-3">
