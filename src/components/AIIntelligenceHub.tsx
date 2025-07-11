@@ -524,7 +524,7 @@ export function AIIntelligenceHub() {
                         <div key={framework}>
                           <div className="flex justify-between text-sm">
                             <span>{framework.toUpperCase()}</span>
-                            <span>{score}%</span>
+                            <span>{score as number}%</span>
                           </div>
                           <Progress value={score as number} className="h-2" />
                         </div>
