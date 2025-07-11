@@ -235,7 +235,7 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
           message: content,
           model: 'gpt-4o-mini',
           context,
-          systemPrompt: 'You are a helpful AI assistant. Be concise and direct in your responses. Provide brief, clear answers unless the user specifically asks for detailed explanations. If more detail is needed, the user can ask follow-up questions.'
+          systemPrompt: `You are UltriumAI's intelligent assistant. You help users with cybersecurity, MSP operations, helpdesk management, and business technology questions. Be concise and direct in your responses. Provide brief, clear answers unless the user specifically asks for detailed explanations. You have access to current information and can help with practical solutions. If you need more context about a specific situation, ask targeted follow-up questions.`
         }
       });
 
