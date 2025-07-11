@@ -86,20 +86,28 @@ export const MSPClientEmailConfig = () => {
 
       if (mspError) throw mspError;
 
-      const { data, error } = await supabase
+      // Fetch email configs
+      const { data: configsData, error: configsError } = await supabase
         .from('client_email_configs')
-        .select(`
-          *,
-          msp_clients!inner(company_name, msp_id)
-        `)
-        .eq('msp_clients.msp_id', mspData.id)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (configsError) throw configsError;
 
-      const formattedConfigs = (data || []).map(config => ({
+      // Fetch MSP clients to get company names
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('msp_clients')
+        .select('id, company_name')
+        .eq('msp_id', mspData.id);
+
+      if (clientsError) throw clientsError;
+
+      // Create a map of client_id to company_name
+      const clientMap = new Map(clientsData?.map(client => [client.id, client.company_name]) || []);
+
+      const formattedConfigs = (configsData || []).map(config => ({
         ...config,
-        client_name: (config as any).msp_clients?.company_name
+        client_name: clientMap.get(config.client_id) || 'Unknown Client'
       })) as ClientEmailConfig[];
 
       setEmailConfigs(formattedConfigs);
