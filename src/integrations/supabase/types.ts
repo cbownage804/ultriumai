@@ -3719,10 +3719,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_msp_clients_organization"
+            foreignKeyName: "fk_msp_clients_msp"
             columns: ["msp_id"]
             isOneToOne: false
-            referencedRelation: "msp_organizations"
+            referencedRelation: "msps"
             referencedColumns: ["id"]
           },
           {
