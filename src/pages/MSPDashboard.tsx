@@ -37,6 +37,11 @@ import { MSPRevenueOptimizer } from '@/components/MSPRevenueOptimizer';
 import { MSPClientRiskScorecard } from '@/components/MSPClientRiskScorecard';
 import { MSPROICalculator } from '@/components/MSPROICalculator';
 import { MSPExecutiveBriefing } from '@/components/MSPExecutiveBriefing';
+import { MSPProfitAnalytics } from '@/components/MSPProfitAnalytics';
+import { MSPUpsellingEngine } from '@/components/MSPUpsellingEngine';
+import { MSPChurnPrediction } from '@/components/MSPChurnPrediction';
+import { MSPCompetitiveBenchmarks } from '@/components/MSPCompetitiveBenchmarks';
+import { MSPLeadScoring } from '@/components/MSPLeadScoring';
 
 const MSPControlCenter = () => {
   const { 
@@ -617,6 +622,11 @@ const MSPControlCenter = () => {
             <TabsTrigger value="scorecards">Risk Scorecards</TabsTrigger>
             <TabsTrigger value="roi">ROI Calculator</TabsTrigger>
             <TabsTrigger value="reports">Executive Reports</TabsTrigger>
+            <TabsTrigger value="profit-analytics">Profit Analytics</TabsTrigger>
+            <TabsTrigger value="upselling">Upselling Engine</TabsTrigger>
+            <TabsTrigger value="churn">Churn Prevention</TabsTrigger>
+            <TabsTrigger value="benchmarks">Benchmarks</TabsTrigger>
+            <TabsTrigger value="leads">Lead Scoring</TabsTrigger>
             <TabsTrigger value="safescan">SafeScan</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
@@ -811,6 +821,26 @@ const MSPControlCenter = () => {
 
           <TabsContent value="reports" className="space-y-4">
             <MSPExecutiveBriefing />
+          </TabsContent>
+
+          <TabsContent value="profit-analytics" className="space-y-4">
+            <MSPProfitAnalytics mspId={msp?.id || ''} />
+          </TabsContent>
+
+          <TabsContent value="upselling" className="space-y-4">
+            <MSPUpsellingEngine mspId={msp?.id || ''} />
+          </TabsContent>
+
+          <TabsContent value="churn" className="space-y-4">
+            <MSPChurnPrediction mspId={msp?.id || ''} />
+          </TabsContent>
+
+          <TabsContent value="benchmarks" className="space-y-4">
+            <MSPCompetitiveBenchmarks mspId={msp?.id || ''} />
+          </TabsContent>
+
+          <TabsContent value="leads" className="space-y-4">
+            <MSPLeadScoring mspId={msp?.id || ''} />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
