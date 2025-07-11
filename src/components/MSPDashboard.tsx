@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -42,7 +44,8 @@ import {
   MessageSquare,
   Database,
   BarChart3,
-  Mail
+  Mail,
+  Save
 } from "lucide-react";
 
 interface MSPClient {
@@ -1516,7 +1519,101 @@ export const MSPDashboard = () => {
         </TabsContent>
 
         <TabsContent value="email-settings" className="mt-6">
-          <MSPClientEmailConfig />
+          <div className="p-4">
+            <h3 className="text-lg font-semibold mb-4">Email Settings</h3>
+            <p className="text-muted-foreground mb-4">
+              Configure email addresses for automatic ticket creation from client emails.
+            </p>
+            
+            <div className="space-y-6">
+              {/* Basic email configuration form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="client-select">Select Client</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a client..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="demo1">ACME Corporation</SelectItem>
+                      <SelectItem value="demo2">TechCorp Solutions</SelectItem>
+                      <SelectItem value="demo3">Global Industries</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="incoming_email">Incoming Email Address</Label>
+                  <Input
+                    id="incoming_email"
+                    placeholder="client-tickets@safedesk.io"
+                    type="email"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Email address where clients send emails to create tickets
+                  </p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="outgoing_email">Outgoing Reply Email</Label>
+                  <Input
+                    id="outgoing_email"
+                    placeholder="support@clientdomain.com"
+                    type="email"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Email address that ticket replies come FROM
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="from_name">From Name</Label>
+                  <Input
+                    id="from_name"
+                    placeholder="ACME Corp Support Team"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="signature">Email Signature</Label>
+                <Textarea
+                  id="signature"
+                  placeholder="Best regards,&#10;ACME Corp Support Team&#10;Phone: (555) 123-4567&#10;https://support.acmecorp.com"
+                  rows={4}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="auto_response">Auto-Response Template</Label>
+                <Textarea
+                  id="auto_response"
+                  placeholder="Thank you for contacting us. Your ticket has been created and we will respond shortly."
+                  rows={3}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Switch id="auto_response_enabled" />
+                  <Label htmlFor="auto_response_enabled">Enable Auto-Response</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch id="is_active" />
+                  <Label htmlFor="is_active">Active</Label>
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Configuration
+                </Button>
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
