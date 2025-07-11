@@ -45,7 +45,10 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [selectedVoice, setSelectedVoice] = useState('EXAVITQu4vr4xnSDxMaL'); // Default to Sarah
+  const [selectedVoice, setSelectedVoice] = useState(() => {
+    // Load saved voice from localStorage or default to Sarah
+    return localStorage.getItem('ai-chat-voice') || 'EXAVITQu4vr4xnSDxMaL';
+  });
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -271,7 +274,10 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
             <Badge variant="outline" className={contextBadgeColor[context]}>
               {context.toUpperCase()}
             </Badge>
-            <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+            <Select value={selectedVoice} onValueChange={(value) => {
+              setSelectedVoice(value);
+              localStorage.setItem('ai-chat-voice', value);
+            }}>
               <SelectTrigger className="w-32 h-8">
                 <SelectValue>
                   {AVAILABLE_VOICES.find(v => v.id === selectedVoice)?.name || 'Select Voice'}
