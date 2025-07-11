@@ -3362,6 +3362,65 @@ export type Database = {
         }
         Relationships: []
       }
+      msp_notifications: {
+        Row: {
+          action_url: string | null
+          client_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_dismissed: boolean | null
+          is_read: boolean | null
+          message: string
+          metadata: Json | null
+          msp_id: string
+          notification_type: string
+          priority: string
+          title: string
+          triggered_by: string | null
+        }
+        Insert: {
+          action_url?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message: string
+          metadata?: Json | null
+          msp_id: string
+          notification_type: string
+          priority?: string
+          title: string
+          triggered_by?: string | null
+        }
+        Update: {
+          action_url?: string | null
+          client_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_dismissed?: boolean | null
+          is_read?: boolean | null
+          message?: string
+          metadata?: Json | null
+          msp_id?: string
+          notification_type?: string
+          priority?: string
+          title?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       msp_organizations: {
         Row: {
           address: string | null
@@ -3467,6 +3526,54 @@ export type Database = {
           profit_margin?: number
           revenue?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      msp_quickbooks_config: {
+        Row: {
+          access_token_encrypted: string | null
+          company_id: string
+          created_at: string | null
+          id: string
+          last_sync_at: string | null
+          msp_id: string
+          refresh_token_encrypted: string | null
+          sync_enabled: boolean | null
+          sync_frequency: string | null
+          sync_settings: Json | null
+          token_expires_at: string | null
+          updated_at: string | null
+          webhook_endpoint: string | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          company_id: string
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          msp_id: string
+          refresh_token_encrypted?: string | null
+          sync_enabled?: boolean | null
+          sync_frequency?: string | null
+          sync_settings?: Json | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          webhook_endpoint?: string | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          last_sync_at?: string | null
+          msp_id?: string
+          refresh_token_encrypted?: string | null
+          sync_enabled?: boolean | null
+          sync_frequency?: string | null
+          sync_settings?: Json | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          webhook_endpoint?: string | null
         }
         Relationships: []
       }
@@ -3712,6 +3819,105 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      msp_workflow_executions: {
+        Row: {
+          actions_executed: Json | null
+          client_id: string | null
+          completed_at: string | null
+          error_message: string | null
+          execution_status: string
+          id: string
+          metadata: Json | null
+          started_at: string | null
+          trigger_data: Json | null
+          workflow_id: string
+        }
+        Insert: {
+          actions_executed?: Json | null
+          client_id?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          metadata?: Json | null
+          started_at?: string | null
+          trigger_data?: Json | null
+          workflow_id: string
+        }
+        Update: {
+          actions_executed?: Json | null
+          client_id?: string | null
+          completed_at?: string | null
+          error_message?: string | null
+          execution_status?: string
+          id?: string
+          metadata?: Json | null
+          started_at?: string | null
+          trigger_data?: Json | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_workflow_executions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msp_workflow_executions_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "msp_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msp_workflows: {
+        Row: {
+          actions: Json
+          created_at: string | null
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          msp_id: string
+          name: string
+          trigger_conditions: Json
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          actions?: Json
+          created_at?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          msp_id: string
+          name: string
+          trigger_conditions?: Json
+          trigger_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          actions?: Json
+          created_at?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          msp_id?: string
+          name?: string
+          trigger_conditions?: Json
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       msps: {
         Row: {
