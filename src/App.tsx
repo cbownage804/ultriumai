@@ -63,6 +63,7 @@ import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
 import MSPControlCenter from '@/pages/MSPDashboard';
+import MSPSecurityDashboard from '@/pages/MSPSecurityDashboard';
 import MSPDashboardPage from '@/pages/MSPDashboardPage';
 import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
 import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
@@ -154,6 +155,11 @@ function AppRouter() {
           <Route path="/msp-control-center" element={
             <ProtectedRoute>
               <MSPControlCenter />
+            </ProtectedRoute>
+          } />
+          <Route path="/msp-security-dashboard" element={
+            <ProtectedRoute>
+              <MSPSecurityDashboard />
             </ProtectedRoute>
           } />
           <Route path="/msp-dashboard" element={
