@@ -28,6 +28,8 @@ import {
   FileText,
   Activity,
   Clock,
+  ArrowLeft,
+  Home,
   XCircle,
   Upload,
   Image as ImageIcon,
@@ -386,6 +388,29 @@ const MSPControlCenter = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+      {/* Navigation Header */}
+      <div className="bg-muted/30 border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/dashboard')}
+            >
+              <Home className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+      
       <div className="space-y-8 p-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
