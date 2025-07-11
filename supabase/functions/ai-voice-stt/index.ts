@@ -42,11 +42,14 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json();
+    const { audio, mimeType } = await req.json();
     
     if (!audio) {
       throw new Error('No audio data provided');
     }
+
+    console.log('Received audio data, length:', audio.length);
+    console.log('MIME type:', mimeType || 'not provided');
 
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -55,12 +58,37 @@ serve(async (req) => {
 
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(audio);
+    console.log('Processed binary audio, size:', binaryAudio.length);
+    
+    // Determine file extension and MIME type
+    let fileExtension = 'webm';
+    let contentType = 'audio/webm';
+    
+    if (mimeType) {
+      if (mimeType.includes('webm')) {
+        fileExtension = 'webm';
+        contentType = 'audio/webm';
+      } else if (mimeType.includes('mp4')) {
+        fileExtension = 'mp4';
+        contentType = 'audio/mp4';
+      } else if (mimeType.includes('ogg')) {
+        fileExtension = 'ogg';
+        contentType = 'audio/ogg';
+      } else if (mimeType.includes('wav')) {
+        fileExtension = 'wav';
+        contentType = 'audio/wav';
+      }
+    }
+    
+    console.log('Using file extension:', fileExtension, 'and content type:', contentType);
     
     // Prepare form data
     const formData = new FormData();
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    const blob = new Blob([binaryAudio], { type: contentType });
+    formData.append('file', blob, `audio.${fileExtension}`);
     formData.append('model', 'whisper-1');
+
+    console.log('Sending to OpenAI Whisper API...');
 
     // Send to OpenAI Whisper
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -71,15 +99,19 @@ serve(async (req) => {
       body: formData,
     });
 
+    console.log('OpenAI response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OpenAI API error: ${errorText}`);
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
     }
 
     const result = await response.json();
+    console.log('OpenAI response:', result);
 
     return new Response(
-      JSON.stringify({ text: result.text }),
+      JSON.stringify({ text: result.text || '' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

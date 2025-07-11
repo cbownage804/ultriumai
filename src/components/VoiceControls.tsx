@@ -94,7 +94,7 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
         const audioBlob = new Blob(chunksRef.current, { type: mimeType });
         console.log('Audio blob created:', audioBlob.size, 'bytes, type:', audioBlob.type);
         
-        await processAudio(audioBlob);
+        await processAudio(audioBlob, mimeType);
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => {
@@ -156,9 +156,10 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
     }
   };
 
-  const processAudio = async (audioBlob: Blob) => {
+  const processAudio = async (audioBlob: Blob, mimeType: string) => {
     try {
       console.log('Processing audio blob:', audioBlob.size, 'bytes, type:', audioBlob.type);
+      console.log('MIME type to send:', mimeType);
       
       // Convert blob to base64
       const arrayBuffer = await audioBlob.arrayBuffer();
@@ -170,7 +171,10 @@ export const VoiceControls: React.FC<VoiceControlsProps> = ({
       // Send to speech-to-text function
       console.log('Sending to speech-to-text function...');
       const { data, error } = await supabase.functions.invoke('ai-voice-stt', {
-        body: { audio: base64Audio }
+        body: { 
+          audio: base64Audio,
+          mimeType: mimeType
+        }
       });
 
       if (error) {
