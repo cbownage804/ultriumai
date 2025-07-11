@@ -79,7 +79,9 @@ import { SafeShieldDashboard } from '@/components/shield/SafeShieldDashboard';
 import AdminDashboard from '@/pages/AdminDashboard';
 import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
+import AIStudio from '@/pages/AIStudio';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
+import { AuthProvider } from '@/hooks/useAuth';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
@@ -319,6 +321,11 @@ function AppRouter() {
             <SecurityAI />
           </ProtectedRoute>
         } />
+        <Route path="/ai-studio" element={
+          <ProtectedRoute>
+            <AIStudio />
+          </ProtectedRoute>
+        } />
         
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -363,15 +370,17 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <NotificationProvider>
-        <VoiceAssistantProvider>
-          <Router>
-            <AppRouter />
-            
-            <Toaster />
-          </Router>
-        </VoiceAssistantProvider>
-      </NotificationProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <VoiceAssistantProvider>
+            <Router>
+              <AppRouter />
+              
+              <Toaster />
+            </Router>
+          </VoiceAssistantProvider>
+        </NotificationProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
