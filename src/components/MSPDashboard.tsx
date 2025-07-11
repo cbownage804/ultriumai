@@ -93,7 +93,7 @@ interface MSPMetrics {
 }
 
 export const MSPDashboard = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<MSPClient | null>(null);
   const [metrics, setMetrics] = useState<MSPMetrics>({
@@ -436,6 +436,21 @@ export const MSPDashboard = () => {
     }
   };
 
+  // Show loading state for auth
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Redirect to auth if not authenticated
+  if (!user) {
+    window.location.href = '/auth';
+    return null;
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -447,20 +462,25 @@ export const MSPDashboard = () => {
       return (
     <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
       {/* Welcome Section */}
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-          Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Manage all your MSP clients with AI-powered tools and automation
-        </p>
-        <div className="text-sm text-muted-foreground">
-          {metrics.totalClients > 0 ? (
-            <span className="text-success">Managing {metrics.totalClients} active clients • ${metrics.monthlyRevenue.toLocaleString()} MRR</span>
-          ) : (
-            <span className="text-muted-foreground">Ready to onboard your first client</span>
-          )}
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Manage all your MSP clients with AI-powered tools and automation
+          </p>
+          <div className="text-sm text-muted-foreground">
+            {metrics.totalClients > 0 ? (
+              <span className="text-success">Managing {metrics.totalClients} active clients • ${metrics.monthlyRevenue.toLocaleString()} MRR</span>
+            ) : (
+              <span className="text-muted-foreground">Ready to onboard your first client</span>
+            )}
+          </div>
         </div>
+        <Button variant="outline" onClick={signOut}>
+          Sign Out
+        </Button>
       </div>
 
       {/* UltriumGPT Feature Highlight */}
