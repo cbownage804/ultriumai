@@ -145,7 +145,7 @@ const TicketingPage = () => {
             <div className="flex items-center justify-center gap-3 mb-6">
               <MessageSquare className="h-12 w-12 text-primary" />
               <h1 className="text-5xl font-bold text-gradient">
-                Ultrium Helpdesk
+                SafeDesk
               </h1>
             </div>
             <p className="text-2xl text-muted-foreground max-w-3xl mx-auto">
@@ -218,7 +218,7 @@ const TicketingPage = () => {
                 <div className="text-center space-y-6">
                   <h2 className="text-3xl font-bold">Modern Support Operations</h2>
                   <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-                    Ultrium Helpdesk combines AI automation with human expertise to deliver exceptional 
+                    SafeDesk combines AI automation with human expertise to deliver exceptional 
                     support experiences while reducing operational costs and improving efficiency.
                   </p>
                 </div>
@@ -426,7 +426,7 @@ const TicketingPage = () => {
           <div className="max-w-4xl mx-auto text-center px-4 space-y-8">
             <h2 className="text-4xl font-bold">Ready to Transform Your Support?</h2>
             <p className="text-xl text-muted-foreground">
-              Join thousands of teams who've revolutionized their support operations with Ultrium Helpdesk
+              Join thousands of teams who've revolutionized their support operations with SafeDesk
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button size="lg" className="text-lg px-8 py-3" variant="hero">

@@ -141,7 +141,7 @@ export const MSPDashboard = () => {
       color: "bg-red-500",
     },
     {
-      title: "AI Helpdesk",
+      title: "SafeDesk",
       description: "Manage support tickets",
       icon: MessageSquare,
       action: () => window.open("/dashboard/helpdesk", "_blank"),
@@ -934,7 +934,7 @@ export const MSPDashboard = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-semibold">AI-Powered Helpdesk</h3>
+                <h3 className="text-2xl font-semibold">SafeDesk - AI-Powered Ticketing</h3>
                 <p className="text-muted-foreground">Co-managed support with AI chat assistants</p>
               </div>
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">

@@ -108,7 +108,7 @@ const testimonials: Testimonial[] = [
     company: 'ReliableTech MSP',
     companySize: '120+ employees',
     industry: 'Managed Services',
-    quote: "The ticketing system has revolutionized our helpdesk operations. AI-powered automation handles 60% of routine tickets, freeing our team to focus on complex issues.",
+    quote: "SafeDesk has revolutionized our ticketing operations. AI-powered automation handles 60% of routine tickets, freeing our team to focus on complex issues.",
     rating: 5,
     results: [
       { metric: 'Ticket Automation', value: '60%', improvement: 'handled by AI' },

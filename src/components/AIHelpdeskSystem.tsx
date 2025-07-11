@@ -247,7 +247,7 @@ export const AIHelpdeskSystem = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bot className="w-5 h-5" />
-            AI-Powered Helpdesk System
+            SafeDesk - AI-Powered Ticketing System
           </CardTitle>
           <CardDescription>
             Co-managed support with AI chat assistants
@@ -260,7 +260,7 @@ export const AIHelpdeskSystem = () => {
                 <Bot className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-muted-foreground">No support tickets found</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  AI-powered helpdesk is ready to assist your clients
+                  SafeDesk AI is ready to assist your clients
                 </p>
               </div>
             ) : (

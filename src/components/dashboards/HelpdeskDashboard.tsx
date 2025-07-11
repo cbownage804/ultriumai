@@ -115,7 +115,7 @@ export const HelpdeskDashboard = () => {
         <div>
           <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
             <HeadphonesIcon className="h-10 w-10 text-primary" />
-            Helpdesk System
+            SafeDesk System
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
             Support ticket management and customer assistance
@@ -323,7 +323,7 @@ export const HelpdeskDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="h-5 w-5 text-primary" />
-                  Helpdesk Configuration
+                  SafeDesk Configuration
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

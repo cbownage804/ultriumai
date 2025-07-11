@@ -75,7 +75,7 @@ const WhoWeHelp = () => {
     {
       icon: Zap,
       title: "Tangible Results, Fast",
-      description: "From reducing helpdesk volume to catching phishing links before they're clicked, our GPTs deliver real ROI—not just a shiny interface."
+      description: "From reducing SafeDesk volume to catching phishing links before they're clicked, our GPTs deliver real ROI—not just a shiny interface."
     },
     {
       icon: CheckCircle,

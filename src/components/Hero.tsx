@@ -119,7 +119,7 @@ const Hero = () => {
                       <Users className="h-6 w-6 text-green-500" />
                     </div>
                     <h4 className="font-bold text-foreground">MSP Platform</h4>
-                    <p className="text-sm text-muted-foreground">Client management, RMM integration, SIEM & helpdesk automation</p>
+                    <p className="text-sm text-muted-foreground">Client management, RMM integration, SIEM & SafeDesk automation</p>
                     <div className="text-xs text-green-500 font-medium">✓ Co-Management</div>
                   </div>
                 </div>

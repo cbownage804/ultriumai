@@ -139,7 +139,7 @@ export const TicketingDemo = () => {
       <div className="text-center space-y-2 mb-6">
         <div className="flex items-center justify-center gap-2">
           <Ticket className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Ultrium Helpdesk Demo</h1>
+          <h1 className="text-3xl font-bold">SafeDesk Demo</h1>
         </div>
         <p className="text-muted-foreground max-w-2xl mx-auto">
           Experience comprehensive ticket management and helpdesk automation for IT teams and MSPs
@@ -465,7 +465,7 @@ export const TicketingDemo = () => {
       <Alert>
         <Ticket className="h-4 w-4" />
         <AlertDescription>
-          This is a demonstration of Ultrium Helpdesk capabilities. In production, you would see real-time tickets and full workflow automation.
+          This is a demonstration of SafeDesk capabilities. In production, you would see real-time tickets and full workflow automation.
         </AlertDescription>
       </Alert>
     </div>

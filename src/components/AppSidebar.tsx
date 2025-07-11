@@ -50,7 +50,7 @@ const safeSuiteItems = [
 
 const managedServicesItems = [
   { title: "RMM", url: "/dashboard/rmm", icon: Server, tooltip: "Remote Monitoring and Management" },
-  { title: "Helpdesk", url: "/dashboard/helpdesk", icon: HeadphonesIcon, tooltip: "AI-powered helpdesk and ticketing system" },
+  { title: "SafeDesk", url: "/dashboard/helpdesk", icon: HeadphonesIcon, tooltip: "AI-powered ticketing and support system" },
 ];
 
 const mspItems = [

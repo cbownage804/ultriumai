@@ -136,7 +136,7 @@ I'm your comprehensive AI companion that adapts to your needs:
 🔧 **IT Support & RMM** - System monitoring, device management, troubleshooting
 🛡️ **Security Analysis** - Threat detection, vulnerability assessment, incident response  
 📧 **SafeScan** - Email, URL, and document security scanning
-🎫 **Helpdesk** - Ticket management, customer support automation
+🎫 **SafeDesk** - Ticket management, customer support automation
 ⚡ **UltriumGPT** - General assistance, reports, web search, image generation
 
 💡 **Pro Tips:**
@@ -427,7 +427,7 @@ Ask me anything to get started!`,
       },
       helpdesk: {
         icon: HeadphonesIcon,
-        label: "Helpdesk AI",
+        label: "SafeDesk AI",
         color: "text-green-600",
         bgColor: "bg-green-50", 
         function: "ai-helpdesk-assistant"

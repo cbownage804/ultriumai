@@ -82,7 +82,7 @@ const MSPPricingCalculator = () => {
     },
     {
       id: 'ticketing',
-      name: 'Ultrium Helpdesk',
+      name: 'SafeDesk',
       chargePrice: 40,
       costPrice: 15,
       unit: 'user/month',

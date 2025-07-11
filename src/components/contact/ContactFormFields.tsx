@@ -147,7 +147,7 @@ export const ContactFormFields = ({
             <SelectValue placeholder="Select project type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="helpdesk">Helpdesk/Support GPT</SelectItem>
+            <SelectItem value="helpdesk">SafeDesk/Support GPT</SelectItem>
             <SelectItem value="cybersecurity">Cybersecurity Copilot</SelectItem>
             <SelectItem value="client-facing">Client-Facing Bot</SelectItem>
             <SelectItem value="automation">Workflow Automation</SelectItem>

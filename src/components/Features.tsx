@@ -39,8 +39,8 @@ const Features = () => {
     },
     {
       icon: Settings,
-      title: "RMM & Helpdesk Integration",
-      description: "Seamless integration with existing RMM platforms, PSA systems, and helpdesk automation workflows."
+      title: "RMM & SafeDesk Integration",
+      description: "Seamless integration with existing RMM platforms, PSA systems, and SafeDesk automation workflows."
     },
     {
       icon: BarChart3,
