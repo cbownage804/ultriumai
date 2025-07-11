@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Volume2, VolumeX } from 'lucide-react';
 import VoiceControls from './VoiceControls';
 
 interface Message {
@@ -30,6 +30,8 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [autoSpeak, setAutoSpeak] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +41,42 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
 
   const handleVoiceTranscription = (text: string) => {
     setInput(text);
+  };
+
+  const speakText = async (text: string) => {
+    if (isPlaying) return;
+
+    try {
+      setIsPlaying(true);
+
+      const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
+        body: { 
+          text, 
+          voice: 'EXAVITQu4vr4xnSDxMaL' // Sarah voice
+        }
+      });
+
+      if (error) throw error;
+
+      const audioData = `data:audio/mp3;base64,${data.audioContent}`;
+      const audio = new Audio(audioData);
+      
+      audio.onended = () => setIsPlaying(false);
+      audio.onerror = () => {
+        setIsPlaying(false);
+        throw new Error('Audio playback failed');
+      };
+
+      await audio.play();
+    } catch (error) {
+      console.error('Error with text-to-speech:', error);
+      setIsPlaying(false);
+      toast({
+        title: "Text-to-Speech Failed",
+        description: "Could not generate speech. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const sendMessage = async (messageContent?: string) => {
@@ -77,6 +115,11 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
 
       setMessages(prev => [...prev, assistantMessage]);
 
+      // Auto-speak the AI response if enabled
+      if (autoSpeak) {
+        await speakText(assistantMessage.content);
+      }
+
     } catch (error) {
       console.error('Chat error:', error);
       toast({
@@ -111,9 +154,23 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
             <Bot className="h-5 w-5" />
             {title}
           </CardTitle>
-          <Badge variant="outline" className={contextBadgeColor[context]}>
-            {context.toUpperCase()}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={contextBadgeColor[context]}>
+              {context.toUpperCase()}
+            </Badge>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setAutoSpeak(!autoSpeak)}
+              className="h-8 px-2"
+            >
+              {autoSpeak ? (
+                <Volume2 className="h-4 w-4 text-green-600" />
+              ) : (
+                <VolumeX className="h-4 w-4 text-muted-foreground" />
+              )}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       
