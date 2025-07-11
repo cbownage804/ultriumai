@@ -852,7 +852,7 @@ const MSPControlCenter = () => {
                   </div>
                   <Button className="w-full">
                     <Code className="h-4 w-4 mr-2" />
-                    Get Embed Code
+                    API Integration
                   </Button>
                 </CardContent>
               </Card>
@@ -874,7 +874,7 @@ const MSPControlCenter = () => {
                   </div>
                   <Button className="w-full">
                     <Code className="h-4 w-4 mr-2" />
-                    Integration Guide
+                    API Integration
                   </Button>
                 </CardContent>
               </Card>
@@ -896,7 +896,7 @@ const MSPControlCenter = () => {
                   </div>
                   <Button className="w-full">
                     <Code className="h-4 w-4 mr-2" />
-                    Get Embed Code
+                    API Integration
                   </Button>
                 </CardContent>
               </Card>
