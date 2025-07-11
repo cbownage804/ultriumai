@@ -66,7 +66,7 @@ export const AIVoiceInterface = () => {
   const speakText = async (text: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('elevenlabs-tts', {
-        body: { text, voice: '9BWtsMINqrJLrRacOk9x' } // Aria voice
+        body: { text, voice: 'CwhRBWXzGAHq8TQ4Fs17' } // Roger voice
       });
 
       if (error) throw error;
