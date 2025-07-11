@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,10 +28,15 @@ import {
   FileText,
   Activity,
   Clock,
-  XCircle
+  XCircle,
+  Upload,
+  Image as ImageIcon,
+  Trash2
 } from 'lucide-react';
 import { useMSP, MSPClient } from '@/hooks/useMSP';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import SafeDocScanner from '@/components/SafeDocScanner';
 import { MSPRevenueOptimizer } from '@/components/MSPRevenueOptimizer';
 import { MSPClientRiskScorecard } from '@/components/MSPClientRiskScorecard';
@@ -55,13 +60,18 @@ const MSPControlCenter = () => {
   } = useMSP();
   
   const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const handleNavigation = (path: string) => {
     navigate(path);
   };
+  
   const [showCreateMSP, setShowCreateMSP] = useState(false);
   const [showCreateClient, setShowCreateClient] = useState(false);
   const [showEmbedCode, setShowEmbedCode] = useState<MSPClient | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   
   const [mspForm, setMspForm] = useState({
     company_name: '',
@@ -81,6 +91,116 @@ const MSPControlCenter = () => {
     max_users: 5,
     monthly_rate: 15
   });
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user || !msp) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file (PNG, JPG, etc.)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      // Upload to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/logo.${fileExt}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('msp-logos')
+        .upload(fileName, file, { 
+          upsert: true 
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('msp-logos')
+        .getPublicUrl(fileName);
+
+      // Update MSP record with logo URL
+      const { error: updateError } = await supabase
+        .from('msps')
+        .update({ logo_url: publicUrl })
+        .eq('id', msp.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Logo uploaded successfully",
+        description: "Your MSP logo has been updated",
+      });
+
+      // Refresh the page to show the new logo
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: "Upload failed",
+        description: "There was an error uploading your logo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!user || !msp) return;
+
+    try {
+      // Remove from storage
+      if (msp.logo_url) {
+        const fileName = `${user.id}/logo.${msp.logo_url.split('.').pop()}`;
+        await supabase.storage
+          .from('msp-logos')
+          .remove([fileName]);
+      }
+
+      // Update MSP record
+      const { error } = await supabase
+        .from('msps')
+        .update({ logo_url: null })
+        .eq('id', msp.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Logo removed",
+        description: "Your MSP logo has been removed",
+      });
+
+      // Refresh the page
+      window.location.reload();
+
+    } catch (error) {
+      console.error('Error removing logo:', error);
+      toast({
+        title: "Remove failed",
+        description: "There was an error removing your logo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCreateMSP = async () => {
     const result = await createMSP(mspForm);
@@ -263,7 +383,15 @@ const MSPControlCenter = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent flex items-center gap-3">
-              <Crown className="h-10 w-10 text-primary" />
+              {msp.logo_url ? (
+                <img 
+                  src={msp.logo_url} 
+                  alt={`${msp.company_name} logo`}
+                  className="h-10 w-10 rounded-lg object-cover border border-border"
+                />
+              ) : (
+                <Crown className="h-10 w-10 text-primary" />
+              )}
               {msp.company_name.replace(/\s*LLC\s*$/i, '')}
             </h1>
             <p className="text-xl text-muted-foreground">
@@ -360,6 +488,74 @@ const MSPControlCenter = () => {
                         />
                       </div>
                     </div>
+                  </div>
+
+                  {/* Logo Upload Section */}
+                  <div className="pt-4 border-t">
+                    <Label className="text-base font-medium">Company Logo</Label>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Upload your company logo to replace the crown icon (max 5MB)
+                    </p>
+                    
+                    {msp.logo_url ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4 p-4 border rounded-lg">
+                          <img 
+                            src={msp.logo_url} 
+                            alt="Current logo"
+                            className="h-12 w-12 rounded-lg object-cover border border-border"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Current Logo</p>
+                            <p className="text-xs text-muted-foreground">Click below to update or remove</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingLogo}
+                            className="flex-1"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {uploadingLogo ? 'Uploading...' : 'Update Logo'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={handleRemoveLogo}
+                            className="px-6"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-center p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                          <div className="text-center">
+                            <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-sm text-muted-foreground">No logo uploaded</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingLogo}
+                          className="w-full"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                        </Button>
+                      </div>
+                    )}
+                    
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
                   </div>
 
                   <div className="pt-4 border-t">
