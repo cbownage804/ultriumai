@@ -33,6 +33,10 @@ import {
 import { useMSP, MSPClient } from '@/hooks/useMSP';
 import { useToast } from '@/hooks/use-toast';
 import SafeDocScanner from '@/components/SafeDocScanner';
+import { MSPRevenueOptimizer } from '@/components/MSPRevenueOptimizer';
+import { MSPClientRiskScorecard } from '@/components/MSPClientRiskScorecard';
+import { MSPROICalculator } from '@/components/MSPROICalculator';
+import { MSPExecutiveBriefing } from '@/components/MSPExecutiveBriefing';
 
 const MSPControlCenter = () => {
   const { 
@@ -609,10 +613,12 @@ const MSPControlCenter = () => {
         <Tabs defaultValue="clients" className="space-y-4">
           <TabsList>
             <TabsTrigger value="clients">Clients</TabsTrigger>
+            <TabsTrigger value="revenue">Revenue Optimizer</TabsTrigger>
+            <TabsTrigger value="scorecards">Risk Scorecards</TabsTrigger>
+            <TabsTrigger value="roi">ROI Calculator</TabsTrigger>
+            <TabsTrigger value="reports">Executive Reports</TabsTrigger>
             <TabsTrigger value="safescan">SafeScan</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="billing">Billing</TabsTrigger>
           </TabsList>
 
           <TabsContent value="clients" className="space-y-6">
@@ -791,6 +797,22 @@ const MSPControlCenter = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="revenue" className="space-y-4">
+            <MSPRevenueOptimizer />
+          </TabsContent>
+
+          <TabsContent value="scorecards" className="space-y-4">
+            <MSPClientRiskScorecard />
+          </TabsContent>
+
+          <TabsContent value="roi" className="space-y-4">
+            <MSPROICalculator />
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            <MSPExecutiveBriefing />
+          </TabsContent>
+
           <TabsContent value="analytics" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card>
@@ -831,160 +853,6 @@ const MSPControlCenter = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          <TabsContent value="integrations" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    SafePass
-                  </CardTitle>
-                  <CardDescription>
-                    Password management and vault services
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-success" />
-                    <span className="text-sm">Active</span>
-                  </div>
-                  <Button className="w-full">
-                    <Code className="h-4 w-4 mr-2" />
-                    API Integration
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    SafeScan
-                  </CardTitle>
-                  <CardDescription>
-                    Comprehensive security scanning suite (docs, emails, links)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-success" />
-                    <span className="text-sm">Active</span>
-                  </div>
-                  <Button className="w-full">
-                    <Code className="h-4 w-4 mr-2" />
-                    API Integration
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    SafeShield
-                  </CardTitle>
-                  <CardDescription>
-                    Advanced threat protection and endpoint security
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-success" />
-                    <span className="text-sm">Active</span>
-                  </div>
-                  <Button className="w-full">
-                    <Code className="h-4 w-4 mr-2" />
-                    API Integration
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="opacity-60">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    SafeScore
-                  </CardTitle>
-                  <CardDescription>
-                    Compliance monitoring and security scoring
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Coming Soon</span>
-                  </div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Not Available
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="opacity-60">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    SafeNet
-                  </CardTitle>
-                  <CardDescription>
-                    Network security monitoring and analysis
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">Coming Soon</span>
-                  </div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Not Available
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="billing" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Billing Overview</CardTitle>
-                <CardDescription>
-                  Your commission and payment details
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">This Month</div>
-                    <div className="text-2xl font-bold text-success">
-                      ${metrics.monthlyProfit.toFixed(2)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      From {metrics.totalUsers} users
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">Commission Rate</div>
-                    <div className="text-2xl font-bold">
-                      {((msp.commission_rate || 0.6667) * 100).toFixed(1)}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      You keep ${((msp.monthly_rate_per_user || 15) * (msp.commission_rate || 0.6667)).toFixed(2)} per user
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-sm text-muted-foreground">Next Payout</div>
-                    <div className="text-2xl font-bold">Dec 1st</div>
-                    <div className="text-xs text-muted-foreground">
-                      Monthly automatic transfer
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
