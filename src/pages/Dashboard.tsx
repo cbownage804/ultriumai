@@ -57,6 +57,7 @@ import { MSPAdvancedAnalytics } from "@/components/MSPAdvancedAnalytics";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
 import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
 import { AIIntelligenceHub } from "@/components/AIIntelligenceHub";
 import { AIVoiceInterface } from "@/components/AIVoiceInterface";
@@ -67,12 +68,23 @@ const Dashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isMSP, isMSSP, shouldRedirectToRole, getRedirectPath } = useRoleBasedRedirect();
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Redirect MSP/MSSP users to their proper dashboards if they land on /dashboard
+  useEffect(() => {
+    if (!loading && user && shouldRedirectToRole() && location.pathname === '/dashboard') {
+      if (isMSP || isMSSP) {
+        const redirectPath = getRedirectPath();
+        navigate(redirectPath);
+      }
+    }
+  }, [loading, user, isMSP, isMSSP, shouldRedirectToRole, getRedirectPath, location.pathname, navigate]);
 
   if (loading) {
     return (
