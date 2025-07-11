@@ -26,6 +26,9 @@ serve(async (req) => {
       case 'generate_solution':
         return await generateAISolution(supabase, ticketId, ticketData);
       
+      case 'generate_summary':
+        return await generateAISummary(ticketData);
+      
       case 'auto_resolve':
         return await autoResolveTicket(supabase, ticketId);
       
@@ -187,6 +190,71 @@ async function autoResolveTicket(supabase: any, ticketId: string) {
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
+}
+
+async function generateAISummary(ticketData: any) {
+  console.log('Generating AI summary for ticket:', ticketData.title);
+
+  const prompt = `Analyze this support ticket and create a concise summary:
+
+Title: ${ticketData.title}
+Description: ${ticketData.description}
+Priority: ${ticketData.priority}
+Category: ${ticketData.category}
+Asset: ${ticketData.asset_name || 'Not specified'}
+Requester: ${ticketData.requester_name || 'Not specified'}
+
+Please provide:
+1. A brief summary of the issue (2-3 sentences)
+2. Key technical details or symptoms
+3. Potential impact assessment
+4. Recommended next steps
+
+Keep the summary concise and actionable, under 150 words.`;
+
+  try {
+    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are an expert IT support analyst. Create clear, actionable summaries of support tickets that help technicians quickly understand and resolve issues.' 
+          },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+      }),
+    });
+
+    const aiData = await aiResponse.json();
+    const summary = aiData.choices[0].message.content;
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        summary: summary
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('AI summary generation failed:', error);
+    
+    // Fallback response
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        summary: `Issue: ${ticketData.title}\nPriority: ${ticketData.priority}\nCategory: ${ticketData.category}\nDescription: ${ticketData.description.substring(0, 100)}...` 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
 }
 
 async function generateChatResponse(message: string, ticketId: string) {

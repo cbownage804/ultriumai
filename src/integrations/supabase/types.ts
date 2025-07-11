@@ -2717,6 +2717,48 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_api_keys: {
+        Row: {
+          api_key_hash: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          key_name: string
+          key_prefix: string
+          last_used_at: string | null
+          permissions: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key_hash: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name: string
+          key_prefix: string
+          last_used_at?: string | null
+          permissions?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key_hash?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          key_name?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          permissions?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       knowledge_articles: {
         Row: {
           category: string | null
@@ -3695,6 +3737,48 @@ export type Database = {
           top_quartile?: number | null
           trend_direction?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      msp_email_settings: {
+        Row: {
+          auto_assign_to: string | null
+          business_name: string
+          created_at: string | null
+          default_category: string | null
+          default_priority: string | null
+          email_signature: string | null
+          id: string
+          ingestion_email: string
+          is_active: boolean | null
+          msp_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          auto_assign_to?: string | null
+          business_name: string
+          created_at?: string | null
+          default_category?: string | null
+          default_priority?: string | null
+          email_signature?: string | null
+          id?: string
+          ingestion_email: string
+          is_active?: boolean | null
+          msp_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          auto_assign_to?: string | null
+          business_name?: string
+          created_at?: string | null
+          default_category?: string | null
+          default_priority?: string | null
+          email_signature?: string | null
+          id?: string
+          ingestion_email?: string
+          is_active?: boolean | null
+          msp_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -8347,6 +8431,8 @@ export type Database = {
         Row: {
           ai_confidence_score: number | null
           ai_suggested_solution: string | null
+          ai_summary: string | null
+          asset_name: string | null
           assigned_by: string | null
           assigned_to: string | null
           auto_resolved: boolean | null
@@ -8355,14 +8441,22 @@ export type Database = {
           connector_id: string | null
           created_at: string
           description: string | null
+          email_thread_id: string | null
           id: string
           internal_notes: string | null
           is_internal_visible: boolean | null
+          last_activity_at: string | null
           msp_id: string | null
           priority: string
+          requester_email: string | null
+          requester_name: string | null
+          requester_phone: string | null
           resolution_notes: string | null
           resolution_time_minutes: number | null
           resolved_at: string | null
+          sla_due_at: string | null
+          sla_policy_id: string | null
+          source_type: string | null
           status: string
           title: string
           updated_at: string
@@ -8371,6 +8465,8 @@ export type Database = {
         Insert: {
           ai_confidence_score?: number | null
           ai_suggested_solution?: string | null
+          ai_summary?: string | null
+          asset_name?: string | null
           assigned_by?: string | null
           assigned_to?: string | null
           auto_resolved?: boolean | null
@@ -8379,14 +8475,22 @@ export type Database = {
           connector_id?: string | null
           created_at?: string
           description?: string | null
+          email_thread_id?: string | null
           id?: string
           internal_notes?: string | null
           is_internal_visible?: boolean | null
+          last_activity_at?: string | null
           msp_id?: string | null
           priority?: string
+          requester_email?: string | null
+          requester_name?: string | null
+          requester_phone?: string | null
           resolution_notes?: string | null
           resolution_time_minutes?: number | null
           resolved_at?: string | null
+          sla_due_at?: string | null
+          sla_policy_id?: string | null
+          source_type?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -8395,6 +8499,8 @@ export type Database = {
         Update: {
           ai_confidence_score?: number | null
           ai_suggested_solution?: string | null
+          ai_summary?: string | null
+          asset_name?: string | null
           assigned_by?: string | null
           assigned_to?: string | null
           auto_resolved?: boolean | null
@@ -8403,14 +8509,22 @@ export type Database = {
           connector_id?: string | null
           created_at?: string
           description?: string | null
+          email_thread_id?: string | null
           id?: string
           internal_notes?: string | null
           is_internal_visible?: boolean | null
+          last_activity_at?: string | null
           msp_id?: string | null
           priority?: string
+          requester_email?: string | null
+          requester_name?: string | null
+          requester_phone?: string | null
           resolution_notes?: string | null
           resolution_time_minutes?: number | null
           resolved_at?: string | null
+          sla_due_at?: string | null
+          sla_policy_id?: string | null
+          source_type?: string | null
           status?: string
           title?: string
           updated_at?: string
