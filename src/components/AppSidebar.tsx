@@ -63,6 +63,9 @@ const mspItems = [
   { title: "QuickBooks Integration", url: "/dashboard/msp/quickbooks", icon: DollarSign, tooltip: "Integrate with QuickBooks for billing and accounting" },
   { title: "API Management", url: "/dashboard/msp/api-management", icon: Key, tooltip: "Manage MSP APIs and integrations" },
   { title: "Client Portal", url: "/dashboard/msp/client-portal", icon: Globe, tooltip: "Manage client self-service portals" },
+  { title: "Role Management", url: "/dashboard/msp/roles", icon: Shield, tooltip: "Manage team roles and permissions" },
+  { title: "Business Operations", url: "/dashboard/msp/business", icon: BarChart3, tooltip: "Manage contracts, invoicing, and SLA performance" },
+  { title: "Advanced Analytics", url: "/dashboard/msp/analytics", icon: TrendingUp, tooltip: "Comprehensive insights into MSP operations" },
 ];
 
 const managementItems = [

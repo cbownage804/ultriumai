@@ -51,6 +51,9 @@ import { SafePassDashboard } from "@/components/shield/SafePassDashboard";
 import { SafeMailDashboard } from "@/components/shield/SafeMailDashboard";
 import { SafeNetDashboard } from "@/components/shield/SafeNetDashboard";
 import { SecurityDashboard } from "@/components/shield/SecurityDashboard";
+import { MSPRoleManagement } from "@/components/MSPRoleManagement";
+import { MSPBusinessOperations } from "@/components/MSPBusinessOperations";
+import { MSPAdvancedAnalytics } from "@/components/MSPAdvancedAnalytics";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -133,6 +136,9 @@ const Dashboard = () => {
   const isMSPQuickBooksPage = location.pathname.includes('/msp/quickbooks');
   const isMSPAPIManagementPage = location.pathname.includes('/msp/api-management');
   const isMSPClientPortalPage = location.pathname.includes('/msp/client-portal');
+  const isMSPRoleManagementPage = location.pathname.includes('/msp/roles');
+  const isMSPBusinessOpsPage = location.pathname.includes('/msp/business');
+  const isMSPAdvancedAnalyticsPage = location.pathname.includes('/msp/analytics');
   
   const getPageTitle = () => {
     if (isDashboardOverview) return "Dashboard";
@@ -179,6 +185,9 @@ const Dashboard = () => {
     if (isMSPQuickBooksPage) return "QuickBooks Integration";
     if (isMSPAPIManagementPage) return "MSP API Management";
     if (isMSPClientPortalPage) return "Client Portal Management";
+    if (isMSPRoleManagementPage) return "Role Management";
+    if (isMSPBusinessOpsPage) return "Business Operations";
+    if (isMSPAdvancedAnalyticsPage) return "Advanced Analytics";
     
     return "Dashboard";
   };
@@ -232,6 +241,9 @@ const Dashboard = () => {
     if (isMSPQuickBooksPage) return <div className="p-6"><MSPQuickBooksIntegration mspId="temp-msp-id" /></div>;
     if (isMSPAPIManagementPage) return <div className="p-6"><MSPAPIManagement mspId="temp-msp-id" /></div>;
     if (isMSPClientPortalPage) return <div className="p-6"><MSPClientPortal /></div>;
+    if (isMSPRoleManagementPage) return <div className="p-6"><MSPRoleManagement /></div>;
+    if (isMSPBusinessOpsPage) return <div className="p-6"><MSPBusinessOperations /></div>;
+    if (isMSPAdvancedAnalyticsPage) return <div className="p-6"><MSPAdvancedAnalytics /></div>;
     
     return <DashboardOverview />;
   };
