@@ -65,6 +65,7 @@ const AdminDashboard = () => {
   const [msps, setMSPs] = useState<MSPData[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [onboardingFeesMap, setOnboardingFeesMap] = useState<Map<string, number>>(new Map());
+  const [clientsData, setClientsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -132,7 +133,7 @@ const AdminDashboard = () => {
       // Get client count and business size for each MSP
       const { data: clientData } = await supabase
         .from('msp_clients')
-        .select('msp_id, business_size, onboarding_fee_paid, onboarding_fee_amount');
+        .select('id, msp_id, company_name, business_size, onboarding_fee_paid, onboarding_fee_amount');
 
       // Load all users
       const { data: userData, error: userError } = await supabase
@@ -220,6 +221,7 @@ const AdminDashboard = () => {
       setMSPs(processedMSPs);
       setUsers(processedUsers);
       setOnboardingFeesMap(onboardingFeesMap);
+      setClientsData(clientData || []);
 
     } catch (error) {
       console.error('Failed to load admin data:', error);
@@ -230,6 +232,69 @@ const AdminDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleMSPPaymentStatus = async (mspId: string, currentStatus: string) => {
+    try {
+      const msp = msps.find(msp => msp.id === mspId);
+      if (!msp) return;
+
+      // Find the user ID based on the MSP data
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', msp.user_email)
+        .single();
+
+      if (!profiles) throw new Error('User profile not found');
+
+      const newStatus = currentStatus === 'Active' ? false : true;
+      const { error } = await supabase
+        .from('subscribers')
+        .update({ subscribed: newStatus })
+        .eq('user_id', profiles.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `MSP payment status updated to ${newStatus ? 'paid' : 'unpaid'}`,
+      });
+      
+      await loadAdminData();
+    } catch (error) {
+      console.error('Error updating MSP payment status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update MSP payment status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleClientOnboardingFee = async (mspId: string, clientId: string) => {
+    try {
+      const { error } = await supabase
+        .from('msp_clients')
+        .update({ onboarding_fee_paid: true })
+        .eq('id', clientId);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Client onboarding fee marked as paid",
+      });
+      
+      await loadAdminData();
+    } catch (error) {
+      console.error('Error updating onboarding fee status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update onboarding fee status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -414,6 +479,13 @@ const AdminDashboard = () => {
                         <Badge variant={msp.subscription_status === 'Active' ? 'default' : 'secondary'}>
                           {msp.subscription_status}
                         </Badge>
+                        <Button 
+                          variant={msp.subscription_status === 'Active' ? 'destructive' : 'default'}
+                          size="sm"
+                          onClick={() => toggleMSPPaymentStatus(msp.id, msp.subscription_status)}
+                        >
+                          Mark as {msp.subscription_status === 'Active' ? 'Unpaid' : 'Paid'}
+                        </Button>
                         <Button variant="outline" size="sm">
                           Manage
                         </Button>
@@ -562,23 +634,53 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {msps.map((msp) => {
-                      const pendingFees = onboardingFeesMap.get(msp.id) || 0;
-                      if (pendingFees === 0) return null;
-                      
-                      return (
-                        <div key={msp.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                          <div>
-                            <div className="font-medium">{msp.company_name}</div>
-                            <div className="text-sm text-muted-foreground">Unpaid onboarding fees</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-orange-600">${pendingFees}</div>
-                            <div className="text-xs text-muted-foreground">Due on collection</div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                     {msps.map((msp) => {
+                       const pendingFees = onboardingFeesMap.get(msp.id) || 0;
+                       const unpaidClients = clientsData.filter(client => 
+                         client.msp_id === msp.id && !client.onboarding_fee_paid
+                       );
+                       
+                       if (pendingFees === 0) return null;
+                       
+                       return (
+                         <div key={msp.id} className="space-y-2">
+                           <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                             <div>
+                               <div className="font-medium">{msp.company_name}</div>
+                               <div className="text-sm text-muted-foreground">
+                                 {unpaidClients.length} unpaid onboarding fee{unpaidClients.length !== 1 ? 's' : ''}
+                               </div>
+                             </div>
+                             <div className="text-right">
+                               <div className="font-bold text-orange-600">${pendingFees}</div>
+                               <div className="text-xs text-muted-foreground">Due on collection</div>
+                             </div>
+                           </div>
+                           {unpaidClients.map((client) => {
+                             const feeAmount = client.business_size === 'small' ? 500 :
+                                             client.business_size === 'medium' ? 1500 : 2500;
+                             return (
+                               <div key={client.id} className="flex items-center justify-between p-2 ml-4 bg-background border rounded">
+                                 <div>
+                                   <div className="font-medium text-sm">{client.company_name}</div>
+                                   <div className="text-xs text-muted-foreground">
+                                     {client.business_size} business • ${feeAmount}
+                                   </div>
+                                 </div>
+                                 <Button
+                                   size="sm"
+                                   variant="outline"
+                                   onClick={() => toggleClientOnboardingFee(msp.id, client.id)}
+                                 >
+                                   <UserCheck className="h-3 w-3 mr-1" />
+                                   Mark Paid
+                                 </Button>
+                               </div>
+                             );
+                           })}
+                         </div>
+                       );
+                     })}
                     <div className="border-t pt-3 mt-3">
                       <div className="flex justify-between font-semibold">
                         <span>Total Pending:</span>
