@@ -699,7 +699,7 @@ const MSPControlCenter = () => {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="max_users">Max Users</Label>
+                      <Label htmlFor="max_users">User Seats</Label>
                       <Input
                         id="max_users"
                         type="number"
