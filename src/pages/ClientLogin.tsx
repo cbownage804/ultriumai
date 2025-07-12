@@ -172,7 +172,7 @@ export const ClientLogin = () => {
             )}
           </div>
           <h1 className="text-2xl font-bold" style={{ color: brandColor }}>
-            {brandName} Portal
+            {clientInfo?.company_name || brandName} Portal
           </h1>
           {clientInfo?.company_name && (
             <p className="text-muted-foreground">
