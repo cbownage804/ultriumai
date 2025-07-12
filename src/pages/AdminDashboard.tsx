@@ -109,11 +109,24 @@ const AdminDashboard = () => {
           id,
           company_name,
           created_at,
-          profiles!inner(email),
-          subscribers(subscribed, subscription_tier)
+          user_id,
+          contact_email
         `);
 
       if (mspError) throw mspError;
+
+      // Get user details for MSPs
+      const userIds = mspData?.map(msp => msp.user_id).filter(Boolean) || [];
+      const { data: mspUsers } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', userIds);
+
+      // Get subscription data
+      const { data: subscriptionData } = await supabase
+        .from('subscribers')
+        .select('user_id, subscribed, subscription_tier')
+        .in('user_id', userIds);
 
       // Load all users
       const { data: userData, error: userError } = await supabase
@@ -123,16 +136,25 @@ const AdminDashboard = () => {
 
       if (userError) throw userError;
 
+      // Create lookup maps
+      const userMap = new Map(mspUsers?.map(user => [user.id, user]) || []);
+      const subscriptionMap = new Map(subscriptionData?.map(sub => [sub.user_id, sub]) || []);
+
       // Process MSP data
-      const processedMSPs = mspData?.map(msp => ({
-        id: msp.id,
-        company_name: msp.company_name,
-        created_at: msp.created_at,
-        user_email: (msp.profiles as any)?.email || 'Unknown',
-        subscription_status: (msp.subscribers as any)?.subscribed ? 'Active' : 'Inactive',
-        client_count: 0, // TODO: Add client count query
-        last_active: new Date().toISOString() // TODO: Add real last active tracking
-      })) || [];
+      const processedMSPs = mspData?.map(msp => {
+        const user = userMap.get(msp.user_id);
+        const subscription = subscriptionMap.get(msp.user_id);
+        
+        return {
+          id: msp.id,
+          company_name: msp.company_name,
+          created_at: msp.created_at,
+          user_email: user?.email || msp.contact_email || 'Unknown',
+          subscription_status: subscription?.subscribed ? 'Active' : 'Inactive',
+          client_count: 0, // TODO: Add client count query
+          last_active: new Date().toISOString() // TODO: Add real last active tracking
+        };
+      }) || [];
 
       // Process user data
       const processedUsers = userData?.map(user => ({
