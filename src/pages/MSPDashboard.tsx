@@ -107,8 +107,8 @@ const MSPControlCenter = () => {
 
   // Determine business size based on user count
   const getBusinessSizeFromUserCount = (userCount: number): 'small' | 'medium' | 'enterprise' => {
-    if (userCount <= 10) return 'small';
-    if (userCount <= 50) return 'medium';
+    if (userCount <= 25) return 'small';
+    if (userCount <= 99) return 'medium';
     return 'enterprise';
   };
 
@@ -749,9 +749,9 @@ const MSPControlCenter = () => {
                       <Input
                         id="business_size"
                         value={
-                          clientForm.business_size === 'small' ? 'Small Business (1-10 users)' :
-                          clientForm.business_size === 'medium' ? 'Medium Business (11-50 users)' :
-                          'Enterprise (51+ users)'
+                          clientForm.business_size === 'small' ? 'Small Business (1-25 users)' :
+                          clientForm.business_size === 'medium' ? 'Medium Business (26-99 users)' :
+                          'Enterprise (100+ users)'
                         }
                         readOnly
                         className="bg-muted"
