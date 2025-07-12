@@ -1020,10 +1020,6 @@ export const MSPDashboard = () => {
         </Card>
       </div>
 
-      {/* DEBUG: This should be visible */}
-      <div style={{ backgroundColor: 'red', color: 'white', padding: '20px', fontSize: '20px', textAlign: 'center', border: '5px solid yellow' }}>
-        DEBUG: TABS SECTION REACHED - activeTab: {activeTab}
-      </div>
       
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => {
