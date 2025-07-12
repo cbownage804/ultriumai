@@ -1022,15 +1022,49 @@ const MSPControlCenter = () => {
                       </div>
                       
                       <div className="flex gap-2 mt-4">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Open configuration dialog/modal for this client
+                            toast({
+                              title: "Configuration",
+                              description: `Configuration for ${client.company_name} coming soon!`,
+                            });
+                          }}
+                        >
                           <Settings className="h-4 w-4 mr-2" />
                           Configure
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Open client portal in new tab
+                            const portalUrl = client.domain 
+                              ? `https://${client.domain}` 
+                              : `https://portal.${msp?.domain || 'safepass.ai'}/${client.id}`;
+                            window.open(portalUrl, '_blank');
+                          }}
+                        >
                           <Eye className="h-4 w-4 mr-2" />
                           View Portal
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            // Navigate to analytics tab and filter by this client
+                            const analyticsTab = document.querySelector('[value="analytics"]') as HTMLElement;
+                            if (analyticsTab) {
+                              analyticsTab.click();
+                              toast({
+                                title: "Analytics",
+                                description: `Viewing analytics for ${client.company_name}`,
+                              });
+                            }
+                          }}
+                        >
                           <BarChart3 className="h-4 w-4 mr-2" />
                           Analytics
                         </Button>
