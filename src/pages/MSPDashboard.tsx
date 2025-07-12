@@ -918,7 +918,7 @@ const MSPControlCenter = () => {
             </TabsList>
             
             {/* Secondary Navigation */}
-            <TabsList className="grid grid-cols-4 lg:grid-cols-7 gap-1 h-auto p-1 bg-muted/20">
+            <TabsList className="grid grid-cols-4 lg:grid-cols-8 gap-1 h-auto p-1 bg-muted/20">
               <TabsTrigger value="benchmarks" className="h-10">Benchmarks</TabsTrigger>
               <TabsTrigger value="leads" className="h-10">Lead Scoring</TabsTrigger>
               <TabsTrigger value="analytics" className="h-10">Analytics</TabsTrigger>
@@ -926,6 +926,7 @@ const MSPControlCenter = () => {
               <TabsTrigger value="business-intel" className="h-10">Business Intelligence</TabsTrigger>
               <TabsTrigger value="client-portal" className="h-10">Client Portal</TabsTrigger>
               <TabsTrigger value="announcements" className="h-10">Announcements</TabsTrigger>
+              <TabsTrigger value="user-management" className="h-10">User Management</TabsTrigger>
             </TabsList>
             
             {/* Apps Navigation */}
@@ -1208,6 +1209,44 @@ const MSPControlCenter = () => {
 
           <TabsContent value="announcements" className="space-y-4">
             <AnnouncementManager />
+          </TabsContent>
+
+          <TabsContent value="user-management" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  User Management
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Manage client users, authentication settings, and security features.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">Client Users</h3>
+                      <p className="text-sm text-muted-foreground">
+                        View and manage user accounts across all your clients
+                      </p>
+                    </div>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add User
+                    </Button>
+                  </div>
+                  
+                  <div className="rounded-lg border p-8 text-center">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground">User management features coming soon</p>
+                    <p className="text-sm text-muted-foreground">
+                      Advanced user management, MFA controls, and access policies will be available here
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
