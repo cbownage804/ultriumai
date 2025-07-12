@@ -138,13 +138,6 @@ export const MSPDashboard = () => {
       featured: true,
     },
     {
-      title: "Add New Client",
-      description: "Onboard a new MSP client",
-      icon: Plus,
-      action: () => setShowAddClient(true),
-      color: "bg-blue-500",
-    },
-    {
       title: "Deploy RMM Agent",
       description: "Install monitoring agent",
       icon: Download,
