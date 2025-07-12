@@ -21,6 +21,7 @@ import { BusinessIntelligence } from "@/components/dashboards/BusinessIntelligen
 import { IntegrationHub } from "@/components/integrations/IntegrationHub";
 import { WorkflowBuilder } from "@/components/automation/WorkflowBuilder";
 import { MobileApp } from "@/components/mobile/MobileApp";
+import { MSPUserManagement } from "@/components/MSPUserManagement";
 import { 
   Shield, 
   Server, 
@@ -1029,10 +1030,14 @@ export const MSPDashboard = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-4">
-        <TabsList className="flex flex-wrap gap-1 h-auto p-2 text-sm justify-start bg-red-500 border-4 border-yellow-400 rounded-md w-full min-h-[80px]">
-          <TabsTrigger value="clients" className="flex items-center gap-1">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-2 text-sm justify-start bg-muted border rounded-md w-full min-h-[60px]">
+          <TabsTrigger value="client-management" className="flex items-center gap-1">
             <Users className="w-3 h-3" />
-            Clients
+            Client Management
+          </TabsTrigger>
+          <TabsTrigger value="msp-staff" className="flex items-center gap-1">
+            <Users className="w-3 h-3" />
+            MSP Staff
           </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-1">
             <Shield className="w-3 h-3" />
@@ -1041,10 +1046,6 @@ export const MSPDashboard = () => {
           <TabsTrigger value="business" className="flex items-center gap-1">
             <BarChart3 className="w-3 h-3" />
             Analytics
-          </TabsTrigger>
-          <TabsTrigger value="client-portal" className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            Portal
           </TabsTrigger>
           <TabsTrigger value="integrations" className="flex items-center gap-1">
             <Link className="w-3 h-3" />
@@ -1062,34 +1063,29 @@ export const MSPDashboard = () => {
             <Monitor className="w-3 h-3" />
             RMM
           </TabsTrigger>
-          <TabsTrigger value="ai-helpdesk" className="flex items-center gap-1">
-            <Bot className="w-3 h-3" />
-            AI Desk
-          </TabsTrigger>
-          <TabsTrigger value="ai-patching" className="flex items-center gap-1">
-            <Zap className="w-3 h-3" />
-            AI Patch
-          </TabsTrigger>
-          <TabsTrigger value="branding" className="flex items-center gap-1">
-            <Palette className="w-3 h-3" />
-            Branding
-          </TabsTrigger>
           <TabsTrigger value="email-settings" className="flex items-center gap-1">
             <Mail className="w-3 h-3" />
             Email
           </TabsTrigger>
-          <TabsTrigger value="client-tools" className="flex items-center gap-1">
-            <Settings className="w-3 h-3" />
-            Client Tools
-          </TabsTrigger>
-          <TabsTrigger value="user-management" className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            User Management
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="clients">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="client-management">
+          <Tabs defaultValue="clients" className="w-full">
+            <TabsList>
+              <TabsTrigger value="clients">Clients</TabsTrigger>
+              <TabsTrigger value="users">Client Users</TabsTrigger>
+              <TabsTrigger value="portal">Client Portal</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="clients">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Client Management</h3>
+                <Button onClick={() => setShowAddClient(true)} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add Client
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {clients.map(client => (
               <Card key={client.id} className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -1167,6 +1163,49 @@ export const MSPDashboard = () => {
                 </CardContent>
               </Card>
             ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="users">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold">Client User Management</h3>
+                    <p className="text-muted-foreground">
+                      Manage client users, authentication settings, and security features.
+                    </p>
+                  </div>
+                </div>
+                <MSPUserManagement />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="portal">
+              <div className="p-4">
+                <ClientPortal />
+              </div>
+            </TabsContent>
+            
+          </Tabs>
+        </TabsContent>
+        
+        <TabsContent value="msp-staff">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold">MSP Staff Management</h3>
+                <p className="text-muted-foreground">
+                  Manage MSP staff and admin users for your organization.
+                </p>
+              </div>
+            </div>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">
+                  MSP staff management will be available here. Add and manage users with MSP-level access.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
@@ -1554,9 +1593,6 @@ export const MSPDashboard = () => {
           <BusinessIntelligence />
         </TabsContent>
 
-        <TabsContent value="client-portal">
-          <ClientPortal />
-        </TabsContent>
 
         <TabsContent value="integrations">
           <IntegrationHub />
@@ -1773,269 +1809,6 @@ export const MSPDashboard = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="user-management" className="mt-6">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold">Client User Management</h3>
-                <p className="text-muted-foreground">
-                  Manage client users, authentication settings, and security features.
-                </p>
-              </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add User
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Client User</DialogTitle>
-                    <DialogDescription>
-                      Create a new user account for client access to the portal.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="client-select">Client Organization</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select client..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clients.map(client => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.company_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="user-email">Email Address</Label>
-                        <Input
-                          id="user-email"
-                          type="email"
-                          placeholder="user@client.com"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="user-name">Full Name</Label>
-                        <Input
-                          id="user-name"
-                          placeholder="John Doe"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="user-role">Role</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select role..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="client_admin">Client Admin</SelectItem>
-                          <SelectItem value="client_staff">Client Staff</SelectItem>
-                          <SelectItem value="client_viewer">Client Viewer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch id="require-mfa" />
-                      <Label htmlFor="require-mfa">Require Multi-Factor Authentication</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Switch id="send-invite" defaultChecked />
-                      <Label htmlFor="send-invite">Send invitation email</Label>
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Create User</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="space-y-6">
-              {clients.map(client => (
-                <Card key={client.id}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{client.company_name}</span>
-                      <Badge variant="outline">
-                        {client.current_users || 0} / {client.max_users} users
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* Sample users - in real app this would come from database */}
-                      {[
-                        {
-                          id: '1',
-                          email: `admin@${client.company_name.toLowerCase().replace(/\s+/g, '')}.com`,
-                          name: 'John Smith',
-                          role: 'client_admin',
-                          mfa_enabled: true,
-                          last_login: '2 hours ago',
-                          status: 'active'
-                        },
-                        {
-                          id: '2',
-                          email: `user@${client.company_name.toLowerCase().replace(/\s+/g, '')}.com`,
-                          name: 'Jane Doe',
-                          role: 'client_staff',
-                          mfa_enabled: false,
-                          last_login: '1 day ago',
-                          status: 'active'
-                        }
-                      ].map((user, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-4 border rounded-lg">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                              <Users className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="font-medium">{user.name}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
-                              <div className="flex items-center space-x-4 mt-1">
-                                <Badge variant="outline" className="text-xs">
-                                  {user.role.replace('_', ' ')}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  Last login: {user.last_login}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge 
-                              variant={user.mfa_enabled ? "default" : "secondary"}
-                              className="text-xs"
-                            >
-                              {user.mfa_enabled ? "MFA ON" : "MFA OFF"}
-                            </Badge>
-                            <Badge 
-                              variant={user.status === 'active' ? "default" : "destructive"}
-                              className="text-xs"
-                            >
-                              {user.status.toUpperCase()}
-                            </Badge>
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Settings className="h-4 w-4 mr-2" />
-                                  Manage
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Manage User: {user.name}</DialogTitle>
-                                  <DialogDescription>
-                                    Configure user settings, security, and access permissions.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-6">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <Label>Email Address</Label>
-                                      <Input value={user.email} readOnly />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Full Name</Label>
-                                      <Input defaultValue={user.name} />
-                                    </div>
-                                  </div>
-                                  
-                                  <div className="space-y-4">
-                                    <h4 className="font-medium">Security Settings</h4>
-                                    <div className="space-y-3">
-                                      <div className="flex items-center justify-between">
-                                        <div>
-                                          <Label>Multi-Factor Authentication</Label>
-                                          <p className="text-xs text-muted-foreground">
-                                            Require additional verification for login
-                                          </p>
-                                        </div>
-                                        <Switch defaultChecked={user.mfa_enabled} />
-                                      </div>
-                                      <div className="flex items-center justify-between">
-                                        <div>
-                                          <Label>Account Status</Label>
-                                          <p className="text-xs text-muted-foreground">
-                                            Enable or disable user access
-                                          </p>
-                                        </div>
-                                        <Switch defaultChecked={user.status === 'active'} />
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-4">
-                                    <h4 className="font-medium">Password Management</h4>
-                                    <div className="space-y-2">
-                                      <Button variant="outline" className="w-full">
-                                        <RefreshCw className="h-4 w-4 mr-2" />
-                                        Send Password Reset Email
-                                      </Button>
-                                      <Button variant="outline" className="w-full">
-                                        <Settings className="h-4 w-4 mr-2" />
-                                        Generate Temporary Password
-                                      </Button>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-4">
-                                    <h4 className="font-medium">MFA Configuration</h4>
-                                    <div className="space-y-2">
-                                      <Button variant="outline" className="w-full">
-                                        <Shield className="h-4 w-4 mr-2" />
-                                        Reset MFA Devices
-                                      </Button>
-                                      <Button variant="outline" className="w-full">
-                                        <MessageSquare className="h-4 w-4 mr-2" />
-                                        Send MFA Setup Instructions
-                                      </Button>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex justify-end space-x-2">
-                                    <Button variant="outline">Cancel</Button>
-                                    <Button>Save Changes</Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* No users state */}
-                      {client.current_users === 0 && (
-                        <div className="text-center py-8">
-                          <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                          <p className="text-muted-foreground">No users found for this client</p>
-                          <p className="text-sm text-muted-foreground">Add users to give them access to the portal</p>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {clients.length === 0 && (
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">No clients found</p>
-                  <p className="text-sm text-muted-foreground">Add clients first to manage their users</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );
