@@ -642,7 +642,7 @@ export const MSPDashboard = () => {
   console.log('About to render main component content');
 
   return (
-    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="space-y-6 p-6 pb-20 bg-gradient-to-br from-background via-background to-muted/20">
       {/* Welcome Section */}
       <div className="flex justify-between items-start">
         <div className="space-y-2">
