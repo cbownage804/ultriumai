@@ -60,6 +60,7 @@ const mspItems = [
   { title: "Integrations Hub", url: "/dashboard/msp/integrations", icon: CloudCog, tooltip: "Connect and manage business tools" },
   { title: "Notifications", url: "/dashboard/msp/notifications", icon: Bell, tooltip: "MSP notification management and alerts" },
   { title: "Workflow Automation", url: "/dashboard/msp/workflow", icon: Workflow, tooltip: "Automate MSP workflows and processes" },
+  { title: "Billing Management", url: "/dashboard/msp/billing", icon: DollarSign, tooltip: "Manage MSP billing, invoices, and revenue" },
   { title: "QuickBooks Integration", url: "/dashboard/msp/quickbooks", icon: DollarSign, tooltip: "Integrate with QuickBooks for billing and accounting" },
   { title: "API Management", url: "/dashboard/msp/api-management", icon: Key, tooltip: "Manage MSP APIs and integrations" },
   { title: "Client Portal", url: "/dashboard/msp/client-portal", icon: Globe, tooltip: "Manage client self-service portals" },

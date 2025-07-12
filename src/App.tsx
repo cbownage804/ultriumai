@@ -87,6 +87,7 @@ import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import AIStudio from '@/pages/AIStudio';
 import SafeTrackPage from '@/pages/SafeTrackPage';
+import MSPBillingPage from '@/pages/MSPBillingPage';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 
@@ -353,6 +354,11 @@ function AppRouter() {
         <Route path="/safetrack" element={
           <ProtectedRoute>
             <SafeTrackPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/dashboard/msp/billing" element={
+          <ProtectedRoute>
+            <MSPBillingPage />
           </ProtectedRoute>
         } />
         
