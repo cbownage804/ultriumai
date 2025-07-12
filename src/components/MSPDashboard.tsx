@@ -66,6 +66,7 @@ interface MSPClient {
   max_users: number;
   current_users: number;
   billing_status: string;
+  tool_access?: any;
   endpoints?: RMMEndpoint[];
   alerts?: RMMAlert[];
 }
@@ -434,6 +435,48 @@ export const MSPDashboard = () => {
       case 'high': return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'warning': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default: return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+  };
+
+  const updateClientToolAccess = async (clientId: string, tool: string, enabled: boolean) => {
+    try {
+      // Get current tool access
+      const client = clients.find(c => c.id === clientId);
+      const currentToolAccess = client?.tool_access || {};
+      
+      // Update the specific tool
+      const updatedToolAccess = {
+        ...currentToolAccess,
+        [tool]: enabled
+      };
+
+      // Update in database
+      const { error } = await supabase
+        .from('msp_clients')
+        .update({ tool_access: updatedToolAccess })
+        .eq('id', clientId);
+
+      if (error) throw error;
+
+      // Update local state
+      setClients(prev => prev.map(c => 
+        c.id === clientId 
+          ? { ...c, tool_access: updatedToolAccess }
+          : c
+      ));
+
+      toast({
+        title: "Tool Access Updated",
+        description: `${tool} access ${enabled ? 'enabled' : 'disabled'} for client`
+      });
+
+    } catch (error) {
+      console.error('Failed to update tool access:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update tool access",
+        variant: "destructive"
+      });
     }
   };
 
@@ -900,6 +943,10 @@ export const MSPDashboard = () => {
           <TabsTrigger value="email-settings" className="flex items-center gap-1">
             <Mail className="w-3 h-3" />
             Email
+          </TabsTrigger>
+          <TabsTrigger value="client-tools" className="flex items-center gap-1">
+            <Settings className="w-3 h-3" />
+            Client Tools
           </TabsTrigger>
         </TabsList>
 
@@ -1738,6 +1785,111 @@ export const MSPDashboard = () => {
                   Save Configuration
                 </Button>
               </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="client-tools" className="mt-6">
+          <div className="p-4">
+            <h3 className="text-lg font-semibold mb-4">Client Tool Access</h3>
+            <p className="text-muted-foreground mb-6">
+              Configure which tools each client has access to in their portal.
+            </p>
+            
+            <div className="space-y-6">
+              {clients.map(client => (
+                <Card key={client.id}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{client.company_name}</span>
+                      <Badge variant="outline">
+                        {client.contact_email}
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Shield className="w-5 h-5 text-blue-600" />
+                          <div>
+                            <p className="font-medium">SafeScan</p>
+                            <p className="text-xs text-muted-foreground">Security scanning tool</p>
+                          </div>
+                        </div>
+                        <Switch 
+                          checked={client.tool_access?.safescan ?? true}
+                          onCheckedChange={(checked) => updateClientToolAccess(client.id, 'safescan', checked)}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Bot className="w-5 h-5 text-purple-600" />
+                          <div>
+                            <p className="font-medium">UltriumGPT</p>
+                            <p className="text-xs text-muted-foreground">AI assistant</p>
+                          </div>
+                        </div>
+                        <Switch 
+                          checked={client.tool_access?.ultraumgpt ?? true}
+                          onCheckedChange={(checked) => updateClientToolAccess(client.id, 'ultraumgpt', checked)}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Shield className="w-5 h-5 text-red-600" />
+                          <div>
+                            <p className="font-medium">SafeShield</p>
+                            <p className="text-xs text-muted-foreground">Endpoint protection</p>
+                          </div>
+                        </div>
+                        <Switch 
+                          checked={client.tool_access?.safeshield ?? false}
+                          onCheckedChange={(checked) => updateClientToolAccess(client.id, 'safeshield', checked)}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <Eye className="w-5 h-5 text-orange-600" />
+                          <div>
+                            <p className="font-medium">Dark Web Monitor</p>
+                            <p className="text-xs text-muted-foreground">Threat intelligence</p>
+                          </div>
+                        </div>
+                        <Switch 
+                          checked={client.tool_access?.darkweb_monitor ?? false}
+                          onCheckedChange={(checked) => updateClientToolAccess(client.id, 'darkweb_monitor', checked)}
+                        />
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <BarChart3 className="w-5 h-5 text-green-600" />
+                          <div>
+                            <p className="font-medium">Reports</p>
+                            <p className="text-xs text-muted-foreground">Analytics & reporting</p>
+                          </div>
+                        </div>
+                        <Switch 
+                          checked={client.tool_access?.reports ?? true}
+                          onCheckedChange={(checked) => updateClientToolAccess(client.id, 'reports', checked)}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {clients.length === 0 && (
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">No clients found</p>
+                  <p className="text-sm text-muted-foreground">Add clients to configure their tool access</p>
+                </div>
+              )}
             </div>
           </div>
         </TabsContent>

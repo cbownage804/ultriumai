@@ -4021,6 +4021,7 @@ export type Database = {
           onboarding_fee_paid: boolean | null
           phone: string | null
           timezone: string | null
+          tool_access: Json | null
           trial_ends_at: string | null
           updated_at: string
           webapp_enabled: boolean | null
@@ -4052,6 +4053,7 @@ export type Database = {
           onboarding_fee_paid?: boolean | null
           phone?: string | null
           timezone?: string | null
+          tool_access?: Json | null
           trial_ends_at?: string | null
           updated_at?: string
           webapp_enabled?: boolean | null
@@ -4083,6 +4085,7 @@ export type Database = {
           onboarding_fee_paid?: boolean | null
           phone?: string | null
           timezone?: string | null
+          tool_access?: Json | null
           trial_ends_at?: string | null
           updated_at?: string
           webapp_enabled?: boolean | null

@@ -32,6 +32,7 @@ interface ClientData {
   health_status: string;
   trial_ends_at: string;
   billing_status: string;
+  tool_access?: any;
 }
 
 interface MSPData {
@@ -290,138 +291,132 @@ export const CustomerPortal = () => {
 
           <TabsContent value="tools" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Scan className="h-5 w-5" style={{ color: brandColor }} />
-                    SafeScan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Secure document scanning and analysis
-                  </p>
-                  <Button 
-                    className="w-full" 
-                    style={{ backgroundColor: brandColor }}
-                    onClick={() => window.open('/safescan', '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open SafeScan
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* SafeScan Tool */}
+              {client.tool_access?.safescan !== false && (
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Scan className="h-5 w-5" style={{ color: brandColor }} />
+                      SafeScan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Secure document scanning and analysis
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      style={{ backgroundColor: brandColor }}
+                      onClick={() => window.open('/safescan', '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open SafeScan
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Brain className="h-5 w-5" style={{ color: brandColor }} />
-                    UltriumGPT
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    AI-powered assistant for your business needs
-                  </p>
-                  <Button 
-                    className="w-full" 
-                    style={{ backgroundColor: brandColor }}
-                    onClick={() => window.open('/gpt-chat', '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open UltriumGPT
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* UltriumGPT Tool */}
+              {client.tool_access?.ultraumgpt !== false && (
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="h-5 w-5" style={{ color: brandColor }} />
+                      UltriumGPT
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      AI-powered assistant for your business needs
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      style={{ backgroundColor: brandColor }}
+                      onClick={() => window.open('/gpt-chat', '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open UltriumGPT
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" style={{ color: brandColor }} />
-                    SafeShield
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Endpoint protection and monitoring
-                  </p>
-                  <Button 
-                    className="w-full" 
-                    style={{ backgroundColor: brandColor }}
-                    onClick={() => window.open('/safeshield', '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open SafeShield
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* SafeShield Tool */}
+              {client.tool_access?.safeshield === true && (
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" style={{ color: brandColor }} />
+                      SafeShield
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Endpoint protection and monitoring
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      style={{ backgroundColor: brandColor }}
+                      onClick={() => window.open('/safeshield', '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open SafeShield
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" style={{ color: brandColor }} />
-                    Dark Web Monitor
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Monitor for compromised credentials
-                  </p>
-                  <Button 
-                    className="w-full" 
-                    style={{ backgroundColor: brandColor }}
-                    onClick={() => window.open('/dark-web', '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open Monitor
-                  </Button>
-                </CardContent>
-              </Card>
+              {/* Dark Web Monitor Tool */}
+              {client.tool_access?.darkweb_monitor === true && (
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="h-5 w-5" style={{ color: brandColor }} />
+                      Dark Web Monitor
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Monitor for compromised credentials
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      style={{ backgroundColor: brandColor }}
+                      onClick={() => window.open('/dark-web', '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open Monitor
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" style={{ color: brandColor }} />
-                    Reports
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Security reports and analytics
-                  </p>
-                  <Button 
-                    className="w-full" 
-                    style={{ backgroundColor: brandColor }}
-                    onClick={() => window.open('/reports', '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Reports
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" style={{ color: brandColor }} />
-                    Settings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Manage your security settings
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configure
-                  </Button>
-                 </CardContent>
-               </Card>
-             </div>
-           </TabsContent>
+              {/* Reports Tool */}
+              {client.tool_access?.reports !== false && (
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" style={{ color: brandColor }} />
+                      Reports
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Security reports and analytics
+                    </p>
+                    <Button 
+                      className="w-full" 
+                      style={{ backgroundColor: brandColor }}
+                      onClick={() => window.open('/reports', '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View Reports
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
 
           <TabsContent value="security" className="space-y-6">
             <Card>
