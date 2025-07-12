@@ -90,6 +90,7 @@ import SafeTrackPage from '@/pages/SafeTrackPage';
 import MSPBillingPage from '@/pages/MSPBillingPage';
 import BusinessBillingPage from '@/pages/BusinessBillingPage';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
+import { CustomerPortal } from '@/pages/CustomerPortal';
 import { AuthProvider } from '@/hooks/useAuth';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
@@ -367,6 +368,9 @@ function AppRouter() {
             <BusinessBillingPage />
           </ProtectedRoute>
         } />
+        
+        {/* Customer Portal Routes */}
+        <Route path="/portal/client/:clientId" element={<CustomerPortal />} />
         
         <Route path="*" element={<NotFound />} />
       </Routes>

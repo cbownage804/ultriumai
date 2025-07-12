@@ -1040,18 +1040,9 @@ const MSPControlCenter = () => {
                           variant="outline" 
                           size="sm"
                           onClick={() => {
-                            // Generate portal URL using MSP's brand name
-                            const brandName = msp?.brand_name || msp?.company_name || 'Ultrium';
-                            const portalUrl = msp?.domain 
-                              ? `https://portal.${msp.domain}/client/${client.id}` 
-                              : `https://portal.ultrium.app/client/${client.id}`;
-                            
-                            // For now, show what the URL would be until portal is built
-                            toast({
-                              title: `${brandName} User Portal`,
-                              description: `Portal URL: ${portalUrl}`,
-                            });
-                            // window.open(portalUrl, '_blank');
+                            // Open the actual customer portal
+                            const portalUrl = `/portal/client/${client.id}`;
+                            window.open(portalUrl, '_blank');
                           }}
                         >
                           <Eye className="h-4 w-4 mr-2" />
