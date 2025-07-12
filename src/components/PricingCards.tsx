@@ -2,8 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Zap, Crown, Building } from "lucide-react";
-import { useSubscription } from "@/hooks/useSubscription";
-import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface PricingPlan {
   name: string;
@@ -67,45 +66,25 @@ const plans: PricingPlan[] = [
 ];
 
 export const PricingCards = () => {
-  const { createCheckout, subscription } = useSubscription();
-  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubscribe = async (planType: string) => {
-    if (!user) {
-      window.location.href = '/auth';
-      return;
-    }
-
-    try {
-      await createCheckout(planType);
-    } catch (error) {
-      console.error('Error creating checkout:', error);
-    }
-  };
-
-  const isCurrentPlan = (planType: string) => {
-    return subscription.subscription_tier === planType;
+  const handleSubscribe = (planType: string) => {
+    navigate('/business-billing');
   };
 
   return (
     <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
       {plans.map((plan) => {
         const Icon = plan.icon;
-        const isCurrent = isCurrentPlan(plan.planType);
         
         return (
           <Card 
             key={plan.name} 
-            className={`relative ${plan.highlighted ? 'border-primary shadow-lg scale-105' : ''} ${isCurrent ? 'ring-2 ring-green-500' : ''}`}
+            className={`relative ${plan.highlighted ? 'border-primary shadow-lg scale-105' : ''}`}
           >
             {plan.highlighted && (
               <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 Most Popular
-              </Badge>
-            )}
-            {isCurrent && (
-              <Badge variant="outline" className="absolute -top-3 right-4 bg-green-50 text-green-700 border-green-200">
-                Current Plan
               </Badge>
             )}
             
@@ -135,9 +114,8 @@ export const PricingCards = () => {
                 className="w-full" 
                 variant={plan.highlighted ? "default" : "outline"}
                 onClick={() => handleSubscribe(plan.planType)}
-                disabled={isCurrent}
               >
-                {isCurrent ? "Current Plan" : `Choose ${plan.name}`}
+                Choose {plan.name}
               </Button>
             </CardContent>
           </Card>

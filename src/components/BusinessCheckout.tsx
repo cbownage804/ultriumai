@@ -21,11 +21,15 @@ import {
 
 interface BusinessCheckoutProps {
   onSuccess?: () => void;
+  packageType?: string;
+  children?: React.ReactNode;
+  className?: string;
+  size?: "sm" | "lg" | "default";
 }
 
-const BusinessCheckout = ({ onSuccess }: BusinessCheckoutProps) => {
+const BusinessCheckout = ({ onSuccess, packageType, children, className, size = "default" }: BusinessCheckoutProps) => {
   const { toast } = useToast();
-  const [selectedPackage, setSelectedPackage] = useState<string>('professional');
+  const [selectedPackage, setSelectedPackage] = useState<string>(packageType || 'professional');
   const [billingCycle, setBillingCycle] = useState<string>('monthly');
   const [seatCount, setSeatCount] = useState<number>(5);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
@@ -172,6 +176,20 @@ const BusinessCheckout = ({ onSuccess }: BusinessCheckoutProps) => {
 
   const selectedPackageData = packages[selectedPackage as keyof typeof packages];
   const SelectedIcon = selectedPackageData.icon;
+
+  // If children provided, render as simple button
+  if (children) {
+    return (
+      <Button 
+        size={size}
+        className={className}
+        onClick={handleCheckout}
+        disabled={isLoading}
+      >
+        {children}
+      </Button>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">

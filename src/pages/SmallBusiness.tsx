@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { SolutionPurchaseButton } from "@/components/SolutionPurchaseButton";
+import BusinessCheckout from "@/components/BusinessCheckout";
 
 const SmallBusiness = () => {
   const navigate = useNavigate();
@@ -35,25 +35,25 @@ const SmallBusiness = () => {
 
   const solutions = [
     {
-      id: "ai-knowledge",
+      id: "starter",
       title: "AI Knowledge Assistant",
       description: "Train AI on your company documents to provide instant answers to employee questions",
       features: ["Document search", "Policy Q&A", "Procedure guidance", "Employee self-service"],
-      price: "Starting at $100/month (5 users)"
+      price: "$29/month"
     },
     {
-      id: "basic-security",
-      title: "Basic Security Scanning",
-      description: "Simple security checks for emails, links, and documents using AI-powered detection",
-      features: ["Email scanning", "Link checking", "Document analysis", "Security tips"],
-      price: "Starting at $100/month (5 users)"
+      id: "professional", 
+      title: "Professional Security Suite",
+      description: "Advanced security checks for emails, links, and documents using AI-powered detection",
+      features: ["Email scanning", "Link checking", "Document analysis", "Advanced threat detection"],
+      price: "$89/month"
     },
     {
-      id: "custom-chatbot",
-      title: "Custom Business Chatbot",
-      description: "Deploy a branded AI assistant for your website or internal use with your content",
-      features: ["Custom branding", "Website integration", "Knowledge training", "Usage analytics"],
-      price: "Starting at $175/month (5 users)"
+      id: "enterprise",
+      title: "Enterprise AI Platform",
+      description: "Deploy a comprehensive AI assistant for your website and internal operations",
+      features: ["Custom branding", "Website integration", "Knowledge training", "Advanced analytics"],
+      price: "$199/month"
     }
   ];
 
@@ -76,11 +76,15 @@ const SmallBusiness = () => {
               Transform your business operations with AI that learns from your documents and procedures. Provide instant answers to employees and basic security scanning for your digital content.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300">
+              <BusinessCheckout 
+                packageType="starter"
+                size="lg" 
+                className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300"
+              >
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/pricing')}>
+              </BusinessCheckout>
+              <Button size="lg" variant="outline" onClick={() => navigate('/business-billing')}>
                 View Pricing
               </Button>
             </div>
@@ -141,13 +145,12 @@ const SmallBusiness = () => {
                     </ul>
                     <div className="pt-4 border-t">
                       <p className="font-semibold text-primary text-lg">{solution.price}</p>
-                      <SolutionPurchaseButton 
-                        solutionType={solution.id}
-                        solutionName={solution.title}
+                      <BusinessCheckout 
+                        packageType={solution.id}
                         className="w-full mt-3"
                       >
                         Get Started
-                      </SolutionPurchaseButton>
+                      </BusinessCheckout>
                     </div>
                   </CardContent>
                 </Card>
@@ -216,9 +219,13 @@ const SmallBusiness = () => {
               Join small businesses already using AI to make their company information instantly accessible to employees
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80">
+              <BusinessCheckout 
+                packageType="starter"
+                size="lg" 
+                className="bg-gradient-to-r from-primary to-primary/80"
+              >
                 Start Free Trial
-              </Button>
+              </BusinessCheckout>
               <Button size="lg" variant="outline" onClick={() => navigate('/demos')}>
                 See Live Demo
               </Button>

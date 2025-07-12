@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { SolutionPurchaseButton } from "@/components/SolutionPurchaseButton";
+import BusinessCheckout from "@/components/BusinessCheckout";
 
 const MediumBusiness = () => {
   const navigate = useNavigate();
@@ -35,25 +35,25 @@ const MediumBusiness = () => {
 
   const solutions = [
     {
-      id: "ai-knowledge",
-      title: "Enterprise Knowledge Assistant",
-      description: "Advanced AI system trained on your company documents, policies, and procedures for instant organizational intelligence",
-      features: ["Multi-department search", "Advanced Q&A", "Policy management", "Workflow automation"],
-      price: "Starting at $400/month (20 users)"
+      id: "starter",
+      title: "Starter Plus",
+      description: "Advanced AI system trained on your company documents with enhanced capabilities for growing teams",
+      features: ["Multi-department search", "Advanced Q&A", "Policy management", "Enhanced security scanning"],
+      price: "$29/month"
     },
     {
-      id: "security-apps", 
-      title: "Advanced Security Suite",
-      description: "Comprehensive AI-powered security scanning for emails, documents, networks, and web applications",
+      id: "professional", 
+      title: "Professional Platform",
+      description: "Comprehensive AI-powered platform with security scanning, knowledge management, and advanced analytics",
       features: ["Real-time threat detection", "Advanced analytics", "Compliance reporting", "Multi-vector scanning"],
-      price: "Starting at $700/month (20 users)"
+      price: "$89/month"
     },
     {
-      id: "custom-chatbot",
+      id: "enterprise",
       title: "Enterprise AI Platform",
       description: "Fully customizable AI platform with multiple specialized agents for different departments and use cases",
       features: ["Multi-agent deployment", "Department customization", "Advanced integrations", "Enterprise analytics"],
-      price: "Starting at $1,400/month (40 users)"
+      price: "$199/month"
     }
   ];
 
@@ -76,11 +76,15 @@ const MediumBusiness = () => {
               Scale your operations with advanced AI knowledge management and security solutions. Perfect for companies with 25-250 employees who need enterprise-grade capabilities without enterprise complexity.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300">
+              <BusinessCheckout 
+                packageType="professional"
+                size="lg" 
+                className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300"
+              >
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/pricing')}>
+              </BusinessCheckout>
+              <Button size="lg" variant="outline" onClick={() => navigate('/business-billing')}>
                 View Pricing
               </Button>
             </div>
@@ -141,13 +145,12 @@ const MediumBusiness = () => {
                     </ul>
                     <div className="pt-4 border-t">
                       <p className="font-semibold text-primary text-lg">{solution.price}</p>
-                      <SolutionPurchaseButton 
-                        solutionType={solution.id}
-                        solutionName={solution.title}
+                      <BusinessCheckout 
+                        packageType={solution.id}
                         className="w-full mt-3"
                       >
                         Get Started
-                      </SolutionPurchaseButton>
+                      </BusinessCheckout>
                     </div>
                   </CardContent>
                 </Card>
@@ -216,9 +219,13 @@ const MediumBusiness = () => {
               Join medium businesses already using AI to streamline operations and accelerate growth
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80">
+              <BusinessCheckout 
+                packageType="professional"
+                size="lg" 
+                className="bg-gradient-to-r from-primary to-primary/80"
+              >
                 Start Free Trial
-              </Button>
+              </BusinessCheckout>
               <Button size="lg" variant="outline" onClick={() => navigate('/demos')}>
                 See Enterprise Demo
               </Button>

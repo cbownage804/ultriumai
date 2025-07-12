@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { SolutionPurchaseButton } from "@/components/SolutionPurchaseButton";
+import BusinessCheckout from "@/components/BusinessCheckout";
 
 const Enterprise = () => {
   const navigate = useNavigate();
@@ -35,25 +35,25 @@ const Enterprise = () => {
 
   const solutions = [
     {
-      id: "enterprise-ai",
+      id: "enterprise",
       title: "Enterprise AI Command Center",
       description: "Comprehensive AI platform with multi-department intelligence, advanced analytics, and executive dashboards for enterprise-wide transformation",
       features: ["Multi-tenant architecture", "Executive analytics", "Department-specific AI agents", "Enterprise SSO integration"],
-      price: "Starting at $2,500/month (50 users)"
+      price: "$199/month + add-ons"
     },
     {
-      id: "enterprise-security", 
+      id: "enterprise", 
       title: "Enterprise Security Intelligence",
       description: "Advanced AI-powered security operations center with threat intelligence, compliance monitoring, and automated incident response",
       features: ["SOC automation", "Threat intelligence", "Compliance reporting", "Incident response workflows"],
-      price: "Starting at $4,500/month (50 users)"
+      price: "$199/month + SafeSecure"
     },
     {
-      id: "custom-enterprise",
+      id: "custom",
       title: "Custom Enterprise Platform",
       description: "Fully customized AI ecosystem designed for your specific enterprise requirements with dedicated support and custom integrations",
       features: ["Custom AI development", "Dedicated support team", "Enterprise SLA", "Custom integrations"],
-      price: "Starting at $10,000/month (100 users)"
+      price: "Contact for Quote"
     }
   ];
 
@@ -76,11 +76,15 @@ const Enterprise = () => {
               Deploy enterprise-grade AI solutions that scale across your entire organization. Built for Fortune 500 companies who demand security, compliance, and performance at global scale.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300">
+              <BusinessCheckout 
+                packageType="enterprise"
+                size="lg" 
+                className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300"
+              >
                 Schedule Enterprise Demo
                 <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/pricing')}>
+              </BusinessCheckout>
+              <Button size="lg" variant="outline" onClick={() => navigate('/business-billing')}>
                 Enterprise Pricing
               </Button>
             </div>
@@ -141,13 +145,12 @@ const Enterprise = () => {
                     </ul>
                     <div className="pt-4 border-t">
                       <p className="font-semibold text-primary text-lg">{solution.price}</p>
-                      <SolutionPurchaseButton 
-                        solutionType={solution.id}
-                        solutionName={solution.title}
+                      <BusinessCheckout 
+                        packageType={solution.id === "custom" ? "enterprise" : solution.id}
                         className="w-full mt-3"
                       >
-                        Contact Sales
-                      </SolutionPurchaseButton>
+                        {solution.id === "custom" ? "Contact Sales" : "Get Started"}
+                      </BusinessCheckout>
                     </div>
                   </CardContent>
                 </Card>
@@ -216,9 +219,13 @@ const Enterprise = () => {
               Join Fortune 500 companies using AI to drive innovation and competitive advantage
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80" onClick={() => navigate('/contact')}>
+              <BusinessCheckout 
+                packageType="enterprise"
+                size="lg" 
+                className="bg-gradient-to-r from-primary to-primary/80"
+              >
                 Schedule Enterprise Consultation
-              </Button>
+              </BusinessCheckout>
               <Button size="lg" variant="outline" onClick={() => navigate('/demos')}>
                 See Enterprise Demo
               </Button>
