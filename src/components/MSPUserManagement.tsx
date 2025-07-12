@@ -83,17 +83,57 @@ export const MSPUserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Loading client users...');
+      
+      // First get basic client users data
+      const { data: clientUsers, error: clientUsersError } = await supabase
         .from('client_users')
-        .select(`
-          *,
-          profiles(full_name, email),
-          msp_clients(company_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setUsers((data as any) || []);
+      if (clientUsersError) {
+        console.error('Error loading client users:', clientUsersError);
+        throw clientUsersError;
+      }
+
+      console.log('Found client users:', clientUsers);
+
+      if (!clientUsers || clientUsers.length === 0) {
+        setUsers([]);
+        return;
+      }
+
+      // Get user profiles
+      const userIds = clientUsers.map(cu => cu.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError);
+      }
+
+      // Get client details
+      const clientIds = clientUsers.map(cu => cu.client_id);
+      const { data: clients, error: clientsError } = await supabase
+        .from('msp_clients')
+        .select('id, company_name')
+        .in('id', clientIds);
+
+      if (clientsError) {
+        console.error('Error loading client details:', clientsError);
+      }
+
+      // Combine the data
+      const enrichedUsers = clientUsers.map(user => ({
+        ...user,
+        profiles: profiles?.find(p => p.id === user.user_id),
+        msp_clients: clients?.find(c => c.id === user.client_id)
+      }));
+
+      console.log('Enriched users:', enrichedUsers);
+      setUsers(enrichedUsers as ClientUser[]);
     } catch (error) {
       console.error('Error loading users:', error);
       toast.error("Failed to load users");
