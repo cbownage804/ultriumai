@@ -88,6 +88,7 @@ import SecurityAI from '@/pages/SecurityAI';
 import AIStudio from '@/pages/AIStudio';
 import SafeTrackPage from '@/pages/SafeTrackPage';
 import MSPBillingPage from '@/pages/MSPBillingPage';
+import BusinessBillingPage from '@/pages/BusinessBillingPage';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { AuthProvider } from '@/hooks/useAuth';
 
@@ -359,6 +360,11 @@ function AppRouter() {
         <Route path="/dashboard/msp/billing" element={
           <ProtectedRoute>
             <MSPBillingPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/business-billing" element={
+          <ProtectedRoute>
+            <BusinessBillingPage />
           </ProtectedRoute>
         } />
         
