@@ -1134,6 +1134,25 @@ export const MSPDashboard = () => {
                         Manage
                       </Button>
                     </div>
+                    
+                    <div className="flex space-x-2 pt-2 border-t">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => window.open(`/client-login?client=${client.id}`, '_blank')}
+                      >
+                        <Link className="w-3 h-3 mr-1" />
+                        Client Login
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => window.open(`/portal/client/${client.id}`, '_blank')}
+                      >
+                        <Eye className="w-3 h-3 mr-1" />
+                        Preview Portal
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

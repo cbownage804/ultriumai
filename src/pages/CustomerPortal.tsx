@@ -54,13 +54,41 @@ export const CustomerPortal = () => {
     const loadClientData = async () => {
       if (!clientId || !user) {
         console.log('Missing clientId or user:', { clientId, user: !!user });
+        // Redirect to client login if not authenticated
+        if (!user) {
+          window.location.href = `/client-login?client=${clientId}`;
+          return;
+        }
         return;
       }
       
       try {
         console.log('Loading portal data for client:', clientId);
         
-        // Load client data first
+        // First verify user has access to this client
+        const { data: clientAccess, error: accessError } = await supabase
+          .from('client_users')
+          .select('client_id, role, is_active')
+          .eq('user_id', user.id)
+          .eq('client_id', clientId)
+          .eq('is_active', true)
+          .single();
+
+        if (accessError || !clientAccess) {
+          console.error('Access verification failed:', accessError);
+          toast({
+            title: "Access Denied",
+            description: "You don't have permission to access this client portal.",
+            variant: "destructive"
+          });
+          // Redirect to client login
+          window.location.href = `/client-login?client=${clientId}`;
+          return;
+        }
+
+        console.log('Access verified for user:', user.id);
+        
+        // Load client data
         const { data: clientData, error: clientError } = await supabase
           .from('msp_clients')
           .select('*')
@@ -155,9 +183,23 @@ export const CustomerPortal = () => {
                 <p className="text-sm text-muted-foreground">{client.company_name}</p>
               </div>
             </div>
-            <Badge variant={client.billing_status === 'active' ? 'default' : 'secondary'}>
-              {client.billing_status}
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge variant={client.billing_status === 'active' ? 'default' : 'secondary'}>
+                {client.billing_status}
+              </Badge>
+              {user && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = `/client-login?client=${clientId}`;
+                  }}
+                >
+                  Sign Out
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>

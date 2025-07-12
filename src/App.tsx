@@ -91,6 +91,7 @@ import MSPBillingPage from '@/pages/MSPBillingPage';
 import BusinessBillingPage from '@/pages/BusinessBillingPage';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { CustomerPortal } from '@/pages/CustomerPortal';
+import { ClientLogin } from '@/pages/ClientLogin';
 import { AuthProvider } from '@/hooks/useAuth';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
@@ -370,6 +371,7 @@ function AppRouter() {
         } />
         
         {/* Customer Portal Routes */}
+        <Route path="/client-login" element={<ClientLogin />} />
         <Route path="/portal/client/:clientId" element={<CustomerPortal />} />
         
         <Route path="*" element={<NotFound />} />
