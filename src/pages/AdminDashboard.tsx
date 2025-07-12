@@ -425,20 +425,20 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Platform Revenue</CardTitle>
+                  <CardTitle className="text-sm font-medium">Platform Subscriptions</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">${stats.activeSubscriptions * 79}</div>
-                  <p className="text-xs text-muted-foreground">MSP platform fees/month</p>
+                  <p className="text-xs text-muted-foreground">Base platform fees/month</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">End-User Revenue</CardTitle>
+                  <CardTitle className="text-sm font-medium">Per-User Revenue</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${stats.activeSubscriptions * 29 * 5}</div>
-                  <p className="text-xs text-muted-foreground">Avg client subscriptions/month</p>
+                  <div className="text-2xl font-bold">${stats.activeSubscriptions * 15 * 8}</div>
+                  <p className="text-xs text-muted-foreground">$15/user × avg 8 users per MSP</p>
                 </CardContent>
               </Card>
               <Card>
@@ -446,8 +446,8 @@ const AdminDashboard = () => {
                   <CardTitle className="text-sm font-medium">Total Monthly Revenue</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${(stats.activeSubscriptions * 79) + (stats.activeSubscriptions * 29 * 5)}</div>
-                  <p className="text-xs text-muted-foreground">Combined platform + user revenue</p>
+                  <div className="text-2xl font-bold">${(stats.activeSubscriptions * 79) + (stats.activeSubscriptions * 15 * 8)}</div>
+                  <p className="text-xs text-muted-foreground">Platform fees + user fees</p>
                 </CardContent>
               </Card>
               <Card>
@@ -455,7 +455,7 @@ const AdminDashboard = () => {
                   <CardTitle className="text-sm font-medium">Annual Recurring Revenue</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${((stats.activeSubscriptions * 79) + (stats.activeSubscriptions * 29 * 5)) * 12}</div>
+                  <div className="text-2xl font-bold">${((stats.activeSubscriptions * 79) + (stats.activeSubscriptions * 15 * 8)) * 12}</div>
                   <p className="text-xs text-muted-foreground">Total ARR</p>
                 </CardContent>
               </Card>
@@ -463,17 +463,19 @@ const AdminDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>MSP Revenue Breakdown</CardTitle>
+                <CardTitle>MSP Billing Breakdown</CardTitle>
                 <CardDescription>
-                  Platform fees + estimated client revenue per MSP
+                  Platform subscription + per-user costs for each MSP
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {msps.map((msp) => {
                     const platformFee = msp.subscription_status === 'Active' ? 79 : 0;
-                    const estimatedClientRevenue = msp.subscription_status === 'Active' ? 29 * 5 : 0; // Assuming 5 clients avg
-                    const totalRevenue = platformFee + estimatedClientRevenue;
+                    const userCount = msp.subscription_status === 'Active' ? 8 : 0; // Estimated users
+                    const perUserFee = 15; // $15 per user per month
+                    const userFees = userCount * perUserFee;
+                    const totalRevenue = platformFee + userFees;
                     
                     return (
                       <div key={msp.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -481,14 +483,14 @@ const AdminDashboard = () => {
                           <div className="font-medium">{msp.company_name}</div>
                           <div className="text-sm text-muted-foreground">{msp.user_email}</div>
                           <div className="text-xs text-muted-foreground">
-                            Clients: ~{msp.subscription_status === 'Active' ? '5' : '0'} • Last payment: {new Date().toLocaleDateString()}
+                            Users: {userCount} • Last payment: {new Date().toLocaleDateString()}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <div className="font-medium">${totalRevenue}/month</div>
                             <div className="text-xs text-muted-foreground">
-                              Platform: ${platformFee} + Clients: ${estimatedClientRevenue}
+                              Platform: ${platformFee} + Users: ${userFees} (${userCount} × $15)
                             </div>
                           </div>
                           <Badge variant={msp.subscription_status === 'Active' ? 'default' : 'secondary'}>
