@@ -830,6 +830,239 @@ export type Database = {
         }
         Relationships: []
       }
+      business_customers: {
+        Row: {
+          account_manager_id: string | null
+          billing_address: Json | null
+          business_email: string
+          company_name: string
+          company_size: string | null
+          created_at: string
+          id: string
+          industry: string | null
+          tax_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          account_manager_id?: string | null
+          billing_address?: Json | null
+          business_email: string
+          company_name: string
+          company_size?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          account_manager_id?: string | null
+          billing_address?: Json | null
+          business_email?: string
+          company_name?: string
+          company_size?: string | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      business_invoices: {
+        Row: {
+          amount_due: number
+          amount_paid: number | null
+          business_customer_id: string | null
+          created_at: string
+          currency: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          issued_at: string
+          line_items: Json | null
+          notes: string | null
+          paid_at: string | null
+          status: string
+          stripe_invoice_id: string | null
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_due: number
+          amount_paid?: number | null
+          business_customer_id?: string | null
+          created_at?: string
+          currency?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issued_at?: string
+          line_items?: Json | null
+          notes?: string | null
+          paid_at?: string | null
+          status: string
+          stripe_invoice_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number
+          amount_paid?: number | null
+          business_customer_id?: string | null
+          created_at?: string
+          currency?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          issued_at?: string
+          line_items?: Json | null
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          stripe_invoice_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_invoices_business_customer_id_fkey"
+            columns: ["business_customer_id"]
+            isOneToOne: false
+            referencedRelation: "business_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "business_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_subscriptions: {
+        Row: {
+          addons: Json | null
+          billing_cycle: string
+          business_customer_id: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          monthly_amount: number
+          package_type: string
+          seat_count: number
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          addons?: Json | null
+          billing_cycle: string
+          business_customer_id?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          monthly_amount: number
+          package_type: string
+          seat_count?: number
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          addons?: Json | null
+          billing_cycle?: string
+          business_customer_id?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          monthly_amount?: number
+          package_type?: string
+          seat_count?: number
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_subscriptions_business_customer_id_fkey"
+            columns: ["business_customer_id"]
+            isOneToOne: false
+            referencedRelation: "business_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_usage_tracking: {
+        Row: {
+          addon_usage: Json | null
+          business_customer_id: string | null
+          created_at: string
+          feature_usage: Json | null
+          id: string
+          overage_charges: number | null
+          seat_usage: Json | null
+          subscription_id: string | null
+          tracking_period: string
+          updated_at: string
+        }
+        Insert: {
+          addon_usage?: Json | null
+          business_customer_id?: string | null
+          created_at?: string
+          feature_usage?: Json | null
+          id?: string
+          overage_charges?: number | null
+          seat_usage?: Json | null
+          subscription_id?: string | null
+          tracking_period: string
+          updated_at?: string
+        }
+        Update: {
+          addon_usage?: Json | null
+          business_customer_id?: string | null
+          created_at?: string
+          feature_usage?: Json | null
+          id?: string
+          overage_charges?: number | null
+          seat_usage?: Json | null
+          subscription_id?: string | null
+          tracking_period?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_usage_tracking_business_customer_id_fkey"
+            columns: ["business_customer_id"]
+            isOneToOne: false
+            referencedRelation: "business_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_usage_tracking_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "business_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_announcements: {
         Row: {
           announcement_type: string
