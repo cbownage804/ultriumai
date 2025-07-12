@@ -541,7 +541,7 @@ const MSPControlCenter = () => {
                       <Input
                         id="edit_brand_name"
                         defaultValue={msp.brand_name}
-                        placeholder="SafePass"
+                        placeholder="Ultrium"
                       />
                     </div>
                     <div>
@@ -1040,11 +1040,18 @@ const MSPControlCenter = () => {
                           variant="outline" 
                           size="sm"
                           onClick={() => {
-                            // Generate proper SafePass portal URL for this client
+                            // Generate portal URL using MSP's brand name
+                            const brandName = msp?.brand_name || msp?.company_name || 'Ultrium';
                             const portalUrl = msp?.domain 
-                              ? `https://${client.id}.${msp.domain}` 
-                              : `https://portal.safepass.ai/client/${client.id}`;
-                            window.open(portalUrl, '_blank');
+                              ? `https://portal.${msp.domain}/client/${client.id}` 
+                              : `https://portal.ultrium.app/client/${client.id}`;
+                            
+                            // For now, show what the URL would be until portal is built
+                            toast({
+                              title: `${brandName} User Portal`,
+                              description: `Portal URL: ${portalUrl}`,
+                            });
+                            // window.open(portalUrl, '_blank');
                           }}
                         >
                           <Eye className="h-4 w-4 mr-2" />
