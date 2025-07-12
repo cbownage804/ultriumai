@@ -9,151 +9,14 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
+import Navigation from '@/components/Navigation';
 
 const Index = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center space-x-3">
-              <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
-              <span className="text-xl font-bold">UltriumAI</span>
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-8">
-              <Link to="/solutions" className="text-muted-foreground hover:text-foreground transition-colors">
-                Solutions
-              </Link>
-              <Link to="/demos" className="text-muted-foreground hover:text-foreground transition-colors">
-                Live Demos
-              </Link>
-              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
-              <Link to="/msps" className="text-muted-foreground hover:text-foreground transition-colors">
-                For MSPs
-              </Link>
-              <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
-                Contact
-              </Link>
-            </nav>
-
-            <div className="hidden lg:flex items-center space-x-4">
-              {user ? (
-                <>
-                  <Link to="/dashboard">
-                    <Button variant="ghost">Dashboard</Button>
-                  </Link>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        {user.email?.split('@')[0]}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link to="/profile" className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
-                          Profile
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/dashboard" className="flex items-center gap-2">
-                          <Monitor className="h-4 w-4" />
-                          Dashboard
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem 
-                        onClick={signOut} 
-                        className="flex items-center gap-2 text-destructive focus:text-destructive"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              ) : (
-                <>
-                  <Link to="/auth">
-                    <Button variant="ghost">Sign In</Button>
-                  </Link>
-                  <Link to="/auth">
-                    <Button variant="hero">Get Started</Button>
-                  </Link>
-                </>
-              )}
-            </div>
-
-            {/* Mobile menu button */}
-            <button
-              className="lg:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden border-t py-4">
-              <nav className="flex flex-col space-y-4">
-                <Link to="/solutions" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Solutions
-                </Link>
-                <Link to="/demos" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Live Demos
-                </Link>
-                <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Pricing
-                </Link>
-                <Link to="/msps" className="text-muted-foreground hover:text-foreground transition-colors">
-                  For MSPs
-                </Link>
-                <Link to="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Contact
-                </Link>
-                <hr />
-                {user ? (
-                  <>
-                    <Link to="/dashboard">
-                      <Button variant="ghost" className="w-full justify-start">Dashboard</Button>
-                    </Link>
-                    <Link to="/profile">
-                      <Button variant="ghost" className="w-full justify-start">Profile</Button>
-                    </Link>
-                    <Button 
-                      onClick={signOut} 
-                      variant="outline" 
-                      className="w-full justify-start text-destructive hover:text-destructive"
-                    >
-                      Sign Out
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/auth">
-                      <Button variant="ghost" className="w-full justify-start">Sign In</Button>
-                    </Link>
-                    <Link to="/auth">
-                      <Button variant="hero" className="w-full">Get Started</Button>
-                    </Link>
-                  </>
-                )}
-              </nav>
-            </div>
-          )}
-        </div>
-      </header>
+      <Navigation />
+      <div className="pt-16">
       
       {/* Hero Section */}
       <section className="py-20 px-4">
@@ -574,7 +437,6 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <Link to="/" className="flex items-center space-x-3 mb-4">
-                <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
                 <span className="text-xl font-bold">UltriumAI</span>
               </Link>
               <p className="text-muted-foreground text-sm">
@@ -619,6 +481,7 @@ const Index = () => {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 };
