@@ -627,13 +627,18 @@ export const MSPDashboard = () => {
     return null;
   }
 
+  console.log('MSPDashboard render - loading:', loading, 'user:', !!user, 'activeTab:', activeTab);
+  
   if (loading) {
+    console.log('Component stuck in loading state');
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
+
+  console.log('About to render main component content');
 
   return (
     <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
@@ -1015,8 +1020,8 @@ export const MSPDashboard = () => {
       </div>
 
       {/* DEBUG: This should be visible */}
-      <div style={{ backgroundColor: 'red', color: 'white', padding: '20px', fontSize: '20px', textAlign: 'center' }}>
-        DEBUG: TABS SECTION - If you see this, tabs area is rendering
+      <div style={{ backgroundColor: 'red', color: 'white', padding: '20px', fontSize: '20px', textAlign: 'center', border: '5px solid yellow' }}>
+        DEBUG: TABS SECTION REACHED - activeTab: {activeTab}
       </div>
       
       {/* Main Content Tabs */}
