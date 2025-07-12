@@ -64,6 +64,7 @@ const AdminDashboard = () => {
   });
   const [msps, setMSPs] = useState<MSPData[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
+  const [onboardingFeesMap, setOnboardingFeesMap] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -128,10 +129,10 @@ const AdminDashboard = () => {
         .select('user_id, subscribed, subscription_tier')
         .in('user_id', userIds);
 
-      // Get client count for each MSP
-      const { data: clientCounts } = await supabase
+      // Get client count and business size for each MSP
+      const { data: clientData } = await supabase
         .from('msp_clients')
-        .select('msp_id');
+        .select('msp_id, business_size, onboarding_fee_paid, onboarding_fee_amount');
 
       // Load all users
       const { data: userData, error: userError } = await supabase
@@ -145,11 +146,33 @@ const AdminDashboard = () => {
       const userMap = new Map(mspUsers?.map(user => [user.id, user]) || []);
       const subscriptionMap = new Map(subscriptionData?.map(sub => [sub.user_id, sub]) || []);
       
-      // Create client count map
+      // Create client count and onboarding fee maps
       const clientCountMap = new Map();
-      clientCounts?.forEach(client => {
+      const onboardingFeesMap = new Map();
+      
+      clientData?.forEach(client => {
         const count = clientCountMap.get(client.msp_id) || 0;
         clientCountMap.set(client.msp_id, count + 1);
+        
+        // Calculate onboarding fee based on business size
+        if (!client.onboarding_fee_paid) {
+          const currentFees = onboardingFeesMap.get(client.msp_id) || 0;
+          let feeAmount = 0;
+          switch (client.business_size) {
+            case 'small':
+              feeAmount = 500;
+              break;
+            case 'medium':
+              feeAmount = 1500;
+              break;
+            case 'enterprise':
+              feeAmount = 2500;
+              break;
+            default:
+              feeAmount = 500;
+          }
+          onboardingFeesMap.set(client.msp_id, currentFees + feeAmount);
+        }
       });
 
       // Process MSP data
@@ -196,6 +219,7 @@ const AdminDashboard = () => {
 
       setMSPs(processedMSPs);
       setUsers(processedUsers);
+      setOnboardingFeesMap(onboardingFeesMap);
 
     } catch (error) {
       console.error('Failed to load admin data:', error);
@@ -438,6 +462,50 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-4">
+            {/* Pricing Information */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Pricing Structure</CardTitle>
+                <CardDescription>
+                  Current billing model for MSP partners and their clients
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-3 text-primary">MSP Platform Fees</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Base Platform Access:</span>
+                        <span className="font-medium">$79/month</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Per Client/User:</span>
+                        <span className="font-medium">$15/month</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-3 text-primary">Client Onboarding Fees</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Small Business:</span>
+                        <span className="font-medium">$500 one-time</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Medium Business:</span>
+                        <span className="font-medium">$1,500 one-time</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Enterprise:</span>
+                        <span className="font-medium">$2,500 one-time</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
                 <CardHeader className="pb-2">
@@ -477,6 +545,53 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
+            {/* Pending Onboarding Fees */}
+            {msps.some(msp => {
+              const pendingFees = Array.from(onboardingFeesMap.values()).reduce((sum, fee) => sum + fee, 0);
+              return pendingFees > 0;
+            }) && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    Pending Onboarding Fees
+                  </CardTitle>
+                  <CardDescription>
+                    One-time fees pending collection from MSP clients
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {msps.map((msp) => {
+                      const pendingFees = onboardingFeesMap.get(msp.id) || 0;
+                      if (pendingFees === 0) return null;
+                      
+                      return (
+                        <div key={msp.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                          <div>
+                            <div className="font-medium">{msp.company_name}</div>
+                            <div className="text-sm text-muted-foreground">Unpaid onboarding fees</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-orange-600">${pendingFees}</div>
+                            <div className="text-xs text-muted-foreground">Due on collection</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="border-t pt-3 mt-3">
+                      <div className="flex justify-between font-semibold">
+                        <span>Total Pending:</span>
+                        <span className="text-orange-600">
+                          ${Array.from(onboardingFeesMap.values()).reduce((sum, fee) => sum + fee, 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle>MSP Billing Breakdown</CardTitle>
@@ -491,6 +606,7 @@ const AdminDashboard = () => {
                     const userCount = msp.client_count; // Use actual client count
                     const perUserFee = 15; // $15 per user per month
                     const userFees = userCount * perUserFee;
+                    const pendingOnboardingFees = onboardingFeesMap.get(msp.id) || 0;
                     const totalRevenue = platformFee + userFees;
                     
                     return (
@@ -508,6 +624,11 @@ const AdminDashboard = () => {
                             <div className="text-xs text-muted-foreground">
                               Platform: ${platformFee} + Users: ${userFees} (${userCount} × $15)
                             </div>
+                            {pendingOnboardingFees > 0 && (
+                              <div className="text-xs text-orange-600 font-medium">
+                                + ${pendingOnboardingFees} onboarding fee pending
+                              </div>
+                            )}
                           </div>
                           <Badge variant={msp.subscription_status === 'Active' ? 'default' : 'secondary'}>
                             {msp.subscription_status}

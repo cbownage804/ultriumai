@@ -3999,6 +3999,7 @@ export type Database = {
           api_enabled: boolean | null
           billing_status: string | null
           business_hours: Json | null
+          business_size: string | null
           company_name: string
           contact_email: string
           contact_name: string
@@ -4016,6 +4017,8 @@ export type Database = {
           monthly_fee: number | null
           monthly_rate: number
           msp_id: string
+          onboarding_fee_amount: number | null
+          onboarding_fee_paid: boolean | null
           phone: string | null
           timezone: string | null
           trial_ends_at: string | null
@@ -4027,6 +4030,7 @@ export type Database = {
           api_enabled?: boolean | null
           billing_status?: string | null
           business_hours?: Json | null
+          business_size?: string | null
           company_name: string
           contact_email: string
           contact_name: string
@@ -4044,6 +4048,8 @@ export type Database = {
           monthly_fee?: number | null
           monthly_rate: number
           msp_id: string
+          onboarding_fee_amount?: number | null
+          onboarding_fee_paid?: boolean | null
           phone?: string | null
           timezone?: string | null
           trial_ends_at?: string | null
@@ -4055,6 +4061,7 @@ export type Database = {
           api_enabled?: boolean | null
           billing_status?: string | null
           business_hours?: Json | null
+          business_size?: string | null
           company_name?: string
           contact_email?: string
           contact_name?: string
@@ -4072,6 +4079,8 @@ export type Database = {
           monthly_fee?: number | null
           monthly_rate?: number
           msp_id?: string
+          onboarding_fee_amount?: number | null
+          onboarding_fee_paid?: boolean | null
           phone?: string | null
           timezone?: string | null
           trial_ends_at?: string | null
