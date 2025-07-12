@@ -19,8 +19,17 @@ import {
   Settings,
   DollarSign,
   UserCheck,
-  Clock
+  Clock,
+  Power,
+  PowerOff
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AdminStats {
   totalMSPs: number;
@@ -37,6 +46,7 @@ interface MSPData {
   created_at: string;
   user_email: string;
   subscription_status: string;
+  subscription_tier: string;
   client_count: number;
   last_active: string;
 }
@@ -188,6 +198,7 @@ const AdminDashboard = () => {
           created_at: msp.created_at,
           user_email: user?.email || msp.contact_email || 'Unknown',
           subscription_status: subscription?.subscribed ? 'Active' : 'Inactive',
+          subscription_tier: subscription?.subscription_tier || 'Basic',
           client_count: clientCount,
           last_active: new Date().toISOString() // TODO: Add real last active tracking
         };
@@ -293,6 +304,90 @@ const AdminDashboard = () => {
       toast({
         title: "Error",
         description: "Failed to update onboarding fee status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleMSPActivation = async (mspId: string, currentStatus: string) => {
+    try {
+      const msp = msps.find(msp => msp.id === mspId);
+      if (!msp) return;
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', msp.user_email)
+        .single();
+
+      if (!profiles) throw new Error('User profile not found');
+
+      // Toggle between active and inactive - if currently Active, make inactive, if inactive make active
+      const newActiveStatus = currentStatus !== 'Active';
+      
+      // Update or create subscriber record
+      const { error } = await supabase
+        .from('subscribers')
+        .upsert({
+          user_id: profiles.id,
+          email: msp.user_email,
+          subscribed: newActiveStatus,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `MSP ${newActiveStatus ? 'activated' : 'deactivated'} successfully`,
+      });
+      
+      await loadAdminData();
+    } catch (error) {
+      console.error('Error toggling MSP activation:', error);
+      toast({
+        title: "Error",
+        description: "Failed to toggle MSP activation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateSubscriptionTier = async (mspId: string, newTier: string) => {
+    try {
+      const msp = msps.find(msp => msp.id === mspId);
+      if (!msp) return;
+
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', msp.user_email)
+        .single();
+
+      if (!profiles) throw new Error('User profile not found');
+
+      const { error } = await supabase
+        .from('subscribers')
+        .upsert({
+          user_id: profiles.id,
+          email: msp.user_email,
+          subscription_tier: newTier,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `Subscription tier updated to ${newTier}`,
+      });
+      
+      await loadAdminData();
+    } catch (error) {
+      console.error('Error updating subscription tier:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update subscription tier",
         variant: "destructive",
       });
     }
@@ -474,21 +569,48 @@ const AdminDashboard = () => {
                         <div className="text-xs text-muted-foreground">
                           Created: {new Date(msp.created_at).toLocaleDateString()}
                         </div>
+                        <div className="text-xs text-muted-foreground">
+                          Tier: {msp.subscription_tier} • Clients: {msp.client_count}
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant={msp.subscription_status === 'Active' ? 'default' : 'secondary'}>
-                          {msp.subscription_status}
-                        </Badge>
-                        <Button 
-                          variant={msp.subscription_status === 'Active' ? 'destructive' : 'default'}
-                          size="sm"
-                          onClick={() => toggleMSPPaymentStatus(msp.id, msp.subscription_status)}
-                        >
-                          Mark as {msp.subscription_status === 'Active' ? 'Unpaid' : 'Paid'}
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          Manage
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant={msp.subscription_status === 'Active' ? 'default' : 'secondary'}>
+                              {msp.subscription_status}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant={msp.subscription_status === 'Active' ? 'destructive' : 'default'}
+                              onClick={() => toggleMSPActivation(msp.id, msp.subscription_status)}
+                            >
+                              {msp.subscription_status === 'Active' ? (
+                                <PowerOff className="h-3 w-3 mr-1" />
+                              ) : (
+                                <Power className="h-3 w-3 mr-1" />
+                              )}
+                              {msp.subscription_status === 'Active' ? 'Deactivate' : 'Activate'}
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Select
+                              value={msp.subscription_tier}
+                              onValueChange={(value) => updateSubscriptionTier(msp.id, value)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Basic">Basic</SelectItem>
+                                <SelectItem value="Premium">Premium</SelectItem>
+                                <SelectItem value="Enterprise">Enterprise</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button variant="outline" size="sm">
+                              Manage
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
