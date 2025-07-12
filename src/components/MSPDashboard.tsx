@@ -1014,12 +1014,17 @@ export const MSPDashboard = () => {
         </Card>
       </div>
 
+      {/* DEBUG: This should be visible */}
+      <div style={{ backgroundColor: 'red', color: 'white', padding: '20px', fontSize: '20px', textAlign: 'center' }}>
+        DEBUG: TABS SECTION - If you see this, tabs area is rendering
+      </div>
+      
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-4">
-        <TabsList className="flex flex-wrap gap-1 h-auto p-2 text-sm justify-start bg-muted/50 border rounded-md w-full min-h-[50px]">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-2 text-sm justify-start bg-red-500 border-4 border-yellow-400 rounded-md w-full min-h-[80px]">
           <TabsTrigger value="clients" className="flex items-center gap-1">
             <Users className="w-3 h-3" />
             Clients
