@@ -1040,10 +1040,10 @@ const MSPControlCenter = () => {
                           variant="outline" 
                           size="sm"
                           onClick={() => {
-                            // Open client portal in new tab
-                            const portalUrl = client.domain 
-                              ? `https://${client.domain}` 
-                              : `https://portal.${msp?.domain || 'safepass.ai'}/${client.id}`;
+                            // Generate proper SafePass portal URL for this client
+                            const portalUrl = msp?.domain 
+                              ? `https://${client.id}.${msp.domain}` 
+                              : `https://portal.safepass.ai/client/${client.id}`;
                             window.open(portalUrl, '_blank');
                           }}
                         >
