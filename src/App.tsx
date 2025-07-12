@@ -166,7 +166,7 @@ function AppRouter() {
         <Route path="/msp-demos" element={<MSPDemos />} />
           <Route path="/msp-control-center" element={
             <ProtectedRoute>
-              <MSPControlCenter />
+              <MSPDashboardPage />
             </ProtectedRoute>
           } />
           <Route path="/msp-security-dashboard" element={
