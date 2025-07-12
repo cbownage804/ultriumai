@@ -277,8 +277,6 @@ export const MSPUserManagement = () => {
                   <SelectContent>
                     <SelectItem value="client_staff">Client Staff</SelectItem>
                     <SelectItem value="client_admin">Client Admin</SelectItem>
-                    <SelectItem value="msp_staff">MSP Staff</SelectItem>
-                    <SelectItem value="msp_admin">MSP Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
