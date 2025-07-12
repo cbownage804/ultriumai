@@ -123,7 +123,7 @@ export const MSPDashboard = () => {
     contact_name: '',
     contact_email: '',
     domain: '',
-    max_users: 5
+    max_users: 10 // Default to 10 users
   });
   const { toast } = useToast();
   const emailSettingsRef = useRef<HTMLDivElement>(null);
@@ -803,22 +803,19 @@ export const MSPDashboard = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="max_users">Max Users</Label>
-                  <Select 
-                    value={newClient.max_users.toString()} 
-                    onValueChange={(value) => setNewClient({ ...newClient, max_users: parseInt(value) })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5 Users - $75/month</SelectItem>
-                      <SelectItem value="10">10 Users - $150/month</SelectItem>
-                      <SelectItem value="25">25 Users - $375/month</SelectItem>
-                      <SelectItem value="50">50 Users - $750/month</SelectItem>
-                      <SelectItem value="100">100 Users - $1,500/month</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="max_users">Number of Users</Label>
+                  <Input
+                    id="max_users"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={newClient.max_users}
+                    onChange={(e) => setNewClient({ ...newClient, max_users: parseInt(e.target.value) || 1 })}
+                    placeholder="Enter number of users"
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    ${newClient.max_users * 15}/month (${15} per user)
+                  </p>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setShowAddClient(false)}>
