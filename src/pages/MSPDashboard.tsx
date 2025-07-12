@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { 
   Building2, 
@@ -99,8 +100,34 @@ const MSPControlCenter = () => {
     domain: '',
     phone: '',
     max_users: 5,
-    monthly_rate: 15
+    monthly_rate: 15,
+    business_size: 'small' as 'small' | 'medium' | 'enterprise',
+    onboarding_fee_amount: 500
   });
+
+  // Calculate onboarding fee based on business size
+  const calculateOnboardingFee = (businessSize: string) => {
+    switch (businessSize) {
+      case 'small':
+        return 500;
+      case 'medium':
+        return 1500;
+      case 'enterprise':
+        return 2500;
+      default:
+        return 500;
+    }
+  };
+
+  // Handle business size change
+  const handleBusinessSizeChange = (businessSize: 'small' | 'medium' | 'enterprise') => {
+    const onboardingFee = calculateOnboardingFee(businessSize);
+    setClientForm(prev => ({ 
+      ...prev, 
+      business_size: businessSize,
+      onboarding_fee_amount: onboardingFee
+    }));
+  };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -238,7 +265,9 @@ const MSPControlCenter = () => {
         domain: '',
         phone: '',
         max_users: 5,
-        monthly_rate: 15
+        monthly_rate: 15,
+        business_size: 'small',
+        onboarding_fee_amount: 500
       });
     }
   };
@@ -697,6 +726,39 @@ const MSPControlCenter = () => {
                         onChange={(e) => setClientForm(prev => ({ ...prev, phone: e.target.value }))}
                         placeholder="(555) 987-6543"
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="business_size">Business Size</Label>
+                      <Select
+                        value={clientForm.business_size}
+                        onValueChange={handleBusinessSizeChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select business size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">Small Business</SelectItem>
+                          <SelectItem value="medium">Medium Business</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="onboarding_fee">Onboarding Fee</Label>
+                      <Input
+                        id="onboarding_fee"
+                        type="number"
+                        value={clientForm.onboarding_fee_amount}
+                        readOnly
+                        className="bg-muted"
+                        placeholder="Calculated automatically"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Fee calculated based on business size
+                      </p>
                     </div>
                   </div>
 

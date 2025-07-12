@@ -222,6 +222,8 @@ export const useMSP = () => {
     phone?: string;
     max_users?: number;
     monthly_rate: number;
+    business_size?: string;
+    onboarding_fee_amount?: number;
   }) => {
     if (!msp) return null;
 
@@ -236,7 +238,10 @@ export const useMSP = () => {
           domain: clientData.domain,
           phone: clientData.phone,
           max_users: clientData.max_users || 5,
-          monthly_rate: clientData.monthly_rate
+          monthly_rate: clientData.monthly_rate,
+          business_size: clientData.business_size || 'small',
+          onboarding_fee_amount: clientData.onboarding_fee_amount || 500,
+          onboarding_fee_paid: false
         })
         .select()
         .single();
