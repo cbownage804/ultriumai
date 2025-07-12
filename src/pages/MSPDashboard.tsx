@@ -105,6 +105,13 @@ const MSPControlCenter = () => {
     onboarding_fee_amount: 500
   });
 
+  // Determine business size based on user count
+  const getBusinessSizeFromUserCount = (userCount: number): 'small' | 'medium' | 'enterprise' => {
+    if (userCount <= 10) return 'small';
+    if (userCount <= 50) return 'medium';
+    return 'enterprise';
+  };
+
   // Calculate onboarding fee based on business size
   const calculateOnboardingFee = (businessSize: string) => {
     switch (businessSize) {
@@ -119,11 +126,14 @@ const MSPControlCenter = () => {
     }
   };
 
-  // Handle business size change
-  const handleBusinessSizeChange = (businessSize: 'small' | 'medium' | 'enterprise') => {
+  // Handle user count change and automatically update business size
+  const handleUserCountChange = (userCount: number) => {
+    const businessSize = getBusinessSizeFromUserCount(userCount);
     const onboardingFee = calculateOnboardingFee(businessSize);
+    
     setClientForm(prev => ({ 
       ...prev, 
+      max_users: userCount,
       business_size: businessSize,
       onboarding_fee_amount: onboardingFee
     }));
@@ -704,9 +714,13 @@ const MSPControlCenter = () => {
                         id="max_users"
                         type="number"
                         value={clientForm.max_users}
-                        onChange={(e) => setClientForm(prev => ({ ...prev, max_users: parseInt(e.target.value) }))}
+                        onChange={(e) => handleUserCountChange(parseInt(e.target.value) || 1)}
                         min="1"
+                        placeholder="5"
                       />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Determines business size and fee
+                      </p>
                     </div>
                     <div>
                       <Label htmlFor="monthly_rate">Rate per User</Label>
@@ -732,19 +746,19 @@ const MSPControlCenter = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="business_size">Business Size</Label>
-                      <Select
-                        value={clientForm.business_size}
-                        onValueChange={handleBusinessSizeChange}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select business size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">Small Business</SelectItem>
-                          <SelectItem value="medium">Medium Business</SelectItem>
-                          <SelectItem value="enterprise">Enterprise</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        id="business_size"
+                        value={
+                          clientForm.business_size === 'small' ? 'Small Business (1-10 users)' :
+                          clientForm.business_size === 'medium' ? 'Medium Business (11-50 users)' :
+                          'Enterprise (51+ users)'
+                        }
+                        readOnly
+                        className="bg-muted"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Automatically determined by user count
+                      </p>
                     </div>
                     <div>
                       <Label htmlFor="onboarding_fee">Onboarding Fee</Label>
@@ -757,7 +771,7 @@ const MSPControlCenter = () => {
                         placeholder="Calculated automatically"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Fee calculated based on business size
+                        Fee based on business size
                       </p>
                     </div>
                   </div>
