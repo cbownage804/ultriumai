@@ -1019,7 +1019,7 @@ export const MSPDashboard = () => {
         console.log('Tab changed to:', value);
         setActiveTab(value);
       }} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7 lg:grid-cols-14 text-xs">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1 text-xs justify-start">
           <TabsTrigger value="clients" className="flex items-center gap-1">
             <Users className="w-3 h-3" />
             Clients
