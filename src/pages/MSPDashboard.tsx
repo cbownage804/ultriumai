@@ -58,6 +58,7 @@ import { SecurityDashboard } from '@/components/dashboards/SecurityDashboard';
 import { BusinessIntelligence } from '@/components/dashboards/BusinessIntelligence';
 import { ClientPortal } from '@/components/client/ClientPortal';
 import { AnnouncementManager } from '@/components/announcements/AnnouncementManager';
+import { MSPUserManagement } from '@/components/MSPUserManagement';
 
 const MSPControlCenter = () => {
   const { 
@@ -1212,41 +1213,7 @@ const MSPControlCenter = () => {
           </TabsContent>
 
           <TabsContent value="user-management" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  User Management
-                </CardTitle>
-                <p className="text-muted-foreground">
-                  Manage client users, authentication settings, and security features.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">Client Users</h3>
-                      <p className="text-sm text-muted-foreground">
-                        View and manage user accounts across all your clients
-                      </p>
-                    </div>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add User
-                    </Button>
-                  </div>
-                  
-                  <div className="rounded-lg border p-8 text-center">
-                    <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                    <p className="text-muted-foreground">User management features coming soon</p>
-                    <p className="text-sm text-muted-foreground">
-                      Advanced user management, MFA controls, and access policies will be available here
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <MSPUserManagement />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-4">
