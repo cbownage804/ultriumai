@@ -66,3 +66,6 @@ verify_jwt = false
 
 [functions.ultrium-safelink-scanner]
 verify_jwt = false
+
+[functions.business-billing]
+verify_jwt = true
