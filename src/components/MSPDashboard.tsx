@@ -1069,10 +1069,6 @@ export const MSPDashboard = () => {
             <TabsContent value="clients">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">Client Management</h3>
-                <Button onClick={() => setShowAddClient(true)} className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Client
-                </Button>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {clients.map(client => (
