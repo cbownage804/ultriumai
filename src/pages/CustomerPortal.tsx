@@ -47,26 +47,33 @@ export const CustomerPortal = () => {
 
   useEffect(() => {
     const loadClientData = async () => {
-      if (!clientId) return;
+      if (!clientId || !user) return;
       
       try {
-        // Load client data
+        // First check if current user is an MSP who owns this client
+        const { data: mspData, error: mspError } = await supabase
+          .from('msps')
+          .select('id, brand_name, brand_color, logo_url, contact_email')
+          .eq('user_id', user.id)
+          .single();
+
+        if (mspError) {
+          console.error('MSP access error:', mspError);
+          throw new Error('You do not have access to this portal');
+        }
+
+        // Load client data - verify it belongs to this MSP
         const { data: clientData, error: clientError } = await supabase
           .from('msp_clients')
           .select('*')
           .eq('id', clientId)
+          .eq('msp_id', mspData.id)
           .single();
 
-        if (clientError) throw clientError;
-
-        // Load MSP data for branding
-        const { data: mspData, error: mspError } = await supabase
-          .from('msps')
-          .select('brand_name, brand_color, logo_url, contact_email')
-          .eq('id', clientData.msp_id)
-          .single();
-
-        if (mspError) throw mspError;
+        if (clientError) {
+          console.error('Client access error:', clientError);
+          throw new Error('Client not found or access denied');
+        }
 
         setClient(clientData);
         setMSP(mspData);
@@ -74,7 +81,7 @@ export const CustomerPortal = () => {
         console.error('Error loading client data:', error);
         toast({
           title: "Error",
-          description: "Failed to load portal data",
+          description: error.message || "Failed to load portal data",
           variant: "destructive"
         });
       } finally {
@@ -83,7 +90,7 @@ export const CustomerPortal = () => {
     };
 
     loadClientData();
-  }, [clientId, toast]);
+  }, [clientId, user, toast]);
 
   if (loading) {
     return (
