@@ -26,7 +26,10 @@ import {
   Eye,
   Building,
   Shield,
-  Globe
+  Globe,
+  Key,
+  BookOpen,
+  BarChart3
 } from "lucide-react";
 
 interface BillingRecord {
@@ -219,10 +222,27 @@ const MSPBillingPage = () => {
 
   const getProductIcon = (product: string) => {
     switch (product.toLowerCase()) {
-      case 'safeweb': return Globe;
+      case 'safescan': return Shield;
+      case 'safepass': return Key;
+      case 'safekb': return BookOpen;
       case 'safenet': return Building;
+      case 'safescore': return BarChart3;
+      case 'safeweb': return Globe;
       case 'safeshield': return Shield;
       default: return FileText;
+    }
+  };
+
+  const getPackageBadge = (packageName: string) => {
+    switch (packageName.toLowerCase()) {
+      case 'starter':
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Starter</Badge>;
+      case 'professional':
+        return <Badge variant="default" className="bg-purple-100 text-purple-800">Professional</Badge>;
+      case 'enterprise':
+        return <Badge variant="outline" className="bg-orange-100 text-orange-800">Enterprise</Badge>;
+      default:
+        return <Badge variant="secondary">{packageName}</Badge>;
     }
   };
 

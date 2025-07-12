@@ -15,6 +15,19 @@ interface ProductBilling {
   records: any[];
 }
 
+interface PackageBilling {
+  package: string;
+  monthly_revenue: number;
+  annual_revenue: number;
+  client_count: number;
+  apps: {
+    [key: string]: {
+      revenue: number;
+      clients: number;
+    };
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -49,63 +62,97 @@ serve(async (req) => {
     console.log(`User ${user.email} - UltriumAI Admin: ${isUltriumAdmin}`);
 
     if (method === 'GET' && action === 'unified_summary') {
-      // Get unified revenue summary across all products
-      const products = ['safeweb', 'safenet', 'safeshield'];
+      // Get unified revenue summary by packages and products
+      const packages = {
+        starter: ['safescan'],
+        professional: ['safepass', 'safekb', 'safenet', 'safescore'],
+        enterprise: ['safeweb', 'safeshield']
+      };
+      
       const summary = {
         total_monthly_revenue: 0,
         total_annual_revenue: 0,
         total_clients: 0,
         total_msps: 0,
+        packages: [] as PackageBilling[],
         products: [] as ProductBilling[],
         top_performing_msps: [] as any[],
         revenue_trends: [] as any[]
       };
 
-      for (const product of products) {
-        try {
-          const tableName = `${product}_msp_billing`;
-          
-          let query = supabaseClient
-            .from(tableName)
-            .select(`
-              *,
-              client:${product}_msp_clients(company_name, subscription_plan)
-            `);
+      // Process by packages first
+      for (const [packageName, apps] of Object.entries(packages)) {
+        const packageData: PackageBilling = {
+          package: packageName.charAt(0).toUpperCase() + packageName.slice(1),
+          monthly_revenue: 0,
+          annual_revenue: 0,
+          client_count: 0,
+          apps: {}
+        };
 
-          // If not UltriumAI admin, filter by user
-          if (!isUltriumAdmin) {
-            query = query.eq('msp_user_id', user.id);
+        for (const product of apps) {
+          try {
+            const tableName = `${product}_msp_billing`;
+            
+            let query = supabaseClient
+              .from(tableName)
+              .select(`
+                *,
+                client:${product}_msp_clients(company_name, subscription_plan)
+              `);
+
+            // If not UltriumAI admin, filter by user
+            if (!isUltriumAdmin) {
+              query = query.eq('msp_user_id', user.id);
+            }
+
+            const { data: billingRecords, error } = await query.order('created_at', { ascending: false });
+
+            if (!error && billingRecords) {
+              const currentMonth = new Date().toISOString().slice(0, 7);
+              const currentMonthRecords = billingRecords.filter(record => 
+                record.billing_period_start?.startsWith(currentMonth)
+              );
+
+              const monthlyRevenue = currentMonthRecords.reduce((sum, record) => 
+                sum + Number(record.msp_profit || 0), 0);
+              const annualRevenue = billingRecords.reduce((sum, record) => 
+                sum + Number(record.msp_profit || 0), 0);
+              const clientCount = new Set(billingRecords.map(record => record.client_id)).size;
+
+              // Add to package totals
+              packageData.monthly_revenue += monthlyRevenue;
+              packageData.annual_revenue += annualRevenue;
+              packageData.client_count += clientCount;
+              
+              // Add to overall totals
+              summary.total_monthly_revenue += monthlyRevenue;
+              summary.total_annual_revenue += annualRevenue;
+              summary.total_clients += clientCount;
+
+              // Store app-specific data
+              packageData.apps[product.toUpperCase()] = {
+                revenue: annualRevenue,
+                clients: clientCount
+              };
+
+              // Also maintain product-level data for backward compatibility
+              summary.products.push({
+                product: product.toUpperCase(),
+                monthly_revenue: monthlyRevenue,
+                annual_revenue: annualRevenue,
+                client_count: clientCount,
+                records: billingRecords.slice(0, 5)
+              });
+            }
+          } catch (error) {
+            console.log(`No billing table found for ${product}:`, error.message);
+            // Continue to next product if table doesn't exist
           }
+        }
 
-          const { data: billingRecords, error } = await query.order('created_at', { ascending: false });
-
-          if (!error && billingRecords) {
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            const currentMonthRecords = billingRecords.filter(record => 
-              record.billing_period_start?.startsWith(currentMonth)
-            );
-
-            const monthlyRevenue = currentMonthRecords.reduce((sum, record) => 
-              sum + Number(record.msp_profit || 0), 0);
-            const annualRevenue = billingRecords.reduce((sum, record) => 
-              sum + Number(record.msp_profit || 0), 0);
-            const clientCount = new Set(billingRecords.map(record => record.client_id)).size;
-
-            summary.total_monthly_revenue += monthlyRevenue;
-            summary.total_annual_revenue += annualRevenue;
-            summary.total_clients += clientCount;
-
-            summary.products.push({
-              product: product.toUpperCase(),
-              monthly_revenue: monthlyRevenue,
-              annual_revenue: annualRevenue,
-              client_count: clientCount,
-              records: billingRecords.slice(0, 5)
-            });
-          }
-        } catch (error) {
-          console.log(`No billing table found for ${product}:`, error.message);
-          // Continue to next product if table doesn't exist
+        if (packageData.monthly_revenue > 0 || packageData.annual_revenue > 0) {
+          summary.packages.push(packageData);
         }
       }
 
