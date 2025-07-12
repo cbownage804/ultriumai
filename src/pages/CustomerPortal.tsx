@@ -47,38 +47,46 @@ export const CustomerPortal = () => {
 
   useEffect(() => {
     const loadClientData = async () => {
-      if (!clientId || !user) return;
+      if (!clientId || !user) {
+        console.log('Missing clientId or user:', { clientId, user: !!user });
+        return;
+      }
       
       try {
-        // First check if current user is an MSP who owns this client
-        const { data: mspData, error: mspError } = await supabase
-          .from('msps')
-          .select('id, brand_name, brand_color, logo_url, contact_email')
-          .eq('user_id', user.id)
-          .single();
-
-        if (mspError) {
-          console.error('MSP access error:', mspError);
-          throw new Error('You do not have access to this portal');
-        }
-
-        // Load client data - verify it belongs to this MSP
+        console.log('Loading portal data for client:', clientId);
+        
+        // Load client data first
         const { data: clientData, error: clientError } = await supabase
           .from('msp_clients')
           .select('*')
           .eq('id', clientId)
-          .eq('msp_id', mspData.id)
           .single();
 
         if (clientError) {
-          console.error('Client access error:', clientError);
-          throw new Error('Client not found or access denied');
+          console.error('Client query error:', clientError);
+          throw new Error('Client not found');
         }
+
+        console.log('Client data loaded:', clientData);
+
+        // Then load MSP data for branding
+        const { data: mspData, error: mspError } = await supabase
+          .from('msps')
+          .select('brand_name, brand_color, logo_url, contact_email')
+          .eq('id', clientData.msp_id)
+          .single();
+
+        if (mspError) {
+          console.error('MSP query error:', mspError);
+          throw new Error('MSP data not found');
+        }
+
+        console.log('MSP data loaded:', mspData);
 
         setClient(clientData);
         setMSP(mspData);
       } catch (error) {
-        console.error('Error loading client data:', error);
+        console.error('Error loading portal data:', error);
         toast({
           title: "Error",
           description: error.message || "Failed to load portal data",
