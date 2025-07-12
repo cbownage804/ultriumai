@@ -627,10 +627,14 @@ export const MSPDashboard = () => {
     return null;
   }
 
+  console.log('MSPDashboard render - loading:', loading, 'authLoading:', authLoading, 'user:', !!user);
+  
   if (loading) {
+    console.log('Stuck in loading state!');
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="ml-4 text-red-500 font-bold">DEBUG: Loading state active</div>
       </div>
     );
   }
