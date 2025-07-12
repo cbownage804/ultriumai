@@ -326,102 +326,167 @@ const BusinessBillingPage = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {subscription && (
-              <>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
-                    {React.createElement(getPackageIcon(subscription.package_type), { className: "h-4 w-4 text-muted-foreground" })}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold capitalize">{subscription.package_type}</div>
-                    <p className="text-xs text-muted-foreground">{subscription.seat_count} seats</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(subscription.monthly_amount)}</div>
-                    <p className="text-xs text-muted-foreground">{subscription.billing_cycle} billing</p>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Status</CardTitle>
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{getStatusBadge(subscription.status)}</div>
-                    <p className="text-xs text-muted-foreground">
-                      {subscription.trial_ends_at ? `Trial ends ${new Date(subscription.trial_ends_at).toLocaleDateString()}` : 'Active subscription'}
-                    </p>
-                  </CardContent>
-                </Card>
-              </>
-            )}
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Invoices</CardTitle>
-                <Receipt className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{invoices.length}</div>
-                <p className="text-xs text-muted-foreground">Total invoices</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          {!subscription && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Choose Your Business Plan</CardTitle>
-                <CardDescription>Select the perfect package for your organization</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {pricing && Object.entries(pricing).map(([pkg, price]: [string, any]) => (
-                    <Card key={pkg} className="cursor-pointer hover:shadow-md transition-shadow">
-                      <CardHeader className="text-center">
-                        <div className="flex justify-center mb-2">
-                          {React.createElement(getPackageIcon(pkg), { className: "h-8 w-8 text-primary" })}
-                        </div>
-                        <CardTitle className="capitalize">{pkg}</CardTitle>
-                        <div className="text-2xl font-bold text-primary">
-                          {formatCurrency(price.monthly.platform + price.monthly.per_user)}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Platform + 1 user/month
-                        </p>
+          {isUltriumAdmin ? (
+            /* Admin View */
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>UltriumAI Admin Access</CardTitle>
+                  <CardDescription>You are logged in as a UltriumAI administrator</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    As an admin, you have access to all business billing features. 
+                    Use the Admin tab to view and manage all business customers.
+                  </p>
+                  <Button onClick={() => {
+                    const adminTab = document.querySelector('[value="admin"]') as HTMLElement;
+                    adminTab?.click();
+                  }} className="mr-2">
+                    <Users className="h-4 w-4 mr-2" />
+                    View Admin Dashboard
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              {adminData && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{adminData.totalCustomers || 0}</div>
+                      <p className="text-xs text-muted-foreground">Business customers</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
+                      <Crown className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{adminData.activeSubscriptions || 0}</div>
+                      <p className="text-xs text-muted-foreground">Active plans</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">${adminData.monthlyRevenue || '0.00'}</div>
+                      <p className="text-xs text-muted-foreground">This month</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Regular Customer View */
+            <div className="space-y-6">
+              {/* Overview Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {subscription && (
+                  <>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Current Plan</CardTitle>
+                        {React.createElement(getPackageIcon(subscription.package_type), { className: "h-4 w-4 text-muted-foreground" })}
                       </CardHeader>
-                      <CardContent className="space-y-2">
-                        <Button 
-                          className="w-full" 
-                          onClick={() => handleCreateCheckout(pkg, 'monthly')}
-                        >
-                          Start Monthly
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => handleCreateCheckout(pkg, 'annual')}
-                        >
-                          Start Annual (Save 2 months)
-                        </Button>
+                      <CardContent>
+                        <div className="text-2xl font-bold capitalize">{subscription.package_type}</div>
+                        <p className="text-xs text-muted-foreground">{subscription.seat_count} seats</p>
                       </CardContent>
                     </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{formatCurrency(subscription.monthly_amount)}</div>
+                        <p className="text-xs text-muted-foreground">{subscription.billing_cycle} billing</p>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Status</CardTitle>
+                        <Shield className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{getStatusBadge(subscription.status)}</div>
+                        <p className="text-xs text-muted-foreground">
+                          {subscription.trial_ends_at ? `Trial ends ${new Date(subscription.trial_ends_at).toLocaleDateString()}` : 'Active subscription'}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Invoices</CardTitle>
+                    <Receipt className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{invoices.length}</div>
+                    <p className="text-xs text-muted-foreground">Total invoices</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Quick Actions */}
+              {!subscription && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Choose Your Business Plan</CardTitle>
+                    <CardDescription>Select the perfect package for your organization</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {pricing && Object.entries(pricing).map(([pkg, price]: [string, any]) => (
+                        <Card key={pkg} className="cursor-pointer hover:shadow-md transition-shadow">
+                          <CardHeader className="text-center">
+                            <div className="flex justify-center mb-2">
+                              {React.createElement(getPackageIcon(pkg), { className: "h-8 w-8 text-primary" })}
+                            </div>
+                            <CardTitle className="capitalize">{pkg}</CardTitle>
+                            <div className="text-2xl font-bold text-primary">
+                              {formatCurrency(price.monthly.platform + price.monthly.per_user)}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Platform + 1 user/month
+                            </p>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <Button 
+                              className="w-full" 
+                              onClick={() => handleCreateCheckout(pkg, 'monthly')}
+                            >
+                              Start Monthly
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              className="w-full"
+                              onClick={() => handleCreateCheckout(pkg, 'annual')}
+                            >
+                              Start Annual (Save 2 months)
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </TabsContent>
 
