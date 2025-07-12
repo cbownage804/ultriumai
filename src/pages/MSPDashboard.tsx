@@ -1040,9 +1040,9 @@ const MSPControlCenter = () => {
                           variant="outline" 
                           size="sm"
                           onClick={() => {
-                            // Open the actual customer portal
+                            // Navigate to the customer portal in the same tab
                             const portalUrl = `/portal/client/${client.id}`;
-                            window.open(portalUrl, '_blank');
+                            window.location.href = portalUrl;
                           }}
                         >
                           <Eye className="h-4 w-4 mr-2" />
