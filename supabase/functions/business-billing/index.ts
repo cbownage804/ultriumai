@@ -48,8 +48,18 @@ serve(async (req) => {
     logStep("Function started");
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action");
+    let action = url.searchParams.get("action");
     const method = req.method;
+    
+    // For POST requests, also check body for action
+    if (method === "POST" && !action) {
+      try {
+        const body = await req.json();
+        action = body.action;
+      } catch (e) {
+        // If body parsing fails, continue with URL param
+      }
+    }
 
     // Get authenticated user
     const authHeader = req.headers.get("Authorization");
@@ -208,7 +218,7 @@ serve(async (req) => {
       });
     }
 
-    if (method === "GET" && action === "business_dashboard") {
+    if ((method === "GET" || method === "POST") && action === "business_dashboard") {
       // Get business customer and subscription info
       const { data: businessCustomer } = await supabaseClient
         .from("business_customers")
