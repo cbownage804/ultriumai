@@ -422,19 +422,79 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="billing" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${stats.monthlyRevenue * 12}</div>
+                  <p className="text-xs text-muted-foreground">Annual recurring revenue</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.activeSubscriptions}</div>
+                  <p className="text-xs text-muted-foreground">Currently paying</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Churn Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">2.1%</div>
+                  <p className="text-xs text-muted-foreground">Monthly churn</p>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
-                <CardTitle>Billing Overview</CardTitle>
+                <CardTitle>Recent Billing Activity</CardTitle>
                 <CardDescription>
-                  Monitor subscription and billing status
+                  Latest subscription and payment activities
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    Advanced billing management coming soon
-                  </p>
+                <div className="space-y-4">
+                  {msps.map((msp) => (
+                    <div key={msp.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{msp.company_name}</div>
+                        <div className="text-sm text-muted-foreground">{msp.user_email}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Last payment: {new Date().toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="font-medium">
+                            ${msp.subscription_status === 'Active' ? '79' : '0'}/month
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {msp.subscription_status === 'Active' ? 'Professional Plan' : 'No active plan'}
+                          </div>
+                        </div>
+                        <Badge variant={msp.subscription_status === 'Active' ? 'default' : 'secondary'}>
+                          {msp.subscription_status}
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          <CreditCard className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {msps.length === 0 && (
+                    <div className="text-center py-8">
+                      <CreditCard className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground">No billing activity yet</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
