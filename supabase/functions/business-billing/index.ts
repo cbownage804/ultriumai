@@ -274,7 +274,7 @@ serve(async (req) => {
       });
     }
 
-    if (method === "GET" && action === "admin_business_overview" && isUltriumAdmin) {
+    if ((method === "GET" || method === "POST") && action === "admin_business_overview" && isUltriumAdmin) {
       // Admin overview of all business customers
       const { data: customers } = await supabaseClient
         .from("business_customers")
@@ -286,10 +286,11 @@ serve(async (req) => {
         .order("created_at", { ascending: false });
 
       const summary = {
-        total_customers: customers?.length || 0,
-        total_mrr: 0,
-        total_arr: 0,
-        package_breakdown: {
+        totalCustomers: customers?.length || 0,
+        activeSubscriptions: 0,
+        monthlyRevenue: 0,
+        annualRevenue: 0,
+        packageBreakdown: {
           starter: 0,
           professional: 0,
           enterprise: 0
@@ -299,15 +300,18 @@ serve(async (req) => {
       customers?.forEach(customer => {
         customer.business_subscriptions?.forEach((sub: any) => {
           if (sub.status === 'active') {
-            summary.total_mrr += Number(sub.monthly_amount);
-            summary.total_arr += Number(sub.monthly_amount) * 12;
-            summary.package_breakdown[sub.package_type]++;
+            summary.activeSubscriptions++;
+            summary.monthlyRevenue += Number(sub.monthly_amount) || 0;
+            summary.annualRevenue += (Number(sub.monthly_amount) || 0) * 12;
+            if (summary.packageBreakdown[sub.package_type]) {
+              summary.packageBreakdown[sub.package_type]++;
+            }
           }
         });
       });
 
       return new Response(JSON.stringify({
-        summary,
+        ...summary,
         customers: customers || []
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
