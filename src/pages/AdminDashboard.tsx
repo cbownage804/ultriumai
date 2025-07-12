@@ -128,6 +128,11 @@ const AdminDashboard = () => {
         .select('user_id, subscribed, subscription_tier')
         .in('user_id', userIds);
 
+      // Get client count for each MSP
+      const { data: clientCounts } = await supabase
+        .from('msp_clients')
+        .select('msp_id');
+
       // Load all users
       const { data: userData, error: userError } = await supabase
         .from('profiles')
@@ -139,11 +144,19 @@ const AdminDashboard = () => {
       // Create lookup maps
       const userMap = new Map(mspUsers?.map(user => [user.id, user]) || []);
       const subscriptionMap = new Map(subscriptionData?.map(sub => [sub.user_id, sub]) || []);
+      
+      // Create client count map
+      const clientCountMap = new Map();
+      clientCounts?.forEach(client => {
+        const count = clientCountMap.get(client.msp_id) || 0;
+        clientCountMap.set(client.msp_id, count + 1);
+      });
 
       // Process MSP data
       const processedMSPs = mspData?.map(msp => {
         const user = userMap.get(msp.user_id);
         const subscription = subscriptionMap.get(msp.user_id);
+        const clientCount = clientCountMap.get(msp.id) || 0;
         
         return {
           id: msp.id,
@@ -151,7 +164,7 @@ const AdminDashboard = () => {
           created_at: msp.created_at,
           user_email: user?.email || msp.contact_email || 'Unknown',
           subscription_status: subscription?.subscribed ? 'Active' : 'Inactive',
-          client_count: 0, // TODO: Add client count query
+          client_count: clientCount,
           last_active: new Date().toISOString() // TODO: Add real last active tracking
         };
       }) || [];
@@ -168,12 +181,15 @@ const AdminDashboard = () => {
 
       // Calculate stats
       const activeSubscriptions = processedMSPs.filter(msp => msp.subscription_status === 'Active').length;
+      const totalClients = processedMSPs.reduce((sum, msp) => sum + msp.client_count, 0);
+      const platformRevenue = activeSubscriptions * 79;
+      const userRevenue = totalClients * 15;
       
       setStats({
         totalMSPs: processedMSPs.length,
         totalUsers: processedUsers.length,
         activeSubscriptions,
-        monthlyRevenue: activeSubscriptions * 79, // Estimated based on basic plan
+        monthlyRevenue: platformRevenue + userRevenue, // Combined revenue
         pendingTickets: 0, // TODO: Add ticket count
         systemHealth: 'healthy'
       });
@@ -437,8 +453,8 @@ const AdminDashboard = () => {
                   <CardTitle className="text-sm font-medium">Per-User Revenue</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${stats.activeSubscriptions * 15 * 8}</div>
-                  <p className="text-xs text-muted-foreground">$15/user × avg 8 users per MSP</p>
+                  <div className="text-2xl font-bold">${msps.reduce((sum, msp) => sum + (msp.subscription_status === 'Active' ? msp.client_count * 15 : 0), 0)}</div>
+                  <p className="text-xs text-muted-foreground">$15/user × actual client count</p>
                 </CardContent>
               </Card>
               <Card>
@@ -446,7 +462,7 @@ const AdminDashboard = () => {
                   <CardTitle className="text-sm font-medium">Total Monthly Revenue</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${(stats.activeSubscriptions * 79) + (stats.activeSubscriptions * 15 * 8)}</div>
+                  <div className="text-2xl font-bold">${stats.monthlyRevenue}</div>
                   <p className="text-xs text-muted-foreground">Platform fees + user fees</p>
                 </CardContent>
               </Card>
@@ -455,7 +471,7 @@ const AdminDashboard = () => {
                   <CardTitle className="text-sm font-medium">Annual Recurring Revenue</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${((stats.activeSubscriptions * 79) + (stats.activeSubscriptions * 15 * 8)) * 12}</div>
+                  <div className="text-2xl font-bold">${stats.monthlyRevenue * 12}</div>
                   <p className="text-xs text-muted-foreground">Total ARR</p>
                 </CardContent>
               </Card>
@@ -472,7 +488,7 @@ const AdminDashboard = () => {
                 <div className="space-y-4">
                   {msps.map((msp) => {
                     const platformFee = msp.subscription_status === 'Active' ? 79 : 0;
-                    const userCount = msp.subscription_status === 'Active' ? 8 : 0; // Estimated users
+                    const userCount = msp.client_count; // Use actual client count
                     const perUserFee = 15; // $15 per user per month
                     const userFees = userCount * perUserFee;
                     const totalRevenue = platformFee + userFees;
