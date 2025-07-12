@@ -117,7 +117,7 @@ export const MSPDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [showAddClient, setShowAddClient] = useState(false);
-  const [activeTab, setActiveTab] = useState("clients");
+  const [activeTab, setActiveTab] = useState("client-management");
   const [newClient, setNewClient] = useState({
     company_name: '',
     contact_name: '',
