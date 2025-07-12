@@ -23,7 +23,10 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Eye
+  Eye,
+  Building,
+  Shield,
+  Globe
 } from "lucide-react";
 
 interface BillingRecord {
@@ -40,6 +43,7 @@ interface BillingRecord {
   invoice_id?: string;
   paid_at?: string;
   created_at: string;
+  product: string;
   client?: {
     company_name: string;
     subscription_plan: string;
@@ -50,13 +54,20 @@ interface RevenueSummary {
   total_monthly_revenue: number;
   total_annual_revenue: number;
   total_clients: number;
+  total_msps?: number;
   average_revenue_per_client: number;
-  revenue_by_plan: {
-    basic: number;
-    professional: number;
-    enterprise: number;
-  };
-  recent_invoices: BillingRecord[];
+  products: Array<{
+    product: string;
+    monthly_revenue: number;
+    annual_revenue: number;
+    client_count: number;
+    records: BillingRecord[];
+  }>;
+  top_performing_msps?: Array<{
+    msp_user_id: string;
+    total_revenue: number;
+    products: string[];
+  }>;
 }
 
 const MSPBillingPage = () => {
@@ -66,33 +77,43 @@ const MSPBillingPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [productFilter, setProductFilter] = useState("all");
   const [periodFilter, setPeriodFilter] = useState("");
   const [generateBillingOpen, setGenerateBillingOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState(new Date().toISOString().slice(0, 7));
+  const [isUltriumAdmin, setIsUltriumAdmin] = useState(false);
 
   useEffect(() => {
     loadBillingData();
+    checkAdminStatus();
   }, []);
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email?.endsWith('@ultriumai.com')) {
+      setIsUltriumAdmin(true);
+    }
+  };
 
   const loadBillingData = async () => {
     try {
       setLoading(true);
       
-      // Load revenue summary
+      // Load unified revenue summary
       const { data: summaryData, error: summaryError } = await supabase.functions.invoke(
-        'safeweb-billing',
+        'msp-billing-unified',
         {
           method: 'GET',
-          body: new URLSearchParams({ action: 'revenue_summary' })
+          body: new URLSearchParams({ action: 'unified_summary' })
         }
       );
 
       if (summaryError) throw summaryError;
       setRevenueSummary(summaryData.summary);
 
-      // Load billing records
+      // Load billing records across all products
       const { data: recordsData, error: recordsError } = await supabase.functions.invoke(
-        'safeweb-billing',
+        'msp-billing-unified',
         { method: 'GET' }
       );
 
@@ -113,10 +134,10 @@ const MSPBillingPage = () => {
 
   const generateBilling = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('safeweb-billing', {
+      const { data, error } = await supabase.functions.invoke('msp-billing-unified', {
         method: 'POST',
         body: JSON.stringify({
-          action: 'generate_billing',
+          action: 'generate_unified_billing',
           billing_period: selectedPeriod
         })
       });
@@ -125,7 +146,7 @@ const MSPBillingPage = () => {
 
       toast({
         title: "Success",
-        description: `Generated ${data.records.length} billing records`,
+        description: data.message,
       });
 
       setGenerateBillingOpen(false);
@@ -140,9 +161,10 @@ const MSPBillingPage = () => {
     }
   };
 
-  const updateBillingStatus = async (recordId: string, status: string, invoiceId?: string) => {
+  const updateBillingStatus = async (recordId: string, status: string, product: string, invoiceId?: string) => {
     try {
-      const { error } = await supabase.functions.invoke('safeweb-billing', {
+      const productLower = product.toLowerCase();
+      const { error } = await supabase.functions.invoke(`${productLower}-billing`, {
         method: 'PUT',
         body: JSON.stringify({
           action: 'update_status',
@@ -195,6 +217,15 @@ const MSPBillingPage = () => {
     );
   };
 
+  const getProductIcon = (product: string) => {
+    switch (product.toLowerCase()) {
+      case 'safeweb': return Globe;
+      case 'safenet': return Building;
+      case 'safeshield': return Shield;
+      default: return FileText;
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -205,8 +236,9 @@ const MSPBillingPage = () => {
   const filteredRecords = billingRecords.filter(record => {
     const matchesSearch = record.client?.company_name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || record.status === statusFilter;
+    const matchesProduct = productFilter === "all" || record.product.toLowerCase() === productFilter.toLowerCase();
     const matchesPeriod = !periodFilter || record.billing_period_start.startsWith(periodFilter);
-    return matchesSearch && matchesStatus && matchesPeriod;
+    return matchesSearch && matchesStatus && matchesProduct && matchesPeriod;
   });
 
   if (loading) {
@@ -228,8 +260,15 @@ const MSPBillingPage = () => {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Billing Management</h1>
-          <p className="text-muted-foreground">Manage MSP billing, invoices, and revenue</p>
+          <h1 className="text-3xl font-bold">
+            {isUltriumAdmin ? "Platform Billing Management" : "MSP Billing Management"}
+          </h1>
+          <p className="text-muted-foreground">
+            {isUltriumAdmin 
+              ? "Manage platform-wide billing across all MSPs and products"
+              : "Manage MSP billing, invoices, and revenue across all products"
+            }
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline">
@@ -246,20 +285,28 @@ const MSPBillingPage = () => {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Generate Billing Records</DialogTitle>
-                <DialogDescription>
-                  Generate billing records for all active clients for the selected period.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="period">Billing Period</Label>
-                  <Input
-                    id="period"
-                    type="month"
-                    value={selectedPeriod}
-                    onChange={(e) => setSelectedPeriod(e.target.value)}
-                  />
+              <DialogDescription>
+                Generate billing records for all active clients across all products for the selected period.
+                {isUltriumAdmin && " As an admin, this will generate billing for ALL MSPs."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="period">Billing Period</Label>
+                <Input
+                  id="period"
+                  type="month"
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                />
+              </div>
+              {isUltriumAdmin && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    ⚠️ Admin Notice: This will generate billing records for ALL MSPs across ALL products.
+                  </p>
                 </div>
+              )}
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setGenerateBillingOpen(false)}>
                     Cancel
@@ -304,9 +351,22 @@ const MSPBillingPage = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{revenueSummary.total_clients}</div>
-              <p className="text-xs text-muted-foreground">Billing clients</p>
+              <p className="text-xs text-muted-foreground">Across all products</p>
             </CardContent>
           </Card>
+
+          {isUltriumAdmin && revenueSummary.total_msps !== undefined && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active MSPs</CardTitle>
+                <Building className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{revenueSummary.total_msps}</div>
+                <p className="text-xs text-muted-foreground">Platform partners</p>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -314,7 +374,9 @@ const MSPBillingPage = () => {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(revenueSummary.average_revenue_per_client)}</div>
+              <div className="text-2xl font-bold">
+                {formatCurrency(revenueSummary.total_clients > 0 ? revenueSummary.total_monthly_revenue / revenueSummary.total_clients : 0)}
+              </div>
               <p className="text-xs text-muted-foreground">Per month</p>
             </CardContent>
           </Card>
@@ -325,6 +387,7 @@ const MSPBillingPage = () => {
         <TabsList>
           <TabsTrigger value="records">Billing Records</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          {isUltriumAdmin && <TabsTrigger value="admin">Admin Dashboard</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="records" className="space-y-4">
@@ -346,6 +409,17 @@ const MSPBillingPage = () => {
                     />
                   </div>
                 </div>
+                <Select value={productFilter} onValueChange={setProductFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Product" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Products</SelectItem>
+                    <SelectItem value="safeweb">SafeWeb</SelectItem>
+                    <SelectItem value="safenet">SafeNet</SelectItem>
+                    <SelectItem value="safeshield">SafeShield</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Status" />
@@ -367,12 +441,13 @@ const MSPBillingPage = () => {
                     className="w-40"
                   />
                 </div>
-                {(searchTerm || statusFilter !== "all" || periodFilter) && (
+                {(searchTerm || statusFilter !== "all" || productFilter !== "all" || periodFilter) && (
                   <Button
                     variant="outline"
                     onClick={() => {
                       setSearchTerm("");
                       setStatusFilter("all");
+                      setProductFilter("all");
                       setPeriodFilter("");
                     }}
                   >
@@ -395,6 +470,7 @@ const MSPBillingPage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Product</TableHead>
                     <TableHead>Client</TableHead>
                     <TableHead>Period</TableHead>
                     <TableHead>Plan</TableHead>
@@ -407,8 +483,16 @@ const MSPBillingPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRecords.map((record) => (
+                  {filteredRecords.map((record) => {
+                    const ProductIcon = getProductIcon(record.product);
+                    return (
                     <TableRow key={record.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <ProductIcon className="h-4 w-4" />
+                          <Badge variant="outline">{record.product}</Badge>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-medium">
                         {record.client?.company_name || 'Unknown Client'}
                       </TableCell>
@@ -439,7 +523,7 @@ const MSPBillingPage = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => updateBillingStatus(record.id, 'invoiced')}
+                              onClick={() => updateBillingStatus(record.id, 'invoiced', record.product)}
                             >
                               Mark Invoiced
                             </Button>
@@ -448,7 +532,7 @@ const MSPBillingPage = () => {
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              onClick={() => updateBillingStatus(record.id, 'paid')}
+                              onClick={() => updateBillingStatus(record.id, 'paid', record.product)}
                             >
                               Mark Paid
                             </Button>
@@ -456,7 +540,8 @@ const MSPBillingPage = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    )
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
@@ -468,19 +553,23 @@ const MSPBillingPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Revenue by Plan</CardTitle>
+                  <CardTitle>Revenue by Product</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {Object.entries(revenueSummary.revenue_by_plan).map(([plan, revenue]) => (
-                      <div key={plan} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-primary"></div>
-                          <span className="capitalize">{plan}</span>
+                    {revenueSummary.products.map((product) => {
+                      const ProductIcon = getProductIcon(product.product);
+                      return (
+                        <div key={product.product} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <ProductIcon className="h-4 w-4" />
+                            <span>{product.product}</span>
+                            <Badge variant="secondary">{product.client_count} clients</Badge>
+                          </div>
+                          <span className="font-medium">{formatCurrency(product.monthly_revenue)}</span>
                         </div>
-                        <span className="font-medium">{formatCurrency(revenue)}</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -491,26 +580,105 @@ const MSPBillingPage = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {revenueSummary.recent_invoices.slice(0, 5).map((record) => (
-                      <div key={record.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{record.client?.company_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(record.created_at).toLocaleDateString()}
-                          </p>
+                    {revenueSummary.products.flatMap(product => 
+                      product.records.slice(0, 2).map(record => ({
+                        ...record,
+                        product: product.product
+                      }))
+                    ).slice(0, 5).map((record) => {
+                      const ProductIcon = getProductIcon(record.product);
+                      return (
+                        <div key={record.id} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <ProductIcon className="h-4 w-4" />
+                            <div>
+                              <p className="font-medium">{record.client?.company_name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {record.product} • {new Date(record.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">{formatCurrency(record.msp_profit)}</p>
+                            {getStatusBadge(record.status)}
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">{formatCurrency(record.msp_profit)}</p>
-                          {getStatusBadge(record.status)}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
             </div>
           )}
         </TabsContent>
+
+        {isUltriumAdmin && (
+          <TabsContent value="admin" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Platform Overview</CardTitle>
+                  <CardDescription>Administrative insights across all MSPs</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(revenueSummary?.total_monthly_revenue || 0)}
+                      </p>
+                      <p className="text-sm text-blue-700">Total Platform Revenue</p>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <p className="text-2xl font-bold text-green-600">
+                        {revenueSummary?.total_msps || 0}
+                      </p>
+                      <p className="text-sm text-green-700">Active MSP Partners</p>
+                    </div>
+                  </div>
+                  {revenueSummary?.top_performing_msps && (
+                    <div className="mt-6">
+                      <h4 className="font-medium mb-4">Top Performing MSPs</h4>
+                      <div className="space-y-2">
+                        {revenueSummary.top_performing_msps.slice(0, 5).map((msp, index) => (
+                          <div key={msp.msp_user_id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <div>
+                              <span className="font-medium">#{index + 1}</span>
+                              <span className="ml-2">{msp.msp_user_id}</span>
+                              <div className="text-xs text-muted-foreground">
+                                Products: {msp.products.join(', ')}
+                              </div>
+                            </div>
+                            <span className="font-medium">{formatCurrency(msp.total_revenue)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Admin Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export All Billing Data
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="h-4 w-4 mr-2" />
+                    View MSP Details
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Platform Analytics
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
