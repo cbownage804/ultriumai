@@ -10,11 +10,52 @@ import {
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Navigation';
+import { FAQSection } from '@/components/FAQSection';
+import { FAQSchema, OrganizationSchema, ServiceSchema } from '@/components/SEOSchemas';
 
 const Index = () => {
+  const mainFAQs = [
+    {
+      question: "What is UltriumAI and how does it protect my business?",
+      answer: "UltriumAI is a comprehensive cybersecurity platform that combines AI-powered threat detection, remote monitoring tools, and MSP management capabilities. Our platform provides 24/7 protection against cyber threats, automated incident response, and complete visibility into your digital infrastructure."
+    },
+    {
+      question: "How quickly can I implement UltriumAI in my organization?",
+      answer: "Most businesses can be up and running with UltriumAI within 24-48 hours. Our onboarding team provides white-glove setup, agent deployment assistance, and initial configuration to ensure seamless integration with your existing infrastructure."
+    },
+    {
+      question: "What makes UltriumAI different from other cybersecurity solutions?",
+      answer: "UltriumAI uniquely combines AI-powered security operations with comprehensive RMM tools in a single platform. Our UltriumGPT AI assistant provides intelligent threat analysis, automated response capabilities, and can integrate with your existing security stack for enhanced protection."
+    },
+    {
+      question: "Do you support MSPs and MSSPs?",
+      answer: "Yes! UltriumAI is built with a multi-tenant architecture specifically designed for Managed Service Providers and Managed Security Service Providers. We offer white-label solutions, client management tools, and scalable pricing for service providers."
+    },
+    {
+      question: "What kind of support and training do you provide?",
+      answer: "We provide comprehensive support including 24/7 technical assistance, onboarding training, regular security briefings, and access to our knowledge base. Enterprise customers receive dedicated account management and custom training programs."
+    },
+    {
+      question: "How does your pricing work for different business sizes?",
+      answer: "We offer flexible pricing tiers designed for every business size - from small businesses starting at $29/month to enterprise custom solutions. All plans include core security features, with advanced capabilities and higher endpoint limits in upper tiers."
+    }
+  ];
+
+  const services = [
+    { name: "AI-Powered Threat Detection", description: "Advanced machine learning algorithms for real-time threat identification", url: "https://ultriumai.com/products/safescan" },
+    { name: "Remote Monitoring & Management", description: "Comprehensive RMM tools for endpoint management", url: "https://ultriumai.com/products/safenet" },
+    { name: "MSP Management Platform", description: "Multi-tenant platform for service providers", url: "https://ultriumai.com/msps" },
+    { name: "Password Management", description: "Enterprise-grade password security solution", url: "https://ultriumai.com/products/safepass" },
+    { name: "Security Analytics", description: "Advanced security intelligence and reporting", url: "https://ultriumai.com/products/safescore" }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
+      {/* SEO Schemas */}
+      <OrganizationSchema />
+      <ServiceSchema services={services} />
+      <FAQSchema faqs={mainFAQs} />
+      
       <Navigation />
       <div className="pt-16">
       
@@ -430,6 +471,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQSection faqs={mainFAQs} className="bg-muted/30" />
 
       {/* Footer */}
       <footer className="border-t py-16 px-4 bg-background">
