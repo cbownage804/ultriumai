@@ -47,6 +47,16 @@ export interface MSPClient {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  tier?: 'basic' | 'premium' | 'enterprise';
+  tool_access?: {
+    rmm: boolean;
+    helpdesk: boolean;
+    asset_management: boolean;
+    compliance: boolean;
+    security_scanner: boolean;
+  };
+  endpoints?: number;
+  alerts?: number;
 }
 
 export interface MSPRevenue {
@@ -406,6 +416,7 @@ export const useMSP = () => {
     monthly_rate: number;
     business_size?: string;
     onboarding_fee_amount?: number;
+    tier?: 'basic' | 'premium' | 'enterprise';
   }) => {
     if (!msp) return null;
 
@@ -423,7 +434,8 @@ export const useMSP = () => {
           monthly_rate: clientData.monthly_rate,
           business_size: clientData.business_size || 'small',
           onboarding_fee_amount: clientData.onboarding_fee_amount || 500,
-          onboarding_fee_paid: false
+          onboarding_fee_paid: false,
+          tier: clientData.tier || 'basic'
         })
         .select()
         .single();
@@ -571,6 +583,7 @@ export const useMSP = () => {
     loadClientLicenseAssignments,
     loadUserLicenseAssignments,
     assignClientTier,
-    assignUserTier
+    assignUserTier,
+    setClients
   };
 };
