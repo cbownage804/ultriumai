@@ -56,22 +56,12 @@ import {
   Save,
   Workflow,
   Smartphone,
-  Link
+  Link,
+  Package,
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
-
-interface MSPClient {
-  id: string;
-  company_name: string;
-  contact_name: string;
-  contact_email: string;
-  domain: string;
-  max_users: number;
-  current_users: number;
-  billing_status: string;
-  tool_access?: any;
-  endpoints?: RMMEndpoint[];
-  alerts?: RMMAlert[];
-}
+import { useMSP } from "@/hooks/useMSP";
 
 interface RMMEndpoint {
   id: string;
@@ -107,8 +97,21 @@ interface MSPMetrics {
 export const MSPDashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const { subscription } = useSubscription();
-  const [clients, setClients] = useState<MSPClient[]>([]);
-  const [selectedClient, setSelectedClient] = useState<MSPClient | null>(null);
+  const { 
+    msp, 
+    clients, 
+    licensePools, 
+    clientLicenseAssignments, 
+    userLicenseAssignments,
+    isLoading: mspLoading,
+    createClient,
+    assignClientTier,
+    assignUserTier,
+    loadMSP,
+    loadClients,
+    loadLicensePools
+  } = useMSP();
+  const [selectedClient, setSelectedClient] = useState<any | null>(null);
   const [metrics, setMetrics] = useState<MSPMetrics>({
     totalClients: 0,
     totalEndpoints: 0,
@@ -125,25 +128,30 @@ export const MSPDashboard = () => {
     contact_name: '',
     contact_email: '',
     domain: '',
-    max_users: 10 // Default to 10 users
+    max_users: 10, // Default to 10 users
+    tier: 'basic' as 'basic' | 'premium' | 'enterprise'
   });
   const { toast } = useToast();
   const emailSettingsRef = useRef<HTMLDivElement>(null);
   
-  // Calculate per-user pricing based on subscription tier
-  const getPerUserPrice = () => {
-    if (!subscription.subscribed) return 25; // Higher rate for unsubscribed users
-    
-    switch (subscription.subscription_tier) {
+  // Calculate per-user pricing based on tier
+  const getPerUserPrice = (tier: 'basic' | 'premium' | 'enterprise') => {
+    switch (tier) {
       case 'enterprise':
-        return 10;
-      case 'premium':
-        return 15;
-      case 'basic':
-        return 20;
-      default:
         return 25;
+      case 'premium':
+        return 20;
+      case 'basic':
+        return 15;
+      default:
+        return 15;
     }
+  };
+
+  // Get available licenses for a tier
+  const getAvailableLicenses = (tier: 'basic' | 'premium' | 'enterprise') => {
+    const pool = licensePools.find(p => p.tier === tier);
+    return pool?.available_licenses || 0;
   };
 
   const quickActions = [
@@ -821,21 +829,45 @@ export const MSPDashboard = () => {
                   />
                 </div>
                 <div>
+                  <Label htmlFor="tier">License Tier</Label>
+                  <Select 
+                    value={newClient.tier} 
+                    onValueChange={(value: 'basic' | 'premium' | 'enterprise') => setNewClient({ ...newClient, tier: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="basic">
+                        Basic - ${getPerUserPrice('basic')}/user (Available: {getAvailableLicenses('basic')})
+                      </SelectItem>
+                      <SelectItem value="premium">
+                        Premium - ${getPerUserPrice('premium')}/user (Available: {getAvailableLicenses('premium')})
+                      </SelectItem>
+                      <SelectItem value="enterprise">
+                        Enterprise - ${getPerUserPrice('enterprise')}/user (Available: {getAvailableLicenses('enterprise')})
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {getAvailableLicenses(newClient.tier) < newClient.max_users && (
+                    <p className="text-sm text-destructive mt-1">
+                      ⚠️ Not enough {newClient.tier} licenses available
+                    </p>
+                  )}
+                </div>
+                <div>
                   <Label htmlFor="max_users">Number of Users</Label>
                   <Input
                     id="max_users"
                     type="number"
                     min="1"
-                    max="1000"
+                    max={getAvailableLicenses(newClient.tier)}
                     value={newClient.max_users}
                     onChange={(e) => setNewClient({ ...newClient, max_users: parseInt(e.target.value) || 1 })}
                     placeholder="Enter number of users"
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    ${newClient.max_users * getPerUserPrice()}/month (${getPerUserPrice()} per user)
-                    {!subscription.subscribed && (
-                      <span className="text-orange-600 ml-1">(Upgrade for better rates)</span>
-                    )}
+                    ${newClient.max_users * getPerUserPrice(newClient.tier)}/month (${getPerUserPrice(newClient.tier)} per user)
                   </p>
                 </div>
                 <div className="flex justify-end space-x-2">

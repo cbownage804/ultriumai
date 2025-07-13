@@ -75,11 +75,47 @@ export interface MSPUsage {
   created_at: string;
 }
 
+export interface MSPLicensePool {
+  id: string;
+  msp_id: string;
+  tier: 'basic' | 'premium' | 'enterprise';
+  total_licenses: number;
+  assigned_licenses: number;
+  available_licenses: number;
+  price_per_license: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MSPClientLicenseAssignment {
+  id: string;
+  client_id: string;
+  tier: 'basic' | 'premium' | 'enterprise';
+  assigned_users: number;
+  price_per_user: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MSPUserLicenseAssignment {
+  id: string;
+  client_id: string;
+  user_email: string;
+  user_name?: string;
+  tier: 'basic' | 'premium' | 'enterprise';
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useMSP = () => {
   const [msp, setMSP] = useState<MSP | null>(null);
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [revenue, setRevenue] = useState<MSPRevenue[]>([]);
   const [usage, setUsage] = useState<MSPUsage[]>([]);
+  const [licensePools, setLicensePools] = useState<MSPLicensePool[]>([]);
+  const [clientLicenseAssignments, setClientLicenseAssignments] = useState<MSPClientLicenseAssignment[]>([]);
+  const [userLicenseAssignments, setUserLicenseAssignments] = useState<MSPUserLicenseAssignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const { user } = useAuth();
@@ -164,6 +200,152 @@ export const useMSP = () => {
       setUsage(data || []);
     } catch (error) {
       console.error('Error loading usage:', error);
+    }
+  };
+
+  // Load license pools
+  const loadLicensePools = async () => {
+    if (!msp) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('msp_license_pools')
+        .select('*')
+        .eq('msp_id', msp.id)
+        .order('tier');
+
+      if (error) throw error;
+      setLicensePools((data || []) as MSPLicensePool[]);
+    } catch (error) {
+      console.error('Error loading license pools:', error);
+    }
+  };
+
+  // Load client license assignments
+  const loadClientLicenseAssignments = async () => {
+    if (!msp) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('msp_client_license_assignments')
+        .select(`
+          *,
+          msp_clients!inner(company_name)
+        `)
+        .eq('msp_clients.msp_id', msp.id);
+
+      if (error) throw error;
+      setClientLicenseAssignments((data || []) as MSPClientLicenseAssignment[]);
+    } catch (error) {
+      console.error('Error loading client license assignments:', error);
+    }
+  };
+
+  // Load user license assignments
+  const loadUserLicenseAssignments = async () => {
+    if (!msp) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('msp_user_license_assignments')
+        .select(`
+          *,
+          msp_clients!inner(company_name)
+        `)
+        .eq('msp_clients.msp_id', msp.id);
+
+      if (error) throw error;
+      setUserLicenseAssignments((data || []) as MSPUserLicenseAssignment[]);
+    } catch (error) {
+      console.error('Error loading user license assignments:', error);
+    }
+  };
+
+  // Assign tier to client
+  const assignClientTier = async (clientId: string, tier: 'basic' | 'premium' | 'enterprise', assignedUsers: number, pricePerUser: number) => {
+    if (!msp) return null;
+
+    // Check if MSP has enough available licenses
+    const pool = licensePools.find(p => p.tier === tier);
+    if (!pool || pool.available_licenses < assignedUsers) {
+      toast({
+        title: "Error",
+        description: `Not enough ${tier} licenses available. You have ${pool?.available_licenses || 0} licenses left.`,
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('msp_client_license_assignments')
+        .upsert({
+          client_id: clientId,
+          tier,
+          assigned_users: assignedUsers,
+          price_per_user: pricePerUser
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await loadLicensePools(); // Refresh license pools
+      await loadClientLicenseAssignments(); // Refresh assignments
+      
+      toast({
+        title: "Success",
+        description: `Assigned ${assignedUsers} ${tier} licenses to client`,
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error assigning client tier:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assign client tier",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  // Assign tier to individual user
+  const assignUserTier = async (clientId: string, userEmail: string, userName: string, tier: 'basic' | 'premium' | 'enterprise') => {
+    if (!msp) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('msp_user_license_assignments')
+        .upsert({
+          client_id: clientId,
+          user_email: userEmail,
+          user_name: userName,
+          tier,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await loadLicensePools(); // Refresh license pools
+      await loadUserLicenseAssignments(); // Refresh assignments
+      
+      toast({
+        title: "Success",
+        description: `Assigned ${tier} license to ${userEmail}`,
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Error assigning user tier:', error);
+      toast({
+        title: "Error",
+        description: "Failed to assign user tier",
+        variant: "destructive",
+      });
+      return null;
     }
   };
 
@@ -361,6 +543,9 @@ export const useMSP = () => {
       loadClients();
       loadRevenue();
       loadUsage();
+      loadLicensePools();
+      loadClientLicenseAssignments();
+      loadUserLicenseAssignments();
     }
   }, [msp]);
 
@@ -369,6 +554,9 @@ export const useMSP = () => {
     clients,
     revenue,
     usage,
+    licensePools,
+    clientLicenseAssignments,
+    userLicenseAssignments,
     isLoading,
     createMSP,
     createClient,
@@ -378,6 +566,11 @@ export const useMSP = () => {
     loadMSP,
     loadClients,
     loadRevenue,
-    loadUsage
+    loadUsage,
+    loadLicensePools,
+    loadClientLicenseAssignments,
+    loadUserLicenseAssignments,
+    assignClientTier,
+    assignUserTier
   };
 };

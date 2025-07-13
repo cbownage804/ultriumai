@@ -3866,6 +3866,44 @@ export type Database = {
           },
         ]
       }
+      msp_client_license_assignments: {
+        Row: {
+          assigned_users: number
+          client_id: string
+          created_at: string
+          id: string
+          price_per_user: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_users?: number
+          client_id: string
+          created_at?: string
+          id?: string
+          price_per_user: number
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_users?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          price_per_user?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_client_license_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       msp_client_portal_access: {
         Row: {
           access_token_hash: string
@@ -4266,6 +4304,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      msp_license_pools: {
+        Row: {
+          assigned_licenses: number
+          available_licenses: number | null
+          created_at: string
+          id: string
+          msp_id: string
+          price_per_license: number
+          tier: string
+          total_licenses: number
+          updated_at: string
+        }
+        Insert: {
+          assigned_licenses?: number
+          available_licenses?: number | null
+          created_at?: string
+          id?: string
+          msp_id: string
+          price_per_license: number
+          tier: string
+          total_licenses?: number
+          updated_at?: string
+        }
+        Update: {
+          assigned_licenses?: number
+          available_licenses?: number | null
+          created_at?: string
+          id?: string
+          msp_id?: string
+          price_per_license?: number
+          tier?: string
+          total_licenses?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_license_pools_msp_id_fkey"
+            columns: ["msp_id"]
+            isOneToOne: false
+            referencedRelation: "msps"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       msp_notifications: {
         Row: {
@@ -4766,6 +4848,47 @@ export type Database = {
             columns: ["msp_id"]
             isOneToOne: false
             referencedRelation: "msps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msp_user_license_assignments: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          tier: string
+          updated_at: string
+          user_email: string
+          user_name: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          tier: string
+          updated_at?: string
+          user_email: string
+          user_name?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          tier?: string
+          updated_at?: string
+          user_email?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_user_license_assignments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
             referencedColumns: ["id"]
           },
         ]
