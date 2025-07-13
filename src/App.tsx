@@ -8,6 +8,8 @@ import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { RoleBasedRedirect } from '@/components/RoleBasedRedirect';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import CookieConsent from '@/components/CookieConsent';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
@@ -98,13 +100,30 @@ import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 function AppRouter() {
   const { user, loading } = useAuth();
   const { getRedirectPath, shouldRedirectToRole } = useRoleBasedRedirect();
   const location = useLocation();
   const [isAIMinimized, setIsAIMinimized] = useState(true);
+  const { trackPageView, identifyUser } = useAnalytics();
   useScrollToTop();
+
+  // Track page views
+  useEffect(() => {
+    trackPageView(document.title, window.location.href);
+  }, [location.pathname, trackPageView]);
+
+  // Identify user for analytics
+  useEffect(() => {
+    if (user) {
+      identifyUser(user.id, {
+        email: user.email,
+        created_at: user.created_at,
+      });
+    }
+  }, [user, identifyUser]);
 
   if (loading) {
     return (
@@ -131,7 +150,7 @@ function AppRouter() {
   };
 
   return (
-    <>
+    <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/agent" element={<Agent />} />
@@ -391,7 +410,10 @@ function AppRouter() {
           context={getAIContext()}
         />
       )}
-    </>
+      
+      {/* Cookie Consent Banner */}
+      <CookieConsent />
+    </ErrorBoundary>
   );
 }
 
@@ -421,18 +443,20 @@ export default function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NotificationProvider>
-          <VoiceAssistantProvider>
-            <Router>
-              <AppRouter />
-              
-              <Toaster />
-            </Router>
-          </VoiceAssistantProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <NotificationProvider>
+            <VoiceAssistantProvider>
+              <Router>
+                <AppRouter />
+                
+                <Toaster />
+              </Router>
+            </VoiceAssistantProvider>
+          </NotificationProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
