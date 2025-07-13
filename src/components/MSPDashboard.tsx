@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { MSPClientEmailConfig } from "@/components/safedesk/MSPClientEmailConfig";
 import { SecurityDashboard } from "@/components/dashboards/SecurityDashboard";
@@ -105,6 +106,7 @@ interface MSPMetrics {
 
 export const MSPDashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
+  const { subscription } = useSubscription();
   const [clients, setClients] = useState<MSPClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<MSPClient | null>(null);
   const [metrics, setMetrics] = useState<MSPMetrics>({
@@ -127,6 +129,22 @@ export const MSPDashboard = () => {
   });
   const { toast } = useToast();
   const emailSettingsRef = useRef<HTMLDivElement>(null);
+  
+  // Calculate per-user pricing based on subscription tier
+  const getPerUserPrice = () => {
+    if (!subscription.subscribed) return 25; // Higher rate for unsubscribed users
+    
+    switch (subscription.subscription_tier) {
+      case 'enterprise':
+        return 10;
+      case 'premium':
+        return 15;
+      case 'basic':
+        return 20;
+      default:
+        return 25;
+    }
+  };
 
   const quickActions = [
     {
@@ -814,7 +832,10 @@ export const MSPDashboard = () => {
                     placeholder="Enter number of users"
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    ${newClient.max_users * 15}/month (${15} per user)
+                    ${newClient.max_users * getPerUserPrice()}/month (${getPerUserPrice()} per user)
+                    {!subscription.subscribed && (
+                      <span className="text-orange-600 ml-1">(Upgrade for better rates)</span>
+                    )}
                   </p>
                 </div>
                 <div className="flex justify-end space-x-2">
