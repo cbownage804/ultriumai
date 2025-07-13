@@ -131,6 +131,37 @@ export const useMSP = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Helper function to safely parse tool_access
+  const parseToolAccess = (toolAccess: any) => {
+    if (!toolAccess) {
+      return {
+        rmm: false,
+        helpdesk: false,
+        asset_management: false,
+        compliance: false,
+        security_scanner: false,
+      };
+    }
+    
+    if (typeof toolAccess === 'object' && toolAccess !== null) {
+      return {
+        rmm: Boolean(toolAccess.rmm),
+        helpdesk: Boolean(toolAccess.helpdesk),
+        asset_management: Boolean(toolAccess.asset_management),
+        compliance: Boolean(toolAccess.compliance),
+        security_scanner: Boolean(toolAccess.security_scanner),
+      };
+    }
+    
+    return {
+      rmm: false,
+      helpdesk: false,
+      asset_management: false,
+      compliance: false,
+      security_scanner: false,
+    };
+  };
+
   // Load MSP profile
   const loadMSP = async () => {
     if (!user) return;
@@ -164,7 +195,16 @@ export const useMSP = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setClients((data || []) as MSPClient[]);
+      
+      // Transform the data to match our interface
+      const transformedClients = (data || []).map(client => ({
+        ...client,
+        tool_access: parseToolAccess(client.tool_access),
+        endpoints: client.endpoints || 0,
+        alerts: client.alerts || 0,
+      })) as MSPClient[];
+      
+      setClients(transformedClients);
     } catch (error) {
       console.error('Error loading clients:', error);
       toast({
@@ -442,13 +482,21 @@ export const useMSP = () => {
 
       if (error) throw error;
 
-      setClients(prev => [data as MSPClient, ...prev]);
+      // Transform the returned data to match our interface
+      const transformedClient = {
+        ...data,
+        tool_access: parseToolAccess(data.tool_access),
+        endpoints: data.endpoints || 0,
+        alerts: data.alerts || 0,
+      } as MSPClient;
+
+      setClients(prev => [transformedClient, ...prev]);
       toast({
         title: "Success",
         description: `Client ${clientData.company_name} added successfully`,
       });
 
-      return data;
+      return transformedClient;
     } catch (error) {
       console.error('Error creating client:', error);
       toast({
@@ -472,8 +520,16 @@ export const useMSP = () => {
 
       if (error) throw error;
 
+      // Transform the returned data to match our interface
+      const transformedClient = {
+        ...data,
+        tool_access: parseToolAccess(data.tool_access),
+        endpoints: data.endpoints || 0,
+        alerts: data.alerts || 0,
+      } as MSPClient;
+
       setClients(prev => prev.map(client => 
-        client.id === clientId ? data as MSPClient : client
+        client.id === clientId ? transformedClient : client
       ));
 
       toast({
@@ -481,7 +537,7 @@ export const useMSP = () => {
         description: "Client updated successfully",
       });
 
-      return data;
+      return transformedClient;
     } catch (error) {
       console.error('Error updating client:', error);
       toast({
