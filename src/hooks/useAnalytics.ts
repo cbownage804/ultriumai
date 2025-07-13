@@ -21,7 +21,7 @@ export const useAnalytics = () => {
 
   const trackPageView = useCallback((page_title: string, page_location: string) => {
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('config', 'GA_MEASUREMENT_ID', {
+      window.gtag('config', 'G-86BYR618XG', {
         page_title,
         page_location,
       });
@@ -67,7 +67,7 @@ export const useAnalytics = () => {
 
     // Google Analytics user identification
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('config', 'GA_MEASUREMENT_ID', {
+      window.gtag('config', 'G-86BYR618XG', {
         user_id: userId,
         custom_map: traits,
       });
