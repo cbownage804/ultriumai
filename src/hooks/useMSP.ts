@@ -200,8 +200,8 @@ export const useMSP = () => {
       const transformedClients = (data || []).map(client => ({
         ...client,
         tool_access: parseToolAccess(client.tool_access),
-        endpoints: (client as any).endpoints || 0,
-        alerts: (client as any).alerts || 0,
+        endpoints: client.endpoints || 0,
+        alerts: client.alerts || 0,
       })) as MSPClient[];
       
       setClients(transformedClients);
@@ -486,8 +486,8 @@ export const useMSP = () => {
       const transformedClient = {
         ...data,
         tool_access: parseToolAccess(data.tool_access),
-        endpoints: (data as any).endpoints || 0,
-        alerts: (data as any).alerts || 0,
+        endpoints: data.endpoints || 0,
+        alerts: data.alerts || 0,
       } as MSPClient;
 
       setClients(prev => [transformedClient, ...prev]);
@@ -524,8 +524,8 @@ export const useMSP = () => {
       const transformedClient = {
         ...data,
         tool_access: parseToolAccess(data.tool_access),
-        endpoints: (data as any).endpoints || 0,
-        alerts: (data as any).alerts || 0,
+        endpoints: data.endpoints || 0,
+        alerts: data.alerts || 0,
       } as MSPClient;
 
       setClients(prev => prev.map(client => 

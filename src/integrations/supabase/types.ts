@@ -4034,6 +4034,7 @@ export type Database = {
       }
       msp_clients: {
         Row: {
+          alerts: number | null
           api_enabled: boolean | null
           billing_status: string | null
           business_hours: Json | null
@@ -4046,6 +4047,7 @@ export type Database = {
           current_users: number | null
           custom_branding: Json | null
           domain: string | null
+          endpoints: number | null
           health_status: string | null
           id: string
           integration_settings: Json | null
@@ -4066,6 +4068,7 @@ export type Database = {
           widget_enabled: boolean | null
         }
         Insert: {
+          alerts?: number | null
           api_enabled?: boolean | null
           billing_status?: string | null
           business_hours?: Json | null
@@ -4078,6 +4081,7 @@ export type Database = {
           current_users?: number | null
           custom_branding?: Json | null
           domain?: string | null
+          endpoints?: number | null
           health_status?: string | null
           id?: string
           integration_settings?: Json | null
@@ -4098,6 +4102,7 @@ export type Database = {
           widget_enabled?: boolean | null
         }
         Update: {
+          alerts?: number | null
           api_enabled?: boolean | null
           billing_status?: string | null
           business_hours?: Json | null
@@ -4110,6 +4115,7 @@ export type Database = {
           current_users?: number | null
           custom_branding?: Json | null
           domain?: string | null
+          endpoints?: number | null
           health_status?: string | null
           id?: string
           integration_settings?: Json | null
