@@ -359,7 +359,7 @@ const Pricing = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Custom query limits (no restrictions)</span>
+                    <span className="text-sm">Custom query limits (high volume)</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
