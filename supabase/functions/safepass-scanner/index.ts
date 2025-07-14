@@ -248,12 +248,15 @@ async function analyzeVault(payload: any) {
   // Build query based on context (MSP, Client, or Individual)
   let query = supabase.from('safepass_entries').select('*')
   
-  if (mspId) {
-    // MSP viewing all client data
-    query = query.eq('msp_org_id', mspId)
+  if (mspId && clientId) {
+    // MSP viewing specific client data
+    query = query.eq('client_id', clientId).eq('msp_id', mspId)
   } else if (clientId) {
     // Client viewing their own data
     query = query.eq('client_id', clientId)
+  } else if (mspId) {
+    // MSP viewing all their client data
+    query = query.eq('msp_id', mspId)
   } else {
     // Individual user
     query = query.eq('user_id', userId)
@@ -262,6 +265,7 @@ async function analyzeVault(payload: any) {
   const { data: entries, error } = await query
 
   if (error) {
+    console.error('Database query error:', error)
     throw new Error(`Failed to fetch vault entries: ${error.message}`)
   }
 
