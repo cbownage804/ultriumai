@@ -5292,6 +5292,48 @@ export type Database = {
         }
         Relationships: []
       }
+      one_time_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          id: string
+          metadata: Json | null
+          payment_type: string
+          product_name: string
+          status: string | null
+          stripe_session_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_type: string
+          product_name: string
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_type?: string
+          product_name?: string
+          status?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       password_audit_logs: {
         Row: {
           action: string
@@ -5592,6 +5634,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pricing_plans: {
+        Row: {
+          category: string
+          created_at: string
+          features: Json | null
+          id: string
+          limits: Json | null
+          monthly_price: number
+          name: string
+          onboarding_fee: number | null
+          trial_days: number | null
+          updated_at: string
+          yearly_price: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          features?: Json | null
+          id?: string
+          limits?: Json | null
+          monthly_price: number
+          name: string
+          onboarding_fee?: number | null
+          trial_days?: number | null
+          updated_at?: string
+          yearly_price?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          features?: Json | null
+          id?: string
+          limits?: Json | null
+          monthly_price?: number
+          name?: string
+          onboarding_fee?: number | null
+          trial_days?: number | null
+          updated_at?: string
+          yearly_price?: number | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
