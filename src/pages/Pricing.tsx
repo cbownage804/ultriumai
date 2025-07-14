@@ -229,7 +229,15 @@ const Pricing = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">500 queries per month</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">1GB knowledge base storage</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Up to 3 team seats</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -284,7 +292,15 @@ const Pricing = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">2,500 queries per month</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">5GB knowledge base storage</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Up to 10 team seats</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -343,7 +359,15 @@ const Pricing = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">25GB knowledge base storage</span>
+                    <span className="text-sm">Custom query limits (no restrictions)</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">25GB+ custom data storage</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Unlimited team seats</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
