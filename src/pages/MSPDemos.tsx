@@ -29,6 +29,11 @@ import {
 import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
 import { SafeScoreDemo } from "@/components/demos/SafeScoreDemo";
+import { CustomGPTBuilderDemo } from "@/components/demos/CustomGPTBuilderDemo";
+import { SafeShieldDemo } from "@/components/demos/SafeShieldDemo";
+import { SafeScanDemo } from "@/components/demos/SafeScanDemo";
+import { RMMDemo } from "@/components/demos/RMMDemo";
+import { SafePassDemo } from "@/components/demos/SafePassDemo";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -110,6 +115,22 @@ const MSPDemos = () => {
       ],
       icon: Key,
       color: 'green'
+    },
+    {
+      id: 'custom-gpt-builder',
+      name: '🤖 Custom Helpdesk GPT Builder',
+      description: 'Create branded AI assistants for your clients with their SOPs, knowledge base, and custom responses',
+      demoUrl: '/demos/custom-gpt',
+      features: [
+        'White-label GPT customization for each client',
+        'Upload client-specific SOPs and documentation',
+        'Branded chat interface with client logos/colors',
+        'Embed directly into client websites or portals',
+        'Real-time training on client knowledge base',
+        'Multi-language support for global clients'
+      ],
+      icon: MessageSquare,
+      color: 'purple'
     }
   ];
 
@@ -330,20 +351,17 @@ const MSPDemos = () => {
                   </TabsContent>
 
                   <TabsContent value="demo" className="space-y-4">
-                    {selectedDemo === 'threat-monitoring' && <DarkWebDemo />}
-                    {selectedDemo === 'threat-monitoring' && <SafeScoreDemo />}
-                    {selectedDemo !== 'threat-monitoring' && (
-                      <div className="text-center py-12 space-y-4">
-                        <div className="text-lg mb-4">Experience the unified UltriumAI platform</div>
-                        <div className="text-muted-foreground mb-6">All features integrated in one seamless solution</div>
-                        <Button asChild size="lg">
-                          <a href="/demos" target="_blank" rel="noopener noreferrer">
-                            View Complete Platform Demo
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </a>
-                        </Button>
+                    {selectedDemo === 'safeshield-platform' && <SafeShieldDemo />}
+                    {selectedDemo === 'safescan-suite' && <SafeScanDemo />}
+                    {selectedDemo === 'safeintel-monitoring' && (
+                      <div className="space-y-6">
+                        <DarkWebDemo />
+                        <SafeScoreDemo />
                       </div>
                     )}
+                    {selectedDemo === 'rmm-platform' && <RMMDemo />}
+                    {selectedDemo === 'password-management' && <SafePassDemo />}
+                    {selectedDemo === 'custom-gpt-builder' && <CustomGPTBuilderDemo />}
                   </TabsContent>
                 </Tabs>
               </CardContent>
