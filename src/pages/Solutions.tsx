@@ -25,60 +25,87 @@ import {
 const Solutions = () => {
   const securityApps = [
     {
-      id: "safeemail",
-      name: "Ultrium SafeMail™",
-      category: "Email Security",
-      description: "AI-powered email analysis and threat detection",
-      longDescription: "Advanced email security solution that uses AI to analyze incoming emails for phishing attempts, malware, suspicious links, and social engineering attacks.",
+      id: "safescan",
+      name: "Ultrium SafeScan™",
+      category: "Unified Threat Detection",
+      description: "Complete AI-powered scanning suite for emails, documents, and URLs",
+      longDescription: "Comprehensive security scanning platform that combines email analysis, document scanning, and URL verification into one unified solution with AI-powered threat detection.",
       icon: Shield,
       features: [
-        "Real-time phishing detection",
-        "Malware scanning",
-        "Link analysis and safety scoring",
+        "Email phishing detection",
+        "Document malware scanning", 
+        "URL reputation analysis",
         "Social engineering detection",
-        "Detailed threat reports",
-        "API integration ready"
+        "Real-time threat intelligence",
+        "API integration ready",
+        "Bulk scanning capabilities",
+        "Scheduled scanning"
       ],
-      demoUrl: "/demos/safemail",
-      pageUrl: "/products/safemail",
+      demoUrl: "/demos/safescan",
+      pageUrl: "/products/safescan",
       gradient: "from-blue-100 to-indigo-100"
     },
     {
-      id: "safelink",
-      name: "Ultrium SafeLink™",
-      category: "Link Security",
-      description: "Comprehensive URL analysis and safety verification",
-      longDescription: "Intelligent link analysis tool that scans URLs for malicious content, phishing sites, malware distribution, and reputation issues.",
-      icon: Lock,
+      id: "safeshield",
+      name: "Ultrium SafeShield™",
+      category: "Endpoint Security",
+      description: "Unified endpoint protection with EDR, MDR, and AI-powered antivirus",
+      longDescription: "Complete endpoint security platform combining AI-powered antivirus (SafeAV), endpoint detection and response (SafeEDR), and managed detection services.",
+      icon: Shield,
       features: [
-        "URL reputation analysis",
-        "Malware detection",
-        "Phishing site identification",
-        "SSL certificate validation",
-        "Domain age and history check",
-        "Real-time scanning results"
+        "AI-powered SafeAV protection",
+        "Endpoint Detection & Response (EDR)",
+        "Managed Detection & Response (MDR)",
+        "Real-time threat monitoring",
+        "Automated incident response",
+        "Behavioral analysis",
+        "Zero-day protection",
+        "Centralized management"
       ],
-      demoUrl: "/demos/safelink",
-      pageUrl: "/products/safelink",
+      demoUrl: "/dashboard/safeshield",
+      pageUrl: "/products/safeshield", 
+      gradient: "from-red-100 to-pink-100"
+    },
+    {
+      id: "safecenter",
+      name: "Ultrium SafeCenter™",
+      category: "IT Service Management",
+      description: "Complete IT service management platform with RMM and helpdesk",
+      longDescription: "Integrated IT service management solution combining remote monitoring and management (RMM), helpdesk ticketing, asset management, and automation tools.",
+      icon: Settings,
+      features: [
+        "Remote monitoring & management",
+        "Integrated helpdesk ticketing",
+        "Asset management & tracking",
+        "Automated patch management",
+        "Performance monitoring",
+        "Service desk automation",
+        "Multi-tenant MSP support",
+        "Mobile technician apps"
+      ],
+      demoUrl: "/msp-control-center",
+      pageUrl: "/msps",
       gradient: "from-green-100 to-emerald-100"
     },
     {
-      id: "safedoc",
-      name: "Ultrium SafeDoc™", 
-      category: "Document Management",
-      description: "Secure document storage and knowledge management platform",
-      longDescription: "Enterprise document management system with advanced security, version control, collaboration tools, and intelligent organization.",
+      id: "safekb",
+      name: "Ultrium SafeKB™", 
+      category: "Knowledge Management",
+      description: "AI-powered knowledge base and documentation platform",
+      longDescription: "Intelligent knowledge management system that organizes documentation, provides AI-powered search, and integrates with your existing workflows.",
       icon: FileText,
       features: [
-        "Secure document storage",
+        "AI-powered knowledge search",
+        "Smart document organization",
+        "Workflow integration",
+        "Team collaboration tools",
         "Version control",
-        "Advanced search",
-        "Team collaboration",
-        "Access controls",
-        "Audit trails"
+        "Access management",
+        "Custom GPT integration",
+        "Multi-format support"
       ],
-      demoUrl: "/demos/safedoc",
-      pageUrl: "/products/safedoc",
+      demoUrl: "/dashboard/safekb",
+      pageUrl: "/products/safekb",
       gradient: "from-purple-100 to-violet-100"
     },
     {
@@ -94,7 +121,9 @@ const Solutions = () => {
         "Team password sharing",
         "Multi-factor authentication",
         "Password health scoring",
-        "Compliance reporting"
+        "Compliance reporting",
+        "SSO integration",
+        "Automated password rotation"
       ],
       demoUrl: "/demos/safepass",
       pageUrl: "/products/safepass",
@@ -104,16 +133,18 @@ const Solutions = () => {
       id: "safenet",
       name: "Ultrium SafeNet™",
       category: "Network Security",
-      description: "Advanced network discovery and topology mapping platform",
-      longDescription: "Comprehensive network security tool that discovers devices, maps network topology, monitors performance, and identifies vulnerabilities.",
+      description: "Advanced network discovery and security monitoring platform",
+      longDescription: "Comprehensive network security tool that discovers devices, maps network topology, monitors performance, and identifies vulnerabilities with real-time threat detection.",
       icon: Network,
       features: [
         "Network topology mapping",
-        "Device discovery",
-        "Performance monitoring",
+        "Device discovery & profiling",
         "Vulnerability assessment",
+        "Performance monitoring",
         "Real-time security scanning",
-        "Meraki integration support"
+        "Meraki integration",
+        "SNMP monitoring",
+        "Automated alerts"
       ],
       demoUrl: "/demos/safenet",
       pageUrl: "/products/safenet",
@@ -124,15 +155,17 @@ const Solutions = () => {
       name: "Ultrium SafeScore™",
       category: "Compliance Management",
       description: "Comprehensive compliance management and audit platform",
-      longDescription: "Enterprise compliance management solution that automates compliance monitoring, conducts security audits, and tracks regulatory requirements.",
-      icon: Users,
+      longDescription: "Enterprise compliance management solution that automates compliance monitoring, conducts security audits, and tracks regulatory requirements across multiple frameworks.",
+      icon: BarChart3,
       features: [
-        "Compliance monitoring",
-        "Audit automation",
-        "Risk assessment",
-        "Multi-framework support",
-        "Automated reporting",
-        "Remediation tracking"
+        "Multi-framework compliance",
+        "Automated audit processes",
+        "Risk assessment tools",
+        "Evidence collection",
+        "Compliance reporting",
+        "Remediation tracking",
+        "Policy management",
+        "Continuous monitoring"
       ],
       demoUrl: "/demos/safescore",
       pageUrl: "/products/safescore",
@@ -143,19 +176,42 @@ const Solutions = () => {
       name: "Ultrium SafeWeb™",
       category: "Threat Intelligence",
       description: "Dark web monitoring and threat intelligence platform",
-      longDescription: "Comprehensive dark web monitoring solution that scans for compromised credentials, corporate data breaches, and emerging cyber threats.",
+      longDescription: "Advanced threat intelligence platform that monitors dark web activities, tracks compromised credentials, and provides early warning of emerging cyber threats.",
       icon: Search,
       features: [
-        "Credential monitoring",
-        "Data breach detection",
+        "Dark web monitoring",
+        "Credential breach detection",
         "Threat actor tracking",
-        "Brand monitoring",
-        "Executive protection",
-        "Automated alerts"
+        "Brand protection",
+        "Executive monitoring",
+        "Intelligence feeds",
+        "Automated alerts",
+        "Threat hunting tools"
       ],
       demoUrl: "/demos/safeweb",
       pageUrl: "/products/safeweb",
       gradient: "from-indigo-100 to-blue-100"
+    },
+    {
+      id: "soc-dashboard",
+      name: "Security Operations Center",
+      category: "Security Operations",
+      description: "Complete SOC dashboard with real-time threat intelligence",
+      longDescription: "Centralized security operations center providing real-time monitoring, threat intelligence, compliance tracking, and incident response coordination.",
+      icon: BarChart3,
+      features: [
+        "Real-time security monitoring",
+        "Threat intelligence feeds",
+        "Incident response coordination",
+        "Compliance tracking",
+        "Security analytics",
+        "Custom alerting",
+        "Multi-client management",
+        "Executive reporting"
+      ],
+      demoUrl: "/security-dashboard",
+      pageUrl: "/security-dashboard",
+      gradient: "from-gray-100 to-slate-100"
     }
   ];
 
@@ -220,7 +276,7 @@ const Solutions = () => {
             <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 max-w-3xl mx-auto">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Star className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold text-primary">7 Integrated Security Applications</span>
+                <span className="font-semibold text-primary">9 Integrated Security Applications</span>
                 <Star className="h-5 w-5 text-yellow-500" />
               </div>
               <p className="text-lg font-medium text-foreground">
