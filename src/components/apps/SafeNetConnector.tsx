@@ -213,7 +213,12 @@ export const SafeNetConnector = () => {
     }
   };
 
-  const downloadConnector = async (platform: 'windows' | 'linux' | 'docker') => {
+  const downloadConnector = async (platform: 'windows' | 'linux' | 'docker' | 'python') => {
+    if (platform === 'python') {
+      downloadPythonScript();
+      return;
+    }
+
     const downloadData = {
       windows: { 
         file: 'safenet-connector-windows-x64.exe', 
@@ -261,6 +266,272 @@ export const SafeNetConnector = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const downloadPythonScript = () => {
+    if (!newConnectorKey) {
+      toast({
+        title: "Generate Connector Key First",
+        description: "Please generate a connector key before downloading the Python script.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Python script content with embedded API key
+    const pythonScript = `#!/usr/bin/env python3
+"""
+SafeNet Network Connector
+Scans local network and reports findings to SafeNet cloud service
+"""
+
+import json
+import subprocess
+import socket
+import requests
+import time
+import platform
+import psutil
+from datetime import datetime
+import concurrent.futures
+import logging
+
+# Configuration
+CONNECTOR_KEY = "${newConnectorKey}"
+API_ENDPOINT = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector"
+SCAN_INTERVAL = 3600  # 1 hour
+
+class SafeNetConnector:
+    def __init__(self):
+        self.connector_key = CONNECTOR_KEY
+        self.api_endpoint = API_ENDPOINT
+        self.setup_logging()
+        
+    def setup_logging(self):
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler('safenet_connector.log'),
+                logging.StreamHandler()
+            ]
+        )
+        self.logger = logging.getLogger(__name__)
+
+    def get_system_info(self):
+        """Get system information"""
+        return {
+            "os": platform.platform(),
+            "cpu": platform.processor() or "Unknown",
+            "memory": f"{psutil.virtual_memory().total // (1024**3)} GB",
+            "diskSpace": f"{psutil.disk_usage('/').total // (1024**3)} GB"
+        }
+
+    def get_network_info(self):
+        """Get network interface information"""
+        interfaces = []
+        subnets = []
+        
+        for interface, addrs in psutil.net_if_addrs().items():
+            for addr in addrs:
+                if addr.family == socket.AF_INET:
+                    interfaces.append({
+                        "interface": interface,
+                        "ip": addr.address,
+                        "netmask": addr.netmask
+                    })
+                    # Calculate subnet
+                    ip_parts = addr.address.split('.')
+                    mask_parts = addr.netmask.split('.')
+                    network_parts = [str(int(ip_parts[i]) & int(mask_parts[i])) for i in range(4)]
+                    subnet = '.'.join(network_parts) + '/24'  # Simplified CIDR
+                    if subnet not in subnets:
+                        subnets.append(subnet)
+
+        return {
+            "interfaces": len(interfaces),
+            "subnets": subnets,
+            "gateway": self.get_default_gateway()
+        }
+
+    def get_default_gateway(self):
+        """Get default gateway IP"""
+        try:
+            if platform.system() == "Windows":
+                result = subprocess.run(['ipconfig'], capture_output=True, text=True)
+                for line in result.stdout.split('\\n'):
+                    if 'Default Gateway' in line:
+                        return line.split(':')[-1].strip()
+            else:
+                result = subprocess.run(['ip', 'route'], capture_output=True, text=True)
+                for line in result.stdout.split('\\n'):
+                    if 'default' in line:
+                        return line.split()[2]
+        except Exception:
+            pass
+        return "Unknown"
+
+    def scan_network(self, subnet="192.168.1.0/24"):
+        """Scan network for devices"""
+        devices = []
+        self.logger.info(f"Scanning network: {subnet}")
+        
+        # Simple ping scan for network discovery
+        base_ip = '.'.join(subnet.split('.')[:-1])
+        
+        def ping_host(ip):
+            try:
+                if platform.system() == "Windows":
+                    cmd = ['ping', '-n', '1', '-w', '1000', ip]
+                else:
+                    cmd = ['ping', '-c', '1', '-W', '1', ip]
+                
+                result = subprocess.run(cmd, capture_output=True)
+                if result.returncode == 0:
+                    return ip
+            except Exception:
+                pass
+            return None
+
+        # Scan first 50 IPs for demo purposes
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            futures = []
+            for i in range(1, 51):
+                ip = f"{base_ip}.{i}"
+                futures.append(executor.submit(ping_host, ip))
+            
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                if result:
+                    # Get hostname
+                    try:
+                        hostname = socket.gethostbyaddr(result)[0]
+                    except:
+                        hostname = "Unknown"
+                    
+                    devices.append({
+                        "ip": result,
+                        "hostname": hostname,
+                        "mac": "Unknown",  # Would need ARP table lookup
+                        "os": "Unknown",
+                        "ports": [],
+                        "vulnerabilities": [],
+                        "risk_level": "low"
+                    })
+
+        self.logger.info(f"Found {len(devices)} devices")
+        return devices
+
+    def send_scan_results(self, devices, network_info, system_info):
+        """Send scan results to SafeNet API"""
+        scan_data = {
+            "connector_key": self.connector_key,
+            "scan_timestamp": datetime.now().isoformat(),
+            "network_ranges": ["192.168.1.0/24"],  # Detected ranges
+            "devices": devices,
+            "network_info": network_info,
+            "system_info": system_info,
+            "connector_version": "2.1.4"
+        }
+
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.connector_key}"
+            }
+            
+            response = requests.post(
+                self.api_endpoint,
+                json=scan_data,
+                headers=headers,
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                self.logger.info("Scan results sent successfully")
+                return True
+            else:
+                self.logger.error(f"Failed to send results: {response.status_code} - {response.text}")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Error sending scan results: {e}")
+            return False
+
+    def run_scan(self):
+        """Run a complete network scan"""
+        self.logger.info("Starting SafeNet network scan...")
+        
+        # Get system and network info
+        system_info = self.get_system_info()
+        network_info = self.get_network_info()
+        
+        # Scan each detected subnet
+        all_devices = []
+        for subnet in network_info.get("subnets", ["192.168.1.0/24"]):
+            devices = self.scan_network(subnet)
+            all_devices.extend(devices)
+        
+        # Send results to SafeNet
+        success = self.send_scan_results(all_devices, network_info, system_info)
+        
+        if success:
+            self.logger.info(f"Scan completed successfully. Found {len(all_devices)} devices.")
+        else:
+            self.logger.error("Failed to send scan results")
+        
+        return success
+
+    def run_continuous(self):
+        """Run connector in continuous mode"""
+        self.logger.info(f"SafeNet Connector started. Scanning every {SCAN_INTERVAL} seconds.")
+        
+        while True:
+            try:
+                self.run_scan()
+                self.logger.info(f"Next scan in {SCAN_INTERVAL} seconds...")
+                time.sleep(SCAN_INTERVAL)
+            except KeyboardInterrupt:
+                self.logger.info("Connector stopped by user")
+                break
+            except Exception as e:
+                self.logger.error(f"Unexpected error: {e}")
+                time.sleep(60)  # Wait 1 minute before retrying
+
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="SafeNet Network Connector")
+    parser.add_argument("--once", action="store_true", help="Run scan once and exit")
+    parser.add_argument("--continuous", action="store_true", help="Run continuously (default)")
+    
+    args = parser.parse_args()
+    
+    connector = SafeNetConnector()
+    
+    if args.once:
+        connector.run_scan()
+    else:
+        connector.run_continuous()
+`;
+
+    // Create and download the file
+    const blob = new Blob([pythonScript], { type: 'text/x-python' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'safenet_connector.py';
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Python Script Downloaded",
+      description: "Run 'python safenet_connector.py' on the target network to start scanning.",
+    });
   };
 
   const restartConnector = (connectorId: string) => {
@@ -359,7 +630,17 @@ export const SafeNetConnector = () => {
 
             <div className="space-y-3">
               <Label>Download Connector Installer</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                <Button 
+                  onClick={() => downloadConnector('python')} 
+                  variant="outline" 
+                  className="flex flex-col items-center p-4 h-auto"
+                  disabled={!newConnectorKey}
+                >
+                  <Terminal className="h-6 w-6 mb-2" />
+                  <span className="text-sm">Python</span>
+                  <span className="text-xs text-muted-foreground">Script</span>
+                </Button>
                 <Button 
                   onClick={() => downloadConnector('windows')} 
                   variant="outline" 
