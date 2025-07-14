@@ -221,7 +221,7 @@ function AppRouter() {
         <Route path="/demos/safemail" element={<SafeScanDemoPage />} />
         <Route path="/demos/safedoc" element={<SafeScanDemoPage />} />
         <Route path="/demos/safeshield" element={<AntivirusDemoPage />} />
-        <Route path="/demos/safecenter" element={<MSPDashboardPage />} />
+        <Route path="/demos/safecenter" element={<TicketingDemoPage />} />
         <Route path="/demos/safekb" element={<SafeScanDemoPage />} />
         <Route path="/demos/safesoc" element={<SafeMDRDemoPage />} />
         <Route path="/embed-demo" element={<EmbedDemo />} />
