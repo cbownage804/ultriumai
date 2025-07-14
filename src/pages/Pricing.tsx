@@ -216,7 +216,7 @@ const Pricing = () => {
                   <div className="text-4xl font-bold text-primary">$99</div>
                   <div className="text-sm text-muted-foreground">per month</div>
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    14-day free trial
+                    7-day free trial
                   </Badge>
                 </div>
               </CardHeader>
@@ -279,7 +279,7 @@ const Pricing = () => {
                   <div className="text-4xl font-bold text-primary">$499</div>
                   <div className="text-sm text-muted-foreground">per month</div>
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    14-day free trial
+                    7-day free trial
                   </Badge>
                 </div>
               </CardHeader>
@@ -346,7 +346,7 @@ const Pricing = () => {
                   <div className="text-4xl font-bold text-primary">Custom</div>
                   <div className="text-sm text-muted-foreground">Contact for pricing</div>
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    30-day free trial
+                    7-day free trial
                   </Badge>
                 </div>
               </CardHeader>
