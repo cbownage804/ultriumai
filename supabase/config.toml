@@ -55,6 +55,12 @@ verify_jwt = false
 [functions.safenet-scanner]
 verify_jwt = false
 
+[functions.safepass-scanner]
+verify_jwt = false
+
+[functions.safescan-api]
+verify_jwt = false
+
 [functions.security-data-pipeline]
 verify_jwt = false
 
