@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RMMDemo from "@/components/demos/RMMDemo";
+import { RMMDemo } from "@/components/demos/RMMDemo";
 import TicketingDemo from "@/components/demos/TicketingDemo";
 
 const SafeCenterDemoPage = () => {

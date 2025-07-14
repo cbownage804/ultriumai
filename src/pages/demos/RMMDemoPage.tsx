@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import RMMDemo from "@/components/demos/RMMDemo";
+import { RMMDemo } from "@/components/demos/RMMDemo";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import { useNavigate } from "react-router-dom";
