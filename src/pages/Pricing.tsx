@@ -81,7 +81,7 @@ const Pricing = () => {
       description: "Complete platform for large organizations",
       platformFee: { monthly: 599, yearly: 5990 },
       perUserFee: { monthly: 49, yearly: 490 },
-      trial: "30-day free trial",
+      trial: "14-day free trial",
       icon: Building2,
       features: [
         "Unlimited team members",
