@@ -103,7 +103,8 @@ const Pricing = () => {
     {
       name: "Security Operations Center",
       description: "Complete SOC dashboard with real-time threat intelligence",
-      perUserFee: { monthly: 99, yearly: 990 },
+      platformFee: { monthly: 99, yearly: 990 },
+      perUserFee: { monthly: 0, yearly: 0 },
       icon: BarChart3,
       features: [
         "Real-time security dashboard",
@@ -332,12 +333,25 @@ const Pricing = () => {
                     <CardDescription className="text-base">{service.description}</CardDescription>
                     
                     <div className="mt-4">
-                      <div className="text-3xl font-bold">
-                        {formatPrice(isYearly ? service.perUserFee.yearly : service.perUserFee.monthly)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        per user/{isYearly ? 'year' : 'month'}
-                      </div>
+                      {service.platformFee ? (
+                        <div>
+                          <div className="text-3xl font-bold">
+                            {formatPrice(isYearly ? service.platformFee.yearly : service.platformFee.monthly)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            per organization/{isYearly ? 'year' : 'month'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-3xl font-bold">
+                            {formatPrice(isYearly ? service.perUserFee.yearly : service.perUserFee.monthly)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            per user/{isYearly ? 'year' : 'month'}
+                          </div>
+                        </div>
+                      )}
                       <div className="text-xs text-muted-foreground mt-1">
                         Add-on to core platform
                       </div>
