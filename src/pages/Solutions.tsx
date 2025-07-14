@@ -359,7 +359,7 @@ const Solutions = () => {
                   <Play className="mr-2 h-5 w-5" />
                   Try Live Demo
                 </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-2 border-primary hover:bg-primary/5" onClick={() => window.location.href = '#gpt-pricing'}>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-2 border-primary hover:bg-primary/5" onClick={() => window.location.href = '/pricing#gpt-pricing'}>
                   <Star className="mr-2 h-5 w-5" />
                   View Pricing
                 </Button>
