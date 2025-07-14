@@ -101,6 +101,20 @@ const Pricing = () => {
 
   const additionalServices = [
     {
+      name: "Security Operations Center",
+      description: "Complete SOC dashboard with real-time threat intelligence",
+      perUserFee: { monthly: 99, yearly: 990 },
+      icon: BarChart3,
+      features: [
+        "Real-time security dashboard",
+        "AI-powered threat intelligence",
+        "Compliance monitoring & reporting",
+        "Advanced analytics & insights",
+        "Custom threat feeds (+$200/month)",
+        "Compliance reports (+$50/report)"
+      ]
+    },
+    {
       name: "Ultrium SafeSecure",
       description: "Advanced endpoint protection and threat response",
       perUserFee: { monthly: 15, yearly: 150 },
