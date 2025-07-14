@@ -29,8 +29,41 @@ interface PasswordScanResult {
 export const useSafeScan = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SafeScanResult | null>(null);
+  const [scanHistory, setScanHistory] = useState<any[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Load scan history
+  const loadScanHistory = async () => {
+    if (!user) return;
+
+    try {
+      // Load recent scans from multiple tables
+      const [docScans, emailScans] = await Promise.all([
+        supabase
+          .from('document_scans')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('email_scans')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+      ]);
+
+      const allScans = [
+        ...(docScans.data || []).map(s => ({ ...s, type: 'document' })),
+        ...(emailScans.data || []).map(s => ({ ...s, type: 'email' }))
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      setScanHistory(allScans);
+    } catch (error) {
+      console.error('Error loading scan history:', error);
+    }
+  };
 
   // URL/Link Scanning
   const scanURL = async (url: string): Promise<SafeScanResult | null> => {
@@ -391,6 +424,8 @@ export const useSafeScan = () => {
   return {
     loading,
     results,
+    scanHistory,
+    loadScanHistory,
     scanURL,
     scanDocument,
     scanEmail,
