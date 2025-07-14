@@ -316,10 +316,10 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
         if (!device) return null;
         
         return (
-          <div className="absolute top-4 right-4 bg-white border rounded-lg p-4 shadow-lg max-w-sm z-20">
+          <div className="absolute top-4 right-4 bg-background border rounded-lg p-4 shadow-lg max-w-sm z-20">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-lg">{device.hostname}</h3>
-              <Button 
+              <h3 className="font-semibold text-lg text-foreground">{device.hostname}</h3>
+              <Button
                 variant="ghost" 
                 size="icon"
                 onClick={() => setSelectedDevice(null)}
