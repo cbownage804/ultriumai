@@ -303,8 +303,8 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
             </div>
 
             {/* Status indicator */}
-            <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-              device.status === 'online' ? 'bg-green-500' : 'bg-red-500'
+            <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-background ${
+              device.status === 'online' ? 'bg-green-600' : 'bg-red-600'
             }`} />
           </div>
         );
@@ -395,20 +395,20 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
       })()}
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white border rounded p-3 shadow-sm">
-        <div className="text-xs font-semibold mb-2">Legend</div>
+      <div className="absolute bottom-4 left-4 bg-background border rounded p-3 shadow-sm">
+        <div className="text-xs font-semibold mb-2 text-foreground">Legend</div>
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span>Online / Safe</span>
+            <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+            <span className="text-foreground">Online / Safe</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            <span>Medium Risk</span>
+            <div className="w-3 h-3 bg-yellow-600 rounded-full"></div>
+            <span className="text-foreground">Medium Risk</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <span>High Risk / Offline</span>
+            <div className="w-3 h-3 bg-red-600 rounded-full"></div>
+            <span className="text-foreground">High Risk / Offline</span>
           </div>
         </div>
       </div>
