@@ -332,11 +332,11 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <span className="font-medium">Type:</span>
-                  <div className="capitalize">{device.type}</div>
+                  <span className="font-medium text-foreground">Type:</span>
+                  <div className="capitalize text-muted-foreground">{device.type}</div>
                 </div>
                 <div>
-                  <span className="font-medium">Status:</span>
+                  <span className="font-medium text-foreground">Status:</span>
                   <div className={`capitalize ${device.status === 'online' ? 'text-green-600' : 'text-red-600'}`}>
                     {device.status}
                   </div>
@@ -344,27 +344,27 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
               </div>
               
               <div>
-                <span className="font-medium">IP Address:</span>
-                <div className="font-mono">{device.ip}</div>
+                <span className="font-medium text-foreground">IP Address:</span>
+                <div className="font-mono text-muted-foreground">{device.ip}</div>
               </div>
               
               <div>
-                <span className="font-medium">MAC Address:</span>
-                <div className="font-mono">{device.mac}</div>
+                <span className="font-medium text-foreground">MAC Address:</span>
+                <div className="font-mono text-muted-foreground">{device.mac}</div>
               </div>
               
               <div>
-                <span className="font-medium">Operating System:</span>
-                <div>{device.os}</div>
+                <span className="font-medium text-foreground">Operating System:</span>
+                <div className="text-muted-foreground">{device.os}</div>
               </div>
               
               <div>
-                <span className="font-medium">Last Seen:</span>
-                <div>{device.lastSeen}</div>
+                <span className="font-medium text-foreground">Last Seen:</span>
+                <div className="text-muted-foreground">{device.lastSeen}</div>
               </div>
               
               <div>
-                <span className="font-medium">Risk Level:</span>
+                <span className="font-medium text-foreground">Risk Level:</span>
                 <div className={`capitalize font-medium ${
                   device.riskLevel === 'high' ? 'text-red-600' : 
                   device.riskLevel === 'medium' ? 'text-yellow-600' : 'text-green-600'
@@ -375,7 +375,7 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
               
               {device.vulnerabilities > 0 && (
                 <div>
-                  <span className="font-medium">Vulnerabilities:</span>
+                  <span className="font-medium text-foreground">Vulnerabilities:</span>
                   <div className="flex items-center gap-1 text-red-600">
                     <AlertTriangle className="h-4 w-4" />
                     {device.vulnerabilities} found
@@ -384,8 +384,8 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
               )}
               
               <div>
-                <span className="font-medium">Open Ports:</span>
-                <div className="text-xs font-mono bg-slate-50 p-2 rounded mt-1">
+                <span className="font-medium text-foreground">Open Ports:</span>
+                <div className="text-xs font-mono bg-muted text-muted-foreground p-2 rounded mt-1">
                   {device.openPorts.join(', ')}
                 </div>
               </div>
