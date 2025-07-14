@@ -225,11 +225,11 @@ const Pricing = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">5 Custom GPT assistants</span>
+                    <span className="text-sm">1 Custom GPT assistant</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">10GB knowledge base storage</span>
+                    <span className="text-sm">1GB knowledge base storage</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -280,11 +280,11 @@ const Pricing = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm font-medium">Unlimited Custom GPT assistants</span>
+                    <span className="text-sm font-medium">5 Custom GPT assistants</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">100GB knowledge base storage</span>
+                    <span className="text-sm">5GB knowledge base storage</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -296,7 +296,7 @@ const Pricing = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Custom branding & styling</span>
+                    <span className="text-sm">Remove "Powered by UltriumAI" branding</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -339,11 +339,11 @@ const Pricing = () => {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Unlimited everything</span>
+                    <span className="text-sm">25 Custom GPT assistants</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Unlimited storage & bandwidth</span>
+                    <span className="text-sm">25GB knowledge base storage</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
@@ -377,8 +377,43 @@ const Pricing = () => {
             </Card>
           </div>
 
+          {/* Professional Services & Custom Development */}
+          <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-8 text-center mb-8">
+            <h3 className="text-2xl font-bold mb-4">Need Custom AI Solutions?</h3>
+            <p className="text-lg text-muted-foreground mb-6 max-w-3xl mx-auto">
+              Our team at UltriumAI specializes in building custom GPTs and AI-powered applications tailored to your specific business needs. 
+              From complex automation workflows to specialized industry solutions.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="flex items-center gap-3">
+                <Star className="h-6 w-6 text-yellow-500" />
+                <span className="font-medium">Custom AI Applications</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Star className="h-6 w-6 text-yellow-500" />
+                <span className="font-medium">Specialized Industry Solutions</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Star className="h-6 w-6 text-yellow-500" />
+                <span className="font-medium">Dedicated Development Team</span>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" variant="outline" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
+                <Play className="mr-2 h-5 w-5" />
+                Try Live Demo
+              </Button>
+              <Button size="lg" asChild>
+                <Link to="/contact">
+                  <MessageSquare className="mr-2 h-5 w-5" />
+                  Contact for Custom Pricing
+                </Link>
+              </Button>
+            </div>
+          </div>
+
           {/* GPT Builder Features Highlight */}
-          <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-8 text-center">
+          <div className="bg-gradient-to-r from-secondary/10 to-accent/10 rounded-xl p-8 text-center">
             <h3 className="text-2xl font-bold mb-4">Why Choose Custom GPT Builder™?</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex items-center gap-3">
@@ -393,12 +428,6 @@ const Pricing = () => {
                 <Star className="h-6 w-6 text-yellow-500" />
                 <span className="font-medium">500+ successful deployments</span>
               </div>
-            </div>
-            <div className="mt-6">
-              <Button size="lg" variant="outline" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
-                <Play className="mr-2 h-5 w-5" />
-                Try Live Demo
-              </Button>
             </div>
           </div>
         </div>
