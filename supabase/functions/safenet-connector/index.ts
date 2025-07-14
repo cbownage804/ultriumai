@@ -66,7 +66,7 @@ async function processConnectorScan(scanData: ConnectorScanResult, userId?: stri
       network_ranges: scanData.results.map(r => r.network_range),
       devices_found: scanData.total_devices,
       scan_duration: scanData.scan_duration,
-      timestamp: scanData.timestamp,
+      scanned_at: scanData.timestamp,
       hostname: scanData.hostname,
       results: scanData,
     };
