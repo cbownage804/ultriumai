@@ -220,6 +220,10 @@ function AppRouter() {
         <Route path="/demos/safelink" element={<SafeScanDemoPage />} />
         <Route path="/demos/safemail" element={<SafeScanDemoPage />} />
         <Route path="/demos/safedoc" element={<SafeScanDemoPage />} />
+        <Route path="/demos/safeshield" element={<SafeScanDemoPage />} />
+        <Route path="/demos/safecenter" element={<RMMDemoPage />} />
+        <Route path="/demos/safekb" element={<SafeScanDemoPage />} />
+        <Route path="/demos/safesoc" element={<SafeMDRDemoPage />} />
         <Route path="/embed-demo" element={<EmbedDemo />} />
         <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
         <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />

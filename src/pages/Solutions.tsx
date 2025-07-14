@@ -62,7 +62,7 @@ const Solutions = () => {
         "Zero-day protection",
         "Centralized management"
       ],
-      demoUrl: "/dashboard/safeshield",
+      demoUrl: "/demos/safeshield",
       pageUrl: "/products/safeshield", 
       gradient: "from-red-100 to-pink-100"
     },
@@ -83,7 +83,7 @@ const Solutions = () => {
         "Multi-tenant MSP support",
         "Mobile technician apps"
       ],
-      demoUrl: "/msp-control-center",
+      demoUrl: "/demos/safecenter",
       pageUrl: "/msps",
       gradient: "from-green-100 to-emerald-100"
     },
@@ -104,7 +104,7 @@ const Solutions = () => {
         "Custom GPT integration",
         "Multi-format support"
       ],
-      demoUrl: "/dashboard/safekb",
+      demoUrl: "/demos/safekb",
       pageUrl: "/products/safekb",
       gradient: "from-purple-100 to-violet-100"
     },
@@ -209,7 +209,7 @@ const Solutions = () => {
         "Multi-client management",
         "Executive reporting"
       ],
-      demoUrl: "/security-dashboard",
+      demoUrl: "/demos/safesoc",
       pageUrl: "/security-dashboard",
       gradient: "from-gray-100 to-slate-100"
     }
