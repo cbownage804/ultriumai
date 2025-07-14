@@ -188,8 +188,8 @@ const Solutions = () => {
         "Automated alerts",
         "Threat hunting tools"
       ],
-      demoUrl: "/demos/safeweb",
-      pageUrl: "/products/safeweb",
+      demoUrl: "/demos/safeintel",
+      pageUrl: "/products/safeintel",
       gradient: "from-indigo-100 to-blue-100"
     },
     {
