@@ -1,34 +1,50 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Shield, 
-  Key, 
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Loader2,
   Plus,
+  Search,
+  Filter,
   Eye,
   EyeOff,
   Copy,
-  AlertTriangle,
-  CheckCircle,
-  Users,
-  Loader2,
   Edit,
   Trash2,
-  Search,
-  Filter,
-  Settings,
+  RefreshCw,
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+  Key,
+  Folder,
+  MoreHorizontal,
   Download,
   Upload,
-  Share,
+  Settings,
   Lock,
   Unlock,
   History,
@@ -57,7 +73,14 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     updateEntry,
     deleteEntry,
     generatePassword,
-    calculatePasswordStrength
+    calculatePasswordStrength,
+    getEntryName,
+    getEntryUsername,
+    getEntryWebsite,
+    getEntryPassword,
+    getEntryStrengthScore,
+    isEntryShared,
+    getVaultName
   } = useSafePass();
 
   const [showPassword, setShowPassword] = useState<string | null>(null);
@@ -78,8 +101,8 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   });
   
   const [entryForm, setEntryForm] = useState({
-    vault_id: '',
-    name: '',
+    vault_id: selectedVault || '',
+    title: '',
     username: '',
     password: '',
     website: '',
@@ -88,50 +111,47 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     tags: [] as string[]
   });
 
-  const generateSecurePassword = async () => {
+  // Copy to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Copied!",
+        description: "Text copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to copy to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Generate password
+  const handleGeneratePassword = () => {
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const password = generatePassword(16, {
-      uppercase: true,
-      lowercase: true,
-      numbers: true,
-      symbols: true
-    });
-    
-    setNewPassword(password);
-    setEntryForm(prev => ({ ...prev, password }));
-    setIsGenerating(false);
+    setTimeout(() => {
+      const generated = generatePassword(16, {
+        uppercase: true,
+        lowercase: true,
+        numbers: true,
+        symbols: true
+      });
+      setNewPassword(generated);
+      setEntryForm(prev => ({ ...prev, password: generated }));
+      setIsGenerating(false);
+    }, 500);
   };
 
-  const getStrengthColor = (strength: number) => {
-    if (strength >= 80) return "text-green-500";
-    if (strength >= 60) return "text-yellow-500";
-    if (strength >= 40) return "text-orange-500";
-    return "text-red-500";
-  };
-
-  const getStrengthLabel = (strength: number) => {
-    if (strength >= 80) return "Strong";
-    if (strength >= 60) return "Good";
-    if (strength >= 40) return "Fair";
-    return "Weak";
-  };
-
-  const copyToClipboard = (text: string, label: string = "Text") => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copied!",
-      description: `${label} copied to clipboard`,
-    });
-  };
-
+  // Create vault handler
   const handleCreateVault = async () => {
     if (!vaultForm.name.trim()) return;
     
     const vault = await createVault({
       name: vaultForm.name,
-      description: vaultForm.description
+      description: vaultForm.description,
+      is_shared: false
     });
     
     if (vault) {
@@ -142,11 +162,11 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   };
 
   const handleCreateEntry = async () => {
-    if (!entryForm.name.trim() || !entryForm.password.trim() || !entryForm.vault_id) return;
+    if (!entryForm.title.trim() || !entryForm.password.trim() || !entryForm.vault_id) return;
     
     const entry = await createEntry({
       vault_id: entryForm.vault_id,
-      name: entryForm.name,
+      title: entryForm.title,
       username: entryForm.username,
       password: entryForm.password,
       website: entryForm.website,
@@ -158,7 +178,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     if (entry) {
       setEntryForm({
         vault_id: selectedVault || '',
-        name: '',
+        title: '',
         username: '',
         password: '',
         website: '',
@@ -170,13 +190,6 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     }
   };
 
-  // Initialize vault selection
-  useEffect(() => {
-    if (vaults.length > 0 && !selectedVault) {
-      setSelectedVault(vaults[0].id);
-    }
-  }, [vaults, selectedVault, setSelectedVault]);
-
   // Set vault_id in entry form when selectedVault changes
   useEffect(() => {
     if (selectedVault) {
@@ -186,18 +199,18 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
 
   // Filter entries
   const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.website?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = getEntryName(entry).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         getEntryUsername(entry).toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         getEntryWebsite(entry).toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || entry.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
   // Calculate stats
   const totalEntries = entries.length;
-  const averageStrength = totalEntries > 0 ? Math.round(entries.reduce((acc, e) => acc + e.strength_score, 0) / totalEntries) : 0;
-  const weakPasswords = entries.filter(e => e.strength_score < 60).length;
-  const sharedEntries = entries.filter(e => e.is_shared).length;
+  const averageStrength = totalEntries > 0 ? Math.round(entries.reduce((acc, e) => acc + getEntryStrengthScore(e), 0) / totalEntries) : 0;
+  const weakPasswords = entries.filter(e => getEntryStrengthScore(e) < 60).length;
+  const sharedEntries = 0; // Not implemented in current schema
   const categories = Array.from(new Set(entries.map(e => e.category)));
 
   if (isLoading) {
@@ -218,29 +231,23 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
             {isWhiteLabeled ? brandName : 'Ultrium'} SafePass
           </h1>
           <p className="text-muted-foreground">
-            Enterprise password management with security monitoring and team collaboration
+            Secure password management and vault system
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="secondary"
-            onClick={() => window.open('/embed-demo', '_blank')}
-            className="mb-2"
-          >
-            <Globe className="h-4 w-4 mr-2" />
-            MSP Widget Demo
-          </Button>
-          
           <Dialog open={showCreateVault} onOpenChange={setShowCreateVault}>
             <DialogTrigger asChild>
               <Button variant="outline">
-                <Plus className="h-4 w-4 mr-2" />
+                <Folder className="h-4 w-4 mr-2" />
                 New Vault
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Vault</DialogTitle>
+                <DialogDescription>
+                  Create a new password vault to organize your credentials
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
@@ -249,16 +256,16 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                     id="vault-name"
                     value={vaultForm.name}
                     onChange={(e) => setVaultForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="e.g., Personal, Work, Team"
+                    placeholder="Enter vault name"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="vault-description">Description (Optional)</Label>
+                  <Label htmlFor="vault-description">Description</Label>
                   <Textarea
                     id="vault-description"
                     value={vaultForm.description}
                     onChange={(e) => setVaultForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe what this vault is for..."
+                    placeholder="Optional description"
                   />
                 </div>
                 <Button onClick={handleCreateVault} className="w-full">
@@ -267,48 +274,29 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
               </div>
             </DialogContent>
           </Dialog>
-          
           <Dialog open={showCreateEntry} onOpenChange={setShowCreateEntry}>
             <DialogTrigger asChild>
-              <Button disabled={!selectedVault}>
+              <Button style={{ backgroundColor: brandColor }}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Password
+                New Entry
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Add New Password Entry</DialogTitle>
+                <DialogTitle>Create New Password Entry</DialogTitle>
+                <DialogDescription>
+                  Add a new password entry to your vault
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="entry-name">Name *</Label>
+                    <Label htmlFor="entry-title">Title</Label>
                     <Input
-                      id="entry-name"
-                      value={entryForm.name}
-                      onChange={(e) => setEntryForm(prev => ({ ...prev, name: e.target.value }))}
+                      id="entry-title"
+                      value={entryForm.title}
+                      onChange={(e) => setEntryForm(prev => ({ ...prev, title: e.target.value }))}
                       placeholder="e.g., Gmail Account"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="entry-website">Website</Label>
-                    <Input
-                      id="entry-website"
-                      value={entryForm.website}
-                      onChange={(e) => setEntryForm(prev => ({ ...prev, website: e.target.value }))}
-                      placeholder="e.g., gmail.com"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="entry-username">Username/Email</Label>
-                    <Input
-                      id="entry-username"
-                      value={entryForm.username}
-                      onChange={(e) => setEntryForm(prev => ({ ...prev, username: e.target.value }))}
-                      placeholder="username or email"
                     />
                   </div>
                   <div>
@@ -322,60 +310,66 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                         <SelectItem value="Work">Work</SelectItem>
                         <SelectItem value="Personal">Personal</SelectItem>
                         <SelectItem value="Banking">Banking</SelectItem>
-                        <SelectItem value="Social">Social Media</SelectItem>
-                        <SelectItem value="Shopping">Shopping</SelectItem>
+                        <SelectItem value="Social">Social</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="entry-username">Username/Email</Label>
+                    <Input
+                      id="entry-username"
+                      value={entryForm.username}
+                      onChange={(e) => setEntryForm(prev => ({ ...prev, username: e.target.value }))}
+                      placeholder="Username or email"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="entry-website">Website</Label>
+                    <Input
+                      id="entry-website"
+                      value={entryForm.website}
+                      onChange={(e) => setEntryForm(prev => ({ ...prev, website: e.target.value }))}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
                 <div>
-                  <Label htmlFor="entry-password">Password *</Label>
+                  <Label htmlFor="entry-password">Password</Label>
                   <div className="flex gap-2">
                     <Input
                       id="entry-password"
                       type="password"
                       value={entryForm.password}
                       onChange={(e) => setEntryForm(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="Enter or generate password"
+                      placeholder="Enter password"
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={generateSecurePassword}
-                      disabled={isGenerating}
-                    >
-                      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
+                    <Button onClick={handleGeneratePassword} disabled={isGenerating}>
+                      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     </Button>
                   </div>
                   {entryForm.password && (
                     <div className="mt-2">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm">Strength:</span>
                         <Progress value={calculatePasswordStrength(entryForm.password)} className="flex-1" />
-                        <span className={`text-sm font-medium ${getStrengthColor(calculatePasswordStrength(entryForm.password))}`}>
-                          {getStrengthLabel(calculatePasswordStrength(entryForm.password))}
-                        </span>
+                        <span className="text-sm font-medium">{calculatePasswordStrength(entryForm.password)}%</span>
                       </div>
                     </div>
                   )}
                 </div>
-
                 <div>
-                  <Label htmlFor="entry-notes">Notes (Optional)</Label>
+                  <Label htmlFor="entry-notes">Notes</Label>
                   <Textarea
                     id="entry-notes"
                     value={entryForm.notes}
                     onChange={(e) => setEntryForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="Additional notes..."
+                    placeholder="Optional notes"
                   />
                 </div>
-
-                <Button 
-                  onClick={handleCreateEntry} 
-                  className="w-full"
-                  disabled={!entryForm.name.trim() || !entryForm.password.trim()}
-                >
-                  Add Password Entry
+                <Button onClick={handleCreateEntry} className="w-full" disabled={!entryForm.title || !entryForm.password}>
+                  Create Entry
                 </Button>
               </div>
             </DialogContent>
@@ -383,307 +377,247 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
         </div>
       </div>
 
-      {/* Stats Overview */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-            <Key className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold" style={{ color: getStrengthColor(averageStrength).replace('text-', '') }}>
-              {averageStrength}%
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: `${brandColor}20` }}>
+                <Key className="h-6 w-6" style={{ color: brandColor }} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalEntries}</p>
+                <p className="text-sm text-muted-foreground">Total Passwords</p>
+              </div>
             </div>
-            <Progress value={averageStrength} className="mt-2" />
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Passwords</CardTitle>
-            <Key className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalEntries}</div>
-            <p className="text-xs text-muted-foreground">
-              Across {vaults.length} vault{vaults.length !== 1 ? 's' : ''}
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-green-100">
+                <Shield className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{averageStrength}%</p>
+                <p className="text-sm text-muted-foreground">Avg Strength</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{weakPasswords}</div>
-            <p className="text-xs text-muted-foreground">
-              Passwords need attention
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-red-100">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{weakPasswords}</p>
+                <p className="text-sm text-muted-foreground">Weak Passwords</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Shared Access</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-500">{sharedEntries}</div>
-            <p className="text-xs text-muted-foreground">
-              Team credentials
-            </p>
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 rounded-lg bg-blue-100">
+                <Folder className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{vaults.length}</p>
+                <p className="text-sm text-muted-foreground">Vaults</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Content */}
-      <Tabs defaultValue="passwords" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="passwords">Password Vault</TabsTrigger>
-          <TabsTrigger value="generator">Password Generator</TabsTrigger>
-          <TabsTrigger value="audit">Security Audit</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="passwords" className="space-y-4">
-          {/* Vault Selector & Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <Select value={selectedVault || ''} onValueChange={setSelectedVault}>
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue placeholder="Select a vault" />
-              </SelectTrigger>
-              <SelectContent>
-                {vaults.map((vault) => (
-                  <SelectItem key={vault.id} value={vault.id}>
-                    {vault.name} ({entries.filter(e => e.vault_id === vault.id).length})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex gap-2 flex-1">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search passwords..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Password Entries */}
-          <div className="grid gap-4">
-            {filteredEntries.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Key className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No passwords found</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {searchTerm || categoryFilter !== "all" 
-                      ? "Try adjusting your search or filter criteria"
-                      : "Add your first password to get started"}
-                  </p>
-                  {(!searchTerm && categoryFilter === "all") && (
-                    <Button onClick={() => setShowCreateEntry(true)} disabled={!selectedVault}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Password
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              filteredEntries.map((entry) => (
-                <Card key={entry.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <h4 className="font-semibold">{entry.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {entry.website && `${entry.website} • `}
-                            {entry.username}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Badge variant={entry.strength_score >= 60 ? "default" : "destructive"}>
-                            {getStrengthLabel(entry.strength_score)}
-                          </Badge>
-                          <Badge variant="secondary">{entry.category}</Badge>
-                          {entry.is_shared && (
-                            <Badge variant="outline">
-                              <Users className="h-3 w-3 mr-1" />
-                              Shared
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(entry.username || '', 'Username')}
-                          disabled={!entry.username}
-                          title="Copy username"
-                        >
-                          <User className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setShowPassword(showPassword === entry.id ? null : entry.id)}
-                          title={showPassword === entry.id ? "Hide password" : "Show password"}
-                        >
-                          {showPassword === entry.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyToClipboard(atob(entry.password_encrypted), 'Password')}
-                          title="Copy password"
-                        >
-                          <Key className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {showPassword === entry.id && (
-                      <div className="bg-muted p-3 rounded-md mb-3">
-                        <div className="font-mono text-sm break-all">
-                          {atob(entry.password_encrypted)}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between">
-                      <Progress value={entry.strength_score} className="flex-1 mr-4" />
-                      <span className="text-sm text-muted-foreground">
-                        Last used: {entry.last_used_at ? new Date(entry.last_used_at).toLocaleDateString() : 'Never'}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="generator">
-          <Card>
-            <CardHeader>
-              <CardTitle>Password Generator</CardTitle>
-              <CardDescription>Generate secure passwords with custom requirements</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  value={newPassword}
-                  placeholder="Generated password will appear here"
-                  readOnly
-                  className="font-mono"
-                />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Vault Sidebar */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Folder className="h-5 w-5" />
+              Vaults
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px]">
+              <div className="space-y-2">
                 <Button
-                  variant="outline"
-                  onClick={() => copyToClipboard(newPassword, 'Generated password')}
-                  disabled={!newPassword}
+                  variant={selectedVault === null ? "default" : "ghost"}
+                  className="w-full justify-start"
+                  onClick={() => setSelectedVault(null)}
                 >
-                  <Copy className="h-4 w-4" />
+                  <Folder className="h-4 w-4 mr-2" />
+                  All Vaults
                 </Button>
+                {vaults.map((vault) => (
+                  <Button
+                    key={vault.id}
+                    variant={selectedVault === vault.id ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setSelectedVault(vault.id)}
+                  >
+                    <Lock className="h-4 w-4 mr-2" />
+                    {getVaultName(vault)}
+                  </Button>
+                ))}
               </div>
-              
-              <Button 
-                onClick={generateSecurePassword}
-                disabled={isGenerating}
-                className="w-full"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Key className="mr-2 h-4 w-4" />
-                    Generate Strong Password
-                  </>
-                )}
-              </Button>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-              {newPassword && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Strength:</span>
-                    <div className="flex items-center gap-2">
-                      <Progress value={calculatePasswordStrength(newPassword)} className="w-32" />
-                      <span className={`text-sm font-medium ${getStrengthColor(calculatePasswordStrength(newPassword))}`}>
-                        {getStrengthLabel(calculatePasswordStrength(newPassword))}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="audit">
+        {/* Main Content */}
+        <div className="lg:col-span-3">
           <Card>
             <CardHeader>
-              <CardTitle>Security Audit</CardTitle>
-              <CardDescription>Monitor your password security and access logs</CardDescription>
+              <div className="flex items-center justify-between">
+                <CardTitle>Password Entries</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search entries..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-64"
+                    />
+                  </div>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              {weakPasswords > 0 && (
-                <Alert className="mb-4">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    You have {weakPasswords} weak password{weakPasswords > 1 ? 's' : ''} that should be updated immediately.
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="space-y-4">
-                <h4 className="font-semibold">Recent Activity</h4>
-                {auditLogs.length === 0 ? (
-                  <p className="text-muted-foreground">No activity logged yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {auditLogs.slice(0, 10).map((log) => (
-                      <div key={log.id} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex items-center gap-2">
-                          <History className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">
-                            {log.action} {log.details?.name && `"${log.details.name}"`}
-                          </span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(log.created_at).toLocaleString()}
-                        </span>
-                      </div>
+              {filteredEntries.length === 0 ? (
+                <div className="text-center py-8">
+                  <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No password entries</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {selectedVault ? "This vault is empty" : "You haven't created any password entries yet"}
+                  </p>
+                  <Button onClick={() => setShowCreateEntry(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Entry
+                  </Button>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Website</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Strength</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEntries.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="font-medium">{getEntryName(entry)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span>{getEntryUsername(entry) || '-'}</span>
+                            {getEntryUsername(entry) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyToClipboard(getEntryUsername(entry))}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {getEntryWebsite(entry) ? (
+                            <a href={getEntryWebsite(entry)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                              {getEntryWebsite(entry)}
+                            </a>
+                          ) : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{entry.category}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Progress value={getEntryStrengthScore(entry)} className="w-16" />
+                            <span className="text-sm">{getEntryStrengthScore(entry)}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (showPassword === entry.id) {
+                                  setShowPassword(null);
+                                } else {
+                                  setShowPassword(entry.id);
+                                }
+                              }}
+                            >
+                              {showPassword === entry.id ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyToClipboard(getEntryPassword(entry))}
+                            >
+                              <Copy className="h-3 w-3" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => setSelectedEntry(entry)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => deleteEntry(entry.id)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                          {showPassword === entry.id && (
+                            <div className="mt-2 p-2 bg-muted rounded text-sm font-mono">
+                              {getEntryPassword(entry)}
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </div>
-                )}
-              </div>
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 };

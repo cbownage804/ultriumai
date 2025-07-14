@@ -6,10 +6,16 @@ import { useToast } from '@/hooks/use-toast';
 export interface PasswordVault {
   id: string;
   user_id: string;
-  name: string;
+  vault_name: string;
   description?: string;
   is_shared: boolean;
-  team_id?: string;
+  is_active: boolean;
+  msp_org_id?: string;
+  client_id?: string;
+  encryption_key_hash?: string;
+  access_policies?: any;
+  shared_with?: any;
+  last_accessed_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -18,17 +24,20 @@ export interface PasswordEntry {
   id: string;
   vault_id: string;
   user_id: string;
-  name: string;
-  username?: string;
-  password_encrypted: string;
-  website?: string;
-  category: string;
-  notes?: string;
-  strength_score: number;
-  last_used_at?: string;
-  is_shared: boolean;
-  shared_with: string[];
+  entry_type: string;
+  title: string;
+  encrypted_data: any;
   tags: string[];
+  category: string;
+  url?: string;
+  notes?: string;
+  is_favorite: boolean;
+  last_used_at?: string;
+  password_strength_score: number;
+  is_compromised: boolean;
+  compromise_details?: any;
+  client_id?: string;
+  msp_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -60,8 +69,10 @@ export const useSafePass = () => {
 
     try {
       const { data, error } = await supabase
-        .from('password_vaults')
+        .from('safepass_vaults')
         .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -82,9 +93,10 @@ export const useSafePass = () => {
 
     try {
       const { data, error } = await supabase
-        .from('password_entries')
+        .from('safepass_entries')
         .select('*')
         .eq('vault_id', vaultId)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -104,16 +116,26 @@ export const useSafePass = () => {
     name: string;
     description?: string;
     is_shared?: boolean;
-    team_id?: string;
+    client_id?: string;
   }) => {
     if (!user) return null;
 
     try {
+      // Generate a simple encryption key hash for demo purposes
+      const encryptionKeyHash = btoa(`vault_${Date.now()}_${user.id}`);
+      
       const { data, error } = await supabase
-        .from('password_vaults')
+        .from('safepass_vaults')
         .insert({
           user_id: user.id,
-          ...vaultData
+          vault_name: vaultData.name,
+          description: vaultData.description,
+          is_shared: vaultData.is_shared || false,
+          is_active: true,
+          client_id: vaultData.client_id,
+          encryption_key_hash: encryptionKeyHash,
+          access_policies: {},
+          shared_with: {}
         })
         .select()
         .single();
@@ -141,7 +163,7 @@ export const useSafePass = () => {
   // Create password entry
   const createEntry = async (entryData: {
     vault_id: string;
-    name: string;
+    title: string;
     username?: string;
     password: string;
     website?: string;
@@ -155,22 +177,28 @@ export const useSafePass = () => {
       // Calculate password strength
       const strength = calculatePasswordStrength(entryData.password);
       
-      // Encrypt password (in real implementation, this would be done server-side)
-      const encryptedPassword = btoa(entryData.password); // Simple base64 for demo
+      // Encrypt password data (in real implementation, this would be done server-side)
+      const encryptedData = {
+        username: entryData.username,
+        password: btoa(entryData.password), // Simple base64 for demo
+        website: entryData.website
+      };
 
       const { data, error } = await supabase
-        .from('password_entries')
+        .from('safepass_entries')
         .insert({
           user_id: user.id,
           vault_id: entryData.vault_id,
-          name: entryData.name,
-          username: entryData.username,
-          password_encrypted: encryptedPassword,
-          website: entryData.website,
+          entry_type: 'password',
+          title: entryData.title,
+          encrypted_data: encryptedData,
+          url: entryData.website,
           category: entryData.category || 'General',
           notes: entryData.notes,
-          strength_score: strength,
-          tags: entryData.tags || []
+          password_strength_score: strength,
+          tags: entryData.tags || [],
+          is_favorite: false,
+          is_compromised: false
         })
         .select()
         .single();
@@ -180,7 +208,7 @@ export const useSafePass = () => {
       setEntries(prev => [data, ...prev]);
       
       // Log the action
-      await logAction('created', data.id, { name: data.name });
+      await logAction('created', data.id, { title: data.title });
       
       toast({
         title: "Success",
@@ -204,14 +232,11 @@ export const useSafePass = () => {
     if (!user) return null;
 
     try {
-      if (updates.password_encrypted) {
-        updates.strength_score = calculatePasswordStrength(atob(updates.password_encrypted));
-      }
-
       const { data, error } = await supabase
-        .from('password_entries')
+        .from('safepass_entries')
         .update(updates)
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -245,14 +270,15 @@ export const useSafePass = () => {
       const entry = entries.find(e => e.id === id);
       
       const { error } = await supabase
-        .from('password_entries')
+        .from('safepass_entries')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
       setEntries(prev => prev.filter(entry => entry.id !== id));
-      await logAction('deleted', id, { name: entry?.name });
+      await logAction('deleted', id, { title: entry?.title });
 
       toast({
         title: "Success",
@@ -323,10 +349,11 @@ export const useSafePass = () => {
 
     try {
       await supabase
-        .from('password_audit_logs')
+        .from('audit_logs')
         .insert({
           user_id: user.id,
-          password_entry_id: entryId,
+          resource_id: entryId,
+          resource_type: 'password_entry',
           action,
           details,
           user_agent: navigator.userAgent
@@ -342,8 +369,10 @@ export const useSafePass = () => {
 
     try {
       const { data, error } = await supabase
-        .from('password_audit_logs')
+        .from('audit_logs')
         .select('*')
+        .eq('user_id', user.id)
+        .eq('resource_type', 'password_entry')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -372,6 +401,21 @@ export const useSafePass = () => {
     }
   }, [selectedVault]);
 
+  // Helper functions for backward compatibility
+  const getEntryName = (entry: PasswordEntry) => entry.title;
+  const getEntryUsername = (entry: PasswordEntry) => entry.encrypted_data?.username || '';
+  const getEntryWebsite = (entry: PasswordEntry) => entry.url || entry.encrypted_data?.website || '';
+  const getEntryPassword = (entry: PasswordEntry) => {
+    try {
+      return atob(entry.encrypted_data?.password || '');
+    } catch {
+      return '';
+    }
+  };
+  const getEntryStrengthScore = (entry: PasswordEntry) => entry.password_strength_score;
+  const isEntryShared = (entry: PasswordEntry) => false; // Not implemented in current schema
+  const getVaultName = (vault: PasswordVault) => vault.vault_name;
+
   return {
     vaults,
     entries,
@@ -387,6 +431,14 @@ export const useSafePass = () => {
     calculatePasswordStrength,
     loadVaults,
     loadEntries,
-    loadAuditLogs
+    loadAuditLogs,
+    // Helper functions
+    getEntryName,
+    getEntryUsername,
+    getEntryWebsite,
+    getEntryPassword,
+    getEntryStrengthScore,
+    isEntryShared,
+    getVaultName
   };
 };
