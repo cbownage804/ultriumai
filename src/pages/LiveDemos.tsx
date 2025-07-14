@@ -39,81 +39,34 @@ interface DemoApp {
 
 const demoApps: DemoApp[] = [
   {
-    id: "ultrium-safeemail",
-    name: "Ultrium SafeMail™",
-    category: "Email Security",
-    description: "AI-powered email analysis and threat detection",
-    longDescription: "Advanced email security solution that uses AI to analyze incoming emails for phishing attempts, malware, suspicious links, and social engineering attacks. Provides real-time threat assessment with detailed risk scoring.",
-    icon: Shield,
-    features: [
-      "Real-time phishing detection",
-      "Malware scanning",
-      "Link analysis and safety scoring",
-      "Social engineering detection",
-      "Detailed threat reports",
-      "API integration ready"
-    ],
-    demoUrl: "/demos/safemail",
-    isLive: true,
-    tags: ["Email Security", "AI Detection", "Threat Analysis"],
-    useCases: [
-      "Corporate email protection",
-      "MSP client security",
-      "Personal email screening",
-      "Compliance monitoring"
-    ]
-  },
-  {
-    id: "ultrium-safelink",
-    name: "Ultrium SafeLink™",
-    category: "Link Security",
-    description: "Comprehensive URL analysis and safety verification",
-    longDescription: "Intelligent link analysis tool that scans URLs for malicious content, phishing sites, malware distribution, and reputation issues. Provides comprehensive safety reports with risk assessments.",
-    icon: Lock,
-    features: [
-      "URL reputation analysis",
-      "Malware detection",
-      "Phishing site identification",
-      "SSL certificate validation",
-      "Domain age and history check",
-      "Real-time scanning results"
-    ],
-    demoUrl: "/demos/safelink",
-    isLive: true,
-    tags: ["URL Security", "Link Analysis", "Web Safety"],
-    useCases: [
-      "Browser extension integration",
-      "Email link verification",
-      "Social media safety",
-      "Employee training tools"
-    ]
-  },
-  {
     id: "ultrium-safescan",
     name: "Ultrium SafeScan™",
-    category: "Document Security",
-    description: "Revolutionary AI-powered multi-vector security scanning platform",
-    longDescription: "Next-generation security scanning platform that unifies email, document, and URL analysis with advanced AI behavioral analysis, real-time threat intelligence, and cross-reference detection capabilities for unprecedented security coverage.",
-    icon: FileText,
+    category: "Unified Security",
+    description: "Revolutionary AI-powered unified security scanning platform for emails, links, and documents",
+    longDescription: "Next-generation security scanning platform that unifies email, document, and URL analysis with advanced AI behavioral analysis, real-time threat intelligence, and cross-reference detection capabilities. Combines the power of SafeMail, SafeLink, and SafeDoc into one comprehensive security solution.",
+    icon: Shield,
     features: [
-      "Multi-vector AI analysis (Email + Document + URL)",
-      "Revolutionary behavioral pattern recognition", 
-      "Real-time threat intelligence integration",
-      "Cross-reference analysis between content types",
-      "Advanced social engineering detection",
+      "Unified email, link, and document scanning",
+      "Real-time phishing and malware detection", 
+      "AI behavioral pattern recognition",
+      "Cross-reference threat analysis",
+      "Multi-format document analysis",
+      "SSL certificate validation",
+      "Social engineering detection",
       "Predictive threat modeling",
       "Global reputation scoring",
       "Automated forensic reporting"
     ],
     demoUrl: "/demos/safescan",
     isLive: true,
-    tags: ["Document Security", "AI Behavioral Analysis", "Multi-Vector Scanning", "Revolutionary"],
+    tags: ["Unified Security", "AI Analysis", "Multi-Vector Scanning", "Revolutionary"],
     useCases: [
       "Unified email, document, and URL protection",
       "Advanced threat intelligence analysis", 
       "Cross-platform security scanning",
       "AI-powered behavioral detection",
-      "Enterprise security automation"
+      "Enterprise security automation",
+      "MSP client protection"
     ]
   },
   {
@@ -139,31 +92,6 @@ const demoApps: DemoApp[] = [
       "Team credential sharing",
       "Compliance requirements",
       "Security auditing"
-    ]
-  },
-  {
-    id: "ultrium-safedoc",
-    name: "Ultrium SafeDoc™", 
-    category: "Document Management",
-    description: "Secure document storage and knowledge management platform",
-    longDescription: "Enterprise document management system with advanced security, version control, collaboration tools, and intelligent organization. Built for IT teams and MSPs who need secure, searchable document storage.",
-    icon: FileText,
-    features: [
-      "Secure document storage",
-      "Version control",
-      "Advanced search",
-      "Team collaboration",
-      "Access controls",
-      "Audit trails"
-    ],
-    demoUrl: "/demos/safedoc",
-    isLive: true,
-    tags: ["Document Management", "Knowledge Base", "Collaboration"],
-    useCases: [
-      "IT documentation storage",
-      "Client knowledge base",
-      "Procedure management", 
-      "Compliance documentation"
     ]
   },
   {
@@ -379,7 +307,7 @@ const demoApps: DemoApp[] = [
 const LiveDemos = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = ["all", "Email Security", "Link Security", "Document Security", "Password Security", "Document Management", "Network Security", "Compliance Management", "Threat Intelligence", "Remote Management", "Service Management", "Endpoint Security", "Revolutionary AI Security", "AI Assistant"];
+  const categories = ["all", "Unified Security", "Password Security", "Network Security", "Compliance Management", "Threat Intelligence", "Remote Management", "Service Management", "Endpoint Security", "Revolutionary AI Security", "AI Assistant"];
   
   const filteredApps = selectedCategory === "all" 
     ? demoApps 
