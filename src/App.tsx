@@ -54,6 +54,9 @@ import RMMDemoPage from '@/pages/demos/RMMDemoPage';
 import TicketingDemoPage from '@/pages/demos/TicketingDemoPage';
 import AntivirusDemoPage from '@/pages/demos/AntivirusDemoPage';
 import SafeMDRDemoPage from '@/pages/demos/SafeMDRDemoPage';
+import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
+import SafeMailDemoPage from '@/pages/demos/SafeMailDemoPage';
+import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
 import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SafeLinkPage from '@/pages/products/SafeLinkPage';
 import SafeDocPage from '@/pages/products/SafeDocPage';
@@ -213,6 +216,9 @@ function AppRouter() {
         <Route path="/demos/ticketing" element={<TicketingDemoPage />} />
         <Route path="/demos/antivirus" element={<AntivirusDemoPage />} />
         <Route path="/demos/safemdr" element={<SafeMDRDemoPage />} />
+        <Route path="/demos/safelink" element={<SafeLinkDemoPage />} />
+        <Route path="/demos/safemail" element={<SafeMailDemoPage />} />
+        <Route path="/demos/safedoc" element={<SafeDocDemoPage />} />
         <Route path="/embed-demo" element={<EmbedDemo />} />
         <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
         <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
