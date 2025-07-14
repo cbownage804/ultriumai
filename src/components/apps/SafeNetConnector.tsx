@@ -125,51 +125,54 @@ export const SafeNetConnector = () => {
     });
   };
 
-  const downloadConnector = (platform: 'windows' | 'linux' | 'docker') => {
+  const downloadConnector = async (platform: 'windows' | 'linux' | 'docker') => {
     const downloadData = {
       windows: { 
-        file: 'safenet-connector-windows-x64.msi', 
+        file: 'safenet-connector-windows-x64.exe', 
         size: '45 MB',
-        content: '# SafeNet Connector for Windows\n# This is a demo installer file\n# Version: 2.1.4\n# Platform: Windows x64\n# In production, this would be the actual MSI installer binary'
+        storagePath: 'safenet-connector-windows-x64.exe'
       },
       linux: { 
         file: 'safenet-connector-linux.deb', 
         size: '32 MB',
-        content: '# SafeNet Connector for Linux\n# This is a demo installer file\n# Version: 2.1.4\n# Platform: Linux (Debian/Ubuntu)\n# In production, this would be the actual DEB package binary'
+        storagePath: 'safenet-connector-linux.deb'
       },
       docker: { 
         file: 'safenet-connector-docker.tar.gz', 
         size: '28 MB',
-        content: '# SafeNet Connector Docker Image\n# This is a demo installer file\n# Version: 2.1.4\n# Platform: Docker Container\n# In production, this would be the actual Docker image tarball'
+        storagePath: 'safenet-connector-docker.tar.gz'
       }
     };
 
     const data = downloadData[platform];
     
-    // Create blob and download link
-    const blob = new Blob([data.content], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    
-    // Create temporary download link
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = data.file;
-    link.style.display = 'none';
-    
-    // Add to DOM, click, and clean up
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Clean up blob URL
-    setTimeout(() => {
-      window.URL.revokeObjectURL(url);
-    }, 100);
-    
-    toast({
-      title: "Download Started",
-      description: `${data.file} is downloading (${data.size})`,
-    });
+    try {
+      // Get download URL from Supabase storage
+      const downloadUrl = `https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/safenet-downloads/${data.storagePath}`;
+      
+      // Create temporary download link
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = data.file;
+      link.target = '_blank';
+      link.style.display = 'none';
+      
+      // Add to DOM, click, and clean up
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Download Started",
+        description: `${data.file} is downloading (${data.size})`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Please try again or contact support if the issue persists.",
+        variant: "destructive"
+      });
+    }
   };
 
   const restartConnector = (connectorId: string) => {
