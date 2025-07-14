@@ -20,7 +20,10 @@ import {
   Network,
   Wrench,
   MessageSquare,
-  Eye
+  Eye,
+  Brain,
+  CheckCircle,
+  Star
 } from "lucide-react";
 
 interface DemoApp {
@@ -326,12 +329,102 @@ const LiveDemos = () => {
       <Navigation />
       
       <main className="pt-20">
-        {/* Hero Section */}
+        {/* Custom GPT Builder Hero Section */}
+        <section className="py-16 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid-primary/5"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="text-center space-y-8 mb-12">
+              <Badge variant="secondary" className="animate-pulse">
+                <Zap className="h-4 w-4 mr-2" />
+                Revolutionary AI Platform
+              </Badge>
+              <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+                Custom GPT Builder™
+              </h1>
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+                Experience the world's most advanced no-code platform for building custom AI assistants. 
+                See how you can create enterprise AI in minutes, not months.
+              </p>
+            </div>
+
+            {/* Custom GPT Builder Demo Card */}
+            <Card className="max-w-5xl mx-auto bg-gradient-to-br from-white/80 to-primary/5 border-2 border-primary/20 shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02] mb-16">
+              <CardContent className="p-8 md:p-10">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg">
+                        <Users className="h-8 w-8 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-foreground">Build AI Without Code</h3>
+                        <p className="text-muted-foreground">From idea to deployment in 24 hours</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-foreground">Drag & drop AI assistant builder</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-foreground">Upload your knowledge base instantly</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-foreground">White-label & custom branding</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="text-foreground">Deploy anywhere with API access</span>
+                      </div>
+                    </div>
+
+                    <Button size="lg" className="w-full text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all duration-300" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
+                      <Play className="mr-2 h-5 w-5" />
+                      Try Live Demo Now
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-primary/20">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Brain className="h-5 w-5 text-primary" />
+                        <span className="font-semibold text-primary">500+ Custom GPTs Built</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Join thousands building their own AI assistants
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-white/60 rounded-lg border">
+                        <div className="text-xl font-bold text-primary">24hrs</div>
+                        <div className="text-xs text-muted-foreground">Build Time</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/60 rounded-lg border">
+                        <div className="text-xl font-bold text-green-600">95%</div>
+                        <div className="text-xs text-muted-foreground">Success Rate</div>
+                      </div>
+                      <div className="text-center p-4 bg-white/60 rounded-lg border">
+                        <div className="text-xl font-bold text-purple-600">50+</div>
+                        <div className="text-xs text-muted-foreground">Industries</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Security Platform Section */}
         <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-6">
-              UltriumAI Complete Platform Demo
-            </h1>
+            <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent mb-6">
+              Security Platform Demos
+            </h2>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
               Experience our unified cybersecurity platform. All tools work together seamlessly - purchase once, access everything, manage from one dashboard.
             </p>
