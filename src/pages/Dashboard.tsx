@@ -1,6 +1,9 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import ChatInterface from "@/components/ChatInterface";
+import { TrialBanner } from '@/components/TrialBanner';
+import { SubscriptionRenewalNotice } from '@/components/SubscriptionRenewalNotice';
+import { GracePeriodManager } from '@/components/GracePeriodManager';
 
 import ProfilePage from "@/pages/ProfilePage";
 import CustomGPTBuild from "@/components/CustomGPTBuild";
@@ -284,6 +287,11 @@ const Dashboard = () => {
             </div>
           </header>
           <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
+            <div className="space-y-4 p-4">
+              <TrialBanner />
+              <SubscriptionRenewalNotice />
+              <GracePeriodManager />
+            </div>
             {renderContent()}
           </div>
         </SidebarInset>

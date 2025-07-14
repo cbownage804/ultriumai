@@ -2,6 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { SubscriptionStatus } from "@/components/SubscriptionStatus";
+import { CreditUsageDisplay } from "@/components/CreditUsageDisplay";
+import { SubscriptionTestSuite } from "@/components/SubscriptionTestSuite";
 import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -351,31 +354,42 @@ export const DashboardOverview = () => {
         </Card>
       </div>
 
+      {/* Subscription Management Section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SubscriptionStatus />
+        <CreditUsageDisplay />
+      </div>
+
+      {/* Testing & Development Tools */}
+      {(user?.email?.includes('@ultriumai.com') || subscription.subscription_tier === 'enterprise') && (
+        <SubscriptionTestSuite />
+      )}
+
       {/* Upgrade Prompts */}
       {subscription.subscription_tier === "free" && (
-        <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50">
+        <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-purple-700">
+            <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
               <Star className="h-5 w-5" />
               Upgrade to Premium
             </CardTitle>
-            <CardDescription className="text-purple-600">
+            <CardDescription className="text-purple-600 dark:text-purple-400">
               Unlock advanced features and increased limits
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-3 mb-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-700">10,000</div>
-                <div className="text-sm text-purple-600">Credits per month</div>
+                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">5,000</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">Credits per month</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-700">Unlimited</div>
-                <div className="text-sm text-purple-600">Custom GPTs</div>
+                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">Unlimited</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">Custom GPTs</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-700">Priority</div>
-                <div className="text-sm text-purple-600">Support</div>
+                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">Premium</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">Security Tools</div>
               </div>
             </div>
             <Button 
