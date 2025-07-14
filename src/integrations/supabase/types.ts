@@ -7736,6 +7736,7 @@ export type Database = {
       safepass_entries: {
         Row: {
           category: string | null
+          client_id: string | null
           compromise_details: Json | null
           created_at: string
           encrypted_data: Json
@@ -7744,6 +7745,7 @@ export type Database = {
           is_compromised: boolean | null
           is_favorite: boolean | null
           last_used_at: string | null
+          msp_id: string | null
           notes: string | null
           password_strength_score: number | null
           tags: string[] | null
@@ -7755,6 +7757,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          client_id?: string | null
           compromise_details?: Json | null
           created_at?: string
           encrypted_data: Json
@@ -7763,6 +7766,7 @@ export type Database = {
           is_compromised?: boolean | null
           is_favorite?: boolean | null
           last_used_at?: string | null
+          msp_id?: string | null
           notes?: string | null
           password_strength_score?: number | null
           tags?: string[] | null
@@ -7774,6 +7778,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          client_id?: string | null
           compromise_details?: Json | null
           created_at?: string
           encrypted_data?: Json
@@ -7782,6 +7787,7 @@ export type Database = {
           is_compromised?: boolean | null
           is_favorite?: boolean | null
           last_used_at?: string | null
+          msp_id?: string | null
           notes?: string | null
           password_strength_score?: number | null
           tags?: string[] | null
@@ -7843,6 +7849,7 @@ export type Database = {
       safepass_vaults: {
         Row: {
           access_policies: Json | null
+          client_id: string | null
           created_at: string
           description: string | null
           encryption_key_hash: string
@@ -7858,6 +7865,7 @@ export type Database = {
         }
         Insert: {
           access_policies?: Json | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
           encryption_key_hash: string
@@ -7873,6 +7881,7 @@ export type Database = {
         }
         Update: {
           access_policies?: Json | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
           encryption_key_hash?: string
