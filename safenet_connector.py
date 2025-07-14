@@ -21,17 +21,23 @@ import schedule
 import threading
 
 # Configuration
-SAFENET_API_URL = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector"
-API_KEY = "your-safenet-api-key"  # Replace with actual API key
+SAFENET_API_URL = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api"
+CONNECTOR_KEY = "your-connector-key"  # Replace with actual connector key from SafeNet dashboard
 SCAN_INTERVAL = 300  # 5 minutes
 HOSTNAME = socket.gethostname()
 
 class SafeNetConnector:
-    def __init__(self, api_key: str, api_url: str):
-        self.api_key = api_key
-        self.api_url = api_url
-        self.nm = nmap.PortScanner()
+    def __init__(self, connector_key: str, api_url: str):
+        self.connector_key = connector_key
+        self.api_url = api_url.rstrip('/')
+        self.connector_id = None
         self.logger = self.setup_logging()
+        
+        try:
+            self.nm = nmap.PortScanner()
+        except nmap.PortScannerError:
+            self.logger.error("Nmap not found. Please install nmap.")
+            sys.exit(1)
         
     def setup_logging(self) -> logging.Logger:
         """Setup logging configuration"""
@@ -331,20 +337,107 @@ class SafeNetConnector:
         
         return 'safe'
 
-    async def send_scan_results(self, scan_results: Dict[str, Any]) -> bool:
-        """Send scan results to SafeNet API"""
+    async def register_connector(self) -> bool:
+        """Register connector with SafeNet API"""
         try:
-            headers = {
-                'Authorization': f'Bearer {self.api_key}',
-                'Content-Type': 'application/json',
-                'x-ultrium-key': self.api_key
+            system_info = {
+                'os': sys.platform,
+                'hostname': HOSTNAME,
+                'python_version': sys.version,
+                'interfaces': self.get_network_interfaces()
+            }
+            
+            registration_data = {
+                'connector_key': self.connector_key,
+                'connector_name': f"SafeNet Connector - {HOSTNAME}",
+                'client_name': HOSTNAME,
+                'version': '1.0.0',
+                'system_info': system_info,
+                'network_info': {
+                    'discovered_ranges': self.discover_network_range()
+                }
             }
             
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.api_url,
-                    json=scan_results,
-                    headers=headers,
+                    f"{self.api_url}/register",
+                    json=registration_data,
+                    timeout=aiohttp.ClientTimeout(total=30)
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        self.connector_id = result.get('connector_id')
+                        self.logger.info(f"Connector registered successfully. ID: {self.connector_id}")
+                        return True
+                    else:
+                        error_text = await response.text()
+                        self.logger.error(f"Failed to register connector: {response.status} - {error_text}")
+                        return False
+                        
+        except Exception as e:
+            self.logger.error(f"Error registering connector: {e}")
+            return False
+
+    async def send_heartbeat(self) -> bool:
+        """Send heartbeat to maintain connection status"""
+        try:
+            heartbeat_data = {
+                'connector_key': self.connector_key
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.api_url}/heartbeat",
+                    json=heartbeat_data,
+                    timeout=aiohttp.ClientTimeout(total=10)
+                ) as response:
+                    return response.status == 200
+                        
+        except Exception as e:
+            self.logger.warning(f"Heartbeat failed: {e}")
+            return False
+
+    async def send_scan_results(self, scan_results: Dict[str, Any]) -> bool:
+        """Send scan results to SafeNet API"""
+        try:
+            # Prepare data for the new API format
+            scan_data = {
+                'connector_key': self.connector_key,
+                'scan_type': 'comprehensive',
+                'network_ranges': [],
+                'devices_found': 0,
+                'scan_duration': scan_results.get('scan_duration', 0),
+                'hostname': HOSTNAME,
+                'results': scan_results,
+                'devices': []
+            }
+            
+            # Extract network ranges and devices from results
+            if 'results' in scan_results and isinstance(scan_results['results'], list):
+                for result in scan_results['results']:
+                    if 'network_range' in result:
+                        scan_data['network_ranges'].append(result['network_range'])
+                    if 'devices' in result:
+                        for device in result['devices']:
+                            scan_data['devices'].append({
+                                'ip_address': device['ip_address'],
+                                'hostname': device['hostname'], 
+                                'device_type': device['device_type'],
+                                'mac_address': device.get('mac_address'),
+                                'os_info': device.get('os_info'),
+                                'open_ports': device.get('open_ports', []),
+                                'services': device.get('services', []),
+                                'vulnerabilities': device.get('vulnerabilities', []),
+                                'risk_level': device['risk_level'],
+                                'status': device['status'],
+                                'network_range': result['network_range']
+                            })
+                        scan_data['devices_found'] += len(result['devices'])
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.api_url}/scan-data",
+                    json=scan_data,
                     timeout=aiohttp.ClientTimeout(total=60)
                 ) as response:
                     if response.status == 200:
@@ -397,45 +490,60 @@ class SafeNetConnector:
         except Exception as e:
             self.logger.error(f"Error during full scan: {e}")
 
-    def run_scheduled_scans(self):
+    async def run_scheduled_scans(self):
         """Run the connector with scheduled scans"""
         self.logger.info(f"Starting SafeNet Connector with {SCAN_INTERVAL}s interval")
         
-        def run_scan():
-            asyncio.run(self.run_full_scan())
+        # Register connector first
+        if not await self.register_connector():
+            self.logger.error("Failed to register connector. Exiting.")
+            return
         
-        # Schedule regular scans
-        schedule.every(SCAN_INTERVAL).seconds.do(run_scan)
+        async def run_scan():
+            # Send heartbeat
+            await self.send_heartbeat()
+            # Run scan
+            await self.run_full_scan()
         
         # Run initial scan
-        run_scan()
+        await run_scan()
         
-        # Keep running scheduled scans
+        # Schedule regular scans
         while True:
-            schedule.run_pending()
-            time.sleep(1)
+            try:
+                await asyncio.sleep(SCAN_INTERVAL)
+                await run_scan()
+            except KeyboardInterrupt:
+                self.logger.info("Received shutdown signal")
+                break
+            except Exception as e:
+                self.logger.error(f"Error in scan loop: {e}")
+                await asyncio.sleep(10)  # Wait before retrying
 
 def main():
     parser = argparse.ArgumentParser(description='SafeNet Network Connector')
-    parser.add_argument('--api-key', default=API_KEY, help='SafeNet API key')
+    parser.add_argument('--connector-key', default=CONNECTOR_KEY, help='SafeNet Connector Key from dashboard')
     parser.add_argument('--api-url', default=SAFENET_API_URL, help='SafeNet API URL')
     parser.add_argument('--interval', type=int, default=SCAN_INTERVAL, help='Scan interval in seconds')
     parser.add_argument('--test', action='store_true', help='Run a single test scan')
     
     args = parser.parse_args()
     
-    if not args.api_key or args.api_key == "your-safenet-api-key":
-        print("Error: Please provide a valid API key using --api-key")
+    if not args.connector_key or args.connector_key == "your-connector-key":
+        print("Error: Please provide a valid connector key using --connector-key")
+        print("Generate a connector key from the SafeNet dashboard and use:")
+        print("python safenet_connector.py --connector-key snc_your_key_here")
         sys.exit(1)
     
-    connector = SafeNetConnector(args.api_key, args.api_url)
+    connector = SafeNetConnector(args.connector_key, args.api_url)
     
     if args.test:
         print("Running test scan...")
         asyncio.run(connector.run_full_scan())
     else:
         try:
-            connector.run_scheduled_scans()
+            print("Starting SafeNet Connector...")
+            asyncio.run(connector.run_scheduled_scans())
         except KeyboardInterrupt:
             print("\nShutting down SafeNet Connector...")
         except Exception as e:

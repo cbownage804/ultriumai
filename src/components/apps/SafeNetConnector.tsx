@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ConnectorInstance {
   id: string;
@@ -59,6 +61,7 @@ interface ConnectorInstance {
 
 export const SafeNetConnector = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [connectors, setConnectors] = useState<ConnectorInstance[]>([
     {
       id: 'conn-001',
@@ -116,13 +119,54 @@ export const SafeNetConnector = () => {
 
   const [newConnectorKey, setNewConnectorKey] = useState('');
 
-  const generateConnectorKey = () => {
+  const generateConnectorKey = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to generate a connector key",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const key = `snc_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    setNewConnectorKey(key);
-    toast({
-      title: "Connector Key Generated",
-      description: "Use this key during connector installation",
-    });
+    
+    try {
+      // Store the connector key in the database
+      const { data, error } = await supabase
+        .from('safenet_connectors')
+        .insert({
+          user_id: user.id,
+          connector_key: key,
+          connector_name: 'New SafeNet Connector',
+          status: 'inactive'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating connector:', error);
+        toast({
+          title: "Error",
+          description: "Failed to generate connector key",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setNewConnectorKey(key);
+      toast({
+        title: "Connector Key Generated",
+        description: "Use this key during connector installation. The connector will register when first run.",
+      });
+    } catch (error) {
+      console.error('Error generating connector key:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate connector key",
+        variant: "destructive"
+      });
+    }
   };
 
   const downloadConnector = async (platform: 'windows' | 'linux' | 'docker') => {

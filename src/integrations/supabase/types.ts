@@ -5124,6 +5124,7 @@ export type Database = {
       network_scans: {
         Row: {
           completed_at: string | null
+          connector_id: string | null
           created_at: string | null
           id: string
           risk_score: number | null
@@ -5136,6 +5137,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          connector_id?: string | null
           created_at?: string | null
           id?: string
           risk_score?: number | null
@@ -5148,6 +5150,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          connector_id?: string | null
           created_at?: string | null
           id?: string
           risk_score?: number | null
@@ -5158,7 +5161,15 @@ export type Database = {
           user_id?: string | null
           vulnerabilities_found?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "network_scans_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "safenet_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
@@ -7524,6 +7535,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safenet_connectors: {
+        Row: {
+          client_name: string | null
+          connector_key: string
+          connector_name: string
+          created_at: string | null
+          id: string
+          last_heartbeat: string | null
+          network_info: Json | null
+          status: string
+          system_info: Json | null
+          updated_at: string | null
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          connector_key: string
+          connector_name: string
+          created_at?: string | null
+          id?: string
+          last_heartbeat?: string | null
+          network_info?: Json | null
+          status?: string
+          system_info?: Json | null
+          updated_at?: string | null
+          user_id: string
+          version?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          connector_key?: string
+          connector_name?: string
+          created_at?: string | null
+          id?: string
+          last_heartbeat?: string | null
+          network_info?: Json | null
+          status?: string
+          system_info?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: []
       }
       safenet_devices: {
         Row: {
@@ -10427,6 +10483,14 @@ export type Database = {
           user_id: string
           is_valid: boolean
           rate_limit_rpd: number
+        }[]
+      }
+      validate_connector_key: {
+        Args: { p_connector_key: string }
+        Returns: {
+          connector_id: string
+          user_id: string
+          is_valid: boolean
         }[]
       }
       vector_avg: {
