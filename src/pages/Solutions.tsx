@@ -19,7 +19,8 @@ import {
   Building,
   Settings,
   Bell,
-  BarChart3
+  BarChart3,
+  Brain
 } from "lucide-react";
 
 const Solutions = () => {
@@ -233,27 +234,6 @@ const Solutions = () => {
       demoUrl: "/demos/ultriumgpt",
       pageUrl: "/ultrium-gpt",
       gradient: "from-violet-100 to-purple-100"
-    },
-    {
-      id: "custom-gpt-builder",
-      name: "Custom GPT Builder™",
-      category: "AI Development Platform",
-      description: "Build, train, and deploy your own custom AI assistants for any business need",
-      longDescription: "Complete platform for creating custom AI assistants tailored to your specific business requirements, with no-code training, deployment, and management capabilities.",
-      icon: Users,
-      features: [
-        "No-code GPT creation",
-        "Custom knowledge base training",
-        "White-label deployment",
-        "API integration capabilities",
-        "Multi-language support",
-        "Custom branding & styling",
-        "Usage analytics & insights",
-        "Enterprise security controls"
-      ],
-      demoUrl: "/demos/custom-gpt-builder",
-      pageUrl: "/custom-gpt-builder",
-      gradient: "from-emerald-100 to-teal-100"
     }
   ];
 
@@ -297,7 +277,99 @@ const Solutions = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      {/* Hero Section */}
+      {/* Custom GPT Builder Hero Section */}
+      <section className="pt-20 pb-12 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-primary/5"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center space-y-8 mb-12">
+            <Badge variant="secondary" className="animate-pulse">
+              <Zap className="h-4 w-4 mr-2" />
+              Revolutionary AI Platform
+            </Badge>
+            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+              Custom GPT Builder™
+            </h1>
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              The world's most advanced no-code platform for building, training, and deploying 
+              custom AI assistants. Transform any business process with personalized AI.
+            </p>
+          </div>
+
+          {/* Custom GPT Builder Feature Card */}
+          <Card className="max-w-6xl mx-auto bg-gradient-to-br from-white/80 to-primary/5 border-2 border-primary/20 shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02]">
+            <CardContent className="p-8 md:p-12">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg">
+                      <Users className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-foreground">No-Code AI Creation</h3>
+                      <p className="text-muted-foreground">Build enterprise AI without coding</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-foreground">Drag & drop AI assistant builder</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-foreground">Upload your own knowledge base</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-foreground">White-label deployment options</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="text-foreground">API integration & custom branding</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-primary/20">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Brain className="h-5 w-5 text-primary" />
+                      <span className="font-semibold text-primary">500+ Custom GPTs Created</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Join thousands of businesses already using our platform
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-4 bg-white/60 rounded-lg border">
+                      <div className="text-2xl font-bold text-primary">24hrs</div>
+                      <div className="text-sm text-muted-foreground">Average Build Time</div>
+                    </div>
+                    <div className="text-center p-4 bg-white/60 rounded-lg border">
+                      <div className="text-2xl font-bold text-green-600">95%</div>
+                      <div className="text-sm text-muted-foreground">Success Rate</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 pt-6 border-t border-primary/20">
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all duration-300" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
+                  <Play className="mr-2 h-5 w-5" />
+                  Try Live Demo
+                </Button>
+                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-2 border-primary hover:bg-primary/5" onClick={() => window.location.href = '#gpt-pricing'}>
+                  <Star className="mr-2 h-5 w-5" />
+                  View Pricing
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Security Applications Section */}
       <section className="pt-20 pb-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
@@ -306,9 +378,9 @@ const Solutions = () => {
                 <Shield className="h-4 w-4 mr-2" />
                 AI Security Solutions
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
-                Complete AI Security Suite for Modern Businesses
-              </h1>
+              <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
+                Complete AI Security Suite
+              </h2>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
                 From email protection to dark web monitoring—our comprehensive AI security applications 
                 protect your business from today's cyber threats while streamlining your security operations.
@@ -318,7 +390,7 @@ const Solutions = () => {
             <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 max-w-3xl mx-auto">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Star className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold text-primary">11 Integrated Security Applications</span>
+                <span className="font-semibold text-primary">10 Integrated Security Applications</span>
                 <Star className="h-5 w-5 text-yellow-500" />
               </div>
               <p className="text-lg font-medium text-foreground">
@@ -329,7 +401,7 @@ const Solutions = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/demos'}>
                 <Play className="mr-2 h-5 w-5" />
-                Try Live Demos
+                Try Security Demos
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '#contact'}>
                 <Shield className="mr-2 h-5 w-5" />
