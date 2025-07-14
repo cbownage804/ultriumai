@@ -239,17 +239,27 @@ async function checkPasswordBreach(payload: any) {
 }
 
 async function analyzeVault(payload: any) {
-  const { userId } = payload
+  const { userId, clientId, mspId } = payload
   
   if (!userId) {
     throw new Error('User ID is required')
   }
 
-  // Get user's vault entries
-  const { data: entries, error } = await supabase
-    .from('safepass_entries')
-    .select('*')
-    .eq('user_id', userId)
+  // Build query based on context (MSP, Client, or Individual)
+  let query = supabase.from('safepass_entries').select('*')
+  
+  if (mspId) {
+    // MSP viewing all client data
+    query = query.eq('msp_org_id', mspId)
+  } else if (clientId) {
+    // Client viewing their own data
+    query = query.eq('client_id', clientId)
+  } else {
+    // Individual user
+    query = query.eq('user_id', userId)
+  }
+
+  const { data: entries, error } = await query
 
   if (error) {
     throw new Error(`Failed to fetch vault entries: ${error.message}`)

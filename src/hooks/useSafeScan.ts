@@ -215,7 +215,7 @@ export const useSafeScan = () => {
   };
 
   // Password Strength Analysis
-  const scanPassword = async (password: string): Promise<PasswordScanResult | null> => {
+  const scanPassword = async (password: string, email?: string): Promise<PasswordScanResult | null> => {
     if (!password) {
       toast({
         title: "Error",
@@ -229,13 +229,27 @@ export const useSafeScan = () => {
     try {
       const { data, error } = await supabase.functions.invoke('safepass-scanner', {
         body: {
-          mode: 'single',
+          action: 'check_password_strength',
           password: password,
+          email: email,
           user_id: user?.id
         }
       });
 
       if (error) throw error;
+
+      const result: PasswordScanResult = {
+        score: data.score,
+        strength: data.strength,
+        time_to_crack: data.time_to_crack || 'Unknown',
+        vulnerabilities: data.checks ? Object.entries(data.checks)
+          .filter(([_, passed]) => !passed)
+          .map(([check, _]) => `Missing ${check}`) : [],
+        improvements: data.recommendations || [],
+        is_common: !data.checks?.noCommonPatterns,
+        is_breached: data.breach?.isBreached || false,
+        breach_count: data.breach?.breachCount || 0
+      };
 
       toast({
         title: `Password Analysis Complete`,
@@ -243,7 +257,7 @@ export const useSafeScan = () => {
         variant: data.score >= 70 ? "default" : "destructive"
       });
 
-      return data;
+      return result;
     } catch (error) {
       console.error('Password scan error:', error);
       toast({

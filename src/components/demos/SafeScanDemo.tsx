@@ -9,6 +9,7 @@ import {
   FileText, 
   Mail, 
   Link, 
+  Key,
   AlertCircle, 
   CheckCircle, 
   Clock,
@@ -41,6 +42,13 @@ export const SafeScanDemo = () => {
       threats: 4,
       status: 'malicious',
       details: ['Domain spoofing', 'Fake login form', 'SSL certificate mismatch', 'Known malware distribution']
+    },
+    password: {
+      password: 'password123',
+      score: 15,
+      strength: 'very weak',
+      breaches: 15847,
+      details: ['Found in 15,847 data breaches', 'Common password pattern', 'Dictionary word detected', 'No special characters']
     }
   };
 
@@ -89,6 +97,13 @@ export const SafeScanDemo = () => {
           <Link className="h-4 w-4 mr-2" />
           SafeLink
         </Button>
+        <Button 
+          variant={activeScanner === 'password' ? 'default' : 'outline'} 
+          onClick={() => setActiveScanner('password')}
+        >
+          <Key className="h-4 w-4 mr-2" />
+          SafePass
+        </Button>
       </div>
 
       {/* Scan Interface */}
@@ -98,9 +113,11 @@ export const SafeScanDemo = () => {
             {activeScanner === 'document' && <FileText className="h-5 w-5 text-primary" />}
             {activeScanner === 'email' && <Mail className="h-5 w-5 text-primary" />}
             {activeScanner === 'url' && <Link className="h-5 w-5 text-primary" />}
+            {activeScanner === 'password' && <Key className="h-5 w-5 text-primary" />}
             {activeScanner === 'document' && 'Document Scanner'}
             {activeScanner === 'email' && 'Email Threat Analysis'}
             {activeScanner === 'url' && 'URL Security Check'}
+            {activeScanner === 'password' && 'Password Security Analysis'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -129,6 +146,20 @@ export const SafeScanDemo = () => {
               <Input placeholder="Enter URL to scan" defaultValue="https://fake-microsoft-login.com" />
               <Button onClick={startScan} className="w-full">
                 Scan URL
+              </Button>
+            </div>
+          )}
+
+          {activeScanner === 'password' && (
+            <div className="space-y-3">
+              <Input 
+                type="password" 
+                placeholder="Enter password to analyze" 
+                defaultValue="password123" 
+              />
+              <Input placeholder="Enter email address for breach check (optional)" />
+              <Button onClick={startScan} className="w-full">
+                Analyze Password Security
               </Button>
             </div>
           )}
