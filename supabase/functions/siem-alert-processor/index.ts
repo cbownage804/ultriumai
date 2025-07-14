@@ -21,6 +21,9 @@ Deno.serve(async (req) => {
 
     console.log('Processing pending alert notifications...')
 
+    // Process SafePass vulnerabilities as security events
+    await processSafePassVulnerabilities(supabase)
+
     // Get pending alert notifications
     const { data: pendingAlerts, error: alertsError } = await supabase
       .from('alert_notifications')
@@ -244,6 +247,125 @@ async function sendWebhookAlert(alert: any): Promise<boolean> {
     console.error('Error sending webhook alert:', error)
     return false
   }
+}
+
+async function processSafePassVulnerabilities(supabase: any) {
+  console.log('Processing SafePass vulnerabilities...')
+  
+  try {
+    // Get recent password entries with weak passwords
+    const { data: weakPasswords } = await supabase
+      .from('safepass_entries')
+      .select(`
+        *,
+        safepass_vaults (name, user_id)
+      `)
+      .or('password_strength.lt.60,is_compromised.eq.true,password_age_days.gt.90')
+      .gt('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
+      .limit(50)
+
+    if (weakPasswords && weakPasswords.length > 0) {
+      for (const entry of weakPasswords) {
+        const severity = determineSeverity(entry)
+        const title = `Password Security Issue: ${entry.username || entry.website || 'Unknown Account'}`
+        const description = generatePasswordAlert(entry)
+
+        // Create security event for password vulnerability
+        await supabase
+          .from('security_events')
+          .insert({
+            user_id: entry.safepass_vaults.user_id,
+            title,
+            description,
+            severity,
+            source_app: 'SafePass',
+            event_type: 'password_vulnerability',
+            affected_assets: [entry.website || entry.username || 'Unknown'],
+            metadata: {
+              entry_id: entry.id,
+              vault_id: entry.vault_id,
+              password_strength: entry.password_strength,
+              is_compromised: entry.is_compromised,
+              password_age_days: entry.password_age_days,
+              password_reuse_count: entry.password_reuse_count
+            }
+          })
+
+        console.log(`Created security event for weak password: ${title}`)
+      }
+    }
+
+    // Check for credential exposure from external breaches
+    const { data: compromisedEntries } = await supabase
+      .from('safepass_entries')
+      .select('*')
+      .eq('is_compromised', true)
+      .gt('updated_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()) // Last 7 days
+      .limit(20)
+
+    if (compromisedEntries && compromisedEntries.length > 0) {
+      // Group by vault/user for summary alerts
+      const groupedByUser = compromisedEntries.reduce((acc, entry) => {
+        const userId = entry.user_id || 'unknown'
+        if (!acc[userId]) acc[userId] = []
+        acc[userId].push(entry)
+        return acc
+      }, {})
+
+      for (const [userId, entries] of Object.entries(groupedByUser)) {
+        await supabase
+          .from('security_events')
+          .insert({
+            user_id: userId,
+            title: `Data Breach Alert: ${entries.length} Credentials Compromised`,
+            description: `${entries.length} stored credentials have been found in external data breaches. Immediate password changes required.`,
+            severity: 'high',
+            source_app: 'SafePass',
+            event_type: 'credential_exposure',
+            affected_assets: entries.map(e => e.website || e.username || 'Unknown Account'),
+            metadata: {
+              compromised_count: entries.length,
+              affected_entries: entries.map(e => ({ id: e.id, website: e.website, username: e.username }))
+            }
+          })
+      }
+    }
+
+  } catch (error) {
+    console.error('Error processing SafePass vulnerabilities:', error)
+  }
+}
+
+function determineSeverity(entry: any): string {
+  if (entry.is_compromised) return 'critical'
+  if (entry.password_strength < 30) return 'high'
+  if (entry.password_age_days > 365 || entry.password_reuse_count > 3) return 'medium'
+  if (entry.password_strength < 60 || entry.password_age_days > 90) return 'low'
+  return 'low'
+}
+
+function generatePasswordAlert(entry: any): string {
+  const issues = []
+  
+  if (entry.is_compromised) {
+    issues.push('Password found in data breach')
+  }
+  if (entry.password_strength < 30) {
+    issues.push(`Very weak password (strength: ${entry.password_strength}/100)`)
+  } else if (entry.password_strength < 60) {
+    issues.push(`Weak password (strength: ${entry.password_strength}/100)`)
+  }
+  if (entry.password_age_days > 365) {
+    issues.push(`Password over 1 year old (${entry.password_age_days} days)`)
+  } else if (entry.password_age_days > 90) {
+    issues.push(`Password over 3 months old (${entry.password_age_days} days)`)
+  }
+  if (entry.password_reuse_count > 1) {
+    issues.push(`Password reused ${entry.password_reuse_count} times`)
+  }
+
+  const account = entry.website || entry.username || 'Unknown account'
+  return `Security issues detected for ${account}: ${issues.join(', ')}`
 }
 
 function getSeverityColor(severity: string): string {

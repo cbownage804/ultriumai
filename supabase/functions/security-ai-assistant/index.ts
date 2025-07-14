@@ -253,6 +253,31 @@ async function gatherSecurityContext(supabase: any, userId: string | null) {
       securityContext.complianceStatus = compliance;
     }
 
+    // Get SafePass security metrics
+    const { data: passwordEntries } = await supabase
+      .from('safepass_entries')
+      .select('*')
+      .eq('user_id', userId)
+      .limit(100);
+
+    if (passwordEntries) {
+      const passwordMetrics = {
+        total_passwords: passwordEntries.length,
+        weak_passwords: passwordEntries.filter(e => e.password_strength < 60).length,
+        compromised_passwords: passwordEntries.filter(e => e.is_compromised).length,
+        old_passwords: passwordEntries.filter(e => e.password_age_days > 90).length,
+        reused_passwords: passwordEntries.filter(e => e.password_reuse_count > 1).length,
+        avg_password_strength: passwordEntries.reduce((sum, e) => sum + (e.password_strength || 0), 0) / passwordEntries.length
+      };
+      
+      securityContext.passwordSecurity = passwordMetrics;
+      
+      // Add to critical threats if passwords are compromised
+      if (passwordMetrics.compromised_passwords > 0) {
+        securityContext.criticalThreats += passwordMetrics.compromised_passwords;
+      }
+    }
+
     // Get recent EDR alerts
     const { data: edrAlerts } = await supabase
       .from('edr_realtime_alerts')

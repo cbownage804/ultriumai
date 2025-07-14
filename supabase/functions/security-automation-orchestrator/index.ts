@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       network_scans: 0,
       compliance_checks: 0,
       incidents_created: 0,
+      password_vulnerabilities_analyzed: 0,
       alerts_processed: 0
     }
 
@@ -44,7 +45,10 @@ Deno.serve(async (req) => {
     // 5. Create Sample Incidents for Testing
     await createSampleIncidents(supabase, results)
 
-    // 6. Process All Pending Alerts
+    // 6. Activate SafePass Security Analysis
+    await activateSafePassAnalysis(supabase, results)
+
+    // 7. Process All Pending Alerts
     await processAlerts(supabase, results)
 
     console.log('✅ Security Automation Orchestrator Completed:', results)
@@ -242,6 +246,39 @@ async function createSampleIncidents(supabase: any, results: any) {
     } catch (error) {
       console.error('Error creating incident:', error)
     }
+  }
+}
+
+async function activateSafePassAnalysis(supabase: any, results: any) {
+  console.log('🔐 Activating SafePass Security Analysis...')
+
+  // Get sample user
+  const { data: user } = await supabase.from('profiles').select('id').limit(1).single()
+  if (!user) return
+
+  try {
+    // Analyze password security across all vaults for the user
+    await supabase.functions.invoke('safepass-scanner', { 
+      body: { 
+        action: 'analyze_security',
+        user_id: user.id,
+        scan_type: 'vault_security_assessment'
+      }
+    })
+
+    // Check for credential exposure in breach databases
+    await supabase.functions.invoke('safepass-scanner', { 
+      body: { 
+        action: 'check_breaches',
+        user_id: user.id,
+        scan_type: 'breach_monitoring'
+      }
+    })
+
+    results.password_vulnerabilities_analyzed++
+    console.log('✅ SafePass security analysis completed')
+  } catch (error) {
+    console.error('Error in SafePass security analysis:', error)
   }
 }
 
