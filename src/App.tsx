@@ -54,7 +54,6 @@ import RMMDemoPage from '@/pages/demos/RMMDemoPage';
 import TicketingDemoPage from '@/pages/demos/TicketingDemoPage';
 import AntivirusDemoPage from '@/pages/demos/AntivirusDemoPage';
 import SafeMDRDemoPage from '@/pages/demos/SafeMDRDemoPage';
-import SafeMailPage from '@/pages/products/SafeMailPage';
 import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SafeLinkPage from '@/pages/products/SafeLinkPage';
 import SafeDocPage from '@/pages/products/SafeDocPage';

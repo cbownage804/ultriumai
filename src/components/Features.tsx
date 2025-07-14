@@ -35,7 +35,7 @@ const Features = () => {
     {
       icon: Zap,
       title: "8 Security Applications",
-      description: "Enterprise-grade security suite including SafeMail, SafeDoc, SafeNet, SafePass, and 4 more protection tools."
+      description: "Enterprise-grade security suite including SafeScan, SafeDoc, SafeNet, SafePass, and 4 more protection tools."
     },
     {
       icon: Settings,

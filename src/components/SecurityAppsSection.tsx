@@ -165,7 +165,7 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Email & Link Security Bundle',
-      apps: ['SafeMail', 'SafeScan', 'SafeLink'],
+      apps: ['SafeScan', 'SafeLink'],
       originalPrice: '$60',
       bundlePrice: '$53',
       enterprisePrice: '$92',
