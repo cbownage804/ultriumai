@@ -233,6 +233,27 @@ const Solutions = () => {
       demoUrl: "/demos/ultriumgpt",
       pageUrl: "/ultrium-gpt",
       gradient: "from-violet-100 to-purple-100"
+    },
+    {
+      id: "custom-gpt-builder",
+      name: "Custom GPT Builder™",
+      category: "AI Development Platform",
+      description: "Build, train, and deploy your own custom AI assistants for any business need",
+      longDescription: "Complete platform for creating custom AI assistants tailored to your specific business requirements, with no-code training, deployment, and management capabilities.",
+      icon: Users,
+      features: [
+        "No-code GPT creation",
+        "Custom knowledge base training",
+        "White-label deployment",
+        "API integration capabilities",
+        "Multi-language support",
+        "Custom branding & styling",
+        "Usage analytics & insights",
+        "Enterprise security controls"
+      ],
+      demoUrl: "/demos/custom-gpt-builder",
+      pageUrl: "/custom-gpt-builder",
+      gradient: "from-emerald-100 to-teal-100"
     }
   ];
 
@@ -297,7 +318,7 @@ const Solutions = () => {
             <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 max-w-3xl mx-auto">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Star className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold text-primary">10 Integrated Security Applications</span>
+                <span className="font-semibold text-primary">11 Integrated Security Applications</span>
                 <Star className="h-5 w-5 text-yellow-500" />
               </div>
               <p className="text-lg font-medium text-foreground">

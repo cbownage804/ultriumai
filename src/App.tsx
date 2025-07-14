@@ -49,6 +49,7 @@ import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
 import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
 import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
 import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
+import CustomGPTBuilderDemoPage from '@/pages/demos/CustomGPTBuilderDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
 import RMMDemoPage from '@/pages/demos/RMMDemoPage';
 import TicketingDemoPage from '@/pages/demos/TicketingDemoPage';
@@ -211,6 +212,7 @@ function AppRouter() {
         <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
         <Route path="/demos/safepass" element={<SafePassDemoPage />} />
         <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
+        <Route path="/demos/custom-gpt-builder" element={<CustomGPTBuilderDemoPage />} />
         <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
         <Route path="/products/safescore" element={<SafeScorePage />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
