@@ -401,6 +401,35 @@ const Pricing = () => {
             </Card>
           </div>
 
+          {/* Live Demo CTA - Standalone Section */}
+          <div className="text-center mb-16">
+            <div className="bg-gradient-to-r from-primary/20 via-purple-500/20 to-blue-500/20 rounded-2xl p-8 border-2 border-primary/30 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <div className="space-y-4">
+                <div className="inline-block">
+                  <Badge variant="secondary" className="animate-pulse bg-green-100 text-green-800 text-sm px-4 py-2">
+                    <Play className="mr-2 h-4 w-4" />
+                    Interactive Demo Available
+                  </Badge>
+                </div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  See Custom GPT Builder™ in Action
+                </h3>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Experience our revolutionary AI platform firsthand. Build your first custom GPT in under 5 minutes.
+                </p>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  onClick={() => window.location.href = '/demos/custom-gpt-builder'}
+                >
+                  <Play className="mr-3 h-6 w-6" />
+                  Try Live Demo Now
+                  <ArrowRight className="ml-3 h-6 w-6" />
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Professional Services & Custom Development */}
           <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-8 text-center mb-8">
             <h3 className="text-2xl font-bold mb-4">Need Custom AI Solutions?</h3>
@@ -423,10 +452,6 @@ const Pricing = () => {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="outline" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
-                <Play className="mr-2 h-5 w-5" />
-                Try Live Demo
-              </Button>
               <Button size="lg" asChild>
                 <Link to="/contact">
                   <MessageSquare className="mr-2 h-5 w-5" />
