@@ -239,9 +239,9 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
       </div>
       
       {/* Internet connection indicator */}
-      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-slate-500">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-muted-foreground z-10">
         <Globe className="h-4 w-4" />
-        Internet
+        <span>Internet</span>
       </div>
       
       <svg width="800" height="500" className="absolute inset-0">
