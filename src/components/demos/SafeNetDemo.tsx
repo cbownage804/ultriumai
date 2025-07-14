@@ -24,7 +24,8 @@ import {
   HardDrive,
   Printer,
   Laptop,
-  Zap
+  Zap,
+  X
 } from "lucide-react";
 
 const mockNetworkDevices = [
@@ -38,7 +39,11 @@ const mockNetworkDevices = [
     riskLevel: "safe",
     vulnerabilities: 0,
     x: 400,
-    y: 100
+    y: 100,
+    mac: "00:1A:2B:3C:4D:5E",
+    os: "Cisco IOS 15.1",
+    lastSeen: "2 minutes ago",
+    openPorts: ["22", "23", "80", "443"]
   },
   {
     id: "2",
@@ -50,7 +55,11 @@ const mockNetworkDevices = [
     riskLevel: "safe",
     vulnerabilities: 0,
     x: 400,
-    y: 200
+    y: 200,
+    mac: "00:1B:2C:3D:4E:5F",
+    os: "Cisco IOS XE 16.12",
+    lastSeen: "1 minute ago",
+    openPorts: ["22", "23", "80", "443", "161"]
   },
   {
     id: "3",
@@ -62,7 +71,11 @@ const mockNetworkDevices = [
     riskLevel: "high",
     vulnerabilities: 3,
     x: 200,
-    y: 300
+    y: 300,
+    mac: "00:1C:2D:3E:4F:60",
+    os: "Windows Server 2019",
+    lastSeen: "30 seconds ago",
+    openPorts: ["21", "22", "80", "139", "445", "3389"]
   },
   {
     id: "4",
@@ -74,7 +87,11 @@ const mockNetworkDevices = [
     riskLevel: "medium",
     vulnerabilities: 1,
     x: 400,
-    y: 300
+    y: 300,
+    mac: "00:1D:2E:3F:40:61",
+    os: "Ubuntu Server 20.04",
+    lastSeen: "45 seconds ago",
+    openPorts: ["22", "25", "80", "110", "143", "993", "995"]
   },
   {
     id: "5",
@@ -86,7 +103,11 @@ const mockNetworkDevices = [
     riskLevel: "safe",
     vulnerabilities: 0,
     x: 600,
-    y: 300
+    y: 300,
+    mac: "00:1E:2F:30:41:62",
+    os: "Ubuntu Server 18.04",
+    lastSeen: "2 hours ago",
+    openPorts: ["22", "80", "443"]
   },
   {
     id: "6",
@@ -98,7 +119,11 @@ const mockNetworkDevices = [
     riskLevel: "safe",
     vulnerabilities: 0,
     x: 150,
-    y: 400
+    y: 400,
+    mac: "00:1F:20:31:42:63",
+    os: "Windows 11 Pro",
+    lastSeen: "15 seconds ago",
+    openPorts: ["80", "135", "139", "445"]
   },
   {
     id: "7",
@@ -110,7 +135,11 @@ const mockNetworkDevices = [
     riskLevel: "medium",
     vulnerabilities: 2,
     x: 300,
-    y: 400
+    y: 400,
+    mac: "00:20:21:32:43:64",
+    os: "Windows 10 Pro",
+    lastSeen: "5 minutes ago",
+    openPorts: ["80", "135", "139", "445", "3389"]
   },
   {
     id: "8",
@@ -122,7 +151,11 @@ const mockNetworkDevices = [
     riskLevel: "safe",
     vulnerabilities: 0,
     x: 450,
-    y: 400
+    y: 400,
+    mac: "00:21:22:33:44:65",
+    os: "macOS Monterey",
+    lastSeen: "1 minute ago",
+    openPorts: ["22", "80", "5900"]
   },
   {
     id: "9",
@@ -134,7 +167,11 @@ const mockNetworkDevices = [
     riskLevel: "safe",
     vulnerabilities: 0,
     x: 650,
-    y: 400
+    y: 400,
+    mac: "00:22:23:34:45:66",
+    os: "HP Printer Firmware",
+    lastSeen: "3 minutes ago",
+    openPorts: ["9100", "80", "443", "631"]
   },
   {
     id: "10",
@@ -146,7 +183,11 @@ const mockNetworkDevices = [
     riskLevel: "safe",
     vulnerabilities: 0,
     x: 550,
-    y: 200
+    y: 200,
+    mac: "00:23:24:35:46:67",
+    os: "Cisco WLC 8.10",
+    lastSeen: "30 seconds ago",
+    openPorts: ["22", "80", "443"]
   }
 ];
 
@@ -268,6 +309,90 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
           </div>
         );
       })}
+
+      {/* Device Details Panel */}
+      {selectedDevice && (() => {
+        const device = devices.find(d => d.id === selectedDevice);
+        if (!device) return null;
+        
+        return (
+          <div className="absolute top-4 right-4 bg-white border rounded-lg p-4 shadow-lg max-w-sm z-20">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-lg">{device.hostname}</h3>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setSelectedDevice(null)}
+                className="h-6 w-6"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="font-medium">Type:</span>
+                  <div className="capitalize">{device.type}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Status:</span>
+                  <div className={`capitalize ${device.status === 'online' ? 'text-green-600' : 'text-red-600'}`}>
+                    {device.status}
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <span className="font-medium">IP Address:</span>
+                <div className="font-mono">{device.ip}</div>
+              </div>
+              
+              <div>
+                <span className="font-medium">MAC Address:</span>
+                <div className="font-mono">{device.mac}</div>
+              </div>
+              
+              <div>
+                <span className="font-medium">Operating System:</span>
+                <div>{device.os}</div>
+              </div>
+              
+              <div>
+                <span className="font-medium">Last Seen:</span>
+                <div>{device.lastSeen}</div>
+              </div>
+              
+              <div>
+                <span className="font-medium">Risk Level:</span>
+                <div className={`capitalize font-medium ${
+                  device.riskLevel === 'high' ? 'text-red-600' : 
+                  device.riskLevel === 'medium' ? 'text-yellow-600' : 'text-green-600'
+                }`}>
+                  {device.riskLevel}
+                </div>
+              </div>
+              
+              {device.vulnerabilities > 0 && (
+                <div>
+                  <span className="font-medium">Vulnerabilities:</span>
+                  <div className="flex items-center gap-1 text-red-600">
+                    <AlertTriangle className="h-4 w-4" />
+                    {device.vulnerabilities} found
+                  </div>
+                </div>
+              )}
+              
+              <div>
+                <span className="font-medium">Open Ports:</span>
+                <div className="text-xs font-mono bg-slate-50 p-2 rounded mt-1">
+                  {device.openPorts.join(', ')}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-white border rounded p-3 shadow-sm">
