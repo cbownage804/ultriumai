@@ -30,6 +30,12 @@ export const useSubscription = () => {
       return;
     }
 
+    // Check if subscription has expired and user is past trial period
+    const userCreatedAt = new Date(user.created_at);
+    const now = new Date();
+    const daysSinceSignup = (now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60 * 24);
+    const isTrialExpired = daysSinceSignup > 14; // 14 days max trial
+
     try {
       setIsLoading(true);
       console.log('Checking subscription for user:', user.email);
@@ -43,7 +49,17 @@ export const useSubscription = () => {
       if (error) throw error;
       
       console.log('Subscription data received:', data);
-      setSubscription(data);
+      
+      // If subscription expired and trial period over, force to free tier
+      if (data.subscription_end && new Date(data.subscription_end) < now && isTrialExpired && !data.subscribed) {
+        setSubscription({
+          subscribed: false,
+          subscription_tier: "free",
+          subscription_end: null
+        });
+      } else {
+        setSubscription(data);
+      }
     } catch (error) {
       console.error('Error checking subscription:', error);
       

@@ -8,6 +8,7 @@ import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { RoleBasedRedirect } from '@/components/RoleBasedRedirect';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import Index from '@/pages/Index';
@@ -193,19 +194,19 @@ function AppRouter() {
         <Route path="/demos" element={<LiveDemos />} />
         <Route path="/msp-demos" element={<MSPDemos />} />
           <Route path="/msp-control-center" element={
-            <ProtectedRoute>
+            <SubscriptionProtectedRoute requiresPremium>
               <MSPDashboardPage />
-            </ProtectedRoute>
+            </SubscriptionProtectedRoute>
           } />
           <Route path="/msp-security-dashboard" element={
-            <ProtectedRoute>
+            <SubscriptionProtectedRoute requiresPremium>
               <MSPSecurityDashboard />
-            </ProtectedRoute>
+            </SubscriptionProtectedRoute>
           } />
           <Route path="/msp-dashboard" element={
-            <ProtectedRoute>
+            <SubscriptionProtectedRoute requiresPremium>
               <MSPDashboardPage />
-            </ProtectedRoute>
+            </SubscriptionProtectedRoute>
           } />
         <Route path="/docs" element={
           <ProtectedRoute>
@@ -238,56 +239,56 @@ function AppRouter() {
         
         {/* SafeNet App Routes */}
         <Route path="/safenet-connector" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeNetConnectorPage />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safenet-msp-dashboard" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeNetMSPPage />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safenet-mobile" element={<SafeNetMobilePage />} />
         <Route path="/technician-mobile" element={<TechnicianMobile />} />
         <Route path="/safeshield" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeShieldApp />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safesiem" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeSIEM />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safesiem/alert-rules" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeSIEMAlertRules />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safesiem/incidents" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeSIEMIncidents />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safesiem/analytics" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeSIEMAnalytics />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/security-dashboard" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SecurityDashboard />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safeweb-dashboard" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeWebDashboard />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/safeweb-msp-dashboard" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <SafeWebMSPDashboard />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         
         {/* Product Pages */}
@@ -397,9 +398,9 @@ function AppRouter() {
           </ProtectedRoute>
         } />
         <Route path="/dashboard/msp/billing" element={
-          <ProtectedRoute>
+          <SubscriptionProtectedRoute requiresPremium>
             <MSPBillingPage />
-          </ProtectedRoute>
+          </SubscriptionProtectedRoute>
         } />
         <Route path="/business-billing" element={
           <ProtectedRoute>
