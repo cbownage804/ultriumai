@@ -78,8 +78,8 @@ export const RMMDemo = () => {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-foreground mb-2">⚡ Remote Monitoring & Management</h3>
-        <p className="text-muted-foreground">Complete endpoint control with integrated security</p>
+        <h3 className="text-2xl font-bold text-foreground mb-2">🏢 SafeCenter Complete MSP Platform</h3>
+        <p className="text-muted-foreground">SafeDesk Helpdesk + SafeRMM Monitoring = Complete MSP Solution</p>
       </div>
 
       {/* Navigation Tabs */}
@@ -89,7 +89,7 @@ export const RMMDemo = () => {
           onClick={() => setActiveView('devices')}
         >
           <Monitor className="h-4 w-4 mr-2" />
-          Devices
+          SafeRMM Devices
         </Button>
         <Button 
           variant={activeView === 'patches' ? 'default' : 'outline'} 
@@ -103,7 +103,7 @@ export const RMMDemo = () => {
           onClick={() => setActiveView('scripts')}
         >
           <Settings className="h-4 w-4 mr-2" />
-          Automation
+          SafeDesk Tickets
         </Button>
       </div>
 
@@ -217,27 +217,36 @@ export const RMMDemo = () => {
 
       {activeView === 'scripts' && (
         <div className="space-y-4">
-          {scripts.map((script, index) => (
+          <h4 className="text-lg font-semibold mb-4">SafeDesk Help Desk Integration</h4>
+          {[
+            { id: 'TICK-001', client: 'Acme Corp', issue: 'Printer not working', priority: 'Medium', status: 'In Progress', assignee: 'John Doe' },
+            { id: 'TICK-002', client: 'Tech Solutions', issue: 'Email sync issues', priority: 'High', status: 'Open', assignee: 'Jane Smith' },
+            { id: 'TICK-003', client: 'Global Industries', issue: 'Software installation', priority: 'Low', status: 'Resolved', assignee: 'Mike Johnson' },
+            { id: 'TICK-004', client: 'StartUp Inc', issue: 'Network connectivity', priority: 'Critical', status: 'Escalated', assignee: 'Sarah Wilson' }
+          ].map((ticket, index) => (
             <Card key={index}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Settings className="h-5 w-5 text-primary" />
                     <div>
-                      <div className="font-medium">{script.name}</div>
+                      <div className="font-medium">{ticket.id} - {ticket.issue}</div>
                       <div className="text-sm text-muted-foreground">
-                        {script.description} • {script.runtime}
+                        {ticket.client} • Assigned to {ticket.assignee}
                       </div>
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
-                      <Play className="h-3 w-3 mr-1" />
-                      Run Now
-                    </Button>
-                    <Button size="sm" variant="outline">
-                      Schedule
-                    </Button>
+                    <Badge variant={
+                      ticket.priority === 'Critical' ? 'destructive' :
+                      ticket.priority === 'High' ? 'outline' :
+                      ticket.priority === 'Medium' ? 'secondary' : 'secondary'
+                    }>
+                      {ticket.priority}
+                    </Badge>
+                    <Badge variant={ticket.status === 'Resolved' ? 'default' : 'outline'}>
+                      {ticket.status}
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
@@ -249,12 +258,12 @@ export const RMMDemo = () => {
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-6 text-center">
           <Monitor className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h4 className="text-xl font-bold mb-2">Unified Management Platform</h4>
+          <h4 className="text-xl font-bold mb-2">SafeCenter: Unified MSP Platform</h4>
           <p className="text-muted-foreground mb-4">
-            Monitor, manage, and secure all endpoints from a single pane of glass
+            Complete integration between SafeDesk helpdesk and SafeRMM monitoring for seamless MSP operations
           </p>
           <Button size="lg">
-            Deploy RMM Solution
+            Deploy SafeCenter Now
           </Button>
         </CardContent>
       </Card>

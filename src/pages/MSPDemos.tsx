@@ -87,18 +87,19 @@ const MSPDemos = () => {
       color: 'red'
     },
     {
-      id: 'rmm-platform',
-      name: 'Remote Monitoring & Management',
-      description: 'Complete RMM solution with integrated security monitoring',
-      demoUrl: '/demos/rmm',
+      id: 'safecenter-platform',
+      name: '🏢 SafeCenter™ Complete MSP Platform',
+      description: 'Unified MSP management platform combining SafeDesk helpdesk and SafeRMM monitoring in one solution',
+      demoUrl: '/demos/safecenter',
       features: [
-        'Remote device management',
-        'Integrated antivirus control',
-        'Real-time monitoring dashboard',
-        'Automated patch management',
-        'Security incident response'
+        'SafeDesk - Advanced ticketing and helpdesk automation',
+        'SafeRMM - Complete remote monitoring & management',
+        'Unified dashboard for tickets and device management',
+        'Automated workflow integration between desk and RMM',
+        'Client portal with ticket and device status',
+        'Integrated billing and time tracking'
       ],
-      icon: Wrench,
+      icon: Building2,
       color: 'blue'
     },
     {
@@ -359,7 +360,7 @@ const MSPDemos = () => {
                         <SafeScoreDemo />
                       </div>
                     )}
-                    {selectedDemo === 'rmm-platform' && <RMMDemo />}
+                    {selectedDemo === 'safecenter-platform' && <RMMDemo />}
                     {selectedDemo === 'password-management' && <SafePassDemo />}
                     {selectedDemo === 'custom-gpt-builder' && <CustomGPTBuilderDemo />}
                   </TabsContent>
