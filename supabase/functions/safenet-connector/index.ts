@@ -7,67 +7,90 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-ultrium-key',
 };
 
-interface ConnectorScanResult {
-  scan_type: string;
-  timestamp: string;
-  hostname: string;
-  networks_scanned: number;
-  total_devices: number;
-  scan_duration: number;
-  results: Array<{
-    network_range: string;
-    devices_found: number;
-    devices: Array<{
-      ip_address: string;
-      hostname: string;
-      device_type: string;
-      mac_address?: string;
-      os_info: string;
-      open_ports: number[];
-      services: Array<{
-        port: number;
-        protocol: string;
-        service: string;
-        version: string;
-        product: string;
-      }>;
-      vulnerabilities: string[];
-      risk_level: string;
-      last_seen: string;
-      status: string;
-    }>;
+interface ConnectorScanData {
+  connector_key: string;
+  scan_timestamp: string;
+  network_ranges: string[];
+  devices: Array<{
+    ip: string;
+    hostname: string;
+    mac: string;
+    os: string;
+    ports: number[];
+    vulnerabilities: string[];
+    risk_level: string;
   }>;
+  network_info: {
+    interfaces: number;
+    subnets: string[];
+    gateway: string;
+  };
+  system_info: {
+    os: string;
+    cpu: string;
+    memory: string;
+    diskSpace: string;
+  };
+  connector_version: string;
 }
 
-function validateApiKey(headers: Headers): string | null {
-  const apiKey = headers.get('x-ultrium-key') || headers.get('authorization')?.replace('Bearer ', '');
-  
-  // In production, validate against stored API keys
-  const validKey = Deno.env.get('ULTRIUM_AGENT_KEY');
-  
-  if (!apiKey || !validKey) {
-    return null;
-  }
-  
-  return apiKey === validKey ? apiKey : null;
-}
-
-async function processConnectorScan(scanData: ConnectorScanResult, userId?: string) {
+async function validateConnectorKey(connectorKey: string): Promise<{ isValid: boolean; userId?: string; connectorId?: string }> {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
 
   try {
+    const { data, error } = await supabase
+      .from('safenet_connectors')
+      .select('id, user_id, status')
+      .eq('connector_key', connectorKey)
+      .single();
+
+    if (error || !data) {
+      console.error('Connector validation error:', error);
+      return { isValid: false };
+    }
+
+    return { 
+      isValid: true, 
+      userId: data.user_id,
+      connectorId: data.id
+    };
+  } catch (error) {
+    console.error('Error validating connector key:', error);
+    return { isValid: false };
+  }
+}
+
+async function processConnectorScan(scanData: ConnectorScanData, userId: string, connectorId: string) {
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  );
+
+  try {
+    // Update connector status and system info
+    await supabase
+      .from('safenet_connectors')
+      .update({
+        status: 'active',
+        last_heartbeat: new Date().toISOString(),
+        system_info: scanData.system_info,
+        network_info: scanData.network_info,
+        version: scanData.connector_version
+      })
+      .eq('id', connectorId);
+
     // Store network scan results
     const scanResult = {
-      user_id: userId || '00000000-0000-0000-0000-000000000000', // Use system user if no user_id
-      scan_type: scanData.scan_type,
-      network_ranges: scanData.results.map(r => r.network_range),
-      devices_found: scanData.total_devices,
-      scan_duration: scanData.scan_duration,
-      scanned_at: scanData.timestamp,
-      hostname: scanData.hostname,
+      user_id: userId,
+      connector_id: connectorId,
+      scan_type: 'network_discovery',
+      network_ranges: scanData.network_ranges,
+      devices_found: scanData.devices.length,
+      scan_duration: 300, // Approximate duration
+      scanned_at: scanData.scan_timestamp,
       results: scanData,
     };
 
@@ -83,62 +106,90 @@ async function processConnectorScan(scanData: ConnectorScanResult, userId?: stri
     }
 
     // Process each device found
-    for (const networkResult of scanData.results) {
-      for (const device of networkResult.devices) {
-        // Store/update device in network inventory
-        const deviceData = {
-          ip_address: device.ip_address,
-          hostname: device.hostname,
-          device_type: device.device_type,
-          mac_address: device.mac_address,
-          os_info: device.os_info,
-          open_ports: device.open_ports,
-          services: device.services,
-          vulnerabilities: device.vulnerabilities,
-          risk_level: device.risk_level,
-          last_seen: device.last_seen,
-          status: device.status,
-          network_range: networkResult.network_range,
-          scan_id: scan.id,
-          user_id: userId,
-        };
+    for (const device of scanData.devices) {
+      // Store/update device in safenet_devices table
+      const deviceData = {
+        connector_id: connectorId,
+        user_id: userId,
+        ip_address: device.ip,
+        hostname: device.hostname || 'Unknown',
+        mac_address: device.mac || 'Unknown',
+        os_detected: device.os || 'Unknown',
+        device_type: 'unknown', // Will be determined by ML later
+        open_ports: device.ports || [],
+        risk_level: device.risk_level || 'low',
+        last_seen: new Date().toISOString(),
+        first_discovered: new Date().toISOString(),
+        status: 'active'
+      };
 
-        // Upsert device (insert or update if exists)
-        const { error: deviceError } = await supabase
-          .from('network_devices')
-          .upsert(deviceData, {
-            onConflict: 'ip_address,user_id',
-            ignoreDuplicates: false
-          });
+      // Upsert device (insert or update if exists)
+      const { data: deviceRecord, error: deviceError } = await supabase
+        .from('safenet_devices')
+        .upsert(deviceData, {
+          onConflict: 'ip_address,connector_id',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
 
-        if (deviceError) {
-          console.error('Error storing device:', deviceError);
-        }
+      if (deviceError) {
+        console.error('Error storing device:', deviceError);
+        continue;
+      }
 
-        // Create security events for high/critical risk devices
-        if (device.risk_level === 'high' || device.risk_level === 'critical') {
-          const eventData = {
+      // Store vulnerabilities if any
+      if (device.vulnerabilities && device.vulnerabilities.length > 0) {
+        for (const vuln of device.vulnerabilities) {
+          const vulnData = {
+            device_id: deviceRecord.id,
+            connector_id: connectorId,
             user_id: userId,
-            title: `${device.risk_level.toUpperCase()} Risk Device Detected`,
-            description: `Device ${device.hostname} (${device.ip_address}) has ${device.risk_level} risk level with vulnerabilities: ${device.vulnerabilities.join(', ')}`,
-            severity: device.risk_level === 'critical' ? 'critical' : 'high',
-            event_type: 'network_security',
-            source: 'safenet_connector',
-            affected_assets: [device.hostname],
-            metadata: {
-              device,
-              scan_id: scan.id,
-              connector_hostname: scanData.hostname,
-            },
+            vulnerability_id: `SAFENET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            title: vuln,
+            description: `Vulnerability detected on ${device.hostname} (${device.ip})`,
+            severity: device.risk_level === 'critical' ? 'critical' : 
+                     device.risk_level === 'high' ? 'high' : 'medium',
+            cvss_score: device.risk_level === 'critical' ? 9.0 : 
+                       device.risk_level === 'high' ? 7.0 : 5.0,
+            status: 'open',
+            discovered_at: new Date().toISOString()
           };
 
-          const { error: eventError } = await supabase
-            .from('security_events')
-            .insert(eventData);
+          const { error: vulnError } = await supabase
+            .from('safenet_vulnerabilities')
+            .insert(vulnData);
 
-          if (eventError) {
-            console.error('Error creating security event:', eventError);
+          if (vulnError) {
+            console.error('Error storing vulnerability:', vulnError);
           }
+        }
+      }
+
+      // Create security events for high/critical risk devices
+      if (device.risk_level === 'high' || device.risk_level === 'critical') {
+        const eventData = {
+          user_id: userId,
+          title: `${device.risk_level.toUpperCase()} Risk Device Detected`,
+          description: `Device ${device.hostname} (${device.ip}) has ${device.risk_level} risk level with ${device.vulnerabilities?.length || 0} vulnerabilities`,
+          severity: device.risk_level === 'critical' ? 'critical' : 'high',
+          event_type: 'network_security',
+          source: 'safenet_connector',
+          affected_assets: [device.hostname || device.ip],
+          status: 'new',
+          metadata: {
+            device,
+            scan_id: scan.id,
+            connector_id: connectorId,
+          },
+        };
+
+        const { error: eventError } = await supabase
+          .from('security_events')
+          .insert(eventData);
+
+        if (eventError) {
+          console.error('Error creating security event:', eventError);
         }
       }
     }
@@ -149,14 +200,11 @@ async function processConnectorScan(scanData: ConnectorScanResult, userId?: stri
       gpt_id: 'safenet-connector',
       interaction_type: 'network_scan',
       metadata: {
-        scan_type: scanData.scan_type,
-        networks_scanned: scanData.networks_scanned,
-        devices_found: scanData.total_devices,
-        scan_duration: scanData.scan_duration,
-        hostname: scanData.hostname,
-        vulnerabilities_found: scanData.results.reduce((sum, r) => 
-          sum + r.devices.reduce((deviceSum, d) => deviceSum + d.vulnerabilities.length, 0), 0
-        ),
+        connector_id: connectorId,
+        networks_scanned: scanData.network_ranges.length,
+        devices_found: scanData.devices.length,
+        vulnerabilities_found: scanData.devices.reduce((sum, d) => sum + (d.vulnerabilities?.length || 0), 0),
+        high_risk_devices: scanData.devices.filter(d => d.risk_level === 'high' || d.risk_level === 'critical').length,
       },
     });
 
@@ -175,18 +223,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate API key
-    const apiKey = validateApiKey(req.headers);
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid or missing API key' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
     if (req.method !== 'POST') {
       return new Response(
         JSON.stringify({ error: 'Method not allowed' }),
@@ -197,11 +233,11 @@ serve(async (req) => {
       );
     }
 
-    const scanData: ConnectorScanResult = await req.json();
+    const scanData: ConnectorScanData = await req.json();
     
-    if (!scanData.scan_type || !scanData.results) {
+    if (!scanData.connector_key || !scanData.devices) {
       return new Response(
-        JSON.stringify({ error: 'Invalid scan data format' }),
+        JSON.stringify({ error: 'Invalid scan data format - missing connector_key or devices' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -209,17 +245,29 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing ${scanData.scan_type} scan from ${scanData.hostname}`);
-    console.log(`Found ${scanData.total_devices} devices across ${scanData.networks_scanned} networks`);
+    // Validate connector key
+    const validation = await validateConnectorKey(scanData.connector_key);
+    if (!validation.isValid || !validation.userId || !validation.connectorId) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid connector key' }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    console.log(`Processing scan from connector ${validation.connectorId}`);
+    console.log(`Found ${scanData.devices.length} devices across ${scanData.network_ranges.length} networks`);
 
     // Process the scan data
-    const result = await processConnectorScan(scanData);
+    const result = await processConnectorScan(scanData, validation.userId, validation.connectorId);
 
     const response = {
       success: true,
       message: 'Scan data processed successfully',
       scan_id: result.scan_id,
-      devices_processed: scanData.total_devices,
+      devices_processed: scanData.devices.length,
       timestamp: new Date().toISOString(),
     };
 
