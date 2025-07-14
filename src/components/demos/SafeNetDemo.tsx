@@ -239,7 +239,7 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
       </div>
       
       {/* Internet connection indicator */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-muted-foreground z-10">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-muted-foreground z-10" style={{ left: '400px', transform: 'translateX(-50%)' }}>
         <Globe className="h-4 w-4" />
         <span>Internet</span>
       </div>
