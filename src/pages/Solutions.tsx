@@ -172,8 +172,8 @@ const Solutions = () => {
       gradient: "from-pink-100 to-rose-100"
     },
     {
-      id: "safeweb",
-      name: "Ultrium SafeWeb™",
+      id: "safeintel",
+      name: "Ultrium SafeIntel™",
       category: "Threat Intelligence",
       description: "Dark web monitoring and threat intelligence platform",
       longDescription: "Advanced threat intelligence platform that monitors dark web activities, tracks compromised credentials, and provides early warning of emerging cyber threats.",
