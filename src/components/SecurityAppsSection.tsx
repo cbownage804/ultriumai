@@ -8,55 +8,22 @@ import { useScrollRotation, useAccordionRotation, useSectionRotation } from "@/h
 
 const SecurityAppsSection = () => {
   const headerAnimation = useScrollAnimation();
-  const { ref: cardsRef, visibleItems: visibleCards } = useStaggeredScrollAnimation(8, 150);
+  const { ref: cardsRef, visibleItems: visibleCards } = useStaggeredScrollAnimation(5, 150);
   const pricingRotation = useScrollRotation();
   const bundlesRotation = useAccordionRotation();
   const ctaRotation = useSectionRotation();
 
   const securityApps = [
     {
-      id: 'safeemail',
-      name: 'Ultrium SafeMail™',
-      icon: Mail,
-      description: 'AI-powered email analysis and threat detection',
-      features: ['Real-time phishing detection', 'Malware scanning', 'Social engineering detection'],
-      riskTypes: ['Phishing', 'Malware', 'BEC'],
-      category: 'Email Security',
-      demoUrl: '/demos/safemail',
-      productUrl: '/products/safemail'
-    },
-    {
-      id: 'safelink',
-      name: 'Ultrium SafeLink™',
-      icon: Link,
-      description: 'Comprehensive URL analysis and safety verification',
-      features: ['URL reputation analysis', 'Malware detection', 'SSL certificate validation'],
-      riskTypes: ['Phishing', 'Malware', 'Suspicious Sites'],
-      category: 'Link Security',
-      demoUrl: '/demos/safelink',
-      productUrl: '/products/safelink'
-    },
-    {
-      id: 'safedoc',
-      name: 'Ultrium SafeDoc™',
-      icon: FileText,
-      description: 'Secure document storage and knowledge management',
-      features: ['Secure document storage', 'Version control', 'Advanced search'],
-      riskTypes: ['Malware', 'Data Leaks', 'Unauthorized Access'],
-      category: 'Document Management',
-      demoUrl: '/demos/safedoc',
-      productUrl: '/products/safedoc'
-    },
-    {
       id: 'safescan',
       name: 'Ultrium SafeScan™',
       icon: Shield,
-      description: 'Document analysis and content safety verification',
-      features: ['Multi-format scanning', 'Macro analysis', 'Embedded threat detection'],
-      riskTypes: ['Malware', 'Trojans', 'Macros'],
-      category: 'Document Security',
-      demoUrl: '/demos/safedoc',
-      productUrl: '/products/safedoc'
+      description: 'AI-powered unified security scanning for emails, links, and documents',
+      features: ['Email phishing detection', 'URL analysis & verification', 'Document threat scanning', 'Multi-format security analysis'],
+      riskTypes: ['Phishing', 'Malware', 'Trojans', 'Suspicious Links', 'Document Threats'],
+      category: 'Unified Security',
+      demoUrl: '/demos/safescan',
+      productUrl: '/products/safescan'
     },
     {
       id: 'safepass',
@@ -164,13 +131,13 @@ const SecurityAppsSection = () => {
       enterpriseSavings: '$22'
     },
     {
-      name: 'Email & Link Security Bundle',
-      apps: ['SafeScan', 'SafeLink'],
-      originalPrice: '$60',
-      bundlePrice: '$53',
-      enterprisePrice: '$92',
-      savings: '$7',
-      enterpriseSavings: '$32'
+      name: 'Security & Password Bundle',
+      apps: ['SafeScan', 'SafePass'],
+      originalPrice: '$40',
+      bundlePrice: '$35',
+      enterprisePrice: '$62',
+      savings: '$5',
+      enterpriseSavings: '$22'
     },
     {
       name: 'Network & Document Bundle',
@@ -192,12 +159,12 @@ const SecurityAppsSection = () => {
     },
     {
       name: 'Complete Security Suite',
-      apps: ['All 8 Apps'],
-      originalPrice: '$160',
-      bundlePrice: '$141',
-      enterprisePrice: '$246',
-      savings: '$19',
-      enterpriseSavings: '$86'
+      apps: ['All 5 Apps'],
+      originalPrice: '$100',
+      bundlePrice: '$88',
+      enterprisePrice: '$154',
+      savings: '$12',
+      enterpriseSavings: '$54'
     }
   ];
 
@@ -452,7 +419,7 @@ const SecurityAppsSection = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-success" />
-                        14-day free trial for all 8 apps
+                        14-day free trial for all 5 apps
                       </li>
                     </ul>
                     <Button className="w-full" onClick={() => window.location.href = '/auth'}>
