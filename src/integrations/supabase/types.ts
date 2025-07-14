@@ -8952,6 +8952,45 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_grace_periods: {
+        Row: {
+          created_at: string
+          grace_period_end: string
+          grace_period_start: string
+          id: string
+          reason: string
+          resolved: boolean | null
+          resolved_at: string | null
+          subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grace_period_end: string
+          grace_period_start?: string
+          id?: string
+          reason?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grace_period_end?: string
+          grace_period_start?: string
+          id?: string
+          reason?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscription_modifications: {
         Row: {
           created_at: string
@@ -9016,6 +9055,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_notifications: {
+        Row: {
+          created_at: string
+          email_notifications: boolean | null
+          id: string
+          in_app_notifications: boolean | null
+          payment_failure_alerts: boolean | null
+          renewal_reminder_enabled: boolean | null
+          trial_expiration_warnings: boolean | null
+          updated_at: string
+          usage_limit_notifications: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_notifications?: boolean | null
+          id?: string
+          in_app_notifications?: boolean | null
+          payment_failure_alerts?: boolean | null
+          renewal_reminder_enabled?: boolean | null
+          trial_expiration_warnings?: boolean | null
+          updated_at?: string
+          usage_limit_notifications?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_notifications?: boolean | null
+          id?: string
+          in_app_notifications?: boolean | null
+          payment_failure_alerts?: boolean | null
+          renewal_reminder_enabled?: boolean | null
+          trial_expiration_warnings?: boolean | null
+          updated_at?: string
+          usage_limit_notifications?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
       }
       support_agents: {
         Row: {
