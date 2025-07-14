@@ -62,62 +62,105 @@ interface ConnectorInstance {
 export const SafeNetConnector = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [connectors, setConnectors] = useState<ConnectorInstance[]>([
-    {
-      id: 'conn-001',
-      name: 'ABC Manufacturing - Main Office',
-      version: '2.1.4',
-      status: 'online',
-      lastSeen: new Date(),
-      clientName: 'ABC Manufacturing',
-      ipAddress: '192.168.1.100',
-      systemInfo: {
-        os: 'Windows Server 2022',
-        cpu: 'Intel Xeon E5-2680 v4',
-        memory: '32 GB',
-        diskSpace: '500 GB SSD'
-      },
-      networkInfo: {
-        interfaces: 3,
-        subnets: ['192.168.1.0/24', '10.0.1.0/24'],
-        gateway: '192.168.1.1'
-      },
-      scanStats: {
-        totalScans: 247,
-        lastScanTime: new Date(),
-        devicesFound: 47,
-        threatsDetected: 3
-      }
-    },
-    {
-      id: 'conn-002',
-      name: 'XYZ Legal - Branch Office',
-      version: '2.1.4',
-      status: 'offline',
-      lastSeen: new Date(Date.now() - 300000), // 5 minutes ago
-      clientName: 'XYZ Legal',
-      ipAddress: '10.0.50.100',
-      systemInfo: {
-        os: 'Ubuntu Server 22.04',
-        cpu: 'AMD Ryzen 7 5800X',
-        memory: '16 GB',
-        diskSpace: '1 TB NVMe'
-      },
-      networkInfo: {
-        interfaces: 2,
-        subnets: ['10.0.50.0/24'],
-        gateway: '10.0.50.1'
-      },
-      scanStats: {
-        totalScans: 89,
-        lastScanTime: new Date(Date.now() - 3600000), // 1 hour ago
-        devicesFound: 23,
-        threatsDetected: 1
-      }
-    }
-  ]);
+  const [connectors, setConnectors] = useState<ConnectorInstance[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [newConnectorKey, setNewConnectorKey] = useState('');
+
+  // Load real connector data from database
+  useEffect(() => {
+    loadConnectors();
+  }, [user]);
+
+  const loadConnectors = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Get connectors from database
+      const { data: connectorsData, error: connectorsError } = await supabase
+        .from('safenet_connectors')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (connectorsError) {
+        console.error('Error loading connectors:', connectorsError);
+        setLoading(false);
+        return;
+      }
+
+      // Get scan statistics for each connector
+      const connectorsWithStats = await Promise.all(
+        (connectorsData || []).map(async (connector) => {
+          // Get scan count and latest scan
+          const { data: scansData } = await supabase
+            .from('network_scans')
+            .select('*')
+            .eq('connector_id', connector.id)
+            .order('created_at', { ascending: false });
+
+          // For now, use 0 for device and vulnerability counts
+          // These will be populated when the connector sends real data
+          const devicesCount = 0;
+          const vulnsCount = 0;
+
+          const totalScans = scansData?.length || 0;
+          const devicesFound = devicesCount || 0;
+          const threatsDetected = vulnsCount || 0;
+          const lastScanTime = scansData?.[0]?.created_at ? new Date(scansData[0].created_at) : new Date();
+
+          // Parse JSON fields safely
+          const systemInfo = typeof connector.system_info === 'object' && connector.system_info !== null
+            ? connector.system_info as any
+            : {};
+          const networkInfo = typeof connector.network_info === 'object' && connector.network_info !== null
+            ? connector.network_info as any
+            : {};
+
+          return {
+            id: connector.id,
+            name: connector.connector_name || 'SafeNet Connector',
+            version: connector.version || '2.1.4',
+            status: connector.status === 'active' ? 'online' as const : 'offline' as const,
+            lastSeen: new Date(connector.last_heartbeat || connector.created_at),
+            clientName: connector.client_name || 'Unknown Client',
+            ipAddress: '192.168.1.100', // Will be populated when connector sends data
+            systemInfo: {
+              os: systemInfo.os || 'Unknown OS',
+              cpu: systemInfo.cpu || 'Unknown CPU',
+              memory: systemInfo.memory || 'Unknown Memory',
+              diskSpace: systemInfo.diskSpace || 'Unknown Storage'
+            },
+            networkInfo: {
+              interfaces: networkInfo.interfaces || 0,
+              subnets: Array.isArray(networkInfo.subnets) ? networkInfo.subnets : [],
+              gateway: networkInfo.gateway || 'N/A'
+            },
+            scanStats: {
+              totalScans,
+              lastScanTime,
+              devicesFound,
+              threatsDetected
+            }
+          };
+        })
+      );
+
+      setConnectors(connectorsWithStats);
+    } catch (error) {
+      console.error('Error loading connectors:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load connector data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generateConnectorKey = async () => {
     if (!user) {
@@ -155,6 +198,7 @@ export const SafeNetConnector = () => {
       }
 
       setNewConnectorKey(key);
+      loadConnectors(); // Refresh the list to show the new connector
       toast({
         title: "Connector Key Generated",
         description: "Use this key during connector installation. The connector will register when first run.",
@@ -412,7 +456,23 @@ export const SafeNetConnector = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {connectors.map((connector) => {
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+                <span>Loading connectors...</span>
+              </div>
+            ) : connectors.length === 0 ? (
+              <div className="text-center py-8 space-y-3">
+                <Server className="h-12 w-12 text-muted-foreground mx-auto" />
+                <div>
+                  <h3 className="font-medium">No Connectors Found</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Generate a connector key and install the SafeNet connector on a client network to get started.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              connectors.map((connector) => {
               const StatusIcon = getStatusIcon(connector.status);
               return (
                 <Card key={connector.id} className="border-l-4 border-l-primary">
@@ -490,9 +550,10 @@ export const SafeNetConnector = () => {
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
+               );
+             })
+            )}
+           </div>
         </CardContent>
       </Card>
 
