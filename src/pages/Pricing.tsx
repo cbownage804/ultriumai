@@ -137,7 +137,7 @@ const Pricing = () => {
     { name: "SafeNet", description: "Network discovery & mapping", tier: "professional" },
     { name: "SafeScore", description: "Compliance management", tier: "professional" },
     { name: "SafeWeb", description: "Dark web monitoring", tier: "enterprise" },
-    { name: "SafeShield", description: "Unified security dashboard", tier: "enterprise" }
+    { name: "SafeShield", description: "Security Operations Center (SOC) dashboard with real-time threat intelligence", tier: "enterprise" }
   ];
 
   const handleSubscribe = async (planName: string) => {
