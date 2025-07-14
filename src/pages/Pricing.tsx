@@ -213,7 +213,7 @@ const Pricing = () => {
                 <CardDescription className="text-base">Perfect for small teams</CardDescription>
                 
                 <div className="mt-6 space-y-2">
-                  <div className="text-4xl font-bold text-primary">$199</div>
+                  <div className="text-4xl font-bold text-primary">$99</div>
                   <div className="text-sm text-muted-foreground">per month</div>
                   <Badge variant="secondary" className="bg-green-100 text-green-800">
                     14-day free trial
