@@ -84,32 +84,6 @@ export const SafeSOCDemo = () => {
     { label: 'Client Satisfaction', value: '4.9/5.0', color: 'text-green-600' }
   ];
 
-  const socAnalysts = [
-    {
-      id: 1,
-      name: 'Sarah Mitchell',
-      role: 'Senior Analyst',
-      status: 'Active',
-      task: 'investigating INC-2024-001',
-      avatar: 'SM'
-    },
-    {
-      id: 2,
-      name: 'Mike Rodriguez',
-      role: 'Threat Hunter',
-      status: 'Active',
-      task: 'proactive hunting',
-      avatar: 'MR'
-    },
-    {
-      id: 3,
-      name: 'Alex Thompson',
-      role: 'Incident Response',
-      status: 'Active',
-      task: 'containment actions',
-      avatar: 'AT'
-    }
-  ];
 
   const incidents = [
     {
@@ -295,37 +269,6 @@ export const SafeSOCDemo = () => {
               </Card>
             </div>
 
-            {/* SOC Analyst Team */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-purple-500" />
-                    <CardTitle className="text-white">SOC Analyst Team</CardTitle>
-                  </div>
-                  <span className="text-sm text-slate-400">24/7 expert security analysts monitoring your environment</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {socAnalysts.map((analyst) => (
-                    <div key={analyst.id} className="flex items-center gap-3 p-4 bg-slate-700 rounded-lg">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                        {analyst.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-white">{analyst.name}</h4>
-                        <p className="text-sm text-slate-400">{analyst.role}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          <span className="text-xs text-green-400">{analyst.status} - {analyst.task}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="incidents" className="space-y-6">
