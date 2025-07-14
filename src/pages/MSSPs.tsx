@@ -189,7 +189,7 @@ const MSSPs = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-sm">Full Security Operations Center automation with threat hunting, incident analysis, and automated containment and remediation workflows.</p>
+                  <p className="text-muted-foreground text-sm">Full SafeSOC automation with threat hunting, incident analysis, and automated containment and remediation workflows.</p>
                 </CardContent>
               </Card>
               

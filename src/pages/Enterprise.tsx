@@ -44,7 +44,7 @@ const Enterprise = () => {
     {
       id: "enterprise", 
       title: "Enterprise Security Intelligence",
-      description: "Advanced AI-powered security operations center with threat intelligence, compliance monitoring, and automated incident response",
+      description: "Advanced AI-powered SafeSOC with threat intelligence, compliance monitoring, and automated incident response",
       features: ["SOC automation", "Threat intelligence", "Compliance reporting", "Incident response workflows"],
       price: "$199/month + SafeSecure"
     },

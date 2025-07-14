@@ -64,7 +64,7 @@ const SafeEDRPage = () => {
 
   const services = [
     {
-      title: "Security Operations Center (SOC)",
+      title: "SafeSOC",
       description: "24/7 monitoring and analysis of security events across your entire infrastructure",
       capabilities: [
         "Real-time event correlation and analysis",

@@ -194,10 +194,10 @@ const Solutions = () => {
     },
     {
       id: "soc-dashboard",
-      name: "Security Operations Center",
+      name: "SafeSOC",
       category: "Security Operations",
       description: "Complete SOC dashboard with real-time threat intelligence",
-      longDescription: "Centralized security operations center providing real-time monitoring, threat intelligence, compliance tracking, and incident response coordination.",
+      longDescription: "Centralized SafeSOC providing real-time monitoring, threat intelligence, compliance tracking, and incident response coordination.",
       icon: BarChart3,
       features: [
         "Real-time security monitoring",

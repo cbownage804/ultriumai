@@ -43,7 +43,7 @@ const Index = () => {
 
   const services = [
     { name: "AI-Powered Threat Detection", description: "Advanced machine learning algorithms for real-time threat identification", url: "https://ultriumai.com/products/safescan" },
-    { name: "Security Operations Center", description: "Complete SOC dashboard with real-time monitoring and incident response", url: "https://ultriumai.com/security-dashboard" },
+    { name: "SafeSOC", description: "Complete SOC dashboard with real-time monitoring and incident response", url: "https://ultriumai.com/security-dashboard" },
     { name: "Remote Monitoring & Management", description: "Comprehensive RMM tools for endpoint management", url: "https://ultriumai.com/products/safenet" },
     { name: "MSP Management Platform", description: "Multi-tenant platform for service providers", url: "https://ultriumai.com/msps" },
     { name: "Password Management", description: "Enterprise-grade password security solution", url: "https://ultriumai.com/products/safepass" },
@@ -289,7 +289,7 @@ const Index = () => {
             <Card className="hover-scale border-2 border-success/30 bg-gradient-to-br from-success/5 to-success/10">
               <CardHeader>
                 <Monitor className="h-8 w-8 text-success mb-2" />
-                <CardTitle className="text-lg">🔥 Security Operations Center</CardTitle>
+                <CardTitle className="text-lg">🔥 SafeSOC</CardTitle>
                 <CardDescription className="font-medium text-success/80">Full SOC dashboard with real-time threat intelligence</CardDescription>
               </CardHeader>
               <CardContent>

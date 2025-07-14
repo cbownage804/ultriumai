@@ -163,7 +163,7 @@ export const SecurityDashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Security Operations Center</h1>
+          <h1 className="text-3xl font-bold">SafeSOC</h1>
           <div className="text-muted-foreground">
             Comprehensive security monitoring and threat intelligence
           </div>

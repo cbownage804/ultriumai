@@ -268,7 +268,7 @@ const Features = () => {
                     <h3 className="font-semibold">Global SOC</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    24/7 Security Operations Center with global threat intelligence
+                    24/7 SafeSOC with global threat intelligence
                   </p>
                   <Badge variant="outline">Q4 2024</Badge>
                 </div>

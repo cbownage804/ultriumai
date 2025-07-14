@@ -101,7 +101,7 @@ const Pricing = () => {
 
   const additionalServices = [
     {
-      name: "Security Operations Center",
+      name: "SafeSOC",
       description: "Complete SOC dashboard with real-time threat intelligence",
       platformFee: { monthly: 99, yearly: 990 },
       perUserFee: { monthly: 0, yearly: 0 },
@@ -152,7 +152,7 @@ const Pricing = () => {
     { name: "SafeNet", description: "Network discovery & mapping", tier: "professional" },
     { name: "SafeScore", description: "Compliance management", tier: "professional" },
     { name: "SafeWeb", description: "Dark web monitoring", tier: "enterprise" },
-    { name: "SafeShield", description: "Security Operations Center (SOC) dashboard with real-time threat intelligence", tier: "enterprise" }
+    { name: "SafeShield", description: "SafeSOC dashboard with real-time threat intelligence", tier: "enterprise" }
   ];
 
   const handleSubscribe = async (planName: string) => {

@@ -365,7 +365,7 @@ export const SafeShieldDashboard = () => {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
-            Security Operations Center
+            SafeSOC
           </h2>
           <p className="text-muted-foreground">
             AI-Powered Endpoint Detection & Response Platform
