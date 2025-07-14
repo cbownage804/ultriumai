@@ -359,7 +359,7 @@ const LiveDemos = () => {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div className="p-4 bg-card rounded-lg">
-                <div className="text-2xl font-bold text-primary">12+</div>
+                <div className="text-2xl font-bold text-primary">10</div>
                 <div className="text-sm text-muted-foreground">Security Tools</div>
               </div>
               <div className="p-4 bg-card rounded-lg">
