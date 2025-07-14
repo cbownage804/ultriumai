@@ -1,8 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Zap, Crown, Building } from "lucide-react";
+import { Check, Zap, Crown, Building, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { usePricingPlans } from "@/hooks/usePricingPlans";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface PricingPlan {
   name: string;
@@ -67,14 +70,60 @@ const plans: PricingPlan[] = [
 
 export const PricingCards = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { plans: dbPlans, loading, createOneTimePayment } = usePricingPlans('platform');
 
   const handleSubscribe = (planType: string) => {
     navigate('/business-billing');
   };
 
+  const handleOneTimePayment = async (planId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to purchase a plan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { url } = await createOneTimePayment(planId);
+      window.open(url, '_blank');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create payment session.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Use database plans if available, otherwise fallback to hardcoded plans
+  const plansToShow = dbPlans.length > 0 ? dbPlans.map((dbPlan, index) => ({
+    name: dbPlan.name,
+    price: `$${dbPlan.monthly_price}`,
+    description: `${dbPlan.category} plan for businesses`,
+    icon: [Zap, Crown, Building][index] || Zap,
+    planType: dbPlan.name.toLowerCase(),
+    highlighted: index === 1,
+    features: dbPlan.features || [],
+    onboardingFee: dbPlan.onboarding_fee,
+    id: dbPlan.id,
+  })) : plans;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-      {plans.map((plan) => {
+      {plansToShow.map((plan, index) => {
         const Icon = plan.icon;
         
         return (
@@ -110,13 +159,27 @@ export const PricingCards = () => {
                 ))}
               </ul>
               
-              <Button 
-                className="w-full" 
-                variant={plan.highlighted ? "default" : "outline"}
-                onClick={() => handleSubscribe(plan.planType)}
-              >
-                Choose {plan.name}
-              </Button>
+              <div className="space-y-2">
+                <Button 
+                  className="w-full" 
+                  variant={plan.highlighted ? "default" : "outline"}
+                  onClick={() => handleSubscribe(plan.planType)}
+                >
+                  Choose {plan.name}
+                </Button>
+                
+                {/* One-time payment option for database plans */}
+                {'id' in plan && (
+                  <Button 
+                    className="w-full" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleOneTimePayment((plan as any).id)}
+                  >
+                    One-time Setup ${(plan as any).onboardingFee || 99}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         );

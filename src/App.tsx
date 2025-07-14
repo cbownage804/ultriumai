@@ -97,6 +97,9 @@ import AIStudio from '@/pages/AIStudio';
 import SafeTrackPage from '@/pages/SafeTrackPage';
 import MSPBillingPage from '@/pages/MSPBillingPage';
 import BusinessBillingPage from '@/pages/BusinessBillingPage';
+import BusinessBilling from '@/pages/BusinessBilling';
+import PaymentSuccess from '@/pages/PaymentSuccess';
+import PaymentCancel from '@/pages/PaymentCancel';
 import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvider';
 import { CustomerPortal } from '@/pages/CustomerPortal';
 import { ClientLogin } from '@/pages/ClientLogin';
@@ -400,9 +403,13 @@ function AppRouter() {
         } />
         <Route path="/business-billing" element={
           <ProtectedRoute>
-            <BusinessBillingPage />
+            <BusinessBilling />
           </ProtectedRoute>
         } />
+        
+        {/* Payment Success/Cancel Routes */}
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/cancel" element={<PaymentCancel />} />
         
         {/* Customer Portal Routes */}
         <Route path="/client-login" element={<ClientLogin />} />
