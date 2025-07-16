@@ -1017,13 +1017,53 @@ class SafeNetConnector:
             time.sleep(self.scan_interval)
 
 if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="SafeNet Network Connector")
+    parser.add_argument("--once", action="store_true", help="Run scan once and exit")
+    
+    args = parser.parse_args()
+    
     try:
+        print("SafeNet Connector started...")
+        print(f"Connector Key: ${connector.connector_key}")
+        print(f"API Endpoint: https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector")
+        print("\\nChecking dependencies...")
+        
+        # Check if required packages are installed
+        try:
+            import requests
+            import psutil
+            import netifaces
+            print("✓ All dependencies found")
+        except ImportError as e:
+            print(f"✗ Missing dependency: {e}")
+            print("\\nPlease install required packages:")
+            print("pip install requests psutil netifaces")
+            input("\\nPress Enter to exit...")
+            exit(1)
+        
         connector = SafeNetConnector()
-        connector.run()
+        
+        if args.once:
+            print("\\nRunning single scan...")
+            connector.perform_scan()
+            print("\\n✓ Scan completed successfully!")
+            print("\\nPress Enter to exit...")
+            input()
+        else:
+            print("\\nStarting continuous scanning mode...")
+            print("Press Ctrl+C to stop the connector")
+            connector.run()
+            
     except KeyboardInterrupt:
-        logger.info("SafeNet Connector stopped by user")
+        print("\\nSafeNet Connector stopped by user")
+        print("\\nPress Enter to exit...")
+        input()
     except Exception as e:
-        logger.error(f"Fatal error: {str(e)}")`;
+        print(f"\\nFatal error: {str(e)}")
+        print("\\nPress Enter to exit...")
+        input()`;
 
     // Create and download the file
     const blob = new Blob([pythonScript], { type: 'text/x-python' });
