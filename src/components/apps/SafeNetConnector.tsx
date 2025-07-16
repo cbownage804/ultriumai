@@ -46,7 +46,9 @@ import {
   HardDrive,
   MemoryStick,
   ArrowLeft,
-  Trash2
+  Trash2,
+  Map,
+  List
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -90,6 +92,8 @@ export const SafeNetConnector = () => {
   const [newConnectorName, setNewConnectorName] = useState('');
   const [showThreatsDialog, setShowThreatsDialog] = useState(false);
   const [threatDetails, setThreatDetails] = useState<any[]>([]);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [allDevices, setAllDevices] = useState<any[]>([]);
 
   const [newConnectorKey, setNewConnectorKey] = useState('');
 
@@ -254,6 +258,33 @@ export const SafeNetConnector = () => {
       );
 
       setConnectors(connectorsWithStats);
+      
+      // Collect all devices for map view
+      const devices: any[] = [];
+      for (const connector of connectorsWithStats) {
+        // Get all scan data for this connector
+        const { data: scansData } = await supabase
+          .from('safenet_scans')
+          .select('*')
+          .eq('connector_id', connector.id)
+          .order('created_at', { ascending: false });
+
+        if (scansData) {
+          scansData.forEach(scan => {
+            if (scan.scan_data && (scan.scan_data as any).devices) {
+              (scan.scan_data as any).devices.forEach((device: any) => {
+                devices.push({
+                  ...device,
+                  connectorName: connector.name,
+                  scanTime: scan.created_at,
+                  connectorId: connector.id
+                });
+              });
+            }
+          });
+        }
+      }
+      setAllDevices(devices);
     } catch (error) {
       console.error('Error loading connectors:', error);
       toast({
@@ -1241,10 +1272,35 @@ if __name__ == "__main__":
             </p>
           </div>
         </div>
+        
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+          >
+            <List className="h-4 w-4 mr-2" />
+            List View
+          </Button>
+          <Button
+            variant={viewMode === 'map' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('map')}
+          >
+            <Map className="h-4 w-4 mr-2" />
+            Network Map
+          </Button>
+        </div>
       </div>
 
-      {/* Connector Installation */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Show different views based on mode */}
+      {viewMode === 'map' ? (
+        <NetworkMapView devices={allDevices} connectors={connectors} />
+      ) : (
+        <>
+          {/* Connector Installation */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -1718,6 +1774,213 @@ if __name__ == "__main__":
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowThreatsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      </>
+      )}
+    </div>
+  );
+};
+
+// Network Map View Component
+const NetworkMapView = ({ devices, connectors }: { devices: any[], connectors: ConnectorInstance[] }) => {
+  const [selectedDevice, setSelectedDevice] = useState<any>(null);
+  
+  // Group devices by network/subnet
+  const devicesByNetwork = devices.reduce((acc, device) => {
+    const network = device.ip.split('.').slice(0, 3).join('.') + '.0/24';
+    if (!acc[network]) acc[network] = [];
+    acc[network].push(device);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  const getDeviceRiskColor = (device: any) => {
+    if (device.vulnerabilities && Array.isArray(device.vulnerabilities) && device.vulnerabilities.length > 0) return 'bg-red-500';
+    if (device.ports && device.ports.length > 5) return 'bg-orange-500';
+    if (device.ports && device.ports.length > 0) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  const getTotalThreats = () => {
+    return devices.reduce((total, device) => {
+      const vulns = device.vulnerabilities;
+      return total + (Array.isArray(vulns) ? vulns.length : 0);
+    }, 0);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Map Overview Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-primary">{Object.keys(devicesByNetwork).length}</div>
+            <div className="text-sm text-muted-foreground">Networks</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{devices.length}</div>
+            <div className="text-sm text-muted-foreground">Total Devices</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{connectors.filter(c => c.status === 'online').length}</div>
+            <div className="text-sm text-muted-foreground">Active Connectors</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-red-600">{getTotalThreats()}</div>
+            <div className="text-sm text-muted-foreground">Threats Detected</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Network Map */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Network className="h-5 w-5" />
+            Network Topology Map
+          </CardTitle>
+          <CardDescription>
+            Visual representation of discovered devices across your networks
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {Object.entries(devicesByNetwork).map(([network, networkDevices]: [string, any[]]) => (
+              <div key={network} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Wifi className="h-5 w-5 text-blue-500" />
+                    <h3 className="font-semibold">{network}</h3>
+                    <Badge variant="outline">{networkDevices.length} devices</Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Last scanned by: {networkDevices[0]?.connectorName}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {networkDevices.map((device, index) => (
+                    <Card 
+                      key={`${device.ip}-${index}`}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => setSelectedDevice(device)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${getDeviceRiskColor(device)}`} />
+                            <span className="font-medium text-sm">{device.ip}</span>
+                          </div>
+                          {device.vulnerabilities && Array.isArray(device.vulnerabilities) && device.vulnerabilities.length > 0 && (
+                            <Badge variant="destructive" className="text-xs">
+                              {device.vulnerabilities.length}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <div>Host: {device.hostname || 'Unknown'}</div>
+                          <div>OS: {device.os || 'Unknown'}</div>
+                          <div>Ports: {device.ports?.length || 0}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Device Details Dialog */}
+      <Dialog open={!!selectedDevice} onOpenChange={() => setSelectedDevice(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Monitor className="h-5 w-5" />
+              Device Details: {selectedDevice?.ip}
+            </DialogTitle>
+            <DialogDescription>
+              Detailed information about the selected network device
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedDevice && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium">IP Address</Label>
+                  <p className="text-sm text-muted-foreground">{selectedDevice.ip}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Hostname</Label>
+                  <p className="text-sm text-muted-foreground">{selectedDevice.hostname || 'Unknown'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Operating System</Label>
+                  <p className="text-sm text-muted-foreground">{selectedDevice.os || 'Unknown'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Risk Level</Label>
+                  <Badge variant={selectedDevice.risk_level === 'high' ? 'destructive' : selectedDevice.risk_level === 'medium' ? 'secondary' : 'default'}>
+                    {selectedDevice.risk_level || 'Low'}
+                  </Badge>
+                </div>
+              </div>
+
+              {selectedDevice.ports && selectedDevice.ports.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium">Open Ports</Label>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedDevice.ports.map((port: number) => (
+                      <Badge key={port} variant="outline" className="text-xs">
+                        {port}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedDevice.vulnerabilities && Array.isArray(selectedDevice.vulnerabilities) && selectedDevice.vulnerabilities.length > 0 && (
+                <div>
+                  <Label className="text-sm font-medium text-red-600">Vulnerabilities</Label>
+                  <div className="space-y-2 mt-1">
+                    {(selectedDevice.vulnerabilities as string[]).map((vuln: string, index: number) => (
+                      <Alert key={index} className="border-red-200">
+                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                        <AlertDescription className="text-sm">
+                          {vuln}
+                        </AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                <div>
+                  <Label className="text-sm font-medium">Discovered by</Label>
+                  <p>{selectedDevice.connectorName}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Last seen</Label>
+                  <p>{new Date(selectedDevice.scanTime).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedDevice(null)}>
               Close
             </Button>
           </DialogFooter>
