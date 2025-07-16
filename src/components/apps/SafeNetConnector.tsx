@@ -171,10 +171,10 @@ export const SafeNetConnector = () => {
             ? connector.network_info as any
             : { interfaces: networkInterfaces, subnets: subnets };
 
-            // Determine real status based on heartbeat
+            // Determine real status based on heartbeat (allow 10 minutes for hourly scans)
             const lastHeartbeat = connector.last_heartbeat ? new Date(connector.last_heartbeat) : null;
-            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-            const isRecentlyActive = lastHeartbeat && lastHeartbeat > fiveMinutesAgo;
+            const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+            const isRecentlyActive = lastHeartbeat && lastHeartbeat > tenMinutesAgo;
             
             let status: 'online' | 'offline' | 'updating' | 'error' = 'offline';
             if (connector.status === 'active' && isRecentlyActive) {
@@ -365,7 +365,7 @@ import logging
 # Configuration
 CONNECTOR_KEY = "${newConnectorKey}"
 API_ENDPOINT = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector"
-SCAN_INTERVAL = 3600  # 1 hour
+SCAN_INTERVAL = 300  # 5 minutes
 
 class SafeNetConnector:
     def __init__(self):
@@ -1141,10 +1141,10 @@ if __name__ == "__main__":
       {/* Back Button and Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/products/safenet">
+          <Link to="/dashboard">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to SafeNet
+              Back to Dashboard
             </Button>
           </Link>
           <div>
