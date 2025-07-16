@@ -579,11 +579,14 @@ if __name__ == "__main__":
 
   const deleteConnector = async (connectorId: string) => {
     try {
-      const { error } = await supabase
+      console.log('Attempting to delete connector:', connectorId);
+      const { error, data } = await supabase
         .from('safenet_connectors')
         .delete()
         .eq('id', connectorId)
         .eq('user_id', user?.id);
+
+      console.log('Delete response:', { error, data });
 
       if (error) {
         console.error('Error deleting connector:', error);
@@ -600,8 +603,9 @@ if __name__ == "__main__":
         description: "The connector has been removed successfully",
       });
 
-      // Refresh the connectors list
-      loadConnectors();
+      // Refresh the connectors list immediately
+      console.log('Refreshing connectors list...');
+      await loadConnectors();
     } catch (error) {
       console.error('Error deleting connector:', error);
       toast({
