@@ -177,24 +177,34 @@ export const SafeNetDashboard = () => {
                   <p className="text-sm text-muted-foreground">
                     Download the SafeNet connector to start monitoring your network infrastructure.
                   </p>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <a 
-                      href="/api/safenet/download/windows" 
+                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/python" 
+                      download="safenet_connector.py"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                     >
-                      Windows
+                      Python Script
                     </a>
                     <a 
-                      href="/api/safenet/download/linux" 
+                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/windows" 
+                      download="safenet_connector.exe"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                     >
-                      Linux
+                      Windows EXE
                     </a>
                     <a 
-                      href="/api/safenet/download/macos" 
+                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/linux" 
+                      download="safenet_connector"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                     >
-                      macOS
+                      Linux Binary
+                    </a>
+                    <a 
+                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/macos" 
+                      download="safenet_connector.app"
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+                    >
+                      macOS App
                     </a>
                   </div>
                 </div>
