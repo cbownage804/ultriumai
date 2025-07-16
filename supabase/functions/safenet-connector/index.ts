@@ -35,10 +35,19 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     console.log('Supabase client initialized');
 
-    // Parse request body
+    // Parse request body with size limit
     console.log('Reading request body...');
     const body = await req.text();
     console.log('Received body length:', body.length);
+    
+    // Check payload size (limit to 10MB)
+    if (body.length > 10 * 1024 * 1024) {
+      console.error('Request payload too large:', body.length);
+      return new Response(
+        JSON.stringify({ error: 'Request payload too large' }),
+        { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     if (!body) {
       console.error('Empty request body');
