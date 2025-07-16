@@ -1791,43 +1791,43 @@ if __name__ == "__main__":
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Connectors</CardTitle>
+            <CardTitle className="text-sm font-medium">Network Devices</CardTitle>
             <Server className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{connectors.length}</div>
+            <div className="text-2xl font-bold">{allDevices.length}</div>
             <p className="text-xs text-muted-foreground">
-              {connectors.filter(c => c.status === 'online').length} online
+              Discovered devices
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Networks Monitored</CardTitle>
-            <Network className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Vulnerable Devices</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {connectors.reduce((sum, c) => sum + c.networkInfo.subnets.length, 0)}
+            <div className="text-2xl font-bold text-orange-500">
+              {allDevices.filter(device => device.vulnerabilities && device.vulnerabilities.length > 0).length}
             </div>
             <p className="text-xs text-muted-foreground">
-              Across {connectors.length} locations
+              Require attention
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Scans</CardTitle>
+            <CardTitle className="text-sm font-medium">Active Connectors</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {connectors.reduce((sum, c) => sum + c.scanStats.totalScans, 0)}
+            <div className="text-2xl font-bold text-green-500">
+              {connectors.filter(c => c.status === 'online').length}
             </div>
             <p className="text-xs text-muted-foreground">
-              Last 30 days
+              Network monitoring
             </p>
           </CardContent>
         </Card>
@@ -1837,16 +1837,14 @@ if __name__ == "__main__":
           onClick={showThreatDetails}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Threats Detected</CardTitle>
+            <CardTitle className="text-sm font-medium">Network Uptime</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">
-              {connectors.reduce((sum, c) => sum + c.scanStats.threatsDetected, 0)}
+            <div className="text-2xl font-bold text-green-500">
+              99.2%
             </div>
-            <p className="text-xs text-muted-foreground">
-              Click to view details
-            </p>
+            <Progress value={99.2} className="mt-2" />
           </CardContent>
         </Card>
       </div>
