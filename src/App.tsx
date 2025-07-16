@@ -379,7 +379,7 @@ function AppRouter() {
         } />
         <Route path="/dashboard/safenet" element={
           <ProtectedRoute>
-            <Dashboard />
+            <SafeNetConnectorPage />
           </ProtectedRoute>
         } />
         <Route path="/security-ai" element={
