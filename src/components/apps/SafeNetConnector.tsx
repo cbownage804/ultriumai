@@ -144,13 +144,27 @@ export const SafeNetConnector = () => {
             ? connector.network_info as any
             : {};
 
-          return {
-            id: connector.id,
-            name: connector.connector_name || 'SafeNet Connector',
-            connector_key: connector.connector_key,
-            version: connector.version || '2.1.4',
-            status: connector.status === 'active' ? 'online' as const : 'offline' as const,
-            lastSeen: new Date(connector.last_heartbeat || connector.created_at),
+            // Determine real status based on heartbeat
+            const lastHeartbeat = connector.last_heartbeat ? new Date(connector.last_heartbeat) : null;
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            const isRecentlyActive = lastHeartbeat && lastHeartbeat > fiveMinutesAgo;
+            
+            let status: 'online' | 'offline' | 'updating' | 'error' = 'offline';
+            if (connector.status === 'active' && isRecentlyActive) {
+              status = 'online';
+            } else if (connector.status === 'active' && !lastHeartbeat) {
+              status = 'offline'; // Never connected
+            } else if (connector.status === 'active' && lastHeartbeat) {
+              status = 'offline'; // Was connected but no recent heartbeat
+            }
+
+            return {
+              id: connector.id,
+              name: connector.connector_name || 'SafeNet Connector',
+              connector_key: connector.connector_key,
+              version: connector.version || '2.1.4',
+              status,
+              lastSeen: new Date(connector.last_heartbeat || connector.created_at),
             clientName: connector.client_name || 'Unknown Client',
             ipAddress: '192.168.1.100', // Will be populated when connector sends data
             systemInfo: {
