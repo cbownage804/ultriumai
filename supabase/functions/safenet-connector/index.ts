@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-  console.log('SafeNet Connector: Request received');
+  console.log('SafeNet Connector: Request received', new Date().toISOString());
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -19,19 +19,42 @@ serve(async (req: Request) => {
   }
 
   try {
+    console.log('Initializing Supabase client...');
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase environment variables');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase client initialized');
 
     // Parse request body
+    console.log('Reading request body...');
     const body = await req.text();
     console.log('Received body length:', body.length);
     
+    if (!body) {
+      console.error('Empty request body');
+      return new Response(
+        JSON.stringify({ error: 'Empty request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Parsing JSON...');
     const scanData = JSON.parse(body);
     console.log('Parsed scan data for connector:', scanData.connector_key);
+    console.log('Scan data keys:', Object.keys(scanData));
 
     // Validate connector key
+    console.log('Validating connector key...');
     const { data: connectorData, error: connectorError } = await supabase
       .rpc('validate_connector_key', { p_connector_key: scanData.connector_key });
 
@@ -54,26 +77,40 @@ serve(async (req: Request) => {
     const { connector_id, user_id } = connectorData[0];
     console.log('Valid connector found:', connector_id, 'for user:', user_id);
 
+    // Prepare scan data for insertion
+    console.log('Preparing scan data for insertion...');
+    const scanRecord = {
+      user_id: user_id,
+      connector_id: connector_id,
+      scan_data: scanData,
+      devices_found: scanData.summary?.devices_found || 0,
+      networks_scanned: scanData.summary?.networks_scanned || 0,
+      total_ports: scanData.summary?.total_ports || 0,
+      scan_duration: scanData.summary?.scan_duration || 0,
+      system_info: scanData.system_info || {},
+      vulnerabilities: scanData.vulnerabilities || [],
+      risk_score: scanData.risk_assessment?.overall_score || 0
+    };
+    
+    console.log('Scan record prepared:', {
+      devices_found: scanRecord.devices_found,
+      networks_scanned: scanRecord.networks_scanned,
+      total_ports: scanRecord.total_ports
+    });
+
     // Store scan results
+    console.log('Inserting scan results...');
     const { error: insertError } = await supabase
       .from('safenet_scans')
-      .insert({
-        user_id: user_id,
-        connector_id: connector_id,
-        scan_data: scanData,
-        devices_found: scanData.summary?.devices_found || 0,
-        networks_scanned: scanData.summary?.networks_scanned || 0,
-        total_ports: scanData.summary?.total_ports || 0,
-        scan_duration: scanData.summary?.scan_duration || 0,
-        system_info: scanData.system_info || {},
-        vulnerabilities: scanData.vulnerabilities || [],
-        risk_score: scanData.risk_assessment?.overall_score || 0
-      });
+      .insert(scanRecord);
 
     if (insertError) {
       console.error('Insert error:', insertError);
       return new Response(
-        JSON.stringify({ error: 'Failed to store scan results' }),
+        JSON.stringify({ 
+          error: 'Failed to store scan results',
+          details: insertError.message 
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -84,7 +121,8 @@ serve(async (req: Request) => {
       JSON.stringify({ 
         success: true,
         message: 'Scan results processed successfully',
-        devices_found: scanData.summary?.devices_found || 0
+        devices_found: scanData.summary?.devices_found || 0,
+        connector_id: connector_id
       }),
       { 
         status: 200, 
@@ -94,6 +132,7 @@ serve(async (req: Request) => {
 
   } catch (error) {
     console.error('Error processing scan:', error);
+    console.error('Error stack:', error.stack);
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
