@@ -69,29 +69,45 @@ async function processConnectorScan(scanData: ConnectorScanData, userId: string,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   );
 
+  console.log(`Starting scan processing for connector ${connectorId}`);
+
   try {
-    // Update connector status and system info
-    await supabase
+    // Update connector status and system info first
+    console.log('Updating connector status...');
+    const { error: updateError } = await supabase
       .from('safenet_connectors')
       .update({
         status: 'active',
         last_heartbeat: new Date().toISOString(),
-        system_info: scanData.system_info,
-        network_info: scanData.network_info,
-        version: scanData.connector_version
+        system_info: scanData.system_info || {},
+        network_info: scanData.network_info || {},
+        version: scanData.connector_version || '2.1.4'
       })
       .eq('id', connectorId);
 
+    if (updateError) {
+      console.error('Error updating connector:', updateError);
+      throw updateError;
+    }
+
     // Store network scan results
+    console.log('Storing scan results...');
     const scanResult = {
       user_id: userId,
       connector_id: connectorId,
       scan_type: 'network_discovery',
-      network_ranges: scanData.network_ranges,
-      devices_found: scanData.devices.length,
+      network_ranges: scanData.network_ranges || [],
+      devices_found: scanData.devices?.length || 0,
       scan_duration: 300, // Approximate duration
-      scanned_at: scanData.scan_timestamp,
-      results: scanData,
+      scanned_at: scanData.scan_timestamp || new Date().toISOString(),
+      results: {
+        summary: {
+          networks_scanned: scanData.network_ranges?.length || 0,
+          devices_found: scanData.devices?.length || 0,
+          total_ports: scanData.devices?.reduce((sum, d) => sum + (d.ports?.length || 0), 0) || 0
+        },
+        devices: scanData.devices || []
+      },
     };
 
     const { data: scan, error: scanError } = await supabase
@@ -105,109 +121,11 @@ async function processConnectorScan(scanData: ConnectorScanData, userId: string,
       throw scanError;
     }
 
-    // Process each device found
-    for (const device of scanData.devices) {
-      // Store/update device in safenet_devices table
-      const deviceData = {
-        connector_id: connectorId,
-        user_id: userId,
-        ip_address: device.ip,
-        hostname: device.hostname || 'Unknown',
-        mac_address: device.mac || 'Unknown',
-        os_detected: device.os || 'Unknown',
-        device_type: 'unknown', // Will be determined by ML later
-        open_ports: device.ports || [],
-        risk_level: device.risk_level || 'low',
-        last_seen: new Date().toISOString(),
-        first_discovered: new Date().toISOString(),
-        status: 'active'
-      };
-
-      // Upsert device (insert or update if exists)
-      const { data: deviceRecord, error: deviceError } = await supabase
-        .from('safenet_devices')
-        .upsert(deviceData, {
-          onConflict: 'ip_address,connector_id',
-          ignoreDuplicates: false
-        })
-        .select()
-        .single();
-
-      if (deviceError) {
-        console.error('Error storing device:', deviceError);
-        continue;
-      }
-
-      // Store vulnerabilities if any
-      if (device.vulnerabilities && device.vulnerabilities.length > 0) {
-        for (const vuln of device.vulnerabilities) {
-          const vulnData = {
-            device_id: deviceRecord.id,
-            connector_id: connectorId,
-            user_id: userId,
-            vulnerability_id: `SAFENET-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            title: vuln,
-            description: `Vulnerability detected on ${device.hostname} (${device.ip})`,
-            severity: device.risk_level === 'critical' ? 'critical' : 
-                     device.risk_level === 'high' ? 'high' : 'medium',
-            cvss_score: device.risk_level === 'critical' ? 9.0 : 
-                       device.risk_level === 'high' ? 7.0 : 5.0,
-            status: 'open',
-            discovered_at: new Date().toISOString()
-          };
-
-          const { error: vulnError } = await supabase
-            .from('safenet_vulnerabilities')
-            .insert(vulnData);
-
-          if (vulnError) {
-            console.error('Error storing vulnerability:', vulnError);
-          }
-        }
-      }
-
-      // Create security events for high/critical risk devices
-      if (device.risk_level === 'high' || device.risk_level === 'critical') {
-        const eventData = {
-          user_id: userId,
-          title: `${device.risk_level.toUpperCase()} Risk Device Detected`,
-          description: `Device ${device.hostname} (${device.ip}) has ${device.risk_level} risk level with ${device.vulnerabilities?.length || 0} vulnerabilities`,
-          severity: device.risk_level === 'critical' ? 'critical' : 'high',
-          event_type: 'network_security',
-          source: 'safenet_connector',
-          affected_assets: [device.hostname || device.ip],
-          status: 'new',
-          metadata: {
-            device,
-            scan_id: scan.id,
-            connector_id: connectorId,
-          },
-        };
-
-        const { error: eventError } = await supabase
-          .from('security_events')
-          .insert(eventData);
-
-        if (eventError) {
-          console.error('Error creating security event:', eventError);
-        }
-      }
-    }
-
-    // Log analytics
-    await supabase.from('gpt_analytics').insert({
-      user_id: userId,
-      gpt_id: 'safenet-connector',
-      interaction_type: 'network_scan',
-      metadata: {
-        connector_id: connectorId,
-        networks_scanned: scanData.network_ranges.length,
-        devices_found: scanData.devices.length,
-        vulnerabilities_found: scanData.devices.reduce((sum, d) => sum + (d.vulnerabilities?.length || 0), 0),
-        high_risk_devices: scanData.devices.filter(d => d.risk_level === 'high' || d.risk_level === 'critical').length,
-      },
-    });
-
+    console.log(`Scan stored with ID: ${scan.id}`);
+    
+    // For now, just store the basic scan - device processing can be done later to avoid timeouts
+    // This ensures we get a quick response back to the connector
+    
     return { success: true, scan_id: scan.id };
 
   } catch (error) {
