@@ -88,6 +88,8 @@ export const SafeNetConnector = () => {
   const [loading, setLoading] = useState(true);
   const [settingsConnector, setSettingsConnector] = useState<ConnectorInstance | null>(null);
   const [newConnectorName, setNewConnectorName] = useState('');
+  const [showThreatsDialog, setShowThreatsDialog] = useState(false);
+  const [threatDetails, setThreatDetails] = useState<any[]>([]);
 
   const [newConnectorKey, setNewConnectorKey] = useState('');
 
@@ -310,6 +312,52 @@ export const SafeNetConnector = () => {
       toast({
         title: "Error",
         description: "Failed to generate connector key",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const showThreatDetails = async () => {
+    try {
+      const allThreats: any[] = [];
+      
+      for (const connector of connectors) {
+        // Get latest scan data for this connector
+        const { data: scansData } = await supabase
+          .from('safenet_scans')
+          .select('*')
+          .eq('connector_id', connector.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (scansData && scansData[0]?.scan_data) {
+          const scanData = scansData[0].scan_data as any;
+          
+          if (scanData.devices && Array.isArray(scanData.devices)) {
+            scanData.devices.forEach((device: any) => {
+              if (device.vulnerabilities && Array.isArray(device.vulnerabilities)) {
+                device.vulnerabilities.forEach((vuln: any) => {
+                  allThreats.push({
+                    connectorName: connector.name,
+                    deviceIp: device.ip,
+                    deviceHostname: device.hostname || 'Unknown',
+                    vulnerability: vuln,
+                    scanTime: scansData[0].created_at
+                  });
+                });
+              }
+            });
+          }
+        }
+      }
+      
+      setThreatDetails(allThreats);
+      setShowThreatsDialog(true);
+    } catch (error) {
+      console.error('Error loading threat details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load threat details",
         variant: "destructive"
       });
     }
@@ -1571,7 +1619,10 @@ if __name__ == "__main__":
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:shadow-lg transition-all" 
+          onClick={showThreatDetails}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Threats Detected</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
@@ -1581,11 +1632,97 @@ if __name__ == "__main__":
               {connectors.reduce((sum, c) => sum + c.scanStats.threatsDetected, 0)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Requires attention
+              Click to view details
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Threats Details Dialog */}
+      <Dialog open={showThreatsDialog} onOpenChange={setShowThreatsDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              Threat Details
+            </DialogTitle>
+            <DialogDescription>
+              All threats detected across your network connectors
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {threatDetails.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Shield className="h-12 w-12 mx-auto mb-4 text-green-500" />
+                <p>No threats detected. Your network is secure!</p>
+              </div>
+            ) : (
+              threatDetails.map((threat, index) => (
+                <Card key={index} className="border-l-4 border-l-red-500">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg text-red-600">
+                          Security Vulnerability Detected
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          {threat.connectorName} • {threat.deviceHostname} ({threat.deviceIp})
+                        </p>
+                      </div>
+                      <Badge variant="destructive">
+                        {threat.vulnerability.risk_level || 'Medium'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <strong>Vulnerability Type:</strong>
+                        <p className="text-muted-foreground">
+                          {threat.vulnerability.type || 'Network Security Issue'}
+                        </p>
+                      </div>
+                      <div>
+                        <strong>Risk Level:</strong>
+                        <p className="text-muted-foreground">
+                          {threat.vulnerability.risk_level || 'Medium'}
+                        </p>
+                      </div>
+                      <div>
+                        <strong>Description:</strong>
+                        <p className="text-muted-foreground">
+                          {threat.vulnerability.description || 'Potential security vulnerability detected during network scan'}
+                        </p>
+                      </div>
+                      <div>
+                        <strong>Detected:</strong>
+                        <p className="text-muted-foreground">
+                          {new Date(threat.scanTime).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    {threat.vulnerability.recommendation && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <strong className="text-blue-800">Recommendation:</strong>
+                        <p className="text-blue-700 mt-1">
+                          {threat.vulnerability.recommendation}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowThreatsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
