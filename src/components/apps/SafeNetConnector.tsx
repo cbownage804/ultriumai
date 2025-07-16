@@ -17,6 +17,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { 
   Download, 
   Server, 
@@ -76,6 +85,8 @@ export const SafeNetConnector = () => {
   const { user } = useAuth();
   const [connectors, setConnectors] = useState<ConnectorInstance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settingsConnector, setSettingsConnector] = useState<ConnectorInstance | null>(null);
+  const [newConnectorName, setNewConnectorName] = useState('');
 
   const [newConnectorKey, setNewConnectorKey] = useState('');
 
@@ -601,6 +612,57 @@ if __name__ == "__main__":
     }
   };
 
+  const openSettings = (connector: ConnectorInstance) => {
+    setSettingsConnector(connector);
+    setNewConnectorName(connector.name);
+  };
+
+  const saveConnectorSettings = async () => {
+    if (!settingsConnector || !newConnectorName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid connector name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('safenet_connectors')
+        .update({ connector_name: newConnectorName.trim() })
+        .eq('id', settingsConnector.id)
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error updating connector:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update connector settings",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Settings Updated",
+        description: "Connector settings have been saved successfully",
+      });
+
+      // Close dialog and refresh
+      setSettingsConnector(null);
+      setNewConnectorName('');
+      loadConnectors();
+    } catch (error) {
+      console.error('Error updating connector:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update connector settings",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online': return 'text-green-500';
@@ -870,9 +932,40 @@ if __name__ == "__main__":
                           >
                             <RefreshCw className={`h-3 w-3 ${connector.status === 'updating' ? 'animate-spin' : ''}`} />
                           </Button>
-                          <Button size="sm" variant="outline">
-                            <Settings className="h-3 w-3" />
-                          </Button>
+                          <Dialog open={settingsConnector?.id === connector.id} onOpenChange={(open) => !open && setSettingsConnector(null)}>
+                            <DialogTrigger asChild>
+                              <Button size="sm" variant="outline" onClick={() => openSettings(connector)}>
+                                <Settings className="h-3 w-3" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Connector Settings</DialogTitle>
+                                <DialogDescription>
+                                  Configure settings for {connector.name}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label htmlFor="connector-name">Connector Name</Label>
+                                  <Input
+                                    id="connector-name"
+                                    value={newConnectorName}
+                                    onChange={(e) => setNewConnectorName(e.target.value)}
+                                    placeholder="Enter connector name"
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setSettingsConnector(null)}>
+                                  Cancel
+                                </Button>
+                                <Button onClick={saveConnectorSettings}>
+                                  Save Changes
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
