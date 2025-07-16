@@ -1,5 +1,8 @@
 project_id = "nsyobmjpdpvesjwdphlh"
 
+[functions.safenet-connector-download]
+verify_jwt = false
+
 [functions.rmm-checkin]
 verify_jwt = false
 
