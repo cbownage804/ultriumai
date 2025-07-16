@@ -259,32 +259,38 @@ export const SafeNetConnector = () => {
 
       setConnectors(connectorsWithStats);
       
-      // Collect all devices for map view
-      const devices: any[] = [];
+      // Collect unique devices for map view (latest scan data only, no duplicates)
+      const deviceMap: { [key: string]: any } = {};
+      
       for (const connector of connectorsWithStats) {
-        // Get all scan data for this connector
-        const { data: scansData } = await supabase
+        // Get only the latest scan data for this connector to avoid duplicates
+        const { data: latestScanData } = await supabase
           .from('safenet_scans')
           .select('*')
           .eq('connector_id', connector.id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        if (scansData) {
-          scansData.forEach(scan => {
-            if (scan.scan_data && (scan.scan_data as any).devices) {
-              (scan.scan_data as any).devices.forEach((device: any) => {
-                devices.push({
+        if (latestScanData && latestScanData[0]) {
+          const scan = latestScanData[0];
+          if (scan.scan_data && (scan.scan_data as any).devices) {
+            (scan.scan_data as any).devices.forEach((device: any) => {
+              // Use IP as unique key to prevent duplicates
+              const deviceKey = device.ip;
+              if (!deviceMap[deviceKey]) {
+                deviceMap[deviceKey] = {
                   ...device,
                   connectorName: connector.name,
                   scanTime: scan.created_at,
                   connectorId: connector.id
-                });
-              });
-            }
-          });
+                };
+              }
+            });
+          }
         }
       }
-      setAllDevices(devices);
+      
+      setAllDevices(Object.values(deviceMap));
     } catch (error) {
       console.error('Error loading connectors:', error);
       toast({
