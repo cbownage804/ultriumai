@@ -787,14 +787,50 @@ class SafeNetConnector:
 
         if open_ports:
             hostname = self.get_hostname(ip)
+            os_detected = self.detect_os(open_ports)
+            vulnerabilities = self.assess_vulnerabilities(open_ports)
+            
             return {
                 "ip": ip,
                 "hostname": hostname,
-                "open_ports": open_ports,
+                "mac": "Unknown",  # Would require additional scanning
+                "os": os_detected,
+                "ports": open_ports,  # API expects "ports", not "open_ports"
+                "vulnerabilities": vulnerabilities,
                 "risk_level": "high" if len(open_ports) > 5 else "medium" if len(open_ports) > 2 else "low"
             }
         
         return None
+
+    def detect_os(self, open_ports):
+        """Basic OS detection based on open ports"""
+        if 22 in open_ports:
+            return "Linux/Unix"
+        elif 135 in open_ports or 3389 in open_ports:
+            return "Windows"
+        elif 80 in open_ports or 443 in open_ports:
+            return "Web Server"
+        else:
+            return "Unknown"
+
+    def assess_vulnerabilities(self, open_ports):
+        """Assess potential vulnerabilities based on open ports"""
+        vulnerabilities = []
+        high_risk_ports = {
+            21: "FTP service may allow anonymous access",
+            23: "Telnet service transmits data in clear text",
+            135: "RPC service may be vulnerable to exploitation",
+            445: "SMB service may be vulnerable to attacks",
+            1433: "SQL Server may have weak authentication",
+            3389: "RDP service may allow brute force attacks",
+            5900: "VNC service may have weak authentication"
+        }
+        
+        for port in open_ports:
+            if port in high_risk_ports:
+                vulnerabilities.append(high_risk_ports[port])
+        
+        return vulnerabilities
 
     def scan_network(self, network_cidr):
         """Scan an entire network"""
@@ -822,12 +858,34 @@ class SafeNetConnector:
 
     def get_system_info(self):
         """Get basic system information"""
-        return {
-            "os": f"{platform.system()} {platform.release()}",
-            "hostname": platform.node(),
-            "architecture": platform.architecture()[0],
-            "python_version": platform.python_version()
-        }
+        try:
+            # Try to get memory info if possible
+            total_memory = "Unknown"
+            disk_space = "Unknown"
+            cpu_info = platform.processor() or "Unknown"
+            
+            try:
+                import psutil
+                total_memory = f"{round(psutil.virtual_memory().total / (1024**3))}GB"
+                disk_space = f"{round(psutil.disk_usage('/').total / (1024**3))}GB"
+            except ImportError:
+                pass
+            except:
+                pass
+                
+            return {
+                "os": f"{platform.system()} {platform.release()}",
+                "cpu": cpu_info,
+                "memory": total_memory,
+                "diskSpace": disk_space
+            }
+        except:
+            return {
+                "os": "Unknown",
+                "cpu": "Unknown",
+                "memory": "Unknown",
+                "diskSpace": "Unknown"
+            }
 
     def send_results(self, scan_data):
         """Send scan results to SafeNet platform"""
@@ -857,16 +915,25 @@ class SafeNetConnector:
             print(f"✗ Error sending results: {e}")
             return False
 
+    def get_network_info(self, networks):
+        """Get network information in expected format"""
+        return {
+            "interfaces": len(networks),
+            "subnets": networks,
+            "gateway": "Auto-detected"
+        }
+
     def perform_scan(self):
         """Perform a complete network scan"""
         print("\\nStarting SafeNet network scan...")
         
         # Get system info
         system_info = self.get_system_info()
-        print(f"System: {system_info['os']} ({system_info['hostname']})")
+        print(f"System: {system_info['os']}")
         
         # Get networks to scan
         networks = self.get_local_networks()
+        network_info = self.get_network_info(networks)
         
         # Scan each network
         all_devices = []
@@ -874,13 +941,14 @@ class SafeNetConnector:
             devices = self.scan_network(network)
             all_devices.extend(devices)
         
-        # Prepare scan data
+        # Prepare scan data in the format expected by the API
         scan_data = {
             "connector_key": self.connector_key,
             "scan_timestamp": datetime.now().isoformat(),
-            "devices": all_devices,
-            "system_info": system_info,
             "network_ranges": networks,
+            "devices": all_devices,
+            "network_info": network_info,
+            "system_info": system_info,
             "connector_version": "2.1.4"
         }
         
