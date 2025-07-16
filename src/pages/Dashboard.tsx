@@ -257,7 +257,7 @@ const Dashboard = () => {
     if (isSafeScanEmbedPage) return <SafeScanApp isWhiteLabeled={true} brandName="Security Scanner" />;
     if (isSafePassDashboard) return <div className="p-6"><SafePassDashboard /></div>;
     if (isSafeMailDashboard) return <div className="p-6"><SafeMailDashboard /></div>;
-    if (isSafeNetDashboard) return <div className="p-6"><SafeNetDashboard /></div>;
+    if (isSafeNetDashboard) return <div className="p-6"><SafeNetApp /></div>;
     
     // MSP Feature Pages
     if (isMSPNotificationsPage) return <div className="p-6"><MSPNotifications mspId="temp-msp-id" /></div>;
