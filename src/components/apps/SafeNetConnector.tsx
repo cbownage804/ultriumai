@@ -799,7 +799,7 @@ import ipaddress
 # Configuration
 CONNECTOR_KEY = "${connector.connector_key}"
 API_ENDPOINT = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector"
-SCAN_INTERVAL = 3600  # 1 hour
+SCAN_INTERVAL = 300  # 5 minutes
 
 class SafeNetConnector:
     def __init__(self):
