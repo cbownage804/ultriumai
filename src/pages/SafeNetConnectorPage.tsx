@@ -1,7 +1,7 @@
-import { SafeNetConnector } from "@/components/apps/SafeNetConnector";
+import { SafeNetDashboard } from "@/components/safenet/SafeNetDashboard";
 
 const SafeNetConnectorPage = () => {
-  return <SafeNetConnector />;
+  return <SafeNetDashboard />;
 };
 
 export default SafeNetConnectorPage;

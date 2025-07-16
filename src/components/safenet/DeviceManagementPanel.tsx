@@ -1,0 +1,440 @@
+import { useState } from "react";
+import { useSafeNetData } from "@/hooks/useSafeNetData";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { 
+  Monitor, 
+  Server, 
+  Smartphone, 
+  Router, 
+  Printer, 
+  HardDrive,
+  Wifi,
+  Search,
+  Filter,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+  Clock
+} from "lucide-react";
+
+const getDeviceIcon = (deviceType: string) => {
+  switch (deviceType?.toLowerCase()) {
+    case 'router':
+    case 'gateway':
+      return Router;
+    case 'server':
+      return Server;
+    case 'workstation':
+    case 'desktop':
+    case 'laptop':
+      return Monitor;
+    case 'mobile':
+    case 'phone':
+      return Smartphone;
+    case 'printer':
+      return Printer;
+    case 'storage':
+    case 'nas':
+      return HardDrive;
+    case 'iot':
+    case 'smart_device':
+      return Wifi;
+    default:
+      return Monitor;
+  }
+};
+
+export const DeviceManagementPanel = () => {
+  const { devices, vulnerabilities, services, isLoading, refreshData } = useSafeNetData();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+
+  const getDeviceVulnerabilities = (deviceId: string) => {
+    return vulnerabilities.filter(v => v.device_id === deviceId);
+  };
+
+  const getDeviceServices = (deviceId: string) => {
+    return services.filter(s => s.device_id === deviceId);
+  };
+
+  const filteredDevices = devices.filter(device => {
+    const matchesSearch = !searchTerm || 
+      device.device_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(device.ip_address)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.mac_address?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = filterType === "all" || device.device_type === filterType;
+    const matchesStatus = filterStatus === "all" || device.status === filterStatus;
+    
+    return matchesSearch && matchesType && matchesStatus;
+  });
+
+  const deviceTypes = [...new Set(devices.map(d => d.device_type).filter(Boolean))];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Filters and Search */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search devices by hostname, IP, or MAC..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Device Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {deviceTypes.map(type => (
+              <SelectItem key={type} value={type}>{type}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="online">Online</SelectItem>
+            <SelectItem value="offline">Offline</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button onClick={refreshData} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Device Table */}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Device</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>IP Address</TableHead>
+              <TableHead>Vulnerabilities</TableHead>
+              <TableHead>Services</TableHead>
+              <TableHead>Last Seen</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredDevices.map((device) => {
+              const Icon = getDeviceIcon(device.device_type);
+              const deviceVulns = getDeviceVulnerabilities(device.id);
+              const deviceServices = getDeviceServices(device.id);
+              const criticalVulns = deviceVulns.filter(v => v.severity === 'critical').length;
+
+              return (
+                <TableRow 
+                  key={device.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedDevice(selectedDevice === device.id ? null : device.id)}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Icon className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <div className="font-medium">
+                          {device.device_name || 'Unknown Device'}
+                        </div>
+                        {device.mac_address && (
+                          <div className="text-sm text-muted-foreground">
+                            {device.mac_address}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline">
+                      {device.device_type || 'Unknown'}
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {device.status === 'online' ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                      )}
+                      <Badge variant={device.status === 'online' ? 'default' : 'secondary'}>
+                        {device.status}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell className="font-mono text-sm">
+                    {String(device.ip_address)}
+                  </TableCell>
+                  
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {criticalVulns > 0 && (
+                        <AlertTriangle className="h-4 w-4 text-destructive" />
+                      )}
+                      <Badge variant={deviceVulns.length > 0 ? "destructive" : "default"}>
+                        {deviceVulns.length}
+                      </Badge>
+                      {criticalVulns > 0 && (
+                        <Badge variant="destructive" className="text-xs">
+                          {criticalVulns} critical
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  
+                  <TableCell>
+                    <Badge variant="outline">
+                      {deviceServices.length} services
+                    </Badge>
+                  </TableCell>
+                  
+                  <TableCell className="text-sm text-muted-foreground">
+                    {device.last_seen_at 
+                      ? new Date(device.last_seen_at).toLocaleString()
+                      : 'Never'
+                    }
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Device Details Panel */}
+      {selectedDevice && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Device Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const device = devices.find(d => d.id === selectedDevice);
+              const deviceVulns = getDeviceVulnerabilities(selectedDevice);
+              const deviceServices = getDeviceServices(selectedDevice);
+              
+              if (!device) return null;
+
+              return (
+                <Tabs defaultValue="overview" className="w-full">
+                  <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="services">Services ({deviceServices.length})</TabsTrigger>
+                    <TabsTrigger value="vulnerabilities">Vulnerabilities ({deviceVulns.length})</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="overview" className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Device Name</label>
+                        <p className="text-sm text-muted-foreground">
+                          {device.device_name || 'N/A'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">IP Address</label>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          {String(device.ip_address)}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">MAC Address</label>
+                        <p className="text-sm text-muted-foreground font-mono">
+                          {device.mac_address || 'N/A'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Device Type</label>
+                        <p className="text-sm text-muted-foreground">
+                          {device.device_type || 'Unknown'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Manufacturer</label>
+                        <p className="text-sm text-muted-foreground">
+                          {device.manufacturer || 'N/A'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Model</label>
+                        <p className="text-sm text-muted-foreground">
+                          {device.model || 'N/A'}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">Security Patches</label>
+                        <p className="text-sm text-muted-foreground">
+                          {device.security_patches_needed || 0} needed
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="text-sm font-medium">OS Version</label>
+                        <p className="text-sm text-muted-foreground">
+                          {device.os_version || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="services">
+                    <div className="space-y-2">
+                      {deviceServices.length > 0 ? (
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Port</TableHead>
+                              <TableHead>Protocol</TableHead>
+                              <TableHead>Service</TableHead>
+                              <TableHead>Version</TableHead>
+                              <TableHead>State</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {deviceServices.map((service) => (
+                              <TableRow key={service.id}>
+                                <TableCell className="font-mono">{service.port}</TableCell>
+                                <TableCell>{service.protocol.toUpperCase()}</TableCell>
+                                <TableCell>{service.service_name || 'Unknown'}</TableCell>
+                                <TableCell>{service.service_version || 'N/A'}</TableCell>
+                                <TableCell>
+                                  <Badge variant={service.service_state === 'open' ? 'default' : 'secondary'}>
+                                    {service.service_state}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-8">
+                          No services detected on this device
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="vulnerabilities">
+                    <div className="space-y-2">
+                      {deviceVulns.length > 0 ? (
+                        <div className="space-y-3">
+                          {deviceVulns.map((vuln) => (
+                            <Card key={vuln.id}>
+                              <CardContent className="p-4">
+                                <div className="flex items-start justify-between">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant={
+                                        vuln.severity === 'critical' ? 'destructive' :
+                                        vuln.severity === 'high' ? 'destructive' :
+                                        vuln.severity === 'medium' ? 'default' : 'secondary'
+                                      }>
+                                        {vuln.severity}
+                                      </Badge>
+                                      {vuln.cve_id && (
+                                        <Badge variant="outline">{vuln.cve_id}</Badge>
+                                      )}
+                                    </div>
+                                    <h4 className="font-medium">{vuln.title}</h4>
+                                    {vuln.description && (
+                                      <p className="text-sm text-muted-foreground">
+                                        {vuln.description}
+                                      </p>
+                                    )}
+                                    {vuln.solution && (
+                                      <div className="mt-2">
+                                        <label className="text-sm font-medium">Solution:</label>
+                                        <p className="text-sm text-muted-foreground">
+                                          {vuln.solution}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {vuln.cvss_score && (
+                                    <Badge variant="outline">
+                                      CVSS: {vuln.cvss_score}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-center py-8">
+                          No vulnerabilities found on this device
+                        </p>
+                      )}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      )}
+
+      {filteredDevices.length === 0 && !isLoading && (
+        <div className="text-center py-8">
+          <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium mb-2">No devices found</h3>
+          <p className="text-muted-foreground">
+            {searchTerm || filterType !== "all" || filterStatus !== "all"
+              ? "Try adjusting your search filters"
+              : "Start by running a network scan to discover devices"
+            }
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
