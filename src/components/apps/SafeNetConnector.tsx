@@ -532,12 +532,43 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    connector = SafeNetConnector()
-    
-    if args.once:
-        connector.run_scan()
-    else:
-        connector.run_continuous()
+    try:
+        connector = SafeNetConnector()
+        print("SafeNet Connector started...")
+        print(f"Connector Key: {CONNECTOR_KEY}")
+        print(f"API Endpoint: {API_ENDPOINT}")
+        print("\\nChecking dependencies...")
+        
+        # Check if required packages are installed
+        try:
+            import requests
+            import psutil
+            print("✓ All dependencies found")
+        except ImportError as e:
+            print(f"✗ Missing dependency: {e}")
+            print("\\nPlease install required packages:")
+            print("pip install requests psutil")
+            input("\\nPress Enter to exit...")
+            exit(1)
+        
+        if args.once:
+            print("\\nRunning single scan...")
+            success = connector.run_scan()
+            if success:
+                print("\\n✓ Scan completed successfully!")
+            else:
+                print("\\n✗ Scan failed. Check the log file for details.")
+            print("\\nPress Enter to exit...")
+            input()
+        else:
+            print("\\nStarting continuous scanning mode...")
+            print("Press Ctrl+C to stop the connector")
+            connector.run_continuous()
+            
+    except Exception as e:
+        print(f"\\nError starting connector: {e}")
+        print("\\nPress Enter to exit...")
+        input()
 `;
 
     // Create and download the file
