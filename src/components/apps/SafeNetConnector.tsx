@@ -6,6 +6,17 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Download, 
   Server, 
@@ -25,7 +36,8 @@ import {
   Cpu,
   HardDrive,
   MemoryStick,
-  ArrowLeft
+  ArrowLeft,
+  Trash2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -554,6 +566,41 @@ if __name__ == "__main__":
     }, 3000);
   };
 
+  const deleteConnector = async (connectorId: string) => {
+    try {
+      const { error } = await supabase
+        .from('safenet_connectors')
+        .delete()
+        .eq('id', connectorId)
+        .eq('user_id', user?.id);
+
+      if (error) {
+        console.error('Error deleting connector:', error);
+        toast({
+          title: "Error",
+          description: "Failed to delete connector",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Connector Deleted",
+        description: "The connector has been removed successfully",
+      });
+
+      // Refresh the connectors list
+      loadConnectors();
+    } catch (error) {
+      console.error('Error deleting connector:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete connector",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'online': return 'text-green-500';
@@ -826,6 +873,31 @@ if __name__ == "__main__":
                           <Button size="sm" variant="outline">
                             <Settings className="h-3 w-3" />
                           </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Connector</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete the connector "{connector.name}"? 
+                                  This action cannot be undone and will remove all associated scan data.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => deleteConnector(connector.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete Connector
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     </div>
