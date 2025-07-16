@@ -915,7 +915,7 @@ class SafeNetConnector:
                 self.api_endpoint,
                 json=scan_data,
                 headers=headers,
-                timeout=30
+                timeout=60  # Increased timeout to 60 seconds
             )
             
             if response.status_code == 200:

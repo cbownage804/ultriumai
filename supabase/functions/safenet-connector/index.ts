@@ -141,7 +141,10 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Request received, processing...');
+    
     if (req.method !== 'POST') {
+      console.log('Invalid method:', req.method);
       return new Response(
         JSON.stringify({ error: 'Method not allowed' }),
         {
@@ -151,7 +154,9 @@ serve(async (req) => {
       );
     }
 
+    console.log('Parsing request body...');
     const scanData: ConnectorScanData = await req.json();
+    console.log('Devices found:', scanData.devices?.length || 0);
     
     // Get connector key from either JSON body or Authorization header
     let connectorKey = scanData.connector_key;
@@ -163,6 +168,7 @@ serve(async (req) => {
     }
     
     if (!connectorKey || !scanData.devices) {
+      console.log('Missing connector key or devices');
       return new Response(
         JSON.stringify({ error: 'Invalid scan data format - missing connector_key or devices' }),
         {
@@ -172,9 +178,11 @@ serve(async (req) => {
       );
     }
 
+    console.log('Validating connector key...');
     // Validate connector key
     const validation = await validateConnectorKey(connectorKey);
     if (!validation.isValid || !validation.userId || !validation.connectorId) {
+      console.log('Invalid connector key validation');
       return new Response(
         JSON.stringify({ error: 'Invalid connector key' }),
         {
@@ -198,6 +206,7 @@ serve(async (req) => {
       timestamp: new Date().toISOString(),
     };
 
+    console.log('Scan processed successfully, returning response');
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
