@@ -128,6 +128,23 @@ serve(async (req: Request) => {
       );
     }
 
+    // Update connector heartbeat and system info
+    console.log('Updating connector heartbeat...');
+    try {
+      await supabase
+        .from('safenet_connectors')
+        .update({ 
+          last_heartbeat: new Date().toISOString(),
+          system_info: scanData.system_info || {},
+          network_info: scanData.network_info || {},
+          version: scanData.connector_version || '2.1.4'
+        })
+        .eq('id', connector_id);
+    } catch (heartbeatError) {
+      console.error('Failed to update heartbeat:', heartbeatError);
+      // Don't fail the request if heartbeat update fails
+    }
+
     console.log('Scan results stored successfully');
     
     return new Response(
