@@ -1312,6 +1312,33 @@ if __name__ == "__main__":
                                     placeholder="Enter connector name"
                                   />
                                 </div>
+                                <div>
+                                  <Label htmlFor="connector-key">Connector Key</Label>
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      id="connector-key"
+                                      value={connector.connector_key}
+                                      readOnly
+                                      className="font-mono text-sm"
+                                    />
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(connector.connector_key);
+                                        toast({
+                                          title: "Copied!",
+                                          description: "Connector key copied to clipboard",
+                                        });
+                                      }}
+                                    >
+                                      Copy
+                                    </Button>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Use this key when installing the connector on client networks
+                                  </p>
+                                </div>
                               </div>
                               <DialogFooter>
                                 <Button variant="outline" onClick={() => setSettingsConnector(null)}>
