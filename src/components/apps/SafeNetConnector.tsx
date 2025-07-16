@@ -94,6 +94,42 @@ export const SafeNetConnector = () => {
   // Load real connector data from database
   useEffect(() => {
     loadConnectors();
+    
+    // Set up real-time updates for connector status
+    if (user) {
+      const channel = supabase
+        .channel('safenet-connectors-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'safenet_connectors',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            // Reload connectors when data changes
+            loadConnectors();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'safenet_scans'
+          },
+          () => {
+            // Reload connectors when new scans arrive
+            loadConnectors();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
   }, [user]);
 
   const loadConnectors = async () => {
