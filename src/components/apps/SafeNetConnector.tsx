@@ -709,65 +709,33 @@ Scans local networks and sends results to Ultrium SafeNet platform
 Generated for: ${connector.name}
 """
 
-import requests
+import sys
+import json
+import time
+import platform
 import socket
 import subprocess
-import platform
-import time
-import json
-import logging
+from datetime import datetime
+import concurrent.futures
 import ipaddress
-import threading
-from datetime import datetime, timezone
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import psutil
-import netifaces
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Configuration
+CONNECTOR_KEY = "${connector.connector_key}"
+API_ENDPOINT = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector"
+SCAN_INTERVAL = 3600  # 1 hour
 
 class SafeNetConnector:
     def __init__(self):
-        # Configuration - Auto-generated for connector: ${connector.name}
-        self.connector_key = "${connector.connector_key}"
-        self.api_endpoint = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector"
-        self.scan_interval = 3600  # 1 hour in seconds
+        self.connector_key = CONNECTOR_KEY
+        self.api_endpoint = API_ENDPOINT
         self.max_threads = 50
         self.timeout = 2
-        
         # Common ports to scan
         self.common_ports = [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 993, 995, 1433, 3306, 3389, 5432, 5900]
-        
-    def get_network_interfaces(self):
-        """Get all network interfaces and their subnets"""
-        networks = []
-        interfaces = netifaces.interfaces()
-        
-        for interface in interfaces:
-            addrs = netifaces.ifaddresses(interface)
-            if netifaces.AF_INET in addrs:
-                for addr_info in addrs[netifaces.AF_INET]:
-                    ip = addr_info.get('addr')
-                    netmask = addr_info.get('netmask')
-                    
-                    if ip and netmask and not ip.startswith('127.'):
-                        try:
-                            network = ipaddress.IPv4Network(f"{ip}/{netmask}", strict=False)
-                            networks.append(str(network))
-                        except:
-                            continue
-        
-        # Add common networks if not found
-        default_networks = ['192.168.0.0/24', '192.168.1.0/24', '10.0.0.0/24', '172.16.0.0/24']
-        for net in default_networks:
-            if net not in networks:
-                networks.append(net)
-                
-        return networks
+
+    def get_local_networks(self):
+        """Get common local network ranges"""
+        return ['192.168.1.0/24', '192.168.0.0/24', '10.0.0.0/24', '172.16.0.0/24']
 
     def ping_host(self, ip):
         """Check if host is alive using ping"""
@@ -786,199 +754,121 @@ class SafeNetConnector:
     def scan_port(self, ip, port):
         """Scan a single port on a host"""
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(self.timeout)
-            result = sock.connect_ex((ip, port))
-            sock.close()
-            return port if result == 0 else None
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(self.timeout)
+                result = sock.connect_ex((ip, port))
+                return port if result == 0 else None
         except:
             return None
 
     def get_hostname(self, ip):
-        """Get hostname for an IP address"""
+        """Get hostname for IP address"""
         try:
-            hostname = socket.gethostbyaddr(ip)[0]
-            return hostname
+            return socket.gethostbyaddr(ip)[0]
         except:
             return "Unknown"
 
-    def detect_os(self, ip, open_ports):
-        """Simple OS detection based on open ports"""
-        if not open_ports:
-            return "Unknown"
-        
-        # Simple heuristics
-        if 3389 in open_ports:  # RDP
-            return "Windows"
-        elif 22 in open_ports and 80 not in open_ports:  # SSH only
-            return "Linux"
-        elif 22 in open_ports and 80 in open_ports:  # SSH + HTTP
-            return "Linux Server"
-        elif 135 in open_ports or 139 in open_ports:  # Windows services
-            return "Windows"
-        else:
-            return "Unknown"
-
-    def assess_risk(self, open_ports, vulnerabilities):
-        """Assess risk level based on open ports and vulnerabilities"""
-        if not open_ports:
-            return "low"
-        
-        high_risk_ports = [21, 23, 135, 139, 445, 1433, 3306, 5432]  # FTP, Telnet, Windows, DB ports
-        critical_ports = [3389]  # RDP
-        
-        if any(port in critical_ports for port in open_ports):
-            return "critical"
-        elif any(port in high_risk_ports for port in open_ports):
-            return "high"
-        elif len(open_ports) > 5:
-            return "medium"
-        else:
-            return "low"
-
     def scan_device(self, ip):
-        """Scan a single device for ports and information"""
+        """Scan a single device for open ports"""
         if not self.ping_host(ip):
             return None
-            
-        logger.info(f"Scanning device: {ip}")
-        
-        # Scan ports
+
+        print(f"  Scanning {ip}...")
         open_ports = []
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             future_to_port = {executor.submit(self.scan_port, ip, port): port 
                             for port in self.common_ports}
             
-            for future in as_completed(future_to_port):
-                result = future.result()
-                if result:
-                    open_ports.append(result)
+            for future in concurrent.futures.as_completed(future_to_port):
+                port = future.result()
+                if port:
+                    open_ports.append(port)
+
+        if open_ports:
+            hostname = self.get_hostname(ip)
+            return {
+                "ip": ip,
+                "hostname": hostname,
+                "open_ports": open_ports,
+                "risk_level": "high" if len(open_ports) > 5 else "medium" if len(open_ports) > 2 else "low"
+            }
         
-        # Get device information
-        hostname = self.get_hostname(ip)
-        os_detected = self.detect_os(ip, open_ports)
-        
-        # Simple vulnerability detection based on open ports
-        vulnerabilities = []
-        if 21 in open_ports:
-            vulnerabilities.append("FTP service exposed")
-        if 23 in open_ports:
-            vulnerabilities.append("Telnet service exposed (unencrypted)")
-        if 3389 in open_ports:
-            vulnerabilities.append("RDP service exposed")
-        if 135 in open_ports:
-            vulnerabilities.append("Windows RPC service exposed")
-        
-        risk_level = self.assess_risk(open_ports, vulnerabilities)
-        
-        return {
-            "ip": ip,
-            "hostname": hostname,
-            "mac": "Unknown",  # MAC detection would require additional tools
-            "os": os_detected,
-            "ports": open_ports,
-            "vulnerabilities": vulnerabilities,
-            "risk_level": risk_level
-        }
+        return None
 
     def scan_network(self, network_cidr):
-        """Scan an entire network for devices"""
-        logger.info(f"Scanning network: {network_cidr}")
+        """Scan an entire network"""
+        print(f"Scanning network: {network_cidr}")
+        devices = []
         
         try:
             network = ipaddress.IPv4Network(network_cidr, strict=False)
-        except ValueError:
-            logger.error(f"Invalid network CIDR: {network_cidr}")
-            return []
-        
-        devices = []
-        
-        # Limit scan size for performance
-        hosts = list(network.hosts())
-        if len(hosts) > 254:  # Limit to /24 equivalent
-            hosts = hosts[:254]
-        
-        with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
-            future_to_ip = {executor.submit(self.scan_device, str(ip)): ip 
-                          for ip in hosts}
+            hosts = list(network.hosts())[:50]  # Limit to first 50 hosts
             
-            for future in as_completed(future_to_ip):
-                device = future.result()
-                if device:
-                    devices.append(device)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_threads) as executor:
+                future_to_ip = {executor.submit(self.scan_device, str(ip)): ip 
+                              for ip in hosts}
+                
+                for future in concurrent.futures.as_completed(future_to_ip):
+                    device = future.result()
+                    if device:
+                        devices.append(device)
+                        
+        except Exception as e:
+            print(f"Error scanning network {network_cidr}: {e}")
         
-        logger.info(f"Found {len(devices)} devices")
+        print(f"Found {len(devices)} devices")
         return devices
 
     def get_system_info(self):
-        """Get system information of the scanning machine"""
-        try:
-            cpu_info = platform.processor() or "Unknown"
-            memory_info = f"{round(psutil.virtual_memory().total / (1024**3))}GB"
-            disk_info = f"{round(psutil.disk_usage('/').total / (1024**3))}GB"
-            
-            return {
-                "os": f"{platform.system()} {platform.release()}",
-                "cpu": cpu_info,
-                "memory": memory_info,
-                "diskSpace": disk_info
-            }
-        except:
-            return {
-                "os": "Unknown",
-                "cpu": "Unknown", 
-                "memory": "Unknown",
-                "diskSpace": "Unknown"
-            }
-
-    def get_network_info(self, networks):
-        """Get network information"""
-        try:
-            gateway = netifaces.gateways().get('default', {}).get(netifaces.AF_INET, ['Unknown'])[0]
-        except:
-            gateway = "Unknown"
-            
+        """Get basic system information"""
         return {
-            "interfaces": len(netifaces.interfaces()),
-            "subnets": networks,
-            "gateway": gateway
+            "os": f"{platform.system()} {platform.release()}",
+            "hostname": platform.node(),
+            "architecture": platform.architecture()[0],
+            "python_version": platform.python_version()
         }
 
     def send_results(self, scan_data):
         """Send scan results to SafeNet platform"""
         try:
-            headers = {
-                'Content-Type': 'application/json'
-            }
+            import requests
             
-            logger.info("Sending scan results to SafeNet platform...")
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.connector_key}"
+            }
             
             response = requests.post(
                 self.api_endpoint,
-                headers=headers,
                 json=scan_data,
+                headers=headers,
                 timeout=30
             )
             
             if response.status_code == 200:
-                logger.info("Scan results sent successfully")
+                print("✓ Scan results sent successfully")
                 return True
             else:
-                logger.error(f"Failed to send results: {response.status_code} - {response.text}")
+                print(f"✗ Failed to send results: {response.status_code}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Error sending results: {str(e)}")
+            print(f"✗ Error sending results: {e}")
             return False
 
     def perform_scan(self):
         """Perform a complete network scan"""
-        logger.info("Starting SafeNet network scan...")
+        print("\\nStarting SafeNet network scan...")
+        
+        # Get system info
+        system_info = self.get_system_info()
+        print(f"System: {system_info['os']} ({system_info['hostname']})")
         
         # Get networks to scan
-        networks = self.get_network_interfaces()
+        networks = self.get_local_networks()
         
-        # Scan all networks
+        # Scan each network
         all_devices = []
         for network in networks:
             devices = self.scan_network(network)
@@ -987,83 +877,116 @@ class SafeNetConnector:
         # Prepare scan data
         scan_data = {
             "connector_key": self.connector_key,
-            "scan_timestamp": datetime.now(timezone.utc).isoformat(),
-            "network_ranges": networks,
+            "scan_timestamp": datetime.now().isoformat(),
             "devices": all_devices,
-            "network_info": self.get_network_info(networks),
-            "system_info": self.get_system_info(),
-            "connector_version": "1.0.0"
+            "system_info": system_info,
+            "network_ranges": networks,
+            "connector_version": "2.1.4"
         }
         
-        logger.info(f"Scan completed. Found {len(all_devices)} devices across {len(networks)} networks")
+        print(f"\\nScan Summary:")
+        print(f"- Networks scanned: {len(networks)}")
+        print(f"- Devices found: {len(all_devices)}")
+        print(f"- Total open ports: {sum(len(d['open_ports']) for d in all_devices)}")
         
         # Send results
-        if self.send_results(scan_data):
-            logger.info("Scan results successfully transmitted to SafeNet platform")
-        else:
-            logger.error("Failed to send scan results")
+        print("\\nSending results to SafeNet...")
+        success = self.send_results(scan_data)
+        return success
 
-    def run(self):
-        """Main execution loop"""
-        logger.info(f"SafeNet Connector started. Scanning every {self.scan_interval} seconds.")
+    def run_continuous(self):
+        """Run connector in continuous mode"""
+        print(f"Running continuous scans every {SCAN_INTERVAL//60} minutes...")
         
         while True:
             try:
                 self.perform_scan()
+                print(f"\\nNext scan in {SCAN_INTERVAL//60} minutes...")
+                time.sleep(SCAN_INTERVAL)
+            except KeyboardInterrupt:
+                print("\\nConnector stopped by user")
+                break
             except Exception as e:
-                logger.error(f"Error during scan: {str(e)}")
-            
-            logger.info(f"Next scan in {self.scan_interval} seconds...")
-            time.sleep(self.scan_interval)
+                print(f"\\nError during scan: {e}")
+                print("Retrying in 60 seconds...")
+                time.sleep(60)
 
 if __name__ == "__main__":
-    import argparse
+    print("=" * 60)
+    print("SafeNet Network Connector")
+    print("=" * 60)
+    print(f"Connector: ${connector.name}")
+    print(f"Key: ${connector.connector_key}")
+    print(f"Endpoint: {API_ENDPOINT}")
+    print("=" * 60)
     
+    # Check for required dependencies
+    try:
+        import requests
+        print("✓ Requests library found")
+    except ImportError:
+        print("✗ Missing 'requests' library")
+        print("\\nInstall with: pip install requests")
+        input("\\nPress Enter to exit...")
+        sys.exit(1)
+    
+    # Parse command line arguments
+    import argparse
     parser = argparse.ArgumentParser(description="SafeNet Network Connector")
     parser.add_argument("--once", action="store_true", help="Run scan once and exit")
+    parser.add_argument("--continuous", action="store_true", help="Run continuously")
     
     args = parser.parse_args()
     
     try:
-        print("SafeNet Connector started...")
-        print(f"Connector Key: ${connector.connector_key}")
-        print(f"API Endpoint: https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector")
-        print("\\nChecking dependencies...")
-        
-        # Check if required packages are installed
-        try:
-            import requests
-            import psutil
-            import netifaces
-            print("✓ All dependencies found")
-        except ImportError as e:
-            print(f"✗ Missing dependency: {e}")
-            print("\\nPlease install required packages:")
-            print("pip install requests psutil netifaces")
-            input("\\nPress Enter to exit...")
-            exit(1)
-        
         connector = SafeNetConnector()
         
         if args.once:
-            print("\\nRunning single scan...")
-            connector.perform_scan()
-            print("\\n✓ Scan completed successfully!")
-            print("\\nPress Enter to exit...")
-            input()
+            print("\\nMode: Single scan")
+            success = connector.perform_scan()
+            if success:
+                print("\\n" + "=" * 60)
+                print("✓ SCAN COMPLETED SUCCESSFULLY")
+            else:
+                print("\\n" + "=" * 60)
+                print("✗ SCAN FAILED - Check network connection")
+        elif args.continuous:
+            print("\\nMode: Continuous scanning")
+            print("Press Ctrl+C to stop...")
+            connector.run_continuous()
         else:
-            print("\\nStarting continuous scanning mode...")
-            print("Press Ctrl+C to stop the connector")
-            connector.run()
+            # Default: ask user what they want to do
+            print("\\nSelect mode:")
+            print("1. Run single scan")
+            print("2. Run continuous scanning")
+            choice = input("\\nEnter choice (1 or 2): ").strip()
             
+            if choice == "1":
+                success = connector.perform_scan()
+                if success:
+                    print("\\n" + "=" * 60)
+                    print("✓ SCAN COMPLETED SUCCESSFULLY")
+                else:
+                    print("\\n" + "=" * 60)
+                    print("✗ SCAN FAILED - Check network connection")
+            elif choice == "2":
+                print("\\nStarting continuous mode...")
+                print("Press Ctrl+C to stop...")
+                connector.run_continuous()
+            else:
+                print("Invalid choice. Running single scan...")
+                connector.perform_scan()
+                
     except KeyboardInterrupt:
-        print("\\nSafeNet Connector stopped by user")
-        print("\\nPress Enter to exit...")
-        input()
+        print("\\n\\nConnector stopped by user")
     except Exception as e:
-        print(f"\\nFatal error: {str(e)}")
-        print("\\nPress Enter to exit...")
-        input()`;
+        print(f"\\n\\nFatal error: {str(e)}")
+        print("Please check your network connection and try again.")
+    
+    print("\\n" + "=" * 60)
+    print("Press Enter to exit...")
+    input()
+`;
 
     // Create and download the file
     const blob = new Blob([pythonScript], { type: 'text/x-python' });
