@@ -119,30 +119,57 @@ export const SafeNetConnector = () => {
       // Get scan statistics for each connector
       const connectorsWithStats = await Promise.all(
         (connectorsData || []).map(async (connector) => {
-          // Get scan count and latest scan
+          // Get scan data from safenet_scans table
           const { data: scansData } = await supabase
-            .from('network_scans')
+            .from('safenet_scans')
             .select('*')
             .eq('connector_id', connector.id)
             .order('created_at', { ascending: false });
 
-          // For now, use 0 for device and vulnerability counts
-          // These will be populated when the connector sends real data
-          const devicesCount = 0;
-          const vulnsCount = 0;
-
           const totalScans = scansData?.length || 0;
-          const devicesFound = devicesCount || 0;
-          const threatsDetected = vulnsCount || 0;
-          const lastScanTime = scansData?.[0]?.created_at ? new Date(scansData[0].created_at) : new Date();
+          const latestScan = scansData?.[0];
+          
+          // Extract actual scan statistics from the latest scan
+          let devicesFound = 0;
+          let threatsDetected = 0;
+          let networkInterfaces = 0;
+          let subnets: string[] = [];
+          let actualSystemInfo = {};
+          
+          if (latestScan && latestScan.scan_data) {
+            const scanData = latestScan.scan_data as any;
+            
+            // Count devices from scan data
+            if (scanData.devices && Array.isArray(scanData.devices)) {
+              devicesFound = scanData.devices.length;
+              
+              // Count vulnerabilities across all devices
+              threatsDetected = scanData.devices.reduce((count: number, device: any) => {
+                return count + (device.vulnerabilities?.length || 0);
+              }, 0);
+            }
+            
+            // Extract network info
+            if (scanData.network_info) {
+              networkInterfaces = scanData.network_info.interfaces || 0;
+              subnets = Array.isArray(scanData.network_info.subnets) ? scanData.network_info.subnets : [];
+            }
+            
+            // Extract system info from scan data
+            if (scanData.system_info) {
+              actualSystemInfo = scanData.system_info;
+            }
+          }
+
+          const lastScanTime = latestScan?.created_at ? new Date(latestScan.created_at) : new Date();
 
           // Parse JSON fields safely
           const systemInfo = typeof connector.system_info === 'object' && connector.system_info !== null
             ? connector.system_info as any
-            : {};
+            : actualSystemInfo; // Use scan data if connector doesn't have system info
           const networkInfo = typeof connector.network_info === 'object' && connector.network_info !== null
             ? connector.network_info as any
-            : {};
+            : { interfaces: networkInterfaces, subnets: subnets };
 
             // Determine real status based on heartbeat
             const lastHeartbeat = connector.last_heartbeat ? new Date(connector.last_heartbeat) : null;
