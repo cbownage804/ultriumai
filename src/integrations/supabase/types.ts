@@ -7711,6 +7711,62 @@ export type Database = {
           },
         ]
       }
+      safenet_scans: {
+        Row: {
+          connector_id: string
+          created_at: string | null
+          devices_found: number | null
+          id: string
+          networks_scanned: number | null
+          risk_score: number | null
+          scan_data: Json
+          scan_duration: number | null
+          system_info: Json | null
+          total_ports: number | null
+          updated_at: string | null
+          user_id: string
+          vulnerabilities: Json | null
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string | null
+          devices_found?: number | null
+          id?: string
+          networks_scanned?: number | null
+          risk_score?: number | null
+          scan_data?: Json
+          scan_duration?: number | null
+          system_info?: Json | null
+          total_ports?: number | null
+          updated_at?: string | null
+          user_id: string
+          vulnerabilities?: Json | null
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string | null
+          devices_found?: number | null
+          id?: string
+          networks_scanned?: number | null
+          risk_score?: number | null
+          scan_data?: Json
+          scan_duration?: number | null
+          system_info?: Json | null
+          total_ports?: number | null
+          updated_at?: string | null
+          user_id?: string
+          vulnerabilities?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safenet_scans_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "safenet_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safenet_vulnerabilities: {
         Row: {
           affected_service: string | null
