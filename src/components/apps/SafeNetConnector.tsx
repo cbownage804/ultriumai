@@ -972,19 +972,176 @@ class SafeNetConnector:
     def assess_vulnerabilities(self, open_ports):
         """Assess potential vulnerabilities based on open ports"""
         vulnerabilities = []
-        high_risk_ports = {
-            21: "FTP service may allow anonymous access",
-            23: "Telnet service transmits data in clear text",
-            135: "RPC service may be vulnerable to exploitation",
-            445: "SMB service may be vulnerable to attacks",
-            1433: "SQL Server may have weak authentication",
-            3389: "RDP service may allow brute force attacks",
-            5900: "VNC service may have weak authentication"
+        
+        # Detailed vulnerability assessments with specific threats and mitigations
+        vulnerability_db = {
+            21: {
+                "type": "FTP Service Exposure",
+                "description": "FTP service detected. This protocol transmits credentials in plain text and may allow anonymous access.",
+                "risk_level": "high",
+                "cve_references": ["CVE-2021-22204", "CVE-2020-7247"],
+                "recommendation": "Disable FTP service if not needed. Use SFTP (SSH File Transfer Protocol) instead. If FTP is required, disable anonymous access and use strong authentication.",
+                "mitigation_steps": [
+                    "1. Check if anonymous FTP is enabled: ftp <ip> (try anonymous login)",
+                    "2. Disable FTP service: sudo systemctl disable vsftpd",
+                    "3. Implement SFTP: sudo apt-get install openssh-server",
+                    "4. Configure firewall to block port 21: sudo ufw deny 21"
+                ]
+            },
+            23: {
+                "type": "Telnet Service Exposure", 
+                "description": "Telnet service transmits all data including passwords in clear text, making it vulnerable to eavesdropping.",
+                "risk_level": "critical",
+                "cve_references": ["CVE-2020-10188", "CVE-2019-6447"],
+                "recommendation": "Disable Telnet immediately and use SSH for remote access. Telnet should never be used in production environments.",
+                "mitigation_steps": [
+                    "1. Disable telnet service: sudo systemctl disable telnet",
+                    "2. Install SSH: sudo apt-get install openssh-server", 
+                    "3. Configure SSH with key-based authentication",
+                    "4. Block telnet port: sudo ufw deny 23"
+                ]
+            },
+            135: {
+                "type": "RPC Endpoint Mapper",
+                "description": "Microsoft RPC Endpoint Mapper service is exposed, potentially vulnerable to remote code execution attacks.",
+                "risk_level": "high", 
+                "cve_references": ["CVE-2022-26937", "CVE-2021-31166"],
+                "recommendation": "Restrict RPC access to trusted networks only. Apply latest Windows security updates.",
+                "mitigation_steps": [
+                    "1. Apply Windows security updates immediately",
+                    "2. Configure Windows Firewall to restrict RPC access",
+                    "3. Use Group Policy to disable unnecessary RPC services",
+                    "4. Monitor RPC traffic for suspicious activity"
+                ]
+            },
+            445: {
+                "type": "SMB Service Exposure",
+                "description": "SMB file sharing service detected. Vulnerable to various attacks including EternalBlue and credential harvesting.",
+                "risk_level": "critical",
+                "cve_references": ["CVE-2017-0144", "CVE-2020-0796", "CVE-2021-31956"],
+                "recommendation": "Apply SMB security patches, disable SMBv1, and restrict SMB access to trusted networks.",
+                "mitigation_steps": [
+                    "1. Disable SMBv1: Disable-WindowsOptionalFeature -Online -FeatureName smb1protocol",
+                    "2. Apply MS17-010 patch for EternalBlue protection",
+                    "3. Configure SMB signing: Set-SmbServerConfiguration -RequireSecuritySignature $true",
+                    "4. Restrict SMB access via firewall rules"
+                ]
+            },
+            1433: {
+                "type": "SQL Server Exposure",
+                "description": "Microsoft SQL Server is accessible from the network, potentially exposing sensitive data.",
+                "risk_level": "high",
+                "cve_references": ["CVE-2021-1636", "CVE-2020-0618"],
+                "recommendation": "Secure SQL Server with strong authentication, encryption, and network restrictions.",
+                "mitigation_steps": [
+                    "1. Enable SQL Server authentication logging",
+                    "2. Use Windows Authentication instead of SQL authentication",
+                    "3. Encrypt SQL Server connections (Force Encryption = Yes)",
+                    "4. Restrict database access to specific IP ranges",
+                    "5. Apply latest SQL Server security updates"
+                ]
+            },
+            3389: {
+                "type": "Remote Desktop Service",
+                "description": "RDP service is exposed to the network, vulnerable to brute force attacks and remote exploitation.",
+                "risk_level": "high",
+                "cve_references": ["CVE-2021-38666", "CVE-2021-34527", "CVE-2019-0708"],
+                "recommendation": "Secure RDP with Network Level Authentication, strong passwords, and access restrictions.",
+                "mitigation_steps": [
+                    "1. Enable Network Level Authentication",
+                    "2. Change default RDP port from 3389",
+                    "3. Implement account lockout policies",
+                    "4. Use VPN for remote access instead of direct RDP",
+                    "5. Apply BlueKeep and other RDP security patches"
+                ]
+            },
+            5900: {
+                "type": "VNC Remote Access",
+                "description": "VNC (Virtual Network Computing) service detected with potentially weak authentication.",
+                "risk_level": "medium",
+                "cve_references": ["CVE-2020-14262", "CVE-2019-15681"],
+                "recommendation": "Secure VNC with strong passwords, encryption, and access controls.",
+                "mitigation_steps": [
+                    "1. Set strong VNC passwords (8+ characters)",
+                    "2. Enable VNC encryption if supported",
+                    "3. Use VNC over SSH tunnel for secure connections",
+                    "4. Restrict VNC access to specific IP addresses",
+                    "5. Consider using more secure alternatives like SSH X11 forwarding"
+                ]
+            },
+            22: {
+                "type": "SSH Service Analysis",
+                "description": "SSH service detected. While generally secure, configuration should be reviewed.",
+                "risk_level": "low",
+                "cve_references": ["CVE-2021-28041", "CVE-2020-15778"],
+                "recommendation": "Ensure SSH is properly configured with key-based authentication and security best practices.",
+                "mitigation_steps": [
+                    "1. Disable password authentication (use SSH keys only)",
+                    "2. Change default SSH port from 22",
+                    "3. Disable root login via SSH",
+                    "4. Implement fail2ban for brute force protection",
+                    "5. Keep SSH version updated"
+                ]
+            },
+            80: {
+                "type": "HTTP Web Service",
+                "description": "HTTP web service detected. Unencrypted web traffic is vulnerable to interception.",
+                "risk_level": "medium",
+                "cve_references": ["CVE-2021-44228", "CVE-2021-45046"],
+                "recommendation": "Implement HTTPS encryption and secure web server configuration.",
+                "mitigation_steps": [
+                    "1. Implement SSL/TLS certificates (Let's Encrypt is free)",
+                    "2. Redirect all HTTP traffic to HTTPS",
+                    "3. Update web server software regularly", 
+                    "4. Implement security headers (HSTS, CSP, etc.)",
+                    "5. Scan for web application vulnerabilities"
+                ]
+            },
+            443: {
+                "type": "HTTPS Web Service",
+                "description": "HTTPS web service detected. SSL/TLS configuration should be reviewed for security.",
+                "risk_level": "low",
+                "cve_references": ["CVE-2021-3449", "CVE-2020-1971"],
+                "recommendation": "Ensure SSL/TLS is properly configured with strong ciphers and up-to-date certificates.",
+                "mitigation_steps": [
+                    "1. Test SSL configuration with SSL Labs test",
+                    "2. Disable weak SSL/TLS protocols (SSLv3, TLS 1.0, TLS 1.1)",
+                    "3. Implement HTTP Strict Transport Security (HSTS)",
+                    "4. Keep SSL certificates updated and properly configured",
+                    "5. Monitor for SSL/TLS vulnerabilities"
+                ]
+            }
         }
         
         for port in open_ports:
-            if port in high_risk_ports:
-                vulnerabilities.append(high_risk_ports[port])
+            if port in vulnerability_db:
+                vuln_info = vulnerability_db[port]
+                vulnerabilities.append({
+                    "port": port,
+                    "type": vuln_info["type"],
+                    "description": vuln_info["description"],
+                    "risk_level": vuln_info["risk_level"],
+                    "cve_references": vuln_info["cve_references"],
+                    "recommendation": vuln_info["recommendation"],
+                    "mitigation_steps": vuln_info["mitigation_steps"]
+                })
+            else:
+                # Generic vulnerability for unknown services
+                vulnerabilities.append({
+                    "port": port,
+                    "type": f"Unknown Service on Port {port}",
+                    "description": f"Unidentified service running on port {port}. This could be a custom application or misconfigured service.",
+                    "risk_level": "medium",
+                    "cve_references": [],
+                    "recommendation": f"Investigate the service running on port {port}. If not needed, close the port. If required, ensure it's properly secured.",
+                    "mitigation_steps": [
+                        f"1. Identify the service: nmap -sV -p {port} <target_ip>",
+                        f"2. Check if the service is necessary for business operations",
+                        f"3. If not needed, disable the service and close port {port}",
+                        f"4. If needed, implement proper authentication and access controls",
+                        f"5. Monitor port {port} for suspicious activity"
+                    ]
+                })
         
         return vulnerabilities
 
@@ -1731,41 +1888,78 @@ if __name__ == "__main__":
                       </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <strong>Vulnerability Type:</strong>
-                        <p className="text-muted-foreground">
-                          {threat.vulnerability.type || 'Network Security Issue'}
-                        </p>
+                   <CardContent>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <strong>Vulnerability Type:</strong>
+                          <p className="text-muted-foreground">
+                            {typeof threat.vulnerability === 'object' ? threat.vulnerability.type : 'Network Security Issue'}
+                          </p>
+                        </div>
+                        <div>
+                          <strong>Risk Level:</strong>
+                          <p className="text-muted-foreground">
+                            {typeof threat.vulnerability === 'object' ? threat.vulnerability.risk_level : 'Medium'}
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <strong>Description:</strong>
+                          <p className="text-muted-foreground">
+                            {typeof threat.vulnerability === 'object' ? threat.vulnerability.description : threat.vulnerability}
+                          </p>
+                        </div>
+                        {typeof threat.vulnerability === 'object' && threat.vulnerability.port && (
+                          <div>
+                            <strong>Affected Port:</strong>
+                            <p className="text-muted-foreground">
+                              {threat.vulnerability.port}
+                            </p>
+                          </div>
+                        )}
+                        <div>
+                          <strong>Detected:</strong>
+                          <p className="text-muted-foreground">
+                            {new Date(threat.scanTime).toLocaleString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <strong>Risk Level:</strong>
-                        <p className="text-muted-foreground">
-                          {threat.vulnerability.risk_level || 'Medium'}
-                        </p>
-                      </div>
-                      <div>
-                        <strong>Description:</strong>
-                        <p className="text-muted-foreground">
-                          {threat.vulnerability.description || 'Potential security vulnerability detected during network scan'}
-                        </p>
-                      </div>
-                      <div>
-                        <strong>Detected:</strong>
-                        <p className="text-muted-foreground">
-                          {new Date(threat.scanTime).toLocaleString()}
-                        </p>
-                      </div>
+                      
+                      {typeof threat.vulnerability === 'object' && threat.vulnerability.cve_references && threat.vulnerability.cve_references.length > 0 && (
+                        <div>
+                          <strong className="text-red-600">CVE References:</strong>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {threat.vulnerability.cve_references.map((cve: string) => (
+                              <Badge key={cve} variant="outline" className="text-xs">
+                                {cve}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {typeof threat.vulnerability === 'object' && threat.vulnerability.recommendation && (
+                        <div className="p-3 bg-blue-50 rounded-lg">
+                          <strong className="text-blue-800">Recommended Action:</strong>
+                          <p className="text-blue-700 mt-1">
+                            {threat.vulnerability.recommendation}
+                          </p>
+                        </div>
+                      )}
+
+                      {typeof threat.vulnerability === 'object' && threat.vulnerability.mitigation_steps && (
+                        <div className="p-3 bg-green-50 rounded-lg">
+                          <strong className="text-green-800">Mitigation Steps:</strong>
+                          <ol className="text-green-700 mt-1 space-y-1 text-sm">
+                            {threat.vulnerability.mitigation_steps.map((step: string, index: number) => (
+                              <li key={index} className="list-decimal list-inside">
+                                {step}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
                     </div>
-                    {threat.vulnerability.recommendation && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                        <strong className="text-blue-800">Recommendation:</strong>
-                        <p className="text-blue-700 mt-1">
-                          {threat.vulnerability.recommendation}
-                        </p>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               ))
