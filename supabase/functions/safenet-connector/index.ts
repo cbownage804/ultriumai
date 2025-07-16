@@ -55,7 +55,6 @@ async function validateConnectorKey(connectorKey: string): Promise<{ isValid: bo
       return { isValid: false };
     }
 
-    // Accept any status for now - the connector will update to 'active' when it sends data
     console.log('Connector found with status:', data.status);
     return { 
       isValid: true, 
@@ -128,9 +127,6 @@ async function processConnectorScan(scanData: ConnectorScanData, userId: string,
 
     console.log(`Scan stored with ID: ${scan.id}`);
     
-    // For now, just store the basic scan - device processing can be done later to avoid timeouts
-    // This ensures we get a quick response back to the connector
-    
     return { success: true, scan_id: scan.id };
 
   } catch (error) {
@@ -140,8 +136,11 @@ async function processConnectorScan(scanData: ConnectorScanData, userId: string,
 }
 
 serve(async (req) => {
+  console.log('Edge function invoked');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -172,6 +171,8 @@ serve(async (req) => {
       }
     }
     
+    console.log('Connector key extracted:', connectorKey ? 'Yes' : 'No');
+    
     if (!connectorKey || !scanData.devices) {
       console.log('Missing connector key or devices');
       return new Response(
@@ -184,7 +185,6 @@ serve(async (req) => {
     }
 
     console.log('Validating connector key...');
-    // Validate connector key
     const validation = await validateConnectorKey(connectorKey);
     if (!validation.isValid || !validation.userId || !validation.connectorId) {
       console.log('Invalid connector key validation');
@@ -198,7 +198,7 @@ serve(async (req) => {
     }
 
     console.log(`Processing scan from connector ${validation.connectorId}`);
-    console.log(`Found ${scanData.devices.length} devices across ${scanData.network_ranges.length} networks`);
+    console.log(`Found ${scanData.devices.length} devices across ${scanData.network_ranges?.length || 0} networks`);
 
     // Process the scan data
     const result = await processConnectorScan(scanData, validation.userId, validation.connectorId);
@@ -222,7 +222,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error',
-        message: error.message,
+        message: error?.message || 'Unknown error',
         timestamp: new Date().toISOString()
       }),
       {
