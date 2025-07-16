@@ -96,11 +96,12 @@ export const SafeNetDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="topology">Network Map</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
           <TabsTrigger value="vulnerabilities">Security</TabsTrigger>
+          <TabsTrigger value="connector">Connector</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -159,6 +160,92 @@ export const SafeNetDashboard = () => {
             </CardHeader>
             <CardContent>
               <VulnerabilityDashboard />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="connector">
+          <Card>
+            <CardHeader>
+              <CardTitle>SafeNet Connector Management</CardTitle>
+              <CardDescription>Download and configure the SafeNet network scanner</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Download Connector</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Download the SafeNet connector to start monitoring your network infrastructure.
+                  </p>
+                  <div className="flex gap-2">
+                    <a 
+                      href="/api/safenet/download/windows" 
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+                    >
+                      Windows
+                    </a>
+                    <a 
+                      href="/api/safenet/download/linux" 
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+                    >
+                      Linux
+                    </a>
+                    <a 
+                      href="/api/safenet/download/macos" 
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+                    >
+                      macOS
+                    </a>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Connection Status</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm">Main Office</span>
+                      </div>
+                      <Badge variant="secondary">Online</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span className="text-sm">Branch Office</span>
+                      </div>
+                      <Badge variant="outline">Connecting</Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-sm">Remote Site</span>
+                      </div>
+                      <Badge variant="destructive">Offline</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Installation Instructions</h3>
+                <div className="bg-muted p-4 rounded-lg space-y-2">
+                  <p className="text-sm font-medium">1. Download the connector for your operating system</p>
+                  <p className="text-sm font-medium">2. Run the installer with administrator privileges</p>
+                  <p className="text-sm font-medium">3. Enter your organization key when prompted</p>
+                  <p className="text-sm font-medium">4. Configure network scanning preferences</p>
+                  <p className="text-sm font-medium">5. Start the service and verify connection</p>
+                </div>
+                
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>Organization Key:</strong> sk-safenet-{Math.random().toString(36).substring(2, 15)}
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    Use this key during connector installation to link it to your account.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
