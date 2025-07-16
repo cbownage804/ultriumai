@@ -41,17 +41,22 @@ async function validateConnectorKey(connectorKey: string): Promise<{ isValid: bo
   );
 
   try {
+    console.log('Validating connector key:', connectorKey);
     const { data, error } = await supabase
       .from('safenet_connectors')
       .select('id, user_id, status')
       .eq('connector_key', connectorKey)
       .single();
 
+    console.log('Validation result:', { data, error });
+
     if (error || !data) {
       console.error('Connector validation error:', error);
       return { isValid: false };
     }
 
+    // Accept any status for now - the connector will update to 'active' when it sends data
+    console.log('Connector found with status:', data.status);
     return { 
       isValid: true, 
       userId: data.user_id,
