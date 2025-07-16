@@ -153,7 +153,16 @@ serve(async (req) => {
 
     const scanData: ConnectorScanData = await req.json();
     
-    if (!scanData.connector_key || !scanData.devices) {
+    // Get connector key from either JSON body or Authorization header
+    let connectorKey = scanData.connector_key;
+    if (!connectorKey) {
+      const authHeader = req.headers.get('authorization');
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        connectorKey = authHeader.substring(7);
+      }
+    }
+    
+    if (!connectorKey || !scanData.devices) {
       return new Response(
         JSON.stringify({ error: 'Invalid scan data format - missing connector_key or devices' }),
         {
@@ -164,7 +173,7 @@ serve(async (req) => {
     }
 
     // Validate connector key
-    const validation = await validateConnectorKey(scanData.connector_key);
+    const validation = await validateConnectorKey(connectorKey);
     if (!validation.isValid || !validation.userId || !validation.connectorId) {
       return new Response(
         JSON.stringify({ error: 'Invalid connector key' }),
