@@ -955,7 +955,7 @@ class SafeNetConnector:
         print(f"\\nScan Summary:")
         print(f"- Networks scanned: {len(networks)}")
         print(f"- Devices found: {len(all_devices)}")
-        print(f"- Total open ports: {sum(len(d['open_ports']) for d in all_devices)}")
+        print(f"- Total open ports: {sum(len(d['ports']) for d in all_devices)}")
         
         # Send results
         print("\\nSending results to SafeNet...")
