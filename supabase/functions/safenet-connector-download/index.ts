@@ -219,13 +219,8 @@ class SafeNetConnector:
 
 def main():
     try:
-        if len(sys.argv) != 2:
-            print("Usage: python safenet_connector.py <organization_key>")
-            print("Example: python safenet_connector.py sk-safenet-abc123")
-            input("Press Enter to exit...")
-            sys.exit(1)
-        
-        org_key = sys.argv[1]
+        # Organization key is embedded in the script
+        org_key = "${agentId || 'sk-safenet-demo'}"
         
         if not org_key.startswith("sk-safenet-"):
             print("Error: Invalid organization key format")
