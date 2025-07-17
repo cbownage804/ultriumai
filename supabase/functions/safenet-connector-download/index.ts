@@ -16,12 +16,19 @@ import socket
 import subprocess
 import json
 import time
-import requests
 import threading
 from datetime import datetime
 import ipaddress
 import sys
 import os
+
+# Check for required modules
+try:
+    import requests
+except ImportError:
+    print("Error: 'requests' module not found. Install it with: pip install requests")
+    input("Press Enter to exit...")
+    sys.exit(1)
 
 class SafeNetConnector:
     def __init__(self, api_key, server_url="https://nsyobmjpdpvesjwdphlh.supabase.co"):
@@ -211,32 +218,41 @@ class SafeNetConnector:
                 time.sleep(60)  # Wait 1 minute before retrying
 
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: python safenet_connector.py <organization_key>")
-        print("Example: python safenet_connector.py sk-safenet-abc123")
-        sys.exit(1)
-    
-    org_key = sys.argv[1]
-    
-    if not org_key.startswith("sk-safenet-"):
-        print("Error: Invalid organization key format")
-        sys.exit(1)
-    
-    print("SafeNet Network Scanner Connector v1.0")
-    print("======================================")
-    print(f"Organization Key: {org_key}")
-    
-    connector = SafeNetConnector(org_key)
-    
     try:
-        # Run initial scan
-        connector.run_scan_cycle()
+        if len(sys.argv) != 2:
+            print("Usage: python safenet_connector.py <organization_key>")
+            print("Example: python safenet_connector.py sk-safenet-abc123")
+            input("Press Enter to exit...")
+            sys.exit(1)
         
-        # Start continuous monitoring
-        connector.start_monitoring()
+        org_key = sys.argv[1]
         
+        if not org_key.startswith("sk-safenet-"):
+            print("Error: Invalid organization key format")
+            input("Press Enter to exit...")
+            sys.exit(1)
+        
+        print("SafeNet Network Scanner Connector v1.0")
+        print("======================================")
+        print(f"Organization Key: {org_key}")
+        
+        connector = SafeNetConnector(org_key)
+        
+        try:
+            # Run initial scan
+            connector.run_scan_cycle()
+            
+            # Start continuous monitoring
+            connector.start_monitoring()
+            
+        except Exception as e:
+            print(f"Fatal error: {e}")
+            input("Press Enter to exit...")
+            sys.exit(1)
+            
     except Exception as e:
-        print(f"Fatal error: {e}")
+        print(f"Unexpected error: {e}")
+        input("Press Enter to exit...")
         sys.exit(1)
 
 if __name__ == "__main__":
