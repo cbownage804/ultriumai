@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { NetworkTopologyViewer } from "./NetworkTopologyViewer";
 import { DeviceManagementPanel } from "./DeviceManagementPanel";
 import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
@@ -44,10 +45,19 @@ export const SafeNetDashboard = () => {
           <h1 className="text-3xl font-bold">SafeNet Dashboard</h1>
           <p className="text-muted-foreground">Network topology and security monitoring</p>
         </div>
-        <Badge variant="outline" className="text-sm">
-          <Activity className="h-4 w-4 mr-1" />
-          Live Monitoring
-        </Badge>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+          >
+            <Activity className="mr-2 h-4 w-4" />
+            Refresh Data
+          </Button>
+          <Badge variant="outline" className="text-sm">
+            <Activity className="h-4 w-4 mr-1" />
+            Live Monitoring
+          </Badge>
+        </div>
       </div>
 
       {/* Overview Cards */}

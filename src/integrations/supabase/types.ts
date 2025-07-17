@@ -7584,61 +7584,91 @@ export type Database = {
       safenet_devices: {
         Row: {
           connector_key: string | null
+          cpu_usage: number | null
           created_at: string
+          device_metadata: Json | null
           device_name: string
+          device_role: string | null
           device_type: string
+          discovery_method: string[] | null
+          hostname: string | null
           id: string
           ip_address: unknown
+          is_critical: boolean | null
           is_managed: boolean | null
           last_seen_at: string | null
           mac_address: string | null
           manufacturer: string | null
+          memory_usage: number | null
           model: string | null
-          network_id: string
+          network_id: string | null
+          network_segment: string | null
+          os_family: string | null
           os_version: string | null
           security_patches_needed: number | null
           status: string | null
           updated_at: string
+          uptime_hours: number | null
           user_id: string
           vulnerability_count: number | null
         }
         Insert: {
           connector_key?: string | null
+          cpu_usage?: number | null
           created_at?: string
+          device_metadata?: Json | null
           device_name: string
+          device_role?: string | null
           device_type: string
+          discovery_method?: string[] | null
+          hostname?: string | null
           id?: string
           ip_address: unknown
+          is_critical?: boolean | null
           is_managed?: boolean | null
           last_seen_at?: string | null
           mac_address?: string | null
           manufacturer?: string | null
+          memory_usage?: number | null
           model?: string | null
-          network_id: string
+          network_id?: string | null
+          network_segment?: string | null
+          os_family?: string | null
           os_version?: string | null
           security_patches_needed?: number | null
           status?: string | null
           updated_at?: string
+          uptime_hours?: number | null
           user_id: string
           vulnerability_count?: number | null
         }
         Update: {
           connector_key?: string | null
+          cpu_usage?: number | null
           created_at?: string
+          device_metadata?: Json | null
           device_name?: string
+          device_role?: string | null
           device_type?: string
+          discovery_method?: string[] | null
+          hostname?: string | null
           id?: string
           ip_address?: unknown
+          is_critical?: boolean | null
           is_managed?: boolean | null
           last_seen_at?: string | null
           mac_address?: string | null
           manufacturer?: string | null
+          memory_usage?: number | null
           model?: string | null
-          network_id?: string
+          network_id?: string | null
+          network_segment?: string | null
+          os_family?: string | null
           os_version?: string | null
           security_patches_needed?: number | null
           status?: string | null
           updated_at?: string
+          uptime_hours?: number | null
           user_id?: string
           vulnerability_count?: number | null
         }
