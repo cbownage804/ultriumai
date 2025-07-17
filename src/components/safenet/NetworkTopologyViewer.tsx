@@ -281,7 +281,7 @@ export const NetworkTopologyViewer = ({ compact = false }: NetworkTopologyViewer
                     <div className="flex items-center gap-2">
                       <Icon className="h-5 w-5" />
                       <div>
-                        <h4 className="font-medium">{device.device_name || 'Unknown Device'}</h4>
+                        <h4 className="font-medium">{device.device_name || device.hostname || 'Unknown Device'}</h4>
                         <p className="text-sm text-muted-foreground">{String(device.ip_address)}</p>
                       </div>
                     </div>
@@ -294,19 +294,90 @@ export const NetworkTopologyViewer = ({ compact = false }: NetworkTopologyViewer
                         </Badge>
                       </div>
                       
-                      {device.device_type && (
+                      <div className="flex justify-between text-sm">
+                        <span>Type:</span>
+                        <span className="text-muted-foreground">{device.device_type || 'Unknown'}</span>
+                      </div>
+
+                      <div className="flex justify-between text-sm">
+                        <span>Role:</span>
+                        <span className="text-muted-foreground">{device.device_role || 'Unknown'}</span>
+                      </div>
+
+                      {device.manufacturer && (
                         <div className="flex justify-between text-sm">
-                          <span>Type:</span>
-                          <span className="text-muted-foreground">{device.device_type}</span>
+                          <span>Manufacturer:</span>
+                          <span className="text-muted-foreground">{device.manufacturer}</span>
+                        </div>
+                      )}
+
+                      {device.model && (
+                        <div className="flex justify-between text-sm">
+                          <span>Model:</span>
+                          <span className="text-muted-foreground">{device.model}</span>
+                        </div>
+                      )}
+
+                      {device.os_family && (
+                        <div className="flex justify-between text-sm">
+                          <span>OS Family:</span>
+                          <span className="text-muted-foreground">{device.os_family}</span>
                         </div>
                       )}
 
                       {device.os_version && (
                         <div className="flex justify-between text-sm">
-                          <span>OS:</span>
+                          <span>OS Version:</span>
                           <span className="text-muted-foreground">{device.os_version}</span>
                         </div>
                       )}
+
+                      <div className="flex justify-between text-sm">
+                        <span>MAC Address:</span>
+                        <span className="text-muted-foreground font-mono">{device.mac_address}</span>
+                      </div>
+
+                      {device.network_segment && (
+                        <div className="flex justify-between text-sm">
+                          <span>Network:</span>
+                          <span className="text-muted-foreground">{device.network_segment}</span>
+                        </div>
+                      )}
+
+                      {device.uptime_hours && (
+                        <div className="flex justify-between text-sm">
+                          <span>Uptime:</span>
+                          <span className="text-muted-foreground">{device.uptime_hours}h</span>
+                        </div>
+                      )}
+
+                      {device.cpu_usage !== null && (
+                        <div className="flex justify-between text-sm">
+                          <span>CPU Usage:</span>
+                          <span className="text-muted-foreground">{device.cpu_usage}%</span>
+                        </div>
+                      )}
+
+                      {device.memory_usage !== null && (
+                        <div className="flex justify-between text-sm">
+                          <span>Memory Usage:</span>
+                          <span className="text-muted-foreground">{device.memory_usage}%</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between text-sm">
+                        <span>Managed:</span>
+                        <Badge variant={device.is_managed ? 'default' : 'secondary'}>
+                          {device.is_managed ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+
+                      <div className="flex justify-between text-sm">
+                        <span>Critical:</span>
+                        <Badge variant={device.is_critical ? 'destructive' : 'secondary'}>
+                          {device.is_critical ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
 
                       <div className="flex justify-between text-sm">
                         <span>Vulnerabilities:</span>
@@ -314,6 +385,57 @@ export const NetworkTopologyViewer = ({ compact = false }: NetworkTopologyViewer
                           {deviceVulns.length}
                         </Badge>
                       </div>
+
+                      {device.security_patches_needed > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span>Patches Needed:</span>
+                          <Badge variant="destructive">
+                            {device.security_patches_needed}
+                          </Badge>
+                        </div>
+                      )}
+
+                      {device.discovery_method && device.discovery_method.length > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span>Discovery:</span>
+                          <span className="text-muted-foreground">{device.discovery_method.join(', ')}</span>
+                        </div>
+                      )}
+
+                      {device.last_seen_at && (
+                        <div className="flex justify-between text-sm">
+                          <span>Last Seen:</span>
+                          <span className="text-muted-foreground">
+                            {new Date(device.last_seen_at).toLocaleString()}
+                          </span>
+                        </div>
+                      )}
+
+                      {device.device_metadata && (
+                        <div className="pt-2 border-t">
+                          <span className="text-sm font-medium">Additional Info:</span>
+                          {device.device_metadata.port_count && (
+                            <div className="flex justify-between text-sm">
+                              <span>Open Ports:</span>
+                              <span className="text-muted-foreground">{device.device_metadata.port_count}</span>
+                            </div>
+                          )}
+                          {device.device_metadata.connector_version && (
+                            <div className="flex justify-between text-sm">
+                              <span>Connector:</span>
+                              <span className="text-muted-foreground">v{device.device_metadata.connector_version}</span>
+                            </div>
+                          )}
+                          {device.device_metadata.scan_timestamp && (
+                            <div className="flex justify-between text-sm">
+                              <span>Last Scan:</span>
+                              <span className="text-muted-foreground">
+                                {new Date(device.device_metadata.scan_timestamp).toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
