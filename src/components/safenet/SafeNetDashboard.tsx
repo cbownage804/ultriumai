@@ -271,12 +271,28 @@ export const SafeNetDashboard = () => {
                 </div>
                 
                 <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>Organization Key:</strong> {organizationKey}
-                  </p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    Use this key during connector installation to link it to your account.
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Organization Key:</strong> {organizationKey}
+                      </p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                        Use this key during connector installation to link it to your account.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        const newKey = `sk-safenet-${user?.id?.slice(0, 8) || 'demo'}-${Math.random().toString(36).substring(2, 8)}`;
+                        localStorage.setItem('safenet_organization_key', newKey);
+                        setOrganizationKey(newKey);
+                      }}
+                      className="ml-4"
+                    >
+                      Generate New Key
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
