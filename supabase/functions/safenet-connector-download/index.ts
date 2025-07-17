@@ -56,11 +56,14 @@ class SafeNetConnector:
                     if result == 0:
                         # Device found, gather info
                         device_info = {
-                            "ip_address": str(ip),
+                            "ip": str(ip),  # Changed from ip_address to ip
                             "hostname": self.get_hostname(str(ip)),
-                            "mac_address": self.get_mac_address(str(ip)),
-                            "open_ports": self.scan_ports(str(ip)),
+                            "mac": self.get_mac_address(str(ip)),  # Changed from mac_address to mac
+                            "ports": self.scan_ports(str(ip)),  # Changed from open_ports to ports
+                            "os": "Unknown",  # Added os field
                             "device_type": "unknown",
+                            "risk_level": "low",  # Added risk_level field
+                            "vulnerabilities": [],  # Added vulnerabilities field
                             "last_seen": datetime.now().isoformat()
                         }
                         devices.append(device_info)
@@ -114,7 +117,7 @@ class SafeNetConnector:
         vulnerabilities = []
         
         # Check for weak services
-        if 23 in device.get('open_ports', []):
+        if 23 in device.get('ports', []):
             vulnerabilities.append({
                 "cve_id": "TELNET-001",
                 "severity": "high",
@@ -123,7 +126,7 @@ class SafeNetConnector:
                 "solution": "Disable telnet and use SSH instead"
             })
             
-        if 80 in device.get('open_ports', []) and 443 not in device.get('open_ports', []):
+        if 80 in device.get('ports', []) and 443 not in device.get('ports', []):
             vulnerabilities.append({
                 "cve_id": "HTTP-001",
                 "severity": "medium",
@@ -205,7 +208,7 @@ class SafeNetConnector:
         topology = []
         for device in devices:
             topology.append({
-                "device_id": device["ip_address"],
+                "device_id": device["ip"],  # Changed from ip_address to ip
                 "device_type": device["device_type"],
                 "connections": [],  # Would be populated with actual network connections
                 "location": "auto-discovered"
