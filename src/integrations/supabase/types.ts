@@ -7587,7 +7587,7 @@ export type Database = {
           cpu_usage: number | null
           created_at: string
           device_metadata: Json | null
-          device_name: string
+          device_name: string | null
           device_role: string | null
           device_type: string
           discovery_method: string[] | null
@@ -7617,7 +7617,7 @@ export type Database = {
           cpu_usage?: number | null
           created_at?: string
           device_metadata?: Json | null
-          device_name: string
+          device_name?: string | null
           device_role?: string | null
           device_type: string
           discovery_method?: string[] | null
@@ -7647,7 +7647,7 @@ export type Database = {
           cpu_usage?: number | null
           created_at?: string
           device_metadata?: Json | null
-          device_name?: string
+          device_name?: string | null
           device_role?: string | null
           device_type?: string
           discovery_method?: string[] | null
