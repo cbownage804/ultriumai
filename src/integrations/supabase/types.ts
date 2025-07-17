@@ -7583,6 +7583,7 @@ export type Database = {
       }
       safenet_devices: {
         Row: {
+          connector_key: string | null
           created_at: string
           device_name: string
           device_type: string
@@ -7602,6 +7603,7 @@ export type Database = {
           vulnerability_count: number | null
         }
         Insert: {
+          connector_key?: string | null
           created_at?: string
           device_name: string
           device_type: string
@@ -7621,6 +7623,7 @@ export type Database = {
           vulnerability_count?: number | null
         }
         Update: {
+          connector_key?: string | null
           created_at?: string
           device_name?: string
           device_type?: string

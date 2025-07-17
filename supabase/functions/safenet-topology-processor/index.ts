@@ -113,7 +113,7 @@ serve(async (req) => {
             scan_timestamp: scanData.scan_timestamp,
             connector_version: scanData.connector_version,
             original_os: device.os,
-            port_count: device.ports.length
+            port_count: (device.ports || []).length
           }
         }, {
           onConflict: 'user_id,connector_key,ip_address',
@@ -128,7 +128,7 @@ serve(async (req) => {
       }
 
       // Process services for this device
-      const servicePromises = device.ports.map(async (port) => {
+      const servicePromises = (device.ports || []).map(async (port) => {
         const serviceInfo = identifyService(port);
         
         return supabase
@@ -155,7 +155,7 @@ serve(async (req) => {
       await Promise.all(servicePromises);
 
       // Process vulnerabilities
-      const vulnPromises = device.vulnerabilities.map(async (vuln) => {
+      const vulnPromises = (device.vulnerabilities || []).map(async (vuln) => {
         const vulnInfo = parseVulnerability(vuln);
         
         return supabase
@@ -279,9 +279,14 @@ serve(async (req) => {
 
 // Helper functions for device classification and analysis
 function classifyDeviceType(device: DeviceData): string {
-  const hostname = device.hostname.toLowerCase();
-  const os = device.os.toLowerCase();
-  const ports = device.ports;
+  const hostname = device.hostname?.toLowerCase() || '';
+  const os = device.os?.toLowerCase() || '';
+  const ports = device.ports || [];
+  
+  // Handle cases where device data might be incomplete
+  if (!hostname && !os && ports.length === 0) {
+    return 'unknown';
+  }
 
   if (hostname.includes('router') || hostname.includes('gateway')) return 'router';
   if (hostname.includes('switch')) return 'switch';
@@ -296,8 +301,8 @@ function classifyDeviceType(device: DeviceData): string {
 }
 
 function determineDeviceRole(device: DeviceData): string {
-  const ports = device.ports;
-  const hostname = device.hostname.toLowerCase();
+  const ports = device.ports || [];
+  const hostname = device.hostname?.toLowerCase() || '';
   
   if (ports.includes(53)) return 'dns_server';
   if (ports.includes(67) || ports.includes(68)) return 'dhcp_server';
