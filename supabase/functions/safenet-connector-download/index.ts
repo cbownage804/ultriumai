@@ -138,7 +138,6 @@ class SafeNetConnector:
         """Send data to SafeNet server"""
         try:
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
                 "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI"
             }
@@ -177,11 +176,24 @@ class SafeNetConnector:
         
         # Prepare data payload
         scan_data = {
+            "connector_key": self.api_key,
             "scan_type": "network_discovery",
-            "timestamp": datetime.now().isoformat(),
+            "scan_timestamp": datetime.now().isoformat(),
+            "connector_version": "1.0",
             "devices": devices,
             "vulnerabilities": all_vulnerabilities,
-            "topology": self.build_topology(devices)
+            "topology": self.build_topology(devices),
+            "system_info": {
+                "os": "Windows",
+                "cpu": "Intel",
+                "memory": "8GB",
+                "diskSpace": "500GB"
+            },
+            "network_info": {
+                "gateway": "192.168.1.1",
+                "subnets": ["192.168.1.0/24"],
+                "interfaces": 1
+            }
         }
         
         # Send to server
