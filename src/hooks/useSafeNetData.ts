@@ -6,19 +6,30 @@ import { useToast } from '@/hooks/use-toast';
 export interface SafeNetDevice {
   id: string;
   user_id: string;
-  network_id: string;
-  device_name: string;
+  network_id?: string | null;
+  device_name?: string | null;
   device_type: string;
-  ip_address: unknown;
-  mac_address?: string;
-  manufacturer?: string;
-  model?: string;
-  os_version?: string;
+  ip_address: string;
+  mac_address?: string | null;
+  manufacturer?: string | null;
+  model?: string | null;
+  os_version?: string | null;
+  os_family?: string | null;
+  hostname?: string | null;
   is_managed: boolean;
+  is_critical?: boolean;
   status: string;
-  last_seen_at?: string;
+  last_seen_at?: string | null;
   vulnerability_count?: number;
   security_patches_needed?: number;
+  connector_key?: string;
+  device_role?: string | null;
+  network_segment?: string | null;
+  discovery_method?: string[];
+  device_metadata?: any;
+  uptime_hours?: number | null;
+  cpu_usage?: number | null;
+  memory_usage?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -99,10 +110,12 @@ export const useSafeNetData = () => {
       // Transform the data to match our interface
       const transformedDevices = data?.map(device => ({
         ...device,
+        ip_address: device.ip_address as string,
         status: device.last_seen_at && new Date(device.last_seen_at) > new Date(Date.now() - 5 * 60 * 1000) 
-          ? 'online' : 'offline'
+          ? 'online' : device.status || 'offline'
       })) || [];
       
+      console.log('Loaded devices:', transformedDevices);
       setDevices(transformedDevices);
     } catch (error) {
       console.error('Error loading devices:', error);
