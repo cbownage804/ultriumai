@@ -92,7 +92,7 @@ export const useSafeNetData = () => {
         .from('safenet_devices')
         .select('*')
         .eq('user_id', user.id)
-        .order('last_seen_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       
