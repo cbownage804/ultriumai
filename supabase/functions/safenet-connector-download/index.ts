@@ -220,7 +220,7 @@ class SafeNetConnector:
 def main():
     try:
         # Organization key is embedded in the script
-        org_key = "${agentId || 'sk-safenet-demo'}"
+        org_key = "AGENT_ID_PLACEHOLDER"
         
         if not org_key.startswith("sk-safenet-"):
             print("Error: Invalid organization key format")
@@ -276,7 +276,7 @@ serve(async (req) => {
     let contentType: string;
 
     // Generate script with embedded agent ID
-    const scriptContent = pythonConnectorScript.replace('${agentId || \'sk-safenet-demo\'}', agentId || 'sk-safenet-demo');
+    const scriptContent = pythonConnectorScript.replace('AGENT_ID_PLACEHOLDER', agentId || 'sk-safenet-demo');
 
     switch (platform) {
       case 'python':
