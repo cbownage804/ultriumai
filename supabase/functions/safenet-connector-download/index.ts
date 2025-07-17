@@ -265,35 +265,42 @@ serve(async (req) => {
     const pathParts = url.pathname.split('/');
     const platform = pathParts[pathParts.length - 1]; // Get last part of path
     
-    console.log(`Download request for platform: ${platform}`);
+    // Extract query parameters
+    const agentId = url.searchParams.get('agentId');
+    const clientId = url.searchParams.get('clientId');
+    
+    console.log(`Download request for platform: ${platform}, agentId: ${agentId}`);
 
     let filename: string;
     let content: string;
     let contentType: string;
 
+    // Generate script with embedded agent ID
+    const scriptContent = pythonConnectorScript.replace('${agentId || \'sk-safenet-demo\'}', agentId || 'sk-safenet-demo');
+
     switch (platform) {
       case 'python':
         filename = 'safenet_connector.py';
-        content = pythonConnectorScript;
+        content = scriptContent;
         contentType = 'text/x-python';
         break;
         
       case 'windows':
         filename = 'safenet_connector.exe';
         // In a real implementation, this would be a compiled Python executable
-        content = pythonConnectorScript;
+        content = scriptContent;
         contentType = 'application/octet-stream';
         break;
         
       case 'linux':
         filename = 'safenet_connector';
-        content = pythonConnectorScript;
+        content = scriptContent;
         contentType = 'application/x-executable';
         break;
         
       case 'macos':
         filename = 'safenet_connector.app';
-        content = pythonConnectorScript;
+        content = scriptContent;
         contentType = 'application/octet-stream';
         break;
         
