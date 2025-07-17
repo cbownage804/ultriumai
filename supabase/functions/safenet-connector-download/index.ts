@@ -301,6 +301,7 @@ serve(async (req) => {
         ...corsHeaders,
         'Content-Type': contentType,
         'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': content.length.toString(),
       },
     });
 
