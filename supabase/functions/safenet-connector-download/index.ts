@@ -5,11 +5,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// SafeNet Python Connector Script
+// Enhanced SafeNet Python Connector Script with Built-in Discovery
 const pythonConnectorScript = `#!/usr/bin/env python3
 """
-SafeNet Network Scanner Connector
-Network discovery, mapping, and security vulnerability assessment
+SafeNet Network Scanner Connector with Enhanced Discovery
+Comprehensive network discovery, mapping, and security vulnerability assessment
+Runs as a service with built-in credentials and enhanced detection capabilities
 """
 
 import socket
@@ -17,18 +18,76 @@ import subprocess
 import json
 import time
 import threading
-from datetime import datetime
-import ipaddress
-import sys
 import os
+import sys
+import platform
+from datetime import datetime, timezone
+import ipaddress
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# Check for required modules
-try:
-    import requests
-except ImportError:
-    print("Error: 'requests' module not found. Install it with: pip install requests")
+# Enhanced modules (install automatically if missing)
+REQUIRED_MODULES = ['requests', 'psutil', 'netifaces']
+OPTIONAL_MODULES = ['pysnmp', 'wmi', 'paramiko']
+
+def install_module(module_name):
+    """Install a Python module using pip"""
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name])
+        return True
+    except:
+        return False
+
+def check_and_install_modules():
+    """Check and install required modules"""
+    for module in REQUIRED_MODULES:
+        try:
+            __import__(module)
+        except ImportError:
+            print(f"Installing required module: {module}")
+            if not install_module(module):
+                print(f"Failed to install {module}. Please install manually.")
+                return False
+    return True
+
+if not check_and_install_modules():
+    print("Failed to install required modules")
     input("Press Enter to exit...")
     sys.exit(1)
+
+import requests
+import psutil
+import netifaces
+
+# Try to import optional modules for enhanced discovery
+try:
+    from pysnmp.hlapi import *
+    SNMP_AVAILABLE = True
+except ImportError:
+    SNMP_AVAILABLE = False
+    
+try:
+    import wmi
+    WMI_AVAILABLE = True
+except ImportError:
+    WMI_AVAILABLE = False
+    
+try:
+    import paramiko
+    SSH_AVAILABLE = True
+except ImportError:
+    SSH_AVAILABLE = False
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('safenet_connector.log'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 class SafeNetConnector:
     def __init__(self, api_key, server_url="https://nsyobmjpdpvesjwdphlh.supabase.co"):
