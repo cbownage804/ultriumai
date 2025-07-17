@@ -263,11 +263,14 @@ export const NetworkTopologyViewer = ({ compact = false }: NetworkTopologyViewer
         </svg>
 
         {/* Device details panel */}
-        {selectedDevice && !compact && (
-          <Card className="absolute top-4 right-4 w-64">
+        {selectedDevice && (
+          <Card className={cn(
+            "absolute top-4 right-4 w-64 z-10",
+            compact && "w-56"
+          )}>
             <CardContent className="p-4">
               {(() => {
-              const device = devices.find(d => d.id === selectedDevice);
+                const device = devices.find(d => d.id === selectedDevice);
                 const deviceVulns = getDeviceVulnerabilities(selectedDevice);
                 if (!device) return null;
 
