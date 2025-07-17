@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -6,11 +6,24 @@ import { NetworkTopologyViewer } from "./NetworkTopologyViewer";
 import { DeviceManagementPanel } from "./DeviceManagementPanel";
 import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
 import { useSafeNetData } from "@/hooks/useSafeNetData";
+import { useAuth } from "@/hooks/useAuth";
 import { Shield, Network, AlertTriangle, Activity } from "lucide-react";
 
 export const SafeNetDashboard = () => {
   const { devices, vulnerabilities, topology, isLoading } = useSafeNetData();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [organizationKey, setOrganizationKey] = useState<string>('');
+
+  useEffect(() => {
+    // Generate or retrieve organization key for this user
+    let storedKey = localStorage.getItem('safenet_organization_key');
+    if (!storedKey) {
+      storedKey = `sk-safenet-${user?.id?.slice(0, 8) || 'demo'}-${Math.random().toString(36).substring(2, 8)}`;
+      localStorage.setItem('safenet_organization_key', storedKey);
+    }
+    setOrganizationKey(storedKey);
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -179,28 +192,28 @@ export const SafeNetDashboard = () => {
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <a 
-                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/python" 
+                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/python?agentId=${organizationKey}`} 
                       download="safenet_connector.py"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                     >
                       Python Script
                     </a>
                     <a 
-                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/windows" 
+                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/windows?agentId=${organizationKey}`} 
                       download="safenet_connector.exe"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                     >
                       Windows EXE
                     </a>
                     <a 
-                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/linux" 
+                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/linux?agentId=${organizationKey}`} 
                       download="safenet_connector"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                     >
                       Linux Binary
                     </a>
                     <a 
-                      href="https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/macos" 
+                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/macos?agentId=${organizationKey}`} 
                       download="safenet_connector.app"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                     >
@@ -249,7 +262,7 @@ export const SafeNetDashboard = () => {
                 
                 <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
                   <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <strong>Organization Key:</strong> sk-safenet-{Math.random().toString(36).substring(2, 15)}
+                    <strong>Organization Key:</strong> {organizationKey}
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                     Use this key during connector installation to link it to your account.
