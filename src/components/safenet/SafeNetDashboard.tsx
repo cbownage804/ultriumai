@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { NetworkTopologyViewer } from "./NetworkTopologyViewer";
 import { DeviceManagementPanel } from "./DeviceManagementPanel";
 import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
+import { DiscoveryCredentialsManager } from "./DiscoveryCredentialsManager";
 import { useSafeNetData } from "@/hooks/useSafeNetData";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, Network, AlertTriangle, Activity } from "lucide-react";
@@ -119,11 +120,12 @@ export const SafeNetDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="topology">Network Map</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
           <TabsTrigger value="vulnerabilities">Security</TabsTrigger>
+          <TabsTrigger value="discovery">Discovery</TabsTrigger>
           <TabsTrigger value="connector">Connector</TabsTrigger>
         </TabsList>
 
@@ -183,6 +185,18 @@ export const SafeNetDashboard = () => {
             </CardHeader>
             <CardContent>
               <VulnerabilityDashboard />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="discovery">
+          <Card>
+            <CardHeader>
+              <CardTitle>Enhanced Device Discovery</CardTitle>
+              <CardDescription>Configure advanced discovery methods and credentials for comprehensive device information</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DiscoveryCredentialsManager />
             </CardContent>
           </Card>
         </TabsContent>

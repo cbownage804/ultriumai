@@ -25,16 +25,32 @@ interface ScanDataRequest {
   results: any;
   devices?: Array<{
     ip_address: string;
-    hostname: string;
-    device_type: string;
+    hostname?: string;
+    device_name?: string;
+    manufacturer?: string;
+    model?: string;
+    serial_number?: string;
+    os_family?: string;
+    os_version?: string;
+    device_type?: string;
+    device_role?: string;
     mac_address?: string;
-    os_info?: string;
+    uptime_hours?: number;
+    cpu_usage?: number;
+    memory_usage?: number;
+    is_managed?: boolean;
+    is_critical?: boolean;
+    network_segment?: string;
     open_ports?: number[];
     services?: any[];
+    installed_software?: string[];
+    hardware_info?: any;
+    performance_metrics?: any;
     vulnerabilities?: string[];
     risk_level: string;
     status: string;
-    network_range: string;
+    discovery_method?: string[];
+    device_metadata?: any;
   }>;
 }
 
@@ -161,24 +177,34 @@ serve(async (req) => {
       if (scanData.devices && scanData.devices.length > 0) {
         const deviceInserts = scanData.devices.map(device => ({
           user_id: connector.user_id,
-          connector_id: connector.connector_id,
-          scan_id: scanResult.id,
+          connector_key: scanData.connector_key,
           ip_address: device.ip_address,
           hostname: device.hostname,
+          device_name: device.device_name,
+          manufacturer: device.manufacturer,
+          model: device.model,
+          os_family: device.os_family,
+          os_version: device.os_version,
           device_type: device.device_type,
+          device_role: device.device_role,
           mac_address: device.mac_address,
-          os_info: device.os_info,
-          open_ports: device.open_ports || [],
-          services: device.services || [],
-          vulnerabilities: device.vulnerabilities || [],
-          risk_level: device.risk_level,
-          last_seen: new Date().toISOString(),
+          uptime_hours: device.uptime_hours,
+          cpu_usage: device.cpu_usage,
+          memory_usage: device.memory_usage,
+          is_managed: device.is_managed || false,
+          is_critical: device.is_critical || false,
+          network_segment: device.network_segment || 'unknown',
+          vulnerability_count: device.vulnerabilities?.length || 0,
+          security_patches_needed: 0,
+          discovery_method: device.discovery_method || ['network_scan'],
+          device_metadata: device.device_metadata || {},
           status: device.status,
-          network_range: device.network_range
+          last_seen_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }));
 
         const { error: deviceError } = await supabase
-          .from('network_devices')
+          .from('safenet_devices')
           .upsert(deviceInserts, { 
             onConflict: 'ip_address,user_id',
             ignoreDuplicates: false 
