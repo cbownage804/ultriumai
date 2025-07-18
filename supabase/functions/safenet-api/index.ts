@@ -67,10 +67,12 @@ serve(async (req) => {
     );
 
     const url = new URL(req.url);
-    const path = url.pathname;
+    const fullPath = url.pathname;
+    // Extract the endpoint path (everything after the function name)
+    const path = fullPath.split('/').pop() || fullPath;
 
     // Register/Authenticate Connector
-    if (path === '/register' && req.method === 'POST') {
+    if (path === 'register' && req.method === 'POST') {
       const { connector_key, connector_name, client_name, version, system_info, network_info }: ConnectorAuthRequest = await req.json();
 
       if (!connector_key || !connector_name) {
@@ -125,7 +127,7 @@ serve(async (req) => {
     }
 
     // Send Scan Data
-    else if (path === '/scan-data' && req.method === 'POST') {
+    else if (path === 'scan-data' && req.method === 'POST') {
       const scanData: ScanDataRequest = await req.json();
 
       if (!scanData.connector_key) {
@@ -233,7 +235,7 @@ serve(async (req) => {
     }
 
     // Heartbeat endpoint
-    else if (path === '/heartbeat' && req.method === 'POST') {
+    else if (path === 'heartbeat' && req.method === 'POST') {
       const { connector_key } = await req.json();
 
       if (!connector_key) {
