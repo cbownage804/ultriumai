@@ -70,6 +70,9 @@ export const DeviceManagementPanel = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterManufacturer, setFilterManufacturer] = useState("all");
+  const [filterOSFamily, setFilterOSFamily] = useState("all");
+  const [filterDiscoveryMethod, setFilterDiscoveryMethod] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [historyFilter, setHistoryFilter] = useState("all");
   const [historicalDevices, setHistoricalDevices] = useState(devices);
@@ -164,15 +167,25 @@ export const DeviceManagementPanel = () => {
     const matchesSearch = !searchTerm || 
       device.device_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(device.ip_address)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      device.mac_address?.toLowerCase().includes(searchTerm.toLowerCase());
+      device.mac_address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.hostname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      device.model?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = filterType === "all" || device.device_type === filterType;
     const matchesStatus = filterStatus === "all" || device.status === filterStatus;
+    const matchesManufacturer = filterManufacturer === "all" || device.manufacturer === filterManufacturer;
+    const matchesOSFamily = filterOSFamily === "all" || device.os_family === filterOSFamily;
+    const matchesDiscoveryMethod = filterDiscoveryMethod === "all" || 
+      (device.discovery_method && device.discovery_method.includes(filterDiscoveryMethod));
     
-    return matchesSearch && matchesType && matchesStatus;
+    return matchesSearch && matchesType && matchesStatus && matchesManufacturer && matchesOSFamily && matchesDiscoveryMethod;
   });
 
   const deviceTypes = [...new Set(historicalDevices.map(d => d.device_type).filter(Boolean))];
+  const manufacturers = [...new Set(historicalDevices.map(d => d.manufacturer).filter(Boolean))];
+  const osFamilies = [...new Set(historicalDevices.map(d => d.os_family).filter(Boolean))];
+  const discoveryMethods = [...new Set(historicalDevices.flatMap(d => d.discovery_method || []).filter(Boolean))];
 
   if (isLoading) {
     return (
@@ -185,60 +198,98 @@ export const DeviceManagementPanel = () => {
   return (
     <div className="space-y-6">
       {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search devices by hostname, IP, or MAC..."
+            placeholder="Search devices by hostname, IP, MAC, manufacturer, model..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
           />
         </div>
         
-        <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Device Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {deviceTypes.map(type => (
-              <SelectItem key={type} value={type}>{type}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap gap-2">
+          <Select value={filterType} onValueChange={setFilterType}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Device Type" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border z-50">
+              <SelectItem value="all">All Types</SelectItem>
+              {deviceTypes.map(type => (
+                <SelectItem key={type} value={type}>{type}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="online">Online</SelectItem>
-            <SelectItem value="offline">Offline</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border z-50">
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="online">Online</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Select value={historyFilter} onValueChange={setHistoryFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Time Range" />
-          </SelectTrigger>
-          <SelectContent className="bg-background border z-50">
-            {timeFilters.map(filter => (
-              <SelectItem key={filter.value} value={filter.value}>
-                <div className="flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  {filter.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={filterManufacturer} onValueChange={setFilterManufacturer}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Manufacturer" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border z-50">
+              <SelectItem value="all">All Manufacturers</SelectItem>
+              {manufacturers.map(manufacturer => (
+                <SelectItem key={manufacturer} value={manufacturer}>{manufacturer}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Button onClick={refreshData} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+          <Select value={filterOSFamily} onValueChange={setFilterOSFamily}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="OS Family" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border z-50">
+              <SelectItem value="all">All OS</SelectItem>
+              {osFamilies.map(os => (
+                <SelectItem key={os} value={os}>{os}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterDiscoveryMethod} onValueChange={setFilterDiscoveryMethod}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Discovery Method" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border z-50">
+              <SelectItem value="all">All Methods</SelectItem>
+              {discoveryMethods.map(method => (
+                <SelectItem key={method} value={method}>{method}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={historyFilter} onValueChange={setHistoryFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="Time Range" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border z-50">
+              {timeFilters.map(filter => (
+                <SelectItem key={filter.value} value={filter.value}>
+                  <div className="flex items-center gap-2">
+                    <History className="h-4 w-4" />
+                    {filter.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button onClick={refreshData} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Device Table */}
