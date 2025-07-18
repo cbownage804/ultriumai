@@ -13,40 +13,68 @@ Comprehensive network discovery, mapping, and security vulnerability assessment
 Runs as a service with built-in credentials and enhanced detection capabilities
 """
 
-import socket
-import subprocess
-import json
-import time
-import threading
-import os
+# Immediate debug wrapper to catch any startup errors
 import sys
-import platform
-from datetime import datetime, timezone
-import ipaddress
-import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
 
-# Immediate error handling and debugging
-def safe_exit(message="Script ended", code=0):
-    print(f"\\n{message}")
+def debug_print(msg):
+    print(f"DEBUG: {msg}")
+    sys.stdout.flush()
+
+def safe_input(prompt="Press Enter to continue..."):
     try:
-        input("\\nPress Enter to exit...")
+        input(prompt)
     except:
         import time
-        time.sleep(10)  # Wait 10 seconds if input fails
-    sys.exit(code)
+        time.sleep(10)
 
-# Wrap everything in try-catch to prevent immediate closure
+# Wrap EVERYTHING in error handling
 try:
-    print("SafeNet Connector Installer v2.0")
-    print("=================================")
-    print(f"Python version: {sys.version}")
-    print(f"Platform: {platform.system()} {platform.release()}")
-    print("Installing enhanced network discovery agent...")
-    print("")
+    debug_print("Starting SafeNet Connector...")
+    debug_print(f"Python version: {sys.version}")
+    debug_print(f"Current directory: {os.getcwd()}")
+    
+    # Basic imports first
+    import socket
+    debug_print("✓ Socket imported")
+    
+    import subprocess
+    debug_print("✓ Subprocess imported")
+    
+    import json
+    debug_print("✓ JSON imported")
+    
+    import time
+    debug_print("✓ Time imported")
+    
+    import threading
+    debug_print("✓ Threading imported")
+    
+    import platform
+    debug_print("✓ Platform imported")
+    
+    from datetime import datetime, timezone
+    debug_print("✓ Datetime imported")
+    
+    import logging
+    debug_print("✓ Logging imported")
+    
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    debug_print("✓ Concurrent futures imported")
+    
+    debug_print("All basic imports successful!")
+
 except Exception as e:
-    print(f"Error in initial setup: {e}")
-    safe_exit("Failed during initial setup", 1)
+    print(f"CRITICAL ERROR during imports: {e}")
+    print(f"Error type: {type(e).__name__}")
+    try:
+        import traceback
+        print("Full traceback:")
+        print(traceback.format_exc())
+    except:
+        print("Could not import traceback module")
+    safe_input("Press Enter to exit...")
+    sys.exit(1)
 
 # Enhanced modules (install automatically if missing)
 CORE_MODULES = ['requests', 'psutil', 'python-nmap', 'schedule']
@@ -864,10 +892,12 @@ def main():
         input("Press Enter to exit...")
         sys.exit(1)
 
-# Main execution with error handling
+# Main execution wrapped in comprehensive error handling
 if __name__ == "__main__":
-    # Wrap main execution in try-catch
+    debug_print("Starting main execution...")
+    
     try:
+        debug_print("Installing modules...")
         if not check_and_install_modules():
             print("\\n" + "="*50)
             print("INSTALLATION INCOMPLETE")
@@ -878,23 +908,34 @@ if __name__ == "__main__":
             try:
                 choice = input().lower().strip()
                 if choice != 'y' and choice != 'yes':
-                    safe_exit("Installation cancelled.", 1)
+                    safe_input("Installation cancelled. Press Enter to exit...")
+                    sys.exit(1)
             except:
                 print("\\nContinuing with partial installation...")
 
-        print("\\n✓ Module installation completed!")
-        print("\\nStarting SafeNet Connector...")
+        debug_print("✓ Module installation completed!")
+        debug_print("Starting SafeNet Connector...")
         
         # Run the main connector
         main()
 
     except Exception as e:
-        print(f"\\nCRITICAL ERROR during installation: {e}")
+        print(f"\\nCRITICAL ERROR: {e}")
         print(f"Error type: {type(e).__name__}")
-        import traceback
-        print("\\nFull error details:")
-        print(traceback.format_exc())
-        safe_exit("Installation failed with errors", 1)
+        try:
+            import traceback
+            print("\\nFull error details:")
+            print(traceback.format_exc())
+        except:
+            print("Could not display traceback")
+        safe_input("Error occurred. Press Enter to exit...")
+        sys.exit(1)
+
+except Exception as startup_error:
+    print(f"STARTUP ERROR: {startup_error}")
+    print(f"Error type: {type(startup_error).__name__}")
+    safe_input("Critical startup error. Press Enter to exit...")
+    sys.exit(1)
 `;
 
 serve(async (req) => {
