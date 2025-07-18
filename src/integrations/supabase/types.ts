@@ -5124,7 +5124,7 @@ export type Database = {
       network_scans: {
         Row: {
           completed_at: string | null
-          connector_id: string | null
+          connector_id: string
           created_at: string | null
           devices_found: number
           hostname: string
@@ -5144,7 +5144,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
-          connector_id?: string | null
+          connector_id: string
           created_at?: string | null
           devices_found?: number
           hostname?: string
@@ -5164,7 +5164,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
-          connector_id?: string | null
+          connector_id?: string
           created_at?: string | null
           devices_found?: number
           hostname?: string
