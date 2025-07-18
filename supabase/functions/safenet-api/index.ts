@@ -180,12 +180,16 @@ serve(async (req) => {
             connector_id: connector.connector_id,
             target_ip: scanData.network_ranges[0] || 'unknown',
             scan_type: scanData.scan_type,
+            scan_status: 'completed', // Mark as completed immediately
             network_ranges: scanData.network_ranges,
             devices_found: scanData.devices_found,
             scan_duration: scanData.scan_duration,
             scanned_at: new Date().toISOString(),
+            completed_at: new Date().toISOString(), // Add completion time
             hostname: scanData.hostname,
-            results: scanData.results
+            results: scanData.results,
+            vulnerabilities_found: 0,
+            risk_score: 0
           })
           .select()
           .single();
@@ -241,8 +245,7 @@ serve(async (req) => {
           const { error: deviceError } = await supabase
             .from('safenet_devices')
             .upsert(deviceInserts, { 
-              onConflict: 'ip_address,user_id',
-              ignoreDuplicates: false 
+              onConflict: 'ip_address,user_id' // Now this constraint exists
             });
 
           if (deviceError) {
