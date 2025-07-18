@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSafeNetData, SafeNetDevice } from "@/hooks/useSafeNetData";
+import { AgentInstallationPanel } from "./AgentInstallationPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -429,6 +430,7 @@ export const DeviceManagementPanel = () => {
                     <TabsTrigger value="overview">Overview</TabsTrigger>
                     <TabsTrigger value="services">Services ({deviceServices.length})</TabsTrigger>
                     <TabsTrigger value="vulnerabilities">Vulnerabilities ({deviceVulns.length})</TabsTrigger>
+                    <TabsTrigger value="agent">Agent Installation</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="overview" className="space-y-4">
@@ -580,6 +582,13 @@ export const DeviceManagementPanel = () => {
                         </p>
                       )}
                     </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="agent">
+                    <AgentInstallationPanel 
+                      selectedDevice={device}
+                      connectorKey={`sk-safenet-${device.user_id?.slice(0,8) || 'demo'}-${Math.random().toString(36).substring(2, 8)}`}
+                    />
                   </TabsContent>
                 </Tabs>
               );
