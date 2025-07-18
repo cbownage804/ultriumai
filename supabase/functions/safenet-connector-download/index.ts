@@ -27,33 +27,136 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Enhanced modules (install automatically if missing)
-REQUIRED_MODULES = ['requests', 'psutil', 'netifaces']
+REQUIRED_MODULES = ['requests', 'psutil', 'netifaces', 'python-nmap', 'schedule', 'ipaddress']
 OPTIONAL_MODULES = ['pysnmp', 'wmi', 'paramiko']
 
-def install_module(module_name):
-    """Install a Python module using pip"""
-    try:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name])
+def install_build_tools_windows():
+    """Install Visual C++ build tools on Windows"""
+    if platform.system() != 'Windows':
         return True
+        
+    print("Installing Microsoft Visual C++ Build Tools for Python compilation...")
+    try:
+        # Method 1: Try chocolatey
+        result = subprocess.run(['choco', 'install', 'visualstudio2022buildtools', 
+                               '--include-recommended', '-y'], 
+                              capture_output=True, text=True, timeout=300)
+        if result.returncode == 0:
+            print("Build tools installed via Chocolatey")
+            return True
     except:
+        pass
+    
+    try:
+        # Method 2: Download and install VS Build Tools
+        import urllib.request
+        import tempfile
+        
+        build_tools_url = "https://aka.ms/vs/17/release/vs_buildtools.exe"
+        temp_dir = tempfile.gettempdir()
+        installer_path = os.path.join(temp_dir, "vs_buildtools.exe")
+        
+        print("Downloading Visual Studio Build Tools installer...")
+        urllib.request.urlretrieve(build_tools_url, installer_path)
+        
+        print("Installing build tools (this may take 5-10 minutes)...")
+        result = subprocess.run([installer_path, "--quiet", "--wait", 
+                               "--add", "Microsoft.VisualStudio.Workload.VCTools",
+                               "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+                               "--add", "Microsoft.VisualStudio.Component.Windows10SDK.19041"], 
+                              timeout=600)
+        
+        if result.returncode == 0:
+            print("Build tools installed successfully")
+            return True
+            
+    except Exception as e:
+        print(f"Failed to install build tools: {e}")
+    
+    print("Could not install build tools automatically.")
+    print("Please manually install Microsoft C++ Build Tools from:")
+    print("https://visualstudio.microsoft.com/visual-cpp-build-tools/")
+    print("Make sure to select 'C++ build tools' workload during installation.")
+    return False
+
+def install_module(module_name):
+    """Install a Python module using pip with enhanced error handling"""
+    try:
+        print(f"Installing {module_name}...")
+        
+        # Special handling for netifaces on Windows
+        if module_name == 'netifaces' and platform.system() == 'Windows':
+            # Try binary wheel first
+            try:
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', 
+                                     'netifaces', '--only-binary=all'], 
+                                    timeout=120)
+                print(f"Successfully installed {module_name} (binary)")
+                return True
+            except:
+                print("Binary wheel not available, installing build tools...")
+                if not install_build_tools_windows():
+                    return False
+                # Now try to install from source
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', 
+                                     'netifaces', '--no-binary=netifaces'], 
+                                    timeout=300)
+                print(f"Successfully installed {module_name} (from source)")
+                return True
+        else:
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], 
+                                timeout=120)
+            print(f"Successfully installed {module_name}")
+            return True
+            
+    except subprocess.TimeoutExpired:
+        print(f"Timeout installing {module_name}")
+        return False
+    except Exception as e:
+        print(f"Failed to install {module_name}: {e}")
         return False
 
 def check_and_install_modules():
     """Check and install required modules"""
+    # Upgrade pip first
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
+    except:
+        pass
+        
     for module in REQUIRED_MODULES:
+        module_import_name = module
+        if module == 'python-nmap':
+            module_import_name = 'nmap'
+        elif module == 'ipaddress':
+            try:
+                import ipaddress
+                continue  # ipaddress is built-in for Python 3.3+
+            except ImportError:
+                pass
+                
         try:
-            __import__(module)
+            __import__(module_import_name)
+            print(f"Module {module} already installed")
         except ImportError:
             print(f"Installing required module: {module}")
             if not install_module(module):
-                print(f"Failed to install {module}. Please install manually.")
+                print(f"CRITICAL: Failed to install {module}")
                 return False
     return True
 
+print("SafeNet Connector Installer")
+print("===========================")
 if not check_and_install_modules():
-    print("Failed to install required modules")
+    print("\\nInstallation failed! Please check the errors above.")
+    print("You may need to:")
+    print("1. Run as administrator (Windows)")
+    print("2. Install Visual C++ Build Tools manually")
+    print("3. Update Python pip: python -m pip install --upgrade pip")
     input("Press Enter to exit...")
     sys.exit(1)
+
+print("\\nAll required modules installed successfully!")
 
 import requests
 import psutil
