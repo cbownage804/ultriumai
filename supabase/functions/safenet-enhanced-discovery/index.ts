@@ -271,8 +271,7 @@ async function discoverViaNmap(ip: string): Promise<Partial<DeviceInfo>> {
             name: getServiceName(port),
             port: port,
             status: 'open',
-            version: getServiceVersion(port),
-            banner: response.headers.get('server') || 'Unknown'
+            banner: response.headers.get('server') || 'Detected'
           });
         }
       } catch (e) {
@@ -282,26 +281,16 @@ async function discoverViaNmap(ip: string): Promise<Partial<DeviceInfo>> {
 
     await Promise.allSettled(portScanPromises);
 
-    // Try to get MAC address via ARP (simplified)
-    let macAddress = null;
-    try {
-      // In a real implementation, this would use ARP tables or direct network interfaces
-      macAddress = generateMacAddress();
-    } catch (e) {
-      // MAC address not available
-    }
-
     const deviceInfo: Partial<DeviceInfo> = {
       discovery_method: ['nmap'],
       open_ports: openPorts,
       services: services,
-      mac_address: macAddress,
       device_metadata: {
         nmap_scan: true,
         discovery_timestamp: new Date().toISOString(),
         ports_scanned: commonPorts.length,
         ports_open: openPorts.length,
-        scan_technique: 'TCP SYN scan'
+        scan_technique: 'TCP connection scan'
       }
     };
 
@@ -344,31 +333,7 @@ function getServiceName(port: number): string {
   return serviceMap[port] || 'unknown';
 }
 
-function getServiceVersion(port: number): string {
-  const versionMap: { [key: number]: string } = {
-    22: 'OpenSSH 8.2',
-    53: 'ISC BIND 9.16',
-    80: 'Apache 2.4.41',
-    135: 'Microsoft RPC',
-    139: 'Samba NetBIOS',
-    443: 'nginx 1.18.0',
-    445: 'Samba 4.11.6',
-    993: 'Dovecot imapd',
-    995: 'Dovecot pop3d'
-  };
-  return versionMap[port] || 'unknown';
-}
-
-function generateMacAddress(): string {
-  const hexChars = '0123456789ABCDEF';
-  let mac = '';
-  for (let i = 0; i < 6; i++) {
-    if (i > 0) mac += ':';
-    mac += hexChars[Math.floor(Math.random() * 16)];
-    mac += hexChars[Math.floor(Math.random() * 16)];
-  }
-  return mac;
-}
+// No fake data generation - only return what can be actually discovered
 
 // Main discovery orchestrator
 async function performEnhancedDiscovery(request: EnhancedDiscoveryRequest): Promise<DeviceInfo> {
