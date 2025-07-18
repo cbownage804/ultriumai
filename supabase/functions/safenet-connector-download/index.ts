@@ -7,8 +7,15 @@ const corsHeaders = {
 
 function generateWindowsInstaller(agentId: string | null, clientId: string | null): string {
   return `@echo off
+setlocal enabledelayedexpansion
 REM SafeNet Connector Installer for Windows
 title SafeNet Connector Installer
+
+REM Keep window open no matter what happens
+set "KEEP_OPEN=1"
+
+:main
+cls
 echo.
 echo ====================================
 echo SafeNet Connector Installer v2.0
@@ -18,29 +25,62 @@ echo Agent ID: ${agentId || 'auto-generated'}
 echo Client ID: ${clientId || 'default'}
 echo.
 
-REM Check if Python is installed
-python --version >nul 2>&1
+echo Checking system requirements...
+echo.
+
+REM Check if Python is installed with detailed output
+echo Checking for Python installation...
+python --version 2>nul
 if errorlevel 1 (
-    echo ERROR: Python is not installed or not in PATH
+    echo.
+    echo [ERROR] Python is not installed or not in PATH
     echo.
     echo Please install Python 3.7+ from: https://www.python.org/downloads/
     echo Make sure to check "Add Python to PATH" during installation
     echo.
-    pause
-    exit /b 1
+    echo After installing Python, run this installer again.
+    echo.
+    goto end_with_pause
 )
 
-echo ✓ Python found
-echo Installing SafeNet Connector...
+echo [SUCCESS] Python found!
+for /f "tokens=*" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
+echo Version: !PYTHON_VERSION!
 echo.
 
-REM Install required packages
+echo Checking pip installation...
+python -m pip --version >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] pip is not available
+    echo Please reinstall Python with pip included
+    goto end_with_pause
+)
+
+echo [SUCCESS] pip found!
+echo.
+
 echo Installing required Python packages...
-pip install requests psutil
+echo This may take a moment...
+echo.
+
+python -m pip install requests psutil --quiet --disable-pip-version-check
+if errorlevel 1 (
+    echo [WARNING] Some packages may have failed to install
+    echo The connector will still attempt to run
+)
+
+echo [SUCCESS] Package installation completed!
+echo.
 
 REM Create SafeNet directory
-if not exist "%USERPROFILE%\\SafeNet" mkdir "%USERPROFILE%\\SafeNet"
-cd /d "%USERPROFILE%\\SafeNet"
+echo Creating SafeNet directory...
+set "SAFENET_DIR=%USERPROFILE%\\SafeNet"
+if not exist "!SAFENET_DIR!" mkdir "!SAFENET_DIR!"
+echo Directory: !SAFENET_DIR!
+echo.
+
+echo Creating connector script...
+pushd "!SAFENET_DIR!"
 
 REM Create the connector script
 echo Creating connector script...
@@ -144,17 +184,40 @@ echo if __name__ == '__main__':
 echo     main^(^)
 ) > safenet_connector.py
 
+popd
+
 echo.
-echo ✓ SafeNet Connector installed successfully!
+echo [SUCCESS] SafeNet Connector installed successfully!
 echo.
-echo To run the connector later:
-echo   cd "%USERPROFILE%\\SafeNet"
-echo   python safenet_connector.py
+echo Installation complete! The connector has been saved to:
+echo   !SAFENET_DIR!\\safenet_connector.py
+echo.
+echo To run the connector:
+echo   1. Open Command Prompt as Administrator (recommended)
+echo   2. Navigate to: !SAFENET_DIR!
+echo   3. Run: python safenet_connector.py
 echo.
 echo Starting SafeNet Connector now...
-python safenet_connector.py
+echo.
 
-pause`;
+REM Try to run the connector
+python "!SAFENET_DIR!\\safenet_connector.py"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Failed to start connector
+    echo Please try running manually from the SafeNet directory
+)
+
+goto end_with_pause
+
+:end_with_pause
+echo.
+echo ===========================================
+echo Installation process finished.
+echo Press any key to close this window...
+echo ===========================================
+pause >nul
+exit /b 0`;
 }
 
 function generateMacOSInstaller(agentId: string | null, clientId: string | null): string {
