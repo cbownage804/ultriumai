@@ -5139,7 +5139,7 @@ export type Database = {
           scanned_at: string
           target_ip: string
           updated_at: string
-          user_id: string | null
+          user_id: string
           vulnerabilities_found: number | null
         }
         Insert: {
@@ -5159,7 +5159,7 @@ export type Database = {
           scanned_at?: string
           target_ip: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
           vulnerabilities_found?: number | null
         }
         Update: {
@@ -5179,7 +5179,7 @@ export type Database = {
           scanned_at?: string
           target_ip?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           vulnerabilities_found?: number | null
         }
         Relationships: [
