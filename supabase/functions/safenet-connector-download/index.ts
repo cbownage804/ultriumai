@@ -270,6 +270,18 @@ if not check_and_install_modules():
         print("\\nContinuing with partial installation...")
 
 print("\\n✓ Module installation completed!")
+print("\\nStarting SafeNet Connector...")
+
+# Prevent window from closing immediately
+import atexit
+def pause_before_exit():
+    try:
+        input("\\nPress Enter to exit...")
+    except:
+        import time
+        time.sleep(5)
+
+atexit.register(pause_before_exit)
 
 import requests
 import psutil
