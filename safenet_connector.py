@@ -1,554 +1,638 @@
 #!/usr/bin/env python3
 """
 SafeNet Network Connector
-A lightweight network scanner that runs on client networks and reports to SafeNet dashboard.
+Advanced network scanner and security assessment tool.
 """
 
-import asyncio
-import aiohttp
-import json
-import logging
-import nmap
-import psutil
 import socket
 import subprocess
-import sys
+import platform
 import time
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-import argparse
-import schedule
+import json
+import logging
+import os
+import sys
+import ipaddress
+import concurrent.futures
 import threading
+from datetime import datetime
+from pathlib import Path
+import argparse
 
-# Configuration
-SAFENET_API_URL = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api"
-CONNECTOR_KEY = "your-connector-key"  # Replace with actual connector key from SafeNet dashboard
+try:
+    import requests
+    import nmap
+    import psutil
+except ImportError as e:
+    print(f"ERROR: Required package not installed: {e}")
+    print("Run: pip install -r safenet-requirements.txt")
+    sys.exit(1)
+
+# ============================
+# CONFIGURATION
+# ============================
+
+SAFENET_API_URL = "https://nsyobmjpdpvesjwdphlh.functions.supabase.co/safenet-api"
 SCAN_INTERVAL = 300  # 5 minutes
-HOSTNAME = socket.gethostname()
+CONNECTOR_VERSION = "2.0.0"
+MAX_THREADS = 50
+TIMEOUT_CONNECT = 3
+TIMEOUT_SCAN = 30
 
-class SafeNetConnector:
-    def __init__(self, connector_key: str, api_url: str):
-        self.connector_key = connector_key
-        self.api_url = api_url.rstrip('/')
-        self.connector_id = None
-        self.logger = self.setup_logging()
-        
-        try:
-            self.nm = nmap.PortScanner()
-        except nmap.PortScannerError:
-            self.logger.error("Nmap not found. Please install nmap.")
-            sys.exit(1)
-        
-    def setup_logging(self) -> logging.Logger:
-        """Setup logging configuration"""
-        logger = logging.getLogger('safenet_connector')
-        logger.setLevel(logging.INFO)
-        
-        # Create console handler
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        
-        # Create file handler
-        try:
-            file_handler = logging.FileHandler('safenet_connector.log')
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-        except Exception as e:
-            logger.warning(f"Could not create log file: {e}")
-        
-        return logger
+# ============================
+# LOGGING SETUP
+# ============================
 
-    def get_network_interfaces(self) -> List[Dict[str, Any]]:
-        """Get all network interfaces and their details"""
-        interfaces = []
+def setup_logging():
+    """Setup comprehensive logging"""
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+    
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    
+    # File handler
+    file_handler = logging.FileHandler(
+        log_dir / f"safenet_connector_{datetime.now().strftime('%Y%m%d')}.log"
+    )
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
+    
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.INFO)
+    
+    # Root logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
+
+logger = setup_logging()
+
+# ============================
+# NETWORK DISCOVERY
+# ============================
+
+class NetworkScanner:
+    def __init__(self, api_key):
+        self.api_key = api_key
+        self.hostname = socket.gethostname()
+        self.nm = nmap.PortScanner()
+        self.discovered_devices = []
+        self.network_ranges = []
+        
+    def get_local_networks(self):
+        """Discover local network ranges"""
+        networks = []
         
         try:
             for interface, addrs in psutil.net_if_addrs().items():
-                interface_info = {
-                    'name': interface,
-                    'addresses': [],
-                    'stats': {}
-                }
-                
                 for addr in addrs:
-                    if addr.family == socket.AF_INET:
-                        interface_info['addresses'].append({
-                            'ip': addr.address,
-                            'netmask': addr.netmask,
-                            'broadcast': addr.broadcast
-                        })
-                
-                # Get interface statistics
+                    if addr.family == socket.AF_INET and not addr.address.startswith('127.'):
+                        try:
+                            # Calculate network from IP and netmask
+                            network = ipaddress.IPv4Network(
+                                f"{addr.address}/{addr.netmask}", 
+                                strict=False
+                            )
+                            if network.is_private:
+                                networks.append(str(network))
+                                logger.info(f"Found local network: {network} on {interface}")
+                        except (ValueError, AttributeError):
+                            continue
+                            
+        except Exception as e:
+            logger.error(f"Error discovering networks: {e}")
+            # Fallback to common private networks
+            networks = ["192.168.1.0/24", "10.0.0.0/24"]
+            
+        return list(set(networks))  # Remove duplicates
+    
+    def ping_sweep(self, network):
+        """Perform ping sweep to find live hosts"""
+        logger.info(f"Performing ping sweep on {network}")
+        live_hosts = []
+        
+        try:
+            net = ipaddress.IPv4Network(network)
+            if net.num_addresses > 1024:
+                logger.warning(f"Network {network} too large, limiting scan")
+                # Limit to first 1024 hosts for large networks
+                hosts = list(net.hosts())[:1024]
+            else:
+                hosts = list(net.hosts())
+            
+            def ping_host(ip):
                 try:
-                    stats = psutil.net_if_stats()[interface]
-                    interface_info['stats'] = {
-                        'is_up': stats.isup,
-                        'duplex': stats.duplex,
-                        'speed': stats.speed,
-                        'mtu': stats.mtu
-                    }
-                except KeyError:
+                    if platform.system().lower() == "windows":
+                        result = subprocess.run(
+                            ["ping", "-n", "1", "-w", "1000", str(ip)],
+                            capture_output=True, timeout=5
+                        )
+                    else:
+                        result = subprocess.run(
+                            ["ping", "-c", "1", "-W", "1", str(ip)],
+                            capture_output=True, timeout=5
+                        )
+                    
+                    if result.returncode == 0:
+                        return str(ip)
+                except:
                     pass
-                
-                if interface_info['addresses']:
-                    interfaces.append(interface_info)
-                    
-        except Exception as e:
-            self.logger.error(f"Error getting network interfaces: {e}")
-        
-        return interfaces
-
-    def discover_network_range(self) -> List[str]:
-        """Discover network ranges to scan"""
-        ranges = []
-        
-        try:
-            interfaces = self.get_network_interfaces()
-            
-            for interface in interfaces:
-                for addr in interface['addresses']:
-                    ip = addr['ip']
-                    netmask = addr['netmask']
-                    
-                    # Skip loopback
-                    if ip.startswith('127.'):
-                        continue
-                    
-                    # Calculate network range
-                    import ipaddress
-                    network = ipaddress.IPv4Network(f"{ip}/{netmask}", strict=False)
-                    ranges.append(str(network))
-                    
-        except Exception as e:
-            self.logger.error(f"Error discovering network ranges: {e}")
-            # Fallback to common ranges
-            ranges = ['192.168.1.0/24', '192.168.0.0/24', '10.0.0.0/24']
-        
-        return ranges
-
-    def scan_network(self, network_range: str) -> Dict[str, Any]:
-        """Perform network scan using nmap"""
-        self.logger.info(f"Scanning network range: {network_range}")
-        
-        try:
-            # Perform host discovery
-            self.nm.scan(hosts=network_range, arguments='-sn')
-            hosts = list(self.nm.all_hosts())
-            
-            devices = []
-            
-            for host in hosts:
-                try:
-                    device_info = self.scan_host(host)
-                    if device_info:
-                        devices.append(device_info)
-                except Exception as e:
-                    self.logger.warning(f"Error scanning host {host}: {e}")
-            
-            return {
-                'network_range': network_range,
-                'scan_type': 'comprehensive',
-                'devices_found': len(devices),
-                'timestamp': datetime.utcnow().isoformat(),
-                'devices': devices,
-                'scanner_info': {
-                    'hostname': HOSTNAME,
-                    'version': '1.0.0',
-                    'scan_duration': 0  # Will be calculated
-                }
-            }
-            
-        except Exception as e:
-            self.logger.error(f"Error scanning network {network_range}: {e}")
-            return {
-                'network_range': network_range,
-                'scan_type': 'comprehensive',
-                'devices_found': 0,
-                'timestamp': datetime.utcnow().isoformat(),
-                'devices': [],
-                'error': str(e)
-            }
-
-    def scan_host(self, host: str) -> Optional[Dict[str, Any]]:
-        """Perform detailed scan of a single host"""
-        try:
-            # Port scan
-            self.nm.scan(host, '1-1000', '-sV -O --version-detection')
-            
-            if host not in self.nm.all_hosts():
                 return None
             
-            host_info = self.nm[host]
+            # Parallel ping sweep
+            with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+                futures = [executor.submit(ping_host, ip) for ip in hosts]
+                for future in concurrent.futures.as_completed(futures):
+                    result = future.result()
+                    if result:
+                        live_hosts.append(result)
+                        
+        except Exception as e:
+            logger.error(f"Error in ping sweep: {e}")
             
-            # Get open ports
-            open_ports = []
-            services = []
+        logger.info(f"Found {len(live_hosts)} live hosts in {network}")
+        return live_hosts
+    
+    def scan_device(self, ip):
+        """Comprehensive device scanning"""
+        logger.debug(f"Scanning device: {ip}")
+        device_info = {
+            "ip_address": ip,
+            "hostname": "unknown",
+            "mac_address": None,
+            "device_type": "unknown",
+            "os_family": "unknown",
+            "os_version": None,
+            "manufacturer": None,
+            "open_ports": [],
+            "services": [],
+            "vulnerabilities": [],
+            "risk_level": "low",
+            "last_seen": datetime.now().isoformat(),
+            "response_time": None
+        }
+        
+        try:
+            start_time = time.time()
             
-            for protocol in host_info.all_protocols():
-                ports = host_info[protocol].keys()
-                for port in ports:
-                    port_info = host_info[protocol][port]
-                    if port_info['state'] == 'open':
-                        open_ports.append(port)
-                        services.append({
-                            'port': port,
-                            'protocol': protocol,
-                            'service': port_info.get('name', 'unknown'),
-                            'version': port_info.get('version', ''),
-                            'product': port_info.get('product', '')
-                        })
+            # Try to resolve hostname
+            try:
+                device_info["hostname"] = socket.gethostbyaddr(ip)[0]
+            except:
+                device_info["hostname"] = f"device-{ip.split('.')[-1]}"
             
-            # Detect vulnerabilities based on services
-            vulnerabilities = self.detect_vulnerabilities(services)
+            # Port scan with nmap
+            try:
+                scan_result = self.nm.scan(
+                    ip, 
+                    '22,23,25,53,80,110,143,443,993,995,1433,3389,5432,8080,8443',
+                    arguments='-sS -O --version-intensity 5'
+                )
+                
+                if ip in scan_result['scan']:
+                    host_data = scan_result['scan'][ip]
+                    
+                    # Extract port information
+                    if 'tcp' in host_data:
+                        for port, port_data in host_data['tcp'].items():
+                            if port_data['state'] == 'open':
+                                device_info["open_ports"].append(port)
+                                
+                                service_info = {
+                                    "port": port,
+                                    "protocol": "tcp",
+                                    "service": port_data.get('name', 'unknown'),
+                                    "version": port_data.get('version', ''),
+                                    "product": port_data.get('product', ''),
+                                    "extrainfo": port_data.get('extrainfo', '')
+                                }
+                                device_info["services"].append(service_info)
+                    
+                    # OS Detection
+                    if 'osmatch' in host_data and host_data['osmatch']:
+                        best_match = host_data['osmatch'][0]
+                        device_info["os_family"] = self.classify_os(best_match['name'])
+                        device_info["os_version"] = best_match['name']
+                        device_info["manufacturer"] = self.extract_manufacturer(best_match['name'])
+                    
+                    # MAC Address
+                    if 'addresses' in host_data and 'mac' in host_data['addresses']:
+                        device_info["mac_address"] = host_data['addresses']['mac']
+                        device_info["manufacturer"] = self.get_mac_vendor(device_info["mac_address"])
+                        
+            except Exception as scan_error:
+                logger.warning(f"Nmap scan failed for {ip}: {scan_error}")
+                # Fallback to simple port check
+                device_info["open_ports"] = self.simple_port_scan(ip)
             
-            # Determine device type
-            device_type = self.determine_device_type(open_ports, services)
+            # Device classification
+            device_info["device_type"] = self.classify_device(device_info)
             
-            # Calculate risk level
-            risk_level = self.calculate_risk_level(vulnerabilities, open_ports)
+            # Vulnerability assessment
+            device_info["vulnerabilities"] = self.assess_vulnerabilities(device_info)
+            device_info["risk_level"] = self.calculate_risk_level(device_info)
             
-            return {
-                'ip_address': host,
-                'hostname': host_info.hostname() if host_info.hostname() else f"device-{host.split('.')[-1]}",
-                'device_type': device_type,
-                'mac_address': self.get_mac_address(host),
-                'os_info': self.get_os_info(host_info),
-                'open_ports': open_ports,
-                'services': services,
-                'vulnerabilities': vulnerabilities,
-                'risk_level': risk_level,
-                'last_seen': datetime.utcnow().isoformat(),
-                'status': 'online'
-            }
+            # Response time
+            device_info["response_time"] = round((time.time() - start_time) * 1000, 2)
             
         except Exception as e:
-            self.logger.warning(f"Error scanning host {host}: {e}")
-            return None
-
-    def get_mac_address(self, ip: str) -> Optional[str]:
-        """Get MAC address for an IP"""
-        try:
-            # Try ARP table
-            result = subprocess.run(['arp', '-n', ip], capture_output=True, text=True)
-            if result.returncode == 0:
-                lines = result.stdout.split('\n')
-                for line in lines:
-                    if ip in line:
-                        parts = line.split()
-                        if len(parts) >= 3:
-                            return parts[2]
-        except:
-            pass
-        return None
-
-    def get_os_info(self, host_info) -> str:
-        """Extract OS information from nmap results"""
-        try:
-            if 'osmatch' in host_info:
-                osmatch = host_info['osmatch']
-                if osmatch:
-                    return osmatch[0]['name']
-        except:
-            pass
-        return 'Unknown'
-
-    def determine_device_type(self, open_ports: List[int], services: List[Dict]) -> str:
-        """Determine device type based on open ports and services"""
-        # Web server
-        if 80 in open_ports or 443 in open_ports:
-            return 'server'
+            logger.error(f"Error scanning device {ip}: {e}")
+            
+        return device_info
+    
+    def simple_port_scan(self, ip):
+        """Fallback simple port scanner"""
+        open_ports = []
+        common_ports = [22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 445, 993, 995, 1433, 3389, 5432, 8080]
         
-        # SSH server
-        if 22 in open_ports:
-            return 'server'
+        def scan_port(port):
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(TIMEOUT_CONNECT)
+                result = sock.connect_ex((ip, port))
+                sock.close()
+                return port if result == 0 else None
+            except:
+                return None
         
-        # Database
-        if any(port in open_ports for port in [3306, 5432, 1433, 27017]):
-            return 'database'
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            futures = [executor.submit(scan_port, port) for port in common_ports]
+            for future in concurrent.futures.as_completed(futures):
+                result = future.result()
+                if result:
+                    open_ports.append(result)
+                    
+        return sorted(open_ports)
+    
+    def classify_os(self, os_string):
+        """Classify operating system family"""
+        os_lower = os_string.lower()
+        if any(term in os_lower for term in ['windows', 'microsoft']):
+            return 'windows'
+        elif any(term in os_lower for term in ['linux', 'ubuntu', 'debian', 'centos', 'red hat']):
+            return 'linux'
+        elif any(term in os_lower for term in ['mac', 'macos', 'darwin']):
+            return 'macos'
+        elif any(term in os_lower for term in ['cisco', 'router', 'switch']):
+            return 'network_device'
+        elif any(term in os_lower for term in ['printer', 'canon', 'hp', 'epson']):
+            return 'printer'
+        else:
+            return 'unknown'
+    
+    def extract_manufacturer(self, os_string):
+        """Extract device manufacturer from OS string"""
+        manufacturers = {
+            'microsoft': 'Microsoft',
+            'cisco': 'Cisco',
+            'hp': 'HP',
+            'dell': 'Dell',
+            'apple': 'Apple',
+            'canon': 'Canon',
+            'epson': 'Epson',
+            'brother': 'Brother',
+            'netgear': 'Netgear',
+            'linksys': 'Linksys',
+            'dlink': 'D-Link'
+        }
         
-        # Router/Network device
-        if 23 in open_ports or 161 in open_ports:
-            return 'router'
+        os_lower = os_string.lower()
+        for key, value in manufacturers.items():
+            if key in os_lower:
+                return value
+        return "Unknown"
+    
+    def get_mac_vendor(self, mac_address):
+        """Get vendor from MAC address (simplified)"""
+        # This would typically use an OUI database
+        mac_vendors = {
+            '00:50:56': 'VMware',
+            '08:00:27': 'VirtualBox',
+            '00:0C:29': 'VMware',
+            '00:16:3E': 'Xen',
+            '00:1B:21': 'Intel'
+        }
         
-        # Windows workstation
-        if 3389 in open_ports or 445 in open_ports:
-            return 'workstation'
+        oui = mac_address[:8].upper()
+        return mac_vendors.get(oui, "Unknown")
+    
+    def classify_device(self, device_info):
+        """Classify device type based on gathered information"""
+        open_ports = device_info["open_ports"]
+        os_family = device_info["os_family"]
+        hostname = device_info["hostname"].lower()
+        
+        # Server classification
+        if any(port in open_ports for port in [22, 23, 80, 443, 1433, 3389, 5432]):
+            if any(term in hostname for term in ['server', 'srv', 'db', 'web', 'mail']):
+                return 'server'
+            elif 3389 in open_ports or os_family == 'windows':
+                return 'server'
+        
+        # Network device
+        if any(port in open_ports for port in [23, 80, 443]) and os_family == 'network_device':
+            return 'network_device'
         
         # Printer
-        if 631 in open_ports or 9100 in open_ports:
+        if any(port in open_ports for port in [80, 443, 9100]) and 'printer' in hostname:
             return 'printer'
         
-        return 'unknown'
-
-    def detect_vulnerabilities(self, services: List[Dict]) -> List[str]:
-        """Detect potential vulnerabilities based on services"""
-        vulnerabilities = []
+        # IoT device
+        if len(open_ports) <= 2 and any(port in open_ports for port in [80, 443]):
+            return 'iot'
         
-        for service in services:
-            port = service['port']
-            name = service['service'].lower()
-            version = service['version'].lower()
-            
-            # Common vulnerability checks
-            if port == 21 and 'ftp' in name:
-                vulnerabilities.append('FTP-CLEARTEXT-AUTH')
-            
-            if port == 23 and 'telnet' in name:
-                vulnerabilities.append('TELNET-CLEARTEXT-AUTH')
-            
-            if port == 80 and 'http' in name:
-                vulnerabilities.append('HTTP-CLEARTEXT')
-            
-            if port == 445 and 'smb' in name:
-                vulnerabilities.append('SMB-EXPOSURE')
-            
-            if port == 3389 and 'rdp' in name:
-                vulnerabilities.append('RDP-EXPOSURE')
-            
-            # Version-specific checks
-            if 'apache' in version and any(v in version for v in ['2.2', '2.0']):
-                vulnerabilities.append('APACHE-OUTDATED')
-            
-            if 'openssh' in version and any(v in version for v in ['7.0', '6.', '5.']):
-                vulnerabilities.append('SSH-OUTDATED')
+        # Workstation (default for Windows/Mac with minimal services)
+        if os_family in ['windows', 'macos'] and len(open_ports) <= 3:
+            return 'workstation'
+        
+        return 'unknown'
+    
+    def assess_vulnerabilities(self, device_info):
+        """Assess device vulnerabilities"""
+        vulnerabilities = []
+        open_ports = device_info["open_ports"]
+        services = device_info["services"]
+        
+        # Check for risky services
+        if 23 in open_ports:  # Telnet
+            vulnerabilities.append({
+                "type": "cleartext_authentication",
+                "severity": "high",
+                "description": "Telnet service allows cleartext authentication",
+                "port": 23,
+                "recommendation": "Disable Telnet and use SSH instead"
+            })
+        
+        if 21 in open_ports:  # FTP
+            vulnerabilities.append({
+                "type": "cleartext_authentication",
+                "severity": "medium",
+                "description": "FTP service may allow cleartext authentication",
+                "port": 21,
+                "recommendation": "Use SFTP or FTPS instead"
+            })
+        
+        if 80 in open_ports and 443 not in open_ports:  # HTTP without HTTPS
+            vulnerabilities.append({
+                "type": "unencrypted_web",
+                "severity": "medium",
+                "description": "Web service not using HTTPS encryption",
+                "port": 80,
+                "recommendation": "Enable HTTPS and redirect HTTP traffic"
+            })
+        
+        if 3389 in open_ports:  # RDP
+            vulnerabilities.append({
+                "type": "remote_desktop_exposed",
+                "severity": "high",
+                "description": "RDP service exposed to network",
+                "port": 3389,
+                "recommendation": "Restrict RDP access and use VPN"
+            })
+        
+        if 445 in open_ports:  # SMB
+            vulnerabilities.append({
+                "type": "smb_exposed",
+                "severity": "medium",
+                "description": "SMB file sharing exposed",
+                "port": 445,
+                "recommendation": "Secure SMB configuration and access controls"
+            })
+        
+        # Check for database services
+        db_ports = [1433, 3306, 5432, 27017]
+        exposed_db_ports = [port for port in db_ports if port in open_ports]
+        for port in exposed_db_ports:
+            vulnerabilities.append({
+                "type": "database_exposed",
+                "severity": "high",
+                "description": f"Database service exposed on port {port}",
+                "port": port,
+                "recommendation": "Restrict database access to authorized hosts only"
+            })
         
         return vulnerabilities
-
-    def calculate_risk_level(self, vulnerabilities: List[str], open_ports: List[int]) -> str:
-        """Calculate risk level based on findings"""
-        critical_vulns = ['RDP-EXPOSURE', 'SMB-EXPOSURE', 'TELNET-CLEARTEXT-AUTH']
-        high_vulns = ['FTP-CLEARTEXT-AUTH', 'HTTP-CLEARTEXT', 'SSH-OUTDATED']
+    
+    def calculate_risk_level(self, device_info):
+        """Calculate overall risk level"""
+        vulnerabilities = device_info["vulnerabilities"]
+        open_ports = device_info["open_ports"]
         
-        if any(vuln in vulnerabilities for vuln in critical_vulns):
-            return 'critical'
+        if not vulnerabilities and len(open_ports) <= 2:
+            return "low"
         
-        if any(vuln in vulnerabilities for vuln in high_vulns):
-            return 'high'
+        critical_vulns = [v for v in vulnerabilities if v["severity"] == "critical"]
+        high_vulns = [v for v in vulnerabilities if v["severity"] == "high"]
         
-        if len(vulnerabilities) > 0:
-            return 'medium'
-        
-        if len(open_ports) > 10:
-            return 'low'
-        
-        return 'safe'
-
-    async def register_connector(self) -> bool:
-        """Register connector with SafeNet API"""
-        try:
-            system_info = {
-                'os': sys.platform,
-                'hostname': HOSTNAME,
-                'python_version': sys.version,
-                'interfaces': self.get_network_interfaces()
-            }
-            
-            registration_data = {
-                'connector_key': self.connector_key,
-                'connector_name': f"SafeNet Connector - {HOSTNAME}",
-                'client_name': HOSTNAME,
-                'version': '1.0.0',
-                'system_info': system_info,
-                'network_info': {
-                    'discovered_ranges': self.discover_network_range()
-                }
-            }
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.api_url}/register",
-                    json=registration_data,
-                    timeout=aiohttp.ClientTimeout(total=30)
-                ) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        self.connector_id = result.get('connector_id')
-                        self.logger.info(f"Connector registered successfully. ID: {self.connector_id}")
-                        return True
-                    else:
-                        error_text = await response.text()
-                        self.logger.error(f"Failed to register connector: {response.status} - {error_text}")
-                        return False
-                        
-        except Exception as e:
-            self.logger.error(f"Error registering connector: {e}")
-            return False
-
-    async def send_heartbeat(self) -> bool:
-        """Send heartbeat to maintain connection status"""
-        try:
-            heartbeat_data = {
-                'connector_key': self.connector_key
-            }
-            
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.api_url}/heartbeat",
-                    json=heartbeat_data,
-                    timeout=aiohttp.ClientTimeout(total=10)
-                ) as response:
-                    return response.status == 200
-                        
-        except Exception as e:
-            self.logger.warning(f"Heartbeat failed: {e}")
-            return False
-
-    async def send_scan_results(self, scan_results: Dict[str, Any]) -> bool:
+        if critical_vulns:
+            return "critical"
+        elif high_vulns:
+            return "high"
+        elif vulnerabilities or len(open_ports) > 5:
+            return "medium"
+        else:
+            return "low"
+    
+    def send_scan_results(self, devices):
         """Send scan results to SafeNet API"""
         try:
-            # Prepare data for the new API format
-            scan_data = {
-                'connector_key': self.connector_key,
-                'scan_type': 'comprehensive',
-                'network_ranges': [],
-                'devices_found': 0,
-                'scan_duration': scan_results.get('scan_duration', 0),
-                'hostname': HOSTNAME,
-                'results': scan_results,
-                'devices': []
+            payload = {
+                "connector_key": self.api_key,
+                "scan_type": "comprehensive_discovery",
+                "hostname": self.hostname,
+                "network_ranges": self.network_ranges,
+                "devices_found": len(devices),
+                "scan_duration": 0,  # Will be calculated
+                "results": {
+                    "discovered": len(devices),
+                    "by_risk": {
+                        "low": len([d for d in devices if d["risk_level"] == "low"]),
+                        "medium": len([d for d in devices if d["risk_level"] == "medium"]),
+                        "high": len([d for d in devices if d["risk_level"] == "high"]),
+                        "critical": len([d for d in devices if d["risk_level"] == "critical"])
+                    }
+                },
+                "devices": devices
             }
             
-            # Extract network ranges and devices from results
-            if 'results' in scan_results and isinstance(scan_results['results'], list):
-                for result in scan_results['results']:
-                    if 'network_range' in result:
-                        scan_data['network_ranges'].append(result['network_range'])
-                    if 'devices' in result:
-                        for device in result['devices']:
-                            scan_data['devices'].append({
-                                'ip_address': device['ip_address'],
-                                'hostname': device['hostname'], 
-                                'device_type': device['device_type'],
-                                'mac_address': device.get('mac_address'),
-                                'os_info': device.get('os_info'),
-                                'open_ports': device.get('open_ports', []),
-                                'services': device.get('services', []),
-                                'vulnerabilities': device.get('vulnerabilities', []),
-                                'risk_level': device['risk_level'],
-                                'status': device['status'],
-                                'network_range': result['network_range']
-                            })
-                        scan_data['devices_found'] += len(result['devices'])
+            response = requests.post(
+                f"{SAFENET_API_URL}/scan-data",
+                json=payload,
+                timeout=30
+            )
             
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.api_url}/scan-data",
-                    json=scan_data,
-                    timeout=aiohttp.ClientTimeout(total=60)
-                ) as response:
-                    if response.status == 200:
-                        self.logger.info("Scan results sent successfully")
-                        return True
-                    else:
-                        error_text = await response.text()
-                        self.logger.error(f"Failed to send results: {response.status} - {error_text}")
-                        return False
-                        
-        except Exception as e:
-            self.logger.error(f"Error sending scan results: {e}")
-            return False
-
-    async def run_full_scan(self):
-        """Run a full network scan and send results"""
-        self.logger.info("Starting full network scan")
-        start_time = time.time()
-        
-        try:
-            # Discover network ranges
-            network_ranges = self.discover_network_range()
-            
-            all_results = []
-            
-            for network_range in network_ranges:
-                scan_result = self.scan_network(network_range)
-                scan_result['scan_duration'] = time.time() - start_time
-                all_results.append(scan_result)
-            
-            # Combine results
-            combined_result = {
-                'scan_type': 'full_network',
-                'timestamp': datetime.utcnow().isoformat(),
-                'hostname': HOSTNAME,
-                'networks_scanned': len(network_ranges),
-                'total_devices': sum(r['devices_found'] for r in all_results),
-                'scan_duration': time.time() - start_time,
-                'results': all_results
-            }
-            
-            # Send to SafeNet dashboard
-            success = await self.send_scan_results(combined_result)
-            
-            if success:
-                self.logger.info(f"Full scan completed successfully. Found {combined_result['total_devices']} devices")
+            if response.status_code == 200:
+                logger.info(f"Successfully sent {len(devices)} device results to SafeNet")
+                return True
             else:
-                self.logger.error("Failed to send scan results")
+                logger.error(f"Failed to send results: {response.status_code} - {response.text}")
+                return False
                 
         except Exception as e:
-            self.logger.error(f"Error during full scan: {e}")
+            logger.error(f"Error sending scan results: {e}")
+            return False
+    
+    def send_heartbeat(self):
+        """Send heartbeat to SafeNet API"""
+        try:
+            payload = {
+                "connector_key": self.api_key,
+                "hostname": self.hostname,
+                "version": CONNECTOR_VERSION,
+                "status": "active"
+            }
+            
+            response = requests.post(
+                f"{SAFENET_API_URL}/heartbeat",
+                json=payload,
+                timeout=10
+            )
+            
+            return response.status_code == 200
+            
+        except Exception as e:
+            logger.debug(f"Heartbeat failed: {e}")
+            return False
+    
+    def full_network_scan(self):
+        """Perform complete network scan"""
+        logger.info("Starting comprehensive network scan")
+        start_time = time.time()
+        
+        # Discover networks
+        self.network_ranges = self.get_local_networks()
+        if not self.network_ranges:
+            logger.error("No networks discovered")
+            return []
+        
+        all_devices = []
+        
+        # Scan each network
+        for network in self.network_ranges:
+            logger.info(f"Scanning network: {network}")
+            
+            # Find live hosts
+            live_hosts = self.ping_sweep(network)
+            
+            # Scan each live host
+            if live_hosts:
+                logger.info(f"Performing detailed scan of {len(live_hosts)} hosts")
+                
+                def scan_wrapper(ip):
+                    return self.scan_device(ip)
+                
+                with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+                    device_futures = [executor.submit(scan_wrapper, ip) for ip in live_hosts]
+                    for future in concurrent.futures.as_completed(device_futures):
+                        device = future.result()
+                        if device:
+                            all_devices.append(device)
+        
+        scan_duration = time.time() - start_time
+        logger.info(f"Scan completed in {scan_duration:.2f} seconds. Found {len(all_devices)} devices")
+        
+        # Update scan duration in results
+        for device in all_devices:
+            device["scan_duration"] = round(scan_duration, 2)
+        
+        return all_devices
 
-    async def run_scheduled_scans(self):
-        """Run the connector with scheduled scans"""
-        self.logger.info(f"Starting SafeNet Connector with {SCAN_INTERVAL}s interval")
-        
-        # Register connector first
-        if not await self.register_connector():
-            self.logger.error("Failed to register connector. Exiting.")
-            return
-        
-        async def run_scan():
-            # Send heartbeat
-            await self.send_heartbeat()
-            # Run scan
-            await self.run_full_scan()
-        
-        # Run initial scan
-        await run_scan()
-        
-        # Schedule regular scans
-        while True:
-            try:
-                await asyncio.sleep(SCAN_INTERVAL)
-                await run_scan()
-            except KeyboardInterrupt:
-                self.logger.info("Received shutdown signal")
-                break
-            except Exception as e:
-                self.logger.error(f"Error in scan loop: {e}")
-                await asyncio.sleep(10)  # Wait before retrying
+# ============================
+# MAIN APPLICATION
+# ============================
 
 def main():
-    parser = argparse.ArgumentParser(description='SafeNet Network Connector')
-    parser.add_argument('--connector-key', default=CONNECTOR_KEY, help='SafeNet Connector Key from dashboard')
-    parser.add_argument('--api-url', default=SAFENET_API_URL, help='SafeNet API URL')
-    parser.add_argument('--interval', type=int, default=SCAN_INTERVAL, help='Scan interval in seconds')
-    parser.add_argument('--test', action='store_true', help='Run a single test scan')
+    parser = argparse.ArgumentParser(description="SafeNet Network Connector")
+    parser.add_argument("--api-key", required=True, help="SafeNet API key")
+    parser.add_argument("--api-url", default=SAFENET_API_URL, help="SafeNet API URL")
+    parser.add_argument("--interval", type=int, default=SCAN_INTERVAL, help="Scan interval in seconds")
+    parser.add_argument("--test", action="store_true", help="Run single test scan")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
     
     args = parser.parse_args()
     
-    if not args.connector_key or args.connector_key == "your-connector-key":
-        print("Error: Please provide a valid connector key using --connector-key")
-        print("Generate a connector key from the SafeNet dashboard and use:")
-        print("python safenet_connector.py --connector-key snc_your_key_here")
-        sys.exit(1)
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
     
-    connector = SafeNetConnector(args.connector_key, args.api_url)
+    # Update global variables
+    global SAFENET_API_URL, SCAN_INTERVAL
+    SAFENET_API_URL = args.api_url
+    SCAN_INTERVAL = args.interval
+    
+    # Initialize scanner
+    scanner = NetworkScanner(args.api_key)
+    
+    logger.info(f"SafeNet Connector v{CONNECTOR_VERSION} starting")
+    logger.info(f"Hostname: {scanner.hostname}")
+    logger.info(f"API URL: {SAFENET_API_URL}")
     
     if args.test:
-        print("Running test scan...")
-        asyncio.run(connector.run_full_scan())
-    else:
+        # Single test scan
+        logger.info("Running test scan...")
+        devices = scanner.full_network_scan()
+        
+        if devices:
+            logger.info(f"Test scan found {len(devices)} devices")
+            for device in devices:
+                logger.info(f"  {device['ip_address']} ({device['hostname']}) - {device['device_type']} - Risk: {device['risk_level']}")
+            
+            # Send results
+            success = scanner.send_scan_results(devices)
+            logger.info(f"Results sent: {'✅' if success else '❌'}")
+        else:
+            logger.warning("No devices found in test scan")
+        
+        return
+    
+    # Continuous scanning mode
+    logger.info(f"Starting continuous scanning (interval: {SCAN_INTERVAL}s)")
+    
+    consecutive_errors = 0
+    max_errors = 5
+    
+    while True:
         try:
-            print("Starting SafeNet Connector...")
-            asyncio.run(connector.run_scheduled_scans())
+            # Send heartbeat
+            if not scanner.send_heartbeat():
+                logger.warning("Heartbeat failed")
+            
+            # Perform scan
+            devices = scanner.full_network_scan()
+            
+            if devices:
+                # Send results
+                if scanner.send_scan_results(devices):
+                    consecutive_errors = 0  # Reset on success
+                else:
+                    consecutive_errors += 1
+            else:
+                logger.warning("No devices found in scan")
+            
         except KeyboardInterrupt:
-            print("\nShutting down SafeNet Connector...")
+            logger.info("Scan stopped by user")
+            break
         except Exception as e:
-            connector.logger.error(f"Fatal error: {e}")
-            sys.exit(1)
+            consecutive_errors += 1
+            logger.error(f"Scan error: {e}")
+            
+            if consecutive_errors >= max_errors:
+                logger.critical(f"Too many consecutive errors ({consecutive_errors}). Exiting.")
+                break
+        
+        # Wait for next scan
+        logger.info(f"Waiting {SCAN_INTERVAL} seconds until next scan...")
+        try:
+            time.sleep(SCAN_INTERVAL)
+        except KeyboardInterrupt:
+            logger.info("Scan stopped by user")
+            break
 
 if __name__ == "__main__":
     main()
