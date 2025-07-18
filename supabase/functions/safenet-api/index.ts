@@ -175,6 +175,7 @@ serve(async (req) => {
           .insert({
             user_id: connector.user_id,
             connector_id: connector.connector_id,
+            target_ip: scanData.network_ranges[0] || 'unknown',
             scan_type: scanData.scan_type,
             network_ranges: scanData.network_ranges,
             devices_found: scanData.devices_found,
