@@ -33,58 +33,11 @@ export const RealTimeMonitor = ({ isActive = true, onToggle }: RealTimeMonitorPr
   const [events, setEvents] = useState<NetworkEvent[]>([]);
   const [monitoring, setMonitoring] = useState(isActive);
 
-  // Simulate real-time events
+  // Real-time events will be populated when actual network monitoring is implemented
+  // For now, the monitor shows an empty state
   useEffect(() => {
-    if (!monitoring) return;
-
-    const interval = setInterval(() => {
-      // Generate random events for demonstration
-      const eventTypes: NetworkEvent['type'][] = [
-        'device_online', 
-        'device_offline', 
-        'vulnerability_detected', 
-        'scan_completed'
-      ];
-      
-      const deviceNames = ['LenovoT15', 'Server-01', 'Printer-HP', 'Router-Main', 'Laptop-01'];
-      const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-      const randomDevice = deviceNames[Math.floor(Math.random() * deviceNames.length)];
-      
-      let message = '';
-      let severity: NetworkEvent['severity'] = 'info';
-      
-      switch (randomType) {
-        case 'device_online':
-          message = `${randomDevice} came online`;
-          severity = 'success';
-          break;
-        case 'device_offline':
-          message = `${randomDevice} went offline`;
-          severity = 'warning';
-          break;
-        case 'vulnerability_detected':
-          message = `Security vulnerability detected on ${randomDevice}`;
-          severity = 'error';
-          break;
-        case 'scan_completed':
-          message = `Network scan completed - found ${Math.floor(Math.random() * 5) + 1} devices`;
-          severity = 'info';
-          break;
-      }
-
-      const newEvent: NetworkEvent = {
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: new Date(),
-        type: randomType,
-        device: randomDevice,
-        message,
-        severity
-      };
-
-      setEvents(prev => [newEvent, ...prev.slice(0, 49)]); // Keep last 50 events
-    }, Math.random() * 10000 + 5000); // Random interval between 5-15 seconds
-
-    return () => clearInterval(interval);
+    // This effect is reserved for future implementation of real network event monitoring
+    // Events would come from actual SafeNet connector data or real-time database subscriptions
   }, [monitoring]);
 
   const getEventIcon = (type: NetworkEvent['type']) => {
