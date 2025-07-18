@@ -67,6 +67,12 @@ const getDeviceIcon = (deviceType: string) => {
 
 export const DeviceManagementPanel = () => {
   const { devices, vulnerabilities, services, isLoading, refreshData } = useSafeNetData();
+  
+  // Debug logging
+  console.log('DeviceManagementPanel - devices:', devices);
+  console.log('DeviceManagementPanel - isLoading:', isLoading);
+  console.log('DeviceManagementPanel - devices length:', devices?.length);
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");

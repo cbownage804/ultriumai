@@ -17,6 +17,11 @@ import { Shield, Network, AlertTriangle, Activity, Search, Filter, RefreshCw } f
 
 export const SafeNetDashboard = () => {
   const { devices, vulnerabilities, isLoading } = useSafeNetData();
+  
+  // Debug logging
+  console.log('SafeNet Dashboard - devices:', devices);
+  console.log('SafeNet Dashboard - isLoading:', isLoading);
+  console.log('SafeNet Dashboard - devices length:', devices?.length);
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [organizationKey, setOrganizationKey] = useState<string>('');
