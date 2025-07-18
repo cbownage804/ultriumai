@@ -264,11 +264,17 @@ export const useSafeNet = () => {
         .from('network_scans')
         .insert({
           user_id: user.id,
+          connector_id: 'web-interface',
           target_ip: networkRange,
           scan_type: 'discovery',
           scan_status: 'completed',
           scan_result: data,
-          vulnerabilities_found: data.vulnerabilities_found || 0
+          vulnerabilities_found: data.vulnerabilities_found || 0,
+          devices_found: data.devices_discovered || 0,
+          network_ranges: [networkRange],
+          scan_duration: 0,
+          hostname: 'web-interface',
+          results: data
         });
 
       toast({

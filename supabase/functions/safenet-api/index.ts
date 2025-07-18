@@ -160,6 +160,16 @@ serve(async (req) => {
         console.log('Using connector:', connector);
 
         // Insert scan data using service role to bypass RLS
+        console.log('About to insert scan data with:', {
+          user_id: connector.user_id,
+          connector_id: connector.connector_id,
+          scan_type: scanData.scan_type,
+          network_ranges: scanData.network_ranges,
+          devices_found: scanData.devices_found,
+          scan_duration: scanData.scan_duration,
+          hostname: scanData.hostname
+        });
+        
         const { data: scanResult, error: scanError } = await supabase
           .from('network_scans')
           .insert({
