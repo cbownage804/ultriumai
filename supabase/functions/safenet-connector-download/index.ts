@@ -101,7 +101,7 @@ echo print^('SafeNet Connector v2.0'^)
 echo print^('====================='^)
 echo print^(f'Agent ID: ${agentId || 'auto-generated'}'^)
 echo print^(f'Client ID: ${clientId || 'default'}'^)
-echo print^('^)
+echo print^(''^)
 echo.
 echo class SafeNetConnector:
 echo     def __init__^(self^):
