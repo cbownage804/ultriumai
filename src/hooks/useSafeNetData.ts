@@ -102,6 +102,7 @@ export const useSafeNetData = () => {
     }
 
     console.log('useSafeNetData: Loading devices for user:', user.id);
+    console.log('useSafeNetData: User object:', user);
 
     try {
       const { data, error } = await supabase
