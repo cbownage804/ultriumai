@@ -8,11 +8,14 @@ const corsHeaders = {
 function generateWindowsInstaller(agentId: string | null, clientId: string | null): string {
   return `@echo off
 setlocal enabledelayedexpansion
-title SafeNet Connector Installer
+title SafeNet Connector Installer v2.1
 
-REM Force window to stay open - multiple safety nets
-echo Starting SafeNet Connector Installer...
-timeout /t 2 /nobreak >nul
+REM FORCE WINDOW TO STAY OPEN - AGGRESSIVE MODE
+echo.
+echo SafeNet Connector Installer Starting...
+echo Window will stay open for troubleshooting
+echo.
+pause
 
 :start
 cls
