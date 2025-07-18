@@ -247,102 +247,49 @@ async function discoverViaSSH(ip: string, username?: string, password?: string, 
   }
 }
 
-// Enhanced Nmap discovery - Real implementation
-async function discoverViaNmap(ip: string): Promise<Partial<DeviceInfo>> {
+// Note: Real network discovery should happen from the SafeNet connector
+// This function processes already-discovered data sent from the connector
+async function processNetworkDiscoveryData(ip: string, discoveryData?: any): Promise<Partial<DeviceInfo>> {
   try {
-    console.log(`Attempting Nmap-style discovery on ${ip}`);
+    console.log(`Processing network discovery data for ${ip}:`, discoveryData);
     
-    // Common ports to scan
-    const commonPorts = [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 443, 993, 995, 1433, 3389, 5432, 8080];
-    const openPorts: number[] = [];
-    const services: any[] = [];
-
-    // Use a more realistic approach - try to connect to ports
-    // Since we can't do actual network scanning from a browser environment,
-    // we'll simulate based on common Windows/network device patterns
-    
-    // For IP 10.243.222.56, let's detect based on the IP pattern and common services
-    const ipParts = ip.split('.');
-    const lastOctet = parseInt(ipParts[3]);
-    
-    // Simulate port scanning results based on IP patterns
-    // Windows workstations typically have these ports
-    if (lastOctet > 50 && lastOctet < 200) {
-      // Likely a workstation
-      openPorts.push(135, 445); // RPC and SMB
-      services.push(
-        { name: 'rpc', port: 135, status: 'open', banner: 'Microsoft RPC' },
-        { name: 'smb', port: 445, status: 'open', banner: 'Microsoft SMB' }
-      );
-      
-      // Sometimes RDP is enabled
-      if (lastOctet % 3 === 0) {
-        openPorts.push(3389);
-        services.push({ name: 'rdp', port: 3389, status: 'open', banner: 'Microsoft Terminal Services' });
-      }
-    }
-    
-    // Try to detect actual network connectivity by attempting connections
-    const connectivityTest = await Promise.allSettled([
-      fetch(`http://${ip}:80`, { method: 'HEAD', signal: AbortSignal.timeout(1000) }),
-      fetch(`http://${ip}:443`, { method: 'HEAD', signal: AbortSignal.timeout(1000) }),
-      fetch(`http://${ip}:8080`, { method: 'HEAD', signal: AbortSignal.timeout(1000) })
-    ]);
-    
-    // Check if any connections succeeded
-    connectivityTest.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        const ports = [80, 443, 8080];
-        const port = ports[index];
-        if (!openPorts.includes(port)) {
-          openPorts.push(port);
-          services.push({
-            name: getServiceName(port),
-            port: port,
-            status: 'open',
-            banner: 'Web service detected'
-          });
+    // If no discovery data was sent from connector, return minimal info
+    if (!discoveryData) {
+      return {
+        discovery_method: ['basic'],
+        device_metadata: {
+          discovery_note: 'Limited discovery - enhanced data should come from SafeNet connector',
+          discovery_timestamp: new Date().toISOString()
         }
-      }
-    });
+      };
+    }
 
+    // Process real discovery data from the connector
     const deviceInfo: Partial<DeviceInfo> = {
-      discovery_method: ['nmap'],
-      open_ports: openPorts,
-      services: services,
+      discovery_method: discoveryData.methods || ['connector'],
+      open_ports: discoveryData.open_ports || [],
+      services: discoveryData.services || [],
       device_metadata: {
-        nmap_scan: true,
         discovery_timestamp: new Date().toISOString(),
-        ports_scanned: commonPorts.length,
-        ports_open: openPorts.length,
-        scan_technique: 'TCP connection scan',
-        connectivity_tested: true
+        ...discoveryData.metadata
       }
     };
 
-    // Enhanced OS fingerprinting based on services and IP patterns
-    if (openPorts.includes(135) || openPorts.includes(139) || openPorts.includes(445)) {
-      deviceInfo.os_family = 'windows';
-      deviceInfo.device_type = 'workstation';
-      deviceInfo.manufacturer = 'Generic PC Manufacturer'; // Will be updated by other discovery methods
-    } else if (openPorts.includes(22)) {
-      deviceInfo.os_family = 'linux';
-      deviceInfo.device_type = 'server';
-    } else if (openPorts.includes(80) || openPorts.includes(443)) {
-      deviceInfo.device_type = 'server';
-    } else {
-      // Default for devices without open ports (firewalled)
-      deviceInfo.device_type = 'workstation';
-      deviceInfo.device_metadata.firewall_detected = true;
-    }
+    // Set device properties from real discovery data
+    if (discoveryData.mac_address) deviceInfo.mac_address = discoveryData.mac_address;
+    if (discoveryData.manufacturer) deviceInfo.manufacturer = discoveryData.manufacturer;
+    if (discoveryData.model) deviceInfo.model = discoveryData.model;
+    if (discoveryData.os_version) deviceInfo.os_version = discoveryData.os_version;
+    if (discoveryData.hostname) deviceInfo.hostname = discoveryData.hostname;
+    if (discoveryData.device_name) deviceInfo.device_name = discoveryData.device_name;
 
     return deviceInfo;
   } catch (error) {
-    console.error(`Nmap discovery failed for ${ip}:`, error);
+    console.error(`Network discovery processing failed for ${ip}:`, error);
     return { 
-      discovery_method: ['nmap_failed'],
+      discovery_method: ['processing_failed'],
       device_metadata: {
-        nmap_error: error.message,
+        processing_error: error.message,
         discovery_timestamp: new Date().toISOString()
       }
     };
@@ -461,7 +408,7 @@ async function performEnhancedDiscovery(request: EnhancedDiscoveryRequest): Prom
   }
 
   if (discovery_methods.includes('nmap')) {
-    discoveryPromises.push(discoverViaNmap(target_ip));
+    discoveryPromises.push(processNetworkDiscoveryData(target_ip, request.discovery_data));
   }
 
   // Also discover gateway information
