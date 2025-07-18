@@ -223,11 +223,11 @@ export const SafeNetDashboard = () => {
                       Python Script
                     </a>
                     <a 
-                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/windows?agentId=${organizationKey}`} 
-                      download="safenet_connector.exe"
+                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/powershell?agentId=${organizationKey}`} 
+                      download="safenet-installer.ps1"
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                     >
-                      Windows EXE
+                      PowerShell Script
                     </a>
                     <a 
                       href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/linux?agentId=${organizationKey}`} 
