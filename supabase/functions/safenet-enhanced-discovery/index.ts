@@ -399,7 +399,7 @@ serve(async (req) => {
     const url = new URL(req.url);
     const path = url.pathname;
 
-    if ((path === '/discover' || path === '/') && req.method === 'POST') {
+    if (req.method === 'POST') {
       const request: EnhancedDiscoveryRequest = await req.json();
 
       if (!request.connector_key || !request.target_ip) {
