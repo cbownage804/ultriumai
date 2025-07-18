@@ -74,10 +74,32 @@ export interface NetworkScanResult {
   vulnerabilities: NetworkVulnerability[];
 }
 
+export interface NetworkScan {
+  id: string;
+  user_id: string;
+  connector_id: string;
+  target_ip: string;
+  scan_type: string;
+  scan_status: string;
+  scan_result?: any;
+  devices_found: number;
+  network_ranges: string[];
+  scan_duration: number;
+  hostname: string;
+  results: any;
+  vulnerabilities_found: number;
+  risk_score: number;
+  created_at: string;
+  updated_at: string;
+  scanned_at: string;
+  completed_at?: string;
+}
+
 export const useSafeNet = () => {
   const [networks, setNetworks] = useState<SafeNetNetwork[]>([]);
   const [devices, setDevices] = useState<NetworkDevice[]>([]);
   const [vulnerabilities, setVulnerabilities] = useState<NetworkVulnerability[]>([]);
+  const [networkScans, setNetworkScans] = useState<NetworkScan[]>([]);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
@@ -165,7 +187,30 @@ export const useSafeNet = () => {
     }
   };
 
-  // Load scan history
+  // Load network scans
+  const loadNetworkScans = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('network_scans')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setNetworkScans(data || []);
+    } catch (error) {
+      console.error('Error loading network scans:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load network scans",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Load scan history (legacy)
   const loadScanHistory = async () => {
     if (!user) return;
 
@@ -381,6 +426,7 @@ export const useSafeNet = () => {
         loadNetworks(),
         loadDevices(),
         loadVulnerabilities(),
+        loadNetworkScans(),
         loadScanHistory()
       ]).finally(() => setIsLoading(false));
     } else {
@@ -400,6 +446,7 @@ export const useSafeNet = () => {
     networks,
     devices,
     vulnerabilities,
+    networkScans,
     scanHistory,
     isLoading,
     isScanning,
@@ -412,6 +459,7 @@ export const useSafeNet = () => {
     loadNetworks,
     loadDevices,
     loadVulnerabilities,
+    loadNetworkScans,
     loadScanHistory
   };
 };
