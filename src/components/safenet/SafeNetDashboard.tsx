@@ -11,12 +11,12 @@ import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
 import { EnhancedDeviceCard } from "./EnhancedDeviceCard";
 import { NetworkStatistics } from "./NetworkStatistics";
 import { RealTimeMonitor } from "./RealTimeMonitor";
-import { useSafeNet } from "@/hooks/useSafeNet";
+import { useSafeNetData } from "@/hooks/useSafeNetData";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, Network, AlertTriangle, Activity, Search, Filter, RefreshCw } from "lucide-react";
 
 export const SafeNetDashboard = () => {
-  const { devices, vulnerabilities, networks: topology, networkScans, isLoading } = useSafeNet();
+  const { devices, vulnerabilities, isLoading } = useSafeNetData();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [organizationKey, setOrganizationKey] = useState<string>('');
@@ -149,7 +149,7 @@ export const SafeNetDashboard = () => {
             <Network className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{topology.length}</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
               Active topology mappings
             </p>
@@ -254,7 +254,11 @@ export const SafeNetDashboard = () => {
                   {filteredDevices.slice(0, 8).map((device, index) => (
                     <EnhancedDeviceCard
                       key={device.id || index}
-                      device={device}
+                      device={{
+                        ...device,
+                        vulnerability_count: device.vulnerability_count || 0,
+                        is_critical: device.is_critical || false
+                      } as any}
                       onClick={() => setActiveTab('devices')}
                     />
                   ))}
@@ -286,47 +290,26 @@ export const SafeNetDashboard = () => {
             />
           </div>
           
-          {/* Network Scan History */}
+          {/* Network Scan History - Temporarily disabled until networkScans data is available */}
           <Card>
             <CardHeader>
               <CardTitle>Recent Network Scans</CardTitle>
               <CardDescription>Latest scan results and discovery activity</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {networkScans.slice(0, 6).map((scan) => (
-                  <div key={scan.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="space-y-1">
-                      <p className="font-medium text-sm">{scan.hostname}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {scan.devices_found} devices • {scan.scan_duration}s
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(scan.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <Badge variant={scan.scan_status === 'completed' ? 'default' : 'secondary'} className="text-xs">
-                      {scan.scan_status}
-                    </Badge>
-                  </div>
-                ))}
-                
-                {networkScans.length === 0 && (
-                  <div className="col-span-3 text-center py-8">
-                    <Activity className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                    <p className="text-sm text-muted-foreground">No scan history available</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Download and run the SafeNet connector to start scanning
-                    </p>
-                  </div>
-                )}
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-sm text-muted-foreground">No scan history available</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Download and run the SafeNet connector to start scanning
+                </p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="statistics">
-          <NetworkStatistics devices={devices} />
+          <NetworkStatistics devices={devices as any} />
         </TabsContent>
 
         <TabsContent value="topology">

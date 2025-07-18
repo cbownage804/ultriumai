@@ -116,6 +116,7 @@ export const useSafeNetData = () => {
       })) || [];
       
       console.log('Loaded devices:', transformedDevices);
+      console.log('Raw devices from DB:', data);
       setDevices(transformedDevices);
     } catch (error) {
       console.error('Error loading devices:', error);

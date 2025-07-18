@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSafeNetData } from "@/hooks/useSafeNetData";
+import { useSafeNetData, SafeNetDevice } from "@/hooks/useSafeNetData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -75,7 +75,7 @@ export const DeviceManagementPanel = () => {
   const [filterDiscoveryMethod, setFilterDiscoveryMethod] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [historyFilter, setHistoryFilter] = useState("all");
-  const [historicalDevices, setHistoricalDevices] = useState(devices);
+  const [historicalDevices, setHistoricalDevices] = useState<SafeNetDevice[]>([]);
 
   // Time filter options
   const timeFilters = [
