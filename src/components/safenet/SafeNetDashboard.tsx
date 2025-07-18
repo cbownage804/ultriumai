@@ -3,18 +3,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NetworkTopologyViewer } from "./NetworkTopologyViewer";
 import { DeviceManagementPanel } from "./DeviceManagementPanel";
 import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
+import { EnhancedDeviceCard } from "./EnhancedDeviceCard";
+import { NetworkStatistics } from "./NetworkStatistics";
+import { RealTimeMonitor } from "./RealTimeMonitor";
 import { useSafeNet } from "@/hooks/useSafeNet";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Network, AlertTriangle, Activity } from "lucide-react";
+import { Shield, Network, AlertTriangle, Activity, Search, Filter, RefreshCw } from "lucide-react";
 
 export const SafeNetDashboard = () => {
   const { devices, vulnerabilities, networks: topology, networkScans, isLoading } = useSafeNet();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [organizationKey, setOrganizationKey] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [isRealTimeActive, setIsRealTimeActive] = useState(true);
 
   useEffect(() => {
     // Generate or retrieve organization key for this user
@@ -25,6 +34,20 @@ export const SafeNetDashboard = () => {
     }
     setOrganizationKey(storedKey);
   }, [user]);
+
+  // Filter devices based on search and filters
+  const filteredDevices = devices.filter(device => {
+    const matchesSearch = !searchQuery || 
+      (device.device_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (device.hostname?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (String(device.ip_address || '').toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (device.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesStatus = filterStatus === 'all' || device.status === filterStatus;
+    const matchesType = filterType === 'all' || device.device_type === filterType;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
   const handleDownload = async (platform: string, filename: string) => {
     try {
@@ -59,7 +82,15 @@ export const SafeNetDashboard = () => {
 
   const criticalVulns = vulnerabilities.filter(v => v.severity === 'critical').length;
   const highVulns = vulnerabilities.filter(v => v.severity === 'high').length;
-  const onlineDevices = devices.filter(d => d.status === 'online').length;
+  const onlineDevices = filteredDevices.filter(d => d.status === 'online').length;
+  const managedDevices = filteredDevices.filter(d => d.is_managed).length;
+  
+  // Get unique device types for filter
+  const deviceTypes = [...new Set(devices.map(d => d.device_type).filter(Boolean))];
+  
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -68,17 +99,18 @@ export const SafeNetDashboard = () => {
           <h1 className="text-3xl font-bold">SafeNet Dashboard</h1>
           <p className="text-muted-foreground">Network topology and security monitoring</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button 
             variant="outline" 
-            onClick={() => window.location.reload()}
+            onClick={handleRefresh}
+            disabled={isLoading}
           >
-            <Activity className="mr-2 h-4 w-4" />
-            Refresh Data
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Refreshing...' : 'Refresh'}
           </Button>
-          <Badge variant="outline" className="text-sm">
-            <Activity className="h-4 w-4 mr-1" />
-            Live Monitoring
+          <Badge variant={isRealTimeActive ? 'default' : 'secondary'} className="text-sm px-3 py-1">
+            <Activity className={`h-4 w-4 mr-1 ${isRealTimeActive ? 'animate-pulse' : ''}`} />
+            {isRealTimeActive ? 'Live Monitoring' : 'Monitoring Paused'}
           </Badge>
         </div>
       </div>
@@ -91,9 +123,9 @@ export const SafeNetDashboard = () => {
             <Network className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{devices.length}</div>
+            <div className="text-2xl font-bold">{filteredDevices.length}</div>
             <p className="text-xs text-muted-foreground">
-              {onlineDevices} online, {devices.length - onlineDevices} offline
+              {onlineDevices} online, {filteredDevices.length - onlineDevices} offline
             </p>
           </CardContent>
         </Card>
@@ -126,6 +158,21 @@ export const SafeNetDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Device Management</CardTitle>
+            <Shield className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">
+              {Math.round((managedDevices / Math.max(filteredDevices.length, 1)) * 100)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {managedDevices} of {filteredDevices.length} managed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Security Score</CardTitle>
             <Shield className="h-4 w-4 text-primary" />
           </CardHeader>
@@ -142,8 +189,9 @@ export const SafeNetDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="statistics">Statistics</TabsTrigger>
           <TabsTrigger value="topology">Network Map</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
           <TabsTrigger value="vulnerabilities">Security</TabsTrigger>
@@ -152,101 +200,133 @@ export const SafeNetDashboard = () => {
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Devices */}
+            {/* Enhanced Recent Devices with Search and Filters */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-medium">Recent Devices</CardTitle>
-                <Network className="h-4 w-4 text-muted-foreground" />
+              <CardHeader className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-medium">Network Devices</CardTitle>
+                  <Badge variant="outline">{filteredDevices.length} devices</Badge>
+                </div>
+                
+                {/* Search and Filter Controls */}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search devices, IPs, or manufacturers..."
+                      className="pl-10"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Select value={filterStatus} onValueChange={setFilterStatus}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="online">Online</SelectItem>
+                        <SelectItem value="offline">Offline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={filterType} onValueChange={setFilterType}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {deviceTypes.map(type => (
+                          <SelectItem key={type} value={type} className="capitalize">
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardHeader>
+              
               <CardContent>
-                <div className="space-y-3 max-h-80 overflow-y-auto">
-                  {devices.slice(0, 5).map((device, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium truncate">
-                              {device.device_name || device.hostname || 'Unknown Device'}
-                            </p>
-                            <Badge variant={device.status === 'online' ? 'default' : 'secondary'} className="text-xs">
-                              {device.status}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                            <span>{String(device.ip_address)}</span>
-                            {device.manufacturer && <span>• {device.manufacturer}</span>}
-                            {device.model && <span>• {device.model}</span>}
-                          </div>
-                          <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-1">
-                            {device.os_family && <span>OS: {device.os_family}</span>}
-                            {device.os_version && <span>• {device.os_version}</span>}
-                          </div>
-                          {device.discovery_method && device.discovery_method.length > 0 && (
-                            <div className="flex items-center space-x-1 mt-1">
-                              {device.discovery_method.map((method, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs">
-                                  {method}
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          {(device.cpu_usage || device.memory_usage || device.uptime_hours) && (
-                            <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-1">
-                              {device.cpu_usage && <span>CPU: {device.cpu_usage}%</span>}
-                              {device.memory_usage && <span>• RAM: {device.memory_usage}%</span>}
-                              {device.uptime_hours && <span>• Uptime: {Math.floor(device.uptime_hours / 24)}d</span>}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end space-y-1">
-                        <Badge variant={device.is_critical ? 'destructive' : device.is_managed ? 'default' : 'secondary'} className="text-xs">
-                          {device.is_critical ? 'Critical' : device.is_managed ? 'Managed' : 'Unmanaged'}
-                        </Badge>
-                        {device.vulnerability_count > 0 && (
-                          <Badge variant="destructive" className="text-xs">
-                            {device.vulnerability_count} issues
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {filteredDevices.slice(0, 8).map((device, index) => (
+                    <EnhancedDeviceCard
+                      key={device.id || index}
+                      device={device}
+                      onClick={() => setActiveTab('devices')}
+                    />
                   ))}
-                  {devices.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No devices discovered yet. Run a scan to discover devices.
-                    </p>
+                  
+                  {filteredDevices.length === 0 && (
+                    <div className="text-center py-8">
+                      <Network className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                      <p className="text-sm text-muted-foreground">
+                        {searchQuery || filterStatus !== 'all' || filterType !== 'all' 
+                          ? 'No devices match your filters' 
+                          : 'No devices discovered yet'
+                        }
+                      </p>
+                      {(!searchQuery && filterStatus === 'all' && filterType === 'all') && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Run the SafeNet connector to discover devices
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Network Scans</CardTitle>
-                <CardDescription>Latest scan results and discovered devices</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {networkScans.slice(0, 3).map((scan) => (
-                    <div key={scan.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{scan.hostname}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Found {scan.devices_found} devices • {scan.scan_duration}s
-                        </p>
-                      </div>
-                      <Badge variant={scan.scan_status === 'completed' ? 'default' : 'secondary'}>
-                        {scan.scan_status}
-                      </Badge>
-                    </div>
-                  ))}
-                  {networkScans.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No recent scans found. Run the SafeNet connector to see scan data.</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Real-Time Activity Monitor */}
+            <RealTimeMonitor 
+              isActive={isRealTimeActive}
+              onToggle={setIsRealTimeActive}
+            />
           </div>
+          
+          {/* Network Scan History */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Network Scans</CardTitle>
+              <CardDescription>Latest scan results and discovery activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {networkScans.slice(0, 6).map((scan) => (
+                  <div key={scan.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="space-y-1">
+                      <p className="font-medium text-sm">{scan.hostname}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {scan.devices_found} devices • {scan.scan_duration}s
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(scan.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <Badge variant={scan.scan_status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                      {scan.scan_status}
+                    </Badge>
+                  </div>
+                ))}
+                
+                {networkScans.length === 0 && (
+                  <div className="col-span-3 text-center py-8">
+                    <Activity className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                    <p className="text-sm text-muted-foreground">No scan history available</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Download and run the SafeNet connector to start scanning
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="statistics">
+          <NetworkStatistics devices={devices} />
         </TabsContent>
 
         <TabsContent value="topology">
