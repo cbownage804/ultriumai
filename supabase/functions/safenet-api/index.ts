@@ -55,8 +55,11 @@ interface ScanDataRequest {
 }
 
 serve(async (req) => {
+  console.log(`SafeNet API called: ${req.method} ${req.url}`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Returning CORS headers for OPTIONS request');
     return new Response(null, { headers: corsHeaders });
   }
 
