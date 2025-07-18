@@ -469,13 +469,17 @@ class SafeNetConnector:
         self.client_id = '${clientId || 'default'}'
         self.connector_key = self.agent_id
         self.endpoint = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api/scan-data'
+        self.headers = {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI'
+        }
 
     def discover_devices(self):
         devices = []
         try:
             hostname = socket.gethostname()
             local_ip = socket.gethostbyname(hostname)
-            
+
             device = {
                 'hostname': hostname,
                 'ip_address': local_ip,
@@ -506,7 +510,7 @@ class SafeNetConnector:
                 'results': {'discovered': len(devices)},
                 'devices': devices
             }
-            response = requests.post(self.endpoint, json=report, timeout=30)
+            response = requests.post(self.endpoint, json=report, headers=self.headers, timeout=30)
             if response.status_code == 200:
                 print('Report sent successfully')
             else:
