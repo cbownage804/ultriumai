@@ -197,37 +197,34 @@ export const useSafeNetData = () => {
   useEffect(() => {
     if (user) {
       refreshData();
+      
+      // Set up real-time subscription for device updates
+      const deviceSubscription = supabase
+        .channel('safenet-devices-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'safenet_devices',
+            filter: `user_id=eq.${user.id}`
+          },
+          (payload) => {
+            console.log('Device change detected:', payload);
+            // Refresh devices when there's a change
+            loadDevices();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        deviceSubscription.unsubscribe();
+      };
     } else {
       setIsLoading(false);
     }
   }, [user]);
 
-  // Set up real-time subscriptions
-  useEffect(() => {
-    if (!user) return;
-
-    const channels = [
-      supabase
-        .channel('safenet_devices_changes')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'safenet_devices', filter: `user_id=eq.${user.id}` },
-          () => loadDevices()
-        )
-        .subscribe(),
-
-      supabase
-        .channel('safenet_vulnerabilities_changes')
-        .on('postgres_changes',
-          { event: '*', schema: 'public', table: 'safenet_vulnerabilities', filter: `user_id=eq.${user.id}` },
-          () => loadVulnerabilities()
-        )
-        .subscribe()
-    ];
-
-    return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
-    };
-  }, [user]);
 
   return {
     devices,
