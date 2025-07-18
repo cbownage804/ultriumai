@@ -27,6 +27,29 @@ export const SafeNetDashboard = () => {
     setOrganizationKey(storedKey);
   }, [user]);
 
+  const handleDownload = async (platform: string, filename: string) => {
+    try {
+      const response = await fetch(`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/${platform}?agentId=${organizationKey}`);
+      
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -222,13 +245,12 @@ export const SafeNetDashboard = () => {
                     >
                       Python Script
                     </a>
-                    <a 
-                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/powershell?agentId=${organizationKey}`} 
-                      download="safenet-installer.ps1"
+                    <button 
+                      onClick={() => handleDownload('powershell', 'safenet-installer.ps1')}
                       className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
                     >
                       PowerShell Script
-                    </a>
+                    </button>
                     <a 
                       href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/linux?agentId=${organizationKey}`} 
                       download="safenet_connector"
