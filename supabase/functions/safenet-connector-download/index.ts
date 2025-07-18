@@ -580,6 +580,119 @@ if __name__ == '__main__':
 }`;
 }
 
+function generatePythonConnector(agentId: string | null, clientId: string | null): string {
+  return `import sys
+import os
+import json
+import time
+import socket
+import subprocess
+from datetime import datetime, timezone
+
+print('SafeNet Connector v2.0')
+print('=====================')
+print(f'Agent ID: ${agentId || 'auto-generated'}')
+print(f'Client ID: ${clientId || 'default'}')
+print('')
+
+class SafeNetConnector:
+    def __init__(self):
+        self.agent_id = '${agentId || 'auto-generated'}'
+        self.client_id = '${clientId || 'default'}'
+        self.connector_key = self.agent_id
+        self.endpoint = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api/scan-data'
+        self.headers = {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI'
+        }
+
+    def discover_devices(self):
+        devices = []
+        try:
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
+
+            device = {
+                'hostname': hostname,
+                'ip_address': local_ip,
+                'device_type': 'computer',
+                'os_family': os.name,
+                'status': 'online',
+                'risk_level': 'low',
+                'device_name': hostname,
+                'is_managed': False,
+                'is_critical': False
+            }
+            devices.append(device)
+            print(f'Found device: {hostname} ({local_ip})')
+        except Exception as e:
+            print(f'Discovery error: {e}')
+        return devices
+
+    def send_report(self, devices):
+        try:
+            import requests
+            report = {
+                'connector_key': self.connector_key,
+                'scan_type': 'basic_discovery',
+                'network_ranges': ['local'],
+                'devices_found': len(devices),
+                'scan_duration': 5,
+                'hostname': socket.gethostname(),
+                'results': {'discovered': len(devices)},
+                'devices': devices
+            }
+            response = requests.post(self.endpoint, json=report, headers=self.headers, timeout=30)
+            if response.status_code == 200:
+                print('Report sent successfully')
+            else:
+                print(f'Report failed: {response.status_code}')
+                print(f'Response: {response.text}')
+        except Exception as e:
+            print(f'Report error: {e}')
+
+    def run_scan(self):
+        print('Starting network scan...')
+        devices = self.discover_devices()
+        self.send_report(devices)
+        print(f'Scan complete. Found {len(devices)} devices')
+
+def main():
+    try:
+        connector = SafeNetConnector()
+        print('SafeNet Connector is ready!')
+        print('Choose an option:')
+        print('1. Run single scan')
+        print('2. Run continuous monitoring')
+        print('3. Exit')
+        
+        while True:
+            choice = input('Enter choice (1-3): ').strip()
+            if choice == '1':
+                connector.run_scan()
+            elif choice == '2':
+                print('Starting continuous monitoring...')
+                print('Press Ctrl+C to stop')
+                try:
+                    while True:
+                        connector.run_scan()
+                        time.sleep(60)
+                except KeyboardInterrupt:
+                    print('Monitoring stopped')
+                    break
+            elif choice == '3':
+                break
+            else:
+                print('Invalid choice')
+    except Exception as e:
+        print(f'Error: {e}')
+        input('Press Enter to exit...')
+
+if __name__ == '__main__':
+    main()
+`;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -606,9 +719,9 @@ serve(async (req) => {
       contentType = 'application/x-msdos-program';
       downloadFilename = 'safenet-connector-install.bat';
     } else if (filename.includes('powershell') || filename.includes('.ps1')) {
-      installerContent = generatePythonConnector(agentId, clientId);
-      contentType = 'text/plain';
-      downloadFilename = 'safenet_connector.py';
+      installerContent = generatePowerShellInstaller(agentId, clientId);
+      contentType = 'application/x-powershell';
+      downloadFilename = 'safenet-installer.ps1';
     } else if (filename.includes('python') || filename.includes('.py')) {
       installerContent = generatePythonConnector(agentId, clientId);
       contentType = 'text/x-python';
