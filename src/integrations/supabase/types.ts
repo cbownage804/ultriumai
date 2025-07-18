@@ -5126,6 +5126,7 @@ export type Database = {
           completed_at: string | null
           connector_id: string | null
           created_at: string | null
+          devices_found: number
           id: string
           risk_score: number | null
           scan_result: Json | null
@@ -5139,6 +5140,7 @@ export type Database = {
           completed_at?: string | null
           connector_id?: string | null
           created_at?: string | null
+          devices_found?: number
           id?: string
           risk_score?: number | null
           scan_result?: Json | null
@@ -5152,6 +5154,7 @@ export type Database = {
           completed_at?: string | null
           connector_id?: string | null
           created_at?: string | null
+          devices_found?: number
           id?: string
           risk_score?: number | null
           scan_result?: Json | null
