@@ -214,6 +214,8 @@ serve(async (req) => {
 
         // Insert device data if provided
         if (scanData.devices && scanData.devices.length > 0) {
+          console.log(`Processing ${scanData.devices.length} discovered devices`);
+          
           const deviceInserts = scanData.devices.map(device => ({
             user_id: connector.user_id,
             connector_key: scanData.connector_key,
@@ -251,6 +253,44 @@ serve(async (req) => {
           if (deviceError) {
             console.error('Error inserting device data:', deviceError);
             // Don't fail the entire request for device insertion errors
+          } else {
+            console.log('Device data saved successfully');
+
+            // Automatically trigger enhanced discovery for each device
+            console.log('Starting enhanced discovery for all discovered devices');
+            const enhancedDiscoveryPromises = scanData.devices.map(async (device: any) => {
+              try {
+                console.log(`Triggering enhanced discovery for device: ${device.ip_address}`);
+                
+                // Call the enhanced discovery function
+                const enhancedResponse = await supabase.functions.invoke('safenet-enhanced-discovery', {
+                  body: {
+                    connector_key: scanData.connector_key,
+                    target_ip: device.ip_address,
+                    discovery_methods: ['snmp', 'wmi', 'ssh', 'nmap'], // Use all available methods
+                    credentials: {
+                      snmp_community: 'public', // Default SNMP community
+                      // Add other default credentials or get from connector config
+                    }
+                  }
+                });
+
+                if (enhancedResponse.error) {
+                  console.error(`Enhanced discovery failed for ${device.ip_address}:`, enhancedResponse.error);
+                } else {
+                  console.log(`Enhanced discovery completed for ${device.ip_address}`);
+                }
+              } catch (error) {
+                console.error(`Error in enhanced discovery for ${device.ip_address}:`, error);
+              }
+            });
+
+            // Run enhanced discovery in background (don't wait for completion)
+            Promise.allSettled(enhancedDiscoveryPromises).then((results) => {
+              const successful = results.filter(r => r.status === 'fulfilled').length;
+              const failed = results.filter(r => r.status === 'rejected').length;
+              console.log(`Enhanced discovery completed: ${successful} successful, ${failed} failed`);
+            });
           }
         }
 
