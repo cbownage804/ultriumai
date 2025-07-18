@@ -51,15 +51,20 @@ interface DeviceInfo {
 // SNMP discovery function
 async function discoverViaSNMP(ip: string, community: string = 'public'): Promise<Partial<DeviceInfo>> {
   try {
-    // Simulate SNMP discovery (in a real implementation, you'd use an SNMP library)
     console.log(`Attempting SNMP discovery on ${ip} with community: ${community}`);
     
-    // Common SNMP OIDs for device information
+    // Simulate more detailed SNMP discovery
     const deviceInfo: Partial<DeviceInfo> = {
       discovery_method: ['snmp'],
+      manufacturer: 'Generic Manufacturer',
+      model: 'SNMP Device Model',
+      uptime_hours: Math.floor(Math.random() * 720) + 24, // 1-30 days
       device_metadata: {
         snmp_community: community,
-        discovery_timestamp: new Date().toISOString()
+        discovery_timestamp: new Date().toISOString(),
+        snmp_version: '2c',
+        system_description: 'Linux router 5.4.0-generic',
+        system_location: 'Network Closet A'
       }
     };
 
@@ -80,13 +85,27 @@ async function discoverViaWMI(ip: string, username?: string, password?: string, 
   try {
     console.log(`Attempting WMI discovery on ${ip}`);
     
-    // Simulate WMI queries (in real implementation, use WMI/PowerShell)
+    // Simulate more detailed WMI queries
     const deviceInfo: Partial<DeviceInfo> = {
       discovery_method: ['wmi'],
       os_family: 'windows',
+      os_version: 'Windows 10 Pro 21H2',
+      manufacturer: 'Dell Inc.',
+      model: 'OptiPlex 7090',
+      serial_number: `DLL${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+      cpu_usage: Math.floor(Math.random() * 40) + 10, // 10-50%
+      memory_usage: Math.floor(Math.random() * 60) + 20, // 20-80%
+      installed_software: [
+        'Microsoft Office 365',
+        'Google Chrome',
+        'Windows Defender',
+        'Adobe Acrobat Reader'
+      ],
       device_metadata: {
         wmi_enabled: true,
-        discovery_timestamp: new Date().toISOString()
+        discovery_timestamp: new Date().toISOString(),
+        domain_joined: true,
+        last_boot_time: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString()
       }
     };
 
@@ -110,13 +129,28 @@ async function discoverViaSSH(ip: string, username?: string, password?: string, 
   try {
     console.log(`Attempting SSH discovery on ${ip}`);
     
-    // Simulate SSH commands (in real implementation, use SSH client)
+    // Simulate more detailed SSH commands
     const deviceInfo: Partial<DeviceInfo> = {
       discovery_method: ['ssh'],
       os_family: 'linux',
+      os_version: 'Ubuntu 20.04.6 LTS',
+      manufacturer: 'HP',
+      model: 'ProLiant DL380 Gen10',
+      serial_number: `HP${Math.random().toString(36).substr(2, 10).toUpperCase()}`,
+      cpu_usage: Math.floor(Math.random() * 30) + 5, // 5-35%
+      memory_usage: Math.floor(Math.random() * 50) + 25, // 25-75%
+      uptime_hours: Math.floor(Math.random() * 2160) + 168, // 1 week to 3 months
+      services: [
+        { name: 'nginx', status: 'running', port: 80 },
+        { name: 'ssh', status: 'running', port: 22 },
+        { name: 'mysql', status: 'running', port: 3306 }
+      ],
+      open_ports: [22, 80, 443, 3306],
       device_metadata: {
         ssh_enabled: true,
-        discovery_timestamp: new Date().toISOString()
+        discovery_timestamp: new Date().toISOString(),
+        kernel_version: '5.4.0-150-generic',
+        architecture: 'x86_64'
       }
     };
 
@@ -142,12 +176,25 @@ async function discoverViaNmap(ip: string): Promise<Partial<DeviceInfo>> {
   try {
     console.log(`Attempting Nmap discovery on ${ip}`);
     
-    // Simulate advanced Nmap scanning
+    // Simulate advanced Nmap scanning with more detailed results
+    const ports = [22, 53, 80, 135, 139, 443, 445, 993, 995];
+    const openPorts = ports.filter(() => Math.random() > 0.6); // Random open ports
+    
     const deviceInfo: Partial<DeviceInfo> = {
       discovery_method: ['nmap'],
+      open_ports: openPorts,
+      services: openPorts.map(port => ({
+        name: getServiceName(port),
+        port: port,
+        status: 'open',
+        version: getServiceVersion(port)
+      })),
+      mac_address: generateMacAddress(),
       device_metadata: {
         nmap_scan: true,
-        discovery_timestamp: new Date().toISOString()
+        discovery_timestamp: new Date().toISOString(),
+        os_fingerprint: 'Linux 3.X|4.X',
+        device_confidence: Math.floor(Math.random() * 30) + 70 // 70-100%
       }
     };
 
@@ -161,6 +208,47 @@ async function discoverViaNmap(ip: string): Promise<Partial<DeviceInfo>> {
     console.error(`Nmap discovery failed for ${ip}:`, error);
     return { discovery_method: ['nmap_failed'] };
   }
+}
+
+function getServiceName(port: number): string {
+  const serviceMap: { [key: number]: string } = {
+    22: 'ssh',
+    53: 'dns',
+    80: 'http',
+    135: 'rpc',
+    139: 'netbios',
+    443: 'https',
+    445: 'smb',
+    993: 'imaps',
+    995: 'pop3s'
+  };
+  return serviceMap[port] || 'unknown';
+}
+
+function getServiceVersion(port: number): string {
+  const versionMap: { [key: number]: string } = {
+    22: 'OpenSSH 8.2',
+    53: 'ISC BIND 9.16',
+    80: 'Apache 2.4.41',
+    135: 'Microsoft RPC',
+    139: 'Samba NetBIOS',
+    443: 'nginx 1.18.0',
+    445: 'Samba 4.11.6',
+    993: 'Dovecot imapd',
+    995: 'Dovecot pop3d'
+  };
+  return versionMap[port] || 'unknown';
+}
+
+function generateMacAddress(): string {
+  const hexChars = '0123456789ABCDEF';
+  let mac = '';
+  for (let i = 0; i < 6; i++) {
+    if (i > 0) mac += ':';
+    mac += hexChars[Math.floor(Math.random() * 16)];
+    mac += hexChars[Math.floor(Math.random() * 16)];
+  }
+  return mac;
 }
 
 // Main discovery orchestrator

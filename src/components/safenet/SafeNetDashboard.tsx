@@ -152,13 +152,71 @@ export const SafeNetDashboard = () => {
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Devices */}
             <Card>
-              <CardHeader>
-                <CardTitle>Network Topology Overview</CardTitle>
-                <CardDescription>Real-time network visualization</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium">Recent Devices</CardTitle>
+                <Network className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <NetworkTopologyViewer compact />
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {devices.slice(0, 5).map((device, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <p className="text-sm font-medium truncate">
+                              {device.device_name || device.hostname || 'Unknown Device'}
+                            </p>
+                            <Badge variant={device.status === 'online' ? 'default' : 'secondary'} className="text-xs">
+                              {device.status}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                            <span>{String(device.ip_address)}</span>
+                            {device.manufacturer && <span>• {device.manufacturer}</span>}
+                            {device.model && <span>• {device.model}</span>}
+                          </div>
+                          <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-1">
+                            {device.os_family && <span>OS: {device.os_family}</span>}
+                            {device.os_version && <span>• {device.os_version}</span>}
+                          </div>
+                          {device.discovery_method && device.discovery_method.length > 0 && (
+                            <div className="flex items-center space-x-1 mt-1">
+                              {device.discovery_method.map((method, idx) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {method}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {(device.cpu_usage || device.memory_usage || device.uptime_hours) && (
+                            <div className="flex items-center space-x-2 text-xs text-muted-foreground mt-1">
+                              {device.cpu_usage && <span>CPU: {device.cpu_usage}%</span>}
+                              {device.memory_usage && <span>• RAM: {device.memory_usage}%</span>}
+                              {device.uptime_hours && <span>• Uptime: {Math.floor(device.uptime_hours / 24)}d</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end space-y-1">
+                        <Badge variant={device.is_critical ? 'destructive' : device.is_managed ? 'default' : 'secondary'} className="text-xs">
+                          {device.is_critical ? 'Critical' : device.is_managed ? 'Managed' : 'Unmanaged'}
+                        </Badge>
+                        {device.vulnerability_count > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            {device.vulnerability_count} issues
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {devices.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No devices discovered yet. Run a scan to discover devices.
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

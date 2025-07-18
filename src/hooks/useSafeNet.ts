@@ -5,20 +5,32 @@ import { useToast } from '@/hooks/use-toast';
 
 export interface NetworkDevice {
   id: string;
-  network_id: string;
+  network_id?: string;
   user_id: string;
-  device_name: string;
+  device_name?: string;
+  hostname?: string;
   ip_address: string | unknown;
-  mac_address: string;
-  device_type: string;
+  mac_address?: string;
+  device_type?: string;
+  device_role?: string;
+  os_family?: string;
   os_version?: string;
   manufacturer?: string;
   model?: string;
+  serial_number?: string;
   status: string;
   last_seen_at?: string;
   vulnerability_count: number;
   is_managed: boolean;
+  is_critical: boolean;
   security_patches_needed: number;
+  network_segment?: string;
+  uptime_hours?: number;
+  cpu_usage?: number;
+  memory_usage?: number;
+  discovery_method?: string[];
+  device_metadata?: any;
+  connector_key?: string;
   created_at: string;
   updated_at: string;
 }
