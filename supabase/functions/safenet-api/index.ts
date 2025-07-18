@@ -188,9 +188,19 @@ serve(async (req) => {
           .single();
 
         if (scanError) {
-          console.error('Error inserting scan data:', scanError);
+          console.error('Detailed error inserting scan data:', JSON.stringify(scanError, null, 2));
+          console.error('Data being inserted:', JSON.stringify({
+            user_id: connector.user_id,
+            connector_id: connector.connector_id,
+            target_ip: scanData.network_ranges[0] || 'unknown',
+            scan_type: scanData.scan_type,
+            network_ranges: scanData.network_ranges,
+            devices_found: scanData.devices_found,
+            scan_duration: scanData.scan_duration,
+            hostname: scanData.hostname
+          }, null, 2));
           return new Response(
-            JSON.stringify({ error: 'Failed to save scan data' }),
+            JSON.stringify({ error: 'Failed to save scan data', details: scanError }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
