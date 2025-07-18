@@ -5,938 +5,311 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Enhanced SafeNet Python Connector Script with Built-in Discovery
-const pythonConnectorScript = `#!/usr/bin/env python3
-"""
-SafeNet Network Scanner Connector with Enhanced Discovery
-Comprehensive network discovery, mapping, and security vulnerability assessment
-Runs as a service with built-in credentials and enhanced detection capabilities
-"""
+function generateWindowsInstaller(agentId: string | null, clientId: string | null): string {
+  return `@echo off
+REM SafeNet Connector Installer for Windows
+title SafeNet Connector Installer
+echo.
+echo ====================================
+echo SafeNet Connector Installer v2.0
+echo ====================================
+echo.
+echo Agent ID: ${agentId || 'auto-generated'}
+echo Client ID: ${clientId || 'default'}
+echo.
 
-# Immediate debug wrapper to catch any startup errors
+REM Check if Python is installed
+python --version >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Python is not installed or not in PATH
+    echo.
+    echo Please install Python 3.7+ from: https://www.python.org/downloads/
+    echo Make sure to check "Add Python to PATH" during installation
+    echo.
+    pause
+    exit /b 1
+)
+
+echo ✓ Python found
+echo Installing SafeNet Connector...
+echo.
+
+REM Install required packages
+echo Installing required Python packages...
+pip install requests psutil
+
+REM Create SafeNet directory
+if not exist "%USERPROFILE%\\SafeNet" mkdir "%USERPROFILE%\\SafeNet"
+cd /d "%USERPROFILE%\\SafeNet"
+
+REM Create the connector script
+echo Creating connector script...
+(
+echo import sys
+echo import os
+echo import json
+echo import time
+echo import socket
+echo import subprocess
+echo from datetime import datetime, timezone
+echo.
+echo print^('SafeNet Connector v2.0'^)
+echo print^('====================='^)
+echo print^(f'Agent ID: ${agentId || 'auto-generated'}'^)
+echo print^(f'Client ID: ${clientId || 'default'}'^)
+echo print^('^)
+echo.
+echo class SafeNetConnector:
+echo     def __init__^(self^):
+echo         self.agent_id = '${agentId || 'auto-generated'}'
+echo         self.client_id = '${clientId || 'default'}'
+echo         self.endpoint = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api'
+echo         
+echo     def discover_devices^(self^):
+echo         devices = []
+echo         try:
+echo             hostname = socket.gethostname^(^)
+echo             local_ip = socket.gethostbyname^(hostname^)
+echo             
+echo             device = {
+echo                 'hostname': hostname,
+echo                 'ip_address': local_ip,
+echo                 'device_type': 'computer',
+echo                 'os': os.name,
+echo                 'status': 'online',
+echo                 'discovered_at': datetime.now^(timezone.utc^).isoformat^(^)
+echo             }
+echo             devices.append^(device^)
+echo             print^(f'Found device: {hostname} ^({local_ip}^)'^)
+echo         except Exception as e:
+echo             print^(f'Discovery error: {e}'^)
+echo         return devices
+echo.
+echo     def send_report^(self, devices^):
+echo         try:
+echo             import requests
+echo             report = {
+echo                 'agent_id': self.agent_id,
+echo                 'client_id': self.client_id,
+echo                 'timestamp': datetime.now^(timezone.utc^).isoformat^(^),
+echo                 'devices': devices,
+echo                 'scan_type': 'basic_discovery'
+echo             }
+echo             response = requests.post^(self.endpoint, json=report, timeout=30^)
+echo             if response.status_code == 200:
+echo                 print^('✓ Report sent successfully'^)
+echo             else:
+echo                 print^(f'Report failed: {response.status_code}'^)
+echo         except Exception as e:
+echo             print^(f'Report error: {e}'^)
+echo.
+echo     def run_scan^(self^):
+echo         print^('Starting network scan...'^)
+echo         devices = self.discover_devices^(^)
+echo         self.send_report^(devices^)
+echo         print^(f'Scan complete. Found {len^(devices^)} devices'^)
+echo.
+echo def main^(^):
+echo     try:
+echo         connector = SafeNetConnector^(^)
+echo         print^('SafeNet Connector is ready!'^)
+echo         print^('Choose an option:'^)
+echo         print^('1. Run single scan'^)
+echo         print^('2. Run continuous monitoring'^)
+echo         print^('3. Exit'^)
+echo         
+echo         while True:
+echo             choice = input^('Enter choice ^(1-3^): '^).strip^(^)
+echo             if choice == '1':
+echo                 connector.run_scan^(^)
+echo             elif choice == '2':
+echo                 print^('Starting continuous monitoring...'^)
+echo                 print^('Press Ctrl+C to stop'^)
+echo                 try:
+echo                     while True:
+echo                         connector.run_scan^(^)
+echo                         time.sleep^(60^)
+echo                 except KeyboardInterrupt:
+echo                     print^('Monitoring stopped'^)
+echo                     break
+echo             elif choice == '3':
+echo                 break
+echo             else:
+echo                 print^('Invalid choice'^)
+echo     except Exception as e:
+echo         print^(f'Error: {e}'^)
+echo         input^('Press Enter to exit...'^)
+echo.
+echo if __name__ == '__main__':
+echo     main^(^)
+) > safenet_connector.py
+
+echo.
+echo ✓ SafeNet Connector installed successfully!
+echo.
+echo To run the connector later:
+echo   cd "%USERPROFILE%\\SafeNet"
+echo   python safenet_connector.py
+echo.
+echo Starting SafeNet Connector now...
+python safenet_connector.py
+
+pause`;
+}
+
+function generateMacOSInstaller(agentId: string | null, clientId: string | null): string {
+  return `#!/bin/bash
+# SafeNet Connector Installer for macOS/Linux
+
+echo "===================================="
+echo "SafeNet Connector Installer v2.0"
+echo "===================================="
+echo ""
+echo "Agent ID: ${agentId || 'auto-generated'}"
+echo "Client ID: ${clientId || 'default'}"
+echo ""
+
+# Check if Python is installed
+if ! command -v python3 &> /dev/null; then
+    echo "ERROR: Python 3 is not installed"
+    echo ""
+    echo "Please install Python 3.7+ from: https://www.python.org/downloads/"
+    echo "Or use your package manager:"
+    echo "  macOS: brew install python3"
+    echo "  Ubuntu/Debian: sudo apt install python3 python3-pip"
+    echo "  CentOS/RHEL: sudo yum install python3 python3-pip"
+    read -p "Press Enter to exit..."
+    exit 1
+fi
+
+echo "✓ Python 3 found"
+echo "Installing SafeNet Connector..."
+echo ""
+
+# Install required packages
+echo "Installing required Python packages..."
+python3 -m pip install requests psutil
+
+# Create SafeNet directory
+mkdir -p ~/SafeNet
+cd ~/SafeNet
+
+# Create the connector script
+echo "Creating connector script..."
+cat > safenet_connector.py << 'EOF'
 import sys
 import os
+import json
+import time
+import socket
+import subprocess
+from datetime import datetime, timezone
 
-def debug_print(msg):
-    print(f"DEBUG: {msg}")
-    sys.stdout.flush()
-
-def safe_input(prompt="Press Enter to continue..."):
-    try:
-        input(prompt)
-    except:
-        import time
-        time.sleep(10)
-
-# Wrap EVERYTHING in error handling
-try:
-    debug_print("Starting SafeNet Connector...")
-    debug_print(f"Python version: {sys.version}")
-    debug_print(f"Current directory: {os.getcwd()}")
-    
-    # Basic imports first
-    import socket
-    debug_print("✓ Socket imported")
-    
-    import subprocess
-    debug_print("✓ Subprocess imported")
-    
-    import json
-    debug_print("✓ JSON imported")
-    
-    import time
-    debug_print("✓ Time imported")
-    
-    import threading
-    debug_print("✓ Threading imported")
-    
-    import platform
-    debug_print("✓ Platform imported")
-    
-    from datetime import datetime, timezone
-    debug_print("✓ Datetime imported")
-    
-    import logging
-    debug_print("✓ Logging imported")
-    
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    debug_print("✓ Concurrent futures imported")
-    
-    debug_print("All basic imports successful!")
-
-except Exception as e:
-    print(f"CRITICAL ERROR during imports: {e}")
-    print(f"Error type: {type(e).__name__}")
-    try:
-        import traceback
-        print("Full traceback:")
-        print(traceback.format_exc())
-    except:
-        print("Could not import traceback module")
-    safe_input("Press Enter to exit...")
-    sys.exit(1)
-
-# Enhanced modules (install automatically if missing)
-CORE_MODULES = ['requests', 'psutil', 'python-nmap', 'schedule']
-NETWORK_MODULES = ['netifaces']  # Separate due to compilation issues
-OPTIONAL_MODULES = ['pysnmp', 'wmi', 'paramiko']
-
-def install_build_tools_windows():
-    """Install Visual C++ build tools on Windows"""
-    if platform.system() != 'Windows':
-        return True
-        
-    print("Installing Microsoft Visual C++ Build Tools...")
-    print("This is required for compiling Python packages with C extensions.")
-    
-    # Check if build tools are already installed
-    try:
-        result = subprocess.run(['where', 'cl'], capture_output=True, text=True)
-        if result.returncode == 0:
-            print("Visual C++ compiler already available")
-            return True
-    except:
-        pass
-    
-    methods = [
-        ("winget", ["winget", "install", "Microsoft.VisualStudio.2022.BuildTools", "--silent"]),
-        ("chocolatey", ["choco", "install", "visualstudio2022buildtools", "--params", "--add Microsoft.VisualStudio.Workload.VCTools", "-y"]),
-    ]
-    
-    for method_name, cmd in methods:
-        try:
-            print(f"Trying {method_name}...")
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            if result.returncode == 0:
-                print(f"Build tools installed via {method_name}")
-                return True
-        except Exception as e:
-            print(f"{method_name} failed: {e}")
-            continue
-    
-    # Manual installation prompt
-    print("\\n" + "="*60)
-    print("MANUAL INSTALLATION REQUIRED")
-    print("="*60)
-    print("Please install Microsoft C++ Build Tools manually:")
-    print("1. Go to: https://visualstudio.microsoft.com/visual-cpp-build-tools/")
-    print("2. Download 'Build Tools for Visual Studio 2022'")
-    print("3. Run the installer and select 'C++ build tools' workload")
-    print("4. Restart this installer after installation completes")
-    print("="*60)
-    return False
-
-def try_alternative_netifaces():
-    """Try alternative methods to get network interfaces"""
-    print("Trying alternative network interface detection...")
-    
-    # Method 1: Using psutil (already installed)
-    try:
-        import psutil
-        interfaces = psutil.net_if_addrs()
-        print(f"Found {len(interfaces)} network interfaces using psutil")
-        return True
-    except:
-        pass
-    
-    # Method 2: Using socket and system commands
-    try:
-        import socket
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        print(f"Local IP detected: {local_ip}")
-        return True
-    except:
-        pass
-    
-    return False
-
-def install_module_with_fallback(module_name):
-    """Install module with multiple fallback strategies"""
-    print(f"Installing {module_name}...")
-    
-    if module_name == 'netifaces':
-        # Strategy 1: Try precompiled wheel
-        wheels_to_try = [
-            f"{module_name} --only-binary=all",
-            f"{module_name} --prefer-binary",
-        ]
-        
-        for wheel_cmd in wheels_to_try:
-            try:
-                cmd = [sys.executable, '-m', 'pip', 'install'] + wheel_cmd.split()
-                subprocess.check_call(cmd, timeout=60)
-                print(f"Successfully installed {module_name} (binary)")
-                return True
-            except:
-                continue
-        
-        # Strategy 2: Install build tools and compile
-        if platform.system() == 'Windows':
-            print(f"Binary installation failed for {module_name}")
-            if install_build_tools_windows():
-                try:
-                    subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], timeout=300)
-                    print(f"Successfully installed {module_name} (from source)")
-                    return True
-                except Exception as e:
-                    print(f"Source compilation failed: {e}")
-            
-            # Strategy 3: Use alternative method
-            print(f"Cannot install {module_name}, using alternative methods...")
-            return try_alternative_netifaces()
-        else:
-            # On non-Windows, try direct installation
-            try:
-                subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], timeout=120)
-                return True
-            except:
-                return try_alternative_netifaces()
-    else:
-        # Standard module installation
-        try:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], timeout=120)
-            print(f"Successfully installed {module_name}")
-            return True
-        except Exception as e:
-            print(f"Failed to install {module_name}: {e}")
-            return False
-
-def check_and_install_modules():
-    """Check and install required modules with robust error handling"""
-    print("Checking and installing required modules...")
-    
-    # Upgrade pip and setuptools first
-    try:
-        print("Upgrading pip and setuptools...")
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'])
-    except:
-        print("Warning: Could not upgrade pip/setuptools")
-    
-    # Install core modules first (these usually work without issues)
-    for module in CORE_MODULES:
-        module_import_name = module
-        if module == 'python-nmap':
-            module_import_name = 'nmap'
-            
-        try:
-            __import__(module_import_name)
-            print(f"✓ {module} already installed")
-        except ImportError:
-            if not install_module_with_fallback(module):
-                print(f"✗ CRITICAL: Failed to install {module}")
-                return False
-    
-    # Handle network modules (problematic on Windows)
-    netifaces_working = False
-    for module in NETWORK_MODULES:
-        try:
-            __import__(module)
-            print(f"✓ {module} already installed")
-            netifaces_working = True
-        except ImportError:
-            if install_module_with_fallback(module):
-                netifaces_working = True
-                print(f"✓ {module} installed successfully")
-            else:
-                print(f"⚠ {module} not available, using alternatives")
-    
-    # Install optional modules (best effort)
-    print("\\nInstalling optional modules for enhanced discovery...")
-    for module in OPTIONAL_MODULES:
-        try:
-            __import__(module)
-            print(f"✓ {module} already installed")
-        except ImportError:
-            try:
-                install_condition = ""
-                if module == 'wmi':
-                    install_condition = '; sys_platform == "win32"'
-                
-                subprocess.check_call([sys.executable, '-m', 'pip', 'install', f'{module}{install_condition}'], timeout=60)
-                print(f"✓ {module} installed")
-            except:
-                print(f"⚠ {module} installation failed (optional)")
-    
-    return True
-
-def get_network_interfaces_fallback():
-    """Get network interfaces using multiple methods"""
-    interfaces = []
-    
-    # Method 1: Try netifaces if available
-    try:
-        import netifaces
-        for interface in netifaces.interfaces():
-            addrs = netifaces.ifaddresses(interface)
-            if netifaces.AF_INET in addrs:
-                for addr in addrs[netifaces.AF_INET]:
-                    if 'addr' in addr:
-                        interfaces.append(addr['addr'])
-        return interfaces
-    except:
-        pass
-    
-    # Method 2: Use psutil
-    try:
-        import psutil
-        for interface_name, interface_addresses in psutil.net_if_addrs().items():
-            for address in interface_addresses:
-                if str(address.family) == 'AddressFamily.AF_INET':
-                    interfaces.append(address.address)
-        return interfaces
-    except:
-        pass
-    
-    # Method 3: Basic socket method
-    try:
-        import socket
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        interfaces.append(local_ip)
-        return interfaces
-    except:
-        pass
-    
-    return ['127.0.0.1']  # Fallback to localhost
-
-
-import requests
-import psutil
-
-# Try to import netifaces, use fallback if not available
-try:
-    import netifaces
-    NETIFACES_AVAILABLE = True
-except ImportError:
-    NETIFACES_AVAILABLE = False
-    print("⚠ netifaces not available, using alternative network detection")
-
-# Try to import optional modules for enhanced discovery
-try:
-    from pysnmp.hlapi import *
-    SNMP_AVAILABLE = True
-except ImportError:
-    SNMP_AVAILABLE = False
-    
-try:
-    import wmi
-    WMI_AVAILABLE = True
-except ImportError:
-    WMI_AVAILABLE = False
-    
-try:
-    import paramiko
-    SSH_AVAILABLE = True
-except ImportError:
-    SSH_AVAILABLE = False
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('safenet_connector.log'),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+print('SafeNet Connector v2.0')
+print('=====================')
+print(f'Agent ID: ${agentId || 'auto-generated'}')
+print(f'Client ID: ${clientId || 'default'}')
+print()
 
 class SafeNetConnector:
-    def __init__(self, api_key, server_url="https://nsyobmjpdpvesjwdphlh.supabase.co"):
-        self.api_key = api_key
-        self.server_url = server_url
-        self.running = False
+    def __init__(self):
+        self.agent_id = '${agentId || 'auto-generated'}'
+        self.client_id = '${clientId || 'default'}'
+        self.endpoint = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api'
         
-        # Enhanced discovery settings
-        self.enable_enhanced_discovery = True
-        self.snmp_community = "public"
-        self.snmp_timeout = 5
-        self.ssh_timeout = 10
-        self.wmi_timeout = 15
-        self.max_threads = 50
-        self.timeout = 2
-        
-        # Built-in credentials for enhanced discovery
-        self.common_credentials = [
-            {"username": "admin", "password": "admin"},
-            {"username": "admin", "password": "password"}, 
-            {"username": "root", "password": "root"},
-            {"username": "user", "password": "user"},
-            {"username": "administrator", "password": "admin"},
-            {"username": "guest", "password": "guest"},
-            {"username": "service", "password": "service"},
-        ]
-        
-        # Extended ports for comprehensive scanning
-        self.common_ports = [21, 22, 23, 25, 53, 80, 110, 135, 139, 143, 161, 443, 445, 993, 995, 1433, 3306, 3389, 5432, 5900, 8080, 8443, 9200, 27017]
-        
-    def enhanced_snmp_discovery(self, ip):
-        """Enhanced device discovery using SNMP"""
-        device_info = {}
-        if not SNMP_AVAILABLE:
-            return device_info
-            
-        try:
-            # System description and name
-            for oid, name in [('1.3.6.1.2.1.1.1.0', 'system_description'), 
-                            ('1.3.6.1.2.1.1.5.0', 'snmp_hostname'),
-                            ('1.3.6.1.2.1.1.6.0', 'location')]:
-                try:
-                    iterator = getCmd(SnmpEngine(),
-                                    CommunityData(self.snmp_community),
-                                    UdpTransportTarget((ip, 161), timeout=self.snmp_timeout),
-                                    ContextData(),
-                                    ObjectType(ObjectIdentity(oid)))
-                    
-                    errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
-                    if not errorIndication and not errorStatus:
-                        device_info[name] = str(varBinds[0][1])
-                except:
-                    continue
-                    
-        except Exception as e:
-            logger.debug(f"SNMP discovery failed for {ip}: {e}")
-            
-        return device_info
-
-    def enhanced_wmi_discovery(self, ip):
-        """Enhanced Windows device discovery using WMI"""
-        device_info = {}
-        if not WMI_AVAILABLE or platform.system() != "Windows":
-            return device_info
-            
-        try:
-            for cred in self.common_credentials:
-                try:
-                    c = wmi.WMI(computer=ip, user=cred['username'], password=cred['password'])
-                    
-                    # System info
-                    for system in c.Win32_ComputerSystem():
-                        device_info.update({
-                            'manufacturer': system.Manufacturer,
-                            'model': system.Model,
-                            'total_memory': f"{int(system.TotalPhysicalMemory) // (1024**3)}GB"
-                        })
-                        break
-                        
-                    # OS info  
-                    for os_info in c.Win32_OperatingSystem():
-                        device_info.update({
-                            'os_name': os_info.Caption,
-                            'os_version': os_info.Version,
-                            'service_pack': str(os_info.ServicePackMajorVersion)
-                        })
-                        break
-                        
-                    break  # Success
-                except:
-                    continue
-                    
-        except Exception as e:
-            logger.debug(f"WMI discovery failed for {ip}: {e}")
-            
-        return device_info
-
-    def enhanced_ssh_discovery(self, ip):
-        """Enhanced Linux/Unix device discovery using SSH"""
-        device_info = {}
-        if not SSH_AVAILABLE:
-            return device_info
-            
-        try:
-            for cred in self.common_credentials:
-                try:
-                    ssh = paramiko.SSHClient()
-                    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                    ssh.connect(ip, username=cred['username'], password=cred['password'], timeout=self.ssh_timeout)
-                    
-                    # Get system info
-                    commands = {
-                        'uname': 'uname -a',
-                        'os_release': 'cat /etc/os-release 2>/dev/null || cat /etc/redhat-release 2>/dev/null',
-                        'uptime': 'uptime',
-                        'memory': 'free -h | head -2',
-                        'disk': 'df -h | head -5'
-                    }
-                    
-                    for key, cmd in commands.items():
-                        try:
-                            stdin, stdout, stderr = ssh.exec_command(cmd)
-                            output = stdout.read().decode().strip()
-                            if output:
-                                device_info[key] = output
-                        except:
-                            continue
-                    
-                    ssh.close()
-                    break
-                except:
-                    continue
-                    
-        except Exception as e:
-            logger.debug(f"SSH discovery failed for {ip}: {e}")
-            
-        return device_info
-
-    def enhanced_nmap_scan(self, ip):
-        """Enhanced port scanning and OS detection"""
-        device_info = {}
-        try:
-            # Try nmap for advanced detection
-            result = subprocess.run(['nmap', '-sV', '-O', '--version-light', '--osscan-guess', ip], 
-                                  capture_output=True, text=True, timeout=120)
-            
-            if result.returncode == 0:
-                output = result.stdout
-                device_info['nmap_scan'] = output
-                
-                # Parse OS
-                for line in output.split('\\n'):
-                    if 'Running:' in line:
-                        device_info['nmap_os'] = line.split('Running:')[1].strip()
-                        break
-                        
-                # Parse services
-                services = []
-                for line in output.split('\\n'):
-                    if '/tcp' in line and 'open' in line:
-                        parts = line.split()
-                        if len(parts) >= 3:
-                            services.append({
-                                'port': int(parts[0].split('/')[0]),
-                                'service': parts[2],
-                                'version': ' '.join(parts[3:]) if len(parts) > 3 else ''
-                            })
-                device_info['services'] = services
-                
-        except:
-            pass
-            
-        return device_info
-
-    def classify_device_type(self, ip, open_ports, enhanced_info):
-        """Smart device classification"""
-        # Enhanced classification logic
-        if enhanced_info.get('system_description'):
-            desc = enhanced_info['system_description'].lower()
-            if 'router' in desc or 'cisco' in desc:
-                return 'router'
-            elif 'switch' in desc:
-                return 'switch'
-            elif 'printer' in desc:
-                return 'printer'
-            elif 'access point' in desc or 'wireless' in desc:
-                return 'access_point'
-                
-        if enhanced_info.get('nmap_os'):
-            os_info = enhanced_info['nmap_os'].lower()
-            if 'router' in os_info:
-                return 'router'
-            elif 'printer' in os_info:
-                return 'printer'
-                
-        # Port-based classification
-        if 161 in open_ports and (80 in open_ports or 443 in open_ports):
-            return 'managed_device'
-        elif 3389 in open_ports and (135 in open_ports or 445 in open_ports):
-            return 'windows_server'
-        elif 22 in open_ports and (80 in open_ports or 443 in open_ports):
-            return 'linux_server'
-        elif 1433 in open_ports or 3306 in open_ports or 5432 in open_ports:
-            return 'database_server'
-        elif 22 in open_ports:
-            return 'linux_workstation'
-        elif 135 in open_ports or 139 in open_ports or 445 in open_ports:
-            return 'windows_workstation'
-        else:
-            return 'unknown'
-
-    def detect_vulnerabilities(self, ip, open_ports, enhanced_info):
-        """Comprehensive vulnerability detection"""
-        vulnerabilities = []
-        
-        # Critical vulnerabilities
-        if 23 in open_ports:
-            vulnerabilities.append({
-                "type": "insecure_protocol",
-                "severity": "critical",
-                "title": "Telnet Service Exposed",
-                "description": "Unencrypted Telnet service allows credential interception",
-                "port": 23,
-                "solution": "Disable Telnet and use SSH instead"
-            })
-            
-        if 21 in open_ports:
-            vulnerabilities.append({
-                "type": "insecure_protocol", 
-                "severity": "high",
-                "title": "FTP Service Exposed",
-                "description": "FTP service may allow unauthorized file access",
-                "port": 21,
-                "solution": "Use SFTP or disable FTP service"
-            })
-            
-        if 3389 in open_ports:
-            vulnerabilities.append({
-                "type": "exposed_service",
-                "severity": "high", 
-                "title": "RDP Service Exposed",
-                "description": "Remote Desktop exposed to network attacks",
-                "port": 3389,
-                "solution": "Restrict RDP access and use VPN"
-            })
-            
-        # Check for weak services
-        if enhanced_info.get('services'):
-            for service in enhanced_info['services']:
-                version = service.get('version', '').lower()
-                if 'ssh' in version and ('openssh 6.' in version or 'openssh 7.0' in version):
-                    vulnerabilities.append({
-                        "type": "vulnerable_version",
-                        "severity": "medium",
-                        "title": "Potentially Vulnerable SSH",
-                        "description": f"SSH version may have known vulnerabilities: {service['version']}",
-                        "port": service['port'],
-                        "solution": "Update SSH to latest version"
-                    })
-                    
-        # OS-specific vulnerabilities
-        if enhanced_info.get('os_name'):
-            os_name = enhanced_info['os_name'].lower()
-            if any(eol_os in os_name for eol_os in ['windows server 2008', 'windows 7', 'windows xp']):
-                vulnerabilities.append({
-                    "type": "end_of_life",
-                    "severity": "critical",
-                    "title": "End-of-Life Operating System",
-                    "description": "OS no longer receives security updates",
-                    "port": None,
-                    "solution": "Upgrade to supported OS version"
-                })
-                
-        return vulnerabilities
-
-    def get_mac_address(self, ip):
-        """Get MAC address from ARP table"""
-        try:
-            if platform.system() == "Windows":
-                result = subprocess.run(['arp', '-a', ip], capture_output=True, text=True, timeout=5)
-                for line in result.stdout.split('\\n'):
-                    if ip in line:
-                        parts = line.split()
-                        for part in parts:
-                            if len(part) == 17 and (part.count('-') == 5 or part.count(':') == 5):
-                                return part.replace('-', ':')
-            else:
-                result = subprocess.run(['arp', '-n', ip], capture_output=True, text=True, timeout=5)
-                for line in result.stdout.split('\\n'):
-                    if ip in line:
-                        parts = line.split()
-                        for part in parts:
-                            if len(part) == 17 and part.count(':') == 5:
-                                return part
-        except:
-            pass
-        return "Unknown"
-        
-    def scan_device_enhanced(self, ip):
-        """Comprehensive device scanning"""
-        # Quick connectivity test
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(1)
-            result = sock.connect_ex((ip, 80))
-            sock.close()
-            if result != 0:
-                # Try another common port
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-                sock.settimeout(1)
-                result = sock.connect_ex((ip, 22))
-                sock.close()
-                if result != 0:
-                    return None
-        except:
-            return None
-            
-        print(f"Scanning device: {ip}")
-        
-        # Port scanning
-        open_ports = []
-        for port in self.common_ports:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(self.timeout)
-                result = sock.connect_ex((ip, port))
-                if result == 0:
-                    open_ports.append(port)
-                sock.close()
-            except:
-                pass
-        
-        # Get basic info
-        hostname = self.get_hostname(ip)
-        mac_address = self.get_mac_address(ip)
-        
-        # Enhanced discovery
-        enhanced_info = {}
-        if self.enable_enhanced_discovery:
-            # Run discovery methods
-            if 161 in open_ports:  # SNMP
-                enhanced_info.update(self.enhanced_snmp_discovery(ip))
-            if any(p in open_ports for p in [135, 139, 445, 3389]):  # Windows
-                enhanced_info.update(self.enhanced_wmi_discovery(ip))
-            if 22 in open_ports:  # SSH
-                enhanced_info.update(self.enhanced_ssh_discovery(ip))
-            
-            # Nmap scan
-            enhanced_info.update(self.enhanced_nmap_scan(ip))
-        
-        # Classification and analysis
-        device_type = self.classify_device_type(ip, open_ports, enhanced_info)
-        vulnerabilities = self.detect_vulnerabilities(ip, open_ports, enhanced_info)
-        
-        # OS detection
-        os_detected = "Unknown"
-        if enhanced_info.get('os_name'):
-            os_detected = enhanced_info['os_name']
-        elif enhanced_info.get('uname'):
-            os_detected = enhanced_info['uname'].split()[0]
-        elif enhanced_info.get('nmap_os'):
-            os_detected = enhanced_info['nmap_os']
-        elif open_ports:
-            if 3389 in open_ports:
-                os_detected = "Windows"
-            elif 22 in open_ports:
-                os_detected = "Linux/Unix"
-                
-        return {
-            "ip": ip,
-            "hostname": hostname,
-            "mac": mac_address,
-            "ports": open_ports,
-            "os": os_detected,
-            "device_type": device_type,
-            "vulnerabilities": vulnerabilities,
-            "risk_level": "critical" if any(v["severity"] == "critical" for v in vulnerabilities) else "high" if vulnerabilities else "low",
-            "last_seen": datetime.now().isoformat(),
-            "manufacturer": enhanced_info.get('manufacturer', 'Unknown'),
-            "model": enhanced_info.get('model', 'Unknown'),
-            "system_description": enhanced_info.get('system_description', ''),
-            "discovery_method": "enhanced" if enhanced_info else "basic"
-        }
-    
-    def get_hostname(self, ip):
-        """Get hostname for IP address"""
-        try:
-            return socket.gethostbyaddr(ip)[0]
-        except:
-            return f"device-{ip.split('.')[-1]}"
-    
-    def scan_network(self):
-        """Enhanced network discovery"""
+    def discover_devices(self):
         devices = []
         try:
-            # Get local network range
             hostname = socket.gethostname()
             local_ip = socket.gethostbyname(hostname)
-            network = ipaddress.IPv4Network(f"{local_ip}/24", strict=False)
             
-            print(f"Scanning network: {network}")
-            print("Enhanced discovery enabled - performing comprehensive scans...")
-            
-            # Scan all hosts in parallel
-            with ThreadPoolExecutor(max_workers=self.max_threads) as executor:
-                futures = {executor.submit(self.scan_device_enhanced, str(ip)): ip for ip in network.hosts()}
-                
-                for future in futures:
-                    try:
-                        device = future.result(timeout=60)
-                        if device:
-                            devices.append(device)
-                            print(f"Found device: {device['ip']} ({device['hostname']}) - {device['device_type']} - {len(device['vulnerabilities'])} vulnerabilities")
-                    except Exception as e:
-                        continue
-                        
+            device = {
+                'hostname': hostname,
+                'ip_address': local_ip,
+                'device_type': 'computer',
+                'os': os.name,
+                'status': 'online',
+                'discovered_at': datetime.now(timezone.utc).isoformat()
+            }
+            devices.append(device)
+            print(f'Found device: {hostname} ({local_ip})')
         except Exception as e:
-            print(f"Network scan error: {e}")
-            
+            print(f'Discovery error: {e}')
         return devices
-        
-    def run_scan_cycle(self):
-        """Run enhanced scan cycle"""
-        print("Starting SafeNet Enhanced Scan Cycle...")
-        
-        # Enhanced device discovery
-        devices = self.scan_network()
-        print(f"Discovered {len(devices)} devices with enhanced scanning")
-        
-        # Calculate statistics
-        total_vulnerabilities = sum(len(device.get('vulnerabilities', [])) for device in devices)
-        critical_devices = sum(1 for device in devices if device.get('risk_level') == 'critical')
-        managed_devices = sum(1 for device in devices if device.get('discovery_method') == 'enhanced')
-        
-        print(f"Enhanced Discovery Results:")
-        print(f"- Total devices: {len(devices)}")
-        print(f"- Enhanced discovery: {managed_devices} devices") 
-        print(f"- Total vulnerabilities: {total_vulnerabilities}")
-        print(f"- Critical risk devices: {critical_devices}")
-        
-        # Prepare enhanced payload
-        scan_data = {
-            "connector_key": self.api_key,
-            "scan_type": "enhanced_network_discovery",
-            "scan_timestamp": datetime.now().isoformat(),
-            "connector_version": "2.0.0",
-            "devices": devices,
-            "scan_statistics": {
-                "total_devices": len(devices),
-                "enhanced_discovered": managed_devices,
-                "total_vulnerabilities": total_vulnerabilities,
-                "critical_devices": critical_devices
-            },
-            "system_info": {
-                "os": platform.system(),
-                "platform": platform.platform(),
-                "python_version": platform.python_version(),
-                "enhanced_modules": {
-                    "snmp": SNMP_AVAILABLE,
-                    "wmi": WMI_AVAILABLE, 
-                    "ssh": SSH_AVAILABLE
-                }
-            },
-            "network_info": {
-                "gateway": socket.gethostbyname(socket.gethostname()),
-                "subnets": [f"{socket.gethostbyname(socket.gethostname())}/24"]
-            }
-        }
-        
-        
-        # Send to server
+
+    def send_report(self, devices):
         try:
-            headers = {
-                "Content-Type": "application/json",
-                "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI"
+            import requests
+            report = {
+                'agent_id': self.agent_id,
+                'client_id': self.client_id,
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'devices': devices,
+                'scan_type': 'basic_discovery'
             }
-            
-            response = requests.post(
-                f"{self.server_url}/functions/v1/safenet-connector",
-                headers=headers,
-                json=scan_data,
-                timeout=30
-            )
-            
+            response = requests.post(self.endpoint, json=report, timeout=30)
             if response.status_code == 200:
-                print("Enhanced scan data sent successfully")
+                print('✓ Report sent successfully')
             else:
-                print(f"Failed to send scan data: {response.status_code}")
-                
+                print(f'Report failed: {response.status_code}')
         except Exception as e:
-            print(f"Error sending scan data: {e}")
-        
-        print(f"Enhanced scan cycle complete. Found {len(devices)} devices, {total_vulnerabilities} vulnerabilities")
-        
-    def start_monitoring(self):
-        """Start continuous enhanced monitoring"""
-        self.running = True
-        print("SafeNet Enhanced Connector started - monitoring network...")
-        print("Enhanced capabilities:")
-        print(f"- SNMP Discovery: {'Enabled' if SNMP_AVAILABLE else 'Disabled (pysnmp not installed)'}")
-        print(f"- WMI Discovery: {'Enabled' if WMI_AVAILABLE else 'Disabled (wmi not installed)'}")
-        print(f"- SSH Discovery: {'Enabled' if SSH_AVAILABLE else 'Disabled (paramiko not installed)'}")
-        print(f"- Built-in Credentials: {len(self.common_credentials)} sets configured")
-        print(f"- Port Scanning: {len(self.common_ports)} ports")
-        
-        while self.running:
-            try:
-                self.run_scan_cycle()
-                print(f"Next scan in 300 seconds...")
-                time.sleep(300)  # Enhanced scan every 5 minutes
-            except KeyboardInterrupt:
-                print("\\nShutting down SafeNet Enhanced Connector...")
-                self.running = False
-                break
-            except Exception as e:
-                print(f"Error in monitoring loop: {e}")
-                time.sleep(60)
+            print(f'Report error: {e}')
+
+    def run_scan(self):
+        print('Starting network scan...')
+        devices = self.discover_devices()
+        self.send_report(devices)
+        print(f'Scan complete. Found {len(devices)} devices')
 
 def main():
     try:
-        # Organization key is embedded in the script
-        org_key = "AGENT_ID_PLACEHOLDER"
+        connector = SafeNetConnector()
+        print('SafeNet Connector is ready!')
+        print('Choose an option:')
+        print('1. Run single scan')
+        print('2. Run continuous monitoring')
+        print('3. Exit')
         
-        if not org_key.startswith("sk-safenet-"):
-            print("Error: Invalid organization key format")
-            input("Press Enter to exit...")
-            sys.exit(1)
-        
-        print("SafeNet Enhanced Network Scanner Connector v2.0")
-        print("==============================================")
-        print(f"Organization Key: {org_key}")
-        
-        connector = SafeNetConnector(org_key)
-        
-        try:
-            # Run initial enhanced scan
-            connector.run_scan_cycle()
-            
-            # Start continuous monitoring
-            connector.start_monitoring()
-            
-        except Exception as e:
-            print(f"Fatal error: {e}")
-            input("Press Enter to exit...")
-            sys.exit(1)
-            
+        while True:
+            choice = input('Enter choice (1-3): ').strip()
+            if choice == '1':
+                connector.run_scan()
+            elif choice == '2':
+                print('Starting continuous monitoring...')
+                print('Press Ctrl+C to stop')
+                try:
+                    while True:
+                        connector.run_scan()
+                        time.sleep(60)
+                except KeyboardInterrupt:
+                    print('Monitoring stopped')
+                    break
+            elif choice == '3':
+                break
+            else:
+                print('Invalid choice')
     except Exception as e:
-        print(f"Unexpected error: {e}")
-        input("Press Enter to exit...")
-        sys.exit(1)
+        print(f'Error: {e}')
+        input('Press Enter to exit...')
 
-# Main execution wrapped in comprehensive error handling
-if __name__ == "__main__":
-    debug_print("Starting main execution...")
-    
-    try:
-        debug_print("Installing modules...")
-        if not check_and_install_modules():
-            print("\\n" + "="*50)
-            print("INSTALLATION INCOMPLETE")
-            print("="*50)
-            print("Some modules failed to install, but the connector may still work")
-            print("with reduced functionality. Continue? (y/n): ", end="")
-            
-            try:
-                choice = input().lower().strip()
-                if choice != 'y' and choice != 'yes':
-                    safe_input("Installation cancelled. Press Enter to exit...")
-                    sys.exit(1)
-            except:
-                print("\\nContinuing with partial installation...")
+if __name__ == '__main__':
+    main()
+EOF
 
-        debug_print("✓ Module installation completed!")
-        debug_print("Starting SafeNet Connector...")
-        
-        # Run the main connector
-        main()
+echo ""
+echo "✓ SafeNet Connector installed successfully!"
+echo ""
+echo "To run the connector later:"
+echo "  cd ~/SafeNet"
+echo "  python3 safenet_connector.py"
+echo ""
+echo "Starting SafeNet Connector now..."
+python3 safenet_connector.py`;
+}
 
-    except Exception as e:
-        print(f"\\nCRITICAL ERROR: {e}")
-        print(f"Error type: {type(e).__name__}")
-        try:
-            import traceback
-            print("\\nFull error details:")
-            print(traceback.format_exc())
-        except:
-            print("Could not display traceback")
-        safe_input("Error occurred. Press Enter to exit...")
-        sys.exit(1)
-
-except Exception as startup_error:
-    print(f"STARTUP ERROR: {startup_error}")
-    print(f"Error type: {type(startup_error).__name__}")
-    safe_input("Critical startup error. Press Enter to exit...")
-    sys.exit(1)
-`;
+function generateLinuxInstaller(agentId: string | null, clientId: string | null): string {
+  return generateMacOSInstaller(agentId, clientId);
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -946,75 +319,52 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/');
-    const platform = pathParts[pathParts.length - 1]; // Get last part of path
+    const pathname = url.pathname;
     
-    // Extract query parameters
+    // Extract platform from filename
+    const filename = pathname.split('/').pop() || '';
     const agentId = url.searchParams.get('agentId');
     const clientId = url.searchParams.get('clientId');
     
-    console.log(`Download request for platform: ${platform}, agentId: ${agentId}`);
-
-    let filename: string;
-    let content: string;
+    console.log(`Download request for platform: ${filename}, agentId: ${agentId}`);
+    
+    let installerContent: string;
     let contentType: string;
-
-    // Generate script with embedded agent ID
-    const scriptContent = pythonConnectorScript.replace('AGENT_ID_PLACEHOLDER', agentId || 'sk-safenet-demo');
-
-    switch (platform) {
-      case 'python':
-        filename = 'safenet_connector.py';
-        content = scriptContent;
-        contentType = 'text/x-python';
-        break;
-        
-      case 'windows':
-        filename = 'safenet_connector.exe';
-        // In a real implementation, this would be a compiled Python executable
-        content = scriptContent;
-        contentType = 'application/octet-stream';
-        break;
-        
-      case 'linux':
-        filename = 'safenet_connector';
-        content = scriptContent;
-        contentType = 'application/x-executable';
-        break;
-        
-      case 'macos':
-        filename = 'safenet_connector.app';
-        content = scriptContent;
-        contentType = 'application/octet-stream';
-        break;
-        
-      default:
-        return new Response(
-          JSON.stringify({ error: 'Invalid platform specified' }), 
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
+    let downloadFilename: string;
+    
+    if (filename.includes('windows') || filename.includes('.bat')) {
+      installerContent = generateWindowsInstaller(agentId, clientId);
+      contentType = 'application/x-msdos-program';
+      downloadFilename = 'safenet-connector-install.bat';
+    } else if (filename.includes('macos') || filename.includes('darwin')) {
+      installerContent = generateMacOSInstaller(agentId, clientId);
+      contentType = 'application/x-sh';
+      downloadFilename = 'safenet-connector-install.sh';
+    } else if (filename.includes('linux')) {
+      installerContent = generateLinuxInstaller(agentId, clientId);
+      contentType = 'application/x-sh';
+      downloadFilename = 'safenet-connector-install.sh';
+    } else {
+      // Default to Windows batch file
+      installerContent = generateWindowsInstaller(agentId, clientId);
+      contentType = 'application/x-msdos-program';
+      downloadFilename = 'safenet-connector-install.bat';
     }
 
-    return new Response(content, {
+    return new Response(installerContent, {
       headers: {
         ...corsHeaders,
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': content.length.toString(),
+        'Content-Disposition': `attachment; filename="${downloadFilename}"`,
+        'Content-Length': installerContent.length.toString(),
       },
     });
 
   } catch (error) {
     console.error('Download error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }), 
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Download failed' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
