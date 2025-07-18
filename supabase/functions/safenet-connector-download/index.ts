@@ -96,25 +96,25 @@ echo import time
 echo import socket
 echo import subprocess
 echo from datetime import datetime, timezone
-echo.
+echo(
 echo print^('SafeNet Connector v2.0'^)
 echo print^('====================='^)
 echo print^(f'Agent ID: ${agentId || 'auto-generated'}'^)
 echo print^(f'Client ID: ${clientId || 'default'}'^)
 echo print^(''^)
-echo.
+echo(
 echo class SafeNetConnector:
 echo     def __init__^(self^):
 echo         self.agent_id = '${agentId || 'auto-generated'}'
 echo         self.client_id = '${clientId || 'default'}'
 echo         self.endpoint = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api'
-echo.        
+echo(
 echo     def discover_devices^(self^):
 echo         devices = []
 echo         try:
 echo             hostname = socket.gethostname^(^)
 echo             local_ip = socket.gethostbyname^(hostname^)
-echo.            
+echo(
 echo             device = {
 echo                 'hostname': hostname,
 echo                 'ip_address': local_ip,
@@ -128,7 +128,7 @@ echo             print^(f'Found device: {hostname} ^({local_ip}^)'^)
 echo         except Exception as e:
 echo             print^(f'Discovery error: {e}'^)
 echo         return devices
-echo.
+echo(
 echo     def send_report^(self, devices^):
 echo         try:
 echo             import requests
@@ -146,13 +146,13 @@ echo             else:
 echo                 print^(f'Report failed: {response.status_code}'^)
 echo         except Exception as e:
 echo             print^(f'Report error: {e}'^)
-echo.
+echo(
 echo     def run_scan^(self^):
 echo         print^('Starting network scan...'^)
 echo         devices = self.discover_devices^(^)
 echo         self.send_report^(devices^)
 echo         print^(f'Scan complete. Found {len^(devices^)} devices'^)
-echo.
+echo(
 echo def main^(^):
 echo     try:
 echo         connector = SafeNetConnector^(^)
@@ -161,7 +161,7 @@ echo         print^('Choose an option:'^)
 echo         print^('1. Run single scan'^)
 echo         print^('2. Run continuous monitoring'^)
 echo         print^('3. Exit'^)
-echo.        
+echo(
 echo         while True:
 echo             choice = input^('Enter choice ^(1-3^): '^).strip^(^)
 echo             if choice == '1':
@@ -183,7 +183,7 @@ echo                 print^('Invalid choice'^)
 echo     except Exception as e:
 echo         print^(f'Error: {e}'^)
 echo         input^('Press Enter to exit...'^)
-echo.
+echo(
 echo if __name__ == '__main__':
 echo     main^(^)
 ) > safenet_connector.py
