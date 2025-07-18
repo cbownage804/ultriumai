@@ -26,6 +26,28 @@ import ipaddress
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Immediate error handling and debugging
+def safe_exit(message="Script ended", code=0):
+    print(f"\\n{message}")
+    try:
+        input("\\nPress Enter to exit...")
+    except:
+        import time
+        time.sleep(10)  # Wait 10 seconds if input fails
+    sys.exit(code)
+
+# Wrap everything in try-catch to prevent immediate closure
+try:
+    print("SafeNet Connector Installer v2.0")
+    print("=================================")
+    print(f"Python version: {sys.version}")
+    print(f"Platform: {platform.system()} {platform.release()}")
+    print("Installing enhanced network discovery agent...")
+    print("")
+except Exception as e:
+    print(f"Error in initial setup: {e}")
+    safe_exit("Failed during initial setup", 1)
+
 # Enhanced modules (install automatically if missing)
 CORE_MODULES = ['requests', 'psutil', 'python-nmap', 'schedule']
 NETWORK_MODULES = ['netifaces']  # Separate due to compilation issues
@@ -250,38 +272,6 @@ def get_network_interfaces_fallback():
     
     return ['127.0.0.1']  # Fallback to localhost
 
-print("SafeNet Connector Installer v2.0")
-print("=================================")
-print("Installing enhanced network discovery agent...")
-
-if not check_and_install_modules():
-    print("\\n" + "="*50)
-    print("INSTALLATION INCOMPLETE")
-    print("="*50)
-    print("Some modules failed to install, but the connector may still work")
-    print("with reduced functionality. Continue? (y/n): ", end="")
-    
-    try:
-        choice = input().lower().strip()
-        if choice != 'y' and choice != 'yes':
-            print("Installation cancelled.")
-            sys.exit(1)
-    except:
-        print("\\nContinuing with partial installation...")
-
-print("\\n✓ Module installation completed!")
-print("\\nStarting SafeNet Connector...")
-
-# Prevent window from closing immediately
-import atexit
-def pause_before_exit():
-    try:
-        input("\\nPress Enter to exit...")
-    except:
-        import time
-        time.sleep(5)
-
-atexit.register(pause_before_exit)
 
 import requests
 import psutil
@@ -324,12 +314,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-class SafeNetConnector:
-    def __init__(self, api_key, server_url="https://nsyobmjpdpvesjwdphlh.supabase.co"):
-        self.api_key = api_key
-        self.server_url = server_url
-        self.running = False
-        
 class SafeNetConnector:
     def __init__(self, api_key, server_url="https://nsyobmjpdpvesjwdphlh.supabase.co"):
         self.api_key = api_key
@@ -880,8 +864,37 @@ def main():
         input("Press Enter to exit...")
         sys.exit(1)
 
+# Main execution with error handling
 if __name__ == "__main__":
-    main()
+    # Wrap main execution in try-catch
+    try:
+        if not check_and_install_modules():
+            print("\\n" + "="*50)
+            print("INSTALLATION INCOMPLETE")
+            print("="*50)
+            print("Some modules failed to install, but the connector may still work")
+            print("with reduced functionality. Continue? (y/n): ", end="")
+            
+            try:
+                choice = input().lower().strip()
+                if choice != 'y' and choice != 'yes':
+                    safe_exit("Installation cancelled.", 1)
+            except:
+                print("\\nContinuing with partial installation...")
+
+        print("\\n✓ Module installation completed!")
+        print("\\nStarting SafeNet Connector...")
+        
+        # Run the main connector
+        main()
+
+    except Exception as e:
+        print(f"\\nCRITICAL ERROR during installation: {e}")
+        print(f"Error type: {type(e).__name__}")
+        import traceback
+        print("\\nFull error details:")
+        print(traceback.format_exc())
+        safe_exit("Installation failed with errors", 1)
 `;
 
 serve(async (req) => {
