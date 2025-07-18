@@ -96,7 +96,12 @@ export const useSafeNetData = () => {
   const { toast } = useToast();
 
   const loadDevices = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('useSafeNetData: No user found, cannot load devices');
+      return;
+    }
+
+    console.log('useSafeNetData: Loading devices for user:', user.id);
 
     try {
       const { data, error } = await supabase
@@ -105,7 +110,12 @@ export const useSafeNetData = () => {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('useSafeNetData: Query result:', { data, error });
+
+      if (error) {
+        console.error('useSafeNetData: Database error:', error);
+        throw error;
+      }
       
       // Transform the data to match our interface
       const transformedDevices = data?.map(device => ({
