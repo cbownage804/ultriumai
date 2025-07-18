@@ -108,13 +108,13 @@ echo     def __init__^(self^):
 echo         self.agent_id = '${agentId || 'auto-generated'}'
 echo         self.client_id = '${clientId || 'default'}'
 echo         self.endpoint = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-api'
-echo         
+echo.        
 echo     def discover_devices^(self^):
 echo         devices = []
 echo         try:
 echo             hostname = socket.gethostname^(^)
 echo             local_ip = socket.gethostbyname^(hostname^)
-echo             
+echo.            
 echo             device = {
 echo                 'hostname': hostname,
 echo                 'ip_address': local_ip,
@@ -141,7 +141,7 @@ echo                 'scan_type': 'basic_discovery'
 echo             }
 echo             response = requests.post^(self.endpoint, json=report, timeout=30^)
 echo             if response.status_code == 200:
-echo                 print^('✓ Report sent successfully'^)
+echo                 print^('Report sent successfully'^)
 echo             else:
 echo                 print^(f'Report failed: {response.status_code}'^)
 echo         except Exception as e:
@@ -161,7 +161,7 @@ echo         print^('Choose an option:'^)
 echo         print^('1. Run single scan'^)
 echo         print^('2. Run continuous monitoring'^)
 echo         print^('3. Exit'^)
-echo         
+echo.        
 echo         while True:
 echo             choice = input^('Enter choice ^(1-3^): '^).strip^(^)
 echo             if choice == '1':
@@ -203,19 +203,6 @@ echo   3. Run: python safenet_connector.py
 echo.
 echo Starting SafeNet Connector now...
 echo.
-
-REM Try to run the connector
-python "!SAFENET_DIR!\\safenet_connector.py"
-if errorlevel 1 (
-    echo.
-    echo [ERROR] Failed to start connector
-    echo Please try running manually from the SafeNet directory
-)
-
-)
-
-echo [STEP 6/6] Starting SafeNet Connector...
-timeout /t 1 /nobreak >nul
 
 python "!SAFENET_DIR!\\safenet_connector.py"
 if errorlevel 1 (
