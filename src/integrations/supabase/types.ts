@@ -5127,12 +5127,18 @@ export type Database = {
           connector_id: string | null
           created_at: string | null
           devices_found: number
+          hostname: string
           id: string
+          network_ranges: string[]
+          results: Json
           risk_score: number | null
+          scan_duration: number
           scan_result: Json | null
           scan_status: string
           scan_type: string
+          scanned_at: string
           target_ip: string
+          updated_at: string
           user_id: string | null
           vulnerabilities_found: number | null
         }
@@ -5141,12 +5147,18 @@ export type Database = {
           connector_id?: string | null
           created_at?: string | null
           devices_found?: number
+          hostname?: string
           id?: string
+          network_ranges?: string[]
+          results?: Json
           risk_score?: number | null
+          scan_duration?: number
           scan_result?: Json | null
           scan_status?: string
           scan_type: string
+          scanned_at?: string
           target_ip: string
+          updated_at?: string
           user_id?: string | null
           vulnerabilities_found?: number | null
         }
@@ -5155,12 +5167,18 @@ export type Database = {
           connector_id?: string | null
           created_at?: string | null
           devices_found?: number
+          hostname?: string
           id?: string
+          network_ranges?: string[]
+          results?: Json
           risk_score?: number | null
+          scan_duration?: number
           scan_result?: Json | null
           scan_status?: string
           scan_type?: string
+          scanned_at?: string
           target_ip?: string
+          updated_at?: string
           user_id?: string | null
           vulnerabilities_found?: number | null
         }
