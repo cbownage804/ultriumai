@@ -261,6 +261,11 @@ serve(async (req) => {
             const enhancedDiscoveryPromises = scanData.devices.map(async (device: any) => {
               try {
                 console.log(`Triggering enhanced discovery for device: ${device.ip_address}`);
+                console.log('Enhanced discovery payload:', {
+                  connector_key: scanData.connector_key,
+                  target_ip: device.ip_address,
+                  discovery_methods: ['snmp', 'wmi', 'ssh', 'nmap']
+                });
                 
                 // Call the enhanced discovery function
                 const enhancedResponse = await supabase.functions.invoke('safenet-enhanced-discovery', {
@@ -278,10 +283,11 @@ serve(async (req) => {
                 if (enhancedResponse.error) {
                   console.error(`Enhanced discovery failed for ${device.ip_address}:`, enhancedResponse.error);
                 } else {
-                  console.log(`Enhanced discovery completed for ${device.ip_address}`);
+                  console.log(`Enhanced discovery completed for ${device.ip_address}:`, enhancedResponse.data);
                 }
               } catch (error) {
                 console.error(`Error in enhanced discovery for ${device.ip_address}:`, error);
+                console.error('Full error details:', JSON.stringify(error, null, 2));
               }
             });
 

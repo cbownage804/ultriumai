@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSafeNetData } from "@/hooks/useSafeNetData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,10 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  History
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const getDeviceIcon = (deviceType: string) => {
   switch (deviceType?.toLowerCase()) {
@@ -69,6 +71,86 @@ export const DeviceManagementPanel = () => {
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [historyFilter, setHistoryFilter] = useState("all");
+  const [historicalDevices, setHistoricalDevices] = useState(devices);
+
+  // Time filter options
+  const timeFilters = [
+    { value: "all", label: "All Time" },
+    { value: "5m", label: "Last 5 minutes" },
+    { value: "30m", label: "Last 30 minutes" },
+    { value: "1h", label: "Last 1 hour" },
+    { value: "6h", label: "Last 6 hours" },
+    { value: "12h", label: "Last 12 hours" },
+    { value: "24h", label: "Last 24 hours" },
+    { value: "7d", label: "Last 7 days" },
+    { value: "30d", label: "Last 30 days" }
+  ];
+
+  // Load historical devices based on time filter
+  useEffect(() => {
+    const loadHistoricalDevices = async () => {
+      if (historyFilter === "all") {
+        setHistoricalDevices(devices);
+        return;
+      }
+
+      let timeQuery = new Date();
+      switch (historyFilter) {
+        case "5m":
+          timeQuery.setMinutes(timeQuery.getMinutes() - 5);
+          break;
+        case "30m":
+          timeQuery.setMinutes(timeQuery.getMinutes() - 30);
+          break;
+        case "1h":
+          timeQuery.setHours(timeQuery.getHours() - 1);
+          break;
+        case "6h":
+          timeQuery.setHours(timeQuery.getHours() - 6);
+          break;
+        case "12h":
+          timeQuery.setHours(timeQuery.getHours() - 12);
+          break;
+        case "24h":
+          timeQuery.setDate(timeQuery.getDate() - 1);
+          break;
+        case "7d":
+          timeQuery.setDate(timeQuery.getDate() - 7);
+          break;
+        case "30d":
+          timeQuery.setDate(timeQuery.getDate() - 30);
+          break;
+      }
+
+      try {
+        const { data: historicalData, error } = await supabase
+          .from('safenet_devices')
+          .select('*')
+          .gte('last_seen_at', timeQuery.toISOString())
+          .order('last_seen_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching historical devices:', error);
+          setHistoricalDevices(devices);
+        } else {
+          // Combine current devices with historical ones, removing duplicates
+          const combinedDevices = [...devices];
+          historicalData?.forEach(historical => {
+            if (!combinedDevices.find(d => String(d.ip_address) === String(historical.ip_address))) {
+              combinedDevices.push(historical as any);
+            }
+          });
+          setHistoricalDevices(combinedDevices);
+        }
+      } catch (error) {
+        console.error('Error loading historical devices:', error);
+        setHistoricalDevices(devices);
+      }
+    };
+
+    loadHistoricalDevices();
+  }, [historyFilter, devices]);
 
   const getDeviceVulnerabilities = (deviceId: string) => {
     return vulnerabilities.filter(v => v.device_id === deviceId);
@@ -78,7 +160,7 @@ export const DeviceManagementPanel = () => {
     return services.filter(s => s.device_id === deviceId);
   };
 
-  const filteredDevices = devices.filter(device => {
+  const filteredDevices = historicalDevices.filter(device => {
     const matchesSearch = !searchTerm || 
       device.device_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       String(device.ip_address)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,7 +172,7 @@ export const DeviceManagementPanel = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const deviceTypes = [...new Set(devices.map(d => d.device_type).filter(Boolean))];
+  const deviceTypes = [...new Set(historicalDevices.map(d => d.device_type).filter(Boolean))];
 
   if (isLoading) {
     return (
@@ -134,6 +216,22 @@ export const DeviceManagementPanel = () => {
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="online">Online</SelectItem>
             <SelectItem value="offline">Offline</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={historyFilter} onValueChange={setHistoryFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Time Range" />
+          </SelectTrigger>
+          <SelectContent className="bg-background border z-50">
+            {timeFilters.map(filter => (
+              <SelectItem key={filter.value} value={filter.value}>
+                <div className="flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  {filter.label}
+                </div>
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -232,10 +330,20 @@ export const DeviceManagementPanel = () => {
                   </TableCell>
                   
                   <TableCell className="text-sm text-muted-foreground">
-                    {device.last_seen_at 
-                      ? new Date(device.last_seen_at).toLocaleString()
-                      : 'Never'
-                    }
+                    <div className="flex flex-col">
+                      <span>
+                        {device.last_seen_at 
+                          ? new Date(device.last_seen_at).toLocaleString()
+                          : 'Never'
+                        }
+                      </span>
+                      {/* Show if device is currently offline but was seen recently */}
+                      {device.status === 'offline' && device.last_seen_at && (
+                        <Badge variant="outline" className="text-xs mt-1 w-fit">
+                          Historical
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -252,7 +360,7 @@ export const DeviceManagementPanel = () => {
           </CardHeader>
           <CardContent>
             {(() => {
-              const device = devices.find(d => d.id === selectedDevice);
+              const device = historicalDevices.find(d => d.id === selectedDevice);
               const deviceVulns = getDeviceVulnerabilities(selectedDevice);
               const deviceServices = getDeviceServices(selectedDevice);
               
