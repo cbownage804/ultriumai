@@ -333,7 +333,51 @@ function getServiceName(port: number): string {
   return serviceMap[port] || 'unknown';
 }
 
-// No fake data generation - only return what can be actually discovered
+// Gateway discovery function
+async function discoverGateway(targetIp: string): Promise<{ gateway?: string; network_segment?: string }> {
+  try {
+    console.log(`Attempting gateway discovery for ${targetIp}`);
+    
+    // Parse the IP to determine likely gateway
+    const ipParts = targetIp.split('.');
+    if (ipParts.length === 4) {
+      // Common gateway patterns
+      const possibleGateways = [
+        `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.1`,   // Most common: .1
+        `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.254`, // Common: .254
+        `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.0`,   // Network address
+      ];
+      
+      // Try to ping/probe each potential gateway
+      for (const gatewayIp of possibleGateways) {
+        try {
+          const response = await fetch(`http://${gatewayIp}:80`, {
+            method: 'HEAD',
+            signal: AbortSignal.timeout(1000),
+          });
+          
+          // If we get any response, it's likely the gateway
+          return {
+            gateway: gatewayIp,
+            network_segment: `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.0/24`
+          };
+        } catch (e) {
+          // Try next gateway
+        }
+      }
+      
+      // Return network segment info even if gateway not found
+      return {
+        network_segment: `${ipParts[0]}.${ipParts[1]}.${ipParts[2]}.0/24`
+      };
+    }
+    
+    return {};
+  } catch (error) {
+    console.error('Gateway discovery failed:', error);
+    return {};
+  }
+}
 
 // Main discovery orchestrator
 async function performEnhancedDiscovery(request: EnhancedDiscoveryRequest): Promise<DeviceInfo> {
@@ -382,6 +426,9 @@ async function performEnhancedDiscovery(request: EnhancedDiscoveryRequest): Prom
   if (discovery_methods.includes('nmap')) {
     discoveryPromises.push(discoverViaNmap(target_ip));
   }
+
+  // Also discover gateway information
+  discoveryPromises.push(discoverGateway(target_ip));
 
   // Wait for all discovery methods to complete
   const results = await Promise.allSettled(discoveryPromises);
@@ -512,7 +559,23 @@ serve(async (req) => {
       const deviceInfo = await performEnhancedDiscovery(request);
 
       // Update or insert device information
-      const { error: upsertError } = await supabase
+      console.log('About to upsert enhanced device data:', JSON.stringify({
+        user_id: connector.user_id,
+        ip_address: deviceInfo.ip_address,
+        hostname: deviceInfo.hostname,
+        device_name: deviceInfo.device_name,
+        manufacturer: deviceInfo.manufacturer,
+        model: deviceInfo.model,
+        os_family: deviceInfo.os_family,
+        os_version: deviceInfo.os_version,
+        device_type: deviceInfo.device_type,
+        device_role: deviceInfo.device_role,
+        mac_address: deviceInfo.mac_address,
+        discovery_method: deviceInfo.discovery_method,
+        device_metadata: deviceInfo.device_metadata
+      }, null, 2));
+
+      const { data: upsertData, error: upsertError } = await supabase
         .from('safenet_devices')
         .upsert({
           user_id: connector.user_id,
@@ -540,7 +603,8 @@ serve(async (req) => {
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'ip_address,user_id'
-        });
+        })
+        .select();
 
       if (upsertError) {
         console.error('Error upserting device data:', upsertError);
