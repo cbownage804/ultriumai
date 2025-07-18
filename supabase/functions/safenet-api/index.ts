@@ -138,10 +138,14 @@ serve(async (req) => {
       }
 
       // Validate the connector key
+      console.log('Validating connector key:', scanData.connector_key);
       const { data: connectorData, error: validateError } = await supabase
         .rpc('validate_connector_key', { p_connector_key: scanData.connector_key });
 
+      console.log('Connector validation result:', { connectorData, validateError });
+
       if (validateError || !connectorData || connectorData.length === 0) {
+        console.error('Connector validation failed:', validateError);
         return new Response(
           JSON.stringify({ error: 'Invalid connector key' }),
           { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -149,6 +153,7 @@ serve(async (req) => {
       }
 
       const connector = connectorData[0];
+      console.log('Using connector:', connector);
 
       // Insert scan data using service role to bypass RLS
       const { data: scanResult, error: scanError } = await supabase
