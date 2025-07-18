@@ -602,9 +602,9 @@ serve(async (req) => {
       contentType = 'application/x-msdos-program';
       downloadFilename = 'safenet-connector-install.bat';
     } else if (filename.includes('powershell') || filename.includes('.ps1')) {
-      installerContent = generatePowerShellInstaller(agentId, clientId);
-      contentType = 'application/octet-stream';
-      downloadFilename = 'safenet-installer.ps1';
+      installerContent = generatePythonConnector(agentId, clientId);
+      contentType = 'text/plain';
+      downloadFilename = 'safenet_connector.py';
     } else if (filename.includes('python') || filename.includes('.py')) {
       installerContent = generatePythonConnector(agentId, clientId);
       contentType = 'text/x-python';
