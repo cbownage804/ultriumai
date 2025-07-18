@@ -141,106 +141,106 @@ serve(async (req) => {
           );
         }
 
-      // Validate the connector key
-      console.log('Validating connector key:', scanData.connector_key);
-      const { data: connectorData, error: validateError } = await supabase
-        .rpc('validate_connector_key', { p_connector_key: scanData.connector_key });
+        // Validate the connector key
+        console.log('Validating connector key:', scanData.connector_key);
+        const { data: connectorData, error: validateError } = await supabase
+          .rpc('validate_connector_key', { p_connector_key: scanData.connector_key });
 
-      console.log('Connector validation result:', { connectorData, validateError });
+        console.log('Connector validation result:', { connectorData, validateError });
 
-      if (validateError || !connectorData || connectorData.length === 0) {
-        console.error('Connector validation failed:', validateError);
-        return new Response(
-          JSON.stringify({ error: 'Invalid connector key' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const connector = connectorData[0];
-      console.log('Using connector:', connector);
-
-      // Insert scan data using service role to bypass RLS
-      const { data: scanResult, error: scanError } = await supabase
-        .from('network_scans')
-        .insert({
-          user_id: connector.user_id,
-          connector_id: connector.connector_id,
-          scan_type: scanData.scan_type,
-          network_ranges: scanData.network_ranges,
-          devices_found: scanData.devices_found,
-          scan_duration: scanData.scan_duration,
-          scanned_at: new Date().toISOString(),
-          hostname: scanData.hostname,
-          results: scanData.results
-        })
-        .select()
-        .single();
-
-      if (scanError) {
-        console.error('Error inserting scan data:', scanError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to save scan data' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Insert device data if provided
-      if (scanData.devices && scanData.devices.length > 0) {
-        const deviceInserts = scanData.devices.map(device => ({
-          user_id: connector.user_id,
-          connector_key: scanData.connector_key,
-          ip_address: device.ip_address,
-          hostname: device.hostname,
-          device_name: device.device_name,
-          manufacturer: device.manufacturer,
-          model: device.model,
-          os_family: device.os_family,
-          os_version: device.os_version,
-          device_type: device.device_type,
-          device_role: device.device_role,
-          mac_address: device.mac_address,
-          uptime_hours: device.uptime_hours,
-          cpu_usage: device.cpu_usage,
-          memory_usage: device.memory_usage,
-          is_managed: device.is_managed || false,
-          is_critical: device.is_critical || false,
-          network_segment: device.network_segment || 'unknown',
-          vulnerability_count: device.vulnerabilities?.length || 0,
-          security_patches_needed: 0,
-          discovery_method: device.discovery_method || ['network_scan'],
-          device_metadata: device.device_metadata || {},
-          status: device.status,
-          last_seen_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }));
-
-        const { error: deviceError } = await supabase
-          .from('safenet_devices')
-          .upsert(deviceInserts, { 
-            onConflict: 'ip_address,user_id',
-            ignoreDuplicates: false 
-          });
-
-        if (deviceError) {
-          console.error('Error inserting device data:', deviceError);
-          // Don't fail the entire request for device insertion errors
+        if (validateError || !connectorData || connectorData.length === 0) {
+          console.error('Connector validation failed:', validateError);
+          return new Response(
+            JSON.stringify({ error: 'Invalid connector key' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-      }
 
-      // Update connector heartbeat
-      await supabase
-        .from('safenet_connectors')
-        .update({ last_heartbeat: new Date().toISOString() })
-        .eq('id', connector.connector_id);
+        const connector = connectorData[0];
+        console.log('Using connector:', connector);
 
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          scan_id: scanResult.id,
-          message: 'Scan data saved successfully' 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+        // Insert scan data using service role to bypass RLS
+        const { data: scanResult, error: scanError } = await supabase
+          .from('network_scans')
+          .insert({
+            user_id: connector.user_id,
+            connector_id: connector.connector_id,
+            scan_type: scanData.scan_type,
+            network_ranges: scanData.network_ranges,
+            devices_found: scanData.devices_found,
+            scan_duration: scanData.scan_duration,
+            scanned_at: new Date().toISOString(),
+            hostname: scanData.hostname,
+            results: scanData.results
+          })
+          .select()
+          .single();
+
+        if (scanError) {
+          console.error('Error inserting scan data:', scanError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to save scan data' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Insert device data if provided
+        if (scanData.devices && scanData.devices.length > 0) {
+          const deviceInserts = scanData.devices.map(device => ({
+            user_id: connector.user_id,
+            connector_key: scanData.connector_key,
+            ip_address: device.ip_address,
+            hostname: device.hostname,
+            device_name: device.device_name,
+            manufacturer: device.manufacturer,
+            model: device.model,
+            os_family: device.os_family,
+            os_version: device.os_version,
+            device_type: device.device_type,
+            device_role: device.device_role,
+            mac_address: device.mac_address,
+            uptime_hours: device.uptime_hours,
+            cpu_usage: device.cpu_usage,
+            memory_usage: device.memory_usage,
+            is_managed: device.is_managed || false,
+            is_critical: device.is_critical || false,
+            network_segment: device.network_segment || 'unknown',
+            vulnerability_count: device.vulnerabilities?.length || 0,
+            security_patches_needed: 0,
+            discovery_method: device.discovery_method || ['network_scan'],
+            device_metadata: device.device_metadata || {},
+            status: device.status,
+            last_seen_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }));
+
+          const { error: deviceError } = await supabase
+            .from('safenet_devices')
+            .upsert(deviceInserts, { 
+              onConflict: 'ip_address,user_id',
+              ignoreDuplicates: false 
+            });
+
+          if (deviceError) {
+            console.error('Error inserting device data:', deviceError);
+            // Don't fail the entire request for device insertion errors
+          }
+        }
+
+        // Update connector heartbeat
+        await supabase
+          .from('safenet_connectors')
+          .update({ last_heartbeat: new Date().toISOString() })
+          .eq('id', connector.connector_id);
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            scan_id: scanResult.id,
+            message: 'Scan data saved successfully' 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       } catch (error) {
         console.error('Scan data error:', error);
         return new Response(
