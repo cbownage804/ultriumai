@@ -6,13 +6,12 @@ import { Button } from "@/components/ui/button";
 import { NetworkTopologyViewer } from "./NetworkTopologyViewer";
 import { DeviceManagementPanel } from "./DeviceManagementPanel";
 import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
-import { DiscoveryCredentialsManager } from "./DiscoveryCredentialsManager";
-import { useSafeNetData } from "@/hooks/useSafeNetData";
+import { useSafeNet } from "@/hooks/useSafeNet";
 import { useAuth } from "@/hooks/useAuth";
 import { Shield, Network, AlertTriangle, Activity } from "lucide-react";
 
 export const SafeNetDashboard = () => {
-  const { devices, vulnerabilities, topology, isLoading } = useSafeNetData();
+  const { devices, vulnerabilities, networks: topology, networkScans, isLoading } = useSafeNet();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [organizationKey, setOrganizationKey] = useState<string>('');
@@ -143,12 +142,11 @@ export const SafeNetDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="topology">Network Map</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
           <TabsTrigger value="vulnerabilities">Security</TabsTrigger>
-          <TabsTrigger value="discovery">Discovery</TabsTrigger>
           <TabsTrigger value="connector">Connector</TabsTrigger>
         </TabsList>
 
@@ -166,11 +164,28 @@ export const SafeNetDashboard = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Recent Security Events</CardTitle>
-                <CardDescription>Latest vulnerability findings</CardDescription>
+                <CardTitle>Recent Network Scans</CardTitle>
+                <CardDescription>Latest scan results and discovered devices</CardDescription>
               </CardHeader>
               <CardContent>
-                <VulnerabilityDashboard compact />
+                <div className="space-y-4">
+                  {networkScans.slice(0, 3).map((scan) => (
+                    <div key={scan.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{scan.hostname}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Found {scan.devices_found} devices • {scan.scan_duration}s
+                        </p>
+                      </div>
+                      <Badge variant={scan.scan_status === 'completed' ? 'default' : 'secondary'}>
+                        {scan.scan_status}
+                      </Badge>
+                    </div>
+                  ))}
+                  {networkScans.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No recent scans found. Run the SafeNet connector to see scan data.</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -212,17 +227,6 @@ export const SafeNetDashboard = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="discovery">
-          <Card>
-            <CardHeader>
-              <CardTitle>Enhanced Device Discovery</CardTitle>
-              <CardDescription>Configure advanced discovery methods and credentials for comprehensive device information</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DiscoveryCredentialsManager />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         <TabsContent value="connector">
           <Card>
