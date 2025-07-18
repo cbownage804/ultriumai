@@ -8,13 +8,13 @@ const corsHeaders = {
 function generateWindowsInstaller(agentId: string | null, clientId: string | null): string {
   return `@echo off
 setlocal enabledelayedexpansion
-REM SafeNet Connector Installer for Windows
 title SafeNet Connector Installer
 
-REM Keep window open no matter what happens
-set "KEEP_OPEN=1"
+REM Force window to stay open - multiple safety nets
+echo Starting SafeNet Connector Installer...
+timeout /t 2 /nobreak >nul
 
-:main
+:start
 cls
 echo.
 echo ====================================
@@ -24,63 +24,64 @@ echo.
 echo Agent ID: ${agentId || 'auto-generated'}
 echo Client ID: ${clientId || 'default'}
 echo.
-
-echo Checking system requirements...
+echo Starting installation process...
 echo.
+timeout /t 1 /nobreak >nul
 
-REM Check if Python is installed with detailed output
-echo Checking for Python installation...
+echo [STEP 1/6] Checking Python installation...
 python --version 2>nul
 if errorlevel 1 (
     echo.
     echo [ERROR] Python is not installed or not in PATH
     echo.
     echo Please install Python 3.7+ from: https://www.python.org/downloads/
-    echo Make sure to check "Add Python to PATH" during installation
+    echo IMPORTANT: Check "Add Python to PATH" during installation
     echo.
     echo After installing Python, run this installer again.
     echo.
-    goto end_with_pause
+    goto force_pause
 )
 
-echo [SUCCESS] Python found!
 for /f "tokens=*" %%i in ('python --version 2^>^&1') do set PYTHON_VERSION=%%i
-echo Version: !PYTHON_VERSION!
+echo [SUCCESS] Python found: !PYTHON_VERSION!
 echo.
+timeout /t 1 /nobreak >nul
 
-echo Checking pip installation...
+echo [STEP 2/6] Checking pip...
 python -m pip --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] pip is not available
     echo Please reinstall Python with pip included
-    goto end_with_pause
+    goto force_pause
 )
-
-echo [SUCCESS] pip found!
+echo [SUCCESS] pip is available
 echo.
+timeout /t 1 /nobreak >nul
 
-echo Installing required Python packages...
-echo This may take a moment...
-echo.
-
-python -m pip install requests psutil --quiet --disable-pip-version-check
+echo [STEP 3/6] Installing required packages...
+echo This may take 30-60 seconds...
+python -m pip install requests psutil --quiet --disable-pip-version-check 2>nul
 if errorlevel 1 (
-    echo [WARNING] Some packages may have failed to install
-    echo The connector will still attempt to run
+    echo [WARNING] Package installation had issues, but continuing...
+) else (
+    echo [SUCCESS] Packages installed successfully
 )
-
-echo [SUCCESS] Package installation completed!
 echo.
+timeout /t 1 /nobreak >nul
 
-REM Create SafeNet directory
-echo Creating SafeNet directory...
+echo [STEP 4/6] Creating SafeNet directory...
 set "SAFENET_DIR=%USERPROFILE%\\SafeNet"
 if not exist "!SAFENET_DIR!" mkdir "!SAFENET_DIR!"
-echo Directory: !SAFENET_DIR!
+echo Directory created: !SAFENET_DIR!
 echo.
+timeout /t 1 /nobreak >nul
 
-echo Creating connector script...
-pushd "!SAFENET_DIR!"
+echo [STEP 5/6] Creating connector script...
+pushd "!SAFENET_DIR!" 2>nul
+if errorlevel 1 (
+    echo [ERROR] Could not access SafeNet directory
+    goto force_pause
+)
 
 REM Create the connector script
 echo Creating connector script...
@@ -208,14 +209,36 @@ if errorlevel 1 (
     echo Please try running manually from the SafeNet directory
 )
 
-goto end_with_pause
+)
 
-:end_with_pause
+echo [STEP 6/6] Starting SafeNet Connector...
+timeout /t 1 /nobreak >nul
+
+python "!SAFENET_DIR!\\safenet_connector.py"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Failed to start connector
+    echo Please try running manually from the SafeNet directory
+    goto force_pause
+)
+
+goto success_end
+
+:force_pause
 echo.
-echo ===========================================
-echo Installation process finished.
+echo ==========================================
+echo Installation paused - please review above
+echo ==========================================
+echo Press any key to continue...
+pause >nul
+goto start
+
+:success_end
+echo.
+echo ==========================================
+echo Installation completed successfully!
 echo Press any key to close this window...
-echo ===========================================
+echo ==========================================
 pause >nul
 exit /b 0`;
 }
