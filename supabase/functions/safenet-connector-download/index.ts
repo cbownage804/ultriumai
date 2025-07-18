@@ -27,7 +27,8 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Enhanced modules (install automatically if missing)
-REQUIRED_MODULES = ['requests', 'psutil', 'netifaces', 'python-nmap', 'schedule', 'ipaddress']
+CORE_MODULES = ['requests', 'psutil', 'python-nmap', 'schedule']
+NETWORK_MODULES = ['netifaces']  # Separate due to compilation issues
 OPTIONAL_MODULES = ['pysnmp', 'wmi', 'paramiko']
 
 def install_build_tools_windows():
@@ -35,132 +36,251 @@ def install_build_tools_windows():
     if platform.system() != 'Windows':
         return True
         
-    print("Installing Microsoft Visual C++ Build Tools for Python compilation...")
+    print("Installing Microsoft Visual C++ Build Tools...")
+    print("This is required for compiling Python packages with C extensions.")
+    
+    # Check if build tools are already installed
     try:
-        # Method 1: Try chocolatey
-        result = subprocess.run(['choco', 'install', 'visualstudio2022buildtools', 
-                               '--include-recommended', '-y'], 
-                              capture_output=True, text=True, timeout=300)
+        result = subprocess.run(['where', 'cl'], capture_output=True, text=True)
         if result.returncode == 0:
-            print("Build tools installed via Chocolatey")
+            print("Visual C++ compiler already available")
             return True
     except:
         pass
     
-    try:
-        # Method 2: Download and install VS Build Tools
-        import urllib.request
-        import tempfile
-        
-        build_tools_url = "https://aka.ms/vs/17/release/vs_buildtools.exe"
-        temp_dir = tempfile.gettempdir()
-        installer_path = os.path.join(temp_dir, "vs_buildtools.exe")
-        
-        print("Downloading Visual Studio Build Tools installer...")
-        urllib.request.urlretrieve(build_tools_url, installer_path)
-        
-        print("Installing build tools (this may take 5-10 minutes)...")
-        result = subprocess.run([installer_path, "--quiet", "--wait", 
-                               "--add", "Microsoft.VisualStudio.Workload.VCTools",
-                               "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
-                               "--add", "Microsoft.VisualStudio.Component.Windows10SDK.19041"], 
-                              timeout=600)
-        
-        if result.returncode == 0:
-            print("Build tools installed successfully")
-            return True
-            
-    except Exception as e:
-        print(f"Failed to install build tools: {e}")
+    methods = [
+        ("winget", ["winget", "install", "Microsoft.VisualStudio.2022.BuildTools", "--silent"]),
+        ("chocolatey", ["choco", "install", "visualstudio2022buildtools", "--params", "--add Microsoft.VisualStudio.Workload.VCTools", "-y"]),
+    ]
     
-    print("Could not install build tools automatically.")
-    print("Please manually install Microsoft C++ Build Tools from:")
-    print("https://visualstudio.microsoft.com/visual-cpp-build-tools/")
-    print("Make sure to select 'C++ build tools' workload during installation.")
+    for method_name, cmd in methods:
+        try:
+            print(f"Trying {method_name}...")
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            if result.returncode == 0:
+                print(f"Build tools installed via {method_name}")
+                return True
+        except Exception as e:
+            print(f"{method_name} failed: {e}")
+            continue
+    
+    # Manual installation prompt
+    print("\\n" + "="*60)
+    print("MANUAL INSTALLATION REQUIRED")
+    print("="*60)
+    print("Please install Microsoft C++ Build Tools manually:")
+    print("1. Go to: https://visualstudio.microsoft.com/visual-cpp-build-tools/")
+    print("2. Download 'Build Tools for Visual Studio 2022'")
+    print("3. Run the installer and select 'C++ build tools' workload")
+    print("4. Restart this installer after installation completes")
+    print("="*60)
     return False
 
-def install_module(module_name):
-    """Install a Python module using pip with enhanced error handling"""
+def try_alternative_netifaces():
+    """Try alternative methods to get network interfaces"""
+    print("Trying alternative network interface detection...")
+    
+    # Method 1: Using psutil (already installed)
     try:
-        print(f"Installing {module_name}...")
+        import psutil
+        interfaces = psutil.net_if_addrs()
+        print(f"Found {len(interfaces)} network interfaces using psutil")
+        return True
+    except:
+        pass
+    
+    # Method 2: Using socket and system commands
+    try:
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        print(f"Local IP detected: {local_ip}")
+        return True
+    except:
+        pass
+    
+    return False
+
+def install_module_with_fallback(module_name):
+    """Install module with multiple fallback strategies"""
+    print(f"Installing {module_name}...")
+    
+    if module_name == 'netifaces':
+        # Strategy 1: Try precompiled wheel
+        wheels_to_try = [
+            f"{module_name} --only-binary=all",
+            f"{module_name} --prefer-binary",
+        ]
         
-        # Special handling for netifaces on Windows
-        if module_name == 'netifaces' and platform.system() == 'Windows':
-            # Try binary wheel first
+        for wheel_cmd in wheels_to_try:
             try:
-                subprocess.check_call([sys.executable, '-m', 'pip', 'install', 
-                                     'netifaces', '--only-binary=all'], 
-                                    timeout=120)
+                cmd = [sys.executable, '-m', 'pip', 'install'] + wheel_cmd.split()
+                subprocess.check_call(cmd, timeout=60)
                 print(f"Successfully installed {module_name} (binary)")
                 return True
             except:
-                print("Binary wheel not available, installing build tools...")
-                if not install_build_tools_windows():
-                    return False
-                # Now try to install from source
-                subprocess.check_call([sys.executable, '-m', 'pip', 'install', 
-                                     'netifaces', '--no-binary=netifaces'], 
-                                    timeout=300)
-                print(f"Successfully installed {module_name} (from source)")
-                return True
+                continue
+        
+        # Strategy 2: Install build tools and compile
+        if platform.system() == 'Windows':
+            print(f"Binary installation failed for {module_name}")
+            if install_build_tools_windows():
+                try:
+                    subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], timeout=300)
+                    print(f"Successfully installed {module_name} (from source)")
+                    return True
+                except Exception as e:
+                    print(f"Source compilation failed: {e}")
+            
+            # Strategy 3: Use alternative method
+            print(f"Cannot install {module_name}, using alternative methods...")
+            return try_alternative_netifaces()
         else:
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], 
-                                timeout=120)
+            # On non-Windows, try direct installation
+            try:
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], timeout=120)
+                return True
+            except:
+                return try_alternative_netifaces()
+    else:
+        # Standard module installation
+        try:
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', module_name], timeout=120)
             print(f"Successfully installed {module_name}")
             return True
-            
-    except subprocess.TimeoutExpired:
-        print(f"Timeout installing {module_name}")
-        return False
-    except Exception as e:
-        print(f"Failed to install {module_name}: {e}")
-        return False
+        except Exception as e:
+            print(f"Failed to install {module_name}: {e}")
+            return False
 
 def check_and_install_modules():
-    """Check and install required modules"""
-    # Upgrade pip first
+    """Check and install required modules with robust error handling"""
+    print("Checking and installing required modules...")
+    
+    # Upgrade pip and setuptools first
     try:
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip'])
+        print("Upgrading pip and setuptools...")
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', 'pip', 'setuptools', 'wheel'])
     except:
-        pass
-        
-    for module in REQUIRED_MODULES:
+        print("Warning: Could not upgrade pip/setuptools")
+    
+    # Install core modules first (these usually work without issues)
+    for module in CORE_MODULES:
         module_import_name = module
         if module == 'python-nmap':
             module_import_name = 'nmap'
-        elif module == 'ipaddress':
-            try:
-                import ipaddress
-                continue  # ipaddress is built-in for Python 3.3+
-            except ImportError:
-                pass
-                
+            
         try:
             __import__(module_import_name)
-            print(f"Module {module} already installed")
+            print(f"✓ {module} already installed")
         except ImportError:
-            print(f"Installing required module: {module}")
-            if not install_module(module):
-                print(f"CRITICAL: Failed to install {module}")
+            if not install_module_with_fallback(module):
+                print(f"✗ CRITICAL: Failed to install {module}")
                 return False
+    
+    # Handle network modules (problematic on Windows)
+    netifaces_working = False
+    for module in NETWORK_MODULES:
+        try:
+            __import__(module)
+            print(f"✓ {module} already installed")
+            netifaces_working = True
+        except ImportError:
+            if install_module_with_fallback(module):
+                netifaces_working = True
+                print(f"✓ {module} installed successfully")
+            else:
+                print(f"⚠ {module} not available, using alternatives")
+    
+    # Install optional modules (best effort)
+    print("\\nInstalling optional modules for enhanced discovery...")
+    for module in OPTIONAL_MODULES:
+        try:
+            __import__(module)
+            print(f"✓ {module} already installed")
+        except ImportError:
+            try:
+                install_condition = ""
+                if module == 'wmi':
+                    install_condition = '; sys_platform == "win32"'
+                
+                subprocess.check_call([sys.executable, '-m', 'pip', 'install', f'{module}{install_condition}'], timeout=60)
+                print(f"✓ {module} installed")
+            except:
+                print(f"⚠ {module} installation failed (optional)")
+    
     return True
 
-print("SafeNet Connector Installer")
-print("===========================")
-if not check_and_install_modules():
-    print("\\nInstallation failed! Please check the errors above.")
-    print("You may need to:")
-    print("1. Run as administrator (Windows)")
-    print("2. Install Visual C++ Build Tools manually")
-    print("3. Update Python pip: python -m pip install --upgrade pip")
-    input("Press Enter to exit...")
-    sys.exit(1)
+def get_network_interfaces_fallback():
+    """Get network interfaces using multiple methods"""
+    interfaces = []
+    
+    # Method 1: Try netifaces if available
+    try:
+        import netifaces
+        for interface in netifaces.interfaces():
+            addrs = netifaces.ifaddresses(interface)
+            if netifaces.AF_INET in addrs:
+                for addr in addrs[netifaces.AF_INET]:
+                    if 'addr' in addr:
+                        interfaces.append(addr['addr'])
+        return interfaces
+    except:
+        pass
+    
+    # Method 2: Use psutil
+    try:
+        import psutil
+        for interface_name, interface_addresses in psutil.net_if_addrs().items():
+            for address in interface_addresses:
+                if str(address.family) == 'AddressFamily.AF_INET':
+                    interfaces.append(address.address)
+        return interfaces
+    except:
+        pass
+    
+    # Method 3: Basic socket method
+    try:
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        interfaces.append(local_ip)
+        return interfaces
+    except:
+        pass
+    
+    return ['127.0.0.1']  # Fallback to localhost
 
-print("\\nAll required modules installed successfully!")
+print("SafeNet Connector Installer v2.0")
+print("=================================")
+print("Installing enhanced network discovery agent...")
+
+if not check_and_install_modules():
+    print("\\n" + "="*50)
+    print("INSTALLATION INCOMPLETE")
+    print("="*50)
+    print("Some modules failed to install, but the connector may still work")
+    print("with reduced functionality. Continue? (y/n): ", end="")
+    
+    try:
+        choice = input().lower().strip()
+        if choice != 'y' and choice != 'yes':
+            print("Installation cancelled.")
+            sys.exit(1)
+    except:
+        print("\\nContinuing with partial installation...")
+
+print("\\n✓ Module installation completed!")
 
 import requests
 import psutil
-import netifaces
+
+# Try to import netifaces, use fallback if not available
+try:
+    import netifaces
+    NETIFACES_AVAILABLE = True
+except ImportError:
+    NETIFACES_AVAILABLE = False
+    print("⚠ netifaces not available, using alternative network detection")
 
 # Try to import optional modules for enhanced discovery
 try:
