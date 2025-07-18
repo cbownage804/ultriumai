@@ -128,14 +128,18 @@ serve(async (req) => {
 
     // Send Scan Data
     else if (path === 'scan-data' && req.method === 'POST') {
-      const scanData: ScanDataRequest = await req.json();
+      try {
+        console.log('Starting scan-data endpoint');
+        const scanData: ScanDataRequest = await req.json();
+        console.log('Received scan data:', JSON.stringify(scanData, null, 2));
 
-      if (!scanData.connector_key) {
-        return new Response(
-          JSON.stringify({ error: 'connector_key is required' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+        if (!scanData.connector_key) {
+          console.log('Missing connector_key');
+          return new Response(
+            JSON.stringify({ error: 'connector_key is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
       // Validate the connector key
       console.log('Validating connector key:', scanData.connector_key);
@@ -237,6 +241,13 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+      } catch (error) {
+        console.error('Scan data error:', error);
+        return new Response(
+          JSON.stringify({ error: 'Internal server error in scan-data' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Heartbeat endpoint
