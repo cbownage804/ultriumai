@@ -426,6 +426,10 @@ export const DeviceManagementPanel = () => {
               const deviceVulns = getDeviceVulnerabilities(selectedDevice);
               const deviceServices = getDeviceServices(selectedDevice);
               
+              console.log('Device Details Panel - selectedDevice:', selectedDevice);
+              console.log('Device Details Panel - historicalDevices:', historicalDevices);
+              console.log('Device Details Panel - found device:', device);
+              
               if (!device) return null;
 
               return (
