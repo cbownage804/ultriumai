@@ -96,7 +96,7 @@ function generateInstallerContent(agentType: string, connectorKey: string, devic
 }
 
 function getGUIInstallerTemplate(): string {
-  return `# Ultrium RMM Agent GUI Installer v2.1
+  return `# Ultrium RMM Agent GUI Installer v2.1 - Production Version
 # Pre-configured for your organization
 # Run with: PowerShell -ExecutionPolicy Bypass -File UltriumRMMAgent-GUI-Installer.ps1
 
@@ -107,12 +107,11 @@ param(
     [switch]$Silent = $false
 )
 
-Write-Host "Ultrium RMM Agent GUI Installer v2.1" -ForegroundColor Cyan
+Write-Host "Ultrium RMM Agent GUI Installer v2.1 - Production Version" -ForegroundColor Cyan
 Write-Host "Pre-configured with token: $($AgentToken.Substring(0,20))..." -ForegroundColor Yellow
 Write-Host "Server URL: $ServerUrl" -ForegroundColor Green
 Write-Host "Target Device: $DEVICE_NAME_PLACEHOLDER$ ($DEVICE_IP_PLACEHOLDER$)" -ForegroundColor Green
 Write-Host ""
-Write-Host "Installation starting..." -ForegroundColor Yellow
 
 # Check if running as Administrator
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
@@ -123,24 +122,59 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 Write-Host "Administrator privileges confirmed." -ForegroundColor Green
+Write-Host "Starting agent installation..." -ForegroundColor Yellow
 Write-Host ""
-Write-Host "NEXT STEPS:" -ForegroundColor Cyan
-Write-Host "1. This is a demo installer template" -ForegroundColor Yellow
-Write-Host "2. In production, this would download and install the actual RMM agent" -ForegroundColor Yellow
-Write-Host "3. The agent would register with token: $AgentToken" -ForegroundColor Yellow
-Write-Host "4. After installation, the device would appear as 'Managed' in SafeNet" -ForegroundColor Yellow
+
+try {
+    # Download the RMM agent installer
+    $InstallerUrl = "$ServerUrl/storage/v1/object/public/rmm-agents/UltriumRMMAgent.msi"
+    $InstallerPath = "$env:TEMP\\UltriumRMMAgent.msi"
+    
+    Write-Host "Downloading agent installer..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $InstallerUrl -OutFile $InstallerPath -UseBasicParsing
+    
+    if (Test-Path $InstallerPath) {
+        Write-Host "Installer downloaded successfully." -ForegroundColor Green
+        
+        # Install the agent silently
+        Write-Host "Installing RMM agent..." -ForegroundColor Yellow
+        $InstallArgs = "/i \\"$InstallerPath\\" /quiet AGENTTOKEN=\\"$AgentToken\\" SERVERURL=\\"$ServerUrl\\" COMPANYID=\\"$CompanyId\\""
+        
+        $Process = Start-Process -FilePath "msiexec.exe" -ArgumentList $InstallArgs -Wait -PassThru
+        
+        if ($Process.ExitCode -eq 0) {
+            Write-Host "RMM Agent installed successfully!" -ForegroundColor Green
+            Write-Host "The device will appear as 'Managed' in SafeNet within 5 minutes." -ForegroundColor Green
+            Write-Host "Agent will automatically start monitoring and reporting to $ServerUrl/functions/v1/rmm-agent-checkin" -ForegroundColor Cyan
+        } else {
+            throw "Installation failed with exit code: $($Process.ExitCode)"
+        }
+        
+        # Cleanup
+        Remove-Item $InstallerPath -Force -ErrorAction SilentlyContinue
+        
+    } else {
+        throw "Failed to download installer from $InstallerUrl"
+    }
+    
+} catch {
+    Write-Host "Installation failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Please contact your IT administrator for assistance." -ForegroundColor Yellow
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+
 Write-Host ""
 Write-Host "Installation completed successfully!" -ForegroundColor Green
+Write-Host "The RMM agent is now monitoring this device." -ForegroundColor Cyan
 
-# In production, uncomment and modify these lines:
-# Invoke-WebRequest -Uri "$ServerUrl/agent-installer.msi" -OutFile "RMMAgent.msi"
-# Start-Process msiexec.exe -Wait -ArgumentList '/I RMMAgent.msi /quiet AGENTTOKEN="$AgentToken" SERVERURL="$ServerUrl"'
-
-Read-Host "Press Enter to close"`;
+if (-not $Silent) {
+    Read-Host "Press Enter to close"
+}`;
 }
 
 function getHeadlessInstallerTemplate(): string {
-  return `# Ultrium RMM Agent Installer v2.1 - Headless Version  
+  return `# Ultrium RMM Agent Installer v2.1 - Headless Production Version  
 # Pre-configured for your organization
 # Run with: PowerShell -ExecutionPolicy Bypass -File UltriumRMMAgent-Installer.ps1 -Install
 
@@ -152,14 +186,14 @@ param(
 )
 
 if (-not $Install) {
-    Write-Host "Ultrium RMM Agent Headless Installer v2.1" -ForegroundColor Cyan
+    Write-Host "Ultrium RMM Agent Headless Installer v2.1 - Production Version" -ForegroundColor Cyan
     Write-Host "Usage: PowerShell -ExecutionPolicy Bypass -File UltriumRMMAgent-Installer.ps1 -Install" -ForegroundColor Yellow
     Write-Host "Pre-configured with token: $($AgentToken.Substring(0,20))..." -ForegroundColor Yellow
     Write-Host "Target Device: $DEVICE_NAME_PLACEHOLDER$ ($DEVICE_IP_PLACEHOLDER$)" -ForegroundColor Green
     exit 0
 }
 
-Write-Host "Ultrium RMM Agent Headless Installer v2.1" -ForegroundColor Cyan
+Write-Host "Ultrium RMM Agent Headless Installer v2.1 - Production Version" -ForegroundColor Cyan
 Write-Host "Installing agent with token: $($AgentToken.Substring(0,20))..." -ForegroundColor Yellow
 Write-Host "Server URL: $ServerUrl" -ForegroundColor Green
 
@@ -172,9 +206,38 @@ if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 Write-Host "Administrator privileges confirmed." -ForegroundColor Green
 Write-Host "Installing agent silently..." -ForegroundColor Yellow
 
-# In production, uncomment and modify these lines:
-# Invoke-WebRequest -Uri "$ServerUrl/agent-installer.msi" -OutFile "RMMAgent.msi"
-# Start-Process msiexec.exe -Wait -ArgumentList '/I RMMAgent.msi /quiet AGENTTOKEN="$AgentToken" SERVERURL="$ServerUrl"'
+try {
+    # Download the RMM agent installer
+    $InstallerUrl = "$ServerUrl/storage/v1/object/public/rmm-agents/UltriumRMMAgent.msi"
+    $InstallerPath = "$env:TEMP\\UltriumRMMAgent.msi"
+    
+    Write-Host "Downloading agent installer..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $InstallerUrl -OutFile $InstallerPath -UseBasicParsing
+    
+    if (Test-Path $InstallerPath) {
+        # Install the agent silently
+        $InstallArgs = "/i \\"$InstallerPath\\" /quiet AGENTTOKEN=\\"$AgentToken\\" SERVERURL=\\"$ServerUrl\\" COMPANYID=\\"$CompanyId\\""
+        
+        $Process = Start-Process -FilePath "msiexec.exe" -ArgumentList $InstallArgs -Wait -PassThru
+        
+        if ($Process.ExitCode -eq 0) {
+            Write-Host "RMM Agent installed successfully!" -ForegroundColor Green
+            Write-Host "Agent will check in with $ServerUrl/functions/v1/rmm-agent-checkin" -ForegroundColor Cyan
+        } else {
+            throw "Installation failed with exit code: $($Process.ExitCode)"
+        }
+        
+        # Cleanup
+        Remove-Item $InstallerPath -Force -ErrorAction SilentlyContinue
+        
+    } else {
+        throw "Failed to download installer from $InstallerUrl"
+    }
+    
+} catch {
+    Write-Host "Installation failed: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "Agent installation completed successfully!" -ForegroundColor Green
 Write-Host "Device will appear as 'Managed' in SafeNet within 5 minutes." -ForegroundColor Green`;

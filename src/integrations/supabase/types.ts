@@ -6067,6 +6067,62 @@ export type Database = {
         }
         Relationships: []
       }
+      rmm_agent_checkins: {
+        Row: {
+          agent_token: string
+          agent_version: string | null
+          created_at: string
+          device_id: string
+          hostname: string
+          id: string
+          installed_software: Json | null
+          ip_address: unknown
+          last_checkin: string
+          performance_metrics: Json | null
+          security_status: Json | null
+          system_info: Json | null
+          user_id: string
+        }
+        Insert: {
+          agent_token: string
+          agent_version?: string | null
+          created_at?: string
+          device_id: string
+          hostname: string
+          id?: string
+          installed_software?: Json | null
+          ip_address: unknown
+          last_checkin?: string
+          performance_metrics?: Json | null
+          security_status?: Json | null
+          system_info?: Json | null
+          user_id: string
+        }
+        Update: {
+          agent_token?: string
+          agent_version?: string | null
+          created_at?: string
+          device_id?: string
+          hostname?: string
+          id?: string
+          installed_software?: Json | null
+          ip_address?: unknown
+          last_checkin?: string
+          performance_metrics?: Json | null
+          security_status?: Json | null
+          system_info?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rmm_agent_checkins_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "safenet_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rmm_agent_commands: {
         Row: {
           agent_id: string
