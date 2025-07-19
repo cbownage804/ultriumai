@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { NetworkTopologyViewer } from "./NetworkTopologyViewer";
 import { DeviceManagementPanel } from "./DeviceManagementPanel";
 import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
+import { MSPClientManager } from "./MSPClientManager";
 import { EnhancedDeviceCard } from "./EnhancedDeviceCard";
 import { NetworkStatistics } from "./NetworkStatistics";
 import { RealTimeMonitor } from "./RealTimeMonitor";
@@ -311,12 +312,13 @@ export const SafeNetDashboard = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="statistics">Statistics</TabsTrigger>
           <TabsTrigger value="topology">Network Map</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
           <TabsTrigger value="vulnerabilities">Security</TabsTrigger>
+          <TabsTrigger value="msp-clients">MSP Clients</TabsTrigger>
           <TabsTrigger value="connector">Connector</TabsTrigger>
         </TabsList>
 
@@ -470,6 +472,9 @@ export const SafeNetDashboard = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="msp-clients">
+          <MSPClientManager />
+        </TabsContent>
 
         <TabsContent value="connector">
           <Card>
