@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertCircle, Building2, Plus, Settings, TrendingUp } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { AlertCircle, Building2, Plus, Settings, TrendingUp, Download, Terminal, FileCode } from 'lucide-react';
 import { useSafeWebData } from '@/hooks/useSafeWebData';
 import { useAccountType } from '@/hooks/useAccountType';
 import { toast } from 'sonner';
@@ -91,6 +92,130 @@ export const MSPClientManager = () => {
     } else {
       toast.error('Failed to create MSP client');
     }
+  };
+
+  const handleInteractiveDownload = (client: any) => {
+    const instructions = `# Interactive Installer Instructions for ${client.company_name}
+
+## Step 1: Download Universal Installer
+Download: https://releases.ultriumai.com/UltriumRMMAgent.exe
+
+## Step 2: Run Interactive Setup
+1. Right-click installer → "Run as Administrator"
+2. Select "Interactive Setup"
+3. When prompted, enter:
+   - Connector Key: ${client.connector_key || `sk-client-${client.client_code}-generated`}
+   - Client Code: ${client.client_code}
+
+## Step 3: Verify Installation
+- Service "UltriumRMMAgent" should be running
+- Check system tray for Ultrium icon
+- Agent will appear in your MSP dashboard within 5 minutes
+
+Contact: ${client.contact_email} if you need assistance.`;
+
+    // Create and download instructions file
+    const blob = new Blob([instructions], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${client.company_name.replace(/[^a-zA-Z0-9]/g, '')}-Interactive-Install.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Interactive installer instructions downloaded for ${client.company_name}`);
+  };
+
+  const handleSilentDownload = (client: any) => {
+    const powershellScript = `# Silent Deployment Script for ${client.company_name}
+# Generated on ${new Date().toISOString()}
+
+param(
+    [string]$LogPath = "C:\\temp\\ultrium-install.log"
+)
+
+$ErrorActionPreference = "Stop"
+$Config = @{
+    ConnectorKey = "${client.connector_key || `sk-client-${client.client_code}-generated`}"
+    ClientCode = "${client.client_code}"
+    ClientName = "${client.company_name}"
+    MSPName = "Your MSP"
+    ApiUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1"
+    Silent = $true
+    InstallPath = "C:\\Program Files\\Ultrium RMM"
+    ServiceName = "UltriumRMMAgent"
+    LogLevel = "Info"
+}
+
+try {
+    Write-Host "Starting Ultrium RMM Agent deployment for $($Config.ClientName)..." -ForegroundColor Green
+    
+    # Download universal installer
+    $InstallerUrl = "https://releases.ultriumai.com/UltriumRMMAgent.exe"
+    $InstallerPath = "$env:TEMP\\UltriumRMMAgent.exe"
+    
+    Write-Host "Downloading installer..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $InstallerUrl -OutFile $InstallerPath
+    
+    # Create config file for silent install
+    $ConfigPath = "$env:TEMP\\ultrium-config.json"
+    $Config | ConvertTo-Json -Depth 3 | Out-File -FilePath $ConfigPath -Encoding UTF8
+    
+    # Run silent installation
+    Write-Host "Installing agent..." -ForegroundColor Yellow
+    $Process = Start-Process -FilePath $InstallerPath -ArgumentList @(
+        "-Silent"
+        "-ConfigFile", $ConfigPath
+        "-LogFile", $LogPath
+    ) -Wait -PassThru
+    
+    if ($Process.ExitCode -eq 0) {
+        Write-Host "✅ Installation completed successfully!" -ForegroundColor Green
+        Write-Host "📊 Agent is now reporting to your MSP" -ForegroundColor Cyan
+        
+        # Verify service is running
+        Start-Sleep -Seconds 5
+        $Service = Get-Service -Name $Config.ServiceName -ErrorAction SilentlyContinue
+        if ($Service -and $Service.Status -eq "Running") {
+            Write-Host "✅ Service is running and connected" -ForegroundColor Green
+        } else {
+            Write-Warning "⚠️ Service not running yet - may take a few minutes to start"
+        }
+    } else {
+        throw "Installation failed with exit code: $($Process.ExitCode)"
+    }
+    
+} catch {
+    Write-Error "❌ Installation failed: $_"
+    Write-Host "📋 Check log file: $LogPath" -ForegroundColor Yellow
+    Write-Host "📧 Contact support: ${client.contact_email}" -ForegroundColor Yellow
+    exit 1
+}
+
+# Cleanup
+Remove-Item $InstallerPath -Force -ErrorAction SilentlyContinue
+Remove-Item $ConfigPath -Force -ErrorAction SilentlyContinue
+
+Write-Host ""
+Write-Host "🎉 Ultrium RMM Agent deployed successfully!" -ForegroundColor Green
+Write-Host "🏢 Client: $($Config.ClientName)" -ForegroundColor Cyan
+Write-Host "🔑 Connector: $($Config.ClientCode)" -ForegroundColor Cyan
+Write-Host "📊 Agent will appear in MSP dashboard within 5 minutes" -ForegroundColor Yellow`;
+
+    // Create and download PowerShell script
+    const blob = new Blob([powershellScript], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Deploy-UltriumRMM-${client.company_name.replace(/[^a-zA-Z0-9]/g, '')}.ps1`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success(`Silent installer script downloaded for ${client.company_name}`);
   };
 
   const getStatusColor = (status: string) => {
@@ -372,9 +497,32 @@ export const MSPClientManager = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon">
-                        <Settings className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex items-center gap-2">
+                              <Download className="h-4 w-4" />
+                              Download Agent
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleInteractiveDownload(client)}>
+                              <Terminal className="h-4 w-4 mr-2" />
+                              Interactive Installer
+                              <span className="ml-auto text-xs text-muted-foreground">User types key</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleSilentDownload(client)}>
+                              <FileCode className="h-4 w-4 mr-2" />
+                              Silent Installer
+                              <span className="ml-auto text-xs text-muted-foreground">PowerShell script</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        
+                        <Button variant="ghost" size="icon">
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
