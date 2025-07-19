@@ -584,7 +584,7 @@ export const DeviceManagementPanel = () => {
                   <TabsContent value="agent">
                     <AgentInstallationPanel 
                       selectedDevice={device}
-                      connectorKey={`sk-safenet-${device.user_id?.slice(0,8) || 'demo'}-${Math.random().toString(36).substring(2, 8)}`}
+                      connectorKey={device.connector_key || 'sk-safenet-demo-default'}
                     />
                   </TabsContent>
                 </Tabs>
