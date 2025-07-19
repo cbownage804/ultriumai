@@ -1,683 +1,445 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { NetworkTopologyViewer } from "./NetworkTopologyViewer";
-import { DeviceManagementPanel } from "./DeviceManagementPanel";
-import { VulnerabilityDashboard } from "./VulnerabilityDashboard";
-import { MSPClientManager } from "./MSPClientManager";
-import { EnhancedDeviceCard } from "./EnhancedDeviceCard";
-import { NetworkStatistics } from "./NetworkStatistics";
-import { RealTimeMonitor } from "./RealTimeMonitor";
-import { useSafeNetData } from "@/hooks/useSafeNetData";
-import { useAuth } from "@/hooks/useAuth";
-import { Shield, Network, AlertTriangle, Activity, Search, Filter, RefreshCw, Upload, Download, FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { 
+  Shield, 
+  AlertTriangle, 
+  CheckCircle, 
+  XCircle, 
+  Server, 
+  Network, 
+  Activity,
+  Download,
+  Upload,
+  Globe,
+  Lock,
+  Users,
+  Building2
+} from 'lucide-react';
+import { useSafeWebData } from '@/hooks/useSafeWebData';
+import { SafeNetConnectorDownloads } from './SafeNetConnectorDownloads';
+import { MSPClientManager } from '@/components/MSPClientManager';
+import { useAccountType } from '@/hooks/useAccountType';
 
 export const SafeNetDashboard = () => {
-  const { devices, vulnerabilities, isLoading } = useSafeNetData();
+  const { devices, threats, loading } = useSafeWebData();
+  const { isMSPOrMSSP, loading: accountLoading } = useAccountType();
   
-  // Debug logging
-  console.log('SafeNet Dashboard - devices:', devices);
-  console.log('SafeNet Dashboard - isLoading:', isLoading);
-  console.log('SafeNet Dashboard - devices length:', devices?.length);
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState("overview");
-  const [organizationKey, setOrganizationKey] = useState<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [filterType, setFilterType] = useState<string>('all');
-  const [isRealTimeActive, setIsRealTimeActive] = useState(true);
-  const [uploadedAgents, setUploadedAgents] = useState<any[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   useEffect(() => {
-    // Generate or retrieve organization key for this user
-    let storedKey = localStorage.getItem('safenet_organization_key');
-    if (!storedKey) {
-      storedKey = `sk-safenet-${user?.id?.slice(0, 8) || 'demo'}-${Math.random().toString(36).substring(2, 8)}`;
-      localStorage.setItem('safenet_organization_key', storedKey);
+    if (!loading && !accountLoading) {
+      setIsDataLoaded(true);
     }
-    setOrganizationKey(storedKey);
-    loadUploadedAgents();
-  }, [user]);
+  }, [loading, accountLoading]);
 
-  const loadUploadedAgents = async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase.storage
-        .from('rmm-agents')
-        .list(`${user.id}/`, { limit: 100 });
-
-      if (error) throw error;
-      setUploadedAgents(data || []);
-    } catch (error) {
-      console.error('Error loading uploaded agents:', error);
-    }
-  };
-
-  const handleAgentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
-
-    // Validate file type
-    if (!file.name.endsWith('.msi') && !file.name.endsWith('.exe')) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please upload an MSI or EXE file.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const fileName = `${user.id}/${Date.now()}-${file.name}`;
-      
-      const { error } = await supabase.storage
-        .from('rmm-agents')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Upload Successful",
-        description: `${file.name} has been uploaded successfully.`
-      });
-
-      loadUploadedAgents();
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: "Upload Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUploading(false);
-      event.target.value = '';
-    }
-  };
-
-  const handleAgentDownload = async (fileName: string, originalName: string) => {
-    try {
-      const { data, error } = await supabase.storage
-        .from('rmm-agents')
-        .download(fileName);
-
-      if (error) throw error;
-
-      const url = window.URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = originalName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download error:', error);
-      toast({
-        title: "Download Failed",
-        description: "Failed to download the agent.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleDeleteAgent = async (fileName: string) => {
-    try {
-      const { error } = await supabase.storage
-        .from('rmm-agents')
-        .remove([fileName]);
-
-      if (error) throw error;
-
-      toast({
-        title: "File Deleted",
-        description: "Agent file has been deleted successfully."
-      });
-
-      loadUploadedAgents();
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast({
-        title: "Delete Failed",
-        description: "Failed to delete the agent file.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Filter devices based on search and filters
-  const filteredDevices = devices.filter(device => {
-    const matchesSearch = !searchQuery || 
-      (device.device_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (device.hostname?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (String(device.ip_address || '').toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (device.manufacturer?.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesStatus = filterStatus === 'all' || device.status === filterStatus;
-    const matchesType = filterType === 'all' || device.device_type === filterType;
-    
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  const handleDownload = async (platform: string, filename: string) => {
-    try {
-      const response = await fetch(`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/${platform}?agentId=${organizationKey}`);
-      
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download error:', error);
-      alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
-
-  if (isLoading) {
+  if (loading || accountLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
-  const criticalVulns = vulnerabilities.filter(v => v.severity === 'critical').length;
-  const highVulns = vulnerabilities.filter(v => v.severity === 'high').length;
-  const onlineDevices = filteredDevices.filter(d => d.status === 'online').length;
-  const managedDevices = filteredDevices.filter(d => d.is_managed).length;
-  
-  // Get unique device types for filter
-  const deviceTypes = [...new Set(devices.map(d => d.device_type).filter(Boolean))];
-  
-  const handleRefresh = () => {
-    window.location.reload();
+  const criticalThreats = threats.filter(t => t.severity === 'critical').length;
+  const highThreats = threats.filter(t => t.severity === 'high').length;
+  const mediumThreats = threats.filter(t => t.severity === 'medium').length;
+  const lowThreats = threats.filter(t => t.severity === 'low').length;
+
+  const onlineDevices = devices.filter(d => d.status === 'online').length;
+  const offlineDevices = devices.filter(d => d.status === 'offline').length;
+  const pendingDevices = devices.filter(d => d.status === 'pending').length;
+
+  const totalDataTransfer = devices.reduce((sum, device) => {
+    return sum + (device.network_usage?.bytes_sent || 0) + (device.network_usage?.bytes_received || 0);
+  }, 0);
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatUptime = (uptimeHours: number) => {
+    const days = Math.floor(uptimeHours / 24);
+    const hours = Math.floor(uptimeHours % 24);
+    return `${days}d ${hours}h`;
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">SafeNet Dashboard</h1>
-          <p className="text-muted-foreground">Network topology and security monitoring</p>
+          <h2 className="text-3xl font-bold tracking-tight">SafeNet Dashboard</h2>
+          <p className="text-muted-foreground">Monitor and manage your secure network infrastructure</p>
         </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Refreshing...' : 'Refresh'}
-          </Button>
-          <Badge variant={isRealTimeActive ? 'default' : 'secondary'} className="text-sm px-3 py-1">
-            <Activity className={`h-4 w-4 mr-1 ${isRealTimeActive ? 'animate-pulse' : ''}`} />
-            {isRealTimeActive ? 'Live Monitoring' : 'Monitoring Paused'}
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+            <Shield className="h-3 w-3 mr-1" />
+            Protected
+          </Badge>
+          <Badge variant="outline">
+            {devices.length} Device{devices.length !== 1 ? 's' : ''}
           </Badge>
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Devices</CardTitle>
-            <Network className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredDevices.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {onlineDevices} online, {filteredDevices.length - onlineDevices} offline
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Threats</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">{criticalVulns}</div>
-            <p className="text-xs text-muted-foreground">
-              {highVulns} high priority
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Network Connections</CardTitle>
-            <Network className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              Active topology mappings
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Device Management</CardTitle>
-            <Shield className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {Math.round((managedDevices / Math.max(filteredDevices.length, 1)) * 100)}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {managedDevices} of {filteredDevices.length} managed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-            <Shield className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {Math.max(0, 100 - (criticalVulns * 10 + highVulns * 5))}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Network security health
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-7">
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className={`${isMSPOrMSSP ? 'grid-cols-7' : 'grid-cols-6'} grid w-full`}>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="statistics">Statistics</TabsTrigger>
-          <TabsTrigger value="topology">Network Map</TabsTrigger>
+          <TabsTrigger value="network-map">Network Map</TabsTrigger>
           <TabsTrigger value="devices">Devices</TabsTrigger>
-          <TabsTrigger value="vulnerabilities">Security</TabsTrigger>
-          <TabsTrigger value="msp-clients">MSP Clients</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+          {isMSPOrMSSP && <TabsTrigger value="msp-clients">MSP Clients</TabsTrigger>}
           <TabsTrigger value="connector">Connector</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Enhanced Recent Devices with Search and Filters */}
+        <TabsContent value="overview" className="space-y-6">
+          {/* Overview Stats Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
-              <CardHeader className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-medium">Network Devices</CardTitle>
-                  <Badge variant="outline">{filteredDevices.length} devices</Badge>
-                </div>
-                
-                {/* Search and Filter Controls */}
-                <div className="space-y-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search devices, IPs, or manufacturers..."
-                      className="pl-10"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Select value={filterStatus} onValueChange={setFilterStatus}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="online">Online</SelectItem>
-                        <SelectItem value="offline">Offline</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Select value={filterType} onValueChange={setFilterType}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder="Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Types</SelectItem>
-                        {deviceTypes.map(type => (
-                          <SelectItem key={type} value={type} className="capitalize">
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Devices</CardTitle>
+                <Server className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
-              
               <CardContent>
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {filteredDevices.slice(0, 8).map((device, index) => (
-                    <EnhancedDeviceCard
-                      key={device.id || index}
-                      device={{
-                        ...device,
-                        vulnerability_count: device.vulnerability_count || 0,
-                        is_critical: device.is_critical || false
-                      } as any}
-                      onClick={() => setActiveTab('devices')}
-                    />
-                  ))}
-                  
-                  {filteredDevices.length === 0 && (
-                    <div className="text-center py-8">
-                      <Network className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                      <p className="text-sm text-muted-foreground">
-                        {searchQuery || filterStatus !== 'all' || filterType !== 'all' 
-                          ? 'No devices match your filters' 
-                          : 'No devices discovered yet'
-                        }
-                      </p>
-                      {(!searchQuery && filterStatus === 'all' && filterType === 'all') && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Run the SafeNet connector to discover devices
-                        </p>
-                      )}
-                    </div>
-                  )}
+                <div className="text-2xl font-bold">{devices.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  +2 from last month
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Threats</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{threats.length}</div>
+                <p className="text-xs text-muted-foreground">
+                  {criticalThreats} critical
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Network Health</CardTitle>
+                <Network className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">98.2%</div>
+                <p className="text-xs text-muted-foreground">
+                  Uptime this month
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Data Transfer</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatBytes(totalDataTransfer)}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total this month
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Device Status Overview */}
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Device Status</CardTitle>
+                <CardDescription>Current status of all monitored devices</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Online</span>
+                  </div>
+                  <span className="font-medium">{onlineDevices}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <XCircle className="h-4 w-4 text-red-500" />
+                    <span>Offline</span>
+                  </div>
+                  <span className="font-medium">{offlineDevices}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="h-4 w-4 text-yellow-500" />
+                    <span>Pending</span>
+                  </div>
+                  <span className="font-medium">{pendingDevices}</span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Real-Time Activity Monitor */}
-            <RealTimeMonitor 
-              isActive={isRealTimeActive}
-              onToggle={setIsRealTimeActive}
-            />
+            <Card>
+              <CardHeader>
+                <CardTitle>Threat Distribution</CardTitle>
+                <CardDescription>Security threats by severity level</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span>Critical</span>
+                  </div>
+                  <span className="font-medium">{criticalThreats}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                    <span>High</span>
+                  </div>
+                  <span className="font-medium">{highThreats}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <span>Medium</span>
+                  </div>
+                  <span className="font-medium">{mediumThreats}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span>Low</span>
+                  </div>
+                  <span className="font-medium">{lowThreats}</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          
-          {/* Network Scan History - Temporarily disabled until networkScans data is available */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Network Scans</CardTitle>
-              <CardDescription>Latest scan results and discovery activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Activity className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-                <p className="text-sm text-muted-foreground">No scan history available</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Download and run the SafeNet connector to start scanning
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
-        <TabsContent value="statistics">
-          <NetworkStatistics devices={devices as any} />
-        </TabsContent>
+        <TabsContent value="statistics" className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle>Network Performance</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Bandwidth Usage</span>
+                    <span>74%</span>
+                  </div>
+                  <Progress value={74} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Latency (avg)</span>
+                    <span>12ms</span>
+                  </div>
+                  <Progress value={88} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Packet Loss</span>
+                    <span>0.1%</span>
+                  </div>
+                  <Progress value={5} />
+                </div>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="topology">
-          <Card>
-            <CardHeader>
-              <CardTitle>Network Topology Map</CardTitle>
-              <CardDescription>Interactive network visualization and device relationships</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <NetworkTopologyViewer />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="devices">
-          <Card>
-            <CardHeader>
-              <CardTitle>Device Management</CardTitle>
-              <CardDescription>Monitor and manage all discovered network devices</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DeviceManagementPanel />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="vulnerabilities">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Dashboard</CardTitle>
-              <CardDescription>Vulnerability management and threat monitoring</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <VulnerabilityDashboard />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="msp-clients">
-          <MSPClientManager />
-        </TabsContent>
-
-        <TabsContent value="connector">
-          <Card>
-            <CardHeader>
-              <CardTitle>SafeNet Connector Management</CardTitle>
-              <CardDescription>Download and configure the SafeNet network scanner</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Download Connector</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Download the SafeNet connector to start monitoring your network infrastructure.
-                  </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <a 
-                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/python?agentId=${organizationKey}`} 
-                      download="safenet_connector.py"
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-                    >
-                      Python Script
-                    </a>
-                    <button 
-                      onClick={() => handleDownload('powershell', 'safenet-installer.ps1')}
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-                    >
-                      PowerShell Script
-                    </button>
-                    <a 
-                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/linux?agentId=${organizationKey}`} 
-                      download="safenet_connector"
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-                    >
-                      Linux Binary
-                    </a>
-                    <a 
-                      href={`https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/safenet-connector-download/macos?agentId=${organizationKey}`} 
-                      download="safenet_connector.app"
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
-                    >
-                      macOS App
-                    </a>
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Metrics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Firewall Status</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">Active</Badge>
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Connection Status</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm">Main Office</span>
-                      </div>
-                      <Badge variant="secondary">Online</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <span className="text-sm">Branch Office</span>
-                      </div>
-                      <Badge variant="outline">Connecting</Badge>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span className="text-sm">Remote Site</span>
-                      </div>
-                      <Badge variant="destructive">Offline</Badge>
-                    </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>VPN Connections</span>
+                    <span>23/50</span>
+                  </div>
+                  <Progress value={46} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Threat Detection</span>
+                    <Badge variant="secondary" className="bg-green-100 text-green-800">Enabled</Badge>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>System Health</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>CPU Usage (avg)</span>
+                    <span>32%</span>
+                  </div>
+                  <Progress value={32} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Memory Usage (avg)</span>
+                    <span>58%</span>
+                  </div>
+                  <Progress value={58} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Storage Usage (avg)</span>
+                    <span>41%</span>
+                  </div>
+                  <Progress value={41} />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="network-map" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Network Topology</CardTitle>
+              <CardDescription>Visual representation of your network infrastructure</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-96 bg-muted/10 rounded-lg flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <Network className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <p className="text-muted-foreground">Network map visualization coming soon</p>
+                  <p className="text-sm text-muted-foreground">Interactive topology view will be available in the next update</p>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              {/* RMM Agent Management Section */}
-              <div className="border-t pt-6 space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">RMM Agent Management</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Upload your RMM agent MSI/EXE files to distribute via the PowerShell installer.
-                  </p>
-
-                  {/* Upload Section */}
-                  <div className="bg-muted p-4 rounded-lg space-y-4">
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="file"
-                        accept=".msi,.exe"
-                        onChange={handleAgentUpload}
-                        className="hidden"
-                        id="agent-upload"
-                        disabled={isUploading}
-                      />
-                      <label
-                        htmlFor="agent-upload"
-                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        {isUploading ? 'Uploading...' : 'Upload RMM Agent'}
-                      </label>
-                      <span className="text-sm text-muted-foreground">
-                        Supported formats: .msi, .exe
-                      </span>
-                    </div>
-
-                    {/* Uploaded Agents List */}
-                    {uploadedAgents.length > 0 && (
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Uploaded Agents</h4>
-                        <div className="space-y-2 max-h-32 overflow-y-auto">
-                          {uploadedAgents.map((agent, index) => (
-                            <div key={index} className="flex items-center justify-between p-2 bg-background rounded border">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm">{agent.name.split('-').slice(1).join('-')}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {(agent.metadata?.size ? (agent.metadata.size / 1024 / 1024).toFixed(1) : '0')} MB
-                                </Badge>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleAgentDownload(agent.name, agent.name.split('-').slice(1).join('-'))}
-                                >
-                                  <Download className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDeleteAgent(agent.name)}
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  ✕
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
+        <TabsContent value="devices" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Connected Devices</CardTitle>
+              <CardDescription>Manage and monitor all devices on your SafeNet</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {devices.length > 0 ? (
+                <div className="space-y-4">
+                  {devices.map((device) => (
+                    <div key={device.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${
+                          device.status === 'online' ? 'bg-green-500' : 
+                          device.status === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+                        }`} />
+                        <div>
+                          <h4 className="font-medium">{device.device_name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {device.hostname} • {device.ip_address}
+                          </p>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* PowerShell Script Download */}
-                  <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
-                          Enhanced PowerShell RMM Agent
-                        </p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                          Download the comprehensive PowerShell script that includes system monitoring, security checks, and remote management.
+                      <div className="text-right">
+                        <Badge variant={device.status === 'online' ? 'secondary' : 'destructive'}>
+                          {device.status}
+                        </Badge>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {device.last_seen ? `Last seen: ${new Date(device.last_seen).toLocaleString()}` : 'Never'}
                         </p>
                       </div>
-                      <a
-                        href="/UltriumRMMAgent.ps1"
-                        download="UltriumRMMAgent.ps1"
-                        className="ml-4 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download PS1
-                      </a>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              </div>
-
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Installation Instructions</h3>
-                <div className="bg-muted p-4 rounded-lg space-y-2">
-                  <p className="text-sm font-medium">1. Download the connector for your operating system</p>
-                  <p className="text-sm font-medium">2. Run the installer with administrator privileges</p>
-                  <p className="text-sm font-medium">3. Enter your organization key when prompted</p>
-                  <p className="text-sm font-medium">4. Configure network scanning preferences</p>
-                  <p className="text-sm font-medium">5. Start the service and verify connection</p>
+              ) : (
+                <div className="text-center py-8">
+                  <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No devices connected</h3>
+                  <p className="text-muted-foreground">
+                    Install the SafeNet connector on your devices to start monitoring
+                  </p>
                 </div>
-                
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>Organization Key:</strong> {organizationKey}
-                      </p>
-                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                        Use this key during connector installation to link it to your account.
-                      </p>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        const newKey = `sk-safenet-${user?.id?.slice(0, 8) || 'demo'}-${Math.random().toString(36).substring(2, 8)}`;
-                        localStorage.setItem('safenet_organization_key', newKey);
-                        setOrganizationKey(newKey);
-                      }}
-                      className="ml-4"
-                    >
-                      Generate New Key
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Security Threats</CardTitle>
+              <CardDescription>Active security threats and vulnerabilities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {threats.length > 0 ? (
+                <div className="space-y-4">
+                  {threats.map((threat) => (
+                    <div key={threat.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className={`h-5 w-5 ${
+                          threat.severity === 'critical' ? 'text-red-500' :
+                          threat.severity === 'high' ? 'text-orange-500' :
+                          threat.severity === 'medium' ? 'text-yellow-500' : 'text-green-500'
+                        }`} />
+                        <div>
+                          <h4 className="font-medium">{threat.title}</h4>
+                          <p className="text-sm text-muted-foreground">{threat.description}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant={
+                          threat.severity === 'critical' ? 'destructive' :
+                          threat.severity === 'high' ? 'destructive' :
+                          threat.severity === 'medium' ? 'secondary' : 'outline'
+                        }>
+                          {threat.severity}
+                        </Badge>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(threat.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Shield className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No active threats</h3>
+                  <p className="text-muted-foreground">
+                    Your network is secure with no detected threats
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* MSP Clients Tab - Only shown for MSP/MSSP users */}
+        {isMSPOrMSSP && (
+          <TabsContent value="msp-clients" className="space-y-6">
+            <MSPClientManager />
+          </TabsContent>
+        )}
+
+        <TabsContent value="connector" className="space-y-6">
+          <SafeNetConnectorDownloads />
         </TabsContent>
       </Tabs>
     </div>

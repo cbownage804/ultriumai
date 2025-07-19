@@ -9,10 +9,12 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertCircle, Building2, Plus, Settings, TrendingUp } from 'lucide-react';
 import { useSafeWebData } from '@/hooks/useSafeWebData';
+import { useAccountType } from '@/hooks/useAccountType';
 import { toast } from 'sonner';
 
 export const MSPClientManager = () => {
   const { mspClients, loading, addMspClient, fetchMspClients } = useSafeWebData();
+  const { isMSPOrMSSP, loading: accountLoading } = useAccountType();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     company_name: '',
@@ -25,6 +27,33 @@ export const MSPClientManager = () => {
     monthly_price: '',
     max_assets: ''
   });
+
+  // Security check - redirect or show error if user is not MSP/MSSP
+  if (accountLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!isMSPOrMSSP) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-destructive">Access Denied</CardTitle>
+          <CardDescription>
+            This feature is only available for MSP and MSSP accounts.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            To access MSP client management features, please upgrade your account to an MSP or MSSP plan.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
