@@ -13,7 +13,9 @@ import { NetworkStatistics } from "./NetworkStatistics";
 import { RealTimeMonitor } from "./RealTimeMonitor";
 import { useSafeNetData } from "@/hooks/useSafeNetData";
 import { useAuth } from "@/hooks/useAuth";
-import { Shield, Network, AlertTriangle, Activity, Search, Filter, RefreshCw } from "lucide-react";
+import { Shield, Network, AlertTriangle, Activity, Search, Filter, RefreshCw, Upload, Download, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const SafeNetDashboard = () => {
   const { devices, vulnerabilities, isLoading } = useSafeNetData();
@@ -29,6 +31,9 @@ export const SafeNetDashboard = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [isRealTimeActive, setIsRealTimeActive] = useState(true);
+  const [uploadedAgents, setUploadedAgents] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Generate or retrieve organization key for this user
@@ -38,7 +43,119 @@ export const SafeNetDashboard = () => {
       localStorage.setItem('safenet_organization_key', storedKey);
     }
     setOrganizationKey(storedKey);
+    loadUploadedAgents();
   }, [user]);
+
+  const loadUploadedAgents = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase.storage
+        .from('rmm-agents')
+        .list(`${user.id}/`, { limit: 100 });
+
+      if (error) throw error;
+      setUploadedAgents(data || []);
+    } catch (error) {
+      console.error('Error loading uploaded agents:', error);
+    }
+  };
+
+  const handleAgentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.msi') && !file.name.endsWith('.exe')) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an MSI or EXE file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileName = `${user.id}/${Date.now()}-${file.name}`;
+      
+      const { error } = await supabase.storage
+        .from('rmm-agents')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Upload Successful",
+        description: `${file.name} has been uploaded successfully.`
+      });
+
+      loadUploadedAgents();
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleAgentDownload = async (fileName: string, originalName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('rmm-agents')
+        .download(fileName);
+
+      if (error) throw error;
+
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the agent.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDeleteAgent = async (fileName: string) => {
+    try {
+      const { error } = await supabase.storage
+        .from('rmm-agents')
+        .remove([fileName]);
+
+      if (error) throw error;
+
+      toast({
+        title: "File Deleted",
+        description: "Agent file has been deleted successfully."
+      });
+
+      loadUploadedAgents();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the agent file.",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Filter devices based on search and filters
   const filteredDevices = devices.filter(device => {
@@ -421,6 +538,99 @@ export const SafeNetDashboard = () => {
                         <span className="text-sm">Remote Site</span>
                       </div>
                       <Badge variant="destructive">Offline</Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RMM Agent Management Section */}
+              <div className="border-t pt-6 space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">RMM Agent Management</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload your RMM agent MSI/EXE files to distribute via the PowerShell installer.
+                  </p>
+
+                  {/* Upload Section */}
+                  <div className="bg-muted p-4 rounded-lg space-y-4">
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="file"
+                        accept=".msi,.exe"
+                        onChange={handleAgentUpload}
+                        className="hidden"
+                        id="agent-upload"
+                        disabled={isUploading}
+                      />
+                      <label
+                        htmlFor="agent-upload"
+                        className={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {isUploading ? 'Uploading...' : 'Upload RMM Agent'}
+                      </label>
+                      <span className="text-sm text-muted-foreground">
+                        Supported formats: .msi, .exe
+                      </span>
+                    </div>
+
+                    {/* Uploaded Agents List */}
+                    {uploadedAgents.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium">Uploaded Agents</h4>
+                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                          {uploadedAgents.map((agent, index) => (
+                            <div key={index} className="flex items-center justify-between p-2 bg-background rounded border">
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm">{agent.name.split('-').slice(1).join('-')}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {(agent.metadata?.size ? (agent.metadata.size / 1024 / 1024).toFixed(1) : '0')} MB
+                                </Badge>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAgentDownload(agent.name, agent.name.split('-').slice(1).join('-'))}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteAgent(agent.name)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  ✕
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PowerShell Script Download */}
+                  <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">
+                          Enhanced PowerShell RMM Agent
+                        </p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                          Download the comprehensive PowerShell script that includes system monitoring, security checks, and remote management.
+                        </p>
+                      </div>
+                      <a
+                        href="/UltriumRMMAgent.ps1"
+                        download="UltriumRMMAgent.ps1"
+                        className="ml-4 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-3"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download PS1
+                      </a>
                     </div>
                   </div>
                 </div>

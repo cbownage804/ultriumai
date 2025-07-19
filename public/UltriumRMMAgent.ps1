@@ -13,6 +13,7 @@ param(
 # Configuration
 $Script:Config = @{
     ApiUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1"
+    StorageUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-agents"
     ConnectorKey = $ConnectorKey
     DeviceIP = if ($DeviceIP) { $DeviceIP } else { (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.*" } | Select-Object -First 1).IPAddress }
     DeviceName = if ($DeviceName) { $DeviceName } else { $env:COMPUTERNAME }
@@ -21,6 +22,7 @@ $Script:Config = @{
     LogPath = "$env:ProgramData\UltriumRMM\agent.log"
     ServiceName = "UltriumRMMAgent"
     ServiceDisplayName = "Ultrium RMM Agent"
+    MSIFileName = "UltriumRMMAgent.msi"
 }
 
 # Ensure log directory exists
@@ -313,6 +315,75 @@ function Get-PendingCommands {
         foreach ($Command in $Response.commands) {
             Invoke-RemoteCommand -Command $Command.command -CommandId $Command.id
         }
+    }
+}
+
+# MSI Download and Installation
+function Install-MSIAgent {
+    param([string]$UserId)
+    
+    Write-Log "Searching for available MSI installers..."
+    
+    try {
+        # Get list of available MSI files for the user
+        $ListUrl = "$($Script:Config.StorageUrl)/"
+        $Response = Invoke-RestMethod -Uri $ListUrl -Method GET -ErrorAction SilentlyContinue
+        
+        # Find the first MSI file for this user
+        $MSIFile = $null
+        if ($UserId) {
+            # Try to find user-specific MSI
+            $MSIFile = "$UserId/UltriumRMMAgent.msi"
+            $DownloadUrl = "$($Script:Config.StorageUrl)/$MSIFile"
+            
+            try {
+                # Test if user-specific MSI exists
+                $TestResponse = Invoke-WebRequest -Uri $DownloadUrl -Method HEAD -ErrorAction Stop
+                Write-Log "Found user-specific MSI: $MSIFile"
+            }
+            catch {
+                # Fallback to generic MSI location
+                $MSIFile = "shared/UltriumRMMAgent.msi"
+                $DownloadUrl = "$($Script:Config.StorageUrl)/$MSIFile"
+                Write-Log "User-specific MSI not found, trying shared location"
+            }
+        } else {
+            # Use generic MSI location
+            $MSIFile = "shared/UltriumRMMAgent.msi"
+            $DownloadUrl = "$($Script:Config.StorageUrl)/$MSIFile"
+        }
+        
+        $TempPath = "$env:TEMP\UltriumRMMAgent.msi"
+        
+        Write-Log "Downloading MSI from: $DownloadUrl"
+        Invoke-WebRequest -Uri $DownloadUrl -OutFile $TempPath -TimeoutSec 300
+        
+        if (Test-Path $TempPath) {
+            Write-Log "MSI downloaded successfully. Installing..."
+            
+            # Install MSI silently
+            $Arguments = "/i `"$TempPath`" /quiet /norestart CONNECTOR_KEY=`"$($Script:Config.ConnectorKey)`""
+            $Process = Start-Process -FilePath "msiexec.exe" -ArgumentList $Arguments -Wait -PassThru
+            
+            if ($Process.ExitCode -eq 0) {
+                Write-Log "MSI installation completed successfully"
+                
+                # Clean up temp file
+                Remove-Item $TempPath -Force -ErrorAction SilentlyContinue
+                
+                return $true
+            } else {
+                Write-Log "MSI installation failed with exit code: $($Process.ExitCode)" "ERROR"
+                return $false
+            }
+        } else {
+            Write-Log "Failed to download MSI file" "ERROR"
+            return $false
+        }
+        
+    } catch {
+        Write-Log "MSI installation error: $($_.Exception.Message)" "ERROR"
+        return $false
     }
 }
 
