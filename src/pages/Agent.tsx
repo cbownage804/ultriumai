@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Monitor, Wifi, HardDrive, Cpu, Activity, Shield } from "lucide-react";
+import { Monitor, Wifi, HardDrive, Cpu, Activity, Shield, Settings } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SystemInfo {
   hostname: string;
@@ -12,28 +15,48 @@ interface SystemInfo {
   screen: string;
   memory: string;
   connection: string;
+  cpu: string;
+  userAgent: string;
+}
+
+interface PerformanceMetrics {
+  cpuUsage: number;
+  memoryUsage: number;
+  networkLatency: number;
+  uptime: number;
+}
+
+interface SecurityStatus {
+  antivirusEnabled: boolean;
+  firewallEnabled: boolean;
+  lastScanDate: Date;
+  vulnerabilities: number;
 }
 
 export const Agent = () => {
   const [isConnected, setIsConnected] = useState(false);
-  const [agentId, setAgentId] = useState<string>('');
+  const [agentToken, setAgentToken] = useState('');
+  const [hostname, setHostname] = useState('');
+  const [ipAddress, setIpAddress] = useState('');
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetrics | null>(null);
+  const [securityStatus, setSecurityStatus] = useState<SecurityStatus | null>(null);
+  const [agentVersion] = useState('2.1.0');
+  const [lastCheckin, setLastCheckin] = useState<Date | null>(null);
   const { toast } = useToast();
 
-  // Generate or retrieve agent ID
+  // Load saved configuration
   useEffect(() => {
-    let storedAgentId = localStorage.getItem('rmm_agent_id');
-    if (!storedAgentId) {
-      storedAgentId = `agent_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('rmm_agent_id', storedAgentId);
-    }
-    setAgentId(storedAgentId);
+    const savedToken = localStorage.getItem('rmm_agent_token') || '';
+    const savedHostname = localStorage.getItem('rmm_hostname') || window.location.hostname;
+    const savedIpAddress = localStorage.getItem('rmm_ip_address') || '';
+    
+    setAgentToken(savedToken);
+    setHostname(savedHostname);
+    setIpAddress(savedIpAddress);
   }, []);
 
-  // Collect system information
+  // Collect comprehensive system information
   useEffect(() => {
     const collectSystemInfo = async (): Promise<SystemInfo> => {
       const nav = navigator as any;
@@ -43,7 +66,7 @@ export const Agent = () => {
       let memoryInfo = 'Unknown';
       if ('memory' in performance) {
         const memory = (performance as any).memory;
-        memoryInfo = `${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB used`;
+        memoryInfo = `${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB used of ${Math.round(memory.jsHeapSizeLimit / 1024 / 1024)}MB`;
       }
 
       // Get connection info
@@ -53,248 +76,138 @@ export const Agent = () => {
         connectionInfo = `${conn.effectiveType} (${conn.downlink}Mbps)`;
       }
 
+      // Get CPU info
+      let cpuInfo = `${navigator.hardwareConcurrency || 'Unknown'} cores`;
+
       return {
-        hostname: window.location.hostname,
+        hostname: hostname || window.location.hostname,
         os: nav.platform || nav.userAgentData?.platform || 'Unknown',
         browser: `${nav.userAgent.split(' ').slice(-2).join(' ')}`,
         screen: `${screen.width}x${screen.height} (${screen.colorDepth}bit)`,
         memory: memoryInfo,
-        connection: connectionInfo
+        connection: connectionInfo,
+        cpu: cpuInfo,
+        userAgent: navigator.userAgent
+      };
+    };
+
+    const collectPerformanceMetrics = (): PerformanceMetrics => {
+      const memory = (performance as any).memory;
+      return {
+        cpuUsage: Math.round(Math.random() * 30 + 10), // Simulated CPU usage
+        memoryUsage: memory ? Math.round((memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100) : 0,
+        networkLatency: Math.round(Math.random() * 50 + 10), // Simulated latency
+        uptime: Math.round(performance.now() / 1000) // Browser uptime in seconds
+      };
+    };
+
+    const collectSecurityStatus = (): SecurityStatus => {
+      // Simulated security status - in production this would check actual security tools
+      return {
+        antivirusEnabled: true,
+        firewallEnabled: true,
+        lastScanDate: new Date(),
+        vulnerabilities: Math.floor(Math.random() * 3) // Random vulnerabilities for demo
       };
     };
 
     collectSystemInfo().then(setSystemInfo);
-  }, []);
+    setPerformanceMetrics(collectPerformanceMetrics());
+    setSecurityStatus(collectSecurityStatus());
+  }, [hostname]);
 
-  // Connect to RMM server
-  const connectToServer = async () => {
-    try {
-      const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-realtime?agent_id=${agentId}`;
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        setIsConnected(true);
-        toast({
-          title: "Connected to RMM Server",
-          description: "Agent is now online and ready for management",
-        });
-
-        // Register this device
-        ws.send(JSON.stringify({
-          type: 'device_registration',
-          data: {
-            agent_id: agentId,
-            system_info: systemInfo,
-            timestamp: Date.now()
-          }
-        }));
-      };
-
-      ws.onmessage = async (event) => {
-        const message = JSON.parse(event.data);
-        await handleRemoteCommand(message);
-      };
-
-      ws.onclose = () => {
-        setIsConnected(false);
-        toast({
-          title: "Disconnected from RMM Server",
-          description: "Attempting to reconnect...",
-          variant: "destructive"
-        });
-        
-        // Attempt reconnection after 5 seconds
-        setTimeout(connectToServer, 5000);
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        toast({
-          title: "Connection Error",
-          description: "Failed to connect to RMM server",
-          variant: "destructive"
-        });
-      };
-
-      wsRef.current = ws;
-    } catch (error) {
-      console.error('Connection failed:', error);
+  // Perform agent check-in with RMM server
+  const performCheckin = async () => {
+    if (!agentToken || !ipAddress) {
       toast({
-        title: "Connection Failed",
-        description: "Could not establish connection to RMM server",
+        title: "Configuration Required",
+        description: "Please configure agent token and IP address",
         variant: "destructive"
       });
+      return;
     }
-  };
 
-  // Handle remote commands from RMM server
-  const handleRemoteCommand = async (message: any) => {
-    switch (message.type) {
-      case 'start_screen_share':
-        await startScreenShare();
-        break;
-      case 'stop_screen_share':
-        stopScreenShare();
-        break;
-      case 'execute_command':
-        executeSystemCommand(message.data.command);
-        break;
-      case 'system_info_request':
-        sendSystemInfo();
-        break;
-      case 'ping':
-        sendPong();
-        break;
-    }
-  };
-
-  // Start screen sharing
-  const startScreenShare = async () => {
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true
+      const checkinData = {
+        agent_token: agentToken,
+        hostname: hostname || window.location.hostname,
+        ip_address: ipAddress,
+        agent_version: agentVersion,
+        system_info: systemInfo,
+        performance_metrics: performanceMetrics,
+        security_status: securityStatus,
+        installed_software: [
+          { name: "Chrome Browser", version: "Latest", vendor: "Google" },
+          { name: "RMM Agent", version: agentVersion, vendor: "Ultrium" }
+        ]
+      };
+
+      const { data, error } = await supabase.functions.invoke('rmm-agent-checkin', {
+        body: checkinData
       });
 
-      streamRef.current = stream;
-      setIsStreaming(true);
+      if (error) {
+        throw error;
+      }
 
-      // Send stream data via WebSocket (simplified)
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const video = document.createElement('video');
+      setIsConnected(true);
+      setLastCheckin(new Date());
       
-      video.srcObject = stream;
-      video.play();
-
-      video.onloadedmetadata = () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        const captureFrame = () => {
-          if (!isStreaming || !ctx) return;
-          
-          ctx.drawImage(video, 0, 0);
-          const imageData = canvas.toDataURL('image/jpeg', 0.5);
-          
-          if (wsRef.current?.readyState === WebSocket.OPEN) {
-            wsRef.current.send(JSON.stringify({
-              type: 'screen_frame',
-              data: imageData,
-              timestamp: Date.now()
-            }));
-          }
-          
-          setTimeout(captureFrame, 100); // 10 FPS
-        };
-
-        captureFrame();
-      };
-
       toast({
-        title: "Screen Sharing Started",
-        description: "Your screen is now being shared",
+        title: "Check-in Successful",
+        description: `Device registered successfully. Next check-in in ${data.next_checkin || 300} seconds`,
       });
 
-    } catch (error) {
-      console.error('Screen share failed:', error);
+      // Save configuration
+      localStorage.setItem('rmm_agent_token', agentToken);
+      localStorage.setItem('rmm_hostname', hostname);
+      localStorage.setItem('rmm_ip_address', ipAddress);
+
+    } catch (error: any) {
+      console.error('Check-in failed:', error);
+      setIsConnected(false);
       toast({
-        title: "Screen Share Failed",
-        description: "Could not start screen sharing",
+        title: "Check-in Failed",
+        description: error.message || "Failed to check in with RMM server",
         variant: "destructive"
       });
     }
   };
 
-  // Stop screen sharing
-  const stopScreenShare = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    setIsStreaming(false);
-    
-    toast({
-      title: "Screen Sharing Stopped",
-      description: "Screen sharing has been disabled",
-    });
-  };
-
-  // Execute system commands (limited to web context)
-  const executeSystemCommand = (command: string) => {
-    let result = '';
-    
-    try {
-      // Limited command execution in browser context
-      switch (command.toLowerCase()) {
-        case 'systeminfo':
-        case 'info':
-          result = JSON.stringify(systemInfo, null, 2);
-          break;
-        case 'clear':
-          result = 'Console cleared';
-          break;
-        case 'date':
-          result = new Date().toString();
-          break;
-        case 'whoami':
-          result = 'Web Agent User';
-          break;
-        default:
-          result = `Command "${command}" not supported in web context`;
-      }
-    } catch (error) {
-      result = `Error executing command: ${error}`;
-    }
-
-    // Send result back to server
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'command_result',
-        data: {
-          command,
-          result,
-          timestamp: Date.now()
-        }
-      }));
-    }
-  };
-
-  // Send system information
-  const sendSystemInfo = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'system_info_response',
-        data: systemInfo,
-        timestamp: Date.now()
-      }));
-    }
-  };
-
-  // Send pong response
-  const sendPong = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'pong',
-        timestamp: Date.now()
-      }));
-    }
-  };
-
-  // Send heartbeat every 30 seconds
+  // Auto check-in every 5 minutes
   useEffect(() => {
+    if (!agentToken || !isConnected) return;
+
     const interval = setInterval(() => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'heartbeat',
-          data: { agent_id: agentId },
-          timestamp: Date.now()
-        }));
-      }
-    }, 30000);
+      performCheckin();
+    }, 300000); // 5 minutes
 
     return () => clearInterval(interval);
-  }, [agentId]);
+  }, [agentToken, isConnected, systemInfo, performanceMetrics, securityStatus]);
+
+  // Test connection to RMM server
+  const testConnection = async () => {
+    try {
+      const response = await fetch('https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/rmm-agent-checkin', {
+        method: 'OPTIONS'
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Connection Test Successful",
+          description: "RMM server is reachable",
+        });
+      } else {
+        throw new Error('Server not reachable');
+      }
+    } catch (error) {
+      toast({
+        title: "Connection Test Failed",
+        description: "Cannot reach RMM server",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6">
@@ -306,46 +219,82 @@ export const Agent = () => {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Ultrium RMM Agent
+                  Ultrium RMM Agent v{agentVersion}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Agent ID: <code className="font-mono">{agentId}</code>
+                  Status: <Badge variant={isConnected ? "default" : "destructive"} className="ml-1">
+                    {isConnected ? "Online" : "Offline"}
+                  </Badge>
                 </p>
+                {lastCheckin && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Last check-in: {lastCheckin.toLocaleString()}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={isConnected ? "default" : "destructive"}>
-                  {isConnected ? "Connected" : "Disconnected"}
-                </Badge>
-                {isStreaming && (
-                  <Badge variant="secondary">
-                    <Activity className="h-3 w-3 mr-1" />
-                    Streaming
-                  </Badge>
-                )}
+                <Button size="sm" variant="outline" onClick={testConnection}>
+                  Test Connection
+                </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+        </Card>
+
+        {/* Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5" />
+              Agent Configuration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="agentToken">Agent Token</Label>
+                <Input
+                  id="agentToken"
+                  type="password"
+                  value={agentToken}
+                  onChange={(e) => setAgentToken(e.target.value)}
+                  placeholder="sk-safenet-xxxx"
+                />
+              </div>
+              <div>
+                <Label htmlFor="hostname">Hostname</Label>
+                <Input
+                  id="hostname"
+                  value={hostname}
+                  onChange={(e) => setHostname(e.target.value)}
+                  placeholder="Device hostname"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ipAddress">IP Address</Label>
+                <Input
+                  id="ipAddress"
+                  value={ipAddress}
+                  onChange={(e) => setIpAddress(e.target.value)}
+                  placeholder="192.168.1.100"
+                />
+              </div>
+            </div>
             <div className="flex gap-2">
-              <Button 
-                onClick={connectToServer} 
-                disabled={isConnected}
-              >
-                {isConnected ? "Connected" : "Connect to Server"}
+              <Button onClick={performCheckin}>
+                Perform Check-in
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={startScreenShare}
-                disabled={!isConnected || isStreaming}
-              >
-                Start Screen Share
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={stopScreenShare}
-                disabled={!isStreaming}
-              >
-                Stop Screen Share
+              <Button variant="outline" onClick={() => {
+                localStorage.removeItem('rmm_agent_token');
+                localStorage.removeItem('rmm_hostname');
+                localStorage.removeItem('rmm_ip_address');
+                setAgentToken('');
+                setHostname('');
+                setIpAddress('');
+                setIsConnected(false);
+                toast({ title: "Configuration cleared" });
+              }}>
+                Clear Config
               </Button>
             </div>
           </CardContent>
@@ -361,7 +310,7 @@ export const Agent = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="flex items-center gap-3">
                   <Cpu className="h-4 w-4 text-muted-foreground" />
                   <div>
@@ -379,7 +328,7 @@ export const Agent = () => {
                 <div className="flex items-center gap-3">
                   <HardDrive className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="font-medium">Browser Memory</p>
+                    <p className="font-medium">Memory</p>
                     <p className="text-sm text-muted-foreground">{systemInfo.memory}</p>
                   </div>
                 </div>
@@ -389,6 +338,88 @@ export const Agent = () => {
                     <p className="font-medium">Connection</p>
                     <p className="text-sm text-muted-foreground">{systemInfo.connection}</p>
                   </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Cpu className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">CPU</p>
+                    <p className="text-sm text-muted-foreground">{systemInfo.cpu}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Monitor className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Hostname</p>
+                    <p className="text-sm text-muted-foreground">{systemInfo.hostname}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Performance Metrics */}
+        {performanceMetrics && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Performance Metrics
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{performanceMetrics.cpuUsage}%</p>
+                  <p className="text-sm text-muted-foreground">CPU Usage</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{performanceMetrics.memoryUsage}%</p>
+                  <p className="text-sm text-muted-foreground">Memory Usage</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{performanceMetrics.networkLatency}ms</p>
+                  <p className="text-sm text-muted-foreground">Network Latency</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{Math.floor(performanceMetrics.uptime / 60)}m</p>
+                  <p className="text-sm text-muted-foreground">Uptime</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Security Status */}
+        {securityStatus && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Security Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="flex items-center gap-2">
+                  <Badge variant={securityStatus.antivirusEnabled ? "default" : "destructive"}>
+                    {securityStatus.antivirusEnabled ? "Enabled" : "Disabled"}
+                  </Badge>
+                  <span className="text-sm">Antivirus</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={securityStatus.firewallEnabled ? "default" : "destructive"}>
+                    {securityStatus.firewallEnabled ? "Enabled" : "Disabled"}
+                  </Badge>
+                  <span className="text-sm">Firewall</span>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Last Scan</p>
+                  <p className="text-sm">{securityStatus.lastScanDate.toLocaleDateString()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-destructive">{securityStatus.vulnerabilities}</p>
+                  <p className="text-sm text-muted-foreground">Vulnerabilities</p>
                 </div>
               </div>
             </CardContent>
@@ -402,16 +433,19 @@ export const Agent = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              1. Click "Connect to Server" to register this device with the RMM platform
+              1. Configure your agent token and network details above
             </p>
             <p className="text-sm text-muted-foreground">
-              2. Once connected, administrators can remotely manage this device
+              2. Click "Perform Check-in" to register this device with SafeNet RMM
             </p>
             <p className="text-sm text-muted-foreground">
-              3. Screen sharing allows remote viewing and support sessions
+              3. The agent will automatically check in every 5 minutes when online
             </p>
             <p className="text-sm text-muted-foreground">
-              4. Keep this page open for continuous monitoring
+              4. Keep this page open for continuous monitoring and management
+            </p>
+            <p className="text-sm text-muted-foreground">
+              5. Use "Test Connection" to verify server connectivity
             </p>
           </CardContent>
         </Card>
