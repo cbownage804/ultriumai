@@ -76,12 +76,6 @@ export const DeviceManagementPanel = () => {
   const [filterOSFamily, setFilterOSFamily] = useState("all");
   const [filterDiscoveryMethod, setFilterDiscoveryMethod] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
-  
-  // Debug logging
-  console.log('DeviceManagementPanel - devices:', devices);
-  console.log('DeviceManagementPanel - isLoading:', isLoading);
-  console.log('DeviceManagementPanel - devices length:', devices?.length);
-  console.log('DeviceManagementPanel - selectedDevice:', selectedDevice);
   const [historyFilter, setHistoryFilter] = useState("all");
   const [historicalDevices, setHistoricalDevices] = useState<SafeNetDevice[]>([]);
 
@@ -326,7 +320,6 @@ export const DeviceManagementPanel = () => {
                   key={device.id}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => {
-                    console.log('Device clicked:', device.id, 'Current selected:', selectedDevice);
                     setSelectedDevice(selectedDevice === device.id ? null : device.id);
                   }}
                 >
@@ -425,10 +418,6 @@ export const DeviceManagementPanel = () => {
               const device = historicalDevices.find(d => d.id === selectedDevice);
               const deviceVulns = getDeviceVulnerabilities(selectedDevice);
               const deviceServices = getDeviceServices(selectedDevice);
-              
-              console.log('Device Details Panel - selectedDevice:', selectedDevice);
-              console.log('Device Details Panel - historicalDevices:', historicalDevices);
-              console.log('Device Details Panel - found device:', device);
               
               if (!device) return null;
 
