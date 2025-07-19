@@ -69,11 +69,6 @@ const getDeviceIcon = (deviceType: string) => {
 export const DeviceManagementPanel = () => {
   const { devices, vulnerabilities, services, isLoading, refreshData } = useSafeNetData();
   
-  // Debug logging
-  console.log('DeviceManagementPanel - devices:', devices);
-  console.log('DeviceManagementPanel - isLoading:', isLoading);
-  console.log('DeviceManagementPanel - devices length:', devices?.length);
-  
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -81,6 +76,12 @@ export const DeviceManagementPanel = () => {
   const [filterOSFamily, setFilterOSFamily] = useState("all");
   const [filterDiscoveryMethod, setFilterDiscoveryMethod] = useState("all");
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  
+  // Debug logging
+  console.log('DeviceManagementPanel - devices:', devices);
+  console.log('DeviceManagementPanel - isLoading:', isLoading);
+  console.log('DeviceManagementPanel - devices length:', devices?.length);
+  console.log('DeviceManagementPanel - selectedDevice:', selectedDevice);
   const [historyFilter, setHistoryFilter] = useState("all");
   const [historicalDevices, setHistoricalDevices] = useState<SafeNetDevice[]>([]);
 
@@ -324,7 +325,10 @@ export const DeviceManagementPanel = () => {
                 <TableRow 
                   key={device.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setSelectedDevice(selectedDevice === device.id ? null : device.id)}
+                  onClick={() => {
+                    console.log('Device clicked:', device.id, 'Current selected:', selectedDevice);
+                    setSelectedDevice(selectedDevice === device.id ? null : device.id);
+                  }}
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
