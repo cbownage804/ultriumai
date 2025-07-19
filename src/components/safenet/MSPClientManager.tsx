@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Plus, Settings, Users, Key, Trash2, Copy } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Download, Plus, Settings, Users, Key, Trash2, Copy, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -146,8 +147,81 @@ export const MSPClientManager = () => {
     });
   };
 
-  const downloadClientAgent = (client: MSPClient) => {
-    // Generate client-specific PowerShell script
+  const downloadClientAgent = (client: MSPClient, deploymentType: 'powershell' | 'config' | 'universal') => {
+    if (deploymentType === 'config') {
+      // Generate client-specific configuration file
+      const configContent = JSON.stringify({
+        ConnectorKey: client.connector_key,
+        ClientCode: client.client_code,
+        ClientName: client.client_name,
+        ApiUrl: "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1",
+        StorageUrl: "https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-agents",
+        ContactEmail: client.contact_email,
+        Settings: {
+          CheckinInterval: 300,
+          MetricsInterval: 60,
+          EnableRemoteCommands: true,
+          AutoUpdate: true
+        }
+      }, null, 2);
+
+      const blob = new Blob([configContent], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ultrium-config-${client.client_code}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Config Downloaded",
+        description: `Configuration file for ${client.client_name} downloaded. Use with universal EXE/MSI.`
+      });
+      return;
+    }
+
+    if (deploymentType === 'universal') {
+      // Generate universal installer command
+      const configUrl = `${window.location.origin}/functions/rmm-client-config?client=${client.client_code}`;
+      const command = `# Universal Ultrium RMM Agent Installation
+# For client: ${client.client_name} (${client.client_code})
+
+# Method 1: Direct installation with config URL
+.\\UltriumRMMAgent.exe -ConfigUrl "${configUrl}" -Install
+
+# Method 2: Installation with config file
+# 1. Download config: ultrium-config-${client.client_code}.json
+# 2. Run: .\\UltriumRMMAgent.exe -ConfigFile "ultrium-config-${client.client_code}.json" -Install
+
+# Method 3: Command line parameters
+.\\UltriumRMMAgent.exe -ConnectorKey "${client.connector_key}" -ClientCode "${client.client_code}" -Install
+
+# MSI Installation (silent)
+msiexec /i UltriumRMMAgent.msi /quiet CONNECTOR_KEY="${client.connector_key}" CLIENT_CODE="${client.client_code}"
+
+# Generated: ${new Date().toISOString()}
+# Contact: ${client.contact_email}`;
+
+      const blob = new Blob([command], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Install-${client.client_code}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Installation Guide Downloaded",
+        description: `Universal installation commands for ${client.client_name} downloaded.`
+      });
+      return;
+    }
+
+    // Original PowerShell script approach
     const scriptContent = `# Ultrium RMM Agent - Client: ${client.client_name}
 # Auto-configured for client: ${client.client_code}
 
@@ -180,7 +254,7 @@ try {
         Write-Host "Executing RMM agent with client configuration..." -ForegroundColor Green
         
         # Execute with client-specific parameters
-        & $TempScript -ConnectorKey $ConnectorKey -DeviceName "$env:COMPUTERNAME-$ClientCode" @args
+        & $TempScript -ConnectorKey $ConnectorKey -ClientCode $ClientCode -DeviceName "$env:COMPUTERNAME-$ClientCode" @args
     } else {
         Write-Error "Failed to download RMM agent"
     }
@@ -383,13 +457,25 @@ try {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => downloadClientAgent(client)}
-                      >
-                        <Download className="h-3 w-3" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Download className="h-3 w-3 mr-1" />
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => downloadClientAgent(client, 'powershell')}>
+                            PowerShell Script
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => downloadClientAgent(client, 'config')}>
+                            Config File
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => downloadClientAgent(client, 'universal')}>
+                            Installation Guide
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button
                         variant="outline"
                         size="sm"

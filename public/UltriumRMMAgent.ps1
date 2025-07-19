@@ -1,20 +1,73 @@
-# Ultrium RMM Agent - PowerShell Edition
-# Version: 1.0.0
+# Ultrium RMM Agent - Universal Edition
+# Version: 2.0.0
+# Supports: Individual Users, MSP Clients, and Business Customers
 
 param(
     [string]$ConnectorKey = "",
+    [string]$ClientCode = "",
+    [string]$ConfigUrl = "",
     [string]$DeviceIP = "",
     [string]$DeviceName = "",
     [switch]$Install,
     [switch]$Uninstall,
-    [switch]$Service
+    [switch]$Service,
+    [switch]$Interactive,
+    [string]$ConfigFile = ""
 )
+
+# Dynamic Configuration Loading
+function Load-ClientConfiguration {
+    Write-Log "Loading client configuration..."
+    
+    # Priority order for configuration:
+    # 1. Command line parameters
+    # 2. Configuration file
+    # 3. Download from ConfigUrl
+    # 4. Interactive prompt
+    
+    if ($ConfigFile -and (Test-Path $ConfigFile)) {
+        Write-Log "Loading configuration from file: $ConfigFile"
+        $Config = Get-Content $ConfigFile | ConvertFrom-Json
+        
+        if ($Config.ConnectorKey) { $Script:Config.ConnectorKey = $Config.ConnectorKey }
+        if ($Config.ClientCode) { $Script:Config.ClientCode = $Config.ClientCode }
+        if ($Config.ClientName) { $Script:Config.ClientName = $Config.ClientName }
+        if ($Config.ApiUrl) { $Script:Config.ApiUrl = $Config.ApiUrl }
+    }
+    elseif ($ConfigUrl) {
+        Write-Log "Downloading configuration from: $ConfigUrl"
+        try {
+            $Config = Invoke-RestMethod -Uri $ConfigUrl -Method GET -TimeoutSec 30
+            
+            if ($Config.ConnectorKey) { $Script:Config.ConnectorKey = $Config.ConnectorKey }
+            if ($Config.ClientCode) { $Script:Config.ClientCode = $Config.ClientCode }
+            if ($Config.ClientName) { $Script:Config.ClientName = $Config.ClientName }
+            if ($Config.ApiUrl) { $Script:Config.ApiUrl = $Config.ApiUrl }
+            
+            Write-Log "Configuration downloaded successfully for client: $($Config.ClientName)"
+        }
+        catch {
+            Write-Log "Failed to download configuration: $($_.Exception.Message)" "ERROR"
+        }
+    }
+    
+    # Apply command line overrides
+    if ($ConnectorKey) { $Script:Config.ConnectorKey = $ConnectorKey }
+    if ($ClientCode) { $Script:Config.ClientCode = $ClientCode }
+    
+    # Update device name with client code if available
+    if ($Script:Config.ClientCode) {
+        $Script:Config.DeviceName = "$($Script:Config.DeviceName)-$($Script:Config.ClientCode)"
+    }
+}
 
 # Configuration
 $Script:Config = @{
     ApiUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1"
     StorageUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-agents"
     ConnectorKey = $ConnectorKey
+    ClientCode = $ClientCode
+    ClientName = ""
     DeviceIP = if ($DeviceIP) { $DeviceIP } else { (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.*" } | Select-Object -First 1).IPAddress }
     DeviceName = if ($DeviceName) { $DeviceName } else { $env:COMPUTERNAME }
     CheckinInterval = 300 # 5 minutes
@@ -24,6 +77,9 @@ $Script:Config = @{
     ServiceDisplayName = "Ultrium RMM Agent"
     MSIFileName = "UltriumRMMAgent.msi"
 }
+
+# Load configuration from various sources
+Load-ClientConfiguration
 
 # Ensure log directory exists
 $LogDir = Split-Path $Script:Config.LogPath -Parent
