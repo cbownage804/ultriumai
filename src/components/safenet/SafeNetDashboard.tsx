@@ -20,12 +20,11 @@ import {
   Building2
 } from 'lucide-react';
 import { useSafeWebData } from '@/hooks/useSafeWebData';
-import { SafeNetConnectorDownloads } from './SafeNetConnectorDownloads';
 import { MSPClientManager } from '@/components/MSPClientManager';
 import { useAccountType } from '@/hooks/useAccountType';
 
 export const SafeNetDashboard = () => {
-  const { devices, threats, loading } = useSafeWebData();
+  const { assets, threats, loading } = useSafeWebData();
   const { isMSPOrMSSP, loading: accountLoading } = useAccountType();
   
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -49,13 +48,11 @@ export const SafeNetDashboard = () => {
   const mediumThreats = threats.filter(t => t.severity === 'medium').length;
   const lowThreats = threats.filter(t => t.severity === 'low').length;
 
-  const onlineDevices = devices.filter(d => d.status === 'online').length;
-  const offlineDevices = devices.filter(d => d.status === 'offline').length;
-  const pendingDevices = devices.filter(d => d.status === 'pending').length;
+  const onlineDevices = assets.filter(d => d.status === 'active').length;
+  const offlineDevices = assets.filter(d => d.status === 'paused').length;
+  const pendingDevices = assets.filter(d => d.status === 'archived').length;
 
-  const totalDataTransfer = devices.reduce((sum, device) => {
-    return sum + (device.network_usage?.bytes_sent || 0) + (device.network_usage?.bytes_received || 0);
-  }, 0);
+  const totalDataTransfer = 0; // Placeholder for now since assets don't have network usage data
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -84,7 +81,7 @@ export const SafeNetDashboard = () => {
             Protected
           </Badge>
           <Badge variant="outline">
-            {devices.length} Device{devices.length !== 1 ? 's' : ''}
+            {assets.length} Asset{assets.length !== 1 ? 's' : ''}
           </Badge>
         </div>
       </div>
@@ -109,7 +106,7 @@ export const SafeNetDashboard = () => {
                 <Server className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{devices.length}</div>
+                <div className="text-2xl font-bold">{assets.length}</div>
                 <p className="text-xs text-muted-foreground">
                   +2 from last month
                 </p>
@@ -341,28 +338,28 @@ export const SafeNetDashboard = () => {
               <CardDescription>Manage and monitor all devices on your SafeNet</CardDescription>
             </CardHeader>
             <CardContent>
-              {devices.length > 0 ? (
+              {assets.length > 0 ? (
                 <div className="space-y-4">
-                  {devices.map((device) => (
-                    <div key={device.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {assets.map((asset) => (
+                    <div key={asset.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className={`w-3 h-3 rounded-full ${
-                          device.status === 'online' ? 'bg-green-500' : 
-                          device.status === 'offline' ? 'bg-red-500' : 'bg-yellow-500'
+                          asset.status === 'active' ? 'bg-green-500' : 
+                          asset.status === 'paused' ? 'bg-yellow-500' : 'bg-red-500'
                         }`} />
                         <div>
-                          <h4 className="font-medium">{device.device_name}</h4>
+                          <h4 className="font-medium">{asset.asset_type}</h4>
                           <p className="text-sm text-muted-foreground">
-                            {device.hostname} • {device.ip_address}
+                            {asset.asset_value}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <Badge variant={device.status === 'online' ? 'secondary' : 'destructive'}>
-                          {device.status}
+                        <Badge variant={asset.status === 'active' ? 'secondary' : 'destructive'}>
+                          {asset.status}
                         </Badge>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {device.last_seen ? `Last seen: ${new Date(device.last_seen).toLocaleString()}` : 'Never'}
+                          {asset.last_scan_at ? `Last scan: ${new Date(asset.last_scan_at).toLocaleString()}` : 'Never scanned'}
                         </p>
                       </div>
                     </div>
@@ -371,9 +368,9 @@ export const SafeNetDashboard = () => {
               ) : (
                 <div className="text-center py-8">
                   <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No devices connected</h3>
+                  <h3 className="text-lg font-medium mb-2">No assets registered</h3>
                   <p className="text-muted-foreground">
-                    Install the SafeNet connector on your devices to start monitoring
+                    Add assets to start monitoring your SafeNet infrastructure
                   </p>
                 </div>
               )}
@@ -439,7 +436,13 @@ export const SafeNetDashboard = () => {
         )}
 
         <TabsContent value="connector" className="space-y-6">
-          <SafeNetConnectorDownloads />
+          <div className="text-center py-8">
+            <Download className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">Connector Downloads</h3>
+            <p className="text-muted-foreground">
+              Download connectors coming soon
+            </p>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
