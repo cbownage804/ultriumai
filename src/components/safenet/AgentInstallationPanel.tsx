@@ -42,8 +42,16 @@ export const AgentInstallationPanel: React.FC<AgentInstallationPanelProps> = ({
         }
       });
 
+      console.log('Function response:', response);
+
       if (response.error) {
+        console.error('Supabase function error:', response.error);
         throw new Error(response.error.message);
+      }
+
+      if (!response.data || response.data.error) {
+        console.error('Function returned error:', response.data);
+        throw new Error(response.data?.error || 'Unknown error occurred');
       }
 
       // Create download link
@@ -69,7 +77,7 @@ export const AgentInstallationPanel: React.FC<AgentInstallationPanelProps> = ({
       console.error('Error downloading agent:', error);
       toast({
         title: "Download Failed",
-        description: "Failed to download agent installer",
+        description: error instanceof Error ? error.message : "Failed to download agent installer",
         variant: "destructive",
       });
     } finally {
