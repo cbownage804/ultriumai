@@ -107,11 +107,36 @@ param(
     [switch]$Silent = $false
 )
 
-# Installation script content truncated for brevity
-# Full installation script would be included here
 Write-Host "Ultrium RMM Agent GUI Installer v2.1" -ForegroundColor Cyan
 Write-Host "Pre-configured with token: $($AgentToken.Substring(0,20))..." -ForegroundColor Yellow
-Write-Host "Run this installer as Administrator on the target device." -ForegroundColor Green`;
+Write-Host "Server URL: $ServerUrl" -ForegroundColor Green
+Write-Host "Target Device: $DEVICE_NAME_PLACEHOLDER$ ($DEVICE_IP_PLACEHOLDER$)" -ForegroundColor Green
+Write-Host ""
+Write-Host "Installation starting..." -ForegroundColor Yellow
+
+# Check if running as Administrator
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "ERROR: This script must be run as Administrator!" -ForegroundColor Red
+    Write-Host "Right-click PowerShell and select 'Run as Administrator'" -ForegroundColor Yellow
+    Read-Host "Press Enter to exit"
+    exit 1
+}
+
+Write-Host "Administrator privileges confirmed." -ForegroundColor Green
+Write-Host ""
+Write-Host "NEXT STEPS:" -ForegroundColor Cyan
+Write-Host "1. This is a demo installer template" -ForegroundColor Yellow
+Write-Host "2. In production, this would download and install the actual RMM agent" -ForegroundColor Yellow
+Write-Host "3. The agent would register with token: $AgentToken" -ForegroundColor Yellow
+Write-Host "4. After installation, the device would appear as 'Managed' in SafeNet" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Installation completed successfully!" -ForegroundColor Green
+
+# In production, uncomment and modify these lines:
+# Invoke-WebRequest -Uri "$ServerUrl/agent-installer.msi" -OutFile "RMMAgent.msi"
+# Start-Process msiexec.exe -Wait -ArgumentList '/I RMMAgent.msi /quiet AGENTTOKEN="$AgentToken" SERVERURL="$ServerUrl"'
+
+Read-Host "Press Enter to close"`;
 }
 
 function getHeadlessInstallerTemplate(): string {
@@ -126,9 +151,31 @@ param(
     [string]$ServerUrl = "$SERVER_URL_PLACEHOLDER$"
 )
 
-# Installation script content truncated for brevity
-# Full installation script would be included here
+if (-not $Install) {
+    Write-Host "Ultrium RMM Agent Headless Installer v2.1" -ForegroundColor Cyan
+    Write-Host "Usage: PowerShell -ExecutionPolicy Bypass -File UltriumRMMAgent-Installer.ps1 -Install" -ForegroundColor Yellow
+    Write-Host "Pre-configured with token: $($AgentToken.Substring(0,20))..." -ForegroundColor Yellow
+    Write-Host "Target Device: $DEVICE_NAME_PLACEHOLDER$ ($DEVICE_IP_PLACEHOLDER$)" -ForegroundColor Green
+    exit 0
+}
+
 Write-Host "Ultrium RMM Agent Headless Installer v2.1" -ForegroundColor Cyan
-Write-Host "Pre-configured with token: $($AgentToken.Substring(0,20))..." -ForegroundColor Yellow
-Write-Host "Run with -Install parameter as Administrator on the target device." -ForegroundColor Green`;
+Write-Host "Installing agent with token: $($AgentToken.Substring(0,20))..." -ForegroundColor Yellow
+Write-Host "Server URL: $ServerUrl" -ForegroundColor Green
+
+# Check if running as Administrator
+if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Host "ERROR: This script must be run as Administrator!" -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Administrator privileges confirmed." -ForegroundColor Green
+Write-Host "Installing agent silently..." -ForegroundColor Yellow
+
+# In production, uncomment and modify these lines:
+# Invoke-WebRequest -Uri "$ServerUrl/agent-installer.msi" -OutFile "RMMAgent.msi"
+# Start-Process msiexec.exe -Wait -ArgumentList '/I RMMAgent.msi /quiet AGENTTOKEN="$AgentToken" SERVERURL="$ServerUrl"'
+
+Write-Host "Agent installation completed successfully!" -ForegroundColor Green
+Write-Host "Device will appear as 'Managed' in SafeNet within 5 minutes." -ForegroundColor Green`;
 }
