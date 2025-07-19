@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useSafeWebData } from '@/hooks/useSafeWebData';
 import { MSPClientManager } from '@/components/MSPClientManager';
+import { ConnectorDownloads } from '@/components/ConnectorDownloads';
 import { useAccountType } from '@/hooks/useAccountType';
 
 export const SafeNetDashboard = () => {
@@ -436,13 +437,7 @@ export const SafeNetDashboard = () => {
         )}
 
         <TabsContent value="connector" className="space-y-6">
-          <div className="text-center py-8">
-            <Download className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Connector Downloads</h3>
-            <p className="text-muted-foreground">
-              Download connectors coming soon
-            </p>
-          </div>
+          <ConnectorDownloads />
         </TabsContent>
       </Tabs>
     </div>
