@@ -98,7 +98,7 @@ export const MSPClientManager = () => {
     const instructions = `# Interactive Installer Instructions for ${client.company_name}
 
 ## Step 1: Download Universal Installer
-Download: https://releases.ultriumai.com/UltriumRMMAgent.exe
+Download: https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-installers/UltriumRMMAgent.exe
 
 ## Step 2: Run Interactive Setup
 1. Right-click installer → "Run as Administrator"
@@ -153,7 +153,7 @@ try {
     Write-Host "Starting Ultrium RMM Agent deployment for $($Config.ClientName)..." -ForegroundColor Green
     
     # Download universal installer
-    $InstallerUrl = "https://releases.ultriumai.com/UltriumRMMAgent.exe"
+    $InstallerUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/rmm-installers/UltriumRMMAgent.exe"
     $InstallerPath = "$env:TEMP\\UltriumRMMAgent.exe"
     
     Write-Host "Downloading installer..." -ForegroundColor Yellow
