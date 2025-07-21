@@ -323,16 +323,8 @@ function Install-SafeNetService {
     if (!$scriptPath) { return $false }
     
     try {
-        # Create service wrapper
-        $serviceBat = Join-Path $Global:Config.InstallPath "SafeNet-Service.bat"
-        @"
-@echo off
-cd /d "$($Global:Config.InstallPath)"
-powershell.exe -ExecutionPolicy Bypass -NoProfile -File "SafeNet-Agent.ps1" service
-"@ | Out-File -FilePath $serviceBat -Encoding ASCII
-        
-        # Install Windows service
-        $servicePath = "cmd.exe /c `"$serviceBat`""
+        # Use PowerShell directly as service executable
+        $servicePath = "powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File `"$scriptPath`" service"
         New-Service -Name $Global:Config.ServiceName -DisplayName $Global:Config.ServiceDisplayName -Description $Global:Config.ServiceDescription -BinaryPathName $servicePath -StartupType Automatic
         
         Write-Log "Windows service installed: $($Global:Config.ServiceName)"
