@@ -334,17 +334,18 @@ function Install-SafeNetService {
             Start-Sleep -Seconds 3  # Wait for complete removal
         }
         
-        # Create a proper service wrapper using sc.exe with PowerShell
+        # Create service using sc.exe with proper syntax
         $servicePath = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
-        $serviceArgs = "-ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Command `"& '$scriptPath' service`""
+        $fullCommand = "`"$servicePath`" -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Command `"& '$scriptPath' service`""
         
-        # Use sc.exe to create service with proper arguments
-        $scResult = & sc.exe create $Global:Config.ServiceName binPath= "`"$servicePath`" $serviceArgs" DisplayName= $Global:Config.ServiceDisplayName start= auto
+        Write-Log "Creating service with command: $fullCommand"
+        $scResult = & sc.exe create $Global:Config.ServiceName binpath= $fullCommand displayname= "`"$($Global:Config.ServiceDisplayName)`"" start= auto
         
         if ($LASTEXITCODE -eq 0) {
             Write-Log "Windows service installed: $($Global:Config.ServiceName)"
             return $true
         } else {
+            Write-Log "sc.exe output: $scResult" "ERROR"
             throw "sc.exe create failed with exit code: $LASTEXITCODE"
         }
     } catch {
