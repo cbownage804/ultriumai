@@ -383,8 +383,19 @@ function Install-SafeNetService {
         
         Write-Log "Installing service with NSSM: $serviceName"
         
-        # Install service using NSSM
-        $nssmResult = & $nssmPath install $serviceName "powershell.exe" "-ExecutionPolicy" "Bypass" "-NoProfile" "-File" "`"$scriptPath`""
+        # Build parameter array for NSSM to pass to PowerShell
+        $params = @(
+            "-ExecutionPolicy", "Bypass"
+            "-NoProfile" 
+            "-File", "`"$scriptPath`""
+            "-ConnectorKey", $Global:Config.ConnectorKey
+            "-ClientCode", $Global:Config.ClientCode
+            "-ClientName", "`"$($Global:Config.ClientName)`""
+            "-Silent"
+        )
+        
+        # Install service using NSSM with all parameters
+        $nssmResult = & $nssmPath install $serviceName "powershell.exe" $params
         if ($LASTEXITCODE -eq 0) {
             Write-Log "NSSM service installed successfully"
             
