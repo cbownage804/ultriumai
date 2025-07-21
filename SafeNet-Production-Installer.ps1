@@ -430,30 +430,78 @@ function Uninstall-SafeNetAgent {
     Write-Log "Starting SafeNet agent uninstallation..."
     
     try {
-        # Stop and remove service
+        # Stop and remove service using NSSM if available
+        $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
         $service = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
+        
         if ($service) {
             if ($service.Status -eq "Running") {
+                Write-Log "Stopping service..."
                 Stop-Service -Name $Global:Config.ServiceName -Force
-                Write-Log "Service stopped"
+                Start-Sleep -Seconds 5  # Wait for service to fully stop
             }
             
-            # Use sc.exe for Windows PowerShell compatibility
-            $result = & sc.exe delete $Global:Config.ServiceName
-            if ($LASTEXITCODE -eq 0) {
-                Write-Log "Service removed successfully"
+            # Try NSSM removal first if available
+            if (Test-Path $nssmPath) {
+                Write-Log "Removing service with NSSM..."
+                $nssmResult = & $nssmPath remove $Global:Config.ServiceName confirm
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Log "Service removed with NSSM successfully"
+                } else {
+                    Write-Log "NSSM removal failed, trying sc.exe..." "WARNING"
+                    & sc.exe delete $Global:Config.ServiceName | Out-Null
+                }
             } else {
-                Write-Log "Service removal completed with code: $LASTEXITCODE" "WARNING"
+                # Fallback to sc.exe
+                Write-Log "Using sc.exe to remove service..."
+                & sc.exe delete $Global:Config.ServiceName | Out-Null
             }
             
-            # Wait for service to be fully removed
-            Start-Sleep -Seconds 2
+            # Wait for service to be fully removed from Windows service database
+            Write-Log "Waiting for service deletion to complete..."
+            $timeout = 30
+            $elapsed = 0
+            do {
+                Start-Sleep -Seconds 1
+                $elapsed++
+                $serviceCheck = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
+            } while ($serviceCheck -and $elapsed -lt $timeout)
+            
+            if ($serviceCheck) {
+                Write-Log "Service still exists after timeout, forcing removal..." "WARNING"
+            } else {
+                Write-Log "Service removed successfully"
+            }
         }
         
-        # Remove installation directory
+        # Remove installation directory with better cleanup
         if (Test-Path $Global:Config.InstallPath) {
-            Remove-Item -Path $Global:Config.InstallPath -Recurse -Force
-            Write-Log "Installation directory removed"
+            # First try to unlock any files that might be in use
+            if (Test-Path $nssmPath) {
+                try {
+                    # Try to remove the nssm.exe file specifically
+                    Remove-Item -Path $nssmPath -Force -ErrorAction SilentlyContinue
+                    Start-Sleep -Seconds 2
+                } catch {
+                    Write-Log "Could not remove nssm.exe (file may be locked)" "WARNING"
+                }
+            }
+            
+            # Remove the entire directory
+            try {
+                Remove-Item -Path $Global:Config.InstallPath -Recurse -Force
+                Write-Log "Installation directory removed"
+            } catch {
+                Write-Log "Partial removal of installation directory (some files may be locked)" "WARNING"
+                # Try to remove individual files and subdirectories
+                Get-ChildItem -Path $Global:Config.InstallPath -Recurse | ForEach-Object {
+                    try {
+                        Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
+                    } catch {
+                        # Ignore locked files
+                    }
+                }
+            }
         }
         
         Write-Host "[SUCCESS] SafeNet agent uninstalled successfully!" -ForegroundColor Green
