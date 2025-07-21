@@ -103,16 +103,24 @@ function Create-ServiceScript {
 # SafeNet RMM Agent Service Script
 # This script runs as a Windows service to monitor the system
 
+# Accept parameters from NSSM
+param(
+    [string]`$ConnectorKey = "$($Global:Config.ConnectorKey)",
+    [string]`$ClientCode = "$($Global:Config.ClientCode)", 
+    [string]`$ClientName = "$($Global:Config.ClientName)",
+    [switch]`$Silent
+)
+
 `$Global:Config = @{
-    ConnectorKey = "$($Global:Config.ConnectorKey)"
-    ClientCode = "$($Global:Config.ClientCode)"
-    ClientName = "$($Global:Config.ClientName)"
+    ConnectorKey = `$ConnectorKey
+    ClientCode = `$ClientCode
+    ClientName = `$ClientName
     ApiUrl = "$($Global:Config.ApiUrl)"
     CheckinInterval = $($Global:Config.CheckinInterval)
     ScanInterval = $($Global:Config.ScanInterval)
     InstallPath = "$($Global:Config.InstallPath)"
     ServiceName = "$($Global:Config.ServiceName)"
-    LogPath = "`$(`$Global:Config.InstallPath)\logs\agent.log"
+    LogPath = "`$(`$PSScriptRoot)\logs\agent.log"
 }
 
 function Write-ServiceLog {
