@@ -298,9 +298,7 @@ function Start-ServiceLoop {
     }
 }
 
-# Service entry point with proper error handling
-param([string]`$Mode = "service")
-
+# Service entry point - simplified for NSSM
 try {
     # Ensure we can write to the log directory first
     `$logDir = Split-Path `$Global:Config.LogPath -Parent
@@ -308,14 +306,7 @@ try {
         New-Item -ItemType Directory -Path `$logDir -Force | Out-Null 
     }
     
-    Write-ServiceLog "SafeNet Agent starting with mode: `$Mode"
-    
-    # Give the service time to fully initialize
-    if (`$Mode -eq "service") {
-        Write-ServiceLog "Waiting for service context to initialize..."
-        Start-Sleep -Seconds 10
-    }
-    
+    Write-ServiceLog "SafeNet Agent starting via NSSM..."
     Write-ServiceLog "Starting main service loop..."
     Start-ServiceLoop
 } catch {
