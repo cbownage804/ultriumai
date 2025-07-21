@@ -408,7 +408,7 @@ function Install-SafeNetService {
             Write-Log "NSSM service created successfully"
             
             # Set the parameters separately using NSSM set command
-            $paramString = "-ExecutionPolicy Bypass -NoProfile -File ""$scriptPath"" -ConnectorKey $($Global:Config.ConnectorKey) -ClientCode $($Global:Config.ClientCode) -ClientName ""$($Global:Config.ClientName)"" -Silent"
+            $paramString = "-ExecutionPolicy Bypass -NoProfile -File `"`"$scriptPath`"`" -ConnectorKey $($Global:Config.ConnectorKey) -ClientCode $($Global:Config.ClientCode) -ClientName `"`"$($Global:Config.ClientName)`"`" -Silent"
             & $nssmPath set $serviceName AppParameters $paramString
             
             # Configure service with NSSM
