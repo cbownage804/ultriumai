@@ -341,7 +341,7 @@ try {
     }
 }
 
-# Install Service
+# Install Service using NSSM
 function Install-SafeNetService {
     $scriptPath = Create-ServiceScript
     if (!$scriptPath) { return $false }
@@ -358,44 +358,67 @@ function Install-SafeNetService {
             Start-Sleep -Seconds 3  # Wait for complete removal
         }
         
-        # Create a batch wrapper for the service to handle PowerShell execution properly
-        $batchWrapperPath = Join-Path $Global:Config.InstallPath "SafeNet-Service-Wrapper.bat"
-        $batchContent = @"
-@echo off
-cd /d "$($Global:Config.InstallPath)"
-powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File "$scriptPath"
-"@
-        $batchContent | Out-File -FilePath $batchWrapperPath -Encoding ASCII
-        Write-Log "Created service wrapper: $batchWrapperPath"
+        # Download NSSM if not present
+        $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
+        if (-not (Test-Path $nssmPath)) {
+            Write-Log "Downloading NSSM..."
+            try {
+                # Download NSSM 64-bit version
+                $nssmUrl = "https://nssm.cc/release/nssm-2.24.zip"
+                $nssmZip = Join-Path $env:TEMP "nssm.zip"
+                $nssmExtract = Join-Path $env:TEMP "nssm"
+                
+                Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
+                Expand-Archive -Path $nssmZip -DestinationPath $nssmExtract -Force
+                
+                # Copy the appropriate architecture version
+                $arch = if ([Environment]::Is64BitOperatingSystem) { "win64" } else { "win32" }
+                $nssmExePath = Join-Path $nssmExtract "nssm-2.24\$arch\nssm.exe"
+                Copy-Item -Path $nssmExePath -Destination $nssmPath
+                
+                # Cleanup
+                Remove-Item -Path $nssmZip -Force -ErrorAction SilentlyContinue
+                Remove-Item -Path $nssmExtract -Recurse -Force -ErrorAction SilentlyContinue
+                
+                Write-Log "NSSM downloaded successfully"
+            } catch {
+                Write-Log "Failed to download NSSM: $_" "ERROR"
+                return $false
+            }
+        }
         
         $serviceName = $Global:Config.ServiceName
         $displayName = $Global:Config.ServiceDisplayName
         
-        # Use the batch wrapper as the service executable
-        Write-Log "Creating service: $serviceName"
-        Write-Log "Service wrapper: $batchWrapperPath"
+        Write-Log "Installing service with NSSM: $serviceName"
         
-        # Use sc.exe to create the service with proper Windows service handling
-        $scResult = & sc.exe create $serviceName binPath= "`"$batchWrapperPath`"" DisplayName= "$displayName" start= auto obj= LocalSystem
+        # Install service using NSSM
+        $nssmResult = & $nssmPath install $serviceName "powershell.exe" "-ExecutionPolicy" "Bypass" "-NoProfile" "-File" "`"$scriptPath`""
         if ($LASTEXITCODE -eq 0) {
-            Write-Log "Windows service created successfully: $serviceName"
+            Write-Log "NSSM service installed successfully"
             
-            # Test if files exist and are accessible
-            if (-not (Test-Path $scriptPath)) {
-                throw "Service script not found at: $scriptPath"
-            }
-            if (-not (Test-Path $batchWrapperPath)) {
-                throw "Service wrapper not found at: $batchWrapperPath"
-            }
+            # Configure service with NSSM
+            & $nssmPath set $serviceName DisplayName "$displayName"
+            & $nssmPath set $serviceName Description "$($Global:Config.ServiceDescription)"
+            & $nssmPath set $serviceName Start SERVICE_AUTO_START
+            & $nssmPath set $serviceName AppDirectory "`"$($Global:Config.InstallPath)`""
             
+            # Set up logging
+            $logsPath = Join-Path $Global:Config.InstallPath "logs"
+            & $nssmPath set $serviceName AppStdout "`"$logsPath\service-output.log`""
+            & $nssmPath set $serviceName AppStderr "`"$logsPath\service-error.log`""
+            & $nssmPath set $serviceName AppRotateFiles 1
+            & $nssmPath set $serviceName AppRotateOnline 1
+            & $nssmPath set $serviceName AppRotateBytes 1048576  # 1MB
+            
+            Write-Log "Service configured with NSSM successfully"
             return $true
         } else {
-            Write-Log "sc.exe create failed with exit code: $LASTEXITCODE" "ERROR"
-            Write-Log "sc.exe output: $scResult" "ERROR"
-            throw "Service creation failed with exit code: $LASTEXITCODE"
+            Write-Log "NSSM service installation failed with exit code: $LASTEXITCODE" "ERROR"
+            return $false
         }
     } catch {
-        Write-Log "Failed to install service: $_" "ERROR"
+        Write-Log "Failed to install service with NSSM: $_" "ERROR"
         return $false
     }
 }
