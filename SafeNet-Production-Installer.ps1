@@ -376,7 +376,7 @@ powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File "$sc
         Write-Log "Service wrapper: $batchWrapperPath"
         
         # Use sc.exe to create the service with proper Windows service handling
-        $scResult = & sc.exe create $serviceName binPath= "`"$batchWrapperPath`"" DisplayName= "$displayName" start= auto
+        $scResult = & sc.exe create $serviceName binPath= "`"$batchWrapperPath`"" DisplayName= "$displayName" start= auto obj= LocalSystem
         if ($LASTEXITCODE -eq 0) {
             Write-Log "Windows service created successfully: $serviceName"
             
