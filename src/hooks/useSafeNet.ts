@@ -37,20 +37,30 @@ export interface NetworkScan {
 export interface NetworkDevice {
   id: string;
   user_id?: string;
-  scan_id?: string;
-  ip_address: string;
+  network_id?: string;
+  device_name: string;
   hostname: string;
-  device_type: string;
+  ip_address: string;
   mac_address?: string;
-  os_info?: string;
-  open_ports?: number[];
-  services?: any;
-  vulnerabilities?: string[];
-  risk_level: string;
-  last_seen: string;
+  device_type: string;
+  os_version?: string;
+  os_family?: string;
+  manufacturer?: string;
+  model?: string;
+  device_role?: string;
   status: string;
-  network_range: string;
-  connector_id?: string;
+  last_seen_at: string;
+  vulnerability_count?: number;
+  is_managed?: boolean;
+  is_critical?: boolean;
+  security_patches_needed?: number;
+  network_segment?: string;
+  uptime_hours?: number;
+  cpu_usage?: number;
+  memory_usage?: number;
+  discovery_method?: string[];
+  device_metadata?: any;
+  connector_key?: string;
   created_at: string;
   updated_at: string;
 }
@@ -114,12 +124,12 @@ export const useSafeNet = () => {
     if (!user) return;
 
     try {
-      // Use any type temporarily until Supabase types are regenerated
+      // Use safenet_devices table instead of network_devices
       const { data, error } = await (supabase as any)
-        .from('network_devices')
+        .from('safenet_devices')
         .select('*')
         .eq('user_id', user.id)
-        .order('last_seen', { ascending: false });
+        .order('last_seen_at', { ascending: false });
 
       if (error) throw error;
       setDevices(data || []);
@@ -189,7 +199,7 @@ export const useSafeNet = () => {
   const activeConnectors = connectors.filter(c => c.status === 'active').length;
   const totalDevices = devices.length;
   const onlineDevices = devices.filter(d => d.status === 'online').length;
-  const vulnerableDevices = devices.filter(d => (d.vulnerabilities?.length || 0) > 0).length;
+  const vulnerableDevices = devices.filter(d => (d.vulnerability_count || 0) > 0).length;
   const recentScans = scans.filter(s => 
     new Date(s.scanned_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
   ).length;

@@ -59,7 +59,7 @@ const getRiskLevel = (vulnerabilityCount: number, isManaged: boolean, isCritical
 export const EnhancedDeviceCard = ({ device, onClick }: EnhancedDeviceCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const DeviceIcon = getDeviceIcon(device.device_type || 'unknown');
-  const risk = getRiskLevel(device.vulnerabilities?.length || 0, false, device.risk_level === 'critical');
+  const risk = getRiskLevel(device.vulnerability_count || 0, device.is_managed || false, device.is_critical || false);
   
   const formatUptime = (hours: number) => {
     const days = Math.floor(hours / 24);
@@ -91,7 +91,7 @@ export const EnhancedDeviceCard = ({ device, onClick }: EnhancedDeviceCardProps)
             </div>
             <div>
               <CardTitle className="text-lg font-semibold">
-                {device.hostname || 'Unknown Device'}
+                {device.device_name || device.hostname || 'Unknown Device'}
               </CardTitle>
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Network className="h-3 w-3" />
@@ -128,47 +128,61 @@ export const EnhancedDeviceCard = ({ device, onClick }: EnhancedDeviceCardProps)
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">OS:</span>
-              <span className="font-medium">{device.os_info || 'Unknown'}</span>
+              <span className="font-medium">{device.os_family || device.os_version || 'Unknown'}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Risk:</span>
-              <span className="font-medium capitalize">{device.risk_level || 'Unknown'}</span>
+              <span className="text-muted-foreground">Role:</span>
+              <span className="font-medium capitalize">{device.device_role || 'Unknown'}</span>
             </div>
           </div>
           <div className="space-y-2">
-            {device.mac_address && (
+            {device.manufacturer && (
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">MAC:</span>
-                <span className="font-medium font-mono text-xs">{device.mac_address}</span>
+                <span className="text-muted-foreground">Manufacturer:</span>
+                <span className="font-medium">{device.manufacturer}</span>
+              </div>
+            )}
+            {device.model && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Model:</span>
+                <span className="font-medium">{device.model}</span>
               </div>
             )}
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Vulnerabilities:</span>
-              <Badge variant={device.vulnerabilities?.length ? 'destructive' : 'default'} className="text-xs">
-                {device.vulnerabilities?.length ? <AlertTriangle className="h-3 w-3 mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />}
-                {device.vulnerabilities?.length || 0}
+              <span className="text-muted-foreground">Managed:</span>
+              <Badge variant={device.is_managed ? 'default' : 'outline'} className="text-xs">
+                {device.is_managed ? <CheckCircle className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                {device.is_managed ? 'Yes' : 'No'}
               </Badge>
             </div>
           </div>
         </div>
 
-        {/* Open Ports */}
-        {device.open_ports && device.open_ports.length > 0 && (
+        {/* Performance Metrics */}
+        {(device.cpu_usage || device.memory_usage) && (
           <div className="space-y-3 p-3 bg-muted/30 rounded-lg">
             <h4 className="text-sm font-medium flex items-center">
-              <Network className="h-4 w-4 mr-2" />
-              Open Ports
+              <Activity className="h-4 w-4 mr-2" />
+              Performance
             </h4>
-            <div className="flex flex-wrap gap-1">
-              {device.open_ports.slice(0, 8).map((port, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {port}
-                </Badge>
-              ))}
-              {device.open_ports.length > 8 && (
-                <Badge variant="secondary" className="text-xs">
-                  +{device.open_ports.length - 8} more
-                </Badge>
+            <div className="space-y-2">
+              {device.cpu_usage && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>CPU Usage</span>
+                    <span>{device.cpu_usage}%</span>
+                  </div>
+                  <Progress value={Number(device.cpu_usage)} className="h-2" />
+                </div>
+              )}
+              {device.memory_usage && (
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Memory Usage</span>
+                    <span>{device.memory_usage}%</span>
+                  </div>
+                  <Progress value={Number(device.memory_usage)} className="h-2" />
+                </div>
               )}
             </div>
           </div>
@@ -183,26 +197,32 @@ export const EnhancedDeviceCard = ({ device, onClick }: EnhancedDeviceCardProps)
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center space-x-1">
               <MapPin className="h-3 w-3 text-muted-foreground" />
-              <span>Range: {device.network_range}</span>
+              <span>Segment: {device.network_segment || 'Unknown'}</span>
             </div>
-            {device.last_seen && (
+            {device.last_seen_at && (
               <div className="flex items-center space-x-1">
                 <Clock className="h-3 w-3 text-muted-foreground" />
-                <span>Seen: {formatLastSeen(device.last_seen)}</span>
+                <span>Seen: {formatLastSeen(device.last_seen_at)}</span>
+              </div>
+            )}
+            {device.uptime_hours && (
+              <div className="flex items-center space-x-1">
+                <Activity className="h-3 w-3 text-muted-foreground" />
+                <span>Uptime: {formatUptime(device.uptime_hours)}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Vulnerabilities */}
-        {device.vulnerabilities && device.vulnerabilities.length > 0 && (
+        {(device.vulnerability_count || 0) > 0 && (
           <div className="flex items-center justify-between p-2 bg-destructive/10 border border-destructive/20 rounded-lg">
             <div className="flex items-center space-x-2">
               <AlertTriangle className="h-4 w-4 text-destructive" />
               <span className="text-sm font-medium">Security Issues</span>
             </div>
             <Badge variant="destructive" className="text-xs">
-              {device.vulnerabilities.length} issues
+              {device.vulnerability_count} issues
             </Badge>
           </div>
         )}
@@ -233,11 +253,11 @@ export const EnhancedDeviceCard = ({ device, onClick }: EnhancedDeviceCardProps)
         {/* Expanded Details */}
         {isExpanded && (
           <div className="space-y-3 pt-3 border-t">
-            {device.services && Object.keys(device.services).length > 0 && (
+            {device.device_metadata && Object.keys(device.device_metadata).length > 0 && (
               <div className="space-y-2">
-                <h5 className="text-sm font-medium">Detected Services</h5>
+                <h5 className="text-sm font-medium">Technical Details</h5>
                 <div className="text-xs space-y-1 p-2 bg-muted/30 rounded font-mono">
-                  {Object.entries(device.services).map(([key, value]) => (
+                  {Object.entries(device.device_metadata).map(([key, value]) => (
                     <div key={key} className="flex justify-between">
                       <span className="text-muted-foreground">{key}:</span>
                       <span className="font-mono text-xs break-all">
@@ -252,21 +272,17 @@ export const EnhancedDeviceCard = ({ device, onClick }: EnhancedDeviceCardProps)
               </div>
             )}
             
-            {device.vulnerabilities && device.vulnerabilities.length > 0 && (
-              <div className="space-y-2">
-                <h5 className="text-sm font-medium">Vulnerabilities</h5>
-                <div className="space-y-1">
-                  {device.vulnerabilities.slice(0, 3).map((vuln, index) => (
-                    <div key={index} className="text-xs bg-destructive/10 text-destructive p-2 rounded">
-                      {vuln}
-                    </div>
-                  ))}
-                  {device.vulnerabilities.length > 3 && (
-                    <p className="text-xs text-muted-foreground">
-                      +{device.vulnerabilities.length - 3} more vulnerabilities
-                    </p>
-                  )}
-                </div>
+            {device.os_version && (
+              <div className="text-xs">
+                <span className="text-muted-foreground">OS Version: </span>
+                <span className="font-medium">{device.os_version}</span>
+              </div>
+            )}
+            
+            {device.security_patches_needed && device.security_patches_needed > 0 && (
+              <div className="flex items-center justify-between p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <span className="text-sm">Security patches needed</span>
+                <Badge variant="secondary">{device.security_patches_needed}</Badge>
               </div>
             )}
           </div>

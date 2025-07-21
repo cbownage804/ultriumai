@@ -25,9 +25,10 @@ export const NetworkStatistics = ({ devices }: NetworkStatisticsProps) => {
   const totalDevices = devices.length;
   const onlineDevices = devices.filter(d => d.status === 'online').length;
   const offlineDevices = totalDevices - onlineDevices;
-  const criticalDevices = devices.filter(d => d.risk_level === 'critical').length;
-  const vulnerableDevices = devices.filter(d => (d.vulnerabilities?.length || 0) > 0).length;
-  const totalVulnerabilities = devices.reduce((sum, d) => sum + (d.vulnerabilities?.length || 0), 0);
+  const managedDevices = devices.filter(d => d.is_managed).length;
+  const criticalDevices = devices.filter(d => d.is_critical).length;
+  const vulnerableDevices = devices.filter(d => (d.vulnerability_count || 0) > 0).length;
+  const totalVulnerabilities = devices.reduce((sum, d) => sum + (d.vulnerability_count || 0), 0);
   
   // Device type breakdown
   const deviceTypes = devices.reduce((acc, device) => {
@@ -38,20 +39,20 @@ export const NetworkStatistics = ({ devices }: NetworkStatisticsProps) => {
 
   // OS breakdown
   const osFamilies = devices.reduce((acc, device) => {
-    const os = device.os_info || 'unknown';
+    const os = device.os_family || device.os_version || 'unknown';
     acc[os] = (acc[os] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   // Network segments
   const networkSegments = devices.reduce((acc, device) => {
-    const segment = device.network_range || 'unknown';
+    const segment = device.network_segment || 'unknown';
     acc[segment] = (acc[segment] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
   // Calculate security score
-  const securityScore = Math.max(0, 100 - (vulnerableDevices * 10) - (criticalDevices * 15));
+  const securityScore = Math.max(0, 100 - (vulnerableDevices * 10) - (criticalDevices * 15) - ((totalDevices - managedDevices) * 5));
 
   // Get device type icon
   const getDeviceTypeIcon = (type: string) => {
@@ -78,7 +79,7 @@ export const NetworkStatistics = ({ devices }: NetworkStatisticsProps) => {
             <div className="space-y-2 mt-2">
               <Progress value={securityScore} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                {totalDevices - vulnerableDevices}/{totalDevices} devices secure
+                {managedDevices}/{totalDevices} devices managed
               </p>
             </div>
           </CardContent>
