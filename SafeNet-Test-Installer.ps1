@@ -6,6 +6,13 @@
     Minimal test version to verify connectivity and basic functionality
 #>
 
+# Ensure script doesn't close on errors
+$ErrorActionPreference = "Continue"
+
+# Test pause at start
+Write-Host "SafeNet Test Starting... Press Enter to continue" -ForegroundColor Green
+Read-Host
+
 param(
     [string]$ConnectorKey = "test_connector_123",
     [string]$ClientCode = "TEST001",
