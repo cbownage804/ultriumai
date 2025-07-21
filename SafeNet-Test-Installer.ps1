@@ -106,5 +106,6 @@ try {
     Write-Host "`n❌ Test failed: $_" -ForegroundColor Red
 }
 
-Write-Host "`nPress any key to continue..." -ForegroundColor Cyan
-pause
+Write-Host "`n=== Test Complete ===" -ForegroundColor Cyan
+Write-Host "Press Enter to close this window..." -ForegroundColor Yellow
+$null = Read-Host
