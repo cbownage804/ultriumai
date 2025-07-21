@@ -107,4 +107,4 @@ try {
 }
 
 Write-Host "`nPress any key to continue..." -ForegroundColor Cyan
-Read-Host
+pause
