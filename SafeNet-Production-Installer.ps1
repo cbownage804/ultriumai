@@ -298,12 +298,36 @@ function Start-ServiceLoop {
     }
 }
 
-# Service entry point - handle both service and direct execution
+# Service entry point with proper error handling
 param([string]`$Mode = "service")
 
-# Always start the service loop when run (since this is the service script)
-Write-ServiceLog "SafeNet Agent starting with mode: `$Mode"
-Start-ServiceLoop
+try {
+    # Ensure we can write to the log directory first
+    `$logDir = Split-Path `$Global:Config.LogPath -Parent
+    if (!(Test-Path `$logDir)) { 
+        New-Item -ItemType Directory -Path `$logDir -Force | Out-Null 
+    }
+    
+    Write-ServiceLog "SafeNet Agent starting with mode: `$Mode"
+    
+    # Give the service time to fully initialize
+    if (`$Mode -eq "service") {
+        Write-ServiceLog "Waiting for service context to initialize..."
+        Start-Sleep -Seconds 10
+    }
+    
+    Write-ServiceLog "Starting main service loop..."
+    Start-ServiceLoop
+} catch {
+    # Try to log the error if possible
+    try {
+        Write-ServiceLog "Service startup failed: `$_" "ERROR"
+    } catch {
+        # If we can't log, write to Windows Event Log
+        Write-EventLog -LogName Application -Source "SafeNet Agent" -EventId 1000 -EntryType Error -Message "SafeNet Agent startup failed: `$_" -ErrorAction SilentlyContinue
+    }
+    exit 1
+}
 "@
 
     $scriptPath = Join-Path $Global:Config.InstallPath "SafeNet-Agent.ps1"
