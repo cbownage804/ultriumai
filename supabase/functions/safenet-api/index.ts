@@ -358,6 +358,25 @@ serve(async (req) => {
       );
     }
 
+    // Test endpoint for connectivity checks
+    else if (req.method === 'POST') {
+      const body = await req.json();
+      
+      // Handle test mode requests
+      if (body.test_mode === true) {
+        console.log('Test mode request received:', body);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'SafeNet API is operational',
+            timestamp: new Date().toISOString(),
+            test_mode: true
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     return new Response(
       JSON.stringify({ error: 'Endpoint not found' }),
       { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
