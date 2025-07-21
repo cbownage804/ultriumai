@@ -67,7 +67,8 @@ export const useSafeNet = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Use any type temporarily until Supabase types are regenerated
+      const { data, error } = await (supabase as any)
         .from('safenet_connectors')
         .select('*')
         .eq('user_id', user.id)
@@ -89,7 +90,8 @@ export const useSafeNet = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Use any type temporarily until Supabase types are regenerated
+      const { data, error } = await (supabase as any)
         .from('network_scans')
         .select('*')
         .eq('user_id', user.id)
@@ -112,7 +114,8 @@ export const useSafeNet = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      // Use any type temporarily until Supabase types are regenerated
+      const { data, error } = await (supabase as any)
         .from('network_devices')
         .select('*')
         .eq('user_id', user.id)
