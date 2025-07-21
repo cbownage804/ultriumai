@@ -358,30 +358,41 @@ function Install-SafeNetService {
             Start-Sleep -Seconds 3  # Wait for complete removal
         }
         
-        # Create service using cmd.exe to properly handle sc.exe syntax
+        # Create a batch wrapper for the service to handle PowerShell execution properly
+        $batchWrapperPath = Join-Path $Global:Config.InstallPath "SafeNet-Service-Wrapper.bat"
+        $batchContent = @"
+@echo off
+cd /d "$($Global:Config.InstallPath)"
+powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File "$scriptPath"
+"@
+        $batchContent | Out-File -FilePath $batchWrapperPath -Encoding ASCII
+        Write-Log "Created service wrapper: $batchWrapperPath"
+        
         $serviceName = $Global:Config.ServiceName
         $displayName = $Global:Config.ServiceDisplayName
         
-        # Build the command with proper quoting for PowerShell service - no backslashes needed for New-Service
-        $binPathValue = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File `"$scriptPath`" service"
-        
+        # Use the batch wrapper as the service executable
         Write-Log "Creating service: $serviceName"
-        Write-Log "Binary path: $binPathValue"
+        Write-Log "Service wrapper: $batchWrapperPath"
         
-        # Use New-Service cmdlet for better PowerShell integration
-        try {
-            New-Service -Name $serviceName -BinaryPathName $binPathValue -DisplayName $displayName -StartupType Automatic -ErrorAction Stop
+        # Use sc.exe to create the service with proper Windows service handling
+        $scResult = & sc.exe create $serviceName binPath= "`"$batchWrapperPath`"" DisplayName= "$displayName" start= auto
+        if ($LASTEXITCODE -eq 0) {
             Write-Log "Windows service created successfully: $serviceName"
             
-            # Test if the service script exists and is accessible
+            # Test if files exist and are accessible
             if (-not (Test-Path $scriptPath)) {
                 throw "Service script not found at: $scriptPath"
             }
+            if (-not (Test-Path $batchWrapperPath)) {
+                throw "Service wrapper not found at: $batchWrapperPath"
+            }
             
             return $true
-        } catch {
-            Write-Log "New-Service failed: $_" "ERROR"
-            throw "Service creation failed: $_"
+        } else {
+            Write-Log "sc.exe create failed with exit code: $LASTEXITCODE" "ERROR"
+            Write-Log "sc.exe output: $scResult" "ERROR"
+            throw "Service creation failed with exit code: $LASTEXITCODE"
         }
     } catch {
         Write-Log "Failed to install service: $_" "ERROR"
