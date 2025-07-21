@@ -108,6 +108,10 @@ function Send-AgentCheckin {
         }
         $uri = "$($Global:Config.ApiUrl)/safenet-api/heartbeat"
         
+        Write-SafeNetLog "Making request to: $uri"
+        Write-SafeNetLog "Headers: $($headers | ConvertTo-Json)"
+        Write-SafeNetLog "Body: $checkinData"
+        
         $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body $checkinData -TimeoutSec 15
         
         if ($response.success) {
@@ -364,6 +368,9 @@ while (`$true) {
         # Network discovery every checkin
         Write-ServiceLog "Starting network discovery scan..."
         try {
+            Write-ServiceLog "Making request to: `$uri"
+            Write-ServiceLog "Headers: `$(`$headers | ConvertTo-Json)"
+            Write-ServiceLog "Body: `$checkinData"
             `$localIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { 
                 `$_.IPAddress -notlike "127.*" -and 
                 `$_.IPAddress -notlike "169.254.*" -and
