@@ -407,19 +407,32 @@ function Install-SafeNetAgent {
         
         # Install and start service
         if (Install-SafeNetService) {
-            Start-Service -Name $Global:Config.ServiceName
-            Write-Log "Service started successfully"
-            
-            # Verify service is running
-            Start-Sleep -Seconds 5
-            $service = Get-Service -Name $Global:Config.ServiceName
-            if ($service.Status -eq "Running") {
-                Write-Host "[SUCCESS] SafeNet agent installed and running!" -ForegroundColor Green
-                Write-Host "[INFO] Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
-                Write-Host "[INFO] Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
-                return $true
-            } else {
-                throw "Service failed to start"
+            try {
+                Start-Service -Name $Global:Config.ServiceName -ErrorAction Stop
+                Write-Log "Service start command executed"
+                
+                # Verify service is running
+                Start-Sleep -Seconds 5
+                $service = Get-Service -Name $Global:Config.ServiceName
+                if ($service.Status -eq "Running") {
+                    Write-Host "[SUCCESS] SafeNet agent installed and running!" -ForegroundColor Green
+                    Write-Host "[INFO] Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
+                    Write-Host "[INFO] Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
+                    return $true
+                } else {
+                    Write-Log "Service status: $($service.Status)" "ERROR"
+                    # Try to get more details about why it failed
+                    $eventLogs = Get-EventLog -LogName System -Source "Service Control Manager" -Newest 5 -ErrorAction SilentlyContinue | Where-Object { $_.Message -like "*$($Global:Config.ServiceName)*" }
+                    if ($eventLogs) {
+                        foreach ($log in $eventLogs) {
+                            Write-Log "Event Log: $($log.Message)" "ERROR"
+                        }
+                    }
+                    throw "Service failed to start - Status: $($service.Status)"
+                }
+            } catch {
+                Write-Log "Failed to start service: $_" "ERROR"
+                throw "Service startup failed: $_"
             }
         }
         
