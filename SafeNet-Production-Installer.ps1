@@ -175,7 +175,7 @@ function Get-SystemInfo {
                     used_percent = [math]::Round(((`$_.Size - `$_.FreeSpace) / `$_.Size) * 100, 2)
                 }
             }
-            uptime_hours = [math]::Round((Get-Date) - `$os.LastBootUpTime).TotalHours, 2)
+            uptime_hours = [math]::Round(((Get-Date) - `$os.LastBootUpTime).TotalHours, 2)
             ip_addresses = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" }).IPAddress
             last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
@@ -408,7 +408,7 @@ function Install-SafeNetService {
             Write-Log "NSSM service created successfully"
             
             # Set the parameters separately using NSSM set command
-            $paramString = "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" -ConnectorKey $($Global:Config.ConnectorKey) -ClientCode $($Global:Config.ClientCode) -ClientName `"$($Global:Config.ClientName)`" -Silent"
+            $paramString = "-ExecutionPolicy Bypass -NoProfile -File ""$scriptPath"" -ConnectorKey $($Global:Config.ConnectorKey) -ClientCode $($Global:Config.ClientCode) -ClientName ""$($Global:Config.ClientName)"" -Silent"
             & $nssmPath set $serviceName AppParameters $paramString
             
             # Configure service with NSSM
