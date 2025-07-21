@@ -334,23 +334,26 @@ function Install-SafeNetService {
             Start-Sleep -Seconds 3  # Wait for complete removal
         }
         
-        # Create service using sc.exe with correct syntax
+        # Create service using correct sc.exe syntax
         $serviceName = $Global:Config.ServiceName
         $displayName = $Global:Config.ServiceDisplayName
-        $binPath = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Command `"& '$scriptPath' service`""
+        
+        # Build the exact command string with proper quoting
+        $binPathValue = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Command `"& '$scriptPath' service`""
         
         Write-Log "Creating service: $serviceName"
-        Write-Log "Binary path: $binPath"
         
-        # Use correct sc.exe syntax with proper spacing
-        $result = & sc.exe create $serviceName binPath= $binPath DisplayName= $displayName start= auto
+        # Use sc.exe with correct syntax - space after equals sign is required
+        $result = & sc.exe create $serviceName "binPath= $binPathValue" "DisplayName= $displayName" "start= auto"
         
         if ($LASTEXITCODE -eq 0) {
             Write-Log "Windows service installed: $serviceName"
             return $true
         } else {
             Write-Log "sc.exe failed with exit code: $LASTEXITCODE" "ERROR"
-            Write-Log "sc.exe output: $result" "ERROR"
+            if ($result) {
+                Write-Log "sc.exe output: $result" "ERROR"
+            }
             throw "Service creation failed"
         }
     } catch {
