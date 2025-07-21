@@ -100,12 +100,6 @@ function Send-AgentCheckin {
         
         $checkinData = @{
             connector_key = $Global:Config.ConnectorKey
-            hostname = $env:COMPUTERNAME
-            ip_address = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" } | Select-Object -First 1).IPAddress
-            agent_version = $Global:Config.Version
-            system_info = $systemInfo
-            performance_metrics = $performanceMetrics
-            status = "online"
         } | ConvertTo-Json -Depth 5
         
         $headers = @{ 
@@ -347,11 +341,6 @@ while (`$true) {
         
         `$checkinData = @{
             connector_key = `$Global:Config.ConnectorKey
-            hostname = `$env:COMPUTERNAME
-            ip_address = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { `$_.IPAddress -notlike "127.*" -and `$_.IPAddress -notlike "169.254.*" } | Select-Object -First 1).IPAddress
-            agent_version = `$Global:Config.Version
-            system_info = `$systemInfo
-            status = "online"
         } | ConvertTo-Json
         
         `$headers = @{ 
