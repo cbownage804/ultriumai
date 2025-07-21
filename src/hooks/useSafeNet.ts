@@ -1,206 +1,91 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
-export interface NetworkDevice {
+export interface SafeNetConnector {
   id: string;
-  network_id?: string;
   user_id: string;
-  device_name?: string;
-  hostname?: string;
-  ip_address: string | unknown;
-  mac_address?: string;
-  device_type?: string;
-  device_role?: string;
-  os_family?: string;
-  os_version?: string;
-  manufacturer?: string;
-  model?: string;
-  serial_number?: string;
+  connector_key: string;
+  connector_name: string;
+  client_name?: string;
   status: string;
-  last_seen_at?: string;
-  vulnerability_count: number;
-  is_managed: boolean;
-  is_critical: boolean;
-  security_patches_needed: number;
-  network_segment?: string;
-  uptime_hours?: number;
-  cpu_usage?: number;
-  memory_usage?: number;
-  discovery_method?: string[];
-  device_metadata?: any;
-  connector_key?: string;
+  last_heartbeat?: string;
+  version?: string;
+  system_info?: any;
+  network_info?: any;
   created_at: string;
   updated_at: string;
-}
-
-export interface NetworkVulnerability {
-  id: string;
-  device_id: string;
-  network_id: string;
-  user_id: string;
-  vulnerability_id: string;
-  title: string;
-  description: string;
-  severity: string;
-  cvss_score?: number;
-  cve_id?: string;
-  affected_service?: string;
-  port?: number;
-  solution?: string;
-  status: string;
-  discovered_at: string;
-  patched_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface SafeNetNetwork {
-  id: string;
-  msp_org_id?: string;
-  user_id: string;
-  network_name: string;
-  network_range: string;
-  location?: string;
-  network_type: string;
-  monitoring_enabled: boolean;
-  last_scan_at?: string;
-  device_count: number;
-  vulnerability_count: number;
-  threat_count: number;
-  security_score: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface NetworkScanResult {
-  success: boolean;
-  network_range: string;
-  devices_discovered: number;
-  vulnerabilities_found: number;
-  critical_issues: number;
-  scan_duration: number;
-  recommendations: string[];
-  devices: NetworkDevice[];
-  vulnerabilities: NetworkVulnerability[];
 }
 
 export interface NetworkScan {
   id: string;
   user_id: string;
-  connector_id: string;
-  target_ip: string;
+  connector_id?: string;
   scan_type: string;
-  scan_status: string;
-  scan_result?: any;
-  devices_found: number;
   network_ranges: string[];
-  scan_duration: number;
-  hostname: string;
-  results: any;
-  vulnerabilities_found: number;
-  risk_score: number;
+  devices_found: number;
+  scan_duration?: number;
+  scanned_at: string;
+  hostname?: string;
+  results?: any;
   created_at: string;
   updated_at: string;
-  scanned_at: string;
-  completed_at?: string;
+}
+
+export interface NetworkDevice {
+  id: string;
+  user_id?: string;
+  scan_id?: string;
+  ip_address: string;
+  hostname: string;
+  device_type: string;
+  mac_address?: string;
+  os_info?: string;
+  open_ports?: number[];
+  services?: any;
+  vulnerabilities?: string[];
+  risk_level: string;
+  last_seen: string;
+  status: string;
+  network_range: string;
+  connector_id?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const useSafeNet = () => {
-  const [networks, setNetworks] = useState<SafeNetNetwork[]>([]);
+  const [connectors, setConnectors] = useState<SafeNetConnector[]>([]);
+  const [scans, setScans] = useState<NetworkScan[]>([]);
   const [devices, setDevices] = useState<NetworkDevice[]>([]);
-  const [vulnerabilities, setVulnerabilities] = useState<NetworkVulnerability[]>([]);
-  const [networkScans, setNetworkScans] = useState<NetworkScan[]>([]);
-  const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isScanning, setIsScanning] = useState(false);
-  const [selectedNetwork, setSelectedNetwork] = useState<string | null>(null);
-
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Load networks
-  const loadNetworks = async () => {
+  const loadConnectors = async () => {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
-        .from('safenet_networks')
+        .from('safenet_connectors')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNetworks(data || []);
+      setConnectors(data || []);
     } catch (error) {
-      console.error('Error loading networks:', error);
+      console.error('Error loading connectors:', error);
       toast({
         title: "Error",
-        description: "Failed to load networks",
+        description: "Failed to load SafeNet connectors",
         variant: "destructive",
       });
     }
   };
 
-  // Load devices for selected network
-  const loadDevices = async (networkId?: string) => {
-    if (!user) return;
-
-    try {
-      let query = supabase
-        .from('safenet_devices')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (networkId) {
-        query = query.eq('network_id', networkId);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDevices(data || []);
-    } catch (error) {
-      console.error('Error loading devices:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load devices",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Load vulnerabilities
-  const loadVulnerabilities = async (networkId?: string) => {
-    if (!user) return;
-
-    try {
-      let query = supabase
-        .from('safenet_vulnerabilities')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (networkId) {
-        query = query.eq('network_id', networkId);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setVulnerabilities(data || []);
-    } catch (error) {
-      console.error('Error loading vulnerabilities:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load vulnerabilities",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Load network scans
-  const loadNetworkScans = async () => {
+  const loadScans = async () => {
     if (!user) return;
 
     try {
@@ -208,12 +93,13 @@ export const useSafeNet = () => {
         .from('network_scans')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('scanned_at', { ascending: false })
+        .limit(20);
 
       if (error) throw error;
-      setNetworkScans(data || []);
+      setScans(data || []);
     } catch (error) {
-      console.error('Error loading network scans:', error);
+      console.error('Error loading scans:', error);
       toast({
         title: "Error",
         description: "Failed to load network scans",
@@ -222,256 +108,103 @@ export const useSafeNet = () => {
     }
   };
 
-  // Load scan history (legacy)
-  const loadScanHistory = async () => {
+  const loadDevices = async () => {
     if (!user) return;
 
     try {
       const { data, error } = await supabase
-        .from('network_scans')
+        .from('network_devices')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .order('last_seen', { ascending: false });
 
       if (error) throw error;
-      setScanHistory(data || []);
+      setDevices(data || []);
     } catch (error) {
-      console.error('Error loading scan history:', error);
-    }
-  };
-
-  // Create network
-  const createNetwork = async (networkData: {
-    name: string;
-    network_range: string;
-    location?: string;
-    network_type: string;
-  }) => {
-    if (!user) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from('safenet_networks')
-        .insert({
-          user_id: user.id,
-          network_name: networkData.name,
-          network_range: networkData.network_range,
-          location: networkData.location,
-          network_type: networkData.network_type,
-          monitoring_enabled: true,
-          device_count: 0,
-          vulnerability_count: 0,
-          threat_count: 0,
-          security_score: 0
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setNetworks(prev => [data, ...prev]);
-      toast({
-        title: "Success",
-        description: "Network created successfully",
-      });
-
-      return data;
-    } catch (error) {
-      console.error('Error creating network:', error);
+      console.error('Error loading devices:', error);
       toast({
         title: "Error",
-        description: "Failed to create network",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-
-  // Scan network
-  const scanNetwork = async (networkRange: string): Promise<NetworkScanResult | null> => {
-    if (!user) return null;
-
-    setIsScanning(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ultrium-safenet-scanner', {
-        body: {
-          action: 'scan_network',
-          network_range: networkRange,
-          user_id: user.id
-        }
-      });
-
-      if (error) throw error;
-
-      const result: NetworkScanResult = {
-        success: true,
-        network_range: networkRange,
-        devices_discovered: data.devices_discovered || 0,
-        vulnerabilities_found: data.vulnerabilities_found || 0,
-        critical_issues: data.critical_issues || 0,
-        scan_duration: data.scan_duration || 0,
-        recommendations: data.recommendations || [],
-        devices: data.devices || [],
-        vulnerabilities: data.vulnerabilities || []
-      };
-
-      // Save scan results to database
-      await supabase
-        .from('network_scans')
-        .insert({
-          user_id: user.id,
-          connector_id: 'web-interface',
-          target_ip: networkRange,
-          scan_type: 'discovery',
-          scan_status: 'completed',
-          scan_result: data,
-          vulnerabilities_found: data.vulnerabilities_found || 0,
-          devices_found: data.devices_discovered || 0,
-          network_ranges: [networkRange],
-          scan_duration: 0,
-          hostname: 'web-interface',
-          results: data
-        });
-
-      toast({
-        title: "Network Scan Complete",
-        description: `Found ${data.devices_discovered} devices, ${data.vulnerabilities_found} vulnerabilities`,
-        variant: data.critical_issues > 0 ? "destructive" : "default"
-      });
-
-      // Reload data
-      await Promise.all([
-        loadNetworks(),
-        loadDevices(),
-        loadVulnerabilities(),
-        loadScanHistory()
-      ]);
-
-      return result;
-    } catch (error) {
-      console.error('Network scan error:', error);
-      toast({
-        title: "Scan Failed",
-        description: "Unable to complete network scan. Please try again.",
-        variant: "destructive"
-      });
-      return null;
-    } finally {
-      setIsScanning(false);
-    }
-  };
-
-  // Vulnerability assessment
-  const runVulnerabilityAssessment = async (deviceIds: string[]) => {
-    if (!user || deviceIds.length === 0) return null;
-
-    setIsScanning(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ultrium-safenet-scanner', {
-        body: {
-          action: 'vulnerability_scan',
-          device_ids: deviceIds,
-          user_id: user.id
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Vulnerability Assessment Complete",
-        description: `Assessed ${deviceIds.length} devices`,
-      });
-
-      // Reload vulnerabilities
-      await loadVulnerabilities();
-
-      return data;
-    } catch (error) {
-      console.error('Vulnerability assessment error:', error);
-      toast({
-        title: "Assessment Failed",
-        description: "Unable to complete vulnerability assessment.",
-        variant: "destructive"
-      });
-      return null;
-    } finally {
-      setIsScanning(false);
-    }
-  };
-
-  // Real-time monitoring toggle
-  const toggleMonitoring = async (networkId: string, enabled: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('safenet_networks')
-        .update({ monitoring_enabled: enabled })
-        .eq('id', networkId)
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-
-      setNetworks(prev => prev.map(network => 
-        network.id === networkId 
-          ? { ...network, monitoring_enabled: enabled }
-          : network
-      ));
-
-      toast({
-        title: enabled ? "Monitoring Enabled" : "Monitoring Disabled",
-        description: `Real-time monitoring ${enabled ? 'started' : 'stopped'} for network`,
-      });
-    } catch (error) {
-      console.error('Error toggling monitoring:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update monitoring settings",
+        description: "Failed to load network devices",
         variant: "destructive",
       });
     }
   };
 
-  // Initialize
+  const refreshData = async () => {
+    setIsLoading(true);
+    await Promise.all([loadConnectors(), loadScans(), loadDevices()]);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
     if (user) {
-      Promise.all([
-        loadNetworks(),
-        loadDevices(),
-        loadVulnerabilities(),
-        loadNetworkScans(),
-        loadScanHistory()
-      ]).finally(() => setIsLoading(false));
+      refreshData();
+      
+      // Set up real-time subscriptions
+      const connectorSubscription = supabase
+        .channel('safenet-connectors-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'safenet_connectors',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            loadConnectors();
+          }
+        )
+        .subscribe();
+
+      const scanSubscription = supabase
+        .channel('network-scans-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'network_scans',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            loadScans();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        connectorSubscription.unsubscribe();
+        scanSubscription.unsubscribe();
+      };
     } else {
       setIsLoading(false);
     }
   }, [user]);
 
-  // Load devices and vulnerabilities when network is selected
-  useEffect(() => {
-    if (selectedNetwork) {
-      loadDevices(selectedNetwork);
-      loadVulnerabilities(selectedNetwork);
-    }
-  }, [selectedNetwork]);
+  // Calculate statistics
+  const activeConnectors = connectors.filter(c => c.status === 'active').length;
+  const totalDevices = devices.length;
+  const onlineDevices = devices.filter(d => d.status === 'online').length;
+  const vulnerableDevices = devices.filter(d => (d.vulnerabilities?.length || 0) > 0).length;
+  const recentScans = scans.filter(s => 
+    new Date(s.scanned_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)
+  ).length;
 
   return {
-    networks,
+    connectors,
+    scans,
     devices,
-    vulnerabilities,
-    networkScans,
-    scanHistory,
     isLoading,
-    isScanning,
-    selectedNetwork,
-    setSelectedNetwork,
-    createNetwork,
-    scanNetwork,
-    runVulnerabilityAssessment,
-    toggleMonitoring,
-    loadNetworks,
-    loadDevices,
-    loadVulnerabilities,
-    loadNetworkScans,
-    loadScanHistory
+    refreshData,
+    // Statistics
+    activeConnectors,
+    totalConnectors: connectors.length,
+    totalDevices,
+    onlineDevices,
+    offlineDevices: totalDevices - onlineDevices,
+    vulnerableDevices,
+    recentScans,
+    totalScans: scans.length
   };
 };

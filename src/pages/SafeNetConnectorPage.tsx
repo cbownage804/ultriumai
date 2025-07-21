@@ -1,3 +1,4 @@
+
 import { SafeNetDashboard } from "@/components/safenet/SafeNetDashboard";
 
 const SafeNetConnectorPage = () => {
