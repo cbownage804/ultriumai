@@ -435,40 +435,44 @@ function Uninstall-SafeNetAgent {
         $service = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
         
         if ($service) {
+            # Stop the service if it's running
             if ($service.Status -eq "Running") {
                 Write-Log "Stopping service..."
-                Stop-Service -Name $Global:Config.ServiceName -Force
-                Start-Sleep -Seconds 5  # Wait for service to fully stop
+                Stop-Service -Name $Global:Config.ServiceName -Force -ErrorAction SilentlyContinue
+                Start-Sleep -Seconds 3
             }
             
-            # Try NSSM removal first if available
+            # Kill any lingering nssm.exe process for our service to unlock the file
+            Write-Log "Killing any lingering NSSM processes..."
+            Get-Process nssm -ErrorAction SilentlyContinue | 
+                Where-Object { $_.Path -eq $nssmPath } | 
+                Stop-Process -Force -ErrorAction SilentlyContinue
+            
+            Start-Sleep -Seconds 2
+            
+            # Remove the service
             if (Test-Path $nssmPath) {
                 Write-Log "Removing service with NSSM..."
-                $nssmResult = & $nssmPath remove $Global:Config.ServiceName confirm
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Log "Service removed with NSSM successfully"
-                } else {
-                    Write-Log "NSSM removal failed, trying sc.exe..." "WARNING"
-                    & sc.exe delete $Global:Config.ServiceName | Out-Null
-                }
+                & $nssmPath remove $Global:Config.ServiceName confirm | Out-Null
             } else {
-                # Fallback to sc.exe
                 Write-Log "Using sc.exe to remove service..."
                 & sc.exe delete $Global:Config.ServiceName | Out-Null
             }
             
-            # Wait for service to be fully removed from Windows service database
-            Write-Log "Waiting for service deletion to complete..."
-            $timeout = 30
-            $elapsed = 0
+            # Wait for the service to fully disappear from Windows
+            Write-Log "Waiting for service to be fully removed from Windows..."
+            $timeout = [DateTime]::UtcNow.AddSeconds(15)
             do {
                 Start-Sleep -Seconds 1
-                $elapsed++
-                $serviceCheck = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
-            } while ($serviceCheck -and $elapsed -lt $timeout)
+                $svc = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
+            } while ($svc -and (Get-Date).ToUniversalTime() -lt $timeout)
             
-            if ($serviceCheck) {
-                Write-Log "Service still exists after timeout, forcing removal..." "WARNING"
+            # Check if service still exists
+            $remainingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
+            if ($remainingService) {
+                Write-Log "Service still exists after timeout, forcing with sc.exe..." "WARNING"
+                & sc.exe delete $Global:Config.ServiceName | Out-Null
+                Start-Sleep -Seconds 5
             } else {
                 Write-Log "Service removed successfully"
             }
