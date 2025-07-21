@@ -298,12 +298,12 @@ function Start-ServiceLoop {
     }
 }
 
-# Service entry point
-if (`$args[0] -eq "service") {
-    Start-ServiceLoop
-} else {
-    Write-Host "SafeNet Agent - Use 'service' parameter to run as service"
-}
+# Service entry point - handle both service and direct execution
+param([string]`$Mode = "service")
+
+# Always start the service loop when run (since this is the service script)
+Write-ServiceLog "SafeNet Agent starting with mode: `$Mode"
+Start-ServiceLoop
 "@
 
     $scriptPath = Join-Path $Global:Config.InstallPath "SafeNet-Agent.ps1"
