@@ -84,3 +84,6 @@ verify_jwt = true
 
 [functions.safenet-topology-processor]
 verify_jwt = false
+
+[functions.safenet-api]
+verify_jwt = false
