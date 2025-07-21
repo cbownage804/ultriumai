@@ -195,7 +195,7 @@ function Get-NetworkDevices {
             for (`$i = 1; `$i -le 254; `$i++) {
                 `$targetIP = "`$network.`$i"
                 if (`$targetIP -ne `$ip) {
-                    `$ping = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet -TimeoutSeconds 1
+                    `$ping = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet
                     if (`$ping) {
                         try {
                             `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
