@@ -19,14 +19,17 @@ serve(async (req) => {
     )
 
     const { 
-      agent_token, 
+      connector_key,
+      agent_token = connector_key, // Support both parameter names
       hostname, 
       ip_address, 
       agent_version,
       system_info,
       performance_metrics,
       installed_software,
-      security_status 
+      security_status,
+      status,
+      last_scan
     } = await req.json();
 
     console.log('Agent check-in received:', { 
