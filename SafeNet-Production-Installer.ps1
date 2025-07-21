@@ -362,12 +362,20 @@ function Install-SafeNetService {
         if (-not (Test-Path $nssmPath)) {
             Write-Log "Downloading NSSM..."
             try {
-                # Download NSSM 64-bit version
+                # Try primary URL first
                 $nssmUrl = "https://nssm.cc/release/nssm-2.24.zip"
                 $nssmZip = Join-Path $env:TEMP "nssm.zip"
                 $nssmExtract = Join-Path $env:TEMP "nssm"
                 
-                Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing
+                try {
+                    Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing -TimeoutSec 30
+                } catch {
+                    # Fallback to GitHub mirror
+                    Write-Log "Primary download failed, trying GitHub mirror..."
+                    $nssmUrl = "https://github.com/kirillkovalenko/nssm/releases/download/2.24/nssm-2.24.zip"
+                    Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing -TimeoutSec 30
+                }
+                
                 Expand-Archive -Path $nssmZip -DestinationPath $nssmExtract -Force
                 
                 # Copy the appropriate architecture version
