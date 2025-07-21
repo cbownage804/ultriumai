@@ -96,14 +96,15 @@ try {
         Write-Host "📋 System: $($systemInfo.hostname)" -ForegroundColor Yellow
         Write-Host "🔗 API: Connected to SafeNet backend" -ForegroundColor Yellow
         Write-Host "🆔 Connector: $($Global:Config.ConnectorKey)" -ForegroundColor Yellow
-        exit 0
     } else {
         Write-TestLog "❌ Tests failed. Please check network connectivity." "ERROR"
-        exit 1
+        Write-Host "`n❌ Test failed! Check network connectivity and try again." -ForegroundColor Red
     }
     
 } catch {
     Write-TestLog "Test failed: $_" "ERROR"
-    Write-Host "❌ Test failed: $_" -ForegroundColor Red
-    exit 1
+    Write-Host "`n❌ Test failed: $_" -ForegroundColor Red
 }
+
+Write-Host "`nPress any key to continue..." -ForegroundColor Cyan
+$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
