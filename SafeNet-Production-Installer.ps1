@@ -338,7 +338,7 @@ function Install-SafeNetService {
         $serviceName = $Global:Config.ServiceName
         $displayName = $Global:Config.ServiceDisplayName
         
-        # Build the command with proper quoting for PowerShell service
+        # Build the command with proper quoting for PowerShell service - no backslashes needed for New-Service
         $binPathValue = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File `"$scriptPath`" service"
         
         Write-Log "Creating service: $serviceName"
