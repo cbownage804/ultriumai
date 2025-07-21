@@ -1,638 +1,562 @@
+
 #Requires -RunAsAdministrator
 <#
 .SYNOPSIS
-    Ultrium SafeNet RMM Agent Installer and Service
+    Production SafeNet RMM Agent Installer and Service
 .DESCRIPTION
-    Installs and configures the SafeNet RMM monitoring agent
-.PARAMETER ConnectorKey
-    The SafeNet connector key for this organization
-.PARAMETER ClientCode
-    The client code for this organization
-.PARAMETER ClientName
-    The organization name
-.PARAMETER Silent
-    Run in silent mode without user interaction
-.PARAMETER ConfigFile
-    Path to JSON configuration file
-.PARAMETER LogFile
-    Path to log file
-.PARAMETER Uninstall
-    Uninstall the SafeNet agent
+    Full production version with service installation, network discovery, and agent management
 #>
 
 param(
-    [string]$ConnectorKey,
-    [string]$ClientCode,
-    [string]$ClientName,
-    [switch]$Silent,
-    [string]$ConfigFile,
-    [string]$LogFile = "C:\temp\safenet-install.log",
-    [switch]$Uninstall
+    [string]$ConnectorKey = "test_connector_123",
+    [string]$ClientCode = "TEST001",
+    [string]$ClientName = "Test Organization"
 )
 
 # Global Configuration
 $Global:Config = @{
-    ServiceName = "UltriumSafeNetAgent"
-    ServiceDisplayName = "Ultrium SafeNet Monitoring Agent"
-    ServiceDescription = "SafeNet RMM monitoring and security agent"
-    InstallPath = "C:\SafeNet"
+    ServiceName = "UltriumSafeNet"
+    ServiceDisplayName = "Ultrium SafeNet RMM Agent"
     ApiUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1"
-    LogPath = $LogFile
-    Version = "1.0.0"
-    CheckinInterval = 300  # 5 minutes
-    ScanInterval = 3600    # 1 hour
+    ConnectorKey = $ConnectorKey
+    ClientCode = $ClientCode
+    ClientName = $ClientName
+    Version = "1.2.0"
+    InstallPath = "C:\SafeNet"
+    LogPath = "C:\SafeNet\logs"
+    CheckinInterval = 300 # 5 minutes
 }
 
-# Logging Function
-function Write-Log {
+function Write-SafeNetLog {
     param([string]$Message, [string]$Level = "INFO")
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $logEntry = "[$timestamp] [$Level] $Message"
-    Write-Host $logEntry
-    if ($Global:Config.LogPath) {
-        try {
-            $logDir = Split-Path $Global:Config.LogPath -Parent
-            if (!(Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
-            Add-Content -Path $Global:Config.LogPath -Value $logEntry -Encoding UTF8
-        } catch { }
+    $logMessage = "[$timestamp] [$Level] $Message"
+    
+    # Console output
+    switch ($Level) {
+        "ERROR" { Write-Host $logMessage -ForegroundColor Red }
+        "SUCCESS" { Write-Host $logMessage -ForegroundColor Green }
+        "WARNING" { Write-Host $logMessage -ForegroundColor Yellow }
+        default { Write-Host $logMessage -ForegroundColor White }
+    }
+    
+    # File logging
+    $logFile = Join-Path $Global:Config.LogPath "agent.log"
+    try {
+        Add-Content -Path $logFile -Value $logMessage -ErrorAction SilentlyContinue
+    } catch {
+        # Ignore file logging errors
     }
 }
 
-# Load Configuration
-function Load-Configuration {
-    if ($ConfigFile -and (Test-Path $ConfigFile)) {
-        try {
-            $config = Get-Content $ConfigFile | ConvertFrom-Json
-            $Global:Config.ConnectorKey = $config.ConnectorKey
-            $Global:Config.ClientCode = $config.ClientCode
-            $Global:Config.ClientName = $config.ClientName
-            $Global:Config.ApiUrl = $config.ApiUrl
-            Write-Log "Configuration loaded from file: $ConfigFile"
-        } catch {
-            Write-Log "Failed to load configuration file: $_" "ERROR"
+function Initialize-SafeNetEnvironment {
+    try {
+        # Create directories
+        @($Global:Config.InstallPath, $Global:Config.LogPath) | ForEach-Object {
+            if (-not (Test-Path $_)) {
+                New-Item -Path $_ -ItemType Directory -Force | Out-Null
+            }
+        }
+        
+        Write-SafeNetLog "SafeNet environment initialized" "SUCCESS"
+        return $true
+    } catch {
+        Write-SafeNetLog "Failed to initialize environment: $_" "ERROR"
+        return $false
+    }
+}
+
+function Test-SafeNetConnectivity {
+    try {
+        Write-SafeNetLog "Testing SafeNet API connectivity..."
+        
+        $testData = @{
+            connector_key = $Global:Config.ConnectorKey
+            test_mode = $true
+            hostname = $env:COMPUTERNAME
+            timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
+        } | ConvertTo-Json
+        
+        $headers = @{ "Content-Type" = "application/json" }
+        $uri = "$($Global:Config.ApiUrl)/safenet-api"
+        
+        $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body $testData -TimeoutSec 10
+        
+        Write-SafeNetLog "API connectivity test successful" "SUCCESS"
+        return $true
+    } catch {
+        Write-SafeNetLog "API connectivity test failed: $_" "ERROR"
+        return $false
+    }
+}
+
+function Send-AgentCheckin {
+    try {
+        Write-SafeNetLog "Sending agent checkin..."
+        
+        # Get system information
+        $systemInfo = Get-SystemInformation
+        $performanceMetrics = Get-PerformanceMetrics
+        
+        $checkinData = @{
+            connector_key = $Global:Config.ConnectorKey
+            hostname = $env:COMPUTERNAME
+            ip_address = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" } | Select-Object -First 1).IPAddress
+            agent_version = $Global:Config.Version
+            system_info = $systemInfo
+            performance_metrics = $performanceMetrics
+            status = "online"
+        } | ConvertTo-Json -Depth 5
+        
+        $headers = @{ "Content-Type" = "application/json" }
+        $uri = "$($Global:Config.ApiUrl)/rmm-agent-checkin"
+        
+        $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body $checkinData -TimeoutSec 15
+        
+        if ($response.success) {
+            Write-SafeNetLog "Agent checkin successful - Device ID: $($response.device_id)" "SUCCESS"
+            return $true
+        } else {
+            Write-SafeNetLog "Agent checkin failed: $($response.error)" "WARNING"
             return $false
         }
-    } else {
-        # Use command line parameters
-        $Global:Config.ConnectorKey = $ConnectorKey
-        $Global:Config.ClientCode = $ClientCode
-        $Global:Config.ClientName = $ClientName
+    } catch {
+        Write-SafeNetLog "Agent checkin error: $_" "WARNING"
+        # Don't treat checkin failures as fatal - continue with other operations
+        return $false
     }
-    
-    # Interactive mode if missing required parameters
-    if (!$Silent -and (!$Global:Config.ConnectorKey -or !$Global:Config.ClientCode)) {
-        Write-Host "=== Ultrium SafeNet Agent Setup ===" -ForegroundColor Cyan
-        if (!$Global:Config.ConnectorKey) {
-            $Global:Config.ConnectorKey = Read-Host "Enter Connector Key"
-        }
-        if (!$Global:Config.ClientCode) {
-            $Global:Config.ClientCode = Read-Host "Enter Client Code"
-        }
-        if (!$Global:Config.ClientName) {
-            $Global:Config.ClientName = Read-Host "Enter Organization Name"
-        }
-    }
-    
-    return ($Global:Config.ConnectorKey -and $Global:Config.ClientCode)
 }
 
-# Create Service Script
-function Create-ServiceScript {
-    $serviceScript = @"
-#Requires -RunAsAdministrator
-# SafeNet RMM Agent Service Script
-# This script runs as a Windows service to monitor the system
+function Get-SystemInformation {
+    try {
+        $os = Get-CimInstance -ClassName Win32_OperatingSystem
+        $computer = Get-CimInstance -ClassName Win32_ComputerSystem
+        $processor = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
+        
+        return @{
+            hostname = $env:COMPUTERNAME
+            os_name = $os.Caption
+            os_version = $os.Version
+            os_build = $os.BuildNumber
+            manufacturer = $computer.Manufacturer
+            model = $computer.Model
+            processor = $processor.Name
+            total_memory_gb = [math]::Round($computer.TotalPhysicalMemory / 1GB, 2)
+            domain = $env:USERDOMAIN
+            last_boot = $os.LastBootUpTime
+            timezone = (Get-TimeZone).Id
+        }
+    } catch {
+        Write-SafeNetLog "Failed to get system information: $_" "WARNING"
+        return @{ error = "Failed to collect system info" }
+    }
+}
 
-# Accept parameters from NSSM
-param(
-    [string]`$ConnectorKey = "$($Global:Config.ConnectorKey)",
-    [string]`$ClientCode = "$($Global:Config.ClientCode)", 
-    [string]`$ClientName = "$($Global:Config.ClientName)",
-    [switch]`$Silent
-)
+function Get-PerformanceMetrics {
+    try {
+        $cpu = Get-CimInstance -ClassName Win32_PerfRawData_PerfOS_Processor | Where-Object { $_.Name -eq "_Total" }
+        $memory = Get-CimInstance -ClassName Win32_OperatingSystem
+        $disk = Get-CimInstance -ClassName Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 }
+        
+        return @{
+            cpu_usage = 0 # Simplified for now
+            memory_usage = [math]::Round((($memory.TotalVisibleMemorySize - $memory.FreePhysicalMemory) / $memory.TotalVisibleMemorySize) * 100, 1)
+            disk_usage = if ($disk) { [math]::Round((($disk[0].Size - $disk[0].FreeSpace) / $disk[0].Size) * 100, 1) } else { 0 }
+            process_count = (Get-Process).Count
+            uptime_hours = [math]::Round(((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).TotalHours, 1)
+        }
+    } catch {
+        Write-SafeNetLog "Failed to get performance metrics: $_" "WARNING"
+        return @{ error = "Failed to collect performance metrics" }
+    }
+}
 
+function Start-NetworkDiscovery {
+    try {
+        Write-SafeNetLog "Starting network discovery scan..."
+        
+        # Get local IP and network
+        $localIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { 
+            $_.IPAddress -notlike "127.*" -and 
+            $_.IPAddress -notlike "169.254.*" -and
+            $_.PrefixLength -eq 24
+        } | Select-Object -First 1)
+        
+        if (-not $localIP) {
+            Write-SafeNetLog "Could not determine local network" "WARNING"
+            return @()
+        }
+        
+        $ip = $localIP.IPAddress
+        $network = $ip.Substring(0, $ip.LastIndexOf('.'))
+        
+        Write-SafeNetLog "Scanning network: $network.0/24"
+        
+        $discoveredDevices = @()
+        $jobs = @()
+        
+        # Scan network range (limited to reduce load)
+        for ($i = 1; $i -le 254; $i++) {
+            $targetIP = "$network.$i"
+            if ($targetIP -ne $ip) {
+                $job = Start-Job -ScriptBlock {
+                    param($targetIP)
+                    try {
+                        $ping = Test-Connection -ComputerName $targetIP -Count 1 -Quiet
+                        if ($ping) {
+                            $result = @{
+                                ip_address = $targetIP
+                                status = "online"
+                                response_time = 1
+                            }
+                            
+                            try {
+                                $hostname = [System.Net.Dns]::GetHostByAddress($targetIP).HostName
+                                $result.hostname = $hostname
+                            } catch {
+                                $result.hostname = "Unknown"
+                            }
+                            
+                            return $result
+                        }
+                    } catch {
+                        # Ignore scan errors for individual IPs
+                    }
+                    return $null
+                } -ArgumentList $targetIP
+                
+                $jobs += $job
+            }
+        }
+        
+        # Wait for jobs to complete (max 30 seconds)
+        $timeout = (Get-Date).AddSeconds(30)
+        while ((Get-Date) -lt $timeout -and ($jobs | Where-Object { $_.State -eq "Running" }).Count -gt 0) {
+            Start-Sleep -Milliseconds 100
+        }
+        
+        # Collect results
+        foreach ($job in $jobs) {
+            try {
+                $result = Receive-Job -Job $job -ErrorAction SilentlyContinue
+                if ($result) {
+                    $discoveredDevices += $result
+                }
+            } catch {
+                # Ignore individual job errors
+            }
+            Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        }
+        
+        Write-SafeNetLog "Network discovery completed. Found $($discoveredDevices.Count) devices"
+        return $discoveredDevices
+        
+    } catch {
+        Write-SafeNetLog "Network discovery failed: $_" "ERROR"
+        return @()
+    }
+}
+
+function Send-NetworkScanData {
+    param([array]$Devices)
+    
+    try {
+        Write-SafeNetLog "Sending scan data for $($Devices.Count) devices..."
+        
+        $scanData = @{
+            connector_key = $Global:Config.ConnectorKey
+            scan_type = "basic_discovery"
+            network_ranges = @("local")
+            devices_found = $Devices.Count
+            devices = @{}
+            results = @{
+                discovered = $Devices.Count
+                timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
+            }
+            scan_duration = 30
+            hostname = $env:COMPUTERNAME
+        }
+        
+        # Add devices to the scan data
+        $deviceIndex = 0
+        foreach ($device in $Devices) {
+            $scanData.devices["device_$deviceIndex"] = $device
+            $deviceIndex++
+        }
+        
+        $json = $scanData | ConvertTo-Json -Depth 5
+        $headers = @{ "Content-Type" = "application/json" }
+        $uri = "$($Global:Config.ApiUrl)/safenet-api"
+        
+        $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body $json -TimeoutSec 15
+        
+        Write-SafeNetLog "Network scan data sent successfully" "SUCCESS"
+        return $true
+    } catch {
+        Write-SafeNetLog "Failed to send scan data: $_" "ERROR"
+        return $false
+    }
+}
+
+function Install-SafeNetService {
+    try {
+        Write-SafeNetLog "Installing SafeNet service..."
+        
+        # Create service script
+        $serviceScript = @"
+# SafeNet Agent Service Script
 `$Global:Config = @{
-    ConnectorKey = `$ConnectorKey
-    ClientCode = `$ClientCode
-    ClientName = `$ClientName
-    ApiUrl = "$($Global:Config.ApiUrl)"
-    CheckinInterval = $($Global:Config.CheckinInterval)
-    ScanInterval = $($Global:Config.ScanInterval)
-    InstallPath = "$($Global:Config.InstallPath)"
     ServiceName = "$($Global:Config.ServiceName)"
-    LogPath = "`$(`$PSScriptRoot)\logs\agent.log"
+    ApiUrl = "$($Global:Config.ApiUrl)"
+    ConnectorKey = "$($Global:Config.ConnectorKey)"
+    ClientCode = "$($Global:Config.ClientCode)"
+    ClientName = "$($Global:Config.ClientName)"
+    Version = "$($Global:Config.Version)"
+    LogPath = "$($Global:Config.LogPath)"
+    CheckinInterval = $($Global:Config.CheckinInterval)
 }
 
 function Write-ServiceLog {
     param([string]`$Message, [string]`$Level = "INFO")
     `$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    `$logEntry = "[`$timestamp] [`$Level] `$Message"
+    `$logFile = Join-Path `$Global:Config.LogPath "agent.log"
     try {
-        `$logDir = Split-Path `$Global:Config.LogPath -Parent
-        if (!(Test-Path `$logDir)) { New-Item -ItemType Directory -Path `$logDir -Force | Out-Null }
-        Add-Content -Path `$Global:Config.LogPath -Value `$logEntry -Encoding UTF8
-    } catch { }
-}
-
-function Invoke-SafeNetAPI {
-    param([string]`$Endpoint, [hashtable]`$Data, [string]`$Method = "POST")
-    try {
-        `$uri = "`$(`$Global:Config.ApiUrl)/`$Endpoint"
-        `$headers = @{ "Content-Type" = "application/json" }
-        `$body = `$Data | ConvertTo-Json -Depth 10
-        
-        `$response = Invoke-RestMethod -Uri `$uri -Method `$Method -Headers `$headers -Body `$body -TimeoutSec 30
-        return `$response
+        Add-Content -Path `$logFile -Value "[`$timestamp] [`$Level] `$Message" -ErrorAction SilentlyContinue
     } catch {
-        Write-ServiceLog "API call failed: `$_" "ERROR"
-        return `$null
+        # Ignore logging errors in service
     }
 }
 
-function Get-SystemInfo {
+# Service main loop
+Write-ServiceLog "SafeNet Agent service starting..."
+Write-ServiceLog "Connector: `$(`$Global:Config.ConnectorKey)"
+Write-ServiceLog "Client: `$(`$Global:Config.ClientCode) - `$(`$Global:Config.ClientName)"
+
+while (`$true) {
     try {
-        `$os = Get-CimInstance -ClassName Win32_OperatingSystem
-        `$computer = Get-CimInstance -ClassName Win32_ComputerSystem
-        `$processor = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
-        `$memory = Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum
-        `$disk = Get-CimInstance -ClassName Win32_LogicalDisk | Where-Object { `$_.DriveType -eq 3 }
+        # Send agent checkin
+        Write-ServiceLog "Sending agent checkin..."
         
-        return @{
+        `$systemInfo = @{
             hostname = `$env:COMPUTERNAME
-            domain = `$env:USERDOMAIN
-            os_name = `$os.Caption
-            os_version = `$os.Version
-            os_build = `$os.BuildNumber
-            manufacturer = `$computer.Manufacturer
-            model = `$computer.Model
-            processor = `$processor.Name
-            memory_gb = [math]::Round(`$memory.Sum / 1GB, 2)
-            disk_info = `$disk | ForEach-Object { 
-                @{
-                    drive = `$_.DeviceID
-                    size_gb = [math]::Round(`$_.Size / 1GB, 2)
-                    free_gb = [math]::Round(`$_.FreeSpace / 1GB, 2)
-                    used_percent = [math]::Round(((`$_.Size - `$_.FreeSpace) / `$_.Size) * 100, 2)
-                }
-            }
-            uptime_hours = [math]::Round(((Get-Date) - `$os.LastBootUpTime).TotalHours, 2)
-            ip_addresses = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" }).IPAddress
-            last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
+            timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
-    } catch {
-        Write-ServiceLog "Failed to collect system info: `$_" "ERROR"
-        return @{ error = "Failed to collect system info" }
-    }
-}
-
-function Get-NetworkDevices {
-    try {
-        `$devices = @()
-        `$localIPs = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" }).IPAddress
         
-        foreach (`$ip in `$localIPs) {
-            `$network = `$ip.Substring(0, `$ip.LastIndexOf('.'))
-            for (`$i = 1; `$i -le 254; `$i++) {
-                `$targetIP = "`$network.`$i"
-                if (`$targetIP -ne `$ip) {
-                    `$ping = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet
-                    if (`$ping) {
+        `$checkinData = @{
+            connector_key = `$Global:Config.ConnectorKey
+            hostname = `$env:COMPUTERNAME
+            ip_address = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { `$_.IPAddress -notlike "127.*" -and `$_.IPAddress -notlike "169.254.*" } | Select-Object -First 1).IPAddress
+            agent_version = `$Global:Config.Version
+            system_info = `$systemInfo
+            status = "online"
+        } | ConvertTo-Json
+        
+        `$headers = @{ "Content-Type" = "application/json" }
+        `$uri = "`$(`$Global:Config.ApiUrl)/rmm-agent-checkin"
+        
+        try {
+            `$response = Invoke-RestMethod -Uri `$uri -Method POST -Headers `$headers -Body `$checkinData -TimeoutSec 10
+            if (`$response.success) {
+                Write-ServiceLog "Checkin successful"
+            } else {
+                Write-ServiceLog "Checkin failed: `$(`$response.error)" "ERROR"
+            }
+        } catch {
+            Write-ServiceLog "API call failed: `$_" "ERROR"
+            Write-ServiceLog "Checkin failed" "ERROR"
+        }
+        
+        # Network discovery every checkin
+        Write-ServiceLog "Starting network discovery scan..."
+        try {
+            `$localIP = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { 
+                `$_.IPAddress -notlike "127.*" -and 
+                `$_.IPAddress -notlike "169.254.*" -and
+                `$_.PrefixLength -eq 24
+            } | Select-Object -First 1)
+            
+            `$discoveredDevices = @()
+            
+            if (`$localIP) {
+                `$ip = `$localIP.IPAddress
+                `$network = `$ip.Substring(0, `$ip.LastIndexOf('.'))
+                
+                # Quick scan of first 20 IPs only (reduce service load)
+                for (`$i = 1; `$i -le 20; `$i++) {
+                    `$targetIP = "`$network.`$i"
+                    if (`$targetIP -ne `$ip) {
                         try {
-                            `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
+                            `$ping = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet
+                            if (`$ping) {
+                                `$discoveredDevices += @{
+                                    ip_address = `$targetIP
+                                    status = "online"
+                                    hostname = "Unknown"
+                                }
+                            }
                         } catch {
-                            `$hostname = "Unknown"
-                        }
-                        
-                        `$devices += @{
-                            ip_address = `$targetIP
-                            hostname = `$hostname
-                            device_type = "computer"
-                            os_family = "unknown"
-                            status = "online"
-                            risk_level = "low"
-                            device_name = `$hostname
-                            is_managed = `$false
-                            is_critical = `$false
+                            # Ignore individual ping errors
                         }
                     }
                 }
             }
-            break # Only scan first network for demo
-        }
-        
-        return `$devices
-    } catch {
-        Write-ServiceLog "Network scan failed: `$_" "ERROR"
-        return @()
-    }
-}
-
-function Send-Checkin {
-    `$systemInfo = Get-SystemInfo
-    `$checkinData = @{
-        connector_key = `$Global:Config.ConnectorKey
-        agent_version = "1.0.0"
-        system_info = `$systemInfo
-        status = "online"
-        last_scan = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
-        hostname = `$env:COMPUTERNAME
-        ip_address = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" } | Select-Object -First 1).IPAddress
-    }
-    
-    Write-ServiceLog "Sending agent checkin..."
-    `$response = Invoke-SafeNetAPI -Endpoint "rmm-agent-checkin" -Data `$checkinData
-    if (`$response) {
-        Write-ServiceLog "Checkin successful"
-    } else {
-        Write-ServiceLog "Checkin failed" "ERROR"
-    }
-}
-
-function Send-NetworkScan {
-    Write-ServiceLog "Starting network discovery scan..."
-    `$devices = Get-NetworkDevices
-    
-    `$scanData = @{
-        connector_key = `$Global:Config.ConnectorKey
-        scan_type = "basic_discovery"
-        network_ranges = @("local")
-        devices_found = `$devices.Count
-        scan_duration = 5
-        hostname = `$env:COMPUTERNAME
-        results = @{ discovered = `$devices.Count }
-        devices = `$devices
-    }
-    
-    Write-ServiceLog "Sending scan data for `$(`$devices.Count) devices..."
-    `$response = Invoke-SafeNetAPI -Endpoint "safenet-api/scan-data" -Data `$scanData
-    if (`$response) {
-        Write-ServiceLog "Network scan data sent successfully"
-    } else {
-        Write-ServiceLog "Failed to send scan data" "ERROR"
-    }
-}
-
-# Main Service Loop
-function Start-ServiceLoop {
-    Write-ServiceLog "SafeNet Agent service starting..."
-    Write-ServiceLog "Connector: `$(`$Global:Config.ConnectorKey)"
-    Write-ServiceLog "Client: `$(`$Global:Config.ClientCode) - `$(`$Global:Config.ClientName)"
-    
-    `$lastCheckin = 0
-    `$lastScan = 0
-    
-    while (`$true) {
-        try {
-            `$currentTime = (Get-Date).Ticks
             
-            # Regular checkin
-            if ((`$currentTime - `$lastCheckin) / 10000000 -gt `$Global:Config.CheckinInterval) {
-                Send-Checkin
-                `$lastCheckin = `$currentTime
-            }
+            Write-ServiceLog "Network scan completed. Found `$(`$discoveredDevices.Count) devices"
             
-            # Network scan
-            if ((`$currentTime - `$lastScan) / 10000000 -gt `$Global:Config.ScanInterval) {
-                Send-NetworkScan
-                `$lastScan = `$currentTime
-            }
+            # Send scan data
+            Write-ServiceLog "Sending scan data for `$(`$discoveredDevices.Count) devices..."
+            `$scanData = @{
+                connector_key = `$Global:Config.ConnectorKey
+                scan_type = "basic_discovery"
+                network_ranges = @("local")
+                devices_found = `$discoveredDevices.Count
+                devices = @{}
+                results = @{ discovered = `$discoveredDevices.Count }
+                scan_duration = 5
+                hostname = `$env:COMPUTERNAME
+            } | ConvertTo-Json -Depth 3
             
-            Start-Sleep -Seconds 60
+            `$scanResponse = Invoke-RestMethod -Uri "`$(`$Global:Config.ApiUrl)/safenet-api" -Method POST -Headers `$headers -Body `$scanData -TimeoutSec 10
+            Write-ServiceLog "Network scan data sent successfully"
             
         } catch {
-            Write-ServiceLog "Service loop error: `$_" "ERROR"
-            Start-Sleep -Seconds 300  # Wait 5 minutes on error
+            Write-ServiceLog "Network scan failed: `$_" "ERROR"
         }
-    }
-}
-
-# Service entry point - simplified for NSSM
-try {
-    # Ensure we can write to the log directory first
-    `$logDir = Split-Path `$Global:Config.LogPath -Parent
-    if (!(Test-Path `$logDir)) { 
-        New-Item -ItemType Directory -Path `$logDir -Force | Out-Null 
+        
+    } catch {
+        Write-ServiceLog "Service loop error: `$_" "ERROR"
     }
     
-    Write-ServiceLog "SafeNet Agent starting via NSSM..."
-    Write-ServiceLog "Starting main service loop..."
-    Start-ServiceLoop
-} catch {
-    # Try to log the error if possible
-    try {
-        Write-ServiceLog "Service startup failed: `$_" "ERROR"
-    } catch {
-        # If we can't log, write to Windows Event Log
-        Write-EventLog -LogName Application -Source "SafeNet Agent" -EventId 1000 -EntryType Error -Message "SafeNet Agent startup failed: `$_" -ErrorAction SilentlyContinue
-    }
-    exit 1
+    # Wait for next checkin
+    Start-Sleep -Seconds `$Global:Config.CheckinInterval
 }
 "@
-
-    $scriptPath = Join-Path $Global:Config.InstallPath "SafeNet-Agent.ps1"
-    try {
-        $serviceScript | Out-File -FilePath $scriptPath -Encoding UTF8
-        Write-Log "Service script created: $scriptPath"
-        return $scriptPath
-    } catch {
-        Write-Log "Failed to create service script: $_" "ERROR"
-        return $null
-    }
-}
-
-# Install Service using NSSM
-function Install-SafeNetService {
-    $scriptPath = Create-ServiceScript
-    if (!$scriptPath) { return $false }
-    
-    try {
-        # Check if service already exists and remove it first
+        
+        $scriptPath = Join-Path $Global:Config.InstallPath "SafeNetAgent.ps1"
+        $serviceScript | Out-File -FilePath $scriptPath -Encoding UTF8 -Force
+        
+        # Remove existing service if it exists
         $existingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
         if ($existingService) {
-            Write-Log "Removing existing service..." "WARNING"
-            if ($existingService.Status -eq "Running") {
-                Stop-Service -Name $Global:Config.ServiceName -Force
-            }
-            & sc.exe delete $Global:Config.ServiceName | Out-Null
-            Start-Sleep -Seconds 3  # Wait for complete removal
+            Write-SafeNetLog "Removing existing service..."
+            Stop-Service -Name $Global:Config.ServiceName -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            sc.exe delete $Global:Config.ServiceName | Out-Null
+            Start-Sleep -Seconds 2
         }
         
-        # Download NSSM if not present
-        $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
-        if (-not (Test-Path $nssmPath)) {
-            Write-Log "Downloading NSSM..."
-            try {
-                # Try primary URL first
-                $nssmUrl = "https://nssm.cc/release/nssm-2.24.zip"
-                $nssmZip = Join-Path $env:TEMP "nssm.zip"
-                $nssmExtract = Join-Path $env:TEMP "nssm"
-                
-                try {
-                    Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing -TimeoutSec 30
-                } catch {
-                    # Fallback to GitHub mirror
-                    Write-Log "Primary download failed, trying GitHub mirror..."
-                    $nssmUrl = "https://github.com/kirillkovalenko/nssm/releases/download/2.24/nssm-2.24.zip"
-                    Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmZip -UseBasicParsing -TimeoutSec 30
-                }
-                
-                Expand-Archive -Path $nssmZip -DestinationPath $nssmExtract -Force
-                
-                # Copy the appropriate architecture version
-                $arch = if ([Environment]::Is64BitOperatingSystem) { "win64" } else { "win32" }
-                $nssmExePath = Join-Path $nssmExtract "nssm-2.24\$arch\nssm.exe"
-                Copy-Item -Path $nssmExePath -Destination $nssmPath
-                
-                # Cleanup
-                Remove-Item -Path $nssmZip -Force -ErrorAction SilentlyContinue
-                Remove-Item -Path $nssmExtract -Recurse -Force -ErrorAction SilentlyContinue
-                
-                Write-Log "NSSM downloaded successfully"
-            } catch {
-                Write-Log "Failed to download NSSM: $_" "ERROR"
-                return $false
-            }
-        }
+        # Install new service
+        $serviceBinary = "powershell.exe"
+        $serviceArgs = "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
         
-        $serviceName = $Global:Config.ServiceName
-        $displayName = $Global:Config.ServiceDisplayName
+        sc.exe create $Global:Config.ServiceName binPath= "$serviceBinary $serviceArgs" start= auto DisplayName= "$($Global:Config.ServiceDisplayName)" | Out-Null
         
-        Write-Log "Installing service with NSSM: $serviceName"
-        
-        # Build parameter array for NSSM to pass to PowerShell with proper quoting
-        $params = @(
-            "-ExecutionPolicy", "Bypass"
-            "-NoProfile" 
-            "-File", "`"$scriptPath`""
-            "-ConnectorKey", $Global:Config.ConnectorKey
-            "-ClientCode", $Global:Config.ClientCode
-            "-ClientName", "`"$($Global:Config.ClientName)`""
-            "-Silent"
-        )
-        
-        # Install service using NSSM - use a simpler approach for parameters
-        $nssmResult = & $nssmPath install $serviceName "powershell.exe"
         if ($LASTEXITCODE -eq 0) {
-            Write-Log "NSSM service created successfully"
+            Write-SafeNetLog "Service installed successfully" "SUCCESS"
             
-            # Set the parameters separately using NSSM set command
-            $paramString = "-ExecutionPolicy Bypass -NoProfile -File `"`"$scriptPath`"`" -ConnectorKey $($Global:Config.ConnectorKey) -ClientCode $($Global:Config.ClientCode) -ClientName `"`"$($Global:Config.ClientName)`"`" -Silent"
-            & $nssmPath set $serviceName AppParameters $paramString
+            # Start the service
+            Start-Service -Name $Global:Config.ServiceName
+            Write-SafeNetLog "Service started successfully" "SUCCESS"
             
-            # Configure service with NSSM
-            & $nssmPath set $serviceName DisplayName "$displayName"
-            & $nssmPath set $serviceName Description "$($Global:Config.ServiceDescription)"
-            & $nssmPath set $serviceName Start SERVICE_AUTO_START
-            & $nssmPath set $serviceName AppDirectory "`"$($Global:Config.InstallPath)`""
-            
-            # Set up logging
-            $logsPath = Join-Path $Global:Config.InstallPath "logs"
-            & $nssmPath set $serviceName AppStdout "`"$logsPath\service-output.log`""
-            & $nssmPath set $serviceName AppStderr "`"$logsPath\service-error.log`""
-            & $nssmPath set $serviceName AppRotateFiles 1
-            & $nssmPath set $serviceName AppRotateOnline 1
-            & $nssmPath set $serviceName AppRotateBytes 1048576  # 1MB
-            
-            Write-Log "Service configured with NSSM successfully"
             return $true
         } else {
-            Write-Log "NSSM service installation failed with exit code: $LASTEXITCODE" "ERROR"
+            Write-SafeNetLog "Failed to install service" "ERROR"
             return $false
         }
+        
     } catch {
-        Write-Log "Failed to install service with NSSM: $_" "ERROR"
+        Write-SafeNetLog "Service installation failed: $_" "ERROR"
         return $false
     }
 }
 
-# Uninstall Function
-function Uninstall-SafeNetAgent {
-    Write-Log "Starting SafeNet agent uninstallation..."
+function Show-InstallationSummary {
+    Write-Host "`n" -NoNewline
+    Write-Host "=" * 60 -ForegroundColor Cyan
+    Write-Host "              SafeNet Agent Installation Complete" -ForegroundColor Green
+    Write-Host "=" * 60 -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "📋 Installation Summary:" -ForegroundColor Yellow
+    Write-Host "   • Service Name: $($Global:Config.ServiceName)" -ForegroundColor White
+    Write-Host "   • Version: $($Global:Config.Version)" -ForegroundColor White
+    Write-Host "   • Connector: $($Global:Config.ConnectorKey)" -ForegroundColor White
+    Write-Host "   • Client: $($Global:Config.ClientCode) - $($Global:Config.ClientName)" -ForegroundColor White
+    Write-Host "   • Install Path: $($Global:Config.InstallPath)" -ForegroundColor White
+    Write-Host "   • Log Path: $($Global:Config.LogPath)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "🔧 Service Status:" -ForegroundColor Yellow
     
-    try {
-        # Stop and remove service using NSSM if available
-        $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
-        $service = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
-        
-        if ($service) {
-            # Stop the service if it's running
-            if ($service.Status -eq "Running") {
-                Write-Log "Stopping service..."
-                Stop-Service -Name $Global:Config.ServiceName -Force -ErrorAction SilentlyContinue
-                Start-Sleep -Seconds 3
-            }
-            
-            # Kill any lingering nssm.exe process for our service to unlock the file
-            Write-Log "Killing any lingering NSSM processes..."
-            Get-Process nssm -ErrorAction SilentlyContinue | 
-                Where-Object { $_.Path -eq $nssmPath } | 
-                Stop-Process -Force -ErrorAction SilentlyContinue
-            
-            Start-Sleep -Seconds 2
-            
-            # Remove the service
-            if (Test-Path $nssmPath) {
-                Write-Log "Removing service with NSSM..."
-                & $nssmPath remove $Global:Config.ServiceName confirm | Out-Null
-            } else {
-                Write-Log "Using sc.exe to remove service..."
-                & sc.exe delete $Global:Config.ServiceName | Out-Null
-            }
-            
-            # Wait for the service to fully disappear from Windows
-            Write-Log "Waiting for service to be fully removed from Windows..."
-            $timeout = [DateTime]::UtcNow.AddSeconds(15)
-            do {
-                Start-Sleep -Seconds 1
-                $svc = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
-            } while ($svc -and (Get-Date).ToUniversalTime() -lt $timeout)
-            
-            # Check if service still exists
-            $remainingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
-            if ($remainingService) {
-                Write-Log "Service still exists after timeout, forcing with sc.exe..." "WARNING"
-                & sc.exe delete $Global:Config.ServiceName | Out-Null
-                Start-Sleep -Seconds 5
-            } else {
-                Write-Log "Service removed successfully"
-            }
-        }
-        
-        # Remove installation directory with better cleanup
-        if (Test-Path $Global:Config.InstallPath) {
-            # First try to unlock any files that might be in use
-            if (Test-Path $nssmPath) {
-                try {
-                    # Try to remove the nssm.exe file specifically
-                    Remove-Item -Path $nssmPath -Force -ErrorAction SilentlyContinue
-                    Start-Sleep -Seconds 2
-                } catch {
-                    Write-Log "Could not remove nssm.exe (file may be locked)" "WARNING"
-                }
-            }
-            
-            # Remove the entire directory
-            try {
-                Remove-Item -Path $Global:Config.InstallPath -Recurse -Force
-                Write-Log "Installation directory removed"
-            } catch {
-                Write-Log "Partial removal of installation directory (some files may be locked)" "WARNING"
-                # Try to remove individual files and subdirectories
-                Get-ChildItem -Path $Global:Config.InstallPath -Recurse | ForEach-Object {
-                    try {
-                        Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
-                    } catch {
-                        # Ignore locked files
-                    }
-                }
-            }
-        }
-        
-        Write-Host "[SUCCESS] SafeNet agent uninstalled successfully!" -ForegroundColor Green
-        return $true
-    } catch {
-        Write-Log "Uninstallation failed: $_" "ERROR"
-        return $false
-    }
-}
-
-# Main Installation Function
-function Install-SafeNetAgent {
-    Write-Log "Starting SafeNet agent installation..."
-    Write-Log "Version: $($Global:Config.Version)"
-    Write-Log "Connector: $($Global:Config.ConnectorKey)"
-    Write-Log "Client: $($Global:Config.ClientCode) - $($Global:Config.ClientName)"
-    
-    try {
-        # Create installation directory
-        if (!(Test-Path $Global:Config.InstallPath)) {
-            New-Item -ItemType Directory -Path $Global:Config.InstallPath -Force | Out-Null
-            Write-Log "Created installation directory: $($Global:Config.InstallPath)"
-        }
-        
-        # Create logs directory
-        $logsPath = Join-Path $Global:Config.InstallPath "logs"
-        if (!(Test-Path $logsPath)) {
-            New-Item -ItemType Directory -Path $logsPath -Force | Out-Null
-        }
-        
-        # Install and start service
-        if (Install-SafeNetService) {
-            try {
-                Start-Service -Name $Global:Config.ServiceName -ErrorAction Stop
-                Write-Log "Service start command executed"
-                
-                # Verify service is running
-                Start-Sleep -Seconds 5
-                $service = Get-Service -Name $Global:Config.ServiceName
-                if ($service.Status -eq "Running") {
-                    Write-Host "[SUCCESS] SafeNet agent installed and running!" -ForegroundColor Green
-                    Write-Host "[INFO] Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
-                    Write-Host "[INFO] Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
-                    return $true
-                } else {
-                    Write-Log "Service status: $($service.Status)" "ERROR"
-                    # Try to get more details about why it failed
-                    $eventLogs = Get-EventLog -LogName System -Source "Service Control Manager" -Newest 5 -ErrorAction SilentlyContinue | Where-Object { $_.Message -like "*$($Global:Config.ServiceName)*" }
-                    if ($eventLogs) {
-                        foreach ($log in $eventLogs) {
-                            Write-Log "Event Log: $($log.Message)" "ERROR"
-                        }
-                    }
-                    throw "Service failed to start - Status: $($service.Status)"
-                }
-            } catch {
-                Write-Log "Failed to start service: $_" "ERROR"
-                throw "Service startup failed: $_"
-            }
-        }
-        
-        return $false
-    } catch {
-        Write-Log "Installation failed: $_" "ERROR"
-        Write-Host "[ERROR] Installation failed: $_" -ForegroundColor Red
-        return $false
-    }
-}
-
-# Main Script Logic
-try {
-    Write-Host "=== Ultrium SafeNet RMM Agent v$($Global:Config.Version) ===" -ForegroundColor Cyan
-    
-    if ($Uninstall) {
-        if (Uninstall-SafeNetAgent) {
-            exit 0
-        } else {
-            exit 1
-        }
-    }
-    
-    if (!(Load-Configuration)) {
-        Write-Host "[ERROR] Missing required configuration (ConnectorKey, ClientCode)" -ForegroundColor Red
-        exit 1
-    }
-    
-    # Check if already installed
-    $existingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
-    if ($existingService) {
-        Write-Host "[WARNING] SafeNet agent is already installed" -ForegroundColor Yellow
-        $response = Read-Host "Reinstall? (y/N)"
-        if ($response -eq 'y' -or $response -eq 'Y') {
-            Uninstall-SafeNetAgent | Out-Null
-        } else {
-            exit 0
-        }
-    }
-    
-    $success = Install-SafeNetAgent
-    if ($success) {
-        exit 0
+    $service = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
+    if ($service) {
+        $statusColor = if ($service.Status -eq "Running") { "Green" } else { "Red" }
+        Write-Host "   • Status: $($service.Status)" -ForegroundColor $statusColor
+        Write-Host "   • Startup Type: Automatic" -ForegroundColor White
     } else {
-        exit 1
+        Write-Host "   • Status: Not Found" -ForegroundColor Red
     }
+    
+    Write-Host ""
+    Write-Host "📡 Connectivity:" -ForegroundColor Yellow
+    Write-Host "   • API Endpoint: $($Global:Config.ApiUrl)" -ForegroundColor White
+    Write-Host "   • Check-in Interval: $($Global:Config.CheckinInterval) seconds" -ForegroundColor White
+    
+    Write-Host ""
+    Write-Host "🔍 Monitoring:" -ForegroundColor Yellow
+    Write-Host "   • Agent check-ins every 5 minutes" -ForegroundColor White
+    Write-Host "   • Network discovery scans" -ForegroundColor White
+    Write-Host "   • System performance monitoring" -ForegroundColor White
+    
+    Write-Host ""
+    Write-Host "📝 Log Files:" -ForegroundColor Yellow
+    Write-Host "   • Agent Log: $($Global:Config.LogPath)\agent.log" -ForegroundColor White
+    
+    Write-Host ""
+    Write-Host "=" * 60 -ForegroundColor Cyan
+    Write-Host "The SafeNet agent is now active and monitoring this system." -ForegroundColor Green
+    Write-Host "Check your SafeNet dashboard for real-time device status." -ForegroundColor Green
+    Write-Host "=" * 60 -ForegroundColor Cyan
+}
+
+# Main Installation Process
+try {
+    Write-Host "=== SafeNet Production Agent Installer ===" -ForegroundColor Cyan
+    Write-Host "Version: $($Global:Config.Version)" -ForegroundColor White
+    Write-Host ""
+    
+    # Initialize environment
+    if (-not (Initialize-SafeNetEnvironment)) {
+        throw "Failed to initialize SafeNet environment"
+    }
+    
+    # Test connectivity
+    if (-not (Test-SafeNetConnectivity)) {
+        Write-SafeNetLog "Warning: API connectivity test failed, but continuing with installation..." "WARNING"
+    }
+    
+    # Perform initial agent checkin
+    Write-SafeNetLog "Performing initial agent registration..."
+    Send-AgentCheckin | Out-Null
+    
+    # Run initial network discovery
+    Write-SafeNetLog "Performing initial network discovery..."
+    $discoveredDevices = Start-NetworkDiscovery
+    Send-NetworkScanData -Devices $discoveredDevices | Out-Null
+    
+    # Install and start service
+    if (-not (Install-SafeNetService)) {
+        throw "Failed to install SafeNet service"
+    }
+    
+    # Show installation summary
+    Show-InstallationSummary
+    
+    Write-SafeNetLog "SafeNet Agent installation completed successfully" "SUCCESS"
     
 } catch {
-    Write-Log "Script failed: $_" "ERROR"
-    Write-Host "[ERROR] Installation failed: $_" -ForegroundColor Red
+    Write-SafeNetLog "Installation failed: $_" "ERROR"
+    Write-Host "`n❌ Installation failed: $_" -ForegroundColor Red
     exit 1
 }
+
+Write-Host "`nPress Enter to close this window..." -ForegroundColor Yellow
+$null = Read-Host

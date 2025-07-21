@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.3'
 
@@ -23,19 +24,20 @@ serve(async (req) => {
       agent_token = connector_key, // Support both parameter names
       hostname, 
       ip_address, 
-      agent_version,
-      system_info,
-      performance_metrics,
-      installed_software,
-      security_status,
-      status,
+      agent_version = '1.0.0',
+      system_info = {},
+      performance_metrics = {},
+      installed_software = [],
+      security_status = {},
+      status = 'online',
       last_scan
     } = await req.json();
 
-    console.log('Agent check-in received:', { 
+    console.log('🔍 Agent check-in received:', { 
       agent_token: agent_token?.substring(0, 20) + '...', 
       hostname, 
-      ip_address 
+      ip_address,
+      agent_version
     });
 
     // Validate agent token and get user info
@@ -47,33 +49,76 @@ serve(async (req) => {
       .single();
 
     if (connectorError || !connectorData) {
+      console.error('❌ Invalid connector:', connectorError);
       throw new Error('Invalid or inactive agent token');
     }
 
-    // Find the device by IP address and user
-    const { data: deviceData, error: deviceError } = await supabase
+    console.log('✅ Connector validated:', connectorData.id);
+
+    // Find or create device record
+    let deviceData;
+    const { data: existingDevice, error: deviceError } = await supabase
       .from('safenet_devices')
-      .select('id')
+      .select('id, is_managed, status')
       .eq('user_id', connectorData.user_id)
       .eq('ip_address', ip_address)
       .single();
 
-    if (deviceError || !deviceData) {
-      throw new Error('Device not found or not registered');
+    if (deviceError || !existingDevice) {
+      console.log('📝 Creating new device record for:', hostname, ip_address);
+      
+      // Auto-register new device
+      const { data: newDevice, error: createError } = await supabase
+        .from('safenet_devices')
+        .insert({
+          user_id: connectorData.user_id,
+          connector_key: agent_token,
+          ip_address,
+          hostname,
+          device_name: `${hostname} Workstation`,
+          device_type: 'workstation',
+          status: 'online',
+          is_managed: true,
+          network_segment: 'local',
+          discovery_method: ['agent_checkin'],
+          last_seen_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('❌ Failed to create device:', createError);
+        throw new Error('Failed to register device');
+      }
+
+      deviceData = newDevice;
+      console.log('✅ Device auto-registered:', deviceData.id);
+    } else {
+      deviceData = existingDevice;
+      console.log('✅ Using existing device:', deviceData.id);
     }
 
     // Update device as managed and online
-    await supabase
+    const { error: updateError } = await supabase
       .from('safenet_devices')
       .update({
         is_managed: true,
         status: 'online',
+        hostname: hostname, // Update hostname in case it changed
+        connector_key: agent_token,
         last_seen_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', deviceData.id);
 
-    // Insert or update agent check-in
+    if (updateError) {
+      console.error('❌ Failed to update device:', updateError);
+      throw new Error('Failed to update device status');
+    }
+
+    // Insert or update agent check-in record in rmm_agent_checkins table
     const { data: existingCheckin } = await supabase
       .from('rmm_agent_checkins')
       .select('id')
@@ -82,20 +127,25 @@ serve(async (req) => {
 
     if (existingCheckin) {
       // Update existing check-in
-      await supabase
+      const { error: updateCheckinError } = await supabase
         .from('rmm_agent_checkins')
         .update({
           agent_version,
-          system_info: system_info || {},
-          performance_metrics: performance_metrics || {},
-          installed_software: installed_software || [],
-          security_status: security_status || {},
+          system_info,
+          performance_metrics,
+          installed_software,
+          security_status,
           last_checkin: new Date().toISOString()
         })
         .eq('id', existingCheckin.id);
+
+      if (updateCheckinError) {
+        console.error('⚠️ Failed to update check-in record:', updateCheckinError);
+        // Don't fail the whole request for this
+      }
     } else {
       // Create new check-in record
-      await supabase
+      const { error: insertCheckinError } = await supabase
         .from('rmm_agent_checkins')
         .insert({
           user_id: connectorData.user_id,
@@ -104,20 +154,28 @@ serve(async (req) => {
           hostname,
           ip_address,
           agent_version,
-          system_info: system_info || {},
-          performance_metrics: performance_metrics || {},
-          installed_software: installed_software || [],
-          security_status: security_status || {}
+          system_info,
+          performance_metrics,
+          installed_software,
+          security_status,
+          last_checkin: new Date().toISOString()
         });
+
+      if (insertCheckinError) {
+        console.error('⚠️ Failed to create check-in record:', insertCheckinError);
+        // Don't fail the whole request for this
+      }
     }
 
-    console.log('Agent check-in processed successfully for device:', deviceData.id);
+    console.log('🎉 Agent check-in processed successfully for device:', deviceData.id);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Check-in received successfully',
         device_id: deviceData.id,
+        is_managed: true,
+        status: 'online',
         next_checkin: 300 // Check in every 5 minutes
       }),
       { 
@@ -129,10 +187,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Agent check-in error:', error);
+    console.error('💥 Agent check-in error:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to process agent check-in' 
+        error: error.message || 'Failed to process agent check-in',
+        success: false
       }),
       { 
         status: 500, 
