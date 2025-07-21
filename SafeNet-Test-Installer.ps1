@@ -39,7 +39,7 @@ function Test-ApiConnectivity {
             timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
         
-        $uri = "$($Global:Config.ApiUrl)/rmm-agent-checkin"
+        $uri = "$($Global:Config.ApiUrl)/safenet-api"
         $headers = @{ "Content-Type" = "application/json" }
         $body = $testData | ConvertTo-Json
         
