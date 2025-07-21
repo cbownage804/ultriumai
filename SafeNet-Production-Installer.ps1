@@ -323,6 +323,17 @@ function Install-SafeNetService {
     if (!$scriptPath) { return $false }
     
     try {
+        # Check if service already exists and remove it first
+        $existingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
+        if ($existingService) {
+            Write-Log "Removing existing service..." "WARNING"
+            if ($existingService.Status -eq "Running") {
+                Stop-Service -Name $Global:Config.ServiceName -Force
+            }
+            & sc.exe delete $Global:Config.ServiceName | Out-Null
+            Start-Sleep -Seconds 3  # Wait for complete removal
+        }
+        
         # Use PowerShell directly as service executable
         $servicePath = "powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File `"$scriptPath`" service"
         New-Service -Name $Global:Config.ServiceName -DisplayName $Global:Config.ServiceDisplayName -Description $Global:Config.ServiceDescription -BinaryPathName $servicePath -StartupType Automatic
@@ -347,8 +358,17 @@ function Uninstall-SafeNetAgent {
                 Stop-Service -Name $Global:Config.ServiceName -Force
                 Write-Log "Service stopped"
             }
-            Remove-Service -Name $Global:Config.ServiceName
-            Write-Log "Service removed"
+            
+            # Use sc.exe for Windows PowerShell compatibility
+            $result = & sc.exe delete $Global:Config.ServiceName
+            if ($LASTEXITCODE -eq 0) {
+                Write-Log "Service removed successfully"
+            } else {
+                Write-Log "Service removal completed with code: $LASTEXITCODE" "WARNING"
+            }
+            
+            # Wait for service to be fully removed
+            Start-Sleep -Seconds 2
         }
         
         # Remove installation directory
