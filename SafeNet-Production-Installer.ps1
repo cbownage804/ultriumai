@@ -338,33 +338,26 @@ function Install-SafeNetService {
         $serviceName = $Global:Config.ServiceName
         $displayName = $Global:Config.ServiceDisplayName
         
-        # Build the command with proper escaping for nested quotes
-        $binPathValue = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File \`"$scriptPath\`" service"
+        # Build the command with proper quoting for PowerShell service
+        $binPathValue = "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -File `"$scriptPath`" service"
         
         Write-Log "Creating service: $serviceName"
         Write-Log "Binary path: $binPathValue"
         
-        # Use New-Service cmdlet instead of sc.exe for better PowerShell integration
+        # Use New-Service cmdlet for better PowerShell integration
         try {
-            New-Service -Name $serviceName -BinaryPathName $binPathValue -DisplayName $displayName -StartupType Automatic
-            $result = $true
-        } catch {
-            Write-Log "New-Service failed, trying sc.exe with proper escaping..." "WARNING"
+            New-Service -Name $serviceName -BinaryPathName $binPathValue -DisplayName $displayName -StartupType Automatic -ErrorAction Stop
+            Write-Log "Windows service created successfully: $serviceName"
             
-            # Fallback to sc.exe with properly escaped quotes
-            $escapedBinPath = $binPathValue -replace '"', '\"'
-            $result = & sc.exe create $serviceName binPath= $escapedBinPath DisplayName= $displayName start= auto
-        }
-        
-        if ($LASTEXITCODE -eq 0) {
-            Write-Log "Windows service installed: $serviceName"
-            return $true
-        } else {
-            Write-Log "sc.exe failed with exit code: $LASTEXITCODE" "ERROR"
-            if ($result) {
-                Write-Log "sc.exe output: $result" "ERROR"
+            # Test if the service script exists and is accessible
+            if (-not (Test-Path $scriptPath)) {
+                throw "Service script not found at: $scriptPath"
             }
-            throw "Service creation failed"
+            
+            return $true
+        } catch {
+            Write-Log "New-Service failed: $_" "ERROR"
+            throw "Service creation failed: $_"
         }
     } catch {
         Write-Log "Failed to install service: $_" "ERROR"
