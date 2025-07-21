@@ -108,8 +108,11 @@ function Send-AgentCheckin {
             status = "online"
         } | ConvertTo-Json -Depth 5
         
-        $headers = @{ "Content-Type" = "application/json" }
-        $uri = "$($Global:Config.ApiUrl)/rmm-agent-checkin"
+        $headers = @{ 
+            "Content-Type" = "application/json"
+            "x-connector-key" = $Global:Config.ConnectorKey
+        }
+        $uri = "$($Global:Config.ApiUrl)/safenet-api/heartbeat"
         
         $response = Invoke-RestMethod -Uri $uri -Method POST -Headers $headers -Body $checkinData -TimeoutSec 15
         
@@ -351,8 +354,11 @@ while (`$true) {
             status = "online"
         } | ConvertTo-Json
         
-        `$headers = @{ "Content-Type" = "application/json" }
-        `$uri = "`$(`$Global:Config.ApiUrl)/rmm-agent-checkin"
+        `$headers = @{ 
+            "Content-Type" = "application/json"
+            "x-connector-key" = `$Global:Config.ConnectorKey
+        }
+        `$uri = "`$(`$Global:Config.ApiUrl)/safenet-api/heartbeat"
         
         try {
             `$response = Invoke-RestMethod -Uri `$uri -Method POST -Headers `$headers -Body `$checkinData -TimeoutSec 10
