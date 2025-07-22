@@ -363,12 +363,12 @@ function Install-SafeNetService {
     if (!$scriptPath) { return $false }
     
     try {
-        # Create service wrapper
+        # Create service wrapper with better error handling
         $serviceBat = Join-Path $Global:Config.InstallPath "SafeNet-Service.bat"
         @"
 @echo off
 cd /d "$($Global:Config.InstallPath)"
-powershell.exe -ExecutionPolicy Bypass -NoProfile -File "SafeNet-Agent.ps1" service
+powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Command "& '.\SafeNet-Agent.ps1' service" > logs\service.log 2>&1
 "@ | Out-File -FilePath $serviceBat -Encoding ASCII
         
         # Check if service already exists and remove it first
