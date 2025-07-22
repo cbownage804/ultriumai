@@ -428,8 +428,7 @@ function Install-SafeNetService {
         $servicePath = "powershell.exe"
         
         & $nssm install $Global:Config.ServiceName $servicePath
-        & $nssm set $Global:Config.ServiceName AppParameters `
-            '-ExecutionPolicy Bypass -NoProfile -File "C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1" service'
+        & $nssm set $Global:Config.ServiceName AppParameters "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" service"
         & $nssm set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
         & $nssm set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
         & $nssm set $Global:Config.ServiceName Start SERVICE_AUTO_START
