@@ -182,7 +182,9 @@ serve(async (req) => {
         device_id: deviceData.id,
         is_managed: true,
         status: 'online',
-        next_checkin: 300 // Check in every 5 minutes
+        next_checkin: 300, // Check in every 5 minutes
+        hostname: hostname,
+        ip_address: ip_address
       }),
       { 
         headers: { 
