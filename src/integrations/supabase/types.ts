@@ -10540,6 +10540,16 @@ export type Database = {
           info: number
         }[]
       }
+      get_device_latest_scan: {
+        Args: { p_device_id: string }
+        Returns: {
+          scan_id: string
+          scanned_at: string
+          devices_found: number
+          scan_duration: number
+          scan_type: string
+        }[]
+      }
       get_helpdesk_role: {
         Args: { _user_id: string; _context_id?: string }
         Returns: Database["public"]["Enums"]["helpdesk_role"]
