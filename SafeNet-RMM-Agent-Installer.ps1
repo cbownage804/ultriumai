@@ -470,18 +470,20 @@ function Install-SafeNetService {
         $servicePath = "powershell.exe"
         
         & $nssm install $Global:Config.ServiceName $servicePath
-        & $nssm set $Global:Config.ServiceName AppParameters "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" service"
+        
+        # Force-set parameters with proper quoting
+        & $nssm set $Global:Config.ServiceName AppParameters '-ExecutionPolicy Bypass -NoProfile -File "C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1" service'
+        & $nssm set $Global:Config.ServiceName AppDirectory "C:\Program Files\Ultrium SafeNet"
         & $nssm set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
         & $nssm set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
         & $nssm set $Global:Config.ServiceName Start SERVICE_AUTO_START
-        & $nssm set $Global:Config.ServiceName AppDirectory $Global:Config.InstallPath
         
         # Configure logging
         $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
         & $nssm set $Global:Config.ServiceName AppStdout $logFile
         & $nssm set $Global:Config.ServiceName AppStderr $logFile
         
-        # Verify configuration
+        # Verify configuration - AppParameters MUST show quotes around .ps1 path
         Write-Log "NSSM Configuration:"
         $params = & $nssm get $Global:Config.ServiceName AppParameters 2>&1
         $stdout = & $nssm get $Global:Config.ServiceName AppStdout 2>&1
@@ -489,6 +491,13 @@ function Install-SafeNetService {
         Write-Log "AppParameters: $params"
         Write-Log "AppStdout: $stdout" 
         Write-Log "AppDirectory: $appdir"
+        
+        # Verify quotes are preserved
+        if ($params -like '*"C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1"*') {
+            Write-Log "✅ NSSM parameters correctly quoted"
+        } else {
+            Write-Log "❌ NSSM parameters missing quotes - this will cause startup failure" "ERROR"
+        }
         
         Write-Log "Windows service installed with NSSM: $($Global:Config.ServiceName)"
         return $true
@@ -593,8 +602,8 @@ function Install-SafeNetAgent {
                     $appParams = & $nssmPath get $Global:Config.ServiceName AppParameters 2>&1
                     $appDir = & $nssmPath get $Global:Config.ServiceName AppDirectory 2>&1
                     Write-Log "Application: $appPath" "ERROR"
-                    Write-Log "Parameters: $appParams" "ERROR"
-                    Write-Log "Directory: $appDir" "ERROR"
+                    Write-Log "AppParameters: $appParams" "ERROR"
+                    Write-Log "AppDirectory: $appDir" "ERROR"
                 } catch {
                     Write-Log "Could not get NSSM config: $_" "ERROR"
                 }
@@ -684,7 +693,17 @@ function Install-SafeNetAgent {
                     Write-Log "Could not get service details: $_" "ERROR"
                 }
                 
-                throw "Service failed to start - Status: $($service.Status)"
+                # Early return on failure to avoid more testing
+                Write-Log "Installation failed: Service failed to start - Status: $($service.Status)" "ERROR"
+                Write-Host "`n❌ Installation failed! Manual debugging steps:" -ForegroundColor Red
+                Write-Host "1. Check NSSM configuration:" -ForegroundColor Yellow
+                Write-Host "   `$nssm = `"C:\Program Files\Ultrium SafeNet\nssm.exe`"" -ForegroundColor Cyan
+                Write-Host "   & `$nssm get UltriumSafeNetAgent AppParameters" -ForegroundColor Cyan
+                Write-Host "`n2. Check service logs:" -ForegroundColor Yellow  
+                Write-Host "   Get-Content `"C:\Program Files\Ultrium SafeNet\logs\service.log`" -Tail 50" -ForegroundColor Cyan
+                Write-Host "`n3. Test script manually:" -ForegroundColor Yellow
+                Write-Host "   powershell.exe -ExecutionPolicy Bypass -NoProfile -File `"C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1`" service" -ForegroundColor Cyan
+                return $false
             }
         }
         
