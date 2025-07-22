@@ -395,8 +395,13 @@ function Uninstall-SafeNetAgent {
                 Stop-Service -Name $Global:Config.ServiceName -Force
                 Write-Log "Service stopped"
             }
-            Remove-Service -Name $Global:Config.ServiceName
-            Write-Log "Service removed"
+            # Use sc.exe for compatibility with older PowerShell versions
+            $result = & sc.exe delete $Global:Config.ServiceName
+            if ($LASTEXITCODE -eq 0) {
+                Write-Log "Service removed"
+            } else {
+                Write-Log "Failed to remove service: $result" "ERROR"
+            }
         }
         
         # Remove installation directory
