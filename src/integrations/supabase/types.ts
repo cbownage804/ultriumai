@@ -10530,6 +10530,16 @@ export type Database = {
         Args: { frequency: string; schedule_time: string }
         Returns: string
       }
+      get_device_alert_counts: {
+        Args: { p_device_id: string }
+        Returns: {
+          critical: number
+          high: number
+          medium: number
+          low: number
+          info: number
+        }[]
+      }
       get_helpdesk_role: {
         Args: { _user_id: string; _context_id?: string }
         Returns: Database["public"]["Enums"]["helpdesk_role"]
