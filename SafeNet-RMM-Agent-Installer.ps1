@@ -567,6 +567,17 @@ function Install-SafeNetAgent {
                     Write-Log "Script test failed: $_" "ERROR"
                 }
                 
+                # Test the exact command NSSM is trying to run
+                Write-Log "Testing exact NSSM command..." "ERROR"
+                try {
+                    $nssmCommand = "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" service"
+                    Write-Log "NSSM Command: powershell.exe $nssmCommand" "ERROR"
+                    $exactResult = & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath service 2>&1
+                    Write-Log "Exact command result: $exactResult" "ERROR"
+                } catch {
+                    Write-Log "Exact command failed: $_" "ERROR"
+                }
+                
                 # Check service logs for more details
                 $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
                 if (Test-Path $logFile) {
