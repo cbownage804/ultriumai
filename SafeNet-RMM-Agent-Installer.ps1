@@ -471,7 +471,7 @@ function Install-SafeNetService {
         
         & $nssm install $Global:Config.ServiceName $servicePath
         
-        # Force-set parameters with proper quoting
+        # Force-set parameters with proper quoting - use single quotes to preserve inner double quotes
         & $nssm set $Global:Config.ServiceName AppParameters '-ExecutionPolicy Bypass -NoProfile -File "C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1" service'
         & $nssm set $Global:Config.ServiceName AppDirectory "C:\Program Files\Ultrium SafeNet"
         & $nssm set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
@@ -483,20 +483,20 @@ function Install-SafeNetService {
         & $nssm set $Global:Config.ServiceName AppStdout $logFile
         & $nssm set $Global:Config.ServiceName AppStderr $logFile
         
-        # Verify configuration - AppParameters MUST show quotes around .ps1 path
-        Write-Log "NSSM Configuration:"
+        # Verify NSSM kept the quotes properly
+        Write-Log "Verifying NSSM configuration..."
         $params = & $nssm get $Global:Config.ServiceName AppParameters 2>&1
-        $stdout = & $nssm get $Global:Config.ServiceName AppStdout 2>&1
-        $appdir = & $nssm get $Global:Config.ServiceName AppDirectory 2>&1
-        Write-Log "AppParameters: $params"
-        Write-Log "AppStdout: $stdout" 
-        Write-Log "AppDirectory: $appdir"
+        Write-Log "AppParameters result: $params"
         
-        # Verify quotes are preserved
+        # Check if quotes are preserved around the .ps1 path
         if ($params -like '*"C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1"*') {
-            Write-Log "✅ NSSM parameters correctly quoted"
+            Write-Log "✅ NSSM parameters correctly quoted" 
         } else {
-            Write-Log "❌ NSSM parameters missing quotes - this will cause startup failure" "ERROR"
+            Write-Log "❌ NSSM lost quotes - attempting to fix..." "ERROR"
+            # Try again with different quoting approach
+            & $nssm set $Global:Config.ServiceName AppParameters '-ExecutionPolicy Bypass -NoProfile -File "C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1" service'
+            $params2 = & $nssm get $Global:Config.ServiceName AppParameters 2>&1
+            Write-Log "Second attempt result: $params2"
         }
         
         Write-Log "Windows service installed with NSSM: $($Global:Config.ServiceName)"
@@ -551,7 +551,7 @@ function Install-SafeNetAgent {
     Write-Log "Starting SafeNet agent installation..."
     Write-Log "Version: $($Global:Config.Version)"
     Write-Log "Connector: $($Global:Config.ConnectorKey)"
-    Write-Log "Client: $($Global:Config.ClientCode) - $($Global:Config.ClientName)"
+    Write-Log "Client: $($Global:Config.ClientCode) - $(if($Global:Config.ClientName) { $Global:Config.ClientName } else { 'Default Client' })"
     
     try {
         # Create installation directory
@@ -699,10 +699,11 @@ function Install-SafeNetAgent {
                 Write-Host "1. Check NSSM configuration:" -ForegroundColor Yellow
                 Write-Host "   `$nssm = `"C:\Program Files\Ultrium SafeNet\nssm.exe`"" -ForegroundColor Cyan
                 Write-Host "   & `$nssm get UltriumSafeNetAgent AppParameters" -ForegroundColor Cyan
-                Write-Host "`n2. Check service logs:" -ForegroundColor Yellow  
-                Write-Host "   Get-Content `"C:\Program Files\Ultrium SafeNet\logs\service.log`" -Tail 50" -ForegroundColor Cyan
-                Write-Host "`n3. Test script manually:" -ForegroundColor Yellow
-                Write-Host "   powershell.exe -ExecutionPolicy Bypass -NoProfile -File `"C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1`" service" -ForegroundColor Cyan
+                Write-Host "`n2. Restart service and check logs:" -ForegroundColor Yellow
+                Write-Host "   & `$nssm restart UltriumSafeNetAgent" -ForegroundColor Cyan  
+                Write-Host "   Get-Content `"C:\Program Files\Ultrium SafeNet\logs\service.log`" -Tail 100 -Wait" -ForegroundColor Cyan
+                Write-Host "`n3. Test exact command manually:" -ForegroundColor Yellow
+                Write-Host "   & `"`$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe`" -ExecutionPolicy Bypass -NoProfile -File `"C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1`" service" -ForegroundColor Cyan
                 return $false
             }
         }
