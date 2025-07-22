@@ -367,14 +367,49 @@ function Install-SafeNetService {
         $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
         if (!(Test-Path $nssmPath)) {
             Write-Log "Downloading NSSM..."
-            $nssmUrl = "https://github.com/kirillkovalenko/nssm/raw/master/win64/nssm.exe"
-            try {
-                Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmPath -UseBasicParsing
-                Write-Log "NSSM downloaded successfully"
-            } catch {
-                Write-Log "Failed to download NSSM: $_" "ERROR"
+            $nssmUrls = @(
+                "https://nssm.cc/ci/nssm-2.24-101-g897c7ad.zip",
+                "https://github.com/kirillkovalenko/nssm/raw/master/win64/nssm.exe"
+            )
+            
+            $downloaded = $false
+            foreach ($url in $nssmUrls) {
+                try {
+                    if ($url -like "*.zip") {
+                        # Download and extract zip
+                        $zipPath = Join-Path $Global:Config.InstallPath "nssm.zip"
+                        Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
+                        Add-Type -AssemblyName System.IO.Compression.FileSystem
+                        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $Global:Config.InstallPath)
+                        
+                        # Find nssm.exe in extracted files
+                        $nssmExe = Get-ChildItem -Path $Global:Config.InstallPath -Recurse -Name "nssm.exe" | Select-Object -First 1
+                        if ($nssmExe) {
+                            $fullNssmPath = Join-Path $Global:Config.InstallPath $nssmExe
+                            Copy-Item $fullNssmPath $nssmPath
+                            Remove-Item $zipPath -Force
+                            # Clean up extracted folders
+                            Get-ChildItem -Path $Global:Config.InstallPath -Directory | Remove-Item -Recurse -Force
+                            $downloaded = $true
+                            break
+                        }
+                    } else {
+                        # Direct exe download
+                        Invoke-WebRequest -Uri $url -OutFile $nssmPath -UseBasicParsing
+                        $downloaded = $true
+                        break
+                    }
+                } catch {
+                    Write-Log "Failed to download from $url`: $_" "ERROR"
+                    continue
+                }
+            }
+            
+            if (!$downloaded) {
+                Write-Log "All NSSM download attempts failed" "ERROR"
                 return $false
             }
+            Write-Log "NSSM downloaded successfully"
         }
         
         # Check if service already exists and remove it first
