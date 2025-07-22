@@ -348,7 +348,7 @@ if (`$args[0] -eq "service") {
 
     $scriptPath = Join-Path $Global:Config.InstallPath "SafeNet-Agent.ps1"
     try {
-        $scriptPath | Out-File -FilePath $scriptPath -Encoding UTF8
+        $serviceScript | Out-File -FilePath $scriptPath -Encoding UTF8
         Write-Log "Service script created: $scriptPath"
         return $scriptPath
     } catch {
@@ -464,11 +464,23 @@ try {
     Write-Host "=== Ultrium SafeNet RMM Agent v$($Global:Config.Version) ===" -ForegroundColor Cyan
     
     if ($Uninstall) {
-        exit (Uninstall-SafeNetAgent ? 0 : 1)
+        if (Uninstall-SafeNetAgent) {
+            exit 0
+        } else {
+            exit 1
+        }
     }
     
     if (!(Load-Configuration)) {
         Write-Host "❌ Missing required configuration (ConnectorKey, ClientCode)" -ForegroundColor Red
+        if (!$Silent) {
+            Write-Host ""
+            Write-Host "Usage: .\SafeNet-RMM-Agent-Installer.ps1 -ConnectorKey 'your-key' -ClientCode 'your-code'" -ForegroundColor Yellow
+            Write-Host "   or: .\SafeNet-RMM-Agent-Installer.ps1 -ConfigFile 'config.json'" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "Press Enter to close this window..." -ForegroundColor Yellow
+            $null = Read-Host
+        }
         exit 1
     }
     
@@ -476,16 +488,24 @@ try {
     $existingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
     if ($existingService) {
         Write-Host "⚠️ SafeNet agent is already installed" -ForegroundColor Yellow
-        $response = Read-Host "Reinstall? (y/N)"
-        if ($response -eq 'y' -or $response -eq 'Y') {
-            Uninstall-SafeNetAgent | Out-Null
+        if (!$Silent) {
+            $response = Read-Host "Reinstall? (y/N)"
+            if ($response -eq 'y' -or $response -eq 'Y') {
+                Uninstall-SafeNetAgent | Out-Null
+            } else {
+                exit 0
+            }
         } else {
-            exit 0
+            # In silent mode, just update
+            Uninstall-SafeNetAgent | Out-Null
         }
     }
     
-    $success = Install-SafeNetAgent
-    exit ($success ? 0 : 1)
+    if (Install-SafeNetAgent) {
+        exit 0
+    } else {
+        exit 1
+    }
     
 } catch {
     Write-Log "Script failed: $_" "ERROR"
