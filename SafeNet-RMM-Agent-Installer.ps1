@@ -140,16 +140,40 @@ function Write-ServiceLog {
 }
 
 function Invoke-SafeNetAPI {
-    param([string]`$Endpoint, [hashtable]`$Data, [string]`$Method = "POST")
+    param(
+        [string]`$Endpoint,
+        [hashtable]`$Data,
+        [string]`$Method = "POST",
+        [int]`$TimeoutSec = 30
+    )
     try {
         `$uri = "`$(`$Global:Config.ApiUrl)/`$Endpoint"
         `$headers = @{ "Content-Type" = "application/json" }
         `$body = `$Data | ConvertTo-Json -Depth 10
-        
-        `$response = Invoke-RestMethod -Uri `$uri -Method `$Method -Headers `$headers -Body `$body -TimeoutSec 30
+
+        Write-ServiceLog "API Request: `$Method `$uri" "DEBUG"
+        Write-ServiceLog "Payload: `$body" "DEBUG"
+
+        `$response = Invoke-RestMethod -Uri `$uri -Method `$Method -Headers `$headers -Body `$body -TimeoutSec `$TimeoutSec
         return `$response
     } catch {
-        Write-ServiceLog "API call failed: `$_" "ERROR"
+        # Pull as much detail as possible
+        `$err = `$_.Exception
+        `$status = `$null
+        `$respBody = `$null
+        try {
+            if (`$err.Response) {
+                `$status = `$err.Response.StatusCode.value__
+                `$reader = New-Object System.IO.StreamReader(`$err.Response.GetResponseStream())
+                `$respBody = `$reader.ReadToEnd()
+                `$reader.Close()
+            }
+        } catch {}
+
+        Write-ServiceLog ("API call failed: HTTP {0} - {1}" -f `$status, `$err.Message) "ERROR"
+        if (`$respBody) {
+            Write-ServiceLog ("API error body: {0}" -f `$respBody) "ERROR"
+        }
         return `$null
     }
 }
