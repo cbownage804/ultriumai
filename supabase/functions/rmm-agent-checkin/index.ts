@@ -19,11 +19,12 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    const requestBody = await req.json();
     const { 
       connector_key,
       agent_token = connector_key, // Support both parameter names
-      hostname, 
-      ip_address, 
+      hostname: directHostname, 
+      ip_address: directIpAddress, 
       agent_version = '1.0.0',
       system_info = {},
       performance_metrics = {},
@@ -31,13 +32,18 @@ serve(async (req) => {
       security_status = {},
       status = 'online',
       last_scan
-    } = await req.json();
+    } = requestBody;
+
+    // Extract hostname and IP from direct fields or system_info fallback
+    const hostname = directHostname || system_info?.hostname || 'Unknown';
+    const ip_address = directIpAddress || system_info?.ip_address || '127.0.0.1';
 
     console.log('🔍 Agent check-in received:', { 
       agent_token: agent_token?.substring(0, 20) + '...', 
       hostname, 
       ip_address,
-      agent_version
+      agent_version,
+      system_info_keys: Object.keys(system_info)
     });
 
     // Validate agent token and get user info
