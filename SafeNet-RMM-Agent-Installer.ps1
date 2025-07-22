@@ -135,8 +135,8 @@ function Invoke-SafeNetAPI {
         `$headers = @{ "Content-Type" = "application/json" }
         `$body    = `$Data | ConvertTo-Json -Depth 10
 
-        Write-ServiceLog "API Request: `$Method `$uri" "DEBUG"
-        Write-ServiceLog "Payload: `$body" "DEBUG"
+        Write-ServiceLog "API Request - `$Method `$uri" "DEBUG"
+        Write-ServiceLog "Payload - `$body" "DEBUG"
 
         Invoke-RestMethod -Uri `$uri -Method `$Method -Headers `$headers -Body `$body -TimeoutSec `$TimeoutSec
     } catch {
@@ -468,14 +468,14 @@ function Uninstall-SafeNetAgent {
 # ------------------- MAIN INSTALL -------------------
 function Install-SafeNetAgent {
     Write-Log 'Starting SafeNet agent installation...'
-    Write-Log "Version: $($Global:Config.Version)"
-    Write-Log "Connector: $($Global:Config.ConnectorKey)"
+    Write-Log "Version - $($Global:Config.Version)"
+    Write-Log "Connector - $($Global:Config.ConnectorKey)"
     Write-Log ("Client: {0} - {1}" -f $Global:Config.ClientCode, (if ($Global:Config.ClientName) { $Global:Config.ClientName } else { 'Default Client' }))
 
     try {
         if (!(Test-Path $Global:Config.InstallPath)) {
             New-Item -ItemType Directory -Path $Global:Config.InstallPath -Force | Out-Null
-            Write-Log "Created installation directory: $($Global:Config.InstallPath)"
+            Write-Log "Created installation directory - $($Global:Config.InstallPath)"
         }
         $logs = Join-Path $Global:Config.InstallPath 'logs'
         if (!(Test-Path $logs)) { New-Item -ItemType Directory -Path $logs -Force | Out-Null }
@@ -498,7 +498,7 @@ function Install-SafeNetAgent {
                 Write-Host ("Service logs: {0}" -f (Join-Path $Global:Config.InstallPath 'logs\service.log')) -ForegroundColor Yellow
                 return $true
             } else {
-                Write-Log "❌ Service failed to start - Status: $($svc.Status)" 'ERROR'
+                Write-Log "❌ Service failed to start - Status - $($svc.Status)" 'ERROR'
                 return $false
             }
         }
