@@ -43,7 +43,7 @@ $Global:Config = @{
 }
 
 # ------------------- LOGGING -------------------
-function Write-Log {
+# ============= HELPER FUNCTIONS =============
     param([string]$Message, [string]$Level = 'INFO')
     $ts  = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $row = "[$ts] [$Level] $Message"
@@ -121,6 +121,64 @@ function Write-ServiceLog {
         if (!(Test-Path `$dir)) { New-Item -ItemType Directory -Path `$dir -Force | Out-Null }
         Add-Content -Path `$Global:Config.LogPath -Value `$row -Encoding UTF8
     } catch {}
+}
+
+function Start-PipeServer {
+    param([string]$PipeName = 'UltriumSafeNet')
+
+    # Run in background thread to not block service loop
+    $null = [System.Threading.Thread]::new({
+        param($PipeName)
+
+        while ($true) {
+            try {
+                $server = New-Object System.IO.Pipes.NamedPipeServerStream($PipeName, 'InOut', 1,
+                          [System.IO.Pipes.PipeTransmissionMode]::Byte, 'Asynchronous', 4096, 4096)
+                $server.WaitForConnection()
+                $reader = New-Object System.IO.StreamReader($server)
+                $writer = New-Object System.IO.StreamWriter($server)
+                $writer.AutoFlush = $true
+
+                $reqJson = $reader.ReadLine()
+                if ($reqJson) {
+                    $req = $reqJson | ConvertFrom-Json
+                    $resp = Handle-IPCRequest $req
+                    $writer.WriteLine(($resp | ConvertTo-Json -Depth 6))
+                }
+
+                $reader.Dispose(); $writer.Dispose(); $server.Dispose()
+            } catch {
+                Write-ServiceLog "Pipe error: $($_.Exception.Message)" "ERROR"
+                Start-Sleep 2
+            }
+        }
+    }, $PipeName)
+    $null.Start()
+    Write-ServiceLog "Named pipe server started on \\.\pipe\$PipeName"
+}
+
+function Handle-IPCRequest {
+    param($req)
+    switch ($req.action) {
+        'get_status' {
+            return @{
+                ok = $true
+                device_id = $Global:Config.DeviceId
+                last_checkin = (Get-Date).ToUniversalTime()
+                version = $Global:Config.Version
+                connector_key = $Global:Config.ConnectorKey
+            }
+        }
+        'run_scan' {
+            Start-Job -ScriptBlock { Send-NetworkScan } | Out-Null
+            return @{ ok = $true; queued = $true }
+        }
+        'send_checkin' {
+            Start-Job -ScriptBlock { Send-Checkin } | Out-Null
+            return @{ ok = $true; queued = $true }
+        }
+        default { return @{ ok = $false; error = 'unknown_action' } }
+    }
 }
 
 function Invoke-SafeNetAPI {

@@ -80,68 +80,52 @@ serve(async (req: Request) => {
       return acc
     }, {} as Record<string, number>) || {}
 
-    // Build comprehensive status response
+    // Build tray-specific response format
     const statusResponse = {
+      online: isOnline,
+      hasCriticalAlert: (alertCounts?.[0]?.critical || 0) > 0 || (vulnCounts.critical || 0) > 0,
+      hasHighAlert: (alertCounts?.[0]?.high || 0) > 0 || (vulnCounts.high || 0) > 0,
+      state: (() => {
+        const criticalAlerts = alertCounts?.[0]?.critical || 0
+        const criticalVulns = vulnCounts.critical || 0
+        const highAlerts = alertCounts?.[0]?.high || 0
+        const highVulns = vulnCounts.high || 0
+        
+        if (!isOnline) return 'Red'
+        if (criticalAlerts > 0 || criticalVulns > 0) return 'Red'
+        if (highAlerts > 0 || highVulns > 0) return 'Yellow'
+        return 'Green'
+      })(),
+      message: (() => {
+        const criticalAlerts = alertCounts?.[0]?.critical || 0
+        const criticalVulns = vulnCounts.critical || 0
+        const highAlerts = alertCounts?.[0]?.high || 0
+        
+        if (!isOnline) return 'Device offline'
+        if (criticalAlerts > 0) return `${criticalAlerts} critical alert${criticalAlerts > 1 ? 's' : ''}`
+        if (criticalVulns > 0) return `${criticalVulns} critical vulnerabilit${criticalVulns > 1 ? 'ies' : 'y'}`
+        if (highAlerts > 0) return `${highAlerts} high-priority alert${highAlerts > 1 ? 's' : ''}`
+        return 'All systems healthy'
+      })(),
+      // Extended information for debugging/advanced users
       device: {
         id: device.id,
         hostname: device.hostname,
         ip_address: device.ip_address,
-        os_info: device.os_info,
         status: device.status,
-        online: isOnline,
         last_heartbeat: device.last_heartbeat
       },
-      alerts: {
-        critical: alertCounts?.[0]?.critical || 0,
-        high: alertCounts?.[0]?.high || 0,
-        medium: alertCounts?.[0]?.medium || 0,
-        low: alertCounts?.[0]?.low || 0,
-        info: alertCounts?.[0]?.info || 0,
-        total: (alertCounts?.[0]?.critical || 0) + 
-               (alertCounts?.[0]?.high || 0) + 
-               (alertCounts?.[0]?.medium || 0) + 
-               (alertCounts?.[0]?.low || 0) + 
-               (alertCounts?.[0]?.info || 0)
-      },
-      vulnerabilities: {
-        critical: vulnCounts.critical || 0,
-        high: vulnCounts.high || 0,
-        medium: vulnCounts.medium || 0,
-        low: vulnCounts.low || 0,
-        total: Object.values(vulnCounts).reduce((sum, count) => sum + count, 0)
-      },
-      last_scan: latestScan?.[0] ? {
-        scan_id: latestScan[0].scan_id,
-        scanned_at: latestScan[0].scanned_at,
-        devices_found: latestScan[0].devices_found,
-        scan_duration: latestScan[0].scan_duration,
-        scan_type: latestScan[0].scan_type
-      } : null,
-      pending_commands: pendingCommands?.length || 0,
-      status_summary: {
-        // Overall status logic for tray icon color
-        level: (() => {
-          const criticalAlerts = alertCounts?.[0]?.critical || 0
-          const criticalVulns = vulnCounts.critical || 0
-          const highAlerts = alertCounts?.[0]?.high || 0
-          const highVulns = vulnCounts.high || 0
-          
-          if (!isOnline) return 'offline'
-          if (criticalAlerts > 0 || criticalVulns > 0) return 'critical'
-          if (highAlerts > 0 || highVulns > 0) return 'warning'
-          return 'healthy'
-        })(),
-        message: (() => {
-          const criticalAlerts = alertCounts?.[0]?.critical || 0
-          const criticalVulns = vulnCounts.critical || 0
-          const highAlerts = alertCounts?.[0]?.high || 0
-          
-          if (!isOnline) return 'Device offline'
-          if (criticalAlerts > 0) return `${criticalAlerts} critical alert${criticalAlerts > 1 ? 's' : ''}`
-          if (criticalVulns > 0) return `${criticalVulns} critical vulnerabilit${criticalVulns > 1 ? 'ies' : 'y'}`
-          if (highAlerts > 0) return `${highAlerts} high-priority alert${highAlerts > 1 ? 's' : ''}`
-          return 'All systems healthy'
-        })()
+      detailed: {
+        alerts: {
+          critical: alertCounts?.[0]?.critical || 0,
+          high: alertCounts?.[0]?.high || 0,
+          medium: alertCounts?.[0]?.medium || 0,
+          low: alertCounts?.[0]?.low || 0,
+          info: alertCounts?.[0]?.info || 0
+        },
+        vulnerabilities: vulnCounts,
+        last_scan: latestScan?.[0] || null,
+        pending_commands: pendingCommands?.length || 0
       },
       timestamp: new Date().toISOString()
     }
