@@ -521,19 +521,36 @@ function Install-SafeNetAgent {
             Write-Log "Waiting for service to initialize..."
             Start-Sleep -Seconds 3
             
+            $serviceStarted = $false
             try {
-                Start-Service -Name $Global:Config.ServiceName
-                Write-Log "Service started successfully"
+                Start-Service -Name $Global:Config.ServiceName -ErrorAction Stop
+                Write-Log "Start-Service command executed successfully"
+                $serviceStarted = $true
             } catch {
-                Write-Log "Failed to start service: $_" "ERROR"
+                Write-Log "Start-Service command failed: $_" "ERROR"
+            }
+            
+            # Wait and check actual service status regardless of Start-Service result
+            Start-Sleep -Seconds 5
+            $service = Get-Service -Name $Global:Config.ServiceName
+            
+            if ($service.Status -eq "Running") {
+                Write-Log "✅ Service is running successfully!" "SUCCESS"
+                Write-Host "SafeNet agent installed and running!" -ForegroundColor Green
+                Write-Host "Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
+                Write-Host "Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
+                Write-Host "Service logs: $(Join-Path $Global:Config.InstallPath 'logs\service.log')" -ForegroundColor Yellow
+                return $true
+            } else {
+                Write-Log "❌ Service failed to start - Status: $($service.Status)" "ERROR"
                 
                 # Get NSSM service configuration for diagnostics
                 Write-Log "NSSM Service Configuration:" "ERROR"
                 $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
                 try {
-                    $appPath = & $nssmPath get $Global:Config.ServiceName Application
-                    $appParams = & $nssmPath get $Global:Config.ServiceName Parameters
-                    $appDir = & $nssmPath get $Global:Config.ServiceName AppDirectory
+                    $appPath = & $nssmPath get $Global:Config.ServiceName Application 2>&1
+                    $appParams = & $nssmPath get $Global:Config.ServiceName AppParameters 2>&1
+                    $appDir = & $nssmPath get $Global:Config.ServiceName AppDirectory 2>&1
                     Write-Log "Application: $appPath" "ERROR"
                     Write-Log "Parameters: $appParams" "ERROR"
                     Write-Log "Directory: $appDir" "ERROR"
@@ -545,7 +562,7 @@ function Install-SafeNetAgent {
                 Write-Log "Testing PowerShell script directly..." "ERROR"
                 $scriptPath = Join-Path $Global:Config.InstallPath "SafeNet-Agent.ps1"
                 try {
-                    $testResult = & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath -ErrorAction Stop
+                    $testResult = & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath 2>&1
                     Write-Log "Script test result: $testResult" "ERROR"
                 } catch {
                     Write-Log "Script test failed: $_" "ERROR"
@@ -575,19 +592,6 @@ function Install-SafeNetAgent {
                     Write-Log "Could not get service details: $_" "ERROR"
                 }
                 
-                throw "Service failed to start - check logs at $logFile"
-            }
-            
-            # Verify service is running
-            Start-Sleep -Seconds 5
-            $service = Get-Service -Name $Global:Config.ServiceName
-            if ($service.Status -eq "Running") {
-                Write-Host "SafeNet agent installed and running!" -ForegroundColor Green
-                Write-Host "Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
-                Write-Host "Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
-                Write-Host "Service logs: $logFile" -ForegroundColor Yellow
-                return $true
-            } else {
                 throw "Service failed to start - Status: $($service.Status)"
             }
         }
