@@ -20,6 +20,9 @@
     Uninstall the SafeNet agent
 #>
 
+# Enable strict mode to catch typos during development
+Set-StrictMode -Version Latest
+
 param(
     [string]$ConnectorKey,
     [string]$ClientCode,
@@ -332,6 +335,7 @@ function Start-ServiceLoop {
     `$lastScan = 0
     `$startTime = (Get-Date).Ticks
     
+    # Main service loop with proper error handling
     while (`$true) {
         try {
             `$currentTime = (Get-Date).Ticks
@@ -356,6 +360,10 @@ function Start-ServiceLoop {
             Start-Sleep -Seconds 300  # Wait 5 minutes on error
         }
     }
+    
+    # If we somehow exit the infinite loop, that's unexpected
+    Write-ServiceLog "Service loop exited unexpectedly" "ERROR"
+    throw "Service loop terminated unexpectedly"
 }
 
 # Service entry point
@@ -482,15 +490,18 @@ function Install-SafeNetService {
         # Force-set parameters with proper quoting using dynamic script path
         $paramsString = "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" service"
         & $nssm set $Global:Config.ServiceName AppParameters $paramsString
-        & $nssm set $Global:Config.ServiceName AppDirectory "C:\Program Files\Ultrium SafeNet"
+        & $nssm set $Global:Config.ServiceName AppDirectory $Global:Config.InstallPath
         & $nssm set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
         & $nssm set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
         & $nssm set $Global:Config.ServiceName Start SERVICE_AUTO_START
         
-        # Configure logging
+        # Configure logging with rotation
         $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
         & $nssm set $Global:Config.ServiceName AppStdout $logFile
         & $nssm set $Global:Config.ServiceName AppStderr $logFile
+        & $nssm set $Global:Config.ServiceName AppRotateFiles 1
+        & $nssm set $Global:Config.ServiceName AppRotateOnline 1
+        & $nssm set $Global:Config.ServiceName AppRotateBytes 10485760  # 10MB
         
         # Configure recovery actions - auto-restart on failure with throttling
         & $nssm set $Global:Config.ServiceName AppExit Default Restart
@@ -699,7 +710,7 @@ function Install-SafeNetAgent {
                 
                 # Try to get service status details
                 try {
-                    $serviceDetails = Get-WmiObject -Class Win32_Service -Filter "Name='$($Global:Config.ServiceName)'"
+                    $serviceDetails = Get-CimInstance -ClassName Win32_Service -Filter "Name='$($Global:Config.ServiceName)'"
                     if ($serviceDetails) {
                         Write-Log "Service State: $($serviceDetails.State)" "ERROR"
                         Write-Log "Service ExitCode: $($serviceDetails.ExitCode)" "ERROR"
