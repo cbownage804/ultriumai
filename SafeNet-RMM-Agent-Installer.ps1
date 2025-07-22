@@ -516,6 +516,30 @@ function Install-SafeNetAgent {
             } catch {
                 Write-Log "Failed to start service: $_" "ERROR"
                 
+                # Get NSSM service configuration for diagnostics
+                Write-Log "NSSM Service Configuration:" "ERROR"
+                $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
+                try {
+                    $appPath = & $nssmPath get $Global:Config.ServiceName Application
+                    $appParams = & $nssmPath get $Global:Config.ServiceName Parameters
+                    $appDir = & $nssmPath get $Global:Config.ServiceName AppDirectory
+                    Write-Log "Application: $appPath" "ERROR"
+                    Write-Log "Parameters: $appParams" "ERROR"
+                    Write-Log "Directory: $appDir" "ERROR"
+                } catch {
+                    Write-Log "Could not get NSSM config: $_" "ERROR"
+                }
+                
+                # Test the PowerShell script directly
+                Write-Log "Testing PowerShell script directly..." "ERROR"
+                $scriptPath = Join-Path $Global:Config.InstallPath "SafeNet-Agent.ps1"
+                try {
+                    $testResult = & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath -ErrorAction Stop
+                    Write-Log "Script test result: $testResult" "ERROR"
+                } catch {
+                    Write-Log "Script test failed: $_" "ERROR"
+                }
+                
                 # Check service logs for more details
                 $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
                 if (Test-Path $logFile) {
@@ -524,6 +548,8 @@ function Install-SafeNetAgent {
                     foreach ($line in $logContent) {
                         Write-Log "LOG: $line" "ERROR"
                     }
+                } else {
+                    Write-Log "No service log file found at $logFile" "ERROR"
                 }
                 
                 # Try to get service status details
