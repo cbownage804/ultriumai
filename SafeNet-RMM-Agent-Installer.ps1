@@ -425,9 +425,10 @@ function Install-SafeNetService {
         
         # Install service using NSSM
         $servicePath = "powershell.exe"
-        $serviceArgs = "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" service"
+        $serviceArgs = '-ExecutionPolicy Bypass -NoProfile -File "' + $scriptPath + '" service'
         
-        & $nssmPath install $Global:Config.ServiceName $servicePath $serviceArgs
+        & $nssmPath install $Global:Config.ServiceName $servicePath
+        & $nssmPath set $Global:Config.ServiceName AppParameters $serviceArgs
         & $nssmPath set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
         & $nssmPath set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
         & $nssmPath set $Global:Config.ServiceName Start SERVICE_AUTO_START
