@@ -182,36 +182,78 @@ function Get-NetworkDevices {
         `$devices = @()
         `$localIPs = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" }).IPAddress
         
+        Write-ServiceLog "Starting network discovery for `$(`$localIPs.Count) local IPs" "INFO"
+        
         foreach (`$ip in `$localIPs) {
             `$network = `$ip.Substring(0, `$ip.LastIndexOf('.'))
-            for (`$i = 1; `$i -le 254; `$i++) {
+            Write-ServiceLog "Scanning network: `$network.0/24" "INFO"
+            
+            # Use parallel jobs for faster scanning - scan common IPs first
+            `$commonIPs = @(1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 100, 101, 102, 103, 104, 105, 110, 111, 112, 113, 114, 115, 200, 201, 202, 203, 204, 205, 210, 211, 212, 213, 214, 215, 254)
+            `$jobs = @()
+            
+            foreach (`$i in `$commonIPs) {
                 `$targetIP = "`$network.`$i"
                 if (`$targetIP -ne `$ip) {
-                    `$ping = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet
-                    if (`$ping) {
+                    `$job = Start-Job -ScriptBlock {
+                        param(`$targetIP)
                         try {
-                            `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
+                            # Try Test-NetConnection first, fallback to Test-Connection
+                            try {
+                                `$pingResult = Test-NetConnection -ComputerName `$targetIP -InformationLevel Quiet -WarningAction SilentlyContinue
+                            } catch {
+                                # Fallback to older Test-Connection if Test-NetConnection isn't available
+                                `$pingResult = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet
+                            }
+                            if (`$pingResult) {
+                                try {
+                                    `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
+                                } catch {
+                                    `$hostname = "Unknown"
+                                }
+                                
+                                return @{
+                                    ip_address = `$targetIP
+                                    hostname = `$hostname
+                                    device_type = "computer"
+                                    os_family = "unknown"
+                                    status = "online"
+                                    risk_level = "low"
+                                    device_name = `$hostname
+                                    is_managed = `$false
+                                    is_critical = `$false
+                                }
+                            }
                         } catch {
-                            `$hostname = "Unknown"
+                            # Silently continue for individual failures
                         }
-                        
-                        `$devices += @{
-                            ip_address = `$targetIP
-                            hostname = `$hostname
-                            device_type = "computer"
-                            os_family = "unknown"
-                            status = "online"
-                            risk_level = "low"
-                            device_name = `$hostname
-                            is_managed = `$false
-                            is_critical = `$false
-                        }
-                    }
+                        return `$null
+                    } -ArgumentList `$targetIP
+                    `$jobs += `$job
                 }
             }
+            
+            # Wait for jobs to complete with timeout
+            Write-ServiceLog "Waiting for `$(`$jobs.Count) scan jobs to complete..." "INFO"
+            `$completed = Wait-Job -Job `$jobs -Timeout 30
+            
+            foreach (`$job in `$jobs) {
+                try {
+                    `$result = Receive-Job -Job `$job -ErrorAction SilentlyContinue
+                    if (`$result) {
+                        `$devices += `$result
+                        Write-ServiceLog "Found device: `$(`$result.ip_address) (`$(`$result.hostname))" "INFO"
+                    }
+                } catch {
+                    # Ignore individual job errors
+                }
+                Remove-Job -Job `$job -Force -ErrorAction SilentlyContinue
+            }
+            
             break # Only scan first network for demo
         }
         
+        Write-ServiceLog "Network scan completed. Found `$(`$devices.Count) devices" "INFO"
         return `$devices
     } catch {
         Write-ServiceLog "Network scan failed: `$_" "ERROR"
