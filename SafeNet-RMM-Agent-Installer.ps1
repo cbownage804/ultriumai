@@ -102,7 +102,7 @@ function Get-UtcStamp { (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:
     InstallPath     = "$($Global:Config.InstallPath)"
     ServiceName     = "$($Global:Config.ServiceName)"
     Version         = "$($Global:Config.Version)"
-    LogPath         = "`$(`$('$($Global:Config.InstallPath)'))\logs\agent.log"
+    LogPath         = "$($Global:Config.InstallPath)\logs\agent.log"
 }
 
 function Write-ServiceLog {
@@ -256,7 +256,16 @@ function Send-Checkin {
     }
     Write-ServiceLog "Sending checkin..."
     `$r = Invoke-SafeNetAPI -Endpoint "rmm-agent-checkin" -Data `$payload
-    if (`$r) { Write-ServiceLog "Checkin OK" } else { Write-ServiceLog "Checkin failed" "ERROR" }
+    if (`$r) { 
+        Write-ServiceLog "Checkin OK" 
+    } else { 
+        Write-ServiceLog "Checkin failed" "ERROR"
+        try {
+            `$dump = Join-Path `$Global:Config.InstallPath "last-checkin.json"
+            `$payload | ConvertTo-Json -Depth 10 | Out-File `$dump -Encoding UTF8
+            Write-ServiceLog "Saved payload to `$dump" "DEBUG"
+        } catch {}
+    }
     Write-ServiceLog ("Heartbeat OK @ {0}" -f (Get-UtcStamp))
 }
 
@@ -408,7 +417,7 @@ function Install-SafeNetService {
         & $nssmPath set $Global:Config.ServiceName AppRestartDelay 30000
         & $nssmPath set $Global:Config.ServiceName AppThrottle 1500
 
-        Write-Log "Windows service installed with NSSM: $($Global:Config.ServiceName)"
+        Write-Log ("Windows service installed with NSSM: {0}" -f $Global:Config.ServiceName)
         return $true
     } catch {
         Write-Log "Failed to install service: $($_.Exception.Message)" "ERROR"
