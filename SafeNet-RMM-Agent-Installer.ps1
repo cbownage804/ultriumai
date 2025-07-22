@@ -388,7 +388,7 @@ function Install-SafeNetService {
                         break
                     }
                 } catch {
-                    Write-Log "Failed to download from $url: $($_.Exception.Message)" 'ERROR'
+                    Write-Log ("Failed to download from {0}: {1}" -f $url, $_.Exception.Message) 'ERROR'
                 }
             }
             if (-not $downloaded) {
