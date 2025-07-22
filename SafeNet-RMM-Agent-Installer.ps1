@@ -209,13 +209,8 @@ function Get-NetworkDevices {
                     `$job = Start-Job -ScriptBlock {
                         param(`$targetIP)
                         try {
-                            # Try Test-NetConnection first, fallback to Test-Connection
-                            try {
-                                `$pingResult = Test-NetConnection -ComputerName `$targetIP -InformationLevel Quiet -WarningAction SilentlyContinue
-                            } catch {
-                                # Fallback to older Test-Connection if Test-NetConnection isn't available
-                                `$pingResult = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet
-                            }
+                            # Use only Test-Connection with short timeout to avoid hanging
+                            `$pingResult = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet -TimeoutSec 2
                             if (`$pingResult) {
                                 try {
                                     `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
@@ -321,6 +316,10 @@ function Start-ServiceLoop {
     Write-ServiceLog "Connector: `$(`$Global:Config.ConnectorKey)"
     Write-ServiceLog "Client: `$(`$Global:Config.ClientCode) - `$(`$Global:Config.ClientName)"
     
+    # Wait 60 seconds before first operations to allow service to fully initialize
+    Write-ServiceLog "Waiting 60 seconds before starting operations..."
+    Start-Sleep -Seconds 60
+    
     `$lastCheckin = 0
     `$lastScan = 0
     
@@ -334,7 +333,7 @@ function Start-ServiceLoop {
                 `$lastCheckin = `$currentTime
             }
             
-            # Network scan
+            # Network scan - only after service has been running for at least 5 minutes
             if ((`$currentTime - `$lastScan) / 10000000 -gt `$Global:Config.ScanInterval) {
                 Send-NetworkScan
                 `$lastScan = `$currentTime
