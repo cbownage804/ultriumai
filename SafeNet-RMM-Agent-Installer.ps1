@@ -348,7 +348,18 @@ function Start-ServiceLoop {
 
 # Service entry point
 if (`$args.Count -gt 0 -and `$args[0] -eq 'service') {
-    Start-ServiceLoop
+    try {
+        Write-ServiceLog "=== SafeNet Agent Service Starting ===" "INFO"
+        Write-ServiceLog "PowerShell Version: `$(`$PSVersionTable.PSVersion)" "INFO"
+        Write-ServiceLog "Working Directory: `$(Get-Location)" "INFO"
+        
+        Write-ServiceLog "Starting main service loop..." "INFO"
+        Start-ServiceLoop
+    } catch {
+        Write-ServiceLog "Service failed to start: `$_" "ERROR"
+        Write-ServiceLog "Stack trace: `$(`$_.ScriptStackTrace)" "ERROR"
+        exit 1
+    }
 } else {
     Write-Host "SafeNet Agent - Use 'service' parameter to run as service"
 }
@@ -578,11 +589,23 @@ function Install-SafeNetAgent {
                 # Test with service parameter (what NSSM actually runs)
                 Write-Log "Testing with 'service' parameter..." "ERROR"
                 try {
-                    $serviceTestResult = Start-Job -ScriptBlock {
+                    $serviceTestJob = Start-Job -ScriptBlock {
                         param($scriptPath)
-                        & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath service
-                    } -ArgumentList $scriptPath | Wait-Job -Timeout 10 | Receive-Job
-                    Write-Log "Service test result: $serviceTestResult" "ERROR"
+                        try {
+                            & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath service 2>&1
+                        } catch {
+                            "Job error: $_"
+                        }
+                    } -ArgumentList $scriptPath
+                    
+                    $serviceTestResult = Wait-Job -Job $serviceTestJob -Timeout 15 | Receive-Job
+                    if ($serviceTestJob.State -eq "Running") {
+                        Remove-Job -Job $serviceTestJob -Force
+                        Write-Log "Service test timed out after 15 seconds (service likely hanging)" "ERROR"
+                    } else {
+                        Write-Log "Service test result: $serviceTestResult" "ERROR"
+                        Remove-Job -Job $serviceTestJob -Force
+                    }
                 } catch {
                     Write-Log "Service test failed: $_" "ERROR"
                 }
