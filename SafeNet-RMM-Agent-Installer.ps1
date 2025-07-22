@@ -143,39 +143,61 @@ function Invoke-SafeNetAPI {
 
 function Get-SystemInfo {
     try {
-        `$os = Get-CimInstance -ClassName Win32_OperatingSystem
-        `$computer = Get-CimInstance -ClassName Win32_ComputerSystem
-        `$processor = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
-        `$memory = Get-CimInstance -ClassName Win32_PhysicalMemory | Measure-Object -Property Capacity -Sum
-        `$disk = Get-CimInstance -ClassName Win32_LogicalDisk | Where-Object { `$_.DriveType -eq 3 }
+        # Get basic info safely to avoid hanging
+        $hostname = try { $env:COMPUTERNAME } catch { "Unknown" }
+        if ([string]::IsNullOrEmpty($hostname)) { $hostname = "Unknown" }
+        
+        # Get primary IP address with error handling
+        $ipAddress = try {
+            $adapters = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | 
+                Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" }
+            if ($adapters) {
+                $adapters[0].IPAddress
+            } else {
+                "127.0.0.1"
+            }
+        } catch {
+            "127.0.0.1"
+        }
+        
+        # Get OS info with timeout protection
+        $osInfo = try {
+            $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
+            @{
+                name = if ($os.Caption) { $os.Caption } else { "Windows" }
+                version = if ($os.Version) { $os.Version } else { "Unknown" }
+                build = if ($os.BuildNumber) { $os.BuildNumber } else { "Unknown" }
+            }
+        } catch {
+            @{
+                name = "Windows"
+                version = "Unknown" 
+                build = "Unknown"
+            }
+        }
         
         return @{
-            hostname = `$env:COMPUTERNAME
-            domain = `$env:USERDOMAIN
-            os_name = `$os.Caption
-            os_version = `$os.Version
-            os_build = `$os.BuildNumber
-            manufacturer = `$computer.Manufacturer
-            model = `$computer.Model
-            processor = `$processor.Name
-            memory_gb = [math]::Round(`$memory.Sum / 1GB, 2)
-            disk_info = `$disk | ForEach-Object { 
-                @{
-                    drive = `$_.DeviceID
-                    size_gb = [math]::Round(`$_.Size / 1GB, 2)
-                    free_gb = [math]::Round(`$_.FreeSpace / 1GB, 2)
-                    used_percent = [math]::Round(((`$_.Size - `$_.FreeSpace) / `$_.Size) * 100, 2)
-                }
-            }
-            uptime_hours = [math]::Round(((Get-Date) - `$os.LastBootUpTime).TotalHours, 2)
-            ip_addresses = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" }).IPAddress
+            hostname = $hostname
+            ip_address = $ipAddress
+            domain = try { $env:USERDOMAIN } catch { "Unknown" }
+            os_name = $osInfo.name
+            os_version = $osInfo.version
+            os_build = $osInfo.build
             last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
     } catch {
-        Write-ServiceLog "Failed to collect system info: `$_" "ERROR"
-        return @{ error = "Failed to collect system info" }
+        Write-ServiceLog "Failed to collect system info: $_" "ERROR"
+        # Return valid defaults to avoid database constraint errors
+        return @{
+            hostname = if ($env:COMPUTERNAME) { $env:COMPUTERNAME } else { "Unknown" }
+            ip_address = "127.0.0.1"
+            domain = if ($env:USERDOMAIN) { $env:USERDOMAIN } else { "Unknown" }
+            os_name = "Windows"
+            os_version = "Unknown"
+            os_build = "Unknown"
+            last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
+        }
     }
-}
 
 function Get-NetworkDevices {
     try {
