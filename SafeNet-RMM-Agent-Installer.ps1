@@ -38,7 +38,7 @@ $Global:Config = @{
     InstallPath = "C:\Program Files\Ultrium SafeNet"
     ApiUrl = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1"
     LogPath = $LogFile
-    Version = "1.0.0"
+    Version = "1.0.1"
     CheckinInterval = 300  # 5 minutes
     ScanInterval = 3600    # 1 hour
 }
@@ -144,45 +144,46 @@ function Invoke-SafeNetAPI {
 function Get-SystemInfo {
     try {
         # Get basic info safely to avoid hanging
-        `$hostname = try { `$env:COMPUTERNAME } catch { "Unknown" }
+        `$hostname = `$env:COMPUTERNAME
         if ([string]::IsNullOrEmpty(`$hostname)) { `$hostname = "Unknown" }
         
         # Get primary IP address with error handling
-        `$ipAddress = try {
+        `$ipAddress = "127.0.0.1"
+        try {
             `$adapters = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | 
                 Where-Object { `$_.IPAddress -notlike "127.*" -and `$_.IPAddress -notlike "169.254.*" }
             if (`$adapters) {
-                `$adapters[0].IPAddress
-            } else {
-                "127.0.0.1"
+                `$ipAddress = `$adapters[0].IPAddress
             }
         } catch {
-            "127.0.0.1"
+            `$ipAddress = "127.0.0.1"
         }
         
         # Get OS info with timeout protection
-        `$osInfo = try {
+        `$osName = "Windows"
+        `$osVersion = "Unknown"
+        `$osBuild = "Unknown"
+        try {
             `$os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
-            @{
-                name = if (`$os.Caption) { `$os.Caption } else { "Windows" }
-                version = if (`$os.Version) { `$os.Version } else { "Unknown" }
-                build = if (`$os.BuildNumber) { `$os.BuildNumber } else { "Unknown" }
+            if (`$os) {
+                if (`$os.Caption) { `$osName = `$os.Caption }
+                if (`$os.Version) { `$osVersion = `$os.Version }
+                if (`$os.BuildNumber) { `$osBuild = `$os.BuildNumber }
             }
         } catch {
-            @{
-                name = "Windows"
-                version = "Unknown" 
-                build = "Unknown"
-            }
+            # Keep defaults
         }
+        
+        `$domain = `$env:USERDOMAIN
+        if ([string]::IsNullOrEmpty(`$domain)) { `$domain = "Unknown" }
         
         return @{
             hostname = `$hostname
             ip_address = `$ipAddress
-            domain = try { `$env:USERDOMAIN } catch { "Unknown" }
-            os_name = `$osInfo.name
-            os_version = `$osInfo.version
-            os_build = `$osInfo.build
+            domain = `$domain
+            os_name = `$osName
+            os_version = `$osVersion
+            os_build = `$osBuild
             last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
     } catch {
@@ -237,8 +238,8 @@ function Get-NetworkDevices {
                 # Skip scanning APIPA addresses and self
                 if (`$targetIP -ne `$ip -and `$targetIP -notlike "169.254.*") {
                     try {
-                        # Use Test-Connection with short timeout
-                        `$pingResult = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet -TimeoutSec 1
+                        # Use Test-Connection without -TimeoutSec for PowerShell 5.1 compatibility
+                        `$pingResult = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet -ErrorAction SilentlyContinue
                         if (`$pingResult) {
                             try {
                                 `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
@@ -359,20 +360,35 @@ function Start-ServiceLoop {
 
 # Service entry point
 if (`$args.Count -gt 0 -and `$args[0] -eq 'service') {
-    try {
-        Write-ServiceLog "=== SafeNet Agent Service Starting ===" "INFO"
-        Write-ServiceLog "PowerShell Version: `$(`$PSVersionTable.PSVersion)" "INFO"
-        Write-ServiceLog "Working Directory: `$(Get-Location)" "INFO"
-        
-        Write-ServiceLog "Starting main service loop..." "INFO"
-        Start-ServiceLoop
-    } catch {
-        Write-ServiceLog "Service failed to start: `$_" "ERROR"
-        Write-ServiceLog "Stack trace: `$(`$_.ScriptStackTrace)" "ERROR"
-        # Don't exit immediately - log and retry instead to avoid instant service failure
-        Start-Sleep -Seconds 300
+    `$maxRetries = 3
+    `$retryCount = 0
+    
+    while (`$retryCount -lt `$maxRetries) {
+        try {
+            Write-ServiceLog "=== SafeNet Agent Service Starting (Attempt `$(`$retryCount + 1)/`$maxRetries) ===" "INFO"
+            Write-ServiceLog "PowerShell Version: `$(`$PSVersionTable.PSVersion)" "INFO"
+            Write-ServiceLog "Working Directory: `$(Get-Location)" "INFO"
+            
+            Write-ServiceLog "Starting main service loop..." "INFO"
+            Start-ServiceLoop
+            # If we reach here, the service ended unexpectedly
+            break
+        } catch {
+            `$retryCount++
+            Write-ServiceLog "Service failed to start: `$_" "ERROR"
+            Write-ServiceLog "Stack trace: `$(`$_.ScriptStackTrace)" "ERROR"
+            
+            if (`$retryCount -lt `$maxRetries) {
+                Write-ServiceLog "Retrying in 60 seconds (attempt `$(`$retryCount + 1)/`$maxRetries)..." "ERROR"
+                Start-Sleep -Seconds 60
+            } else {
+                Write-ServiceLog "Maximum retry attempts reached. Service will exit." "ERROR"
+                exit 1
+            }
+        }
     }
 } else {
+    # Non-service mode - installer usage
     Write-Host "SafeNet Agent - Use 'service' parameter to run as service"
 }
 "@
@@ -471,6 +487,10 @@ function Install-SafeNetService {
         $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
         & $nssm set $Global:Config.ServiceName AppStdout $logFile
         & $nssm set $Global:Config.ServiceName AppStderr $logFile
+        
+        # Configure recovery actions - auto-restart on failure
+        & $nssm set $Global:Config.ServiceName AppExit Default Restart
+        & $nssm set $Global:Config.ServiceName AppRestartDelay 30000
         
         # Verify NSSM kept the quotes properly
         Write-Log "Verifying NSSM configuration..."
@@ -607,28 +627,30 @@ function Install-SafeNetAgent {
                     Write-Log "Script test failed: $_" "ERROR"
                 }
                 
-                # Test with service parameter (what NSSM actually runs)
-                Write-Log "Testing with 'service' parameter..." "ERROR"
-                try {
-                    $serviceTestJob = Start-Job -ScriptBlock {
-                        param($scriptPath)
-                        try {
-                            & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath service 2>&1
-                        } catch {
-                            "Job error: $_"
+                # Test with service parameter (what NSSM actually runs) - skip in silent mode
+                if (!$Silent) {
+                    Write-Log "Testing with 'service' parameter..." "ERROR"
+                    try {
+                        $serviceTestJob = Start-Job -ScriptBlock {
+                            param($scriptPath)
+                            try {
+                                & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath service 2>&1
+                            } catch {
+                                "Job error: $_"
+                            }
+                        } -ArgumentList $scriptPath
+                        
+                        $serviceTestResult = Wait-Job -Job $serviceTestJob -Timeout 15 | Receive-Job
+                        if ($serviceTestJob.State -eq "Running") {
+                            Remove-Job -Job $serviceTestJob -Force
+                            Write-Log "Service test timed out after 15 seconds (service likely hanging)" "ERROR"
+                        } else {
+                            Write-Log "Service test result: $serviceTestResult" "ERROR"
+                            Remove-Job -Job $serviceTestJob -Force
                         }
-                    } -ArgumentList $scriptPath
-                    
-                    $serviceTestResult = Wait-Job -Job $serviceTestJob -Timeout 15 | Receive-Job
-                    if ($serviceTestJob.State -eq "Running") {
-                        Remove-Job -Job $serviceTestJob -Force
-                        Write-Log "Service test timed out after 15 seconds (service likely hanging)" "ERROR"
-                    } else {
-                        Write-Log "Service test result: $serviceTestResult" "ERROR"
-                        Remove-Job -Job $serviceTestJob -Force
+                    } catch {
+                        Write-Log "Service test failed: $_" "ERROR"
                     }
-                } catch {
-                    Write-Log "Service test failed: $_" "ERROR"
                 }
                 
                 # Check Windows Event Log for service startup errors
