@@ -316,25 +316,23 @@ function Start-ServiceLoop {
     Write-ServiceLog "Connector: `$(`$Global:Config.ConnectorKey)"
     Write-ServiceLog "Client: `$(`$Global:Config.ClientCode) - `$(`$Global:Config.ClientName)"
     
-    # Wait 60 seconds before first operations to allow service to fully initialize
-    Write-ServiceLog "Waiting 60 seconds before starting operations..."
-    Start-Sleep -Seconds 60
-    
     `$lastCheckin = 0
     `$lastScan = 0
+    `$startTime = (Get-Date).Ticks
     
     while (`$true) {
         try {
             `$currentTime = (Get-Date).Ticks
+            `$runningTime = (`$currentTime - `$startTime) / 10000000 # seconds
             
-            # Regular checkin
-            if ((`$currentTime - `$lastCheckin) / 10000000 -gt `$Global:Config.CheckinInterval) {
+            # Regular checkin - start after 30 seconds
+            if (`$runningTime -gt 30 -and (`$currentTime - `$lastCheckin) / 10000000 -gt `$Global:Config.CheckinInterval) {
                 Send-Checkin
                 `$lastCheckin = `$currentTime
             }
             
-            # Network scan - only after service has been running for at least 5 minutes
-            if ((`$currentTime - `$lastScan) / 10000000 -gt `$Global:Config.ScanInterval) {
+            # Network scan - start after 5 minutes to allow service to stabilize
+            if (`$runningTime -gt 300 -and (`$currentTime - `$lastScan) / 10000000 -gt `$Global:Config.ScanInterval) {
                 Send-NetworkScan
                 `$lastScan = `$currentTime
             }
