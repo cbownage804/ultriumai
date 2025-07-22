@@ -578,6 +578,34 @@ function Install-SafeNetAgent {
                     Write-Log "Script test failed: $_" "ERROR"
                 }
                 
+                # Test with service parameter (what NSSM actually runs)
+                Write-Log "Testing with 'service' parameter..." "ERROR"
+                try {
+                    $serviceTestResult = Start-Job -ScriptBlock {
+                        param($scriptPath)
+                        & powershell.exe -ExecutionPolicy Bypass -NoProfile -File $scriptPath service
+                    } -ArgumentList $scriptPath | Wait-Job -Timeout 10 | Receive-Job
+                    Write-Log "Service test result: $serviceTestResult" "ERROR"
+                } catch {
+                    Write-Log "Service test failed: $_" "ERROR"
+                }
+                
+                # Check Windows Event Log for service startup errors
+                Write-Log "Checking Windows Event Log for recent service errors..." "ERROR"
+                try {
+                    $events = Get-WinEvent -FilterHashtable @{LogName='System'; ID=7034,7031,7030,7022,7023,7024} -MaxEvents 10 -ErrorAction SilentlyContinue | 
+                        Where-Object {$_.TimeCreated -gt (Get-Date).AddMinutes(-5) -and $_.Message -like "*$($Global:Config.ServiceName)*"}
+                    if ($events) {
+                        foreach ($event in $events) {
+                            Write-Log "Event Log: $($event.Id) - $($event.LevelDisplayName) - $($event.Message)" "ERROR"
+                        }
+                    } else {
+                        Write-Log "No recent service errors found in Event Log" "ERROR"
+                    }
+                } catch {
+                    Write-Log "Could not read Event Log: $_" "ERROR"
+                }
+                
                 # Test the exact command NSSM is trying to run
                 Write-Log "Testing exact NSSM command..." "ERROR"
                 try {
