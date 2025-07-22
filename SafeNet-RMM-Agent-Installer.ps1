@@ -507,8 +507,39 @@ function Install-SafeNetAgent {
         
         # Install and start service
         if (Install-SafeNetService) {
-            Start-Service -Name $Global:Config.ServiceName
-            Write-Log "Service started successfully"
+            Write-Log "Waiting for service to initialize..."
+            Start-Sleep -Seconds 3
+            
+            try {
+                Start-Service -Name $Global:Config.ServiceName
+                Write-Log "Service started successfully"
+            } catch {
+                Write-Log "Failed to start service: $_" "ERROR"
+                
+                # Check service logs for more details
+                $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
+                if (Test-Path $logFile) {
+                    Write-Log "Service log contents:" "ERROR"
+                    $logContent = Get-Content $logFile -Tail 10 -ErrorAction SilentlyContinue
+                    foreach ($line in $logContent) {
+                        Write-Log "LOG: $line" "ERROR"
+                    }
+                }
+                
+                # Try to get service status details
+                try {
+                    $serviceDetails = Get-WmiObject -Class Win32_Service -Filter "Name='$($Global:Config.ServiceName)'"
+                    if ($serviceDetails) {
+                        Write-Log "Service State: $($serviceDetails.State)" "ERROR"
+                        Write-Log "Service ExitCode: $($serviceDetails.ExitCode)" "ERROR"
+                        Write-Log "Service ProcessId: $($serviceDetails.ProcessId)" "ERROR"
+                    }
+                } catch {
+                    Write-Log "Could not get service details: $_" "ERROR"
+                }
+                
+                throw "Service failed to start - check logs at $logFile"
+            }
             
             # Verify service is running
             Start-Sleep -Seconds 5
@@ -517,9 +548,10 @@ function Install-SafeNetAgent {
                 Write-Host "SafeNet agent installed and running!" -ForegroundColor Green
                 Write-Host "Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
                 Write-Host "Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
+                Write-Host "Service logs: $logFile" -ForegroundColor Yellow
                 return $true
             } else {
-                throw "Service failed to start"
+                throw "Service failed to start - Status: $($service.Status)"
             }
         }
         
