@@ -167,7 +167,7 @@ function Get-SystemInfo {
                     used_percent = [math]::Round(((`$_.Size - `$_.FreeSpace) / `$_.Size) * 100, 2)
                 }
             }
-            uptime_hours = [math]::Round((Get-Date) - `$os.LastBootUpTime).TotalHours, 2)
+            uptime_hours = [math]::Round(((Get-Date) - `$os.LastBootUpTime).TotalHours, 2)
             ip_addresses = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" }).IPAddress
             last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
@@ -339,7 +339,7 @@ function Start-ServiceLoop {
 }
 
 # Service entry point
-if (`$args[0] -eq "service") {
+if (`$args.Count -gt 0 -and `$args[0] -eq 'service') {
     Start-ServiceLoop
 } else {
     Write-Host "SafeNet Agent - Use 'service' parameter to run as service"
@@ -424,14 +424,24 @@ function Install-SafeNetService {
         }
         
         # Install service using NSSM
+        $nssm = Join-Path $Global:Config.InstallPath "nssm.exe"
         $servicePath = "powershell.exe"
-        $serviceArgs = '-ExecutionPolicy Bypass -NoProfile -File "' + $scriptPath + '" service'
         
-        & $nssmPath install $Global:Config.ServiceName $servicePath
-        & $nssmPath set $Global:Config.ServiceName AppParameters $serviceArgs
-        & $nssmPath set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
-        & $nssmPath set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
-        & $nssmPath set $Global:Config.ServiceName Start SERVICE_AUTO_START
+        & $nssm install $Global:Config.ServiceName $servicePath
+        & $nssm set $Global:Config.ServiceName AppParameters `
+            '-ExecutionPolicy Bypass -NoProfile -File "C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1" service'
+        & $nssm set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
+        & $nssm set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
+        & $nssm set $Global:Config.ServiceName Start SERVICE_AUTO_START
+        
+        # Configure logging
+        & $nssm set $Global:Config.ServiceName AppStdout "C:\Program Files\Ultrium SafeNet\logs\service.log"
+        & $nssm set $Global:Config.ServiceName AppStderr "C:\Program Files\Ultrium SafeNet\logs\service.log"
+        
+        # Verify configuration
+        Write-Log "NSSM Configuration:"
+        & $nssm get $Global:Config.ServiceName AppParameters
+        & $nssm get $Global:Config.ServiceName AppStdout
         & $nssmPath set $Global:Config.ServiceName AppDirectory $Global:Config.InstallPath
         
         # Set up logging
