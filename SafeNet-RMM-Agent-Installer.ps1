@@ -144,15 +144,15 @@ function Invoke-SafeNetAPI {
 function Get-SystemInfo {
     try {
         # Get basic info safely to avoid hanging
-        $hostname = try { $env:COMPUTERNAME } catch { "Unknown" }
-        if ([string]::IsNullOrEmpty($hostname)) { $hostname = "Unknown" }
+        `$hostname = try { `$env:COMPUTERNAME } catch { "Unknown" }
+        if ([string]::IsNullOrEmpty(`$hostname)) { `$hostname = "Unknown" }
         
         # Get primary IP address with error handling
-        $ipAddress = try {
-            $adapters = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | 
-                Where-Object { $_.IPAddress -notlike "127.*" -and $_.IPAddress -notlike "169.254.*" }
-            if ($adapters) {
-                $adapters[0].IPAddress
+        `$ipAddress = try {
+            `$adapters = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | 
+                Where-Object { `$_.IPAddress -notlike "127.*" -and `$_.IPAddress -notlike "169.254.*" }
+            if (`$adapters) {
+                `$adapters[0].IPAddress
             } else {
                 "127.0.0.1"
             }
@@ -161,12 +161,12 @@ function Get-SystemInfo {
         }
         
         # Get OS info with timeout protection
-        $osInfo = try {
-            $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
+        `$osInfo = try {
+            `$os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction SilentlyContinue
             @{
-                name = if ($os.Caption) { $os.Caption } else { "Windows" }
-                version = if ($os.Version) { $os.Version } else { "Unknown" }
-                build = if ($os.BuildNumber) { $os.BuildNumber } else { "Unknown" }
+                name = if (`$os.Caption) { `$os.Caption } else { "Windows" }
+                version = if (`$os.Version) { `$os.Version } else { "Unknown" }
+                build = if (`$os.BuildNumber) { `$os.BuildNumber } else { "Unknown" }
             }
         } catch {
             @{
@@ -177,27 +177,28 @@ function Get-SystemInfo {
         }
         
         return @{
-            hostname = $hostname
-            ip_address = $ipAddress
-            domain = try { $env:USERDOMAIN } catch { "Unknown" }
-            os_name = $osInfo.name
-            os_version = $osInfo.version
-            os_build = $osInfo.build
+            hostname = `$hostname
+            ip_address = `$ipAddress
+            domain = try { `$env:USERDOMAIN } catch { "Unknown" }
+            os_name = `$osInfo.name
+            os_version = `$osInfo.version
+            os_build = `$osInfo.build
             last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
     } catch {
-        Write-ServiceLog "Failed to collect system info: $_" "ERROR"
+        Write-ServiceLog "Failed to collect system info: `$_" "ERROR"
         # Return valid defaults to avoid database constraint errors
         return @{
-            hostname = if ($env:COMPUTERNAME) { $env:COMPUTERNAME } else { "Unknown" }
+            hostname = if (`$env:COMPUTERNAME) { `$env:COMPUTERNAME } else { "Unknown" }
             ip_address = "127.0.0.1"
-            domain = if ($env:USERDOMAIN) { $env:USERDOMAIN } else { "Unknown" }
+            domain = if (`$env:USERDOMAIN) { `$env:USERDOMAIN } else { "Unknown" }
             os_name = "Windows"
             os_version = "Unknown"
             os_build = "Unknown"
             last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
         }
     }
+}
 
 function Get-NetworkDevices {
     try {
@@ -464,7 +465,7 @@ function Install-SafeNetService {
             Start-Sleep -Seconds 2
         }
         
-        # Install service using NSSM
+        # Install service using NSSM with correct parameters
         $nssm = Join-Path $Global:Config.InstallPath "nssm.exe"
         $servicePath = "powershell.exe"
         
@@ -473,21 +474,21 @@ function Install-SafeNetService {
         & $nssm set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
         & $nssm set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
         & $nssm set $Global:Config.ServiceName Start SERVICE_AUTO_START
+        & $nssm set $Global:Config.ServiceName AppDirectory $Global:Config.InstallPath
         
         # Configure logging
-        & $nssm set $Global:Config.ServiceName AppStdout "C:\Program Files\Ultrium SafeNet\logs\service.log"
-        & $nssm set $Global:Config.ServiceName AppStderr "C:\Program Files\Ultrium SafeNet\logs\service.log"
+        $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
+        & $nssm set $Global:Config.ServiceName AppStdout $logFile
+        & $nssm set $Global:Config.ServiceName AppStderr $logFile
         
         # Verify configuration
         Write-Log "NSSM Configuration:"
-        & $nssm get $Global:Config.ServiceName AppParameters
-        & $nssm get $Global:Config.ServiceName AppStdout
-        & $nssmPath set $Global:Config.ServiceName AppDirectory $Global:Config.InstallPath
-        
-        # Set up logging
-        $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
-        & $nssmPath set $Global:Config.ServiceName AppStdout $logFile
-        & $nssmPath set $Global:Config.ServiceName AppStderr $logFile
+        $params = & $nssm get $Global:Config.ServiceName AppParameters 2>&1
+        $stdout = & $nssm get $Global:Config.ServiceName AppStdout 2>&1
+        $appdir = & $nssm get $Global:Config.ServiceName AppDirectory 2>&1
+        Write-Log "AppParameters: $params"
+        Write-Log "AppStdout: $stdout" 
+        Write-Log "AppDirectory: $appdir"
         
         Write-Log "Windows service installed with NSSM: $($Global:Config.ServiceName)"
         return $true
