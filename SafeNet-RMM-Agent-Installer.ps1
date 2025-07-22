@@ -371,6 +371,17 @@ cd /d "$($Global:Config.InstallPath)"
 powershell.exe -ExecutionPolicy Bypass -NoProfile -File "SafeNet-Agent.ps1" service
 "@ | Out-File -FilePath $serviceBat -Encoding ASCII
         
+        # Check if service already exists and remove it first
+        $existingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
+        if ($existingService) {
+            Write-Log "Removing existing service..."
+            if ($existingService.Status -eq "Running") {
+                Stop-Service -Name $Global:Config.ServiceName -Force
+            }
+            $result = & sc.exe delete $Global:Config.ServiceName
+            Start-Sleep -Seconds 2  # Wait for service to be fully removed
+        }
+        
         # Install Windows service
         $servicePath = "cmd.exe /c `"$serviceBat`""
         New-Service -Name $Global:Config.ServiceName -DisplayName $Global:Config.ServiceDisplayName -Description $Global:Config.ServiceDescription -BinaryPathName $servicePath -StartupType Automatic
