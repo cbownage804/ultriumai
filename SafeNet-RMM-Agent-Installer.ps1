@@ -363,30 +363,47 @@ function Install-SafeNetService {
     if (!$scriptPath) { return $false }
     
     try {
-        # Create service wrapper with better error handling
-        $serviceBat = Join-Path $Global:Config.InstallPath "SafeNet-Service.bat"
-        @"
-@echo off
-cd /d "$($Global:Config.InstallPath)"
-powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Command "& '.\SafeNet-Agent.ps1' service" > logs\service.log 2>&1
-"@ | Out-File -FilePath $serviceBat -Encoding ASCII
+        # Download and setup NSSM
+        $nssmPath = Join-Path $Global:Config.InstallPath "nssm.exe"
+        if (!(Test-Path $nssmPath)) {
+            Write-Log "Downloading NSSM..."
+            $nssmUrl = "https://github.com/kirillkovalenko/nssm/raw/master/win64/nssm.exe"
+            try {
+                Invoke-WebRequest -Uri $nssmUrl -OutFile $nssmPath -UseBasicParsing
+                Write-Log "NSSM downloaded successfully"
+            } catch {
+                Write-Log "Failed to download NSSM: $_" "ERROR"
+                return $false
+            }
+        }
         
         # Check if service already exists and remove it first
         $existingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
         if ($existingService) {
             Write-Log "Removing existing service..."
             if ($existingService.Status -eq "Running") {
-                Stop-Service -Name $Global:Config.ServiceName -Force
+                & $nssmPath stop $Global:Config.ServiceName
             }
-            $result = & sc.exe delete $Global:Config.ServiceName
-            Start-Sleep -Seconds 2  # Wait for service to be fully removed
+            & $nssmPath remove $Global:Config.ServiceName confirm
+            Start-Sleep -Seconds 2
         }
         
-        # Install Windows service
-        $servicePath = "cmd.exe /c `"$serviceBat`""
-        New-Service -Name $Global:Config.ServiceName -DisplayName $Global:Config.ServiceDisplayName -Description $Global:Config.ServiceDescription -BinaryPathName $servicePath -StartupType Automatic
+        # Install service using NSSM
+        $servicePath = "powershell.exe"
+        $serviceArgs = "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" service"
         
-        Write-Log "Windows service installed: $($Global:Config.ServiceName)"
+        & $nssmPath install $Global:Config.ServiceName $servicePath $serviceArgs
+        & $nssmPath set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
+        & $nssmPath set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
+        & $nssmPath set $Global:Config.ServiceName Start SERVICE_AUTO_START
+        & $nssmPath set $Global:Config.ServiceName AppDirectory $Global:Config.InstallPath
+        
+        # Set up logging
+        $logFile = Join-Path $Global:Config.InstallPath "logs\service.log"
+        & $nssmPath set $Global:Config.ServiceName AppStdout $logFile
+        & $nssmPath set $Global:Config.ServiceName AppStderr $logFile
+        
+        Write-Log "Windows service installed with NSSM: $($Global:Config.ServiceName)"
         return $true
     } catch {
         Write-Log "Failed to install service: $_" "ERROR"
