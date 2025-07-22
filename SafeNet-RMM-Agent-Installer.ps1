@@ -180,13 +180,23 @@ function Get-SystemInfo {
 function Get-NetworkDevices {
     try {
         `$devices = @()
-        `$localIPs = (Get-NetIPAddress | Where-Object { `$_.AddressFamily -eq "IPv4" -and `$_.IPAddress -ne "127.0.0.1" }).IPAddress
+        `$localIPs = (Get-NetIPAddress | Where-Object { 
+            `$_.AddressFamily -eq "IPv4" -and 
+            `$_.IPAddress -ne "127.0.0.1" -and 
+            `$_.IPAddress -notlike "169.254.*"
+        }).IPAddress
         
         Write-ServiceLog "Starting network discovery for `$(`$localIPs.Count) local IPs" "INFO"
         
         foreach (`$ip in `$localIPs) {
+            # Skip APIPA/link-local addresses
+            if (`$ip -like "169.254.*") {
+                Write-ServiceLog "Skipping APIPA address: `$ip" "INFO"
+                continue
+            }
+            
             `$network = `$ip.Substring(0, `$ip.LastIndexOf('.'))
-            Write-ServiceLog "Scanning network: `$network.0/24" "INFO"
+            Write-ServiceLog "Scanning network: `$network.0/24 (excluding APIPA ranges)" "INFO"
             
             # Use parallel jobs for faster scanning - scan common IPs first
             `$commonIPs = @(1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 100, 101, 102, 103, 104, 105, 110, 111, 112, 113, 114, 115, 200, 201, 202, 203, 204, 205, 210, 211, 212, 213, 214, 215, 254)
@@ -194,7 +204,8 @@ function Get-NetworkDevices {
             
             foreach (`$i in `$commonIPs) {
                 `$targetIP = "`$network.`$i"
-                if (`$targetIP -ne `$ip) {
+                # Skip scanning APIPA addresses and self
+                if (`$targetIP -ne `$ip -and `$targetIP -notlike "169.254.*") {
                     `$job = Start-Job -ScriptBlock {
                         param(`$targetIP)
                         try {
