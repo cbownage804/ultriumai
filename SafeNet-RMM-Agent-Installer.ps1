@@ -283,7 +283,7 @@ function Send-Checkin {
     `$systemInfo = Get-SystemInfo
     `$checkinData = @{
         connector_key = `$Global:Config.ConnectorKey
-        agent_version = "1.0.0"
+        agent_version = `$Global:Config.Version
         system_info = `$systemInfo
         status = "online"
         last_scan = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
@@ -420,6 +420,9 @@ function Install-SafeNetService {
             )
             
             $downloaded = $false
+            # Force TLS 1.2 for older Windows versions
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            
             foreach ($url in $nssmUrls) {
                 try {
                     if ($url -like "*.zip") {
@@ -476,8 +479,9 @@ function Install-SafeNetService {
         
         & $nssm install $Global:Config.ServiceName $servicePath
         
-        # Force-set parameters with proper quoting - use single quotes to preserve inner double quotes
-        & $nssm set $Global:Config.ServiceName AppParameters '-ExecutionPolicy Bypass -NoProfile -File "C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1" service'
+        # Force-set parameters with proper quoting using dynamic script path
+        $paramsString = "-ExecutionPolicy Bypass -NoProfile -File `"$scriptPath`" service"
+        & $nssm set $Global:Config.ServiceName AppParameters $paramsString
         & $nssm set $Global:Config.ServiceName AppDirectory "C:\Program Files\Ultrium SafeNet"
         & $nssm set $Global:Config.ServiceName DisplayName $Global:Config.ServiceDisplayName
         & $nssm set $Global:Config.ServiceName Description $Global:Config.ServiceDescription
@@ -488,9 +492,10 @@ function Install-SafeNetService {
         & $nssm set $Global:Config.ServiceName AppStdout $logFile
         & $nssm set $Global:Config.ServiceName AppStderr $logFile
         
-        # Configure recovery actions - auto-restart on failure
+        # Configure recovery actions - auto-restart on failure with throttling
         & $nssm set $Global:Config.ServiceName AppExit Default Restart
         & $nssm set $Global:Config.ServiceName AppRestartDelay 30000
+        & $nssm set $Global:Config.ServiceName AppThrottle 1500
         
         # Verify NSSM kept the quotes properly
         Write-Log "Verifying NSSM configuration..."
@@ -498,12 +503,12 @@ function Install-SafeNetService {
         Write-Log "AppParameters result: $params"
         
         # Check if quotes are preserved around the .ps1 path
-        if ($params -like '*"C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1"*') {
+        if ($params -like "*`"$scriptPath`"*") {
             Write-Log "✅ NSSM parameters correctly quoted" 
         } else {
             Write-Log "❌ NSSM lost quotes - attempting to fix..." "ERROR"
             # Try again with different quoting approach
-            & $nssm set $Global:Config.ServiceName AppParameters '-ExecutionPolicy Bypass -NoProfile -File "C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1" service'
+            & $nssm set $Global:Config.ServiceName AppParameters $paramsString
             $params2 = & $nssm get $Global:Config.ServiceName AppParameters 2>&1
             Write-Log "Second attempt result: $params2"
         }
@@ -656,7 +661,7 @@ function Install-SafeNetAgent {
                 # Check Windows Event Log for service startup errors
                 Write-Log "Checking Windows Event Log for recent service errors..." "ERROR"
                 try {
-                    $events = Get-WinEvent -FilterHashtable @{LogName='System'; ID=7034,7031,7030,7022,7023,7024} -MaxEvents 10 -ErrorAction SilentlyContinue | 
+                    $events = Get-WinEvent -FilterHashtable @{LogName='System'; ID=7034,7031,7030,7022,7023,7024,7000,7009,7011,7026} -MaxEvents 10 -ErrorAction SilentlyContinue | 
                         Where-Object {$_.TimeCreated -gt (Get-Date).AddMinutes(-5) -and $_.Message -like "*$($Global:Config.ServiceName)*"}
                     if ($events) {
                         foreach ($event in $events) {
