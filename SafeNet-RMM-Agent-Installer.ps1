@@ -407,7 +407,7 @@ function Install-SafeNetService {
             Start-Sleep 2
         }
 
-        $psExe = "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
+        $psExe = "${env:WINDIR}\System32\WindowsPowerShell\v1.0\powershell.exe"
         & $nssmPath install $Global:Config.ServiceName $psExe
 
         # Use -Command to keep quotes intact
