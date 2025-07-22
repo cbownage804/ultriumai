@@ -405,7 +405,7 @@ function Uninstall-SafeNetAgent {
             Write-Log "Installation directory removed"
         }
         
-        Write-Host "✅ SafeNet agent uninstalled successfully!" -ForegroundColor Green
+        Write-Host "SafeNet agent uninstalled successfully!" -ForegroundColor Green
         return $true
     } catch {
         Write-Log "Uninstallation failed: $_" "ERROR"
@@ -442,9 +442,9 @@ function Install-SafeNetAgent {
             Start-Sleep -Seconds 5
             $service = Get-Service -Name $Global:Config.ServiceName
             if ($service.Status -eq "Running") {
-                Write-Host "✅ SafeNet agent installed and running!" -ForegroundColor Green
-                Write-Host "🛡️ Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
-                Write-Host "📊 Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
+                Write-Host "SafeNet agent installed and running!" -ForegroundColor Green
+                Write-Host "Protection is now active for $($Global:Config.ClientName)" -ForegroundColor Cyan
+                Write-Host "Agent will appear in dashboard within 5 minutes" -ForegroundColor Yellow
                 return $true
             } else {
                 throw "Service failed to start"
@@ -454,7 +454,7 @@ function Install-SafeNetAgent {
         return $false
     } catch {
         Write-Log "Installation failed: $_" "ERROR"
-        Write-Host "❌ Installation failed: $_" -ForegroundColor Red
+        Write-Host "Installation failed: $_" -ForegroundColor Red
         return $false
     }
 }
@@ -472,7 +472,7 @@ try {
     }
     
     if (!(Load-Configuration)) {
-        Write-Host "❌ Missing required configuration (ConnectorKey, ClientCode)" -ForegroundColor Red
+        Write-Host "Missing required configuration (ConnectorKey, ClientCode)" -ForegroundColor Red
         if (!$Silent) {
             Write-Host ""
             Write-Host "Usage: .\SafeNet-RMM-Agent-Installer.ps1 -ConnectorKey 'your-key' -ClientCode 'your-code'" -ForegroundColor Yellow
@@ -487,7 +487,7 @@ try {
     # Check if already installed
     $existingService = Get-Service -Name $Global:Config.ServiceName -ErrorAction SilentlyContinue
     if ($existingService) {
-        Write-Host "⚠️ SafeNet agent is already installed" -ForegroundColor Yellow
+        Write-Host "SafeNet agent is already installed" -ForegroundColor Yellow
         if (!$Silent) {
             $response = Read-Host "Reinstall? (y/N)"
             if ($response -eq 'y' -or $response -eq 'Y') {
@@ -509,6 +509,6 @@ try {
     
 } catch {
     Write-Log "Script failed: $_" "ERROR"
-    Write-Host "❌ Installation failed: $_" -ForegroundColor Red
+    Write-Host "Installation failed: $_" -ForegroundColor Red
     exit 1
 }
