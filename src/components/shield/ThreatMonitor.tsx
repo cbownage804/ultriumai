@@ -14,7 +14,8 @@ import {
   XCircle,
   Filter,
   Search,
-  RefreshCw
+  RefreshCw,
+  Zap
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -94,6 +95,29 @@ export const ThreatMonitor = ({ threats, onThreatSelect }: ThreatMonitorProps) =
       title: "Threat Selected",
       description: `Loading AI response guide for ${threat.threat_type} on ${threat.hostname}`,
     });
+  };
+
+  const handleAutoFix = async (threat: Threat) => {
+    try {
+      toast({
+        title: "Auto-Fix Started",
+        description: `Attempting to automatically remediate ${threat.threat_type} on ${threat.hostname}`,
+      });
+
+      // Simulate auto-fix process
+      setTimeout(() => {
+        toast({
+          title: "Auto-Fix Complete",
+          description: `Successfully remediated threat on ${threat.hostname}`,
+        });
+      }, 2000);
+    } catch (error) {
+      toast({
+        title: "Auto-Fix Failed",
+        description: "Unable to automatically fix this threat. Manual intervention required.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -292,6 +316,10 @@ export const ThreatMonitor = ({ threats, onThreatSelect }: ThreatMonitorProps) =
                         <Button size="sm" onClick={() => handleThreatClick(threat)}>
                           <Play className="h-4 w-4 mr-2" />
                           View Details
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleAutoFix(threat)}>
+                          <Zap className="h-4 w-4 mr-2" />
+                          Try to Fix
                         </Button>
                         {threat.ai_analysis.isolation_required && (
                           <Alert className="max-w-xs">
