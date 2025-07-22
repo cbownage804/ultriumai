@@ -221,62 +221,50 @@ function Get-NetworkDevices {
             `$network = `$ip.Substring(0, `$ip.LastIndexOf('.'))
             Write-ServiceLog "Scanning network: `$network.0/24 (excluding APIPA ranges)" "INFO"
             
-            # Use parallel jobs for faster scanning - scan common IPs first
+            # Use synchronous scanning to avoid job issues in service context
             `$commonIPs = @(1, 2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 100, 101, 102, 103, 104, 105, 110, 111, 112, 113, 114, 115, 200, 201, 202, 203, 204, 205, 210, 211, 212, 213, 214, 215, 254)
-            `$jobs = @()
+            `$scannedCount = 0
             
             foreach (`$i in `$commonIPs) {
                 `$targetIP = "`$network.`$i"
+                `$scannedCount++
+                
+                # Log progress every 20 IPs
+                if (`$scannedCount % 20 -eq 0) {
+                    Write-ServiceLog "Scanned `$scannedCount/`$(`$commonIPs.Count) addresses, found `$(`$devices.Count) online devices" "INFO"
+                }
+                
                 # Skip scanning APIPA addresses and self
                 if (`$targetIP -ne `$ip -and `$targetIP -notlike "169.254.*") {
-                    `$job = Start-Job -ScriptBlock {
-                        param(`$targetIP)
-                        try {
-                            # Use only Test-Connection with short timeout to avoid hanging
-                            `$pingResult = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet -TimeoutSec 2
-                            if (`$pingResult) {
-                                try {
-                                    `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
-                                } catch {
-                                    `$hostname = "Unknown"
-                                }
-                                
-                                return @{
-                                    ip_address = `$targetIP
-                                    hostname = `$hostname
-                                    device_type = "computer"
-                                    os_family = "unknown"
-                                    status = "online"
-                                    risk_level = "low"
-                                    device_name = `$hostname
-                                    is_managed = `$false
-                                    is_critical = `$false
-                                }
+                    try {
+                        # Use Test-Connection with short timeout
+                        `$pingResult = Test-Connection -ComputerName `$targetIP -Count 1 -Quiet -TimeoutSec 1
+                        if (`$pingResult) {
+                            try {
+                                `$hostname = [System.Net.Dns]::GetHostByAddress(`$targetIP).HostName
+                            } catch {
+                                `$hostname = "Unknown"
                             }
-                        } catch {
-                            # Silently continue for individual failures
+                            
+                            `$device = @{
+                                ip_address = `$targetIP
+                                hostname = `$hostname
+                                device_type = "computer"
+                                os_family = "unknown"
+                                status = "online"
+                                risk_level = "low"
+                                device_name = `$hostname
+                                is_managed = `$false
+                                is_critical = `$false
+                            }
+                            
+                            `$devices += `$device
+                            Write-ServiceLog "Found device: `$(`$device.ip_address) (`$(`$device.hostname))" "INFO"
                         }
-                        return `$null
-                    } -ArgumentList `$targetIP
-                    `$jobs += `$job
-                }
-            }
-            
-            # Wait for jobs to complete with timeout
-            Write-ServiceLog "Waiting for `$(`$jobs.Count) scan jobs to complete..." "INFO"
-            `$completed = Wait-Job -Job `$jobs -Timeout 30
-            
-            foreach (`$job in `$jobs) {
-                try {
-                    `$result = Receive-Job -Job `$job -ErrorAction SilentlyContinue
-                    if (`$result) {
-                        `$devices += `$result
-                        Write-ServiceLog "Found device: `$(`$result.ip_address) (`$(`$result.hostname))" "INFO"
+                    } catch {
+                        # Silently continue for individual failures
                     }
-                } catch {
-                    # Ignore individual job errors
                 }
-                Remove-Job -Job `$job -Force -ErrorAction SilentlyContinue
             }
             
             break # Only scan first network for demo
@@ -381,7 +369,8 @@ if (`$args.Count -gt 0 -and `$args[0] -eq 'service') {
     } catch {
         Write-ServiceLog "Service failed to start: `$_" "ERROR"
         Write-ServiceLog "Stack trace: `$(`$_.ScriptStackTrace)" "ERROR"
-        exit 1
+        # Don't exit immediately - log and retry instead to avoid instant service failure
+        Start-Sleep -Seconds 300
     }
 } else {
     Write-Host "SafeNet Agent - Use 'service' parameter to run as service"
