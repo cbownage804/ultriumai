@@ -33,6 +33,12 @@ param(
     [switch]$Uninstall
 )
 
+# Utility Functions
+function Get-UtcStamp { (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") }
+
+# Optimize download performance
+$ProgressPreference = 'SilentlyContinue'
+
 # Global Configuration
 $Global:Config = @{
     ServiceName = "UltriumSafeNetAgent"
@@ -106,6 +112,9 @@ function Create-ServiceScript {
 # SafeNet RMM Agent Service Script
 # This script runs as a Windows service to monitor the system
 
+# Utility Functions
+function Get-UtcStamp { (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ") }
+
 `$Global:Config = @{
     ConnectorKey = "$($Global:Config.ConnectorKey)"
     ClientCode = "$($Global:Config.ClientCode)"
@@ -116,6 +125,7 @@ function Create-ServiceScript {
     InstallPath = "$($Global:Config.InstallPath)"
     ServiceName = "$($Global:Config.ServiceName)"
     LogPath = "`$(`$Global:Config.InstallPath)\logs\agent.log"
+    Version = "$($Global:Config.Version)"
 }
 
 function Write-ServiceLog {
@@ -187,7 +197,7 @@ function Get-SystemInfo {
             os_name = `$osName
             os_version = `$osVersion
             os_build = `$osBuild
-            last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
+            last_checkin = Get-UtcStamp
         }
     } catch {
         Write-ServiceLog "Failed to collect system info: `$_" "ERROR"
@@ -199,7 +209,7 @@ function Get-SystemInfo {
             os_name = "Windows"
             os_version = "Unknown"
             os_build = "Unknown"
-            last_checkin = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
+            last_checkin = Get-UtcStamp
         }
     }
 }
@@ -289,7 +299,7 @@ function Send-Checkin {
         agent_version = `$Global:Config.Version
         system_info = `$systemInfo
         status = "online"
-        last_scan = Get-Date -Format "yyyy-MM-ddTHH:mm:ss.fffZ"
+        last_scan = Get-UtcStamp
     }
     
     Write-ServiceLog "Sending agent checkin..."
@@ -303,14 +313,17 @@ function Send-Checkin {
 
 function Send-NetworkScan {
     Write-ServiceLog "Starting network discovery scan..."
+    `$scanStartTime = Get-Date
     `$devices = Get-NetworkDevices
+    `$scanEndTime = Get-Date
+    `$scanDurationSeconds = (`$scanEndTime - `$scanStartTime).TotalSeconds
     
     `$scanData = @{
         connector_key = `$Global:Config.ConnectorKey
         scan_type = "basic_discovery"
         network_ranges = @("local")
         devices_found = `$devices.Count
-        scan_duration = 5
+        scan_duration = [math]::Round(`$scanDurationSeconds, 2)
         hostname = `$env:COMPUTERNAME
         results = @{ discovered = `$devices.Count }
         devices = `$devices
@@ -724,13 +737,13 @@ function Install-SafeNetAgent {
                 Write-Log "Installation failed: Service failed to start - Status: $($service.Status)" "ERROR"
                 Write-Host "`n❌ Installation failed! Manual debugging steps:" -ForegroundColor Red
                 Write-Host "1. Check NSSM configuration:" -ForegroundColor Yellow
-                Write-Host "   `$nssm = `"C:\Program Files\Ultrium SafeNet\nssm.exe`"" -ForegroundColor Cyan
+                Write-Host "   `$nssm = `"$($Global:Config.InstallPath)\nssm.exe`"" -ForegroundColor Cyan
                 Write-Host "   & `$nssm get UltriumSafeNetAgent AppParameters" -ForegroundColor Cyan
                 Write-Host "`n2. Restart service and check logs:" -ForegroundColor Yellow
                 Write-Host "   & `$nssm restart UltriumSafeNetAgent" -ForegroundColor Cyan  
-                Write-Host "   Get-Content `"C:\Program Files\Ultrium SafeNet\logs\service.log`" -Tail 100 -Wait" -ForegroundColor Cyan
+                Write-Host "   Get-Content `"$(Join-Path $Global:Config.InstallPath 'logs\service.log')`" -Tail 100 -Wait" -ForegroundColor Cyan
                 Write-Host "`n3. Test exact command manually:" -ForegroundColor Yellow
-                Write-Host "   & `"`$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe`" -ExecutionPolicy Bypass -NoProfile -File `"C:\Program Files\Ultrium SafeNet\SafeNet-Agent.ps1`" service" -ForegroundColor Cyan
+                Write-Host "   & `"`$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe`" -ExecutionPolicy Bypass -NoProfile -File `"$(Join-Path $Global:Config.InstallPath 'SafeNet-Agent.ps1')`" service" -ForegroundColor Cyan
                 return $false
             }
         }
