@@ -2166,6 +2166,47 @@ export type Database = {
         }
         Relationships: []
       }
+      device_commands: {
+        Row: {
+          command_type: string
+          created_at: string | null
+          device_id: string
+          id: string
+          payload: Json
+          result: Json | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          command_type: string
+          created_at?: string | null
+          device_id: string
+          id?: string
+          payload?: Json
+          result?: Json | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          command_type?: string
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          payload?: Json
+          result?: Json | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_device_commands_device_id"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "safenet_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       document_scans: {
         Row: {
           completed_at: string | null
