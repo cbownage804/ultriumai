@@ -23,6 +23,7 @@ interface ScanDataRequest {
   scan_duration: number;
   hostname: string;
   results: any;
+  device_id?: string;
   devices?: Array<{
     ip_address: string;
     hostname?: string;
@@ -162,6 +163,9 @@ serve(async (req) => {
         const connector = connectorData[0];
         console.log('Using connector:', connector);
 
+        // Coerce scan_duration to integer before inserting
+        const scan_duration = Math.round(Number(scanData.scan_duration) || 0);
+        
         // Insert scan data using service role to bypass RLS
         console.log('About to insert scan data with:', {
           user_id: connector.user_id,
@@ -169,8 +173,9 @@ serve(async (req) => {
           scan_type: scanData.scan_type,
           network_ranges: scanData.network_ranges,
           devices_found: scanData.devices_found,
-          scan_duration: scanData.scan_duration,
-          hostname: scanData.hostname
+          scan_duration: scan_duration,
+          hostname: scanData.hostname,
+          device_id: scanData.device_id
         });
         
         const { data: scanResult, error: scanError } = await supabase
@@ -183,7 +188,7 @@ serve(async (req) => {
             scan_status: 'completed', // Mark as completed immediately
             network_ranges: scanData.network_ranges,
             devices_found: scanData.devices_found,
-            scan_duration: scanData.scan_duration,
+            scan_duration: scan_duration,
             scanned_at: new Date().toISOString(),
             completed_at: new Date().toISOString(), // Add completion time
             hostname: scanData.hostname,

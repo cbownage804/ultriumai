@@ -109,7 +109,7 @@ function Get-UtcStamp { (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:
     InstallPath     = "$($Global:Config.InstallPath)"
     ServiceName     = "$($Global:Config.ServiceName)"
     Version         = "$($Global:Config.Version)"
-    LogPath         = "$($Global:Config.InstallPath)\logs\agent.log"
+    LogPath         = "`$(`$Global:Config.InstallPath)\logs\agent.log"
 }
 
 function Write-ServiceLog {
@@ -340,15 +340,17 @@ function Send-NetworkScan {
     `$start = Get-Date
     `$dev   = Get-NetworkDevices
     `$stop  = Get-Date
+    `$scanDurationSeconds = [int]([math]::Round((`$stop - `$start).TotalSeconds))
     `$payload = @{
         connector_key  = `$Global:Config.ConnectorKey
         scan_type      = "basic_discovery"
         network_ranges = @("local")
         devices_found  = `$dev.Count
-        scan_duration  = [math]::Round((`$stop-`$start).TotalSeconds,2)
+        scan_duration  = `$scanDurationSeconds
         hostname       = `$env:COMPUTERNAME
         results        = @{ discovered = `$dev.Count }
         devices        = `$dev
+        device_id      = `$Global:Config.DeviceId
     }
     `$r = Invoke-SafeNetAPI -Endpoint "safenet-api/scan-data" -Data `$payload
     if (`$r) { Write-ServiceLog "Scan data sent" } else { Write-ServiceLog "Scan send failed" "ERROR" }

@@ -42,8 +42,8 @@ try {
     # Extract service script from installer and update the existing one
     Write-Host "🔄 Updating agent script with improved network discovery..." -ForegroundColor Yellow
     
-    # Run the installer to regenerate the service script
-    & $installerScript -ConnectorKey "update" -ClientCode "update" -Silent
+    # Run the installer to regenerate the service script with new changes
+    & $installerScript -ConnectorKey "test_connector_123" -ClientCode "TEST001" -ClientName "Test Org" -Silent
     
     Write-Host "🔄 Starting SafeNet service..." -ForegroundColor Yellow
     Start-Service -Name $ServiceName
