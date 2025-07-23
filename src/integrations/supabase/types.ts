@@ -2166,6 +2166,35 @@ export type Database = {
         }
         Relationships: []
       }
+      device_checkins: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          payload: Json
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_checkins_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_commands: {
         Row: {
           command_type: string
@@ -2203,6 +2232,97 @@ export type Database = {
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "safenet_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_scans: {
+        Row: {
+          created_at: string
+          device_id: string
+          devices_found: number | null
+          id: string
+          network_ranges: string[] | null
+          results: Json | null
+          scan_duration: number | null
+          scan_type: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          devices_found?: number | null
+          id?: string
+          network_ranges?: string[] | null
+          results?: Json | null
+          scan_duration?: number | null
+          scan_type: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          devices_found?: number | null
+          id?: string
+          network_ranges?: string[] | null
+          results?: Json | null
+          scan_duration?: number | null
+          scan_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_scans_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devices: {
+        Row: {
+          agent_version: string | null
+          created_at: string
+          domain: string | null
+          hostname: string | null
+          id: string
+          ip_address: string | null
+          last_checkin: string | null
+          last_scan_at: string | null
+          org_id: string
+          status: Database["public"]["Enums"]["device_status"]
+          updated_at: string
+        }
+        Insert: {
+          agent_version?: string | null
+          created_at?: string
+          domain?: string | null
+          hostname?: string | null
+          id?: string
+          ip_address?: string | null
+          last_checkin?: string | null
+          last_scan_at?: string | null
+          org_id: string
+          status?: Database["public"]["Enums"]["device_status"]
+          updated_at?: string
+        }
+        Update: {
+          agent_version?: string | null
+          created_at?: string
+          domain?: string | null
+          hostname?: string | null
+          id?: string
+          ip_address?: string | null
+          last_checkin?: string | null
+          last_scan_at?: string | null
+          org_id?: string
+          status?: Database["public"]["Enums"]["device_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -5404,6 +5524,33 @@ export type Database = {
           stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      organizations: {
+        Row: {
+          client_code: string
+          client_name: string | null
+          connector_key: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          client_code: string
+          client_name?: string | null
+          connector_key: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          client_code?: string
+          client_name?: string | null
+          connector_key?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -10137,6 +10284,41 @@ export type Database = {
         }
         Relationships: []
       }
+      tray_tokens: {
+        Row: {
+          created_at: string
+          device_id: string
+          expires_at: string
+          id: string
+          jwt: string
+          tool: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          expires_at: string
+          id?: string
+          jwt: string
+          tool: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          expires_at?: string
+          id?: string
+          jwt?: string
+          tool?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tray_tokens_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity_logs: {
         Row: {
           activity_details: Json | null
@@ -10571,6 +10753,14 @@ export type Database = {
         Args: { frequency: string; schedule_time: string }
         Returns: string
       }
+      current_device_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      current_org_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_device_alert_counts: {
         Args: { p_device_id: string }
         Returns: {
@@ -10754,6 +10944,8 @@ export type Database = {
         | "msp_admin"
         | "mssp_admin"
         | "ultrium_admin"
+      command_status: "queued" | "running" | "done" | "error" | "expired"
+      device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
     }
     CompositeTypes: {
@@ -10891,6 +11083,8 @@ export const Constants = {
         "mssp_admin",
         "ultrium_admin",
       ],
+      command_status: ["queued", "running", "done", "error", "expired"],
+      device_status: ["online", "offline", "stale", "unknown"],
       helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
     },
   },
