@@ -30,5 +30,19 @@ namespace SafeTray.Helpers
                 // Fail silently if no admin rights
             }
         }
+
+        // Helper method to read device ID from registry with fallback
+        public static string? ReadDeviceId()
+        {
+            const string keyPath = @"SOFTWARE\Ultrium\SafeNet";
+            return ReadValue(keyPath, "DeviceId");
+        }
+
+        // Helper method to write device ID to registry
+        public static void WriteDeviceId(string deviceId)
+        {
+            const string keyPath = @"SOFTWARE\Ultrium\SafeNet";
+            WriteValue(keyPath, "DeviceId", deviceId);
+        }
     }
 }

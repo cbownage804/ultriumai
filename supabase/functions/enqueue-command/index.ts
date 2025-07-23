@@ -44,7 +44,7 @@ serve(async (req: Request) => {
 
     // Verify device exists
     const { data: device, error: deviceError } = await supabase
-      .from('safenet_devices')
+      .from('devices')
       .select('id, hostname')
       .eq('id', device_id)
       .single()
@@ -61,12 +61,11 @@ serve(async (req: Request) => {
       .from('device_commands')
       .insert({
         device_id,
-        command_type,
+        type: command_type,
         payload,
-        status: 'queued',
-        created_at: new Date().toISOString()
+        status: 'queued'
       })
-      .select('id, command_type, status, created_at')
+      .select('id, type, status, queued_at')
       .single()
 
     if (commandError) {
@@ -82,9 +81,9 @@ serve(async (req: Request) => {
     return new Response(JSON.stringify({
       command_id: command.id,
       device_id,
-      command_type: command.command_type,
+      command_type: command.type,
       status: command.status,
-      created_at: command.created_at,
+      created_at: command.queued_at,
       message: `Command ${command_type} successfully enqueued for device ${device.hostname}`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

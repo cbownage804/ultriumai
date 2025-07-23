@@ -10894,6 +10894,15 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      upsert_device_from_checkin: {
+        Args: {
+          p_connector_key: string
+          p_client_code: string
+          p_system_info: Json
+          p_agent_version: string
+        }
+        Returns: string
+      }
       validate_api_key: {
         Args: { key_hash: string }
         Returns: {

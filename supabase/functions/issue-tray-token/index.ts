@@ -36,10 +36,10 @@ serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, serviceKey)
 
-    // Verify device exists and get connector info
+    // Verify device exists and get info
     const { data: device, error } = await supabase
-      .from('safenet_devices')
-      .select('id, connector_key, user_id, hostname, status')
+      .from('devices')
+      .select('id, org_id, hostname, status')
       .eq('id', device_id)
       .single()
 
@@ -58,8 +58,7 @@ serve(async (req: Request) => {
       sub: device_id,
       role: 'device_tray',
       device_id: device_id,
-      connector_key: device.connector_key,
-      user_id: device.user_id,
+      org_id: device.org_id,
       hostname: device.hostname,
       scope: scope,
       iat: now,

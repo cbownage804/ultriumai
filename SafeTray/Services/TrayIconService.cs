@@ -152,8 +152,15 @@ namespace SafeTray.Services
 
         private void OpenSettings()
         {
-            // TODO: Implement settings window
-            MessageBox.Show("Settings window not yet implemented", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                var settingsWindow = new Views.SettingsWindow();
+                settingsWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to open settings: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void ExitApplication()
