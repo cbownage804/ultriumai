@@ -163,8 +163,9 @@ serve(async (req) => {
         const connector = connectorData[0];
         console.log('Using connector:', connector);
 
-        // Coerce scan_duration to integer before inserting
-        const scan_duration = Math.round(Number(scanData.scan_duration) || 0);
+        // Coerce scan_duration to integer before inserting with safety check
+        const durRaw = scanData.scan_duration;
+        const scan_duration = Number.isFinite(durRaw) ? Math.round(durRaw) : 0;
         
         // Insert scan data using service role to bypass RLS
         console.log('About to insert scan data with:', {
