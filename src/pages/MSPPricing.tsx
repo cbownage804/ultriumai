@@ -232,7 +232,7 @@ const MSPPricing = () => {
               <CardHeader>
                 <CardTitle className="text-lg">AI Knowledge Assistant</CardTitle>
                 <CardDescription>Transform your documents into intelligent knowledge base</CardDescription>
-                <div className="text-2xl font-bold text-primary">$20/month</div>
+                <div className="text-2xl font-bold text-primary">$20/user/month</div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
@@ -259,7 +259,7 @@ const MSPPricing = () => {
               <CardHeader>
                 <CardTitle className="text-lg">Security Knowledge Base</CardTitle>
                 <CardDescription>Cybersecurity training and compliance assistant</CardDescription>
-                <div className="text-2xl font-bold text-primary">$20/month</div>
+                <div className="text-2xl font-bold text-primary">$20/user/month</div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
@@ -286,7 +286,7 @@ const MSPPricing = () => {
               <CardHeader>
                 <CardTitle className="text-lg">Custom Enterprise Chatbot</CardTitle>
                 <CardDescription>Fully customized AI assistant for your business</CardDescription>
-                <div className="text-2xl font-bold text-primary">$35/month</div>
+                <div className="text-2xl font-bold text-primary">$35/user/month</div>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
