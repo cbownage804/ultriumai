@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import StripeIntegration from "./integrations/StripeIntegration";
 import ZapierIntegration from "./integrations/ZapierIntegration";
 import QuickBooksIntegration from "./integrations/QuickBooksIntegration";
+import SlackIntegration from "./integrations/SlackIntegration";
+import EmailIntegration from "./integrations/EmailIntegration";
+import Office365Integration from "./integrations/Office365Integration";
 
 const IntegrationsManager = () => {
   const { toast } = useToast();
@@ -43,20 +46,29 @@ const IntegrationsManager = () => {
     {
       id: '4',
       name: 'Slack Notifications',
-      status: 'disconnected',
+      status: 'connected',
       provider: 'Slack',
-      enabled: false,
+      enabled: true,
       icon: MessageSquare,
       category: 'communication'
     },
     {
       id: '5',
       name: 'Email Marketing',
-      status: 'disconnected',
-      provider: 'Mailchimp',
-      enabled: false,
+      status: 'connected',
+      provider: 'Resend',
+      enabled: true,
       icon: Mail,
       category: 'marketing'
+    },
+    {
+      id: '6',
+      name: 'Office 365',
+      status: 'connected',
+      provider: 'Microsoft',
+      enabled: true,
+      icon: Calendar,
+      category: 'productivity'
     }
   ]);
 
@@ -83,12 +95,14 @@ const IntegrationsManager = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="stripe">Stripe</TabsTrigger>
           <TabsTrigger value="quickbooks">QuickBooks</TabsTrigger>
           <TabsTrigger value="zapier">Zapier</TabsTrigger>
+          <TabsTrigger value="slack">Slack</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>
+          <TabsTrigger value="office365">Office 365</TabsTrigger>
           <TabsTrigger value="communication">Communication</TabsTrigger>
         </TabsList>
 
@@ -102,7 +116,7 @@ const IntegrationsManager = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Connected</p>
-                    <p className="text-2xl font-bold">3</p>
+                    <p className="text-2xl font-bold">6</p>
                   </div>
                 </div>
               </CardContent>
@@ -200,20 +214,16 @@ const IntegrationsManager = () => {
           <ZapierIntegration />
         </TabsContent>
 
-        <TabsContent value="email" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Email Integration
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Email integration coming soon. Connect with services like Mailchimp, SendGrid, and more.
-              </p>
-            </CardContent>
-          </Card>
+        <TabsContent value="slack">
+          <SlackIntegration />
+        </TabsContent>
+
+        <TabsContent value="email">
+          <EmailIntegration />
+        </TabsContent>
+
+        <TabsContent value="office365">
+          <Office365Integration />
         </TabsContent>
 
         <TabsContent value="communication" className="space-y-4">
@@ -221,12 +231,12 @@ const IntegrationsManager = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
-                Communication Integrations
+                Additional Communication Integrations
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Connect with Slack, Microsoft Teams, Discord, and other communication platforms.
+                Connect with Discord, Microsoft Teams, and other communication platforms.
               </p>
             </CardContent>
           </Card>
