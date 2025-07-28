@@ -224,63 +224,90 @@ const MSPPricing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Custom GPT Solutions</h2>
-            <p className="text-muted-foreground">AI-powered solutions for specific client needs (sold separately)</p>
+            <p className="text-muted-foreground">Pre-built AI solutions for specific business needs</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {customGPTSolutions.map((solution, index) => {
-              const SolutionIcon = solution.icon;
-              const savings = getSavings(solution);
-              
-              return (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="text-center pb-6">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <SolutionIcon className="w-6 h-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{solution.name}</CardTitle>
-                    <CardDescription>{solution.description}</CardDescription>
-                    
-                    <div className="mt-4">
-                      <div className="text-3xl font-bold">
-                        {formatPrice(isYearly ? solution.price.yearly : solution.price.monthly)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        per user/{isYearly ? 'year' : 'month'}
-                      </div>
-                      {isYearly && savings && (
-                        <div className="text-sm text-green-600 font-medium mt-1">
-                          Save ${savings} per user/year
-                        </div>
-                      )}
-                    </div>
-                  </CardHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">AI Knowledge Assistant</CardTitle>
+                <CardDescription>Transform your documents into intelligent knowledge base</CardDescription>
+                <div className="text-2xl font-bold text-primary">$20/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Document processing & indexing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Intelligent Q&A system
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Multi-format support
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Learn More
+                </Button>
+              </CardContent>
+            </Card>
 
-                  <CardContent>
-                    <div className="space-y-3">
-                      {solution.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-center gap-3">
-                          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Security Knowledge Base</CardTitle>
+                <CardDescription>Cybersecurity training and compliance assistant</CardDescription>
+                <div className="text-2xl font-bold text-primary">$20/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Security policy guidance
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Compliance training
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Incident response help
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Learn More
+                </Button>
+              </CardContent>
+            </Card>
 
-                  <CardFooter>
-                    <Button 
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => handleSubscribe(solution.name)}
-                      disabled={isLoading}
-                    >
-                      Add Solution
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </CardFooter>
-                </Card>
-              );
-            })}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Custom Enterprise Chatbot</CardTitle>
+                <CardDescription>Fully customized AI assistant for your business</CardDescription>
+                <div className="text-2xl font-bold text-primary">$35/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Custom training on your data
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Branded interface
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    API integration
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Learn More
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
