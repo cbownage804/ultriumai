@@ -219,7 +219,7 @@ const Hero = () => {
               onClick={() => handleNavigation('/pricing')}
             >
               <Star className="mr-2 h-5 w-5" />
-              Get Started - $15/month
+              Get Started Today
             </Button>
             <Button 
               variant="outline" 
