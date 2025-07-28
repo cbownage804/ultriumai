@@ -254,7 +254,7 @@ const Solutions = () => {
         "Real-time security insights",
         "Integration with security tools"
       ],
-      demoUrl: "/demos/ai-studio",
+      demoUrl: "/demos/custom-gpt-builder",
       pageUrl: "/ai-studio",
       gradient: "from-violet-100 to-purple-100"
     }

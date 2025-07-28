@@ -191,7 +191,7 @@ const AIStudio = () => {
                 <Play className="mr-2 h-5 w-5" />
                 Launch AI Studio Platform
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos/ai-studio'}>
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
                 <Play className="mr-2 h-5 w-5" />
                 View Demo
               </Button>
