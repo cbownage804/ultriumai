@@ -281,10 +281,10 @@ const Navigation = () => {
                        <LayoutDashboard className="h-4 w-4 mr-2" />
                        Dashboard
                      </Button>
-                     <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/ai-studio')}>
-                       <Brain className="h-4 w-4 mr-2" />
-                       AI Studio
-                     </Button>
+                      <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/ai-studio')}>
+                        <Brain className="h-4 w-4 mr-2" />
+                        AI Studio
+                      </Button>
                     {isMSPOrMSSP && (
                       <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/msp-control-center')}>
                         MSP Control Center

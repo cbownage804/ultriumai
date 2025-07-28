@@ -186,7 +186,7 @@ const UltriumGPT = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ai-studio'}>
+              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ultrium-gpt'}>
                 <Play className="mr-2 h-5 w-5" />
                 Launch Ultrium GPT Platform
               </Button>
