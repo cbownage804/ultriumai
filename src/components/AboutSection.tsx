@@ -45,23 +45,23 @@ const AboutSection = () => {
                 UltriumAI was born from our experience as an MSP (Managed Service Provider) dealing with the chaos of managing dozens of security tools, RMM platforms, and vendor solutions. We were tired of juggling multiple dashboards, inconsistent APIs, and security gaps between systems.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                So we built what we wished existed: <strong>UltriumAI Studio</strong> and <strong>UltriumGPT</strong> - an all-inclusive platform that consolidates cybersecurity, IT management, and AI automation into one secure, intelligent ecosystem. No more vendor sprawl. No more security gaps. Just comprehensive tools that work together seamlessly.
+                So we built what we wished existed: <strong>SafeSuite</strong> - our comprehensive cybersecurity platform with integrated <strong>UltriumAI Studio</strong> for creating custom AI chatbots and GPTs. One unified ecosystem that eliminates vendor sprawl while strengthening your security posture.
               </p>
               
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-semibold">UltriumAI Studio - All-in-One Platform</h4>
-                    <p className="text-muted-foreground">Our flagship platform combines cybersecurity monitoring, RMM tools, MSP management, and AI-powered automation in one unified dashboard. Built by MSPs, for MSPs and businesses who want enterprise-level security without the complexity.</p>
+                    <h4 className="font-semibold">SafeSuite - Comprehensive Cybersecurity Platform</h4>
+                    <p className="text-muted-foreground">Our flagship cybersecurity platform combines threat monitoring, RMM tools, compliance management, and security automation in one unified dashboard. Built by MSPs, for businesses who want enterprise-level security without the complexity.</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-semibold">UltriumGPT - Custom AI That Actually Works</h4>
-                    <p className="text-muted-foreground">Our custom GPT agents are trained on your specific environment, policies, and procedures. From automated threat response to intelligent helpdesk support, UltriumGPT delivers practical AI that reduces tickets, improves response times, and strengthens security posture.</p>
+                    <h4 className="font-semibold">UltriumAI Studio - Build Custom AI Solutions</h4>
+                    <p className="text-muted-foreground">Integrated within SafeSuite, our AI Studio lets you create custom chatbots and GPTs trained on your specific environment, policies, and procedures. From automated helpdesk support to intelligent threat response, build AI that actually understands your business.</p>
                   </div>
                 </div>
               </div>
@@ -84,7 +84,7 @@ const AboutSection = () => {
                   </div>
                   <h3 className="text-xl font-bold">Built by the MSP That Wanted Better Tools</h3>
                   <p className="text-muted-foreground">
-                    <strong>UltriumAI is proudly developed by Ultrium</strong>, a veteran-owned MSP based in Virginia. After years of managing fragmented security tools and disjointed vendor solutions for our clients, we created the unified platform we always needed. Now we're sharing our comprehensive AI-powered cybersecurity and IT management tools with MSPs and businesses worldwide.
+                    <strong>UltriumAI is proudly developed by Ultrium</strong>, a veteran-owned MSP based in Virginia. After years of managing fragmented security tools for our clients, we created SafeSuite - the unified cybersecurity platform we always needed, complete with AI Studio for custom chatbot and GPT development.
                   </p>
                   <Button variant="outline" className="w-full">
                     <Building className="mr-2 h-4 w-4" />
@@ -116,8 +116,8 @@ const AboutSection = () => {
             },
             {
               step: "02", 
-              title: "Deploy Unified Platform",
-              description: "We migrate your critical functions to UltriumAI Studio, configure UltriumGPT with your specific environment, and eliminate vendor sprawl while maintaining full functionality.",
+              title: "Deploy SafeSuite Platform",
+              description: "We migrate your critical security functions to SafeSuite, configure AI Studio for your custom chatbots and GPTs, and eliminate vendor sprawl while strengthening your security posture.",
               icon: Shield
             },
             {
@@ -156,9 +156,9 @@ const AboutSection = () => {
         <div ref={ctaRef} className={getAnimationClasses(ctaVisible, 'fadeUp')}>
           <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/20">
             <CardContent className="p-8 text-center">
-              <h3 className="text-2xl font-bold mb-6">Ready to Consolidate Your Security Stack?</h3>
+              <h3 className="text-2xl font-bold mb-6">Ready to Experience SafeSuite?</h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                See how UltriumAI Studio and UltriumGPT can replace multiple vendors with one comprehensive, AI-powered platform that actually improves your security posture.
+                See how SafeSuite's comprehensive cybersecurity platform and integrated AI Studio can replace multiple vendors while empowering you to build custom AI solutions.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button size="lg" className="text-lg px-8">
