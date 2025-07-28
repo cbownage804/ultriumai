@@ -302,23 +302,23 @@ const MSPSolutions = () => {
           
           <div className="space-y-8">
             {mspSecurityApps.map((app, index) => (
-              <Card key={app.id} className={`overflow-hidden hover:shadow-xl transition-all duration-300 bg-gradient-to-r ${app.gradient} border-2 border-primary/20`}>
+              <Card key={app.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 bg-white border-2 border-primary/20">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
                   {/* App Info */}
-                  <div className="lg:col-span-1 p-8 bg-white/90">
+                  <div className="lg:col-span-1 p-8 bg-white">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="p-3 rounded-xl bg-primary/10">
                         <app.icon className="h-8 w-8 text-primary" />
                       </div>
                       <div>
-                        <Badge variant="outline" className="mb-2 text-xs">
+                        <Badge variant="outline" className="mb-2 text-xs border-primary/30 text-primary">
                           {app.category}
                         </Badge>
-                        <h3 className="text-xl font-bold text-foreground">{app.name}</h3>
+                        <h3 className="text-xl font-bold text-gray-900">{app.name}</h3>
                       </div>
                     </div>
                     
-                    <p className="text-muted-foreground mb-6 leading-relaxed">
+                    <p className="text-gray-600 mb-6 leading-relaxed">
                       {app.longDescription}
                     </p>
                     
@@ -342,9 +342,9 @@ const MSPSolutions = () => {
                   </div>
                   
                   {/* Features */}
-                  <div className="lg:col-span-2 p-8">
+                  <div className="lg:col-span-2 p-8 bg-gray-50">
                     <div className="flex items-center justify-between mb-6">
-                      <h4 className="text-lg font-semibold">MSP Features</h4>
+                      <h4 className="text-lg font-semibold text-gray-900">MSP Features</h4>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -369,14 +369,14 @@ const MSPSolutions = () => {
                       {app.features.slice(0, expandedFeatures.has(app.id) ? app.features.length : 6).map((feature, idx) => (
                         <div key={idx} className="flex items-start gap-2">
                           <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-foreground">{feature}</span>
+                          <span className="text-sm text-gray-700">{feature}</span>
                         </div>
                       ))}
                     </div>
                     
                     {!expandedFeatures.has(app.id) && app.features.length > 6 && (
                       <div className="mt-4 text-center">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-primary/30 text-primary">
                           +{app.features.length - 6} more features
                         </Badge>
                       </div>
