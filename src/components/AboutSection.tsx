@@ -155,19 +155,19 @@ const AboutSection = () => {
                 <h4 className="text-xl font-bold mb-4 text-center">Revolutionary Integration</h4>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
-                    <div className="w-3 h-3 bg-primary rounded-full"></div>
+                    <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                     <span className="font-medium">SafeSuite</span>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Live security data</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
-                    <div className="w-3 h-3 bg-secondary rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     <span className="font-medium">AI Studio</span>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Custom training</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
-                    <div className="w-3 h-3 bg-accent rounded-full"></div>
+                    <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                     <span className="font-medium">UltriumGPT</span>
                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     <span className="text-muted-foreground">Intelligent responses</span>
