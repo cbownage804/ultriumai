@@ -182,7 +182,7 @@ function AppRouter() {
         {/* UltriumGPT Platform */}
         <Route path="/ultrium-gpt" element={
           <ProtectedRoute>
-            <AIStudio />
+            <UltriumGPT />
           </ProtectedRoute>
         } />
         <Route path="/small-business" element={<SmallBusiness />} />
@@ -389,7 +389,7 @@ function AppRouter() {
         } />
         <Route path="/ai-studio" element={
           <ProtectedRoute>
-            <UltriumGPT />
+            <AIStudio />
           </ProtectedRoute>
         } />
         <Route path="/safetrack" element={
