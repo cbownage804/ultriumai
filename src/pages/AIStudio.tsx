@@ -110,10 +110,10 @@ const AIStudio = () => {
                 <Brain className="h-10 w-10 text-primary" />
                 <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1" />
               </div>
-              AI Studio
+              Ultrium GPT
             </h1>
             <p className="text-muted-foreground mt-2 text-lg">
-              Advanced AI assistant for cybersecurity operations and threat analysis
+              Advanced AI platform for security operations analysis and automation
             </p>
           </div>
           <div className="flex items-center gap-4">
