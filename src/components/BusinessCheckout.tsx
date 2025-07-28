@@ -44,9 +44,9 @@ const BusinessCheckout = ({ onSuccess, packageType, children, className, size = 
       annual: { platform: 1990, per_user: 350 },
       features: [
         'Up to 10 team members',
-        '5 Custom AI Agents',
-        'SafeScan security scanning',
-        'Basic support',
+        'Basic security scanning',
+        'Email support',
+        'Standard integrations',
         '10GB storage'
       ],
       maxSeats: 10
@@ -59,11 +59,13 @@ const BusinessCheckout = ({ onSuccess, packageType, children, className, size = 
       annual: { platform: 3990, per_user: 550 },
       features: [
         'Up to 50 team members',
-        'Unlimited Custom AI Agents',
-        'SafePass, SafeKB, SafeNet, SafeScore',
-        'Mobile apps (iOS & Android)',
+        'Advanced security suite',
+        'Mobile technician apps (iOS & Android)',
+        'Full MSP dashboard',
         'Priority support',
-        '50GB storage'
+        'Premium integrations',
+        '50GB storage',
+        'Advanced analytics'
       ],
       maxSeats: 50,
       popular: true
@@ -76,11 +78,13 @@ const BusinessCheckout = ({ onSuccess, packageType, children, className, size = 
       annual: { platform: 7990, per_user: 750 },
       features: [
         'Unlimited team members',
-        'SafeWeb & SafeShield',
         'White-label solutions',
+        'Enterprise security & compliance',
         'Dedicated account manager',
         '24/7 phone support',
-        '100GB+ storage'
+        'Custom integrations',
+        '100GB storage + additional available',
+        'Custom reporting'
       ],
       maxSeats: 1000
     }
