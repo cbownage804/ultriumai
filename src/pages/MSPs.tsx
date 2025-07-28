@@ -84,6 +84,9 @@ const MSPs = () => {
                 Schedule MSP Demo
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/msp-solutions')}>
+                View Complete Solutions
+              </Button>
               <Button size="lg" variant="outline" onClick={() => navigate('/pricing')}>
                 MSP Pricing
               </Button>

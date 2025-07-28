@@ -34,6 +34,7 @@ import SmallBusiness from '@/pages/SmallBusiness';
 import MediumBusiness from '@/pages/MediumBusiness';
 import Enterprise from '@/pages/Enterprise';
 import MSPs from '@/pages/MSPs';
+import MSPSolutions from '@/pages/MSPSolutions';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
@@ -189,6 +190,7 @@ function AppRouter() {
         <Route path="/medium-business" element={<MediumBusiness />} />
         <Route path="/enterprise" element={<Enterprise />} />
         <Route path="/msps" element={<MSPs />} />
+        <Route path="/msp-solutions" element={<MSPSolutions />} />
         <Route path="/mssps" element={<MSSPs />} />
         <Route path="/solutions" element={<Solutions />} />
         <Route path="/demos" element={<LiveDemos />} />
