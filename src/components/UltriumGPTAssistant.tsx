@@ -50,7 +50,7 @@ export const UltriumGPTAssistant = () => {
 
 I can help you with IT support, generate reports, search the web, create images, and automatically handle system management tasks.
 
-**💡 Pro Tip: For the complete UltriumGPT experience with voice capabilities, advanced AI modes, chat history, and enhanced features, use the AI Studio!**
+**💡 Pro Tip: For the complete business intelligence platform experience with voice capabilities, advanced AI modes, chat history, and enhanced features, use Ultrium GPT!**
 
 Choose a question below to get started, or ask me anything!`,
       timestamp: new Date(),
@@ -242,11 +242,11 @@ Choose a question below to get started, or ask me anything!`,
           <div className="mt-6">
             <Button 
               size="lg" 
-              onClick={() => window.location.href = '/ai-studio'}
+              onClick={() => window.location.href = '/ultrium-gpt'}
               className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <HeadphonesIcon className="h-5 w-5 mr-2" />
-              🎙️ Launch Full AI Studio (Voice & Advanced Features)
+              🎙️ Launch Full Ultrium GPT Platform (Voice & Advanced Features)
             </Button>
           </div>
         </div>
