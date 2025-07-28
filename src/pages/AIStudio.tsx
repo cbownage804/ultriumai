@@ -164,14 +164,17 @@ const AIStudio = () => {
             <div className="space-y-6">
               <Badge variant="secondary" className="mb-4">
                 <Brain className="h-4 w-4 mr-2" />
-                AI Studio Platform
+                UltriumAI Studio™
               </Badge>
               <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
-                Create Custom GPTs That Actually Work for Your Business
+                UltriumAI Studio™
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-                Whether you're an MSP looking to scale your services or a business wanting to automate operations—
-                build intelligent AI assistants trained on YOUR data, YOUR processes, YOUR way.
+              <h2 className="text-2xl md:text-3xl font-semibold text-muted-foreground mb-4">
+                Custom GPT Builder Platform
+              </h2>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+                Build intelligent AI assistants in minutes, not months. Deploy custom GPTs trained on YOUR data, 
+                YOUR processes, YOUR way—whether you're an MSP scaling services or a business automating operations.
               </p>
             </div>
 
@@ -189,7 +192,7 @@ const AIStudio = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ultrium-gpt'}>
                 <Play className="mr-2 h-5 w-5" />
-                Launch AI Studio Platform
+                Launch UltriumAI Studio
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
                 <Play className="mr-2 h-5 w-5" />
