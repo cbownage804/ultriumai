@@ -58,7 +58,7 @@ export const CTAActions = {
   viewMSPPricing: () => navigateToExternal('/msp-pricing'),
   
   // Phone
-  callSupport: () => navigateToExternal('tel:804-821-1410'),
+  callSupport: () => navigateToExternal('tel:888-884-1410'),
 };
 
 /**

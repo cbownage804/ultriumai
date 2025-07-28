@@ -70,7 +70,7 @@ const ContactSection = () => {
                     </Button>
                     <Button type="button" variant="outline" className="flex-1" onClick={handleCallButton}>
                       <Phone className="mr-2 h-4 w-4" />
-                      Call 804-821-1410
+                      Call 888-884-1410
                     </Button>
                   </div>
                 </form>

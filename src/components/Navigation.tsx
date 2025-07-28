@@ -176,9 +176,9 @@ const Navigation = () => {
               {isContactDropdownOpen && (
                 <div className="absolute top-full right-0 mt-2 w-44 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
                   <div className="py-2">
-                    <a href="tel:804-821-1410" className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 flex items-center gap-2">
+                    <a href="tel:888-884-1410" className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 flex items-center gap-2">
                       <Phone className="h-4 w-4" />
-                      804-821-1410
+                      888-884-1410
                     </a>
                     <button onClick={() => { handleNavigationWithMenuClose('/contact'); setIsContactDropdownOpen(false); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50">
                       Contact Form
@@ -273,7 +273,7 @@ const Navigation = () => {
               ) : null}
               <div className="flex flex-col space-y-2 pt-4 px-3">
                 <Button variant="ghost" className="w-full">
-                  804-821-1410
+                  888-884-1410
                 </Button>
                 {user ? (
                   <div className="flex flex-col space-y-2">

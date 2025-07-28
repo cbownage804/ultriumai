@@ -73,7 +73,7 @@ export const useContactForm = () => {
   };
 
   const handleCallButton = () => {
-    window.open('tel:804-821-1410', '_self');
+    window.open('tel:888-884-1410', '_self');
   };
 
   return {

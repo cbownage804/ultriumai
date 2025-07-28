@@ -22,7 +22,7 @@ export const ContactInfo = ({ isVisible, animationClasses }: ContactInfoProps) =
             <Phone className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="font-medium">Phone</p>
-              <p className="text-primary font-semibold text-lg" itemProp="telephone">804-821-1410</p>
+              <p className="text-primary font-semibold text-lg" itemProp="telephone">888-884-1410</p>
             </div>
           </div>
           <div className="flex items-center gap-3 hover:bg-muted/30 p-2 rounded-lg transition-colors duration-200" itemScope itemType="https://schema.org/ContactPoint">
