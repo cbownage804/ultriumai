@@ -1,5 +1,5 @@
 import Navigation from "@/components/Navigation";
-import { UltriumGPTDemo } from "@/components/demos/UltriumGPTDemo";
+import UltriumGPTFullDemo from "@/components/demos/UltriumGPTFullDemo";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import Footer from "@/components/Footer";
@@ -35,7 +35,7 @@ const UltriumGPTDemoPage = () => {
           </div>
         </div>
         
-        <UltriumGPTDemo />
+        <UltriumGPTFullDemo />
       </div>
       <Footer />
     </div>
