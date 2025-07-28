@@ -25,7 +25,8 @@ import {
   BarChart3,
   Brain,
   TrendingUp,
-  Headphones
+  Headphones,
+  Crown
 } from "lucide-react";
 
 const Solutions = () => {
@@ -818,6 +819,58 @@ const Solutions = () => {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* MSP Upgrade Section */}
+      <section className="py-16 bg-gradient-to-r from-green-50 to-blue-50 border-t border-green-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="bg-gradient-to-r from-green-100 to-blue-100 border-2 border-green-300">
+            <CardContent className="p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                <div>
+                  <Badge className="mb-4 bg-green-600 hover:bg-green-700">
+                    <Crown className="h-4 w-4 mr-2" />
+                    MSP Partner Program
+                  </Badge>
+                  <h3 className="text-2xl font-bold mb-4">Looking to Scale? Become an MSP Partner</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Deploy these same powerful solutions for multiple clients with our comprehensive MSP platform. 
+                    Multi-tenant architecture, white-label deployment, and new revenue opportunities.
+                  </p>
+                  <div className="space-y-2 mb-6">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">Multi-client management dashboard</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">White-label solutions with your branding</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">Create new revenue streams from AI services</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center lg:text-right">
+                  <div className="mb-6">
+                    <div className="text-3xl font-bold text-green-600 mb-2">$15K+</div>
+                    <p className="text-sm text-muted-foreground">Average monthly revenue increase</p>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700" onClick={() => handleNavigation('/msp-solutions')}>
+                      <Building className="mr-2 h-4 w-4" />
+                      View MSP Solutions
+                    </Button>
+                    <Button variant="outline" size="lg" onClick={() => handleNavigation('/msps')}>
+                      Learn About MSP Program
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
