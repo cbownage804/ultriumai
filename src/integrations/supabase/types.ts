@@ -3808,6 +3808,36 @@ export type Database = {
           },
         ]
       }
+      msp_billing_periods: {
+        Row: {
+          created_at: string
+          id: string
+          msp_user_id: string
+          period_end: string
+          period_start: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          msp_user_id: string
+          period_end: string
+          period_start: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          msp_user_id?: string
+          period_end?: string
+          period_start?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       msp_billing_records: {
         Row: {
           additional_charges: number | null
@@ -3862,6 +3892,45 @@ export type Database = {
           total_amount?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      msp_billing_templates: {
+        Row: {
+          billing_frequency: string
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          msp_user_id: string
+          service_name: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          billing_frequency?: string
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          msp_user_id: string
+          service_name: string
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          billing_frequency?: string
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          msp_user_id?: string
+          service_name?: string
+          unit_price?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -4402,6 +4471,115 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      msp_invoice_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          quantity: number
+          service_name: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          quantity?: number
+          service_name: string
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          service_name?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "msp_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msp_invoices: {
+        Row: {
+          billing_period_id: string
+          client_id: string
+          created_at: string
+          currency: string
+          due_date: string
+          id: string
+          invoice_number: string
+          msp_user_id: string
+          notes: string | null
+          paid_at: string | null
+          sent_at: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          subtotal: number
+          tax_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          billing_period_id: string
+          client_id: string
+          created_at?: string
+          currency?: string
+          due_date: string
+          id?: string
+          invoice_number: string
+          msp_user_id: string
+          notes?: string | null
+          paid_at?: string | null
+          sent_at?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          billing_period_id?: string
+          client_id?: string
+          created_at?: string
+          currency?: string
+          due_date?: string
+          id?: string
+          invoice_number?: string
+          msp_user_id?: string
+          notes?: string | null
+          paid_at?: string | null
+          sent_at?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          subtotal?: number
+          tax_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msp_invoices_billing_period_id_fkey"
+            columns: ["billing_period_id"]
+            isOneToOne: false
+            referencedRelation: "msp_billing_periods"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       msp_lead_scoring: {
         Row: {
@@ -10758,6 +10936,10 @@ export type Database = {
         Returns: string
       }
       current_org_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
