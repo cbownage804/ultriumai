@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Zap, Settings, CheckCircle, CreditCard, Mail, MessageSquare, Calendar, BarChart3, FileText } from "lucide-react";
+import { Zap, Settings, CheckCircle, CreditCard, Mail, MessageSquare, Calendar, BarChart3, FileText, Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import StripeIntegration from "./integrations/StripeIntegration";
 import ZapierIntegration from "./integrations/ZapierIntegration";
+import QuickBooksIntegration from "./integrations/QuickBooksIntegration";
 
 const IntegrationsManager = () => {
   const { toast } = useToast();
@@ -32,6 +33,15 @@ const IntegrationsManager = () => {
     },
     {
       id: '3',
+      name: 'QuickBooks Online',
+      status: 'connected',
+      provider: 'Intuit',
+      enabled: true,
+      icon: Building2,
+      category: 'accounting'
+    },
+    {
+      id: '4',
       name: 'Slack Notifications',
       status: 'disconnected',
       provider: 'Slack',
@@ -40,7 +50,7 @@ const IntegrationsManager = () => {
       category: 'communication'
     },
     {
-      id: '4',
+      id: '5',
       name: 'Email Marketing',
       status: 'disconnected',
       provider: 'Mailchimp',
@@ -73,9 +83,10 @@ const IntegrationsManager = () => {
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="stripe">Stripe</TabsTrigger>
+          <TabsTrigger value="quickbooks">QuickBooks</TabsTrigger>
           <TabsTrigger value="zapier">Zapier</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>
           <TabsTrigger value="communication">Communication</TabsTrigger>
@@ -91,7 +102,7 @@ const IntegrationsManager = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Connected</p>
-                    <p className="text-2xl font-bold">2</p>
+                    <p className="text-2xl font-bold">3</p>
                   </div>
                 </div>
               </CardContent>
@@ -179,6 +190,10 @@ const IntegrationsManager = () => {
 
         <TabsContent value="stripe">
           <StripeIntegration />
+        </TabsContent>
+
+        <TabsContent value="quickbooks">
+          <QuickBooksIntegration />
         </TabsContent>
 
         <TabsContent value="zapier">
