@@ -24,12 +24,12 @@ const MSPPricing = () => {
   const { subscription, createCheckout, openCustomerPortal, isLoading } = useSubscription();
   const { user } = useAuth();
 
-  // Custom GPT Solutions for MSPs
+  // Custom GPT Solutions for MSPs (same pricing as business)
   const customGPTSolutions = [
     {
       name: "AI Knowledge Assistant",
       description: "Transform client documents into intelligent knowledge base",
-      price: { monthly: 15, yearly: 150 },
+      price: { monthly: 20, yearly: 200 },
       icon: Users,
       features: [
         "Document processing & indexing",
@@ -42,7 +42,7 @@ const MSPPricing = () => {
     {
       name: "Security Knowledge Base",
       description: "Cybersecurity training and compliance assistant",
-      price: { monthly: 15, yearly: 150 },
+      price: { monthly: 20, yearly: 200 },
       icon: Shield,
       features: [
         "Security policy guidance",
@@ -55,7 +55,7 @@ const MSPPricing = () => {
     {
       name: "Custom Enterprise Chatbot",
       description: "Fully customized AI assistant for client businesses",
-      price: { monthly: 25, yearly: 250 },
+      price: { monthly: 35, yearly: 350 },
       icon: Crown,
       features: [
         "Custom training on client data",
