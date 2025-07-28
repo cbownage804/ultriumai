@@ -141,11 +141,6 @@ const Navigation = () => {
                   Dashboard
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                 </button>
-                <button onClick={() => handleNavigation('/ai-studio')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1">
-                  <Brain className="h-3 w-3" />
-                  AI Studio
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-                </button>
                 <button onClick={() => handleNavigation('/docs')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
                   KB
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
