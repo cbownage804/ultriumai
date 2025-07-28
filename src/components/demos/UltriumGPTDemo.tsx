@@ -225,11 +225,11 @@ export const UltriumGPTDemo = () => {
           </p>
           <div className="mt-4">
             <Button 
-              onClick={() => window.location.href = '/ultrium-gpt?tab=voice'}
+              onClick={() => window.location.href = '/ai-studio?tab=voice'}
               className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
             >
               <Mic className="h-4 w-4 mr-2" />
-              Try Full Voice Interface in Ultrium GPT
+              Try Full Voice Interface in AI Studio
             </Button>
           </div>
         </div>

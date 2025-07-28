@@ -242,11 +242,11 @@ Choose a question below to get started, or ask me anything!`,
           <div className="mt-6">
             <Button 
               size="lg" 
-              onClick={() => window.location.href = '/ultrium-gpt'}
+              onClick={() => window.location.href = '/ai-studio'}
               className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <HeadphonesIcon className="h-5 w-5 mr-2" />
-              🎙️ Launch Full Ultrium GPT Platform (Voice & Advanced Features)
+              🎙️ Launch Full AI Studio Platform (Voice & Advanced Features)
             </Button>
           </div>
         </div>

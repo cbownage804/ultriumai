@@ -1,273 +1,244 @@
-import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import RealTimeAIChat from '@/components/RealTimeAIChat';
-import { AIIntelligenceHub } from '@/components/AIIntelligenceHub';
-import { AIVoiceInterface } from '@/components/AIVoiceInterface';
-import { AIVisionAnalyzer } from '@/components/AIVisionAnalyzer';
-import AIWorkflowAutomation from '@/components/AIWorkflowAutomation';
 import { 
-  Brain, 
-  MessageCircle, 
-  Mic, 
-  Eye, 
-  Workflow, 
-  Zap,
-  Bot,
-  Sparkles,
-  TrendingUp,
-  ArrowLeft,
-  Home
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+  Building, 
+  Building2,
+  Users, 
+  Shield, 
+  Zap, 
+  CheckCircle,
+  ArrowRight,
+  Phone,
+  Calendar,
+  MessageSquare,
+  Settings,
+  BarChart3,
+  Globe,
+  Wrench,
+  Lightbulb,
+  Rocket,
+  Target,
+  Code,
+  Brain,
+  Play,
+  Star,
+  Crown,
+  Check
+} from "lucide-react";
 
 const UltriumGPT = () => {
-  const [activeModel, setActiveModel] = useState('gpt-4o-mini');
-  const navigate = useNavigate();
+  const creationPaths = [
+    {
+      title: "Build It Yourself",
+      subtitle: "DIY GPT Builder Platform",
+      description: "Our intuitive platform empowers you to create custom GPTs without coding expertise.",
+      icon: Wrench,
+      gradient: "from-blue-100 to-indigo-100",
+      features: [
+        "Drag-and-drop GPT builder",
+        "Pre-built templates for common use cases", 
+        "Step-by-step guided setup",
+        "Real-time testing and refinement",
+        "Knowledge base integration tools",
+        "Client-specific customization options"
+      ],
+      benefits: [
+        "Complete control over your GPT",
+        "Learn and iterate at your own pace",
+        "Cost-effective for multiple GPTs",
+        "Immediate deployment capability"
+      ],
+      cta: "Start Building Free",
+      audience: "Perfect for tech-savvy MSPs and businesses who want hands-on control"
+    },
+    {
+      title: "We Build It For You",
+      subtitle: "Full-Service GPT Development",
+      description: "Our expert team creates custom GPTs tailored to your exact specifications and business needs.",
+      icon: Rocket,
+      gradient: "from-purple-100 to-violet-100",
+      features: [
+        "Dedicated development team",
+        "Custom training on your data",
+        "Advanced integrations and workflows",
+        "White-label branding options",
+        "Ongoing optimization and updates",
+        "Enterprise-grade security implementation"
+      ],
+      benefits: [
+        "Professional, polished results",
+        "Faster time to deployment",
+        "Expert optimization for performance",
+        "Comprehensive support and maintenance"
+      ],
+      cta: "Get Custom Quote",
+      audience: "Ideal for busy MSPs and businesses who want professional results without the learning curve"
+    }
+  ];
 
-  const aiFeatures = [
+  const useCases = [
     {
-      id: 'chat',
-      title: 'Real-Time AI Chat',
-      description: 'Conversational AI with streaming responses',
-      icon: MessageCircle,
-      component: RealTimeAIChat,
-      status: 'Available',
-      usage: '2.4K messages today'
+      title: "For MSPs",
+      icon: Settings,
+      subtitle: "Multiply Your Service Capacity",
+      scenarios: [
+        {
+          name: "Client Support GPTs",
+          description: "Create dedicated GPTs for each client with their specific IT environment, policies, and procedures"
+        },
+        {
+          name: "Internal Operations GPT", 
+          description: "Automate your own help desk, onboarding, and standard operating procedures"
+        },
+        {
+          name: "White-Label GPTs",
+          description: "Offer GPT services to clients under your brand as a new revenue stream"
+        }
+      ]
     },
     {
-      id: 'intelligence',
-      title: 'Intelligence Hub',
-      description: 'Advanced AI analysis and insights',
+      title: "For Businesses",
+      icon: Building,
+      subtitle: "Get Enterprise-Level AI Without the Enterprise Cost",
+      scenarios: [
+        {
+          name: "Employee Assistant GPT",
+          description: "Handle HR questions, IT support, and company policy guidance 24/7"
+        },
+        {
+          name: "Customer Service GPT",
+          description: "Provide instant support to customers with your specific product knowledge"
+        },
+        {
+          name: "Process Automation GPT",
+          description: "Streamline workflows, approvals, and routine business processes"
+        }
+      ]
+    }
+  ];
+
+  const platformFeatures = [
+    {
       icon: Brain,
-      component: AIIntelligenceHub,
-      status: 'Available',
-      usage: '156 analyses this week'
+      title: "Smart Knowledge Training",
+      description: "Upload your documents, policies, and procedures. Our platform intelligently processes and trains your GPT."
     },
     {
-      id: 'voice',
-      title: 'Voice Interface',
-      description: 'Natural language voice interactions',
-      icon: Mic,
-      component: AIVoiceInterface,
-      status: 'Available',
-      usage: '89 conversations'
+      icon: Shield,
+      title: "Security-First Design", 
+      description: "Built-in data protection, access controls, and compliance features for business-grade security."
     },
     {
-      id: 'vision',
-      title: 'Vision Analyzer',
-      description: 'AI-powered image and document analysis',
-      icon: Eye,
-      component: AIVisionAnalyzer,
-      status: 'Available',
-      usage: '42 images analyzed'
+      icon: Code,
+      title: "No-Code Integration",
+      description: "Connect to your existing tools and systems without writing a single line of code."
     },
     {
-      id: 'workflows',
-      title: 'Workflow Automation',
-      description: 'Intelligent automation workflows',
-      icon: Workflow,
-      component: AIWorkflowAutomation,
-      status: 'Available',
-      usage: '12 active workflows'
+      icon: BarChart3,
+      title: "Performance Analytics",
+      description: "Track usage, measure ROI, and optimize your GPT's performance with detailed insights."
+    },
+    {
+      icon: Users,
+      title: "Multi-User Management",
+      description: "Set up different access levels for employees, clients, and administrators."
+    },
+    {
+      icon: Target,
+      title: "Continuous Learning",
+      description: "Your GPT gets smarter over time, learning from interactions and feedback."
     }
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation Header */}
-      <div className="bg-muted/30 border-b">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/dashboard')}
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
+      <Navigation />
+      
+      {/* Hero Section */}
+      <section className="pt-20 pb-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-8">
+            <div className="space-y-6">
+              <Badge variant="secondary" className="mb-4">
+                <Brain className="h-4 w-4 mr-2" />
+                Ultrium GPT Platform
+              </Badge>
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
+                Advanced AI Platform for Security Operations Analysis
+              </h1>
+              <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+                Comprehensive AI-powered business intelligence platform that enhances security operations with advanced analytics, automated reporting, policy generation, and workflow optimization.
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 max-w-3xl mx-auto">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Star className="h-5 w-5 text-yellow-500" />
+                <span className="font-semibold text-primary">Business Intelligence Platform</span>
+                <Star className="h-5 w-5 text-yellow-500" />
+              </div>
+              <p className="text-lg font-medium text-foreground">
+                Transform your security operations with AI-powered insights, automated analysis, and intelligent workflow optimization.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ai-studio'}>
+                <Play className="mr-2 h-5 w-5" />
+                Launch Ultrium GPT Platform
+              </Button>
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos/ultriumgpt'}>
+                <Play className="mr-2 h-5 w-5" />
+                View Demo
+              </Button>
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/contact'}>
+                <Calendar className="mr-2 h-5 w-5" />
+                Schedule Consultation
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold flex items-center gap-3">
-              <div className="relative">
-                <Brain className="h-10 w-10 text-primary" />
-                <Sparkles className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1" />
-              </div>
-              Ultrium GPT
-            </h1>
-            <p className="text-muted-foreground mt-2 text-lg">
-              Advanced AI platform for security operations analysis and automation
+      {/* Platform Features */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-6 text-foreground">
+              Built for Security Operations. Designed for Intelligence.
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Ultrium GPT comes with enterprise-grade features that ensure your business intelligence 
+              platform is secure, scalable, and perfectly integrated with your security operations.
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="px-3 py-1">
-              <Zap className="h-3 w-3 mr-1" />
-              {activeModel}
-            </Badge>
-            <Badge variant="secondary" className="px-3 py-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              94% Uptime
-            </Badge>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {platformFeatures.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
+                  <CardHeader>
+                    <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Icon className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
+      </section>
 
-        {/* AI Features Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {aiFeatures.map((feature) => (
-            <Card key={feature.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <feature.icon className="h-5 w-5 text-primary" />
-                  <Badge variant="outline" className="text-xs">
-                    {feature.status}
-                  </Badge>
-                </div>
-                <CardTitle className="text-sm">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground mb-2">
-                  {feature.description}
-                </p>
-                <p className="text-xs font-medium text-primary">
-                  {feature.usage}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Main AI Interface */}
-        <Tabs defaultValue="chat" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="chat" className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
-              Chat
-            </TabsTrigger>
-            <TabsTrigger value="intelligence" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              Intelligence
-            </TabsTrigger>
-            <TabsTrigger value="voice" className="flex items-center gap-2">
-              <Mic className="h-4 w-4" />
-              Voice
-            </TabsTrigger>
-            <TabsTrigger value="vision" className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              Vision
-            </TabsTrigger>
-            <TabsTrigger value="workflows" className="flex items-center gap-2">
-              <Workflow className="h-4 w-4" />
-              Workflows
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="chat" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
-                  Real-Time AI Chat
-                </CardTitle>
-                <CardDescription>
-                  Engage in real-time conversations with advanced AI models
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RealTimeAIChat context="general" title="AI Assistant" />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="intelligence" className="space-y-4">
-            <AIIntelligenceHub />
-          </TabsContent>
-
-          <TabsContent value="voice" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mic className="h-5 w-5" />
-                  Voice Interface
-                </CardTitle>
-                <CardDescription>
-                  Natural language voice interactions with AI
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AIVoiceInterface />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="vision" className="space-y-4">
-            <AIVisionAnalyzer />
-          </TabsContent>
-
-          <TabsContent value="workflows" className="space-y-4">
-            <AIWorkflowAutomation />
-          </TabsContent>
-        </Tabs>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">AI Queries Today</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">2,847</div>
-              <p className="text-xs text-muted-foreground">+23% from yesterday</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Active Models</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">5</div>
-              <p className="text-xs text-muted-foreground">GPT-4, Claude, Gemini</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Response Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1.2s</div>
-              <p className="text-xs text-muted-foreground">Average response</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">99.7%</div>
-              <p className="text-xs text-muted-foreground">Last 24 hours</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
       <Footer />
     </div>
   );
