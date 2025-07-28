@@ -118,6 +118,22 @@ const MSPDemos = () => {
       color: 'green'
     },
     {
+      id: 'ultrium-gpt',
+      name: '🧠 UltriumGPT - AI Business Intelligence',
+      description: 'Advanced AI platform for client support automation, security analysis, and business intelligence',
+      demoUrl: '/demos/ultriumgpt',
+      features: [
+        'AI-powered client helpdesk automation',
+        'Real-time security incident analysis and response',
+        'Voice-enabled AI assistant for MSP operations',
+        'Intelligent document and image analysis',
+        'Automated workflow creation and management',
+        'Multi-tenant client support with branded interfaces'
+      ],
+      icon: MessageSquare,
+      color: 'cyan'
+    },
+    {
       id: 'custom-gpt-builder',
       name: '🤖 Custom Helpdesk GPT Builder',
       description: 'Create branded AI assistants for your clients with their SOPs, knowledge base, and custom responses',
@@ -130,7 +146,7 @@ const MSPDemos = () => {
         'Real-time training on client knowledge base',
         'Multi-language support for global clients'
       ],
-      icon: MessageSquare,
+      icon: Database,
       color: 'purple'
     }
   ];
@@ -362,6 +378,24 @@ const MSPDemos = () => {
                     )}
                     {selectedDemo === 'safecenter-platform' && <RMMDemo />}
                     {selectedDemo === 'password-management' && <SafePassDemo />}
+                    {selectedDemo === 'ultrium-gpt' && (
+                      <div className="space-y-4">
+                        <div className="bg-muted p-4 rounded-lg text-center">
+                          <p className="text-muted-foreground mb-4">
+                            Experience UltriumGPT's full AI capabilities including voice interface, security analysis, and workflow automation.
+                          </p>
+                          <Button 
+                            asChild 
+                            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                          >
+                            <a href="/demos/ultriumgpt" target="_blank" rel="noopener noreferrer">
+                              Launch UltriumGPT Demo
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     {selectedDemo === 'custom-gpt-builder' && <CustomGPTBuilderDemo />}
                   </TabsContent>
                 </Tabs>
