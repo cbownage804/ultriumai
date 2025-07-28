@@ -33,8 +33,21 @@ const Hero = () => {
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="space-y-12 py-8">
+          {/* Demo GIF Section - Moved to Top */}
+          <div className="animate-fade-in">
+            <div className="max-w-xl mx-auto mb-8">
+              <div className="relative rounded-xl overflow-hidden shadow-2xl">
+                <img 
+                  src="https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/gpt-logos/UltriumAI_intro_gif.gif"
+                  alt="UltriumAI Demo"
+                  className="w-full h-auto object-contain max-w-md mx-auto block"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Main heading with centered logo */}
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-6 animate-fade-in" style={{animationDelay: '0.2s'}}>
             <div className="flex justify-center mb-6">
               <img 
                 src="/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png" 
@@ -45,7 +58,7 @@ const Hero = () => {
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
               Complete AI-Powered Business Platform
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in px-4" style={{animationDelay: '0.2s'}}>
+            <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed animate-fade-in px-4" style={{animationDelay: '0.4s'}}>
               Build custom AI agents, deploy mobile technician apps, protect with enterprise security, and white-label everything for your clients. Complete platform from custom GPTs to mobile field operations.
             </p>
             <div className="flex items-center justify-center gap-2 text-base md:text-lg font-medium text-primary animate-bounce-gentle px-4">
@@ -140,18 +153,6 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Demo GIF Section */}
-          <div className="animate-fade-in" style={{animationDelay: '0.6s'}}>
-            <div className="max-w-xl mx-auto mb-8">
-              <div className="relative rounded-xl overflow-hidden shadow-2xl">
-                <img 
-                  src="https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/gpt-logos/UltriumAI_intro_gif.gif"
-                  alt="UltriumAI Demo"
-                  className="w-full h-auto object-contain max-w-md mx-auto block"
-                />
-              </div>
-            </div>
-          </div>
 
           {/* Target Audience Buttons */}
           <div className="animate-fade-in mb-8" style={{animationDelay: '0.6s'}}>
