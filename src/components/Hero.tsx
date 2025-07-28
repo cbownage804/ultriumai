@@ -35,26 +35,19 @@ const Hero = () => {
         <div className="space-y-12 py-8">
           {/* Demo GIF Section - Moved to Top */}
           <div className="animate-fade-in">
-            <div className="max-w-xl mx-auto mb-8">
+            <div className="max-w-sm mx-auto mb-8">
               <div className="relative rounded-xl overflow-hidden shadow-2xl">
                 <img 
                   src="https://nsyobmjpdpvesjwdphlh.supabase.co/storage/v1/object/public/gpt-logos/UltriumAI_intro_gif.gif"
                   alt="UltriumAI Demo"
-                  className="w-full h-auto object-contain max-w-md mx-auto block"
+                  className="w-full h-auto object-contain max-w-xs mx-auto block"
                 />
               </div>
             </div>
           </div>
 
-          {/* Main heading with centered logo */}
+          {/* Main heading */}
           <div className="space-y-6 animate-fade-in" style={{animationDelay: '0.2s'}}>
-            <div className="flex justify-center mb-6">
-              <img 
-                src="/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png" 
-                alt="Ultrium Logo" 
-                className="h-48 w-48"
-              />
-            </div>
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-normal animate-slide-up px-4 pb-4">
               Complete AI-Powered Business Platform
             </h1>
