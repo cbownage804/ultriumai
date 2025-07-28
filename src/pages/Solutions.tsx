@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,9 @@ import {
   ArrowRight,
   Play,
   Network,
-  CheckCircle,
+  CheckCircle, 
+  ChevronDown,
+  ChevronUp,
   Star,
   Building,
   Settings,
@@ -26,6 +29,22 @@ import {
 } from "lucide-react";
 
 const Solutions = () => {
+  const [expandedFeatures, setExpandedFeatures] = useState<Set<string>>(new Set());
+  
+  const toggleFeatures = (appId: string) => {
+    const newExpanded = new Set(expandedFeatures);
+    if (newExpanded.has(appId)) {
+      newExpanded.delete(appId);
+    } else {
+      newExpanded.add(appId);
+    }
+    setExpandedFeatures(newExpanded);
+  };
+
+  const handleNavigation = (path: string) => {
+    window.location.href = path;
+  };
+
   const securityApps = [
     {
       id: "safescan",
@@ -653,15 +672,30 @@ const Solutions = () => {
                     <div>
                       <h4 className="font-semibold mb-2 text-black">Key Features:</h4>
                       <ul className="space-y-1">
-                        {app.features.slice(0, 3).map((feature, idx) => (
+                        {(expandedFeatures.has(app.id) ? app.features : app.features.slice(0, 3)).map((feature, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-xs">
                             <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 mt-0.5" />
                             <span className="text-black/70">{feature}</span>
                           </li>
                         ))}
                         {app.features.length > 3 && (
-                          <li className="text-xs text-black/60 font-medium">
-                            +{app.features.length - 3} more features
+                          <li>
+                            <button 
+                              onClick={() => toggleFeatures(app.id)}
+                              className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"
+                            >
+                              {expandedFeatures.has(app.id) ? (
+                                <>
+                                  <ChevronUp className="h-3 w-3" />
+                                  Show less
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="h-3 w-3" />
+                                  +{app.features.length - 3} more features
+                                </>
+                              )}
+                            </button>
                           </li>
                         )}
                       </ul>
