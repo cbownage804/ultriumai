@@ -188,7 +188,7 @@ const UltriumGPT = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ai-studio'}>
                 <Play className="mr-2 h-5 w-5" />
-                Try UltriumGPT Now
+                Launch UltriumGPT Studio
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos/ultriumgpt'}>
                 <Play className="mr-2 h-5 w-5" />
@@ -618,34 +618,6 @@ const UltriumGPT = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 to-secondary/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20">
-            <CardContent className="p-12 text-center">
-              <h2 className="text-3xl font-bold mb-6">Ready to Build Your Custom GPT?</h2>
-              <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-                Whether you want to build it yourself or have us create it for you, let's discuss how a custom GPT 
-                can transform your business operations and deliver real ROI.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ai-studio'}>
-                  <Lightbulb className="mr-2 h-5 w-5" />
-                  Launch UltriumGPT Studio
-                </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/contact'}>
-                  <Phone className="mr-2 h-5 w-5" />
-                  Schedule Demo Call
-                </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.open('tel:804-821-1410')}>
-                  <Phone className="mr-2 h-5 w-5" />
-                  Call 804-821-1410
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
     </div>
   );
 };

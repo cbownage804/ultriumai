@@ -305,7 +305,7 @@ const SecurityAppsSection = () => {
                         if (tier.cta === 'Start Free Trial' || tier.cta === 'Start Premium') {
                           window.location.href = '/auth';
                         } else if (tier.cta === 'Contact Sales') {
-                          window.location.href = '#contact';
+                          window.location.href = '/contact';
                         }
                       }}
                     >
@@ -362,7 +362,7 @@ const SecurityAppsSection = () => {
                       <Button className="w-full" variant="outline" onClick={() => window.location.href = '/pricing'}>
                         Get Premium Bundle
                       </Button>
-                      <Button className="w-full" variant="secondary" onClick={() => window.location.href = '#contact'}>
+                      <Button className="w-full" variant="secondary" onClick={() => window.location.href = '/contact'}>
                         Get Enterprise Bundle
                       </Button>
                     </div>
