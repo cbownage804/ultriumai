@@ -328,98 +328,100 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Pricing Preview */}
+      {/* Pricing Overview */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-xl text-muted-foreground">Choose the plan that fits your business needs</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Pricing Path</h2>
+            <p className="text-xl text-muted-foreground">Tailored pricing for businesses and service providers</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="text-center">
-              <CardHeader>
-                <CardTitle className="text-2xl">Starter</CardTitle>
-                <div className="text-3xl font-bold">$29<span className="text-lg text-muted-foreground">/mo</span></div>
-                <CardDescription>Perfect for small businesses</CardDescription>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Business Pricing */}
+            <Card className="text-center hover-scale border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+              <CardHeader className="pb-8">
+                <Building2 className="h-16 w-16 mx-auto mb-4 text-primary" />
+                <CardTitle className="text-2xl mb-2">Business Pricing</CardTitle>
+                <CardDescription className="text-base">
+                  Perfect for companies looking to protect their own infrastructure
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm text-left mb-6">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Up to 25 endpoints</span>
+              <CardContent className="space-y-6">
+                <div className="space-y-3 text-left">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Direct endpoint protection</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Basic security monitoring</span>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">AI-powered threat detection</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Email support</span>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">24/7 monitoring & support</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Starting at $29/month</span>
                   </div>
                 </div>
                 <Link to="/pricing">
-                  <Button variant="outline" className="w-full">View Details</Button>
+                  <Button variant="hero" className="w-full" size="lg">
+                    View Business Pricing
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            <Card className="text-center border-primary shadow-lg scale-105">
-              <CardHeader>
-                <div className="bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full mx-auto w-fit mb-2">
-                  Most Popular
-                </div>
-                <CardTitle className="text-2xl">Professional</CardTitle>
-                <div className="text-3xl font-bold">$99<span className="text-lg text-muted-foreground">/mo</span></div>
-                <CardDescription>For growing businesses</CardDescription>
+            {/* MSP Pricing */}
+            <Card className="text-center hover-scale border-2 border-success/30 bg-gradient-to-br from-success/5 to-success/10">
+              <CardHeader className="pb-8">
+                <Users className="h-16 w-16 mx-auto mb-4 text-success" />
+                <CardTitle className="text-2xl mb-2">MSP Pricing</CardTitle>
+                <CardDescription className="text-base">
+                  Designed for service providers managing multiple clients
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm text-left mb-6">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Up to 250 endpoints</span>
+              <CardContent className="space-y-6">
+                <div className="space-y-3 text-left">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Multi-tenant architecture</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Advanced AI security</span>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">White-label solutions</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>24/7 support</span>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">High profit margins (90%+)</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Per-user pricing model</span>
                   </div>
                 </div>
-                <Link to="/pricing">
-                  <Button variant="hero" className="w-full">View Details</Button>
+                <Link to="/msp-pricing">
+                  <Button variant="outline" className="w-full border-success text-success hover:bg-success hover:text-success-foreground" size="lg">
+                    View MSP Pricing
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </Link>
               </CardContent>
             </Card>
+          </div>
 
-            <Card className="text-center">
-              <CardHeader>
-                <CardTitle className="text-2xl">Enterprise</CardTitle>
-                <div className="text-3xl font-bold">Custom</div>
-                <CardDescription>For large organizations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm text-left mb-6">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Unlimited endpoints</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Custom integrations</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span>Dedicated support</span>
-                  </div>
-                </div>
-                <Link to="/contact">
-                  <Button variant="outline" className="w-full">Contact Sales</Button>
-                </Link>
-              </CardContent>
-            </Card>
+          <div className="text-center mt-12">
+            <p className="text-muted-foreground mb-6">
+              Not sure which pricing model fits your needs?
+            </p>
+            <Link to="/contact">
+              <Button variant="outline" size="lg">
+                Contact Our Sales Team
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
