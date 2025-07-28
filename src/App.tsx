@@ -82,6 +82,7 @@ import MSPSecurityDashboard from '@/pages/MSPSecurityDashboard';
 import MSPDashboardPage from '@/pages/MSPDashboardPage';
 import MSPOnboardingPage from '@/pages/MSPOnboardingPage';
 import MSPBillingPage from '@/pages/MSPBillingPage';
+import MSPReportingPage from '@/pages/MSPReportingPage';
 import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
 import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
 import SafeNetMobilePage from '@/pages/SafeNetMobilePage';
@@ -200,6 +201,11 @@ function AppRouter() {
         <Route path="/msp-billing" element={
           <SubscriptionProtectedRoute requiresPremium>
             <MSPBillingPage />
+          </SubscriptionProtectedRoute>
+        } />
+        <Route path="/msp-reporting" element={
+          <SubscriptionProtectedRoute requiresPremium>
+            <MSPReportingPage />
           </SubscriptionProtectedRoute>
         } />
         <Route path="/mssps" element={<MSSPs />} />
