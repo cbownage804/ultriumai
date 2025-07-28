@@ -319,7 +319,7 @@ const Solutions = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      {/* Custom GPT Builder Hero Section */}
+      {/* UltriumAI Studio Hero Section */}
       <section className="pt-20 pb-16 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-grid-primary/5"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -329,14 +329,14 @@ const Solutions = () => {
               Revolutionary AI Platform
             </Badge>
             <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
-              Custom GPT Builder™
+              UltriumAI Studio™
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
               Build your own AI workforce in minutes, not months. Deploy intelligent assistants that know your business inside and out, reduce operational costs by 60%, and scale your expertise instantly.
             </p>
           </div>
 
-          {/* Custom GPT Builder Feature Card */}
+          {/* UltriumAI Studio Feature Card */}
           <Card className="max-w-6xl mx-auto bg-gradient-to-br from-white/80 to-primary/5 border-2 border-primary/20 shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02]">
             <CardContent className="p-8 md:p-12">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
