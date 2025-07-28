@@ -83,6 +83,9 @@ import MSPDashboardPage from '@/pages/MSPDashboardPage';
 import MSPOnboardingPage from '@/pages/MSPOnboardingPage';
 import MSPBillingPage from '@/pages/MSPBillingPage';
 import MSPReportingPage from '@/pages/MSPReportingPage';
+import ClientPortalDashboard from '@/pages/client/ClientPortalDashboard';
+import ClientTicketsPage from '@/pages/client/ClientTicketsPage';
+import ClientBillingPage from '@/pages/client/ClientBillingPage';
 import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
 import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
 import SafeNetMobilePage from '@/pages/SafeNetMobilePage';
@@ -208,6 +211,11 @@ function AppRouter() {
             <MSPReportingPage />
           </SubscriptionProtectedRoute>
         } />
+        
+        {/* Client Portal Routes */}
+        <Route path="/client" element={<ClientPortalDashboard />} />
+        <Route path="/client/tickets" element={<ClientTicketsPage />} />
+        <Route path="/client/billing" element={<ClientBillingPage />} />
         <Route path="/mssps" element={<MSSPs />} />
         <Route path="/solutions" element={<Solutions />} />
         <Route path="/demos" element={<LiveDemos />} />
