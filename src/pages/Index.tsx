@@ -10,6 +10,7 @@ import {
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Navigation';
+import Hero from '@/components/Hero';
 import { FAQSection } from '@/components/FAQSection';
 import { FAQSchema, OrganizationSchema, ServiceSchema } from '@/components/SEOSchemas';
 
@@ -58,42 +59,9 @@ const Index = () => {
       <FAQSchema faqs={mainFAQs} />
       
       <Navigation />
-      <div className="pt-16">
       
-      {/* Hero Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto text-center max-w-5xl">
-          <div className="animate-fade-in">
-            <div className="space-y-2 mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-full border border-primary/20">
-                <Bot className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">Powered by UltriumGPT AI</span>
-              </div>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              Complete Cybersecurity Platform with AI-Powered Intelligence
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              UltriumGPT AI-powered security operations, comprehensive RMM tools, MSP management, and advanced threat detection - all unified in one revolutionary platform.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <Link to="/auth">
-                <Button size="lg" variant="hero" className="w-full sm:w-auto px-8">
-                  Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/demos">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto px-8">
-                  View Live Demos
-                </Button>
-              </Link>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              ✓ No credit card required • ✓ 14-day free trial • ✓ Full platform access
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* Original Hero Section with GIF */}
+      <Hero />
 
       {/* Key Features Highlight */}
       <section className="py-16 px-4 bg-muted/30">
@@ -529,6 +497,7 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <div className="space-y-2 text-sm">
+                <Link to="/about" className="block text-muted-foreground hover:text-foreground">About Us</Link>
                 <Link to="/contact" className="block text-muted-foreground hover:text-foreground">Contact Us</Link>
                 <Link to="/terms" className="block text-muted-foreground hover:text-foreground">Terms of Service</Link>
                 <Link to="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy Policy</Link>
@@ -543,7 +512,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-      </div>
     </div>
   );
 };
