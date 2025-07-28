@@ -80,6 +80,7 @@ import MSPDemos from '@/pages/MSPDemos';
 import MSPControlCenter from '@/pages/MSPDashboard';
 import MSPSecurityDashboard from '@/pages/MSPSecurityDashboard';
 import MSPDashboardPage from '@/pages/MSPDashboardPage';
+import MSPOnboardingPage from '@/pages/MSPOnboardingPage';
 import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
 import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
 import SafeNetMobilePage from '@/pages/SafeNetMobilePage';
@@ -191,6 +192,11 @@ function AppRouter() {
         <Route path="/enterprise" element={<Enterprise />} />
         <Route path="/msps" element={<MSPs />} />
         <Route path="/msp-solutions" element={<MSPSolutions />} />
+        <Route path="/msp-onboarding" element={
+          <SubscriptionProtectedRoute requiresPremium>
+            <MSPOnboardingPage />
+          </SubscriptionProtectedRoute>
+        } />
         <Route path="/mssps" element={<MSSPs />} />
         <Route path="/solutions" element={<Solutions />} />
         <Route path="/demos" element={<LiveDemos />} />
