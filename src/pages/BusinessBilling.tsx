@@ -117,26 +117,119 @@ const BusinessBilling = () => {
           <div className="flex items-center justify-center gap-2 mb-6">
             <Building className="h-8 w-8 text-primary" />
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-primary to-blue-400 bg-clip-text text-transparent">
-              Business Plans
+              Business Solutions
             </h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Scale your business with our enterprise-grade AI platform. Choose the plan that fits your team size and requirements.
+            Choose from our enterprise-grade AI solutions designed for different business needs.
           </p>
         </div>
       </section>
 
-      {/* Pricing Plans */}
+      {/* Custom GPT Solutions */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Choose Your Plan</h2>
-            <p className="text-muted-foreground">All plans include a 14-day free trial</p>
+            <h2 className="text-3xl font-bold mb-4">Custom GPT Solutions</h2>
+            <p className="text-muted-foreground">Pre-built AI solutions for specific business needs</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">AI Knowledge Assistant</CardTitle>
+                <CardDescription>Transform your documents into intelligent knowledge base</CardDescription>
+                <div className="text-2xl font-bold text-primary">$20/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Document processing & indexing
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Intelligent Q&A system
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Multi-format support
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Learn More
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Security Knowledge Base</CardTitle>
+                <CardDescription>Cybersecurity training and compliance assistant</CardDescription>
+                <div className="text-2xl font-bold text-primary">$20/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Security policy guidance
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Compliance training
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Incident response help
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Learn More
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Custom Enterprise Chatbot</CardTitle>
+                <CardDescription>Fully customized AI assistant for your business</CardDescription>
+                <div className="text-2xl font-bold text-primary">$35/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Custom training on your data
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Branded interface
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    API integration
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Learn More
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Plans */}
+      <section className="py-16 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Platform Plans</h2>
+            <p className="text-muted-foreground">Full platform access with team collaboration features</p>
           </div>
 
           {pricingPlans.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">No pricing plans available at the moment.</p>
+              <p className="text-muted-foreground">No platform plans available at the moment.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -162,7 +255,7 @@ const BusinessBilling = () => {
                       </div>
                       <CardTitle className="text-2xl">{plan.name}</CardTitle>
                       <CardDescription className="text-sm">
-                        {plan.category} plan for growing businesses
+                        Full platform access for teams
                       </CardDescription>
                       
                       <div className="mt-4">
@@ -170,7 +263,7 @@ const BusinessBilling = () => {
                           ${plan.monthly_price}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          per month
+                          per month + per user fees
                         </div>
                         {plan.onboarding_fee && (
                           <div className="text-xs text-muted-foreground mt-1">
@@ -221,6 +314,72 @@ const BusinessBilling = () => {
               })}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Additional Services */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Additional Services</h2>
+            <p className="text-muted-foreground">Enhance your platform with specialized security tools</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">SafeSecure Add-on</CardTitle>
+                <CardDescription>Advanced security monitoring and protection</CardDescription>
+                <div className="text-2xl font-bold text-primary">$25/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Real-time threat monitoring
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Automated security alerts
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Compliance reporting
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Add to Plan
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">SafeCenter Add-on</CardTitle>
+                <CardDescription>Centralized security management dashboard</CardDescription>
+                <div className="text-2xl font-bold text-primary">$35/user/month</div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Unified security dashboard
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Multi-site management
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    Advanced analytics
+                  </li>
+                </ul>
+                <Button className="w-full mt-4" variant="outline">
+                  Add to Plan
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
