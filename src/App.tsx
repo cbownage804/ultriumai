@@ -36,6 +36,7 @@ import Enterprise from '@/pages/Enterprise';
 import MSPs from '@/pages/MSPs';
 import MSPSolutions from '@/pages/MSPSolutions';
 import BusinessSolutions from '@/pages/BusinessSolutions';
+import TegrityDashboardPage from '@/pages/TegrityDashboardPage';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
@@ -198,6 +199,7 @@ function AppRouter() {
         <Route path="/msps" element={<MSPs />} />
         <Route path="/msp-solutions" element={<MSPSolutions />} />
         <Route path="/business-solutions" element={<BusinessSolutions />} />
+        <Route path="/tegrity-dashboard" element={<TegrityDashboardPage />} />
         <Route path="/msp-onboarding" element={
           <SubscriptionProtectedRoute requiresPremium>
             <MSPOnboardingPage />
