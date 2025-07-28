@@ -24,16 +24,59 @@ const MSPPricing = () => {
   const { subscription, createCheckout, openCustomerPortal, isLoading } = useSubscription();
   const { user } = useAuth();
 
+  // Custom GPT Solutions for MSPs
+  const customGPTSolutions = [
+    {
+      name: "AI Knowledge Assistant",
+      description: "Transform client documents into intelligent knowledge base",
+      price: { monthly: 15, yearly: 150 },
+      icon: Users,
+      features: [
+        "Document processing & indexing",
+        "Intelligent Q&A system", 
+        "Multi-format support",
+        "White-label branding",
+        "Client portal access"
+      ]
+    },
+    {
+      name: "Security Knowledge Base",
+      description: "Cybersecurity training and compliance assistant",
+      price: { monthly: 15, yearly: 150 },
+      icon: Shield,
+      features: [
+        "Security policy guidance",
+        "Compliance training modules",
+        "Incident response help",
+        "Custom security protocols",
+        "Risk assessment tools"
+      ]
+    },
+    {
+      name: "Custom Enterprise Chatbot",
+      description: "Fully customized AI assistant for client businesses",
+      price: { monthly: 25, yearly: 250 },
+      icon: Crown,
+      features: [
+        "Custom training on client data",
+        "Branded interface",
+        "API integration",
+        "Multi-language support",
+        "Advanced analytics"
+      ]
+    }
+  ];
+
+  // Core MSP Platform Plans
   const plans = [
     {
       name: "Ultrium SafeMSP Start",
-      description: "Essential AI and security tools for MSP clients",
+      description: "Essential security platform for MSP clients",
       price: { monthly: 29, yearly: 290 },
       trial: "14-day free trial",
       icon: Users,
       features: [
-        "UltriumGPT AI Platform",
-        "1 Custom GPT creation",
+        "UltriumGPT AI Platform access",
         "SafeLink URL protection",
         "SafeMail email security",
         "Basic white-label customization",
@@ -46,13 +89,12 @@ const MSPPricing = () => {
     },
     {
       name: "Ultrium SafeMSP Pro",
-      description: "Enhanced security suite with expanded AI capabilities",
+      description: "Enhanced security suite with expanded capabilities",
       price: { monthly: 49, yearly: 490 },
       trial: "14-day free trial",
       icon: Crown,
       features: [
         "Everything in SafeMSP Start",
-        "5 Custom GPT creations",
         "SafePass password management",
         "SafeKB asset management",
         "Advanced white-label branding",
@@ -177,15 +219,81 @@ const MSPPricing = () => {
         </div>
       </section>
 
-      {/* Main Plans */}
+      {/* Custom GPT Solutions */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Core MSP Plans</h2>
+            <h2 className="text-3xl font-bold mb-4">Custom GPT Solutions</h2>
+            <p className="text-muted-foreground">AI-powered solutions for specific client needs (sold separately)</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {customGPTSolutions.map((solution, index) => {
+              const SolutionIcon = solution.icon;
+              const savings = getSavings(solution);
+              
+              return (
+                <Card key={index} className="hover:shadow-lg transition-shadow">
+                  <CardHeader className="text-center pb-6">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <SolutionIcon className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">{solution.name}</CardTitle>
+                    <CardDescription>{solution.description}</CardDescription>
+                    
+                    <div className="mt-4">
+                      <div className="text-3xl font-bold">
+                        {formatPrice(isYearly ? solution.price.yearly : solution.price.monthly)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        per user/{isYearly ? 'year' : 'month'}
+                      </div>
+                      {isYearly && savings && (
+                        <div className="text-sm text-green-600 font-medium mt-1">
+                          Save ${savings} per user/year
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="space-y-3">
+                      {solution.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} className="flex items-center gap-3">
+                          <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+
+                  <CardFooter>
+                    <Button 
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => handleSubscribe(solution.name)}
+                      disabled={isLoading}
+                    >
+                      Add Solution
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Core MSP Platform Plans */}
+      <section className="py-16 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Core MSP Platform Plans</h2>
             <p className="text-muted-foreground">Choose the right security foundation for your clients</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {plans.map((plan, index) => {
               const PlanIcon = plan.icon;
               const savings = getSavings(plan);
@@ -264,8 +372,12 @@ const MSPPricing = () => {
               );
             })}
           </div>
+        </div>
+      </section>
 
-          {/* Additional Services */}
+      {/* Additional Services */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Additional Services</h2>
             <p className="text-muted-foreground">Enhance your security offering with specialized tools</p>
