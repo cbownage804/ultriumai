@@ -39,7 +39,7 @@ const MediumBusiness = () => {
       title: "Starter Plus",
       description: "Advanced AI system trained on your company documents with enhanced capabilities for growing teams",
       features: ["Multi-department search", "Advanced Q&A", "Policy management", "Enhanced security scanning"],
-      price: "$29/month"
+      price: "$20/user/month"
     },
     {
       id: "professional", 

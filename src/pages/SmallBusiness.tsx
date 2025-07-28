@@ -39,7 +39,7 @@ const SmallBusiness = () => {
       title: "AI Knowledge Assistant",
       description: "Train AI on your company documents to provide instant answers to employee questions",
       features: ["Document search", "Policy Q&A", "Procedure guidance", "Employee self-service"],
-      price: "$29/month"
+      price: "$20/user/month"
     },
     {
       id: "professional", 

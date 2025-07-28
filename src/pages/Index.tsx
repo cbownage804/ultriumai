@@ -37,7 +37,7 @@ const Index = () => {
     },
     {
       question: "How does your pricing work for different business sizes?",
-      answer: "We offer flexible pricing tiers designed for every business size - from small businesses starting at $29/month to enterprise custom solutions. All plans include core security features, with advanced capabilities and higher endpoint limits in upper tiers."
+      answer: "We offer flexible pricing tiers designed for every business size - from custom GPT solutions starting at $20/user/month to full platform access. All plans include core features, with advanced capabilities and team collaboration in enterprise tiers."
     }
   ];
 
@@ -362,7 +362,7 @@ const Index = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Starting at $29/month</span>
+                    <span className="text-sm">Starting at $20/user/month</span>
                   </div>
                 </div>
                 <Link to="/pricing">
