@@ -236,6 +236,27 @@ const Solutions = () => {
       demoUrl: "/demos/ultriumgpt",
       pageUrl: "/ultrium-gpt",
       gradient: "from-violet-100 to-purple-100"
+    },
+    {
+      id: "ai-studio",
+      name: "Ultrium AI Studio™",
+      category: "Business Intelligence",
+      description: "Advanced AI platform for security operations analysis and automation",
+      longDescription: "Comprehensive AI-powered business intelligence platform that enhances security operations with advanced analytics, automated reporting, policy generation, and workflow optimization.",
+      icon: Brain,
+      features: [
+        "Security data analysis & insights",
+        "Automated policy generation",
+        "Threat research & intelligence",
+        "Compliance report automation",
+        "Workflow optimization",
+        "Training content creation",
+        "Risk assessment modeling",
+        "Executive dashboard analytics"
+      ],
+      demoUrl: "/demos/ai-studio",
+      pageUrl: "/ai-studio",
+      gradient: "from-emerald-100 to-teal-100"
     }
   ];
 
