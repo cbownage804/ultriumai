@@ -81,6 +81,7 @@ import MSPControlCenter from '@/pages/MSPDashboard';
 import MSPSecurityDashboard from '@/pages/MSPSecurityDashboard';
 import MSPDashboardPage from '@/pages/MSPDashboardPage';
 import MSPOnboardingPage from '@/pages/MSPOnboardingPage';
+import MSPBillingPage from '@/pages/MSPBillingPage';
 import SafeNetConnectorPage from '@/pages/SafeNetConnectorPage';
 import SafeNetMSPPage from '@/pages/SafeNetMSPPage';
 import SafeNetMobilePage from '@/pages/SafeNetMobilePage';
@@ -98,7 +99,6 @@ import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import AIStudio from '@/pages/AIStudio';
 import SafeTrackPage from '@/pages/SafeTrackPage';
-import MSPBillingPage from '@/pages/MSPBillingPage';
 import BusinessBillingPage from '@/pages/BusinessBillingPage';
 import BusinessBilling from '@/pages/BusinessBilling';
 import PaymentSuccess from '@/pages/PaymentSuccess';
@@ -195,6 +195,11 @@ function AppRouter() {
         <Route path="/msp-onboarding" element={
           <SubscriptionProtectedRoute requiresPremium>
             <MSPOnboardingPage />
+          </SubscriptionProtectedRoute>
+        } />
+        <Route path="/msp-billing" element={
+          <SubscriptionProtectedRoute requiresPremium>
+            <MSPBillingPage />
           </SubscriptionProtectedRoute>
         } />
         <Route path="/mssps" element={<MSSPs />} />
