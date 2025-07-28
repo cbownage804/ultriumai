@@ -35,6 +35,7 @@ import MediumBusiness from '@/pages/MediumBusiness';
 import Enterprise from '@/pages/Enterprise';
 import MSPs from '@/pages/MSPs';
 import MSPSolutions from '@/pages/MSPSolutions';
+import BusinessSolutions from '@/pages/BusinessSolutions';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
@@ -196,6 +197,7 @@ function AppRouter() {
         <Route path="/enterprise" element={<Enterprise />} />
         <Route path="/msps" element={<MSPs />} />
         <Route path="/msp-solutions" element={<MSPSolutions />} />
+        <Route path="/business-solutions" element={<BusinessSolutions />} />
         <Route path="/msp-onboarding" element={
           <SubscriptionProtectedRoute requiresPremium>
             <MSPOnboardingPage />
