@@ -40,28 +40,28 @@ const AboutSection = () => {
         <div ref={contentRef} className={getAnimationClasses(contentVisible, 'fadeUp')}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
             <div className="space-y-6">
-              <h3 className="text-2xl font-bold">Our Story</h3>
+              <h3 className="text-2xl font-bold">From MSP Frustration to AI Innovation</h3>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                UltriumAI is the AI innovation arm of Ultrium, a security-first IT provider. We specialize in creating custom GPT agents that work the way your business works—from IT support and cybersecurity tools to client-facing bots and automated workflows.
+                UltriumAI was born from our experience as an MSP (Managed Service Provider) dealing with the chaos of managing dozens of security tools, RMM platforms, and vendor solutions. We were tired of juggling multiple dashboards, inconsistent APIs, and security gaps between systems.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                We're not here to sell hype. We're here to build smart, secure tools that solve real problems—so your team can move faster, serve better, and stay safer.
+                So we built what we wished existed: <strong>UltriumAI Studio</strong> and <strong>UltriumGPT</strong> - an all-inclusive platform that consolidates cybersecurity, IT management, and AI automation into one secure, intelligent ecosystem. No more vendor sprawl. No more security gaps. Just comprehensive tools that work together seamlessly.
               </p>
               
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-semibold">AI That Fits Your Business</h4>
-                    <p className="text-muted-foreground">We don't believe in one-size-fits-all bots. Every GPT we build is trained on your actual documents, policies, and workflows—so it sounds like you, thinks like you, and works like a real team member.</p>
+                    <h4 className="font-semibold">UltriumAI Studio - All-in-One Platform</h4>
+                    <p className="text-muted-foreground">Our flagship platform combines cybersecurity monitoring, RMM tools, MSP management, and AI-powered automation in one unified dashboard. Built by MSPs, for MSPs and businesses who want enterprise-level security without the complexity.</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-semibold">Real Results, Not Just Tech Demos</h4>
-                    <p className="text-muted-foreground">We focus on practical wins: fewer tickets, faster onboarding, smarter automation. Whether you're streamlining internal support or enhancing cybersecurity, our tools deliver measurable value from day one.</p>
+                    <h4 className="font-semibold">UltriumGPT - Custom AI That Actually Works</h4>
+                    <p className="text-muted-foreground">Our custom GPT agents are trained on your specific environment, policies, and procedures. From automated threat response to intelligent helpdesk support, UltriumGPT delivers practical AI that reduces tickets, improves response times, and strengthens security posture.</p>
                   </div>
                 </div>
               </div>
@@ -82,9 +82,9 @@ const AboutSection = () => {
                       className="h-24 w-24 hidden dark:block"
                     />
                   </div>
-                  <h3 className="text-xl font-bold">Comprehensive IT & Cybersecurity Services</h3>
+                  <h3 className="text-xl font-bold">Built by the MSP That Wanted Better Tools</h3>
                   <p className="text-muted-foreground">
-                    <strong>UltriumAI is proudly developed by Ultrium</strong>, a veteran-owned IT solutions company based in Virginia. While UltriumAI focuses on AI-powered cybersecurity, automation, and business intelligence tools, Ultrium delivers full-service IT support, managed services, cloud infrastructure, and compliance solutions to businesses of all sizes.
+                    <strong>UltriumAI is proudly developed by Ultrium</strong>, a veteran-owned MSP based in Virginia. After years of managing fragmented security tools and disjointed vendor solutions for our clients, we created the unified platform we always needed. Now we're sharing our comprehensive AI-powered cybersecurity and IT management tools with MSPs and businesses worldwide.
                   </p>
                   <Button variant="outline" className="w-full">
                     <Building className="mr-2 h-4 w-4" />
@@ -99,9 +99,9 @@ const AboutSection = () => {
         {/* Process Section */}
         <div ref={processRef} className={getAnimationClasses(processVisible, 'fadeUp')}>
           <div className="text-center mb-16">
-            <h3 className="text-3xl font-bold mb-6">How UltriumAI Builds Smarter, Safer AI Tools</h3>
+            <h3 className="text-3xl font-bold mb-6">How We Eliminate Vendor Sprawl with AI-Powered Solutions</h3>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              From discovery to deployment, our process makes AI simple to understand, easy to use, and secure from the ground up.
+              Our unified platform approach means you get comprehensive cybersecurity, IT management, and AI automation without juggling multiple vendors or worrying about integration gaps.
             </p>
           </div>
         </div>
@@ -110,20 +110,20 @@ const AboutSection = () => {
           {[
             {
               step: "01",
-              title: "Discovery & Analysis",
-              description: "We dive deep into your workflows, security requirements, and business goals to design the perfect AI solution.",
+              title: "Assess Your Current Stack",
+              description: "We analyze your existing security tools, RMM platforms, and vendor relationships to identify gaps, redundancies, and integration challenges.",
               icon: Users
             },
             {
               step: "02", 
-              title: "Custom Development",
-              description: "Our team builds and trains your GPT using your actual data, policies, and procedures—with security baked in from day one.",
+              title: "Deploy Unified Platform",
+              description: "We migrate your critical functions to UltriumAI Studio, configure UltriumGPT with your specific environment, and eliminate vendor sprawl while maintaining full functionality.",
               icon: Shield
             },
             {
               step: "03",
-              title: "Deploy & Support",
-              description: "We handle the technical deployment and provide ongoing support to ensure your AI tools evolve with your business.",
+              title: "Optimize & Scale",
+              description: "We continuously enhance your unified platform with new AI capabilities, threat intelligence updates, and automated workflows as your business grows.",
               icon: Zap
             }
           ].map((process, index) => {
@@ -156,9 +156,9 @@ const AboutSection = () => {
         <div ref={ctaRef} className={getAnimationClasses(ctaVisible, 'fadeUp')}>
           <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/20">
             <CardContent className="p-8 text-center">
-              <h3 className="text-2xl font-bold mb-6">Ready to Get Started?</h3>
+              <h3 className="text-2xl font-bold mb-6">Ready to Consolidate Your Security Stack?</h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Let's discuss how custom AI agents can transform your business operations while keeping security at the forefront.
+                See how UltriumAI Studio and UltriumGPT can replace multiple vendors with one comprehensive, AI-powered platform that actually improves your security posture.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button size="lg" className="text-lg px-8">
