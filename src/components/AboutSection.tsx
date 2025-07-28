@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Building,
   Phone,
-  Mail
+  Mail,
+  Bot
 } from "lucide-react";
 import { useScrollAnimation, getAnimationClasses, useStaggeredScrollAnimation } from "@/hooks/useScrollAnimation";
 
@@ -91,6 +92,135 @@ const AboutSection = () => {
                     Learn more at UltriumLLC.com
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* UltriumGPT Section */}
+        <div className="py-20 bg-gradient-to-br from-primary/5 to-secondary/5">
+          <div className="text-center mb-16">
+            <Badge variant="secondary" className="mb-4">
+              <Bot className="h-4 w-4 mr-2" />
+              Introducing UltriumGPT
+            </Badge>
+            <h3 className="text-4xl font-bold mb-6 text-foreground">
+              The Security-First LLM That Understands Your Business
+            </h3>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
+              UltriumGPT isn't just another chatbot. It's a revolutionary Large Language Model specifically trained for cybersecurity, IT operations, and business intelligence—seamlessly integrated with SafeSuite and customizable through AI Studio.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
+            <div className="space-y-6">
+              <h4 className="text-2xl font-bold">Advanced LLM Capabilities</h4>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                  <div>
+                    <h5 className="font-semibold">Security-Native Intelligence</h5>
+                    <p className="text-muted-foreground">Trained on cybersecurity frameworks, threat intelligence, and compliance standards. UltriumGPT speaks security fluently.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Zap className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                  <div>
+                    <h5 className="font-semibold">Real-Time Data Integration</h5>
+                    <p className="text-muted-foreground">Connects directly to SafeSuite's live security data, providing contextual responses based on your actual environment.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Users className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                  <div>
+                    <h5 className="font-semibold">Multi-Modal Interactions</h5>
+                    <p className="text-muted-foreground">Text, voice, and visual analysis capabilities for comprehensive threat assessment and incident response.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Award className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                  <div>
+                    <h5 className="font-semibold">Custom Knowledge Training</h5>
+                    <p className="text-muted-foreground">Through AI Studio, train UltriumGPT on your specific policies, procedures, and organizational knowledge.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20">
+              <CardContent className="p-8">
+                <h4 className="text-xl font-bold mb-4 text-center">Revolutionary Integration</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                    <div className="w-3 h-3 bg-primary rounded-full"></div>
+                    <span className="font-medium">SafeSuite</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Live security data</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                    <div className="w-3 h-3 bg-secondary rounded-full"></div>
+                    <span className="font-medium">AI Studio</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Custom training</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                    <div className="w-3 h-3 bg-accent rounded-full"></div>
+                    <span className="font-medium">UltriumGPT</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Intelligent responses</span>
+                  </div>
+                </div>
+                <div className="mt-6 p-4 bg-primary/5 rounded-lg text-center">
+                  <p className="text-sm text-muted-foreground mb-2">The first LLM that:</p>
+                  <p className="font-semibold">Understands your security posture in real-time</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="text-center hover:shadow-lg transition-all duration-200">
+              <CardHeader>
+                <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Bot className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-lg">Intelligent Automation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Automate incident response, compliance reporting, and security assessments with AI that understands context.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-all duration-200">
+              <CardHeader>
+                <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Shield className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-lg">Security-First Design</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Built with enterprise security standards, ensuring your conversations and data remain protected and compliant.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="text-center hover:shadow-lg transition-all duration-200">
+              <CardHeader>
+                <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Zap className="h-8 w-8 text-primary" />
+                </div>
+                <CardTitle className="text-lg">Continuous Learning</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Evolves with your organization, learning from your environment to provide increasingly accurate insights.
+                </p>
               </CardContent>
             </Card>
           </div>
