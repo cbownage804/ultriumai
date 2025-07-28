@@ -1,9 +1,10 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import { 
   Building, 
+  Building2,
   Users, 
   Shield, 
   Zap, 
@@ -22,7 +23,9 @@ import {
   Code,
   Brain,
   Play,
-  Star
+  Star,
+  Crown,
+  Check
 } from "lucide-react";
 
 const UltriumGPT = () => {
@@ -362,6 +365,255 @@ const UltriumGPT = () => {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Custom GPT Builder™ Pricing Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-primary/5"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center space-y-8 mb-12">
+            <Badge variant="secondary" className="animate-pulse">
+              <Zap className="h-4 w-4 mr-2" />
+              Revolutionary AI Platform
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+              Custom GPT Builder™ Pricing
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              Build unlimited custom AI assistants for your business. No coding required, 
+              unlimited knowledge bases, white-label deployment included.
+            </p>
+          </div>
+
+          {/* Custom GPT Builder Pricing Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+            {/* Starter GPT Plan */}
+            <Card className="bg-white/80 border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
+              <CardHeader className="text-center pb-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Brain className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl">GPT Starter</CardTitle>
+                <CardDescription className="text-base">Perfect for small teams</CardDescription>
+                
+                <div className="mt-6 space-y-2">
+                  <div className="text-4xl font-bold text-primary">$99</div>
+                  <div className="text-sm text-muted-foreground">per month</div>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    7-day free trial
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">1 Custom GPT assistant</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">500 queries per month</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">1GB knowledge base storage</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Up to 3 team seats</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Basic analytics & usage tracking</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">API access & webhooks</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Email support</span>
+                  </div>
+                </div>
+              </CardContent>
+
+              <CardFooter>
+                <Button className="w-full" variant="outline" onClick={() => window.location.href = '/auth'}>
+                  Start Free Trial
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Professional GPT Plan - Most Popular */}
+            <Card className="bg-gradient-to-br from-white/90 to-primary/5 border-2 border-primary shadow-lg scale-105 relative">
+              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary">
+                Most Popular
+              </Badge>
+              
+              <CardHeader className="text-center pb-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl">GPT Professional</CardTitle>
+                <CardDescription className="text-base">Everything you need for business AI</CardDescription>
+                
+                <div className="mt-6 space-y-2">
+                  <div className="text-4xl font-bold text-primary">$499</div>
+                  <div className="text-sm text-muted-foreground">per month</div>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    7-day free trial
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm font-medium">5 Custom GPT assistants</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">2,500 queries per month</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">5GB knowledge base storage</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Up to 10 team seats</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Advanced analytics & insights</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">White-label deployment options</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Remove "Powered by UltriumAI" branding</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Priority support</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Advanced integrations</span>
+                  </div>
+                </div>
+              </CardContent>
+
+              <CardFooter>
+                <Button className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90" onClick={() => window.location.href = '/auth'}>
+                  Start Free Trial
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Enterprise GPT Plan */}
+            <Card className="bg-white/80 border-2 border-primary/20 hover:border-primary/40 transition-all duration-300">
+              <CardHeader className="text-center pb-8">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                  <Building2 className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl">GPT Enterprise</CardTitle>
+                <CardDescription className="text-base">For large-scale deployments</CardDescription>
+                
+                <div className="mt-6 space-y-2">
+                  <div className="text-4xl font-bold text-primary">Custom</div>
+                  <div className="text-sm text-muted-foreground">Contact for pricing</div>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    7-day free trial
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">25 Custom GPT assistants</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Custom query limits (high volume)</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">25GB+ custom data storage</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Unlimited team seats</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Enterprise security & compliance</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Dedicated account manager</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">24/7 priority support</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">On-premise deployment</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
+                    <span className="text-sm">Custom training & setup</span>
+                  </div>
+                </div>
+              </CardContent>
+
+              <CardFooter>
+                <Button className="w-full" variant="outline" onClick={() => window.location.href = '/contact'}>
+                  Contact Sales
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+
+          {/* Live Demo CTA */}
+          <div className="text-center mb-8">
+            <div className="bg-gradient-to-r from-primary/20 via-purple-500/20 to-blue-500/20 rounded-2xl p-8 border-2 border-primary/30 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <div className="space-y-4">
+                <div className="inline-block">
+                  <Badge variant="secondary" className="animate-pulse bg-green-100 text-green-800 text-sm px-4 py-2">
+                    <Play className="mr-2 h-4 w-4" />
+                    Interactive Demo Available
+                  </Badge>
+                </div>
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent">
+                  See Custom GPT Builder™ in Action
+                </h3>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                  Experience our revolutionary AI platform firsthand. Build your first custom GPT in under 5 minutes.
+                </p>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  onClick={() => window.location.href = '/demos/custom-gpt-builder'}
+                >
+                  <Play className="mr-3 h-6 w-6" />
+                  Try Live Demo Now
+                  <ArrowRight className="ml-3 h-6 w-6" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
