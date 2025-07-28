@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Navigation';
 import Hero from '@/components/Hero';
+import AboutSection from '@/components/AboutSection';
 import { FAQSection } from '@/components/FAQSection';
 import { FAQSchema, OrganizationSchema, ServiceSchema } from '@/components/SEOSchemas';
 
@@ -62,6 +63,9 @@ const Index = () => {
       
       {/* Original Hero Section with GIF */}
       <Hero />
+
+      {/* About Section */}
+      <AboutSection />
 
       {/* Key Features Highlight */}
       <section className="py-16 px-4 bg-muted/30">
