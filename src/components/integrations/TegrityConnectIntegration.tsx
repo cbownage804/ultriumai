@@ -117,8 +117,12 @@ const TegrityConnectIntegration: React.FC = () => {
       <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-primary/20 rounded-lg">
-              <Shield className="h-6 w-6 text-primary" />
+            <div className="p-2 bg-white rounded-lg shadow-sm">
+              <img 
+                src="/lovable-uploads/28348e0f-1c72-435c-b46f-d51c7100ba4f.png" 
+                alt="Tegrity Connect" 
+                className="h-8 w-auto"
+              />
             </div>
             <div>
               <CardTitle className="flex items-center gap-2">
