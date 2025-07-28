@@ -15,6 +15,7 @@ const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSecurityDropdownOpen, setIsSecurityDropdownOpen] = useState(false);
   const [isBusinessDropdownOpen, setIsBusinessDropdownOpen] = useState(false);  
+  const [isSolutionsDropdownOpen, setIsSolutionsDropdownOpen] = useState(false);
   const [isDemosDropdownOpen, setIsDemosDropdownOpen] = useState(false);
   const [isPricingDropdownOpen, setIsPricingDropdownOpen] = useState(false);
   const [isContactDropdownOpen, setIsContactDropdownOpen] = useState(false);
@@ -32,6 +33,7 @@ const Navigation = () => {
     setIsMenuOpen(false);
     setIsSecurityDropdownOpen(false);
     setIsBusinessDropdownOpen(false);
+    setIsSolutionsDropdownOpen(false);
     setIsDemosDropdownOpen(false);
     setIsPricingDropdownOpen(false);
     setIsContactDropdownOpen(false);
@@ -89,10 +91,28 @@ const Navigation = () => {
                 </div>
               )}
             </div>
-            <button onClick={() => handleNavigation('/solutions')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group">
-              Solutions
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsSolutionsDropdownOpen(!isSolutionsDropdownOpen)}
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1"
+              >
+                Solutions
+                <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${isSolutionsDropdownOpen ? 'rotate-180' : ''}`} />
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </button>
+              {isSolutionsDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-56 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-lg z-50">
+                  <div className="py-2">
+                    <button onClick={() => { handleNavigationWithMenuClose('/solutions'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 font-medium">
+                      Business Solutions
+                    </button>
+                    <button onClick={() => { handleNavigationWithMenuClose('/msp-solutions'); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-muted/50 font-medium">
+                      MSP Solutions
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="relative">
               <button 
                 onClick={() => setIsPricingDropdownOpen(!isPricingDropdownOpen)}
@@ -237,7 +257,10 @@ const Navigation = () => {
                 Enterprise
               </button>
               <button onClick={() => handleNavigationWithMenuClose('/solutions')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
-                Solutions
+                Business Solutions
+              </button>
+              <button onClick={() => handleNavigationWithMenuClose('/msp-solutions')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
+                MSP Solutions
               </button>
               <button onClick={() => handleNavigationWithMenuClose('#security')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground">
                 AI Security Apps
