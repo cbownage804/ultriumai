@@ -41,7 +41,7 @@ export const GPTDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Bot className="h-8 w-8 text-primary" />
-            Ultrium GPT Dashboard
+            AI Studio Dashboard
           </h1>
           <p className="text-muted-foreground">
             Manage and monitor your custom AI assistants

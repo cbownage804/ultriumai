@@ -219,27 +219,6 @@ const Solutions = () => {
     {
       id: "ultrium-gpt",
       name: "Ultrium GPT™",
-      category: "AI Security Assistant",
-      description: "Advanced AI assistant for cybersecurity operations and threat analysis",
-      longDescription: "Intelligent AI assistant specialized in cybersecurity operations, threat analysis, incident response, and security automation with natural language processing.",
-      icon: Zap,
-      features: [
-        "Natural language security queries",
-        "Automated threat analysis",
-        "Incident response assistance",
-        "Security policy generation",
-        "Vulnerability assessment",
-        "Compliance guidance",
-        "Real-time security insights",
-        "Integration with security tools"
-      ],
-      demoUrl: "/demos/ultriumgpt",
-      pageUrl: "/ultrium-gpt",
-      gradient: "from-violet-100 to-purple-100"
-    },
-    {
-      id: "ai-studio",
-      name: "Ultrium AI Studio™",
       category: "Business Intelligence",
       description: "Advanced AI platform for security operations analysis and automation",
       longDescription: "Comprehensive AI-powered business intelligence platform that enhances security operations with advanced analytics, automated reporting, policy generation, and workflow optimization.",
@@ -254,9 +233,30 @@ const Solutions = () => {
         "Risk assessment modeling",
         "Executive dashboard analytics"
       ],
+      demoUrl: "/demos/ultriumgpt",
+      pageUrl: "/ultrium-gpt",
+      gradient: "from-emerald-100 to-teal-100"
+    },
+    {
+      id: "ai-studio",
+      name: "Ultrium AI Studio™",
+      category: "AI Security Assistant",
+      description: "Advanced AI assistant for cybersecurity operations and threat analysis",
+      longDescription: "Intelligent AI assistant specialized in cybersecurity operations, threat analysis, incident response, and security automation with natural language processing.",
+      icon: Zap,
+      features: [
+        "Natural language security queries",
+        "Automated threat analysis",
+        "Incident response assistance",
+        "Security policy generation",
+        "Vulnerability assessment",
+        "Compliance guidance",
+        "Real-time security insights",
+        "Integration with security tools"
+      ],
       demoUrl: "/demos/ai-studio",
       pageUrl: "/ai-studio",
-      gradient: "from-emerald-100 to-teal-100"
+      gradient: "from-violet-100 to-purple-100"
     }
   ];
 
