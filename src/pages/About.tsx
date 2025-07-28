@@ -7,6 +7,8 @@ import {
   Target, Lightbulb, Zap, Brain, Eye, Lock,
   Building, Clock, Star, ArrowRight, CheckCircle
 } from 'lucide-react';
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const About = () => {
   const stats = [
@@ -304,6 +306,7 @@ const About = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };

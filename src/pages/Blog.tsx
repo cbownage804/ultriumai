@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Footer from "@/components/Footer";
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -301,6 +302,7 @@ const Blog = () => {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 };

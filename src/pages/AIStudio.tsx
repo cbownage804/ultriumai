@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -267,6 +268,7 @@ const AIStudio = () => {
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

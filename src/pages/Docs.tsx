@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -593,6 +594,7 @@ const Docs = () => {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 };

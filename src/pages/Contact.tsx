@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import Footer from "@/components/Footer";
 import {
   Mail, Phone, MapPin, Clock, Send, MessageSquare,
   Building, Users, Shield, Headphones, ArrowRight,
@@ -421,6 +422,7 @@ const Contact = () => {
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

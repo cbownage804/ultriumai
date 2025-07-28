@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import { 
   Building, 
   Building2,
@@ -618,6 +619,7 @@ const UltriumGPT = () => {
         </div>
       </section>
 
+      <Footer />
     </div>
   );
 };

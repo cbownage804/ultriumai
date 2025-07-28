@@ -4,6 +4,7 @@ import ChatInterface from "@/components/ChatInterface";
 import { TrialBanner } from '@/components/TrialBanner';
 import { SubscriptionRenewalNotice } from '@/components/SubscriptionRenewalNotice';
 import { GracePeriodManager } from '@/components/GracePeriodManager';
+import Footer from "@/components/Footer";
 
 import ProfilePage from "@/pages/ProfilePage";
 import CustomGPTBuild from "@/components/CustomGPTBuild";
@@ -296,6 +297,7 @@ const Dashboard = () => {
           </div>
         </SidebarInset>
       </div>
+      <Footer />
     </SidebarProvider>
   );
 };
