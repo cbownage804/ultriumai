@@ -43,7 +43,6 @@ const Pricing = () => {
       icon: Users,
       features: [
         "Up to 10 team members",
-        "5 Custom AI Agents",
         "Basic security scanning",
         "Email support",
         "Standard integrations",
@@ -62,7 +61,6 @@ const Pricing = () => {
       icon: Crown,
       features: [
         "Up to 50 team members",
-        "Unlimited Custom AI Agents",
         "Advanced security suite",
         "Mobile technician apps (iOS & Android)",
         "Full MSP dashboard",
