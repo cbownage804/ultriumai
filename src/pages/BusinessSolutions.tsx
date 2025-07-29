@@ -272,18 +272,18 @@ const BusinessSolutions = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {businessCategories.map((category, index) => (
-              <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
+              <Card key={index} className="group hover:shadow-lg transition-all duration-300 border border-border shadow-md bg-card">
                 <CardContent className="p-6">
                   <div className={`w-14 h-14 bg-muted rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
                     <category.icon className={`h-7 w-7 text-primary`} />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-2">{category.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
+                  <h3 className="font-semibold text-lg text-card-foreground mb-2">{category.title}</h3>
+                  <p className="text-card-foreground/70 text-sm mb-4">{category.description}</p>
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-xs">
                       {category.count} integrations
                     </Badge>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+                    <ArrowRight className="h-4 w-4 text-card-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
                   </div>
                 </CardContent>
               </Card>
@@ -362,25 +362,25 @@ const BusinessSolutions = () => {
             integrationsVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
           }`}>
             {businessIntegrations.map((integration, index) => (
-              <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
+              <Card key={index} className="group hover:shadow-xl transition-all duration-300 border border-border shadow-md overflow-hidden bg-card">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors duration-300">
-                      <integration.icon className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
+                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
+                      <integration.icon className="h-6 w-6 text-card-foreground/70 group-hover:text-primary transition-colors duration-300" />
                     </div>
                     {getStatusBadge(integration.status)}
                   </div>
-                  <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                  <CardTitle className="text-lg font-semibold text-card-foreground group-hover:text-primary transition-colors duration-300">
                     {integration.name}
                   </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground">
+                  <CardDescription className="text-sm text-card-foreground/70">
                     {integration.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2 mb-4">
                     {integration.benefits.slice(0, 3).map((benefit, benefitIndex) => (
-                      <div key={benefitIndex} className="flex items-center text-sm text-muted-foreground">
+                      <div key={benefitIndex} className="flex items-center text-sm text-card-foreground/70">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                         {benefit}
                       </div>
@@ -431,21 +431,21 @@ const BusinessSolutions = () => {
                       <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                     ))}
                   </div>
-                  <blockquote className="text-muted-foreground italic">
+                  <blockquote className="text-card-foreground/80 italic">
                     "UltriumAI's Tegrity Connect transformed how we manage our 200+ clients. Our response time went from hours to minutes, and client satisfaction increased by 85%."
                   </blockquote>
                 </div>
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-foreground">Sarah Johnson</h4>
-                  <p className="text-sm text-muted-foreground">Founder, TechStart Solutions</p>
+                  <h4 className="font-semibold text-card-foreground">Sarah Johnson</h4>
+                  <p className="text-sm text-card-foreground/70">Founder, TechStart Solutions</p>
                   <div className="mt-3 grid grid-cols-2 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-primary">85%</div>
-                      <div className="text-xs text-muted-foreground">Client Satisfaction</div>
+                      <div className="text-xs text-card-foreground/70">Client Satisfaction</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-primary">200+</div>
-                      <div className="text-xs text-muted-foreground">Clients Managed</div>
+                      <div className="text-xs text-card-foreground/70">Clients Managed</div>
                     </div>
                   </div>
                 </div>
@@ -453,7 +453,7 @@ const BusinessSolutions = () => {
             </Card>
 
             {/* Success Story 2 - Medium Business */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
+            <Card className="group hover:shadow-xl transition-all duration-300 border border-border shadow-md overflow-hidden bg-card">
               <div className="aspect-video bg-gradient-to-br from-success/10 to-info/10 p-6 flex items-center justify-center">
                 <img 
                   src="https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=400&h=300&fit=crop"
@@ -468,21 +468,21 @@ const BusinessSolutions = () => {
                       <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                     ))}
                   </div>
-                  <blockquote className="text-muted-foreground italic">
+                  <blockquote className="text-card-foreground/80 italic">
                     "The integrated platform eliminated our workflow bottlenecks. We saved 40 hours per week on manual processes and increased our team productivity by 60%."
                   </blockquote>
                 </div>
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-foreground">Michael Chen</h4>
-                  <p className="text-sm text-muted-foreground">Operations Director, GrowthCorp</p>
+                  <h4 className="font-semibold text-card-foreground">Michael Chen</h4>
+                  <p className="text-sm text-card-foreground/70">Operations Director, GrowthCorp</p>
                   <div className="mt-3 grid grid-cols-2 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-success">40hrs</div>
-                      <div className="text-xs text-muted-foreground">Weekly Time Saved</div>
+                      <div className="text-xs text-card-foreground/70">Weekly Time Saved</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-success">60%</div>
-                      <div className="text-xs text-muted-foreground">Productivity Increase</div>
+                      <div className="text-xs text-card-foreground/70">Productivity Increase</div>
                     </div>
                   </div>
                 </div>
@@ -503,21 +503,21 @@ const BusinessSolutions = () => {
                       <Star key={i} className="h-4 w-4 fill-primary text-primary" />
                     ))}
                   </div>
-                  <blockquote className="text-muted-foreground italic">
+                  <blockquote className="text-card-foreground/80 italic">
                     "As an MSP partner, offering UltriumAI to our clients created a new $50K+ monthly revenue stream. Our clients love the white-labeled solution."
                   </blockquote>
                 </div>
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-foreground">Elite IT Solutions</h4>
-                  <p className="text-sm text-muted-foreground">MSP Partner Since 2023</p>
+                  <h4 className="font-semibold text-card-foreground">Elite IT Solutions</h4>
+                  <p className="text-sm text-card-foreground/70">MSP Partner Since 2023</p>
                   <div className="mt-3 grid grid-cols-2 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-warning">$50K+</div>
-                      <div className="text-xs text-muted-foreground">Monthly Revenue</div>
+                      <div className="text-xs text-card-foreground/70">Monthly Revenue</div>
                     </div>
                     <div>
                       <div className="text-2xl font-bold text-warning">150+</div>
-                      <div className="text-xs text-muted-foreground">Deployed Clients</div>
+                      <div className="text-xs text-card-foreground/70">Deployed Clients</div>
                     </div>
                   </div>
                 </div>
@@ -529,10 +529,10 @@ const BusinessSolutions = () => {
           <div className="text-center mt-16">
             <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20 max-w-2xl mx-auto">
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-foreground mb-4">
+                <h3 className="text-2xl font-bold text-card-foreground mb-4">
                   Ready to Write Your Success Story?
                 </h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-card-foreground/80 mb-6">
                   Join hundreds of businesses that have transformed their operations with our integrated platform.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
