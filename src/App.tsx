@@ -121,6 +121,7 @@ import AssetManagementPage from '@/pages/AssetManagementPage';
 import PatchManagementPage from '@/pages/PatchManagementPage';
 import RemoteAccessPage from '@/pages/RemoteAccessPage';
 import MonitoringPage from '@/pages/MonitoringPage';
+import TicketManagementPage from '@/pages/TicketManagementPage';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
@@ -468,6 +469,11 @@ function AppRouter() {
         <Route path="/monitoring" element={
           <ProtectedRoute>
             <MonitoringPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/tickets" element={
+          <ProtectedRoute>
+            <TicketManagementPage />
           </ProtectedRoute>
         } />
         
