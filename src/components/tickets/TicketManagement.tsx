@@ -199,11 +199,13 @@ const TicketManagement = () => {
         estimated_hours: newTicket.estimated_hours ? parseFloat(newTicket.estimated_hours) : null,
         client_id: newTicket.client_id || null,
         user_id: user.id,
+        status: 'open',
+        source: 'portal'
       };
 
       const { error } = await supabase
         .from('tickets')
-        .insert(ticketData);
+        .insert(ticketData as any);
 
       if (error) {
         console.error('Error creating ticket:', error);
