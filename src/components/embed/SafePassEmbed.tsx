@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { safeWindowOpen } from '@/utils/security';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -120,8 +121,7 @@ export const SafePassEmbed = ({
     
     // Show success notification
     const notification = document.createElement('div');
-    notification.innerHTML = `
-      <div style="
+    notification.style.cssText = `
         position: fixed; 
         top: 20px; 
         right: 20px; 
@@ -136,13 +136,24 @@ export const SafePassEmbed = ({
         display: flex;
         align-items: center;
         gap: 8px;
-      ">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20,6 9,17 4,12"></polyline>
-        </svg>
-        Credentials filled successfully!
-      </div>
     `;
+    
+    // Create SVG element safely
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '16');
+    svg.setAttribute('height', '16');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    
+    const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    polyline.setAttribute('points', '20,6 9,17 4,12');
+    svg.appendChild(polyline);
+    
+    notification.appendChild(svg);
+    notification.appendChild(document.createTextNode('Credentials filled successfully!'));
+    
     document.body.appendChild(notification);
     setTimeout(() => document.body.removeChild(notification), 3000);
   };
@@ -254,7 +265,7 @@ export const SafePassEmbed = ({
                   size="sm" 
                   variant="outline" 
                   className="flex-1 text-xs"
-                  onClick={() => window.open(`${apiEndpoint}/manage/${tenantId}`, '_blank')}
+                  onClick={() => safeWindowOpen(`${apiEndpoint}/manage/${tenantId}`, '_blank')}
                 >
                   <Settings className="h-3 w-3 mr-1" />
                   Manage

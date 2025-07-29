@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -411,7 +412,7 @@ const EmailTemplateForm = ({ template, onSave, onCancel, previewMode, onTogglePr
           </CardHeader>
           <CardContent>
             <div className="prose max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: formData.body_html }} />
+              <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(formData.body_html) }} />
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from 'dompurify';
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -555,10 +556,10 @@ const Docs = () => {
                   <CardContent>
                     <div className="prose prose-slate dark:prose-invert max-w-none">
                       <div dangerouslySetInnerHTML={{ 
-                        __html: selectedArticle.content
+                        __html: DOMPurify.sanitize(selectedArticle.content
                           .replace(/^#\s(.+)/gm, '<h1>$1</h1>')
                           .replace(/^##\s(.+)/gm, '<h2>$1</h2>')
-                          .replace(/\n/g, '<br>')
+                          .replace(/\n/g, '<br>'))
                       }} />
                     </div>
                   </CardContent>

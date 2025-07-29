@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DOMPurify from 'dompurify';
 import { Eye, Download, Save, RefreshCw } from "lucide-react";
 import { WhiteLabelConfig } from "@/types/whiteLabel";
 
@@ -85,7 +86,7 @@ export const WhiteLabelPreview = ({ config, loading, onSave }: WhiteLabelPreview
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <style dangerouslySetInnerHTML={{ __html: generatePreviewCSS() }} />
+          <style dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(generatePreviewCSS(), { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }) }} />
           <div className="preview-container">
             <div className="preview-header">
               <div className="preview-logo">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import DOMPurify from 'dompurify';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -361,7 +362,7 @@ export const SafeScanBranding = () => {
 
       {/* Custom CSS Preview */}
       {config.custom_css && (
-        <style dangerouslySetInnerHTML={{ __html: config.custom_css }} />
+        <style dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(config.custom_css, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }) }} />
       )}
     </div>
   );
