@@ -40,6 +40,7 @@ import TegrityDashboardPage from '@/pages/TegrityDashboardPage';
 import KaseyaDashboardPage from '@/pages/KaseyaDashboardPage';
 import QuickBooksDashboardPage from '@/pages/QuickBooksDashboardPage';
 import PSATicketingPage from '@/pages/PSATicketingPage';
+import RMMScriptPage from '@/pages/RMMScriptPage';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
@@ -206,6 +207,7 @@ function AppRouter() {
         <Route path="/kaseya-dashboard" element={<KaseyaDashboardPage />} />
         <Route path="/quickbooks-dashboard" element={<QuickBooksDashboardPage />} />
         <Route path="/psa-ticketing" element={<PSATicketingPage />} />
+        <Route path="/rmm-scripts" element={<RMMScriptPage />} />
         <Route path="/msp-onboarding" element={
           <SubscriptionProtectedRoute requiresPremium>
             <MSPOnboardingPage />
