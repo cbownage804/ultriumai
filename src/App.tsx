@@ -37,6 +37,8 @@ import MSPs from '@/pages/MSPs';
 import MSPSolutions from '@/pages/MSPSolutions';
 import BusinessSolutions from '@/pages/BusinessSolutions';
 import TegrityDashboardPage from '@/pages/TegrityDashboardPage';
+import KaseyaDashboardPage from '@/pages/KaseyaDashboardPage';
+import QuickBooksDashboardPage from '@/pages/QuickBooksDashboardPage';
 import MSSPs from '@/pages/MSSPs';
 import CreditsPurchase from '@/pages/CreditsPurchase';
 import Contact from '@/pages/Contact';
@@ -200,6 +202,8 @@ function AppRouter() {
         <Route path="/msp-solutions" element={<MSPSolutions />} />
         <Route path="/business-solutions" element={<BusinessSolutions />} />
         <Route path="/tegrity-dashboard" element={<TegrityDashboardPage />} />
+        <Route path="/kaseya-dashboard" element={<KaseyaDashboardPage />} />
+        <Route path="/quickbooks-dashboard" element={<QuickBooksDashboardPage />} />
         <Route path="/msp-onboarding" element={
           <SubscriptionProtectedRoute requiresPremium>
             <MSPOnboardingPage />
