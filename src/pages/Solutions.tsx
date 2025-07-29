@@ -42,12 +42,6 @@ const Solutions = () => {
   const navigate = useNavigate();
   const [selectedIndustry, setSelectedIndustry] = useState('all');
 
-  const stats = [
-    { value: "50K+", label: "Businesses Protected", icon: Shield },
-    { value: "99.9%", label: "Uptime Guarantee", icon: TrendingUp },
-    { value: "24/7", label: "Support Available", icon: Users },
-    { value: "150+", label: "Countries Served", icon: Globe }
-  ];
 
   const companies = [
     { name: "Microsoft", logo: "https://logo.clearbit.com/microsoft.com" },
@@ -256,27 +250,6 @@ const Solutions = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="py-16 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {stats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={index} className="text-center space-y-4">
-                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Icon className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-4xl font-bold text-primary">{stat.value}</div>
-                      <div className="text-foreground/80">{stat.label}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
 
         {/* Company Trust Section */}
         <section className="py-16 bg-muted/30">
