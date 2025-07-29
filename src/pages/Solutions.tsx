@@ -338,7 +338,7 @@ const Solutions = () => {
           </div>
 
           {/* UltriumAI Studio Feature Card */}
-          <Card className="max-w-6xl mx-auto bg-gradient-to-br from-white/80 to-primary/5 border-2 border-primary/20 shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02]">
+          <Card className="max-w-6xl mx-auto bg-card border-2 border-primary/20 shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02]">
             <CardContent className="p-8 md:p-12">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                 <div className="space-y-6">
@@ -347,39 +347,39 @@ const Solutions = () => {
                       <Users className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-foreground">Revolutionary No-Code AI</h3>
-                      <p className="text-muted-foreground">Build enterprise AI without a single line of code</p>
+                      <h3 className="text-2xl font-bold text-card-foreground">Revolutionary No-Code AI</h3>
+                      <p className="text-card-foreground/70">Build enterprise AI without a single line of code</p>
                     </div>
                   </div>
                   
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-foreground">
+                      <span className="text-card-foreground">
                         <strong>Drag & drop AI builder</strong> - Create assistants in under 5 minutes
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-foreground">
+                      <span className="text-card-foreground">
                         <strong>Upload unlimited knowledge</strong> - PDFs, docs, websites, databases
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-foreground">
+                      <span className="text-card-foreground">
                         <strong>White-label deployment</strong> - Your brand, your domain, your customers
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-foreground">
+                      <span className="text-card-foreground">
                         <strong>Advanced integrations</strong> - API, webhooks, CRM, helpdesk systems
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-foreground">
+                      <span className="text-card-foreground">
                         <strong>Enterprise security</strong> - SOC 2, GDPR compliant, encrypted data
                       </span>
                     </div>
