@@ -30,8 +30,8 @@ const Index = () => {
       answer: "UltriumAI uniquely combines AI-powered security operations with comprehensive RMM tools in a single platform. Our UltriumGPT AI assistant provides intelligent threat analysis, automated response capabilities, and can integrate with your existing security stack for enhanced protection."
     },
     {
-      question: "Do you support MSPs and MSSPs?",
-      answer: "Yes! UltriumAI is built with a multi-tenant architecture specifically designed for Managed Service Providers and Managed Security Service Providers. We offer white-label solutions, client management tools, and scalable pricing for service providers."
+      question: "Can I buy UltriumAI direct or through my MSP?",
+      answer: "Absolutely! UltriumAI is available both direct-to-business and through our trusted MSP partner network. Buy directly from us for immediate access, or get it through your existing MSP with their expert support and integration services. We support both business models with flexible pricing and deployment options."
     },
     {
       question: "What kind of support and training do you provide?",
@@ -39,7 +39,7 @@ const Index = () => {
     },
     {
       question: "How does your pricing work for different business sizes?",
-      answer: "We offer flexible pricing tiers designed for every business size - from custom GPT solutions starting at $20/user/month to full platform access. All plans include core features, with advanced capabilities and team collaboration in enterprise tiers."
+      answer: "We offer flexible pricing whether you buy direct or through your MSP. Direct pricing starts at $20/user/month for custom GPT solutions. MSP partners receive volume discounts and white-label options with high profit margins. All plans include core features, with advanced capabilities in enterprise tiers."
     }
   ];
 
@@ -102,8 +102,8 @@ const Index = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">💼 Choose Your Security Victory</h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Every business size gets enterprise-grade protection. From startup to Fortune 500 - 
-              <strong>your competition wishes they had what you're about to get.</strong>
+              <strong>Direct to Business</strong> or <strong>through your MSP</strong> - Every business size gets enterprise-grade protection. 
+              From startup to Fortune 500, <strong>your competition wishes they had what you're about to get.</strong>
             </p>
           </div>
           
@@ -305,7 +305,7 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Pricing Path</h2>
-            <p className="text-xl text-muted-foreground">Tailored pricing for businesses and service providers</p>
+            <p className="text-xl text-muted-foreground">Buy direct or through your MSP - flexible pricing for every business model</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -313,9 +313,9 @@ const Index = () => {
             <Card className="text-center hover-scale border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
               <CardHeader className="pb-8">
                 <Building2 className="h-16 w-16 mx-auto mb-4 text-primary" />
-                <CardTitle className="text-2xl mb-2">Business Pricing</CardTitle>
+                <CardTitle className="text-2xl mb-2">Direct Business</CardTitle>
                 <CardDescription className="text-base">
-                  Perfect for companies looking to protect their own infrastructure
+                  Buy directly from UltriumAI to protect your company infrastructure
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -350,9 +350,9 @@ const Index = () => {
             <Card className="text-center hover-scale border-2 border-success/30 bg-gradient-to-br from-success/5 to-success/10">
               <CardHeader className="pb-8">
                 <Users className="h-16 w-16 mx-auto mb-4 text-success" />
-                <CardTitle className="text-2xl mb-2">MSP Pricing</CardTitle>
+                <CardTitle className="text-2xl mb-2">Through Your MSP</CardTitle>
                 <CardDescription className="text-base">
-                  Designed for service providers managing multiple clients
+                  Get UltriumAI through your trusted MSP partner with their expert support
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

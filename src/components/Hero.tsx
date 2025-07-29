@@ -149,11 +149,11 @@ const Hero = () => {
 
           {/* Target Audience Buttons */}
           <div className="animate-fade-in mb-8" style={{animationDelay: '0.6s'}}>
-            <p className="text-lg font-medium text-foreground mb-8">Choose Your Solution:</p>
+            <p className="text-lg font-medium text-foreground mb-8">Get UltriumAI Direct or Through Your MSP:</p>
             
             {/* Business Solutions */}
             <div className="mb-8">
-              <h3 className="text-xl font-semibold text-foreground mb-4 text-center">Business Solutions</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-4 text-center">Buy Direct from UltriumAI</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
                 <Button 
                   size="lg" 
@@ -187,7 +187,7 @@ const Hero = () => {
 
             {/* Service Provider Solutions */}
             <div>
-              <h3 className="text-xl font-semibold text-foreground mb-4 text-center">Service Provider Solutions</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-4 text-center">Get Through Your MSP Partner</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                 <Button 
                   size="lg" 

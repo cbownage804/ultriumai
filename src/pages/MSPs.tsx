@@ -74,10 +74,10 @@ const MSPs = () => {
               MSP Solutions
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-              AI-Powered Support for MSPs
+              Partner with UltriumAI & Grow Your Revenue
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Transform your MSP with AI-powered knowledge management. Deploy white-label AI assistants trained on your documentation to provide instant answers and premium client services.
+              Join our MSP partner network and offer your clients enterprise-grade AI security solutions. Your clients get UltriumAI through you, their trusted technology partner, with white-label branding and high profit margins.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-gradient-to-r from-primary to-primary/80 hover:scale-105 transition-all duration-300">
