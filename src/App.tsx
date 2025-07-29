@@ -117,6 +117,7 @@ import { VoiceAssistantProvider } from '@/components/voice/VoiceAssistantProvide
 import { CustomerPortal } from '@/pages/CustomerPortal';
 import { ClientLogin } from '@/pages/ClientLogin';
 import { AuthProvider } from '@/hooks/useAuth';
+import AssetManagementPage from '@/pages/AssetManagementPage';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
@@ -444,6 +445,11 @@ function AppRouter() {
         <Route path="/business-billing" element={
           <ProtectedRoute>
             <BusinessBilling />
+          </ProtectedRoute>
+        } />
+        <Route path="/assets" element={
+          <ProtectedRoute>
+            <AssetManagementPage />
           </ProtectedRoute>
         } />
         
