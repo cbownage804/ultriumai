@@ -364,38 +364,6 @@ const Solutions = () => {
           </div>
         </section>
 
-        {/* Customer Success Story */}
-        <section className="py-20 bg-background">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 bg-card border border-border">
-                <CardContent className="p-8">
-                  <div className="text-center space-y-6">
-                    <div className="flex justify-center mb-6">
-                      <div className="flex -space-x-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className="h-6 w-6 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                    <blockquote className="text-xl italic text-card-foreground">
-                      "UltriumAI transformed our customer service operations. Our response time improved by 75% and customer satisfaction increased by 40%. The AI agents handle complex queries better than we expected."
-                    </blockquote>
-                    <div className="flex items-center justify-center gap-4">
-                      <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
-                        <User className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-card-foreground">Sarah Johnson</div>
-                        <div className="text-sm text-card-foreground/70">CTO, TechCorp Inc.</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
 
         {/* Security Suite Section */}
         <section className="py-20 bg-muted/30">
