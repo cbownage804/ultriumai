@@ -782,6 +782,101 @@ export type Database = {
           },
         ]
       }
+      billing_schedules: {
+        Row: {
+          auto_invoice: boolean | null
+          client_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_billed_date: string | null
+          next_billing_date: string
+          schedule_name: string
+          schedule_type: string
+          service_items: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_invoice?: boolean | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_billed_date?: string | null
+          next_billing_date: string
+          schedule_name: string
+          schedule_type: string
+          service_items?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_invoice?: boolean | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_billed_date?: string | null
+          next_billing_date?: string
+          schedule_name?: string
+          schedule_type?: string
+          service_items?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      billing_usage_tracking: {
+        Row: {
+          billing_rate: number | null
+          client_id: string | null
+          cost_center_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          tracking_date: string
+          usage_amount: number
+          usage_type: string
+          usage_unit: string
+          user_id: string
+        }
+        Insert: {
+          billing_rate?: number | null
+          client_id?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tracking_date?: string
+          usage_amount: number
+          usage_type: string
+          usage_unit: string
+          user_id: string
+        }
+        Update: {
+          billing_rate?: number | null
+          client_id?: string | null
+          cost_center_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          tracking_date?: string
+          usage_amount?: number
+          usage_type?: string
+          usage_unit?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_usage_tracking_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "cost_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author_id: string | null
@@ -2163,6 +2258,48 @@ export type Database = {
           created_at?: string
           id?: string
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cost_centers: {
+        Row: {
+          budget_amount: number | null
+          budget_period: string | null
+          cost_center_code: string
+          cost_center_name: string
+          created_at: string
+          department: string | null
+          id: string
+          is_active: boolean | null
+          manager_email: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_amount?: number | null
+          budget_period?: string | null
+          cost_center_code: string
+          cost_center_name: string
+          created_at?: string
+          department?: string | null
+          id?: string
+          is_active?: boolean | null
+          manager_email?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_amount?: number | null
+          budget_period?: string | null
+          cost_center_code?: string
+          cost_center_name?: string
+          created_at?: string
+          department?: string | null
+          id?: string
+          is_active?: boolean | null
+          manager_email?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -3759,6 +3896,193 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      invoice_line_items: {
+        Row: {
+          billing_period_end: string | null
+          billing_period_start: string | null
+          created_at: string
+          description: string | null
+          id: string
+          invoice_id: string
+          item_name: string
+          item_type: string
+          line_total: number
+          metadata: Json | null
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id: string
+          item_name: string
+          item_type: string
+          line_total?: number
+          metadata?: Json | null
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          invoice_id?: string
+          item_name?: string
+          item_type?: string
+          line_total?: number
+          metadata?: Json | null
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_templates: {
+        Row: {
+          auto_send: boolean | null
+          created_at: string
+          footer_html: string | null
+          header_html: string | null
+          id: string
+          is_active: boolean | null
+          payment_terms_days: number | null
+          template_name: string
+          template_type: string
+          terms_conditions: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_send?: boolean | null
+          created_at?: string
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          is_active?: boolean | null
+          payment_terms_days?: number | null
+          template_name: string
+          template_type: string
+          terms_conditions?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_send?: boolean | null
+          created_at?: string
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          is_active?: boolean | null
+          payment_terms_days?: number | null
+          template_name?: string
+          template_type?: string
+          terms_conditions?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      invoices: {
+        Row: {
+          auto_generated: boolean | null
+          billing_period_end: string | null
+          billing_period_start: string | null
+          client_id: string | null
+          created_at: string
+          currency: string | null
+          discount_amount: number | null
+          due_date: string
+          id: string
+          internal_notes: string | null
+          invoice_number: string
+          invoice_type: string
+          issue_date: string
+          notes: string | null
+          payment_date: string | null
+          payment_method: string | null
+          status: string
+          subtotal: number
+          tax_amount: number
+          tax_rate: number | null
+          template_id: string | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_generated?: boolean | null
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          client_id?: string | null
+          created_at?: string
+          currency?: string | null
+          discount_amount?: number | null
+          due_date: string
+          id?: string
+          internal_notes?: string | null
+          invoice_number: string
+          invoice_type: string
+          issue_date?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number | null
+          template_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_generated?: boolean | null
+          billing_period_end?: string | null
+          billing_period_start?: string | null
+          client_id?: string | null
+          created_at?: string
+          currency?: string | null
+          discount_amount?: number | null
+          due_date?: string
+          id?: string
+          internal_notes?: string | null
+          invoice_number?: string
+          invoice_type?: string
+          issue_date?: string
+          notes?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number | null
+          template_id?: string | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "invoice_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       knowledge_articles: {
         Row: {
@@ -6465,6 +6789,50 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          invoice_id: string
+          notes: string | null
+          payment_amount: number
+          payment_date: string
+          payment_method: string
+          payment_reference: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          invoice_id: string
+          notes?: string | null
+          payment_amount: number
+          payment_date?: string
+          payment_method: string
+          payment_reference?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          invoice_id?: string
+          notes?: string | null
+          payment_amount?: number
+          payment_date?: string
+          payment_method?: string
+          payment_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -11497,6 +11865,10 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      calculate_invoice_totals: {
+        Args: { p_invoice_id: string }
+        Returns: undefined
+      }
       calculate_next_run: {
         Args: { frequency: string; schedule_time: string }
         Returns: string
@@ -11510,6 +11882,10 @@ export type Database = {
         Returns: string
       }
       generate_invoice_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_next_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

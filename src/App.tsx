@@ -123,6 +123,7 @@ import RemoteAccessPage from '@/pages/RemoteAccessPage';
 import MonitoringPage from '@/pages/MonitoringPage';
 import TicketManagementPage from '@/pages/TicketManagementPage';
 import ClientPortalPage from '@/pages/ClientPortalPage';
+import BillingPage from '@/pages/BillingPage';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
@@ -480,6 +481,11 @@ function AppRouter() {
         <Route path="/client-portal" element={
           <ProtectedRoute>
             <ClientPortalPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/billing" element={
+          <ProtectedRoute>
+            <BillingPage />
           </ProtectedRoute>
         } />
         
