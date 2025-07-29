@@ -58,7 +58,7 @@ const MSPs = () => {
   ];
 
   const integrations = [
-    "ConnectWise", "Autotask", "Kaseya", "NinjaRMM", "Atera", "SyncroMSP", "Teams", "Slack"
+    "Tegrity Connect", "ConnectWise", "Autotask", "Kaseya", "NinjaRMM", "Atera", "SyncroMSP", "Teams"
   ];
 
   return (
@@ -222,13 +222,29 @@ const MSPs = () => {
         {/* Integrations Section */}
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold mb-4">Popular MSP Tools</h2>
+            <h2 className="text-3xl font-bold mb-4">Popular MSP Tools & Integrations</h2>
             <p className="text-xl text-muted-foreground mb-12">
-              Familiar tools your team already uses daily
+              Seamlessly connects with the tools your team already uses daily
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-              {integrations.map((integration, index) => (
-                <div key={index} className="bg-muted/50 p-4 rounded-lg text-center">
+            
+            {/* Feature Tegrity Connect prominently */}
+            <div className="mb-8">
+              <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/30 max-w-md mx-auto hover:shadow-xl transition-all duration-300">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-xl text-primary flex items-center justify-center gap-2">
+                    <Star className="h-6 w-6" />
+                    Tegrity Connect - Primary CRM Integration
+                  </CardTitle>
+                  <CardDescription>
+                    Our flagship CRM integration - built specifically for MSPs
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+              {integrations.slice(1).map((integration, index) => (
+                <div key={index} className="bg-muted/50 p-4 rounded-lg text-center hover:bg-muted/70 transition-all duration-200">
                   <span className="font-medium text-sm">{integration}</span>
                 </div>
               ))}

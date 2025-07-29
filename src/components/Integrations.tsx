@@ -5,6 +5,13 @@ import { useScrollAnimation, getAnimationClasses, useStaggeredScrollAnimation } 
 const Integrations = () => {
   const integrations = [
     {
+      name: "Tegrity Connect",
+      description: "Our primary CRM integration - built specifically for MSPs with advanced client management features",
+      category: "Primary CRM",
+      status: "Available",
+      featured: true
+    },
+    {
       name: "Microsoft Teams",
       description: "Deploy as a Teams app with native chat integration",
       category: "Chat Platform",
@@ -101,10 +108,15 @@ const Integrations = () => {
           {integrations.map((integration, index) => (
             <Card 
               key={index} 
-              className={`p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 group ${getAnimationClasses(cardsVisible[index], 'fadeUp')}`}
+              className={`relative p-6 hover:shadow-xl hover:-translate-y-2 transition-all duration-200 hover:scale-105 group ${getAnimationClasses(cardsVisible[index], 'fadeUp')} ${integration.featured ? 'ring-2 ring-primary bg-gradient-to-br from-primary/5 to-secondary/5' : ''}`}
             >
+              {integration.featured && (
+                <Badge className="absolute -top-2 -right-2 bg-primary">
+                  Primary CRM
+                </Badge>
+              )}
               <div className="flex items-start justify-between mb-4">
-                <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
+                <h3 className={`text-lg font-semibold group-hover:text-primary transition-colors duration-200 ${integration.featured ? 'text-primary' : 'text-foreground'}`}>
                   {integration.name}
                 </h3>
                 <Badge 
