@@ -332,7 +332,7 @@ const Solutions = () => {
             <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
               UltriumAI Studio™
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-foreground/80 max-w-4xl mx-auto leading-relaxed">
               Build your own AI workforce in minutes, not months. Deploy intelligent assistants that know your business inside and out, reduce operational costs by 60%, and scale your expertise instantly.
             </p>
           </div>
@@ -411,11 +411,11 @@ const Solutions = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-4 bg-white/60 rounded-lg border">
                       <div className="text-2xl font-bold text-primary">5 min</div>
-                      <div className="text-sm text-muted-foreground">Setup Time</div>
+                      <div className="text-sm text-foreground/70">Setup Time</div>
                     </div>
                     <div className="text-center p-4 bg-white/60 rounded-lg border">
                       <div className="text-2xl font-bold text-green-600">24/7</div>
-                      <div className="text-sm text-muted-foreground">Always Online</div>
+                      <div className="text-sm text-foreground/70">Always Online</div>
                     </div>
                   </div>
                   
@@ -424,7 +424,7 @@ const Solutions = () => {
                       <Brain className="h-5 w-5 text-primary" />
                       <span className="font-semibold text-primary">500+ Companies Trust Us</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-foreground/70">
                       From startups to Fortune 500s - powering AI transformation worldwide
                     </p>
                   </div>
@@ -451,7 +451,7 @@ const Solutions = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Transform Every Department with AI</h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-lg text-foreground/80 max-w-3xl mx-auto">
               Create specialized AI assistants for any business function. No technical skills required.
             </p>
           </div>
@@ -564,21 +564,21 @@ const Solutions = () => {
                 <div className="flex items-center justify-center gap-4">
                   <div className="text-center">
                     <p className="font-semibold">Sarah Johnson</p>
-                    <p className="text-sm text-muted-foreground">VP of Customer Success, TechCorp</p>
+                    <p className="text-sm text-foreground/70">VP of Customer Success, TechCorp</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">75%</div>
-                    <div className="text-sm text-muted-foreground">Fewer Support Tickets</div>
+                    <div className="text-sm text-foreground/70">Fewer Support Tickets</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-600">40%</div>
-                    <div className="text-sm text-muted-foreground">Higher CSAT Score</div>
+                    <div className="text-sm text-foreground/70">Higher CSAT Score</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-purple-600">$50K</div>
-                    <div className="text-sm text-muted-foreground">Annual Savings</div>
+                    <div className="text-sm text-foreground/70">Annual Savings</div>
                   </div>
                 </div>
               </div>
@@ -599,7 +599,7 @@ const Solutions = () => {
               <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
                 Complete AI Security Suite
               </h2>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              <p className="text-xl md:text-2xl text-foreground/80 max-w-4xl mx-auto leading-relaxed">
                 From email protection to dark web monitoring—our comprehensive AI security applications 
                 protect your business from today's cyber threats while streamlining your security operations.
               </p>
@@ -637,7 +637,7 @@ const Solutions = () => {
             <h2 className="text-4xl font-bold mb-6 text-foreground">
               AI-Powered Security Applications
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
               Each application is designed to address specific security challenges while providing 
               intelligent automation and real-time threat detection capabilities.
             </p>
@@ -727,7 +727,7 @@ const Solutions = () => {
             <h2 className="text-4xl font-bold mb-6 text-foreground">
               Built for Your Industry
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
               Our security solutions are designed to meet the specific needs and compliance requirements 
               of different business types and industries.
             </p>
@@ -753,7 +753,7 @@ const Solutions = () => {
                       {industry.benefits.map((benefit, idx) => (
                         <li key={idx} className="flex items-start gap-2 text-sm">
                           <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-muted-foreground">{benefit}</span>
+                          <span className="text-foreground/70">{benefit}</span>
                         </li>
                       ))}
                     </ul>
@@ -772,7 +772,7 @@ const Solutions = () => {
             <h2 className="text-4xl font-bold mb-6 text-foreground">
               Seamless Integration & Deployment
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
               Deploy as standalone applications or integrate with your existing security stack. 
               Our solutions work with your current tools and processes.
             </p>
@@ -811,7 +811,7 @@ const Solutions = () => {
                     <CardTitle className="text-lg">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-foreground/70">
                       {feature.description}
                     </p>
                   </CardContent>
@@ -834,7 +834,7 @@ const Solutions = () => {
                     MSP Partner Program
                   </Badge>
                   <h3 className="text-2xl font-bold mb-4">Looking to Scale? Become an MSP Partner</h3>
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-foreground/80 mb-6">
                     Deploy these same powerful solutions for multiple clients with our comprehensive MSP platform. 
                     Multi-tenant architecture, white-label deployment, and new revenue opportunities.
                   </p>
@@ -856,7 +856,7 @@ const Solutions = () => {
                 <div className="text-center lg:text-right">
                   <div className="mb-6">
                     <div className="text-3xl font-bold text-green-600 mb-2">$15K+</div>
-                    <p className="text-sm text-muted-foreground">Average monthly revenue increase</p>
+                    <p className="text-sm text-foreground/70">Average monthly revenue increase</p>
                   </div>
                   <div className="flex flex-col gap-3">
                     <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700" onClick={() => handleNavigation('/msp-solutions')}>
@@ -880,7 +880,7 @@ const Solutions = () => {
           <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20">
             <CardContent className="p-12 text-center">
               <h2 className="text-3xl font-bold mb-6">Ready to Secure Your Business?</h2>
-              <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+              <p className="text-xl text-foreground/80 mb-8 max-w-3xl mx-auto">
                 Start with individual applications or deploy our complete security suite. 
                 Let's discuss which solutions are right for your business.
               </p>
