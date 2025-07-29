@@ -223,7 +223,7 @@ const BusinessSolutions = () => {
             </span>
           </h1>
           
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-foreground/80 mb-8 max-w-3xl mx-auto leading-relaxed">
             Streamline your business operations with powerful integrations. Connect your favorite tools, 
             automate workflows, and grow your business with our comprehensive platform.
           </p>
@@ -243,15 +243,15 @@ const BusinessSolutions = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
               <div className="text-3xl font-bold text-foreground">{businessIntegrations.length}+</div>
-              <div className="text-muted-foreground">Business Integrations</div>
+              <div className="text-foreground/70">Business Integrations</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-foreground">{businessCategories.length}</div>
-              <div className="text-muted-foreground">Business Categories</div>
+              <div className="text-foreground/70">Business Categories</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-foreground">24/7</div>
-              <div className="text-muted-foreground">Support Available</div>
+              <div className="text-foreground/70">Support Available</div>
             </div>
           </div>
         </div>
@@ -264,7 +264,7 @@ const BusinessSolutions = () => {
             <h2 className="text-4xl font-bold text-foreground mb-4">
               Everything Your Business Needs
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
               From CRM and accounting to e-commerce and marketing - we've got all the tools 
               your business needs to succeed in one integrated platform.
             </p>
@@ -310,7 +310,7 @@ const BusinessSolutions = () => {
               <CardTitle className="text-3xl font-bold text-foreground mb-4">
                 Complete Business Management Platform
               </CardTitle>
-              <CardDescription className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <CardDescription className="text-lg text-foreground/80 max-w-2xl mx-auto">
                 Tegrity Connect provides everything your business needs: CRM, marketing automation, 
                 customer communications, and sales pipeline management - all in one powerful platform.
               </CardDescription>
@@ -328,7 +328,7 @@ const BusinessSolutions = () => {
                       <feature.icon className="h-6 w-6 text-primary" />
                     </div>
                     <h4 className="font-semibold text-foreground mb-2">{feature.title}</h4>
-                    <p className="text-sm text-muted-foreground">{feature.desc}</p>
+                    <p className="text-sm text-foreground/70">{feature.desc}</p>
                   </div>
                 ))}
               </div>
@@ -353,7 +353,7 @@ const BusinessSolutions = () => {
             <h2 className="text-4xl font-bold text-foreground mb-4">
               All Business Integrations
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
               Connect your business tools and streamline your operations with our comprehensive integration library.
             </p>
           </div>
@@ -409,7 +409,7 @@ const BusinessSolutions = () => {
             <h2 className="text-4xl font-bold text-foreground mb-4">
               Customer Success Stories
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
               See how businesses like yours have transformed their operations and accelerated growth with our platform.
             </p>
           </div>
