@@ -402,6 +402,153 @@ const BusinessSolutions = () => {
         </div>
       </section>
 
+      {/* Customer Success Stories */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
+              Customer Success Stories
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              See how businesses like yours have transformed their operations and accelerated growth with our platform.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Success Story 1 - Small Business */}
+            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
+              <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 p-6 flex items-center justify-center">
+                <img 
+                  src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=300&fit=crop"
+                  alt="Sarah Johnson, Founder of TechStart Solutions"
+                  className="w-20 h-20 rounded-full object-cover border-4 border-background"
+                />
+              </div>
+              <CardContent className="p-6">
+                <div className="mb-4">
+                  <div className="flex items-center gap-1 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <blockquote className="text-muted-foreground italic">
+                    "UltriumAI's Tegrity Connect transformed how we manage our 200+ clients. Our response time went from hours to minutes, and client satisfaction increased by 85%."
+                  </blockquote>
+                </div>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-foreground">Sarah Johnson</h4>
+                  <p className="text-sm text-muted-foreground">Founder, TechStart Solutions</p>
+                  <div className="mt-3 grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-primary">85%</div>
+                      <div className="text-xs text-muted-foreground">Client Satisfaction</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-primary">200+</div>
+                      <div className="text-xs text-muted-foreground">Clients Managed</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Success Story 2 - Medium Business */}
+            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
+              <div className="aspect-video bg-gradient-to-br from-success/10 to-info/10 p-6 flex items-center justify-center">
+                <img 
+                  src="https://images.unsplash.com/photo-1581090464777-f3220bbe1b8b?w=400&h=300&fit=crop"
+                  alt="Michael Chen, Operations Director at GrowthCorp"
+                  className="w-20 h-20 rounded-full object-cover border-4 border-background"
+                />
+              </div>
+              <CardContent className="p-6">
+                <div className="mb-4">
+                  <div className="flex items-center gap-1 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <blockquote className="text-muted-foreground italic">
+                    "The integrated platform eliminated our workflow bottlenecks. We saved 40 hours per week on manual processes and increased our team productivity by 60%."
+                  </blockquote>
+                </div>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-foreground">Michael Chen</h4>
+                  <p className="text-sm text-muted-foreground">Operations Director, GrowthCorp</p>
+                  <div className="mt-3 grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-success">40hrs</div>
+                      <div className="text-xs text-muted-foreground">Weekly Time Saved</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-success">60%</div>
+                      <div className="text-xs text-muted-foreground">Productivity Increase</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Success Story 3 - MSP Partner */}
+            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
+              <div className="aspect-video bg-gradient-to-br from-warning/10 to-primary/10 p-6 flex items-center justify-center">
+                <div className="w-20 h-20 bg-card rounded-full flex items-center justify-center border-4 border-background">
+                  <Building2 className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <CardContent className="p-6">
+                <div className="mb-4">
+                  <div className="flex items-center gap-1 mb-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <blockquote className="text-muted-foreground italic">
+                    "As an MSP partner, offering UltriumAI to our clients created a new $50K+ monthly revenue stream. Our clients love the white-labeled solution."
+                  </blockquote>
+                </div>
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-foreground">Elite IT Solutions</h4>
+                  <p className="text-sm text-muted-foreground">MSP Partner Since 2023</p>
+                  <div className="mt-3 grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-warning">$50K+</div>
+                      <div className="text-xs text-muted-foreground">Monthly Revenue</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-warning">150+</div>
+                      <div className="text-xs text-muted-foreground">Deployed Clients</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Call to Action */}
+          <div className="text-center mt-16">
+            <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20 max-w-2xl mx-auto">
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold text-foreground mb-4">
+                  Ready to Write Your Success Story?
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Join hundreds of businesses that have transformed their operations with our integrated platform.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground">
+                    Start Your Success Story
+                  </Button>
+                  <Button size="lg" variant="outline">
+                    View More Case Studies
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/90 to-secondary/90">
         <div className="max-w-4xl mx-auto text-center">
