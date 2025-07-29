@@ -18,6 +18,7 @@ import {
   Phone,
   Mail,
   Calendar,
+  User,
   Award,
   Target,
   Briefcase,
