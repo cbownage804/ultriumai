@@ -124,6 +124,7 @@ import MonitoringPage from '@/pages/MonitoringPage';
 import TicketManagementPage from '@/pages/TicketManagementPage';
 import ClientPortalPage from '@/pages/ClientPortalPage';
 import BillingPage from '@/pages/BillingPage';
+import AnalyticsPage from '@/pages/AnalyticsPage';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
@@ -486,6 +487,11 @@ function AppRouter() {
         <Route path="/billing" element={
           <ProtectedRoute>
             <BillingPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/analytics" element={
+          <ProtectedRoute>
+            <AnalyticsPage />
           </ProtectedRoute>
         } />
         

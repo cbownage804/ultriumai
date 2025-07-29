@@ -245,6 +245,75 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_dashboards: {
+        Row: {
+          created_at: string
+          dashboard_name: string
+          dashboard_type: string
+          id: string
+          is_default: boolean | null
+          is_shared: boolean | null
+          layout_config: Json
+          shared_with: Json | null
+          updated_at: string
+          user_id: string
+          widget_config: Json
+        }
+        Insert: {
+          created_at?: string
+          dashboard_name: string
+          dashboard_type: string
+          id?: string
+          is_default?: boolean | null
+          is_shared?: boolean | null
+          layout_config?: Json
+          shared_with?: Json | null
+          updated_at?: string
+          user_id: string
+          widget_config?: Json
+        }
+        Update: {
+          created_at?: string
+          dashboard_name?: string
+          dashboard_type?: string
+          id?: string
+          is_default?: boolean | null
+          is_shared?: boolean | null
+          layout_config?: Json
+          shared_with?: Json | null
+          updated_at?: string
+          user_id?: string
+          widget_config?: Json
+        }
+        Relationships: []
+      }
+      analytics_snapshots: {
+        Row: {
+          created_at: string
+          data_snapshot: Json
+          id: string
+          snapshot_date: string
+          snapshot_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_snapshot?: Json
+          id?: string
+          snapshot_date: string
+          snapshot_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_snapshot?: Json
+          id?: string
+          snapshot_date?: string
+          snapshot_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       antivirus_scans: {
         Row: {
           client_id: string
@@ -781,6 +850,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bi_reports: {
+        Row: {
+          created_at: string
+          data_sources: Json
+          id: string
+          is_active: boolean | null
+          is_automated: boolean | null
+          last_generated_at: string | null
+          report_config: Json
+          report_name: string
+          report_type: string
+          schedule_config: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_sources?: Json
+          id?: string
+          is_active?: boolean | null
+          is_automated?: boolean | null
+          last_generated_at?: string | null
+          report_config?: Json
+          report_name: string
+          report_type: string
+          schedule_config?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_sources?: Json
+          id?: string
+          is_active?: boolean | null
+          is_automated?: boolean | null
+          last_generated_at?: string | null
+          report_config?: Json
+          report_name?: string
+          report_type?: string
+          schedule_config?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       billing_schedules: {
         Row: {
@@ -3855,6 +3969,39 @@ export type Database = {
         }
         Relationships: []
       }
+      industry_benchmarks: {
+        Row: {
+          benchmark_date: string
+          benchmark_period: string
+          benchmark_value: number
+          company_size: string
+          created_at: string
+          id: string
+          industry_type: string
+          metric_name: string
+        }
+        Insert: {
+          benchmark_date: string
+          benchmark_period: string
+          benchmark_value: number
+          company_size: string
+          created_at?: string
+          id?: string
+          industry_type: string
+          metric_name: string
+        }
+        Update: {
+          benchmark_date?: string
+          benchmark_period?: string
+          benchmark_value?: number
+          company_size?: string
+          created_at?: string
+          id?: string
+          industry_type?: string
+          metric_name?: string
+        }
+        Relationships: []
+      }
       integration_api_keys: {
         Row: {
           api_key_hash: string
@@ -4386,6 +4533,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      kpi_definitions: {
+        Row: {
+          calculation_method: string
+          created_at: string
+          data_source: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          kpi_category: string
+          kpi_name: string
+          target_period: string | null
+          target_value: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          calculation_method: string
+          created_at?: string
+          data_source?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          kpi_category: string
+          kpi_name: string
+          target_period?: string | null
+          target_value?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          calculation_method?: string
+          created_at?: string
+          data_source?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          kpi_category?: string
+          kpi_name?: string
+          target_period?: string | null
+          target_value?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -6837,6 +7029,96 @@ export type Database = {
           },
         ]
       }
+      performance_metrics: {
+        Row: {
+          comparison_period: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_category: string
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number
+          previous_value: number | null
+          recorded_at: string
+          target_value: number | null
+          user_id: string
+        }
+        Insert: {
+          comparison_period?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_category: string
+          metric_name: string
+          metric_unit?: string | null
+          metric_value: number
+          previous_value?: number | null
+          recorded_at?: string
+          target_value?: number | null
+          user_id: string
+        }
+        Update: {
+          comparison_period?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_category?: string
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number
+          previous_value?: number | null
+          recorded_at?: string
+          target_value?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      predictive_models: {
+        Row: {
+          accuracy_score: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_trained_at: string | null
+          model_config: Json
+          model_name: string
+          model_type: string
+          predictions: Json | null
+          training_data: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accuracy_score?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_trained_at?: string | null
+          model_config?: Json
+          model_name: string
+          model_type: string
+          predictions?: Json | null
+          training_data?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accuracy_score?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_trained_at?: string | null
+          model_config?: Json
+          model_name?: string
+          model_type?: string
+          predictions?: Json | null
+          training_data?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pricing_plans: {
         Row: {
           category: string
@@ -8001,6 +8283,57 @@ export type Database = {
           id?: string
           session_id?: string | null
           timestamp?: string | null
+        }
+        Relationships: []
+      }
+      roi_tracking: {
+        Row: {
+          benefits_tracked: Json
+          created_at: string
+          id: string
+          initiative_name: string
+          initiative_type: string
+          investment_amount: number
+          investment_date: string
+          notes: string | null
+          payback_period_months: number | null
+          roi_percentage: number | null
+          status: string | null
+          total_benefits: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          benefits_tracked?: Json
+          created_at?: string
+          id?: string
+          initiative_name: string
+          initiative_type: string
+          investment_amount: number
+          investment_date: string
+          notes?: string | null
+          payback_period_months?: number | null
+          roi_percentage?: number | null
+          status?: string | null
+          total_benefits?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          benefits_tracked?: Json
+          created_at?: string
+          id?: string
+          initiative_name?: string
+          initiative_type?: string
+          investment_amount?: number
+          investment_date?: string
+          notes?: string | null
+          payback_period_months?: number | null
+          roi_percentage?: number | null
+          status?: string | null
+          total_benefits?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -11873,12 +12206,20 @@ export type Database = {
         Args: { frequency: string; schedule_time: string }
         Returns: string
       }
+      calculate_roi_percentage: {
+        Args: { p_roi_id: string }
+        Returns: undefined
+      }
       current_device_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
       current_org_id: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_analytics_snapshot: {
+        Args: { p_user_id: string; p_snapshot_type: string }
         Returns: string
       }
       generate_invoice_number: {
