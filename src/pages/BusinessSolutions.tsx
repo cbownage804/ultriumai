@@ -416,7 +416,7 @@ const BusinessSolutions = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Success Story 1 - Small Business */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
+            <Card className="group hover:shadow-xl transition-all duration-300 border border-border shadow-md overflow-hidden bg-card">
               <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 p-6 flex items-center justify-center">
                 <img 
                   src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=400&h=300&fit=crop"
@@ -490,7 +490,7 @@ const BusinessSolutions = () => {
             </Card>
 
             {/* Success Story 3 - MSP Partner */}
-            <Card className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
+            <Card className="group hover:shadow-xl transition-all duration-300 border border-border shadow-md overflow-hidden bg-card">
               <div className="aspect-video bg-gradient-to-br from-warning/10 to-primary/10 p-6 flex items-center justify-center">
                 <div className="w-20 h-20 bg-card rounded-full flex items-center justify-center border-4 border-background">
                   <Building2 className="h-8 w-8 text-primary" />
@@ -527,7 +527,7 @@ const BusinessSolutions = () => {
 
           {/* Call to Action */}
           <div className="text-center mt-16">
-            <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20 max-w-2xl mx-auto">
+            <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 max-w-2xl mx-auto bg-card">
               <CardContent className="p-8">
                 <h3 className="text-2xl font-bold text-card-foreground mb-4">
                   Ready to Write Your Success Story?
