@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { safeWindowOpen } from "@/utils/security";
 import { Loader2 } from "lucide-react";
 import { UserCountSelector } from "./UserCountSelector";
 
@@ -50,7 +51,7 @@ export const SolutionPurchaseButton = ({
       if (error) throw error;
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        safeWindowOpen(data.url, '_blank');
         setOpen(false);
       }
     } catch (error) {

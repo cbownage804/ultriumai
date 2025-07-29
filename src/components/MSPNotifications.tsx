@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { safeWindowOpen } from '@/utils/security';
 import { 
   Bell, 
   AlertTriangle, 
@@ -292,7 +293,7 @@ export const MSPNotifications: React.FC<MSPNotificationsProps> = ({ mspId }) => 
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => window.open(notification.action_url, '_blank')}
+                              onClick={() => safeWindowOpen(notification.action_url, '_blank')}
                             >
                               Take Action
                             </Button>

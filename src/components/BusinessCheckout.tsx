@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { safeWindowOpen } from "@/utils/security";
 import { 
   Users, 
   Crown, 
@@ -154,7 +155,7 @@ const BusinessCheckout = ({ onSuccess, packageType, children, className, size = 
       if (error) throw error;
 
       // Open Stripe checkout in new tab
-      window.open(data.url, '_blank');
+      safeWindowOpen(data.url, '_blank');
       
       if (onSuccess) {
         onSuccess();

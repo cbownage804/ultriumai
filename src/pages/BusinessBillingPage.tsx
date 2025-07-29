@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { safeWindowOpen } from "@/utils/security";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   DollarSign, 
@@ -147,7 +148,7 @@ const BusinessBillingPage = () => {
       if (error) throw error;
 
       // Open Stripe checkout in new tab
-      window.open(data.url, '_blank');
+      safeWindowOpen(data.url, '_blank');
     } catch (error) {
       console.error('Error creating checkout:', error);
       toast({

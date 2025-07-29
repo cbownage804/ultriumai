@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Copy, Globe, Code, QrCode, Mail, MessageSquare, Share2, Download, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { safeWindowOpen } from "@/utils/security";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -40,12 +41,12 @@ const ShareModal = ({ isOpen, onClose, gptId, gptName, gptDescription }: ShareMo
   const shareViaEmail = () => {
     const subject = encodeURIComponent(`Try ${gptName} - Custom AI Assistant`);
     const body = encodeURIComponent(shareText);
-    window.open(`mailto:?subject=${subject}&body=${body}`);
+    safeWindowOpen(`mailto:?subject=${subject}&body=${body}`);
   };
 
   const shareViaSMS = () => {
     const body = encodeURIComponent(shareText);
-    window.open(`sms:?body=${body}`);
+    safeWindowOpen(`sms:?body=${body}`);
   };
 
   const shareViaSocial = (platform: string) => {
@@ -61,7 +62,7 @@ const ShareModal = ({ isOpen, onClose, gptId, gptName, gptDescription }: ShareMo
     };
 
     if (urls[platform as keyof typeof urls]) {
-      window.open(urls[platform as keyof typeof urls], '_blank');
+      safeWindowOpen(urls[platform as keyof typeof urls], '_blank');
     }
   };
 
@@ -121,7 +122,7 @@ const ShareModal = ({ isOpen, onClose, gptId, gptName, gptDescription }: ShareMo
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => window.open(publicUrl, '_blank')} className="flex-1">
+              <Button variant="outline" onClick={() => safeWindowOpen(publicUrl, '_blank')} className="flex-1">
                 <Globe className="h-4 w-4 mr-2" />
                 Preview
               </Button>

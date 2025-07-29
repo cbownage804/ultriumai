@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { usePricingPlans } from "@/hooks/usePricingPlans";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { safeWindowOpen } from "@/utils/security";
 
 interface PricingPlan {
   name: string;
@@ -90,7 +91,7 @@ export const PricingCards = () => {
 
     try {
       const { url } = await createOneTimePayment(planId);
-      window.open(url, '_blank');
+      safeWindowOpen(url, '_blank');
     } catch (error) {
       toast({
         title: "Error",

@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
+import { safeWindowOpen } from "@/utils/security";
 
 const CreditsPurchase = () => {
   const { user, session } = useAuth();
@@ -69,7 +70,7 @@ const CreditsPurchase = () => {
       if (error) throw error;
 
       // Open Stripe checkout in a new tab
-      window.open(data.url, '_blank');
+      safeWindowOpen(data.url, '_blank');
     } catch (error) {
       console.error('Error creating credit purchase:', error);
       toast({

@@ -10,6 +10,7 @@ import { Shield, Zap, Users, Lock, ExternalLink, Settings, Crown, Check, X, Star
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { safeWindowOpen } from "@/utils/security";
 
 interface SecurityApp {
   id: string;
@@ -216,7 +217,7 @@ const SecurityAppsMarketplace = () => {
 
       // Redirect to Stripe checkout
       if (data.url) {
-        window.open(data.url, '_blank');
+        safeWindowOpen(data.url, '_blank');
       }
     } catch (error) {
       toast({

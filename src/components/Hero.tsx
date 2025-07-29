@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Shield, Play, Calendar, Users, Star, Lock, Building } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { safeWindowOpen } from "@/utils/security";
 import VideoPlayer from "./VideoPlayer";
 
 const Hero = () => {
@@ -260,7 +261,7 @@ const Hero = () => {
                 <Button 
                   variant="outline"
                   className="mt-4 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50 transition-all duration-300 text-lg px-6 py-3"
-                  onClick={() => window.open('https://ultriumllc.com', '_blank', 'noopener,noreferrer')}
+                  onClick={() => safeWindowOpen('https://ultriumllc.com', '_blank')}
                 >
                   <Building className="mr-2 h-5 w-5" />
                   Get Your Complete IT Solution →

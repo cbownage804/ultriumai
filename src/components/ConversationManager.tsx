@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { safeWindowOpen } from "@/utils/security";
 import { FileText, Upload, Download, Search, AlertCircle, CheckCircle, Clock, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -425,7 +426,7 @@ export const ConversationManager = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(exportItem.file_url, '_blank')}
+                          onClick={() => safeWindowOpen(exportItem.file_url, '_blank')}
                         >
                           <Download className="w-4 h-4 mr-2" />
                           Download
