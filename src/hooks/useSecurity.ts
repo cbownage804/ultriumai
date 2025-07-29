@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { SecuritySettings, AuditLog, SecurityEvent } from "@/types/security";
+import { securitySettingsSchema, validateForm } from "@/utils/validation";
 
 export const useSecurity = () => {
   const { user, session } = useAuth();
@@ -203,11 +204,22 @@ export const useSecurity = () => {
   const updateSecuritySettings = async (settings: Partial<SecuritySettings>) => {
     if (!user) return;
 
+    // Validate settings before updating
+    const validation = validateForm(securitySettingsSchema.partial(), settings);
+    if (!validation.success) {
+      toast({
+        title: "Validation Error",
+        description: validation.errors?.join(', ') || "Invalid settings provided.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setLoading(true);
       const { error } = await supabase
         .from('security_settings' as any)
-        .update(settings)
+        .update(validation.data)
         .eq('user_id', user.id);
 
       if (error) throw error;
