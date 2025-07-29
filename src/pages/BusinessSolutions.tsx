@@ -193,43 +193,43 @@ const BusinessSolutions = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'featured':
-        return <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white">⭐ Featured</Badge>;
+        return <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground">⭐ Featured</Badge>;
       case 'available':
-        return <Badge variant="outline" className="border-green-200 text-green-700">Available</Badge>;
+        return <Badge variant="outline" className="border-success/30 text-success">Available</Badge>;
       case 'coming_soon':
-        return <Badge variant="outline" className="border-blue-200 text-blue-700">Coming Soon</Badge>;
+        return <Badge variant="outline" className="border-info/30 text-info">Coming Soon</Badge>;
       default:
         return <Badge variant="secondary">Available</Badge>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8" ref={headerRef}>
         <div className={`max-w-7xl mx-auto text-center transition-all duration-1000 transform ${
           headerVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'
         }`}>
           <div className="flex justify-center mb-6">
-            <div className="p-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg">
-              <Building2 className="h-12 w-12 text-white" />
+            <div className="p-4 bg-gradient-to-br from-primary/80 to-secondary/80 rounded-2xl shadow-lg">
+              <Building2 className="h-12 w-12 text-primary-foreground" />
             </div>
           </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
             Business Solutions
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">
               Platform
             </span>
           </h1>
           
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
             Streamline your business operations with powerful integrations. Connect your favorite tools, 
             automate workflows, and grow your business with our comprehensive platform.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3">
+            <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground px-8 py-3">
               <Star className="mr-2 h-5 w-5" />
               Get Started Free
             </Button>
@@ -242,29 +242,29 @@ const BusinessSolutions = () => {
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900">{businessIntegrations.length}+</div>
-              <div className="text-gray-600">Business Integrations</div>
+              <div className="text-3xl font-bold text-foreground">{businessIntegrations.length}+</div>
+              <div className="text-muted-foreground">Business Integrations</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900">{businessCategories.length}</div>
-              <div className="text-gray-600">Business Categories</div>
+              <div className="text-3xl font-bold text-foreground">{businessCategories.length}</div>
+              <div className="text-muted-foreground">Business Categories</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-gray-900">24/7</div>
-              <div className="text-gray-600">Support Available</div>
+              <div className="text-3xl font-bold text-foreground">24/7</div>
+              <div className="text-muted-foreground">Support Available</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Categories Overview */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
               Everything Your Business Needs
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               From CRM and accounting to e-commerce and marketing - we've got all the tools 
               your business needs to succeed in one integrated platform.
             </p>
@@ -274,16 +274,16 @@ const BusinessSolutions = () => {
             {businessCategories.map((category, index) => (
               <Card key={index} className="group hover:shadow-lg transition-all duration-300 border-0 shadow-md">
                 <CardContent className="p-6">
-                  <div className={`w-14 h-14 ${category.bgColor} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                    <category.icon className={`h-7 w-7 ${category.color}`} />
+                  <div className={`w-14 h-14 bg-muted rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <category.icon className={`h-7 w-7 text-primary`} />
                   </div>
-                  <h3 className="font-semibold text-lg text-gray-900 mb-2">{category.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4">{category.description}</p>
+                  <h3 className="font-semibold text-lg text-foreground mb-2">{category.title}</h3>
+                  <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-xs">
                       {category.count} integrations
                     </Badge>
-                    <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-300" />
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
                   </div>
                 </CardContent>
               </Card>
@@ -293,9 +293,9 @@ const BusinessSolutions = () => {
       </section>
 
       {/* Featured Integration - Tegrity Connect */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-purple-50">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 to-secondary/10">
         <div className="max-w-7xl mx-auto">
-          <Card className="border-2 border-blue-200 bg-white shadow-xl">
+          <Card className="border-2 border-primary/30 bg-card shadow-xl">
             <CardHeader className="text-center pb-8">
               <div className="flex justify-center mb-4">
                 <img 
@@ -304,13 +304,13 @@ const BusinessSolutions = () => {
                   className="h-12 w-auto"
                 />
               </div>
-              <Badge className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white mb-4">
+              <Badge className="bg-gradient-to-r from-primary to-secondary text-primary-foreground mb-4">
                 ⭐ Featured Business CRM
               </Badge>
-              <CardTitle className="text-3xl font-bold text-gray-900 mb-4">
+              <CardTitle className="text-3xl font-bold text-foreground mb-4">
                 Complete Business Management Platform
               </CardTitle>
-              <CardDescription className="text-lg text-gray-600 max-w-2xl mx-auto">
+              <CardDescription className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Tegrity Connect provides everything your business needs: CRM, marketing automation, 
                 customer communications, and sales pipeline management - all in one powerful platform.
               </CardDescription>
@@ -324,17 +324,17 @@ const BusinessSolutions = () => {
                   { icon: Phone, title: 'Multi-Channel Support', desc: 'Phone, email, chat, and social media' }
                 ].map((feature, index) => (
                   <div key={index} className="text-center">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                      <feature.icon className="h-6 w-6 text-blue-600" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
+                      <feature.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <h4 className="font-semibold text-gray-900 mb-2">{feature.title}</h4>
-                    <p className="text-sm text-gray-600">{feature.desc}</p>
+                    <h4 className="font-semibold text-foreground mb-2">{feature.title}</h4>
+                    <p className="text-sm text-muted-foreground">{feature.desc}</p>
                   </div>
                 ))}
               </div>
               
               <div className="text-center">
-                <Button size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 mr-4">
+                <Button size="lg" className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-primary-foreground px-8 py-3 mr-4">
                   Start Free Trial
                 </Button>
                 <Button size="lg" variant="outline" className="px-8 py-3">
@@ -350,10 +350,10 @@ const BusinessSolutions = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8" ref={integrationsRef}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-foreground mb-4">
               All Business Integrations
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Connect your business tools and streamline your operations with our comprehensive integration library.
             </p>
           </div>
@@ -365,22 +365,22 @@ const BusinessSolutions = () => {
               <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md overflow-hidden">
                 <CardHeader className="pb-4">
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-blue-50 transition-colors duration-300">
-                      <integration.icon className="h-6 w-6 text-gray-600 group-hover:text-blue-600 transition-colors duration-300" />
+                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center group-hover:bg-primary/10 transition-colors duration-300">
+                      <integration.icon className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
                     </div>
                     {getStatusBadge(integration.status)}
                   </div>
-                  <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                  <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
                     {integration.name}
                   </CardTitle>
-                  <CardDescription className="text-sm text-gray-600">
+                  <CardDescription className="text-sm text-muted-foreground">
                     {integration.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <div className="space-y-2 mb-4">
                     {integration.benefits.slice(0, 3).map((benefit, benefitIndex) => (
-                      <div key={benefitIndex} className="flex items-center text-sm text-gray-600">
+                      <div key={benefitIndex} className="flex items-center text-sm text-muted-foreground">
                         <CheckCircle className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" />
                         {benefit}
                       </div>
@@ -388,10 +388,10 @@ const BusinessSolutions = () => {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-blue-600">
+                    <div className="text-sm font-medium text-primary">
                       {integration.pricing}
                     </div>
-                    <Button size="sm" variant="outline" className="group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all duration-300">
+                    <Button size="sm" variant="outline" className="group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-300">
                       Connect
                     </Button>
                   </div>
@@ -403,22 +403,22 @@ const BusinessSolutions = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-900 to-purple-900">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/90 to-secondary/90">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
             Ready to Transform Your Business?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
             Join thousands of businesses that have streamlined their operations and accelerated growth 
             with our integrated business solutions platform.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-blue-900 hover:bg-gray-100 px-8 py-3">
+            <Button size="lg" className="bg-background text-foreground hover:bg-background/90 px-8 py-3">
               <Star className="mr-2 h-5 w-5" />
               Start Your Free Trial
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-900 px-8 py-3">
+            <Button size="lg" variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary px-8 py-3">
               Schedule a Demo
             </Button>
           </div>
