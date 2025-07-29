@@ -119,6 +119,8 @@ import { ClientLogin } from '@/pages/ClientLogin';
 import { AuthProvider } from '@/hooks/useAuth';
 import AssetManagementPage from '@/pages/AssetManagementPage';
 import PatchManagementPage from '@/pages/PatchManagementPage';
+import RemoteAccessPage from '@/pages/RemoteAccessPage';
+import MonitoringPage from '@/pages/MonitoringPage';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
@@ -456,6 +458,16 @@ function AppRouter() {
         <Route path="/patches" element={
           <ProtectedRoute>
             <PatchManagementPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/remote-access" element={
+          <ProtectedRoute>
+            <RemoteAccessPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/monitoring" element={
+          <ProtectedRoute>
+            <MonitoringPage />
           </ProtectedRoute>
         } />
         
