@@ -1,318 +1,214 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 import { 
   Shield, 
-  Lock, 
-  Search, 
-  Globe, 
-  FileText, 
   Users, 
-  Zap,
-  ArrowRight,
-  Play,
-  Network,
+  Building2, 
+  TrendingUp, 
   CheckCircle, 
-  ChevronDown,
-  ChevronUp,
+  ArrowRight, 
+  Play,
   Star,
-  Building,
-  Settings,
-  Bell,
+  Lock,
+  Zap,
+  Globe,
+  Phone,
+  Mail,
+  Calendar,
+  Award,
+  Target,
+  Briefcase,
+  FileText,
   BarChart3,
-  Brain,
-  TrendingUp,
-  Headphones,
-  Crown
+  Settings,
+  Crown,
+  Heart,
+  Lightbulb,
+  Rocket,
+  Clock,
+  DollarSign,
+  MessageSquare,
+  Handshake
 } from "lucide-react";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
+import { useNavigate } from "react-router-dom";
 
 const Solutions = () => {
-  const [expandedFeatures, setExpandedFeatures] = useState<Set<string>>(new Set());
-  
-  const toggleFeatures = (appId: string) => {
-    const newExpanded = new Set(expandedFeatures);
-    if (newExpanded.has(appId)) {
-      newExpanded.delete(appId);
-    } else {
-      newExpanded.add(appId);
-    }
-    setExpandedFeatures(newExpanded);
-  };
+  const navigate = useNavigate();
+  const [selectedIndustry, setSelectedIndustry] = useState('all');
 
-  const handleNavigation = (path: string) => {
-    window.location.href = path;
-  };
+  const stats = [
+    { value: "50K+", label: "Businesses Protected", icon: Shield },
+    { value: "99.9%", label: "Uptime Guarantee", icon: TrendingUp },
+    { value: "24/7", label: "Support Available", icon: Users },
+    { value: "150+", label: "Countries Served", icon: Globe }
+  ];
 
-  const securityApps = [
+  const companies = [
+    { name: "Microsoft", logo: "https://logo.clearbit.com/microsoft.com" },
+    { name: "Google", logo: "https://logo.clearbit.com/google.com" },
+    { name: "AWS", logo: "https://logo.clearbit.com/aws.amazon.com" },
+    { name: "Salesforce", logo: "https://logo.clearbit.com/salesforce.com" },
+    { name: "Adobe", logo: "https://logo.clearbit.com/adobe.com" },
+    { name: "Oracle", logo: "https://logo.clearbit.com/oracle.com" }
+  ];
+
+  const useCases = [
     {
-      id: "safescan",
-      name: "Ultrium SafeScan™",
-      category: "Unified Threat Detection",
-      description: "Complete AI-powered scanning suite for emails, documents, and URLs",
-      longDescription: "Comprehensive security scanning platform that combines email analysis, document scanning, and URL verification into one unified solution with AI-powered threat detection.",
-      icon: Shield,
-      features: [
-        "Email phishing detection",
-        "Document malware scanning", 
-        "URL reputation analysis",
-        "Social engineering detection",
-        "Real-time threat intelligence",
-        "API integration ready",
-        "Bulk scanning capabilities",
-        "Scheduled scanning"
-      ],
-      demoUrl: "/demos/safescan",
-      pageUrl: "/products/safescan",
-      gradient: "from-blue-100 to-indigo-100"
+      title: "Customer Support AI",
+      description: "Intelligent chatbots that handle 80% of customer inquiries automatically",
+      icon: MessageSquare,
+      benefits: ["24/7 availability", "Instant responses", "Multilingual support"],
+      industry: "retail"
     },
     {
-      id: "safeshield",
-      name: "Ultrium SafeShield™",
-      category: "Endpoint Security",
-      description: "Unified endpoint protection with EDR, MDR, and AI-powered antivirus",
-      longDescription: "Complete endpoint security platform combining AI-powered antivirus (SafeAV), endpoint detection and response (SafeEDR), and managed detection services.",
-      icon: Shield,
-      features: [
-        "AI-powered SafeAV protection",
-        "Endpoint Detection & Response (EDR)",
-        "Managed Detection & Response (MDR)",
-        "Real-time threat monitoring",
-        "Automated incident response",
-        "Behavioral analysis",
-        "Zero-day protection",
-        "Centralized management"
-      ],
-      demoUrl: "/demos/safeshield",
-      pageUrl: "/products/safeshield", 
-      gradient: "from-red-100 to-pink-100"
-    },
-    {
-      id: "safecenter",
-      name: "Ultrium SafeCenter™",
-      category: "IT Service Management",
-      description: "Complete IT service management platform with RMM and helpdesk",
-      longDescription: "Integrated IT service management solution combining remote monitoring and management (RMM), helpdesk ticketing, asset management, and automation tools.",
-      icon: Settings,
-      features: [
-        "Remote monitoring & management",
-        "Integrated helpdesk ticketing",
-        "Asset management & tracking",
-        "Automated patch management",
-        "Performance monitoring",
-        "Service desk automation",
-        "Multi-tenant MSP support",
-        "Mobile technician apps"
-      ],
-      demoUrl: "/demos/safecenter",
-      pageUrl: "/msps",
-      gradient: "from-green-100 to-emerald-100"
-    },
-    {
-      id: "safekb",
-      name: "Ultrium SafeKB™", 
-      category: "Knowledge Management",
-      description: "AI-powered knowledge base and documentation platform",
-      longDescription: "Intelligent knowledge management system that organizes documentation, provides AI-powered search, and integrates with your existing workflows.",
+      title: "Document Processing",
+      description: "Automated document analysis and data extraction for faster processing",
       icon: FileText,
-      features: [
-        "AI-powered knowledge search",
-        "Smart document organization",
-        "Workflow integration",
-        "Team collaboration tools",
-        "Version control",
-        "Access management",
-        "Custom GPT integration",
-        "Multi-format support"
-      ],
-      demoUrl: "/demos/safekb",
-      pageUrl: "/products/safekb",
-      gradient: "from-purple-100 to-violet-100"
+      benefits: ["95% accuracy", "10x faster processing", "Cost reduction"],
+      industry: "finance"
     },
     {
-      id: "safepass",
-      name: "Ultrium SafePass™",
-      category: "Password Security",
-      description: "Enterprise password management and security platform",
-      longDescription: "Comprehensive password management solution with enterprise-grade security, automated password generation, and breach monitoring.",
-      icon: Lock,
-      features: [
-        "Secure password generation",
-        "Breach monitoring",
-        "Team password sharing",
-        "Multi-factor authentication",
-        "Password health scoring",
-        "Compliance reporting",
-        "SSO integration",
-        "Automated password rotation"
-      ],
-      demoUrl: "/demos/safepass",
-      pageUrl: "/products/safepass",
-      gradient: "from-orange-100 to-red-100"
-    },
-    {
-      id: "safenet",
-      name: "Ultrium SafeNet™",
-      category: "Network Security",
-      description: "Advanced network discovery and security monitoring platform",
-      longDescription: "Comprehensive network security tool that discovers devices, maps network topology, monitors performance, and identifies vulnerabilities with real-time threat detection.",
-      icon: Network,
-      features: [
-        "Network topology mapping",
-        "Device discovery & profiling",
-        "Vulnerability assessment",
-        "Performance monitoring",
-        "Real-time security scanning",
-        "Meraki integration",
-        "SNMP monitoring",
-        "Automated alerts"
-      ],
-      demoUrl: "/demos/safenet",
-      pageUrl: "/products/safenet",
-      gradient: "from-teal-100 to-cyan-100"
-    },
-    {
-      id: "safescore",
-      name: "Ultrium SafeScore™",
-      category: "Compliance Management",
-      description: "Comprehensive compliance management and audit platform",
-      longDescription: "Enterprise compliance management solution that automates compliance monitoring, conducts security audits, and tracks regulatory requirements across multiple frameworks.",
+      title: "Predictive Analytics",
+      description: "AI-powered insights to forecast trends and optimize operations",
       icon: BarChart3,
-      features: [
-        "Multi-framework compliance",
-        "Automated audit processes",
-        "Risk assessment tools",
-        "Evidence collection",
-        "Compliance reporting",
-        "Remediation tracking",
-        "Policy management",
-        "Continuous monitoring"
-      ],
-      demoUrl: "/demos/safescore",
-      pageUrl: "/products/safescore",
-      gradient: "from-pink-100 to-rose-100"
+      benefits: ["Data-driven decisions", "Risk reduction", "Revenue optimization"],
+      industry: "manufacturing"
     },
     {
-      id: "safeintel",
-      name: "Ultrium SafeIntel™",
-      category: "Threat Intelligence",
-      description: "Dark web monitoring and threat intelligence platform",
-      longDescription: "Advanced threat intelligence platform that monitors dark web activities, tracks compromised credentials, and provides early warning of emerging cyber threats.",
-      icon: Search,
-      features: [
-        "Dark web monitoring",
-        "Credential breach detection",
-        "Threat actor tracking",
-        "Brand protection",
-        "Executive monitoring",
-        "Intelligence feeds",
-        "Automated alerts",
-        "Threat hunting tools"
-      ],
-      demoUrl: "/demos/safeintel",
-      pageUrl: "/products/safeintel",
-      gradient: "from-indigo-100 to-blue-100"
+      title: "Code Generation",
+      description: "Automated code writing and debugging to accelerate development",
+      icon: Settings,
+      benefits: ["50% faster development", "Fewer bugs", "Code quality improvement"],
+      industry: "technology"
     },
     {
-      id: "soc-dashboard",
-      name: "SafeSOC",
-      category: "Security Operations",
-      description: "Complete SOC dashboard with real-time threat intelligence",
-      longDescription: "Centralized SafeSOC providing real-time monitoring, threat intelligence, compliance tracking, and incident response coordination.",
-      icon: BarChart3,
-      features: [
-        "Real-time security monitoring",
-        "Threat intelligence feeds",
-        "Incident response coordination",
-        "Compliance tracking",
-        "Security analytics",
-        "Custom alerting",
-        "Multi-client management",
-        "Executive reporting"
-      ],
-      demoUrl: "/demos/safesoc",
-      pageUrl: "/security-dashboard",
-      gradient: "from-gray-100 to-slate-100"
+      title: "Content Creation",
+      description: "AI-generated content for marketing, social media, and communications",
+      icon: Lightbulb,
+      benefits: ["Consistent brand voice", "Scalable content", "Creative inspiration"],
+      industry: "marketing"
     },
     {
-      id: "ultrium-gpt",
-      name: "Ultrium GPT™",
-      category: "Business Intelligence",
-      description: "Advanced AI platform for security operations analysis and automation",
-      longDescription: "Comprehensive AI-powered business intelligence platform that enhances security operations with advanced analytics, automated reporting, policy generation, and workflow optimization.",
-      icon: Brain,
-      features: [
-        "Security data analysis & insights",
-        "Automated policy generation",
-        "Threat research & intelligence",
-        "Compliance report automation",
-        "Workflow optimization",
-        "Training content creation",
-        "Risk assessment modeling",
-        "Executive dashboard analytics"
-      ],
-      demoUrl: "/demos/ultriumgpt",
-      pageUrl: "/ultrium-gpt",
-      gradient: "from-emerald-100 to-teal-100"
-    },
-    {
-      id: "ai-studio",
-      name: "Ultrium AI Studio™",
-      category: "AI Security Assistant",
-      description: "Advanced AI assistant for cybersecurity operations and threat analysis",
-      longDescription: "Intelligent AI assistant specialized in cybersecurity operations, threat analysis, incident response, and security automation with natural language processing.",
-      icon: Zap,
-      features: [
-        "Natural language security queries",
-        "Automated threat analysis",
-        "Incident response assistance",
-        "Security policy generation",
-        "Vulnerability assessment",
-        "Compliance guidance",
-        "Real-time security insights",
-        "Integration with security tools"
-      ],
-      demoUrl: "/demos/custom-gpt-builder",
-      pageUrl: "/ai-studio",
-      gradient: "from-violet-100 to-purple-100"
+      title: "Process Automation",
+      description: "Streamline workflows and eliminate repetitive tasks across departments",
+      icon: Rocket,
+      benefits: ["Efficiency gains", "Error reduction", "Employee satisfaction"],
+      industry: "all"
     }
   ];
 
   const industries = [
+    { id: 'all', name: 'All Industries', icon: Globe },
+    { id: 'retail', name: 'Retail & E-commerce', icon: Briefcase },
+    { id: 'finance', name: 'Financial Services', icon: DollarSign },
+    { id: 'manufacturing', name: 'Manufacturing', icon: Settings },
+    { id: 'technology', name: 'Technology', icon: Zap },
+    { id: 'marketing', name: 'Marketing & Media', icon: Target }
+  ];
+
+  const securityApps = [
     {
-      name: "Managed Service Providers (MSPs)",
-      icon: Settings,
-      description: "Comprehensive security toolkit for MSPs managing multiple client environments",
-      benefits: [
-        "Multi-tenant client management",
-        "Centralized security monitoring",
-        "Automated compliance reporting",
-        "White-label deployment options"
-      ]
+      name: "SafeScan",
+      description: "Advanced vulnerability scanning and threat detection",
+      features: ["Real-time scanning", "Compliance reporting", "Risk assessment"],
+      color: "bg-red-500"
     },
     {
-      name: "Small & Medium Businesses",
-      icon: Building,
-      description: "Enterprise-grade security solutions designed for SMB budgets and complexity",
-      benefits: [
-        "Easy deployment and management",
-        "Cost-effective security coverage",
-        "Minimal IT overhead required",
-        "Scalable as business grows"
-      ]
+      name: "SafeNet",
+      description: "Network security monitoring and intrusion detection",
+      features: ["Traffic analysis", "Threat intelligence", "Automated response"],
+      color: "bg-blue-500"
     },
     {
-      name: "Enterprise Organizations",
-      icon: Globe,
-      description: "Advanced security solutions for complex organizational structures",
-      benefits: [
-        "Enterprise-grade integrations",
-        "Advanced analytics and reporting",
-        "Custom deployment options",
-        "Dedicated support and training"
-      ]
+      name: "SafePass",
+      description: "Password management and identity protection",
+      features: ["Secure vault", "Multi-factor auth", "Breach monitoring"],
+      color: "bg-green-500"
+    },
+    {
+      name: "SafeWeb",
+      description: "Web security and dark web monitoring",
+      features: ["Site protection", "Brand monitoring", "Threat tracking"],
+      color: "bg-purple-500"
+    },
+    {
+      name: "SafeEmail",
+      description: "Email security and phishing protection",
+      features: ["Spam filtering", "Attachment scanning", "Link verification"],
+      color: "bg-orange-500"
+    },
+    {
+      name: "SafeCloud",
+      description: "Cloud security and data protection",
+      features: ["Data encryption", "Access control", "Compliance monitoring"],
+      color: "bg-cyan-500"
+    },
+    {
+      name: "SafeDesk",
+      description: "Endpoint security and device management",
+      features: ["Device monitoring", "Patch management", "Threat response"],
+      color: "bg-pink-500"
+    },
+    {
+      name: "SafeComply",
+      description: "Compliance management and audit preparation",
+      features: ["Regulatory tracking", "Audit trails", "Risk assessment"],
+      color: "bg-indigo-500"
+    }
+  ];
+
+  const filteredUseCases = selectedIndustry === 'all' 
+    ? useCases 
+    : useCases.filter(useCase => useCase.industry === selectedIndustry || useCase.industry === 'all');
+
+  const integrationFeatures = [
+    {
+      title: "API-First Architecture",
+      description: "RESTful APIs for seamless integration with existing systems",
+      icon: Settings
+    },
+    {
+      title: "Webhook Support",
+      description: "Real-time notifications and automated workflows",
+      icon: Zap
+    },
+    {
+      title: "SSO Integration",
+      description: "Single sign-on with popular identity providers",
+      icon: Lock
+    },
+    {
+      title: "Custom Connectors",
+      description: "Purpose-built integrations for your specific tools",
+      icon: Handshake
+    }
+  ];
+
+  const industryBenefits = [
+    {
+      industry: "Healthcare",
+      benefits: ["HIPAA compliance", "Patient data security", "Automated reporting"],
+      icon: Heart
+    },
+    {
+      industry: "Finance",
+      benefits: ["SOX compliance", "Fraud detection", "Risk management"],
+      icon: DollarSign
+    },
+    {
+      industry: "Manufacturing",
+      benefits: ["Quality control", "Predictive maintenance", "Supply chain optimization"],
+      icon: Settings
+    },
+    {
+      industry: "Retail",
+      benefits: ["Customer insights", "Inventory optimization", "Personalization"],
+      icon: Briefcase
     }
   ];
 
@@ -320,584 +216,396 @@ const Solutions = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      {/* UltriumAI Studio Hero Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-primary/5"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center space-y-8 mb-12">
-            <Badge variant="secondary" className="animate-pulse">
-              <Zap className="h-4 w-4 mr-2" />
-              Revolutionary AI Platform
-            </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
-              UltriumAI Studio™
-            </h1>
-            <p className="text-xl md:text-2xl text-foreground/80 max-w-4xl mx-auto leading-relaxed">
-              Build your own AI workforce in minutes, not months. Deploy intelligent assistants that know your business inside and out, reduce operational costs by 60%, and scale your expertise instantly.
-            </p>
-          </div>
-
-          {/* UltriumAI Studio Feature Card */}
-          <Card className="max-w-6xl mx-auto bg-card border-2 border-primary/20 shadow-2xl hover:shadow-primary/20 transition-all duration-500 hover:scale-[1.02]">
-            <CardContent className="p-8 md:p-12">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg">
-                      <Users className="h-8 w-8 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-card-foreground">Revolutionary No-Code AI</h3>
-                      <p className="text-card-foreground/70">Build enterprise AI without a single line of code</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-card-foreground">
-                        <strong>Drag & drop AI builder</strong> - Create assistants in under 5 minutes
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-card-foreground">
-                        <strong>Upload unlimited knowledge</strong> - PDFs, docs, websites, databases
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-card-foreground">
-                        <strong>White-label deployment</strong> - Your brand, your domain, your customers
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-card-foreground">
-                        <strong>Advanced integrations</strong> - API, webhooks, CRM, helpdesk systems
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <span className="text-card-foreground">
-                        <strong>Enterprise security</strong> - SOC 2, GDPR compliant, encrypted data
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
+      <main className="pt-16">
+        {/* Hero Section */}
+        <section className="py-20 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center space-y-8">
                 <div className="space-y-4">
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp className="h-5 w-5 text-green-600" />
-                      <span className="font-semibold text-green-800">ROI Impact</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-green-700">Support cost reduction:</span>
-                        <span className="font-bold text-green-800">-60%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-green-700">Response time improvement:</span>
-                        <span className="font-bold text-green-800">-85%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-green-700">Customer satisfaction:</span>
-                        <span className="font-bold text-green-800">+40%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-4 bg-white/60 rounded-lg border">
-                      <div className="text-2xl font-bold text-primary">5 min</div>
-                      <div className="text-sm text-foreground/70">Setup Time</div>
-                    </div>
-                    <div className="text-center p-4 bg-white/60 rounded-lg border">
-                      <div className="text-2xl font-bold text-green-600">24/7</div>
-                      <div className="text-sm text-foreground/70">Always Online</div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-xl border border-primary/20">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Brain className="h-5 w-5 text-primary" />
-                      <span className="font-semibold text-primary">500+ Companies Trust Us</span>
-                    </div>
-                    <p className="text-sm text-foreground/70">
-                      From startups to Fortune 500s - powering AI transformation worldwide
-                    </p>
-                  </div>
+                  <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    AI Solutions for Every Business
+                  </h1>
+                  <p className="text-xl text-foreground/80 max-w-4xl mx-auto">
+                    Transform your operations with custom AI agents, comprehensive security suite, and enterprise-grade platform. From small businesses to global enterprises.
+                  </p>
+                </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    size="lg" 
+                    className="text-lg px-8 py-6 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                    onClick={() => navigate('/pricing')}
+                  >
+                    <Star className="mr-2 h-5 w-5" />
+                    Get Started Today
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="text-lg px-8 py-6"
+                    onClick={() => navigate('/live-demos')}
+                  >
+                    <Play className="mr-2 h-5 w-5" />
+                    See Live Demos
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 pt-6 border-t border-primary/20">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 shadow-lg hover:shadow-xl transition-all duration-300" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
-                  <Play className="mr-2 h-5 w-5" />
-                  Try Live Demo
-                </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto border-2 border-primary hover:bg-primary/5" onClick={() => window.location.href = '/pricing#gpt-pricing'}>
-                  <Star className="mr-2 h-5 w-5" />
-                  View Pricing
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Custom GPT Use Cases & Benefits */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Transform Every Department with AI</h2>
-            <p className="text-lg text-foreground/80 max-w-3xl mx-auto">
-              Create specialized AI assistants for any business function. No technical skills required.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {/* Customer Support */}
-            <Card className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                  <Headphones className="h-6 w-6 text-blue-600" />
-                </div>
-                <CardTitle className="text-xl">Customer Support GPT</CardTitle>
-                <CardDescription>Handle 80% of support tickets automatically</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Instant responses 24/7
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Escalate complex issues to humans
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Multi-language support
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Learn from your FAQ & docs
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Sales Assistant */}
-            <Card className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
-              <CardHeader>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
-                </div>
-                <CardTitle className="text-xl">Sales Assistant GPT</CardTitle>
-                <CardDescription>Qualify leads and accelerate your sales cycle</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Lead qualification & scoring
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Product recommendations
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Pricing information & quotes
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    CRM integration
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* HR Assistant */}
-            <Card className="hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
-              <CardHeader>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                  <Users className="h-6 w-6 text-purple-600" />
-                </div>
-                <CardTitle className="text-xl">HR Assistant GPT</CardTitle>
-                <CardDescription>Streamline employee onboarding & support</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Policy & procedure guidance
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Benefits enrollment help
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Employee self-service
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    Training & compliance
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Success Story */}
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-primary/20">
-            <CardContent className="p-8">
-              <div className="text-center space-y-4">
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Customer Success Story
-                </Badge>
-                <blockquote className="text-xl font-medium text-foreground">
-                  "We reduced our support ticket volume by 75% and improved customer satisfaction scores by 40% within the first month. Our GPT handles everything from password resets to complex product questions."
-                </blockquote>
-                <div className="flex items-center justify-center gap-4">
-                  <div className="text-center">
-                    <p className="font-semibold">Sarah Johnson</p>
-                    <p className="text-sm text-foreground/70">VP of Customer Success, TechCorp</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">75%</div>
-                    <div className="text-sm text-foreground/70">Fewer Support Tickets</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">40%</div>
-                    <div className="text-sm text-foreground/70">Higher CSAT Score</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">$50K</div>
-                    <div className="text-sm text-foreground/70">Annual Savings</div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Security Applications Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-8">
-            <div className="space-y-6">
-              <Badge variant="secondary" className="mb-4">
-                <Shield className="h-4 w-4 mr-2" />
-                AI Security Solutions
-              </Badge>
-              <h2 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
-                Complete AI Security Suite
-              </h2>
-              <p className="text-xl md:text-2xl text-foreground/80 max-w-4xl mx-auto leading-relaxed">
-                From email protection to dark web monitoring—our comprehensive AI security applications 
-                protect your business from today's cyber threats while streamlining your security operations.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 max-w-3xl mx-auto">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold text-primary">10 Integrated Security Applications</span>
-                <Star className="h-5 w-5 text-yellow-500" />
-              </div>
-              <p className="text-lg font-medium text-foreground">
-                Deploy individually or as a complete security ecosystem. Each app works independently while integrating seamlessly with the others.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/demos'}>
-                <Play className="mr-2 h-5 w-5" />
-                Try Security Demos
-              </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/contact'}>
-                <Shield className="mr-2 h-5 w-5" />
-                Schedule Security Assessment
-              </Button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Security Applications Grid */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-foreground">
-              AI-Powered Security Applications
-            </h2>
-            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-              Each application is designed to address specific security challenges while providing 
-              intelligent automation and real-time threat detection capabilities.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {securityApps.map((app) => {
-              const Icon = app.icon;
-              return (
-                <Card key={app.id} className={`hover:shadow-xl transition-all duration-300 bg-gradient-to-br ${app.gradient} border-2 hover:border-primary/20 hover:scale-105`}>
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-3 rounded-lg bg-white/80 shadow-sm">
-                        <Icon className="h-8 w-8 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg text-black">{app.name}</CardTitle>
-                        <Badge variant="outline" className="mt-1 text-black border-black/20">
-                          {app.category}
-                        </Badge>
-                      </div>
-                    </div>
-                    <CardDescription className="text-black/80 font-medium">
-                      {app.description}
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-black/70 leading-relaxed">
-                      {app.longDescription}
-                    </p>
-                    
-                    <div>
-                      <h4 className="font-semibold mb-2 text-black">Key Features:</h4>
-                      <ul className="space-y-1">
-                        {(expandedFeatures.has(app.id) ? app.features : app.features.slice(0, 3)).map((feature, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs">
-                            <CheckCircle className="h-3 w-3 text-green-600 flex-shrink-0 mt-0.5" />
-                            <span className="text-black/70">{feature}</span>
-                          </li>
-                        ))}
-                        {app.features.length > 3 && (
-                          <li>
-                            <button 
-                              onClick={() => toggleFeatures(app.id)}
-                              className="text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1 transition-colors"
-                            >
-                              {expandedFeatures.has(app.id) ? (
-                                <>
-                                  <ChevronUp className="h-3 w-3" />
-                                  Show less
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="h-3 w-3" />
-                                  +{app.features.length - 3} more features
-                                </>
-                              )}
-                            </button>
-                          </li>
-                        )}
-                      </ul>
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <Button size="sm" className="flex-1" onClick={() => window.location.href = app.demoUrl}>
-                        <Play className="mr-1 h-3 w-3" />
-                        Demo
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1" onClick={() => window.location.href = app.pageUrl}>
-                        Learn More
-                        <ArrowRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Industries Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-foreground">
-              Built for Your Industry
-            </h2>
-            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-              Our security solutions are designed to meet the specific needs and compliance requirements 
-              of different business types and industries.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {industries.map((industry, index) => {
-              const Icon = industry.icon;
-              return (
-                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300 hover:scale-105">
-                  <CardHeader>
-                    <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+        {/* Stats Section */}
+        <section className="py-16 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {stats.map((stat, index) => {
+                const Icon = stat.icon;
+                return (
+                  <div key={index} className="text-center space-y-4">
+                    <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
                       <Icon className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-xl">{industry.name}</CardTitle>
-                    <CardDescription className="text-base">
-                      {industry.description}
-                    </CardDescription>
-                  </CardHeader>
-                  
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {industry.benefits.map((benefit, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-foreground/70">{benefit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Integration Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-foreground">
-              Seamless Integration & Deployment
-            </h2>
-            <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
-              Deploy as standalone applications or integrate with your existing security stack. 
-              Our solutions work with your current tools and processes.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                title: "API-First Design",
-                description: "RESTful APIs for seamless integration with existing systems",
-                icon: Zap
-              },
-              {
-                title: "SSO Integration",
-                description: "Single sign-on support for streamlined user management",
-                icon: Lock
-              },
-              {
-                title: "Real-Time Alerts",
-                description: "Instant notifications via email, SMS, or webhook",
-                icon: Bell
-              },
-              {
-                title: "Custom Dashboards",
-                description: "Tailored reporting and analytics for your specific needs",
-                icon: BarChart3
-              }
-            ].map((feature, index) => {
-              const Icon = feature.icon;
-              return (
-                <Card key={index} className="text-center hover:shadow-lg transition-all duration-300">
-                  <CardHeader>
-                    <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-foreground/70">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* MSP Upgrade Section */}
-      <section className="py-16 bg-gradient-to-r from-green-50 to-blue-50 border-t border-green-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-gradient-to-r from-green-100 to-blue-100 border-2 border-green-300">
-            <CardContent className="p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div>
-                  <Badge className="mb-4 bg-green-600 hover:bg-green-700">
-                    <Crown className="h-4 w-4 mr-2" />
-                    MSP Partner Program
-                  </Badge>
-                  <h3 className="text-2xl font-bold mb-4">Looking to Scale? Become an MSP Partner</h3>
-                  <p className="text-foreground/80 mb-6">
-                    Deploy these same powerful solutions for multiple clients with our comprehensive MSP platform. 
-                    Multi-tenant architecture, white-label deployment, and new revenue opportunities.
-                  </p>
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">Multi-client management dashboard</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">White-label solutions with your branding</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">Create new revenue streams from AI services</span>
+                    <div>
+                      <div className="text-4xl font-bold text-primary">{stat.value}</div>
+                      <div className="text-foreground/80">{stat.label}</div>
                     </div>
                   </div>
-                </div>
-                <div className="text-center lg:text-right">
-                  <div className="mb-6">
-                    <div className="text-3xl font-bold text-green-600 mb-2">$15K+</div>
-                    <p className="text-sm text-foreground/70">Average monthly revenue increase</p>
-                  </div>
-                  <div className="flex flex-col gap-3">
-                    <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700" onClick={() => handleNavigation('/msp-solutions')}>
-                      <Building className="mr-2 h-4 w-4" />
-                      View MSP Solutions
-                    </Button>
-                    <Button variant="outline" size="lg" onClick={() => handleNavigation('/msps')}>
-                      Learn About MSP Program
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 to-secondary/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20">
-            <CardContent className="p-12 text-center">
-              <h2 className="text-3xl font-bold mb-6">Ready to Secure Your Business?</h2>
-              <p className="text-xl text-foreground/80 mb-8 max-w-3xl mx-auto">
-                Start with individual applications or deploy our complete security suite. 
-                Let's discuss which solutions are right for your business.
+        {/* Company Trust Section */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Trusted by Leading Companies</h2>
+              <p className="text-foreground/80 max-w-2xl mx-auto">
+                Join thousands of businesses that trust UltriumAI for their AI and security needs
               </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 items-center">
+              {companies.map((company, index) => (
+                <div key={index} className="flex items-center justify-center p-4 bg-card rounded-lg hover:shadow-lg transition-shadow">
+                  <img 
+                    src={company.logo} 
+                    alt={company.name}
+                    className="h-8 w-auto opacity-70 hover:opacity-100 transition-opacity"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Use Cases Section */}
+        <section className="py-20 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl font-bold mb-4">AI Solutions by Industry</h2>
+                <p className="text-foreground/80 max-w-2xl mx-auto">
+                  Discover how UltriumAI transforms businesses across different sectors
+                </p>
+              </div>
+
+              {/* Industry Filter */}
+              <div className="flex flex-wrap justify-center gap-4 mb-12">
+                {industries.map((industry) => {
+                  const Icon = industry.icon;
+                  return (
+                    <Button
+                      key={industry.id}
+                      variant={selectedIndustry === industry.id ? "default" : "outline"}
+                      onClick={() => setSelectedIndustry(industry.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <Icon className="h-4 w-4" />
+                      {industry.name}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {/* Use Cases Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredUseCases.map((useCase, index) => {
+                  const Icon = useCase.icon;
+                  return (
+                    <Card key={index} className="hover:shadow-lg transition-shadow bg-card border border-border">
+                      <CardHeader>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-primary/10 rounded-lg">
+                            <Icon className="h-6 w-6 text-primary" />
+                          </div>
+                          <CardTitle className="text-xl text-card-foreground">{useCase.title}</CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-card-foreground/70 mb-4">{useCase.description}</p>
+                        <ul className="space-y-2">
+                          {useCase.benefits.map((benefit, benefitIndex) => (
+                            <li key={benefitIndex} className="flex items-center gap-2 text-sm text-card-foreground/80">
+                              <CheckCircle className="h-4 w-4 text-success" />
+                              {benefit}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Customer Success Story */}
+        <section className="py-20 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20 bg-card border border-border">
+                <CardContent className="p-8">
+                  <div className="text-center space-y-6">
+                    <div className="flex justify-center mb-6">
+                      <div className="flex -space-x-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className="h-6 w-6 text-yellow-400 fill-current" />
+                        ))}
+                      </div>
+                    </div>
+                    <blockquote className="text-xl italic text-card-foreground">
+                      "UltriumAI transformed our customer service operations. Our response time improved by 75% and customer satisfaction increased by 40%. The AI agents handle complex queries better than we expected."
+                    </blockquote>
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
+                        <User className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-card-foreground">Sarah Johnson</div>
+                        <div className="text-sm text-card-foreground/70">CTO, TechCorp Inc.</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Security Suite Section */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl font-bold mb-4">Complete Security Suite</h2>
+                <p className="text-foreground/80 max-w-2xl mx-auto">
+                  Comprehensive security applications to protect your business from all angles
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {securityApps.map((app, index) => (
+                  <Card key={index} className="hover:shadow-lg transition-shadow bg-card border border-border">
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${app.color}`}></div>
+                        <CardTitle className="text-lg text-card-foreground">{app.name}</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-card-foreground/70 mb-4">{app.description}</p>
+                      <ul className="space-y-2">
+                        {app.features.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-center gap-2 text-sm text-card-foreground/80">
+                            <CheckCircle className="h-4 w-4 text-success" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Industry Benefits */}
+        <section className="py-20 bg-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl font-bold mb-4">Industry-Specific Benefits</h2>
+                <p className="text-foreground/80 max-w-2xl mx-auto">
+                  Tailored solutions that address the unique challenges of your industry
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {industryBenefits.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <Card key={index} className="text-center hover:shadow-lg transition-shadow bg-card border border-border">
+                      <CardHeader>
+                        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                          <Icon className="h-8 w-8 text-primary" />
+                        </div>
+                        <CardTitle className="text-xl text-card-foreground">{item.industry}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-2">
+                          {item.benefits.map((benefit, benefitIndex) => (
+                            <li key={benefitIndex} className="text-sm text-card-foreground/80">
+                              {benefit}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Integration Features */}
+        <section className="py-20 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-16">
+                <h2 className="text-3xl font-bold mb-4">Seamless Integration</h2>
+                <p className="text-foreground/80 max-w-2xl mx-auto">
+                  Connect UltriumAI with your existing tools and workflows
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {integrationFeatures.map((feature, index) => {
+                  const Icon = feature.icon;
+                  return (
+                    <Card key={index} className="text-center hover:shadow-lg transition-shadow bg-card border border-border">
+                      <CardHeader>
+                        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                          <Icon className="h-8 w-8 text-primary" />
+                        </div>
+                        <CardTitle className="text-lg text-card-foreground">{feature.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-card-foreground/70">{feature.description}</p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* MSP Partner Program */}
+        <section className="py-20 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto">
+              <Card className="bg-gradient-to-br from-green-500/10 to-blue-500/10 border-green-500/20 dark:border-green-400/20">
+                <CardContent className="p-8">
+                  <div className="text-center space-y-6">
+                    <Badge className="bg-green-600 text-white px-4 py-2 text-sm font-medium">
+                      <Crown className="h-4 w-4 mr-2" />
+                      MSP Partner Program
+                    </Badge>
+                    
+                    <h2 className="text-3xl font-bold text-foreground">
+                      Looking to Scale? Become an MSP Partner
+                    </h2>
+                    
+                    <p className="text-xl text-foreground/80 max-w-3xl mx-auto">
+                      Join our MSP Partner Program and offer UltriumAI's complete suite to your clients. 
+                      Earn recurring revenue while providing cutting-edge AI and security solutions.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
+                      <div className="text-center">
+                        <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <div className="font-semibold text-foreground">Up to 40% recurring commissions</div>
+                      </div>
+                      <div className="text-center">
+                        <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <div className="font-semibold text-foreground">White-label options with your branding</div>
+                      </div>
+                      <div className="text-center">
+                        <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                        <div className="font-semibold text-foreground">24/7 technical support and training</div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-green-600 mb-2">$15K+</div>
+                      <div className="text-foreground/80">Average monthly recurring revenue per partner</div>
+                    </div>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Button 
+                        size="lg" 
+                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
+                        onClick={() => navigate('/msps')}
+                      >
+                        <FileText className="mr-2 h-5 w-5" />
+                        View MSP Solutions
+                      </Button>
+                      <Button 
+                        size="lg" 
+                        variant="outline" 
+                        className="bg-black text-white hover:bg-gray-800 border-black"
+                        onClick={() => navigate('/msp-program')}
+                      >
+                        Learn About MSP Program
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 bg-gradient-to-r from-primary/10 to-secondary/10">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Business?</h2>
+              <p className="text-xl text-foreground/80 mb-8 max-w-2xl mx-auto">
+                Join thousands of businesses already using UltriumAI to automate processes, 
+                enhance security, and accelerate growth.
+              </p>
+              
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/contact'}>
-                  <Shield className="mr-2 h-5 w-5" />
-                  Get Security Assessment
+                <Button 
+                  size="lg" 
+                  className="text-lg px-8 py-6"
+                  onClick={() => navigate('/pricing')}
+                >
+                  <Star className="mr-2 h-5 w-5" />
+                  Start Free Trial
                 </Button>
-                <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos'}>
-                  <Play className="mr-2 h-5 w-5" />
-                  Try All Demos
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="text-lg px-8 py-6"
+                  onClick={() => navigate('/contact')}
+                >
+                  <Phone className="mr-2 h-5 w-5" />
+                  Schedule Demo
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+            </div>
+          </div>
+        </section>
+      </main>
+      
       <Footer />
     </div>
   );
