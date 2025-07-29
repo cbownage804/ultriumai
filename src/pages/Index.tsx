@@ -102,7 +102,7 @@ const Index = () => {
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">💼 Choose Your Security Victory</h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              <strong>Direct to Business</strong> or <strong>through your MSP</strong> - Every business size gets enterprise-grade protection. 
+              <strong>Buy Direct</strong> or <strong>Partner with us to sell to your clients</strong> - Every business size gets enterprise-grade protection. 
               From startup to Fortune 500, <strong>your competition wishes they had what you're about to get.</strong>
             </p>
           </div>
@@ -305,7 +305,7 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Pricing Path</h2>
-            <p className="text-xl text-muted-foreground">Buy direct or through your MSP - flexible pricing for every business model</p>
+            <p className="text-xl text-muted-foreground">Direct business sales or MSP partner program with high margins</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -350,9 +350,9 @@ const Index = () => {
             <Card className="text-center hover-scale border-2 border-success/30 bg-gradient-to-br from-success/5 to-success/10">
               <CardHeader className="pb-8">
                 <Users className="h-16 w-16 mx-auto mb-4 text-success" />
-                <CardTitle className="text-2xl mb-2">Through Your MSP</CardTitle>
+                <CardTitle className="text-2xl mb-2">MSP Partners</CardTitle>
                 <CardDescription className="text-base">
-                  Get UltriumAI through your trusted MSP partner with their expert support
+                  Partner with us to sell UltriumAI solutions to your clients
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

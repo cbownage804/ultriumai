@@ -187,7 +187,7 @@ const Hero = () => {
 
             {/* Service Provider Solutions */}
             <div>
-              <h3 className="text-xl font-semibold text-foreground mb-4 text-center">Get Through Your MSP Partner</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-4 text-center">MSPs: Sell UltriumAI to Your Clients</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                 <Button 
                   size="lg" 
@@ -195,8 +195,8 @@ const Hero = () => {
                   onClick={() => handleNavigation('/msps')}
                 >
                   <Users className="h-6 w-6" />
-                  <span>MSPs</span>
-                  <span className="text-sm opacity-80">Managed Service Providers</span>
+                  <span>MSP Partners</span>
+                  <span className="text-sm opacity-80">Sell to Your Clients</span>
                 </Button>
                 <Button 
                   size="lg" 
@@ -204,8 +204,8 @@ const Hero = () => {
                   onClick={() => handleNavigation('/mssps')}
                 >
                   <Lock className="h-6 w-6" />
-                  <span>MSSPs</span>
-                  <span className="text-sm opacity-80">Managed Security Service Providers</span>
+                  <span>MSSP Partners</span>
+                  <span className="text-sm opacity-80">Security Service Providers</span>
                 </Button>
               </div>
             </div>
