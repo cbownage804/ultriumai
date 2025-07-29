@@ -10413,6 +10413,47 @@ export type Database = {
           },
         ]
       }
+      ticket_attachments: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          ticket_id: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          ticket_id: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          ticket_id?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_ticket_attachments_ticket_id"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_comments: {
         Row: {
           content: string
@@ -10622,6 +10663,99 @@ export type Database = {
           tags?: string[] | null
           title_template?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tickets: {
+        Row: {
+          actual_hours: number | null
+          assigned_to: string | null
+          billable_hours: number | null
+          category: string
+          client_id: string | null
+          closed_at: string | null
+          created_at: string
+          customer_satisfaction: number | null
+          description: string
+          due_date: string | null
+          estimated_hours: number | null
+          first_response_at: string | null
+          id: string
+          internal_notes: string | null
+          last_activity_at: string
+          metadata: Json | null
+          parent_ticket_id: string | null
+          priority: string
+          resolved_at: string | null
+          sla_due_at: string | null
+          sla_policy_id: string | null
+          source: string
+          status: string
+          tags: string[] | null
+          ticket_number: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          billable_hours?: number | null
+          category?: string
+          client_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_satisfaction?: number | null
+          description: string
+          due_date?: string | null
+          estimated_hours?: number | null
+          first_response_at?: string | null
+          id?: string
+          internal_notes?: string | null
+          last_activity_at?: string
+          metadata?: Json | null
+          parent_ticket_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          sla_policy_id?: string | null
+          source?: string
+          status?: string
+          tags?: string[] | null
+          ticket_number: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          billable_hours?: number | null
+          category?: string
+          client_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_satisfaction?: number | null
+          description?: string
+          due_date?: string | null
+          estimated_hours?: number | null
+          first_response_at?: string | null
+          id?: string
+          internal_notes?: string | null
+          last_activity_at?: string
+          metadata?: Json | null
+          parent_ticket_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          sla_policy_id?: string | null
+          source?: string
+          status?: string
+          tags?: string[] | null
+          ticket_number?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -11145,6 +11279,10 @@ export type Database = {
         Returns: string
       }
       generate_invoice_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_ticket_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
