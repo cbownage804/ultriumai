@@ -1209,6 +1209,211 @@ export type Database = {
         }
         Relationships: []
       }
+      client_feedback: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          feedback_text: string | null
+          id: string
+          is_resolved: boolean | null
+          rating: number | null
+          ticket_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          rating?: number | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          is_resolved?: boolean | null
+          rating?: number | null
+          ticket_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_portal_announcements: {
+        Row: {
+          client_id: string
+          content: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          priority: string
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          content: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: string
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: string
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      client_portal_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_portal_settings: {
+        Row: {
+          allowed_features: Json | null
+          client_id: string
+          created_at: string
+          custom_branding: Json | null
+          custom_domain: string | null
+          id: string
+          portal_enabled: boolean
+          portal_url_slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          allowed_features?: Json | null
+          client_id: string
+          created_at?: string
+          custom_branding?: Json | null
+          custom_domain?: string | null
+          id?: string
+          portal_enabled?: boolean
+          portal_url_slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          allowed_features?: Json | null
+          client_id?: string
+          created_at?: string
+          custom_branding?: Json | null
+          custom_domain?: string | null
+          id?: string
+          portal_enabled?: boolean
+          portal_url_slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      client_portal_users: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_login_at: string | null
+          password_hash: string | null
+          reset_token: string | null
+          reset_token_expires_at: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          password_hash?: string | null
+          reset_token?: string | null
+          reset_token_expires_at?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          password_hash?: string | null
+          reset_token?: string | null
+          reset_token_expires_at?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_users: {
         Row: {
           client_id: string
