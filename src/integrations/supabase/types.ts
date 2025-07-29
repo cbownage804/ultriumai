@@ -1295,6 +1295,237 @@ export type Database = {
         }
         Relationships: []
       }
+      client_portal_kb: {
+        Row: {
+          category: string
+          client_id: string | null
+          content: string
+          created_at: string
+          created_by: string
+          helpful_count: number | null
+          id: string
+          is_featured: boolean | null
+          is_public: boolean | null
+          last_updated_by: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          view_count: number | null
+        }
+        Insert: {
+          category: string
+          client_id?: string | null
+          content: string
+          created_at?: string
+          created_by: string
+          helpful_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          last_updated_by?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Update: {
+          category?: string
+          client_id?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          helpful_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          last_updated_by?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      client_portal_notifications: {
+        Row: {
+          acknowledged_by: Json | null
+          acknowledgment_required: boolean | null
+          action_url: string | null
+          affected_services: string[] | null
+          client_id: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          message: string
+          notification_type: string
+          severity: string
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_by?: Json | null
+          acknowledgment_required?: boolean | null
+          action_url?: string | null
+          affected_services?: string[] | null
+          client_id: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message: string
+          notification_type: string
+          severity?: string
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_by?: Json | null
+          acknowledgment_required?: boolean | null
+          action_url?: string | null
+          affected_services?: string[] | null
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          message?: string
+          notification_type?: string
+          severity?: string
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      client_portal_requests: {
+        Row: {
+          actual_completion_date: string | null
+          approval_notes: string | null
+          assigned_to: string | null
+          attachments: Json | null
+          business_justification: string | null
+          client_id: string
+          created_at: string
+          description: string
+          estimated_cost: number | null
+          id: string
+          metadata: Json | null
+          priority: string
+          rejection_reason: string | null
+          request_type: string
+          requested_by: string
+          requested_completion_date: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_completion_date?: string | null
+          approval_notes?: string | null
+          assigned_to?: string | null
+          attachments?: Json | null
+          business_justification?: string | null
+          client_id: string
+          created_at?: string
+          description: string
+          estimated_cost?: number | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          rejection_reason?: string | null
+          request_type: string
+          requested_by: string
+          requested_completion_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_completion_date?: string | null
+          approval_notes?: string | null
+          assigned_to?: string | null
+          attachments?: Json | null
+          business_justification?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string
+          estimated_cost?: number | null
+          id?: string
+          metadata?: Json | null
+          priority?: string
+          rejection_reason?: string | null
+          request_type?: string
+          requested_by?: string
+          requested_completion_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      client_portal_services: {
+        Row: {
+          client_id: string
+          contract_end_date: string | null
+          created_at: string
+          documentation_url: string | null
+          id: string
+          is_billable: boolean | null
+          last_check_at: string | null
+          monthly_cost: number | null
+          service_contacts: Json | null
+          service_description: string | null
+          service_health: number | null
+          service_metrics: Json | null
+          service_name: string
+          service_status: string
+          service_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          contract_end_date?: string | null
+          created_at?: string
+          documentation_url?: string | null
+          id?: string
+          is_billable?: boolean | null
+          last_check_at?: string | null
+          monthly_cost?: number | null
+          service_contacts?: Json | null
+          service_description?: string | null
+          service_health?: number | null
+          service_metrics?: Json | null
+          service_name: string
+          service_status?: string
+          service_type: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          contract_end_date?: string | null
+          created_at?: string
+          documentation_url?: string | null
+          id?: string
+          is_billable?: boolean | null
+          last_check_at?: string | null
+          monthly_cost?: number | null
+          service_contacts?: Json | null
+          service_description?: string | null
+          service_health?: number | null
+          service_metrics?: Json | null
+          service_name?: string
+          service_status?: string
+          service_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_portal_sessions: {
         Row: {
           created_at: string
