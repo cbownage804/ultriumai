@@ -118,6 +118,7 @@ import { CustomerPortal } from '@/pages/CustomerPortal';
 import { ClientLogin } from '@/pages/ClientLogin';
 import { AuthProvider } from '@/hooks/useAuth';
 import AssetManagementPage from '@/pages/AssetManagementPage';
+import PatchManagementPage from '@/pages/PatchManagementPage';
 
 import { UnifiedAIAssistant } from '@/components/UnifiedAIAssistant';
 import { Loader2 } from 'lucide-react';
@@ -450,6 +451,11 @@ function AppRouter() {
         <Route path="/assets" element={
           <ProtectedRoute>
             <AssetManagementPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/patches" element={
+          <ProtectedRoute>
+            <PatchManagementPage />
           </ProtectedRoute>
         } />
         
