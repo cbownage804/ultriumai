@@ -275,20 +275,20 @@ const MSPConsole = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Weak Passwords</span>
-                    <span className="text-sm font-bold text-warning">{report?.weak_passwords || 0}</span>
+                    <span className="text-sm font-bold text-warning">0</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Reused Passwords</span>
-                    <span className="text-sm font-bold text-warning">{report?.reused_passwords || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Breached Passwords</span>
-                    <span className="text-sm font-bold text-destructive">{report?.breached_passwords || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Compliant Clients</span>
-                    <span className="text-sm font-bold text-success">{report?.compliant_clients || 0}</span>
-                  </div>
+                   <div className="flex items-center justify-between">
+                     <span className="text-sm font-medium">Reused Passwords</span>
+                     <span className="text-sm font-bold text-warning">0</span>
+                   </div>
+                   <div className="flex items-center justify-between">
+                     <span className="text-sm font-medium">Breached Passwords</span>
+                     <span className="text-sm font-bold text-destructive">0</span>
+                   </div>
+                   <div className="flex items-center justify-between">
+                     <span className="text-sm font-medium">Compliant Clients</span>
+                     <span className="text-sm font-bold text-success">0</span>
+                   </div>
                 </div>
               </CardContent>
             </Card>
@@ -353,18 +353,18 @@ const MSPConsole = () => {
                     {vaults?.map((vault) => (
                       <TableRow key={vault.id}>
                         <TableCell className="font-medium">{vault.client_name || 'Unknown Client'}</TableCell>
-                        <TableCell>{vault.user_count || 0}</TableCell>
-                        <TableCell>{vault.vault_count || 1}</TableCell>
+                         <TableCell>0</TableCell>
+                         <TableCell>1</TableCell>
                         <TableCell>
                           <span className={getSecurityScoreColor(vault.security_score || 0)}>
                             {vault.security_score || 0}%
                           </span>
                         </TableCell>
-                        <TableCell>
-                          <Badge className={vault.status === 'active' ? 'bg-success' : 'bg-muted'}>
-                            {vault.status || 'active'}
-                          </Badge>
-                        </TableCell>
+                         <TableCell>
+                           <Badge className="bg-success">
+                             active
+                           </Badge>
+                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
                             <Button size="sm" variant="outline">
