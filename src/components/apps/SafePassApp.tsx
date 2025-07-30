@@ -53,6 +53,8 @@ import {
 } from "lucide-react";
 import { useSafePass, PasswordEntry, PasswordVault } from "@/hooks/useSafePass";
 import { useToast } from "@/hooks/use-toast";
+import { MasterPasswordSetup } from "@/components/safepass/MasterPasswordSetup";
+import { SecurePasswordGenerator } from "@/components/safepass/SecurePasswordGenerator";
 
 interface SafePassAppProps {
   isWhiteLabeled?: boolean;
@@ -74,10 +76,12 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     deleteEntry,
     generatePassword,
     calculatePasswordStrength,
+    masterPassword,
     getEntryName,
     getEntryUsername,
     getEntryWebsite,
     getEntryPassword,
+    getEntryNotes,
     getEntryStrengthScore,
     isEntryShared,
     getVaultName
@@ -91,6 +95,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   const [showCreateVault, setShowCreateVault] = useState(false);
   const [showCreateEntry, setShowCreateEntry] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<PasswordEntry | null>(null);
+  const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);
   
   const { toast } = useToast();
 
@@ -213,6 +218,44 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   const sharedEntries = 0; // Not implemented in current schema
   const categories = Array.from(new Set(entries.map(e => e.category)));
 
+  // Show master password setup if not set
+  if (!masterPassword.hasUserSetMasterPassword()) {
+    return (
+      <div className="flex items-center justify-center min-h-[600px] p-6">
+        <MasterPasswordSetup
+          onMasterPasswordSet={masterPassword.setMasterPassword}
+          isCreating={true}
+          title="Setup SafePass Vault"
+          description="Create a master password to encrypt and secure all your passwords."
+        />
+      </div>
+    );
+  }
+
+  // Show unlock screen if locked
+  if (!masterPassword.isUnlocked) {
+    return (
+      <div className="flex items-center justify-center min-h-[600px] p-6">
+        <MasterPasswordSetup
+          onMasterPasswordSet={async (password) => {
+            const result = await masterPassword.unlockWithPassword(password);
+            if (!result.success && result.error) {
+              toast({
+                title: "Unlock Failed",
+                description: result.error,
+                variant: "destructive",
+              });
+            }
+          }}
+          onCancel={() => {}}
+          isCreating={false}
+          title="Unlock SafePass Vault"
+          description="Enter your master password to access your secure vault."
+        />
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -235,6 +278,14 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => masterPassword.lock()}
+            size="sm"
+          >
+            <Lock className="h-4 w-4 mr-2" />
+            Lock Vault
+          </Button>
           <Dialog open={showCreateVault} onOpenChange={setShowCreateVault}>
             <DialogTrigger asChild>
               <Button variant="outline">
@@ -345,8 +396,12 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                       onChange={(e) => setEntryForm(prev => ({ ...prev, password: e.target.value }))}
                       placeholder="Enter password"
                     />
-                    <Button onClick={handleGeneratePassword} disabled={isGenerating}>
-                      {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    <Button 
+                      onClick={() => setShowPasswordGenerator(true)} 
+                      variant="outline"
+                      type="button"
+                    >
+                      <RefreshCw className="h-4 w-4" />
                     </Button>
                   </div>
                   {entryForm.password && (
@@ -376,6 +431,25 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
           </Dialog>
         </div>
       </div>
+
+      {/* Password Generator Dialog */}
+      <Dialog open={showPasswordGenerator} onOpenChange={setShowPasswordGenerator}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Password Generator</DialogTitle>
+            <DialogDescription>
+              Generate secure passwords and passphrases
+            </DialogDescription>
+          </DialogHeader>
+          <SecurePasswordGenerator
+            onPasswordSelect={(password) => {
+              setEntryForm(prev => ({ ...prev, password }));
+              setShowPasswordGenerator(false);
+            }}
+            embedded={true}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -487,14 +561,12 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                   </div>
                   <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                     <SelectTrigger className="w-32">
-                      <SelectValue />
+                      <SelectValue placeholder="Category" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -502,26 +574,13 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
               </div>
             </CardHeader>
             <CardContent>
-              {filteredEntries.length === 0 ? (
-                <div className="text-center py-8">
-                  <Key className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No password entries</h3>
-                  <p className="text-muted-foreground mb-4">
-                    {selectedVault ? "This vault is empty" : "You haven't created any password entries yet"}
-                  </p>
-                  <Button onClick={() => setShowCreateEntry(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create First Entry
-                  </Button>
-                </div>
-              ) : (
+              <ScrollArea className="h-[500px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Username</TableHead>
                       <TableHead>Website</TableHead>
-                      <TableHead>Category</TableHead>
                       <TableHead>Strength</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -529,34 +588,21 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                   <TableBody>
                     {filteredEntries.map((entry) => (
                       <TableRow key={entry.id}>
-                        <TableCell className="font-medium">{getEntryName(entry)}</TableCell>
-                        <TableCell>
+                        <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
-                            <span>{getEntryUsername(entry) || '-'}</span>
-                            {getEntryUsername(entry) && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => copyToClipboard(getEntryUsername(entry))}
-                              >
-                                <Copy className="h-3 w-3" />
-                              </Button>
-                            )}
+                            {entry.category === 'Banking' && <Key className="h-4 w-4 text-green-600" />}
+                            {entry.category === 'Work' && <Folder className="h-4 w-4 text-blue-600" />}
+                            {entry.category === 'Personal' && <User className="h-4 w-4 text-purple-600" />}
+                            {entry.category === 'Social' && <Globe className="h-4 w-4 text-orange-600" />}
+                            {entry.category === 'General' && <Key className="h-4 w-4 text-gray-600" />}
+                            {getEntryName(entry)}
                           </div>
                         </TableCell>
-                        <TableCell>
-                          {getEntryWebsite(entry) ? (
-                            <a href={getEntryWebsite(entry)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                              {getEntryWebsite(entry)}
-                            </a>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{entry.category}</Badge>
-                        </TableCell>
+                        <TableCell>{getEntryUsername(entry)}</TableCell>
+                        <TableCell>{getEntryWebsite(entry)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Progress value={getEntryStrengthScore(entry)} className="w-16" />
+                            <Progress value={getEntryStrengthScore(entry)} className="w-16 h-2" />
                             <span className="text-sm">{getEntryStrengthScore(entry)}%</span>
                           </div>
                         </TableCell>
@@ -565,35 +611,29 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                if (showPassword === entry.id) {
-                                  setShowPassword(null);
-                                } else {
-                                  setShowPassword(entry.id);
-                                }
-                              }}
+                              onClick={() => copyToClipboard(getEntryPassword(entry))}
                             >
-                              {showPassword === entry.id ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                              <Copy className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => copyToClipboard(getEntryPassword(entry))}
+                              onClick={() => setShowPassword(showPassword === entry.id ? null : entry.id)}
                             >
-                              <Copy className="h-3 w-3" />
+                              {showPassword === entry.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-3 w-3" />
+                                  <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent>
-                                <DropdownMenuItem onClick={() => setSelectedEntry(entry)}>
+                                <DropdownMenuItem>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => deleteEntry(entry.id)}
                                   className="text-red-600"
                                 >
@@ -603,17 +643,17 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
-                          {showPassword === entry.id && (
-                            <div className="mt-2 p-2 bg-muted rounded text-sm font-mono">
-                              {getEntryPassword(entry)}
-                            </div>
-                          )}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              )}
+                {filteredEntries.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No password entries found</p>
+                  </div>
+                )}
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>

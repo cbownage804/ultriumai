@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useMasterPassword } from '@/hooks/useMasterPassword';
+import { encryptData, decryptData, EncryptedData } from '@/utils/crypto';
 
 export interface PasswordVault {
   id: string;
@@ -62,6 +64,7 @@ export const useSafePass = () => {
   
   const { user } = useAuth();
   const { toast } = useToast();
+  const masterPassword = useMasterPassword();
 
   // Load vaults
   const loadVaults = async () => {
@@ -171,18 +174,21 @@ export const useSafePass = () => {
     notes?: string;
     tags?: string[];
   }) => {
-    if (!user) return null;
+    if (!user || !masterPassword.isUnlocked) return null;
 
     try {
       // Calculate password strength
       const strength = calculatePasswordStrength(entryData.password);
       
-      // Encrypt password data (in real implementation, this would be done server-side)
-      const encryptedData = {
-        username: entryData.username,
-        password: btoa(entryData.password), // Simple base64 for demo
-        website: entryData.website
-      };
+      // Encrypt password data using master password
+      const dataToEncrypt = JSON.stringify({
+        username: entryData.username || '',
+        password: entryData.password,
+        website: entryData.website || '',
+        notes: entryData.notes || ''
+      });
+      
+      const encryptedData = await encryptData(dataToEncrypt, masterPassword.masterPassword!);
 
       const { data, error } = await supabase
         .from('safepass_entries')
@@ -401,17 +407,64 @@ export const useSafePass = () => {
     }
   }, [selectedVault]);
 
-  // Helper functions for backward compatibility
+  // Helper functions for backward compatibility with encryption/decryption
   const getEntryName = (entry: PasswordEntry) => entry.title;
-  const getEntryUsername = (entry: PasswordEntry) => entry.encrypted_data?.username || '';
-  const getEntryWebsite = (entry: PasswordEntry) => entry.url || entry.encrypted_data?.website || '';
-  const getEntryPassword = (entry: PasswordEntry) => {
+  
+  const getEntryUsername = (entry: PasswordEntry) => {
+    if (!masterPassword.isUnlocked) return '[Locked]';
     try {
-      return atob(entry.encrypted_data?.password || '');
+      if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
+        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        return decryptedData;
+      }
+      return entry.encrypted_data?.username || '';
     } catch {
-      return '';
+      return '[Decryption Error]';
     }
   };
+  
+  const getEntryWebsite = (entry: PasswordEntry) => {
+    if (!masterPassword.isUnlocked) return '[Locked]';
+    try {
+      if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
+        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        const parsed = JSON.parse(decryptedData);
+        return parsed.website || entry.url || '';
+      }
+      return entry.url || entry.encrypted_data?.website || '';
+    } catch {
+      return '[Decryption Error]';
+    }
+  };
+  
+  const getEntryPassword = (entry: PasswordEntry) => {
+    if (!masterPassword.isUnlocked) return '[Locked]';
+    try {
+      if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
+        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        const parsed = JSON.parse(decryptedData);
+        return parsed.password || '';
+      }
+      return atob(entry.encrypted_data?.password || '');
+    } catch {
+      return '[Decryption Error]';
+    }
+  };
+  
+  const getEntryNotes = (entry: PasswordEntry) => {
+    if (!masterPassword.isUnlocked) return '[Locked]';
+    try {
+      if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
+        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        const parsed = JSON.parse(decryptedData);
+        return parsed.notes || '';
+      }
+      return entry.notes || '';
+    } catch {
+      return '[Decryption Error]';
+    }
+  };
+  
   const getEntryStrengthScore = (entry: PasswordEntry) => entry.password_strength_score;
   const isEntryShared = (entry: PasswordEntry) => false; // Not implemented in current schema
   const getVaultName = (vault: PasswordVault) => vault.vault_name;
@@ -432,11 +485,14 @@ export const useSafePass = () => {
     loadVaults,
     loadEntries,
     loadAuditLogs,
+    // Master password integration
+    masterPassword,
     // Helper functions
     getEntryName,
     getEntryUsername,
     getEntryWebsite,
     getEntryPassword,
+    getEntryNotes,
     getEntryStrengthScore,
     isEntryShared,
     getVaultName
