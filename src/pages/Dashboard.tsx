@@ -62,6 +62,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
+import { useOnboarding } from "@/hooks/useOnboarding";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
 import { AIIntelligenceHub } from "@/components/AIIntelligenceHub";
 import { AIVoiceInterface } from "@/components/AIVoiceInterface";
@@ -73,6 +75,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isMSP, isMSSP, shouldRedirectToRole, getRedirectPath } = useRoleBasedRedirect();
+  const { needsOnboarding, loading: onboardingLoading, completeOnboarding } = useOnboarding();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -103,6 +106,11 @@ const Dashboard = () => {
 
   if (!user) {
     return null;
+  }
+
+  // Show onboarding flow if needed
+  if (!onboardingLoading && needsOnboarding && location.pathname === '/dashboard') {
+    return <OnboardingFlow onComplete={completeOnboarding} />;
   }
 
   // Determine which page to show based on the path

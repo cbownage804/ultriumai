@@ -6,211 +6,285 @@ import { SubscriptionStatus } from "@/components/SubscriptionStatus";
 import { CreditUsageDisplay } from "@/components/CreditUsageDisplay";
 import { SubscriptionTestSuite } from "@/components/SubscriptionTestSuite";
 import { useAuth } from "@/hooks/useAuth";
-import { useCustomGPTs } from "@/hooks/useCustomGPTs";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserCredits } from "@/hooks/useUserCredits";
-import { Bot, MessageSquare, Users, TrendingUp, Star, Zap, Clock, Database, Send, Shield } from "lucide-react";
+import { 
+  Shield, 
+  TrendingUp, 
+  Users, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock,
+  Lock,
+  Mail,
+  Globe,
+  Database,
+  Zap,
+  Bot,
+  MessageSquare,
+  Star,
+  Activity,
+  Search,
+  FileText,
+  Settings,
+  BarChart3,
+  Scan
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import ChatInterface from "@/components/ChatInterface";
 
 export const DashboardOverview = () => {
   const { user } = useAuth();
-  const { gpts } = useCustomGPTs();
-  const { subscription } = useSubscription();
-  const { credits } = useUserCredits();
+  const { profile, credits, subscription, loading } = useUserProfile();
+  const { remainingCredits, usagePercentage } = useUserCredits();
   const navigate = useNavigate();
 
-  const activeGPTs = gpts.filter(gpt => gpt.is_active).length;
-  const totalChats = gpts.reduce((sum, gpt) => sum + gpt.chat_count, 0);
-  const creditsUsed = credits?.credits_used || 0;
-  const creditsLimit = credits?.credits_limit || 100;
-  const creditsPercentage = (creditsUsed / creditsLimit) * 100;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    return 'evening';
+  };
+
+  const securityScore = 85; // Mock data - will be calculated from real security metrics
+  const threatsBlocked = 147; // Mock data
+  const activeScans = 3; // Mock data
 
   const quickActions = [
     {
-      title: "Open UltriumGPT",
-      description: "Launch AI assistant",
-      icon: Bot,
-      action: () => navigate("/dashboard/ultrium-gpt"),
-      color: "bg-gradient-to-r from-primary to-primary/80",
+      title: "Run Security Scan",
+      description: "Comprehensive security audit",
+      icon: Scan,
+      action: () => navigate("/dashboard/safescan"),
+      color: "bg-primary",
       featured: true,
     },
     {
-      title: "Create New GPT",
-      description: "Build a custom AI assistant",
-      icon: Bot,
-      action: () => navigate("/dashboard/gpt/build"),
+      title: "SafePass Manager",
+      description: "Manage passwords securely",
+      icon: Lock,
+      action: () => navigate("/dashboard/safepass"),
       color: "bg-blue-500",
     },
     {
-      title: "View Templates",
-      description: "Browse GPT templates",
-      icon: Star,
-      action: () => navigate("/dashboard/templates"),
-      color: "bg-purple-500",
-    },
-    {
-      title: "Chat History",
-      description: "View conversation history",
-      icon: MessageSquare,
-      action: () => navigate("/dashboard/history"),
+      title: "Email Security",
+      description: "Monitor email threats",
+      icon: Mail,
+      action: () => navigate("/dashboard/safemail"),
       color: "bg-green-500",
     },
     {
-      title: "Analytics",
-      description: "View usage analytics",
-      icon: TrendingUp,
-      action: () => navigate("/dashboard/analytics"),
+      title: "Network Monitor",
+      description: "Network security status",
+      icon: Globe,
+      action: () => navigate("/dashboard/safenet"),
+      color: "bg-purple-500",
+    },
+    {
+      title: "UltriumGPT",
+      description: "AI security assistant",
+      icon: Bot,
+      action: () => navigate("/dashboard/ultrium-gpt"),
       color: "bg-orange-500",
     },
     {
-      title: "Security Center",
-      description: "Monitor security status",
-      icon: Shield,
-      action: () => navigate("/security-dashboard"),
+      title: "Security Settings",
+      description: "Configure security",
+      icon: Settings,
+      action: () => navigate("/dashboard/security"),
       color: "bg-red-500",
     },
   ];
 
   const recentActivity = [
-    { action: "Created GPT 'Customer Support Bot'", time: "2 hours ago", type: "create" },
-    { action: "Deployed Marketing Assistant", time: "1 day ago", type: "deploy" },
-    { action: "Updated Knowledge Base", time: "2 days ago", type: "update" },
-    { action: "API key generated", time: "3 days ago", type: "api" },
+    { action: "Security scan completed", time: "2 hours ago", type: "scan", status: "success" },
+    { action: "Password breach detected", time: "1 day ago", type: "breach", status: "warning" },
+    { action: "Email threat blocked", time: "2 days ago", type: "block", status: "success" },
+    { action: "Network device discovered", time: "3 days ago", type: "discovery", status: "info" },
   ];
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Welcome Section */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
-        </h1>
-        <p className="text-muted-foreground">
-          Manage your AI assistants and explore UltriumGPT's powerful capabilities.
-        </p>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Welcome Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold">
+            Good {getTimeOfDay()}, {profile?.full_name || user?.email?.split('@')[0]}!
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Welcome to your UltriumAI security dashboard
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge variant="outline" className="text-sm">
+            {subscription?.subscription_tier || 'Free'} Plan
+          </Badge>
+          {subscription?.subscribed && (
+            <Badge variant="default" className="text-sm">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Active
+            </Badge>
+          )}
+        </div>
       </div>
 
-      {/* UltriumGPT Feature Highlight */}
-      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-lg bg-gradient-to-r from-primary to-primary/80">
-              <Bot className="h-8 w-8 text-white" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl">UltriumGPT AI Assistant</CardTitle>
-              <CardDescription className="text-base">
-                Your intelligent co-pilot for cybersecurity, operations, and business intelligence
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-4 mb-6">
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
-              <MessageSquare className="h-6 w-6 text-primary" />
-              <div>
-                <div className="font-medium">Smart Chat</div>
-                <div className="text-sm text-muted-foreground">Intelligent Q&A with memory</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
-              <Database className="h-6 w-6 text-primary" />
-              <div>
-                <div className="font-medium">Web Browsing</div>
-                <div className="text-sm text-muted-foreground">Real-time information access</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
-              <TrendingUp className="h-6 w-6 text-primary" />
-              <div>
-                <div className="font-medium">Auto Reports</div>
-                <div className="text-sm text-muted-foreground">Generate insights & summaries</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 rounded-lg bg-background/50 border">
-              <Shield className="h-6 w-6 text-primary" />
-              <div>
-                <div className="font-medium">Security Focus</div>
-                <div className="text-sm text-muted-foreground">Cybersecurity expertise</div>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button 
-              size="lg"
-              className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
-              onClick={() => navigate("/dashboard/ultrium-gpt")}
-            >
-              <Bot className="h-5 w-5 mr-2" />
-              Open UltriumGPT
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => navigate("/ultrium-gpt")}
-            >
-              Learn More
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+      {/* Key Metrics Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-l-4 border-l-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active GPTs</CardTitle>
-            <Bot className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
+            <Shield className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activeGPTs}</div>
-            <p className="text-xs text-muted-foreground">
-              {gpts.length - activeGPTs} inactive
+            <div className="text-2xl font-bold text-primary">{securityScore}/100</div>
+            <div className="mt-2">
+              <Progress value={securityScore} className="h-2" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              +5 from last week
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Conversations</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Threats Blocked</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalChats}</div>
+            <div className="text-2xl font-bold text-green-600">{threatsBlocked}</div>
             <p className="text-xs text-muted-foreground">
-              Across all GPTs
+              This month
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Credits Used</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Active Scans</CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{creditsUsed}</div>
-            <Progress value={creditsPercentage} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">
-              {creditsLimit - creditsUsed} remaining
+            <div className="text-2xl font-bold text-blue-600">{activeScans}</div>
+            <p className="text-xs text-muted-foreground">
+              Running now
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Subscription</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Credits Remaining</CardTitle>
+            <Zap className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold capitalize">
-              {subscription.subscription_tier || 'Free'}
+            <div className="text-2xl font-bold text-purple-600">
+              {remainingCredits || (credits?.credits_limit || 0) - (credits?.credits_used || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Plan status
+            <div className="mt-2">
+              <Progress value={100 - (usagePercentage || 0)} className="h-2" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {Math.round(100 - (usagePercentage || 0))}% remaining
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Security Services Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Shield className="h-5 w-5" />
+              <span>Security Services</span>
+            </CardTitle>
+            <CardDescription>
+              Overview of your active security tools
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Lock className="h-8 w-8 text-primary" />
+                <div>
+                  <h3 className="font-semibold">SafePass</h3>
+                  <p className="text-sm text-muted-foreground">Password Manager</p>
+                </div>
+              </div>
+              <Badge variant="outline">Active</Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Mail className="h-8 w-8 text-blue-500" />
+                <div>
+                  <h3 className="font-semibold">SafeMail</h3>
+                  <p className="text-sm text-muted-foreground">Email Security</p>
+                </div>
+              </div>
+              <Badge variant="outline">Active</Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Globe className="h-8 w-8 text-green-500" />
+                <div>
+                  <h3 className="font-semibold">SafeWeb</h3>
+                  <p className="text-sm text-muted-foreground">Web Protection</p>
+                </div>
+              </div>
+              <Badge variant="outline">Active</Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div className="flex items-center space-x-3">
+                <Database className="h-8 w-8 text-purple-500" />
+                <div>
+                  <h3 className="font-semibold">SafeNet</h3>
+                  <p className="text-sm text-muted-foreground">Network Security</p>
+                </div>
+              </div>
+              <Badge variant="outline">Active</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Clock className="h-5 w-5" />
+              <span>Recent Activity</span>
+            </CardTitle>
+            <CardDescription>
+              Latest security events and updates
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
+                <div className={`h-5 w-5 mt-0.5 ${
+                  activity.status === 'success' ? 'text-green-500' :
+                  activity.status === 'warning' ? 'text-yellow-500' :
+                  activity.status === 'error' ? 'text-red-500' : 'text-blue-500'
+                }`}>
+                  {activity.status === 'success' && <CheckCircle className="h-5 w-5" />}
+                  {activity.status === 'warning' && <AlertTriangle className="h-5 w-5" />}
+                  {activity.status === 'info' && <Activity className="h-5 w-5" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{activity.action}</p>
+                  <p className="text-xs text-muted-foreground">{activity.time}</p>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
@@ -220,11 +294,11 @@ export const DashboardOverview = () => {
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
           <CardDescription>
-            Get started with common tasks
+            Common security tasks and operations
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
@@ -247,113 +321,6 @@ export const DashboardOverview = () => {
         </CardContent>
       </Card>
 
-      {/* Chat Interface for Active GPT */}
-      {gpts.length > 0 && gpts[0].is_active && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Chat with {gpts[0].name}
-            </CardTitle>
-            <CardDescription>
-              Quick access to your AI assistant
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ChatInterface />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent GPTs */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              Recent GPTs
-            </CardTitle>
-            <CardDescription>
-              Your latest AI assistants
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {gpts.slice(0, 4).map((gpt) => (
-                <div key={gpt.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    {gpt.logo_url ? (
-                      <img src={gpt.logo_url} alt={gpt.name} className="w-8 h-8 rounded" />
-                    ) : (
-                      <div 
-                        className="w-8 h-8 rounded flex items-center justify-center text-white text-sm font-medium"
-                        style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}
-                      >
-                        {gpt.name.charAt(0)}
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium">{gpt.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {gpt.chat_count} conversations
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant={gpt.is_active ? "default" : "secondary"}>
-                    {gpt.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-              ))}
-              {gpts.length === 0 && (
-                <div className="text-center py-8">
-                  <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No GPTs Yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create your first AI assistant to get started.
-                  </p>
-                  <Button onClick={() => navigate("/dashboard/custom-gpts/build")}>
-                    Create Your First GPT
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Recent Activity
-            </CardTitle>
-            <CardDescription>
-              Latest actions on your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
-                  <div className="p-1.5 rounded-full bg-muted">
-                    {activity.type === 'create' && <Bot className="h-3 w-3" />}
-                    {activity.type === 'deploy' && <TrendingUp className="h-3 w-3" />}
-                    {activity.type === 'update' && <Database className="h-3 w-3" />}
-                    {activity.type === 'api' && <Zap className="h-3 w-3" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{activity.action}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Subscription Management Section */}
       <div className="grid gap-6 lg:grid-cols-2">
         <SubscriptionStatus />
@@ -361,12 +328,12 @@ export const DashboardOverview = () => {
       </div>
 
       {/* Testing & Development Tools */}
-      {(user?.email?.includes('@ultriumai.com') || subscription.subscription_tier === 'enterprise') && (
+      {(user?.email?.includes('@ultriumai.com') || subscription?.subscription_tier === 'enterprise') && (
         <SubscriptionTestSuite />
       )}
 
       {/* Upgrade Prompts */}
-      {subscription.subscription_tier === "free" && (
+      {(subscription?.subscription_tier === "free" || !subscription?.subscribed) && (
         <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
@@ -374,7 +341,7 @@ export const DashboardOverview = () => {
               Upgrade to Premium
             </CardTitle>
             <CardDescription className="text-purple-600 dark:text-purple-400">
-              Unlock advanced features and increased limits
+              Unlock advanced security features and increased limits
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -385,10 +352,10 @@ export const DashboardOverview = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">Unlimited</div>
-                <div className="text-sm text-purple-600 dark:text-purple-400">Custom GPTs</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">Security Scans</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">Premium</div>
+                <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">Advanced</div>
                 <div className="text-sm text-purple-600 dark:text-purple-400">Security Tools</div>
               </div>
             </div>
