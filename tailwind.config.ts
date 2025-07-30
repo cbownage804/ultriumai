@@ -294,22 +294,38 @@ export default {
 		require("tailwindcss-animate"),
 		function({ addUtilities }: any) {
 			const newUtilities = {
-				// Interactive Elements
 				'.story-link': {
-					'@apply': 'relative inline-block after:content-[""] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left'
+					position: 'relative',
+					display: 'inline-block',
+					'&::after': {
+						content: '""',
+						position: 'absolute',
+						width: '100%',
+						transform: 'scaleX(0)',
+						height: '2px',
+						bottom: '0',
+						left: '0',
+						backgroundColor: 'hsl(var(--primary))',
+						transformOrigin: 'bottom right',
+						transition: 'transform 0.3s ease',
+					},
+					'&:hover::after': {
+						transform: 'scaleX(1)',
+						transformOrigin: 'bottom left',
+					},
 				},
-				
-				// Hover Scale Animation
 				'.hover-scale': {
-					'@apply': 'transition-transform duration-200 hover:scale-105'
+					transition: 'transform 0.2s ease',
+					'&:hover': {
+						transform: 'scale(1.05)',
+					},
 				},
-				
-				// Hover Glow Effect
 				'.hover-glow': {
-					'@apply': 'transition-all duration-300 hover:shadow-lg hover:shadow-primary/25'
+					transition: 'all 0.3s ease',
+					'&:hover': {
+						boxShadow: '0 10px 25px -5px hsl(var(--primary) / 0.25)',
+					},
 				},
-				
-				// Stagger Animation Delays
 				'.stagger-1': { 'animation-delay': '0.1s' },
 				'.stagger-2': { 'animation-delay': '0.2s' },
 				'.stagger-3': { 'animation-delay': '0.3s' },
