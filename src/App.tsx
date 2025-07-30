@@ -15,7 +15,7 @@ import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
 import Analytics from '@/pages/Analytics';
-import Auth from '@/pages/Auth';
+import AuthPage from '@/pages/AuthPage';
 import Dashboard from '@/pages/Dashboard';
 import GPTChat from '@/pages/GPTChat';
 import NotFound from '@/pages/NotFound';
@@ -184,7 +184,7 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/agent" element={<Agent />} />
-        <Route path="/auth" element={user ? <RoleBasedRedirect /> : <Auth />} />
+        <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/msp-pricing" element={<MSPPricing />} />
         <Route path="/contact" element={<Contact />} />

@@ -24,7 +24,10 @@ import {
   UserCheck
 } from 'lucide-react';
 
+import { useAuth } from '@/hooks/useAuth';
+
 export const SafePassDemo = () => {
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState('vault');
   const [showPassword, setShowPassword] = useState({});
 
@@ -94,6 +97,14 @@ export const SafePassDemo = () => {
       <div className="text-center mb-6">
         <h3 className="text-2xl font-bold text-foreground mb-2">🔐 SafePass Identity & Password Management</h3>
         <p className="text-muted-foreground">Enterprise-grade password security with breach monitoring</p>
+        {user && profile && (
+          <div className="mt-2 px-4 py-2 bg-primary/10 rounded-lg inline-block">
+            <p className="text-sm text-primary">
+              Welcome back, <strong>{profile.full_name || profile.email}</strong>
+              {profile.company_name && ` from ${profile.company_name}`}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Navigation Tabs */}

@@ -1,41 +1,65 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  profile: Profile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName?: string, companyName?: string) => Promise<{ error: any }>;
-  signOut: () => Promise<void>;
+  signUp: (email: string, password: string, metadata?: any) => Promise<{ error: any }>;
+  signOut: () => Promise<{ error: any }>;
+  updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
+  profile: null,
   loading: true,
   signIn: async () => ({ error: null }),
   signUp: async () => ({ error: null }),
-  signOut: async () => {},
+  signOut: async () => ({ error: null }),
+  updateProfile: async () => ({ error: null }),
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Fetch user profile
+          setTimeout(async () => {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .single();
+            
+            setProfile(profileData);
+          }, 0);
+        } else {
+          setProfile(null);
+        }
+        
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -58,7 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName?: string, companyName?: string) => {
+  const signUp = async (email: string, password: string, metadata = {}) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
@@ -67,10 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName,
-            company_name: companyName,
-          }
+          data: metadata
         }
       });
       return { error };
@@ -82,16 +103,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
-      // Redirect to home page after signout
-      window.location.href = '/';
+      const { error } = await supabase.auth.signOut();
+      if (!error) {
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+      }
+      return { error };
     } catch (error) {
       console.error('Sign out error:', error);
+      return { error };
+    }
+  };
+
+  const updateProfile = async (updates: Partial<Profile>) => {
+    if (!user) return { error: new Error('No user logged in') };
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('user_id', user.id);
+
+      if (!error) {
+        setProfile(prev => prev ? { ...prev, ...updates } : null);
+      }
+
+      return { error };
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return { error };
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
