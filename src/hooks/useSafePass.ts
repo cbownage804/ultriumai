@@ -197,7 +197,7 @@ export const useSafePass = () => {
           vault_id: entryData.vault_id,
           entry_type: 'password',
           title: entryData.title,
-          encrypted_data: encryptedData,
+          encrypted_data: encryptedData as any,
           url: entryData.website,
           category: entryData.category || 'General',
           notes: entryData.notes,
@@ -410,12 +410,13 @@ export const useSafePass = () => {
   // Helper functions for backward compatibility with encryption/decryption
   const getEntryName = (entry: PasswordEntry) => entry.title;
   
-  const getEntryUsername = (entry: PasswordEntry) => {
+  const getEntryUsername = async (entry: PasswordEntry) => {
     if (!masterPassword.isUnlocked) return '[Locked]';
     try {
       if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
-        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
-        return decryptedData;
+        const decryptedData = await decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        const parsed = JSON.parse(decryptedData);
+        return parsed.username || '';
       }
       return entry.encrypted_data?.username || '';
     } catch {
@@ -423,11 +424,11 @@ export const useSafePass = () => {
     }
   };
   
-  const getEntryWebsite = (entry: PasswordEntry) => {
+  const getEntryWebsite = async (entry: PasswordEntry) => {
     if (!masterPassword.isUnlocked) return '[Locked]';
     try {
       if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
-        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        const decryptedData = await decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
         const parsed = JSON.parse(decryptedData);
         return parsed.website || entry.url || '';
       }
@@ -437,11 +438,11 @@ export const useSafePass = () => {
     }
   };
   
-  const getEntryPassword = (entry: PasswordEntry) => {
+  const getEntryPassword = async (entry: PasswordEntry) => {
     if (!masterPassword.isUnlocked) return '[Locked]';
     try {
       if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
-        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        const decryptedData = await decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
         const parsed = JSON.parse(decryptedData);
         return parsed.password || '';
       }
@@ -451,11 +452,11 @@ export const useSafePass = () => {
     }
   };
   
-  const getEntryNotes = (entry: PasswordEntry) => {
+  const getEntryNotes = async (entry: PasswordEntry) => {
     if (!masterPassword.isUnlocked) return '[Locked]';
     try {
       if (typeof entry.encrypted_data === 'object' && 'ciphertext' in entry.encrypted_data) {
-        const decryptedData = decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
+        const decryptedData = await decryptData(entry.encrypted_data as EncryptedData, masterPassword.masterPassword!);
         const parsed = JSON.parse(decryptedData);
         return parsed.notes || '';
       }

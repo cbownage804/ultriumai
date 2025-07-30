@@ -140,9 +140,11 @@ export async function decryptData(
   const tag = base64ToArrayBuffer(encryptedData.tag);
   
   // Reconstruct encrypted data with tag
-  const encryptedWithTag = new Uint8Array(ciphertext.length + tag.length);
-  encryptedWithTag.set(new Uint8Array(ciphertext));
-  encryptedWithTag.set(new Uint8Array(tag), ciphertext.length);
+  const ciphertextArray = new Uint8Array(ciphertext);
+  const tagArray = new Uint8Array(tag);
+  const encryptedWithTag = new Uint8Array(ciphertextArray.length + tagArray.length);
+  encryptedWithTag.set(ciphertextArray);
+  encryptedWithTag.set(tagArray, ciphertextArray.length);
   
   // Derive key from master password
   const key = await deriveKeyFromPassword(masterPassword, new Uint8Array(salt));

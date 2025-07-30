@@ -202,11 +202,42 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     }
   }, [selectedVault]);
 
+  // Create sync helpers for UI display
+  const [entryDisplayData, setEntryDisplayData] = useState<Record<string, {username: string, website: string, password: string}>>({});
+
+  // Update display data when entries change
+  useEffect(() => {
+    const updateDisplayData = async () => {
+      const newDisplayData: Record<string, {username: string, website: string, password: string}> = {};
+      for (const entry of entries) {
+        try {
+          newDisplayData[entry.id] = {
+            username: await getEntryUsername(entry),
+            website: await getEntryWebsite(entry),
+            password: await getEntryPassword(entry)
+          };
+        } catch (error) {
+          newDisplayData[entry.id] = {
+            username: '[Error]',
+            website: '[Error]',
+            password: '[Error]'
+          };
+        }
+      }
+      setEntryDisplayData(newDisplayData);
+    };
+
+    if (entries.length > 0) {
+      updateDisplayData();
+    }
+  }, [entries, masterPassword.isUnlocked]);
+
   // Filter entries
   const filteredEntries = entries.filter(entry => {
+    const displayData = entryDisplayData[entry.id];
     const matchesSearch = getEntryName(entry).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         getEntryUsername(entry).toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         getEntryWebsite(entry).toLowerCase().includes(searchTerm.toLowerCase());
+                         (displayData?.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (displayData?.website || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || entry.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -598,8 +629,8 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                             {getEntryName(entry)}
                           </div>
                         </TableCell>
-                        <TableCell>{getEntryUsername(entry)}</TableCell>
-                        <TableCell>{getEntryWebsite(entry)}</TableCell>
+                        <TableCell>{entryDisplayData[entry.id]?.username || '[Loading...]'}</TableCell>
+                        <TableCell>{entryDisplayData[entry.id]?.website || '[Loading...]'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Progress value={getEntryStrengthScore(entry)} className="w-16 h-2" />
@@ -611,7 +642,7 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => copyToClipboard(getEntryPassword(entry))}
+                              onClick={() => copyToClipboard(entryDisplayData[entry.id]?.password || '')}
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
