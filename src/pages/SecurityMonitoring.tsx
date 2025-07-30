@@ -72,53 +72,53 @@ const mockThreats = [
 
 const SecurityStats = () => {
   return (
-    <div className="grid gap-4 md:grid-cols-4">
-      <Card>
+    <div className="grid gap-4 md:grid-cols-4 animate-fade-in-up stagger-3">
+      <Card className="hover-scale hover-glow animate-fade-in stagger-1">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Active Threats</CardTitle>
-          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertTriangle className="h-4 w-4 text-destructive animate-pulse" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-destructive">7</div>
+          <div className="text-2xl font-bold text-destructive animate-glow">7</div>
           <p className="text-xs text-muted-foreground">
             +2 from last hour
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover-scale hover-glow animate-fade-in stagger-2">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Protected Assets</CardTitle>
-          <Shield className="h-4 w-4 text-primary" />
+          <Shield className="h-4 w-4 text-primary animate-bounce-gentle" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-primary">1,247</div>
+          <div className="text-2xl font-bold text-primary animate-glow">1,247</div>
           <p className="text-xs text-muted-foreground">
             All systems monitored
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover-scale hover-glow animate-fade-in stagger-3">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-          <Activity className="h-4 w-4 text-accent" />
+          <Activity className="h-4 w-4 text-accent animate-pulse" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-accent">94%</div>
+          <div className="text-2xl font-bold text-accent animate-glow">94%</div>
           <p className="text-xs text-muted-foreground">
             Excellent security posture
           </p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="hover-scale hover-glow animate-fade-in stagger-4">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Response Time</CardTitle>
-          <Clock className="h-4 w-4 text-secondary" />
+          <Clock className="h-4 w-4 text-secondary animate-bounce-gentle" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-secondary">2.3s</div>
+          <div className="text-2xl font-bold text-secondary animate-glow">2.3s</div>
           <p className="text-xs text-muted-foreground">
             Average detection time
           </p>
@@ -261,17 +261,17 @@ export default function SecurityMonitoring() {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between animate-fade-in-up">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent animate-glow">
               Security Monitoring
             </h1>
-            <p className="text-lg text-muted-foreground mt-2">
+            <p className="text-lg text-muted-foreground mt-2 animate-fade-in stagger-1">
               Real-time threat detection and incident response
             </p>
           </div>
-          <Button>
-            <Activity className="h-4 w-4 mr-2" />
+          <Button className="hover-scale hover-glow animate-fade-in stagger-2">
+            <Activity className="h-4 w-4 mr-2 animate-bounce-gentle" />
             Run Security Scan
           </Button>
         </div>

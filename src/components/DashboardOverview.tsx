@@ -113,21 +113,21 @@ export const DashboardOverview = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 animate-fade-in-up">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent animate-glow">
             Good {getTimeOfDay()}, {profile?.full_name || user?.email?.split('@')[0]}!
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 animate-fade-in stagger-1">
             Welcome to your UltriumAI security dashboard
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Badge variant="outline" className="text-sm">
+        <div className="flex items-center space-x-3 animate-fade-in stagger-2">
+          <Badge variant="outline" className="text-sm hover-scale">
             {subscription?.subscription_tier || 'Free'} Plan
           </Badge>
           {subscription?.subscribed && (
-            <Badge variant="default" className="text-sm">
+            <Badge variant="default" className="text-sm hover-scale animate-pulse-glow">
               <CheckCircle className="w-3 h-3 mr-1" />
               Active
             </Badge>
@@ -136,14 +136,14 @@ export const DashboardOverview = () => {
       </div>
 
       {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-l-4 border-l-primary">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up stagger-3">
+        <Card className="border-l-4 border-l-primary hover-scale hover-glow animate-fade-in stagger-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-            <Shield className="h-4 w-4 text-primary" />
+            <Shield className="h-4 w-4 text-primary animate-bounce-gentle" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{securityScore}/100</div>
+            <div className="text-2xl font-bold text-primary animate-glow">{securityScore}/100</div>
             <div className="mt-2">
               <Progress value={securityScore} className="h-2" />
             </div>
@@ -153,39 +153,39 @@ export const DashboardOverview = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500">
+        <Card className="border-l-4 border-l-green-500 hover-scale hover-glow animate-fade-in stagger-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Threats Blocked</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-green-500" />
+            <AlertTriangle className="h-4 w-4 text-green-500 animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{threatsBlocked}</div>
+            <div className="text-2xl font-bold text-green-600 animate-glow">{threatsBlocked}</div>
             <p className="text-xs text-muted-foreground">
               This month
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500">
+        <Card className="border-l-4 border-l-blue-500 hover-scale hover-glow animate-fade-in stagger-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Scans</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-500" />
+            <TrendingUp className="h-4 w-4 text-blue-500 animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{activeScans}</div>
+            <div className="text-2xl font-bold text-blue-600 animate-glow">{activeScans}</div>
             <p className="text-xs text-muted-foreground">
               Running now
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500">
+        <Card className="border-l-4 border-l-purple-500 hover-scale hover-glow animate-fade-in stagger-4">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Credits Remaining</CardTitle>
-            <Zap className="h-4 w-4 text-purple-500" />
+            <Zap className="h-4 w-4 text-purple-500 animate-bounce-gentle" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-purple-600 animate-glow">
               {remainingCredits || (credits?.credits_limit || 0) - (credits?.credits_used || 0)}
             </div>
             <div className="mt-2">
@@ -290,9 +290,12 @@ export const DashboardOverview = () => {
       </div>
 
       {/* Quick Actions */}
-      <Card>
+      <Card className="animate-fade-in-up stagger-4">
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle className="flex items-center space-x-2 animate-glow">
+            <Zap className="h-5 w-5 text-primary" />
+            <span>Quick Actions</span>
+          </CardTitle>
           <CardDescription>
             Common security tasks and operations
           </CardDescription>
@@ -303,14 +306,17 @@ export const DashboardOverview = () => {
               <Button
                 key={index}
                 variant="outline"
-                className={`h-auto p-4 flex-col space-y-2 ${action.featured ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5' : ''}`}
+                className={`h-auto p-4 flex-col space-y-2 hover-scale hover-glow transition-all duration-300 animate-fade-in ${
+                  action.featured ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5 animate-pulse-glow' : ''
+                }`}
+                style={{ animationDelay: `${index * 0.1}s` }}
                 onClick={action.action}
               >
-                <div className={`p-2 rounded-full ${action.color}`}>
+                <div className={`p-2 rounded-full ${action.color} animate-float`}>
                   <action.icon className="h-4 w-4 text-white" />
                 </div>
                 <div className="text-center">
-                  <div className={`font-medium ${action.featured ? 'text-primary' : ''}`}>{action.title}</div>
+                  <div className={`font-medium ${action.featured ? 'text-primary animate-glow' : ''}`}>{action.title}</div>
                   <div className="text-xs text-muted-foreground">
                     {action.description}
                   </div>

@@ -68,6 +68,7 @@ import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
 import { AIIntelligenceHub } from "@/components/AIIntelligenceHub";
 import { AIVoiceInterface } from "@/components/AIVoiceInterface";
 import { AIVisionAnalyzer } from "@/components/AIVisionAnalyzer";
+import SecurityMonitoring from "@/pages/SecurityMonitoring";
 
 
 const Dashboard = () => {
@@ -156,6 +157,7 @@ const Dashboard = () => {
   const isSafeMailDashboard = location.pathname.includes('/safemail') && !location.pathname.includes('/app');
   const isSafeNetDashboard = location.pathname.includes('/safenet') && !location.pathname.includes('/app');
   const isSafeScanPage = location.pathname.includes('/safescan');
+  const isSecurityMonitoringPage = location.pathname.includes('/security-monitoring');
   
   // MSP Feature Pages
   const isMSPNotificationsPage = location.pathname.includes('/msp/notifications');
@@ -190,6 +192,7 @@ const Dashboard = () => {
     if (isTeamManagementPage) return "Team Management";
     if (isTeamAnalyticsPage) return "Team Analytics";
     if (isSecurityPage) return "Security Settings";
+    if (isSecurityMonitoringPage) return "Security Monitoring";
     if (isConversationsPage) return "Conversation Manager";
     if (isDeploymentPage) return "GPT Deployment";
     if (isAPIKeysPage) return "API Keys";
@@ -248,6 +251,7 @@ const Dashboard = () => {
     if (isTeamManagementPage) return <div className="p-6"><TeamManagement /></div>;
     if (isTeamAnalyticsPage) return <div className="p-6"><TeamAnalytics /></div>;
     if (isSecurityPage) return <div className="p-6"><SecuritySettings /></div>;
+    if (isSecurityMonitoringPage) return <SecurityMonitoring />;
     if (isConversationsPage) return <div className="p-6"><ConversationManager /></div>;
     if (isDeploymentPage) return <div className="p-6"><GPTDeploymentCenter /></div>;
     if (isAPIKeysPage) return <div className="p-6"><APIKeyManager /></div>;
@@ -288,20 +292,22 @@ const Dashboard = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
+        <SidebarInset className="animate-fade-in">
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 animate-slide-in-left backdrop-blur-xl bg-background/80">
+            <SidebarTrigger className="-ml-1 hover-scale" />
             <div className="flex-1">
-              <h1 className="text-lg font-semibold">{getPageTitle()}</h1>
+              <h1 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent animate-glow">{getPageTitle()}</h1>
             </div>
           </header>
           <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
-            <div className="space-y-4 p-4">
+            <div className="space-y-4 p-4 animate-fade-in-up stagger-1">
               <TrialBanner />
               <SubscriptionRenewalNotice />
               <GracePeriodManager />
             </div>
-            {renderContent()}
+            <div className="animate-scale-in stagger-2">
+              {renderContent()}
+            </div>
           </div>
         </SidebarInset>
       </div>
