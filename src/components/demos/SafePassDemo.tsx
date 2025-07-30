@@ -4,6 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import TeamManagement from '@/components/safepass/TeamManagement';
+import SecurityDashboard from '@/components/safepass/SecurityDashboard';
+import MSPConsole from '@/components/safepass/MSPConsole';
 import { 
   Key, 
   Shield, 
@@ -16,7 +19,9 @@ import {
   Users,
   Building,
   Smartphone,
-  Globe
+  Globe,
+  Settings,
+  UserCheck
 } from 'lucide-react';
 
 export const SafePassDemo = () => {
@@ -113,6 +118,27 @@ export const SafePassDemo = () => {
         >
           <Users className="h-4 w-4 mr-2" />
           Team Access
+        </Button>
+        <Button 
+          variant={activeTab === 'teams' ? 'default' : 'outline'} 
+          onClick={() => setActiveTab('teams')}
+        >
+          <UserCheck className="h-4 w-4 mr-2" />
+          Teams
+        </Button>
+        <Button 
+          variant={activeTab === 'security' ? 'default' : 'outline'} 
+          onClick={() => setActiveTab('security')}
+        >
+          <Shield className="h-4 w-4 mr-2" />
+          Security
+        </Button>
+        <Button 
+          variant={activeTab === 'msp' ? 'default' : 'outline'} 
+          onClick={() => setActiveTab('msp')}
+        >
+          <Settings className="h-4 w-4 mr-2" />
+          MSP Console
         </Button>
       </div>
 
@@ -297,6 +323,24 @@ export const SafePassDemo = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {activeTab === 'teams' && (
+        <div className="space-y-4">
+          <TeamManagement />
+        </div>
+      )}
+
+      {activeTab === 'security' && (
+        <div className="space-y-4">
+          <SecurityDashboard />
+        </div>
+      )}
+
+      {activeTab === 'msp' && (
+        <div className="space-y-4">
+          <MSPConsole />
         </div>
       )}
 
