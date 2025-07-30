@@ -9458,6 +9458,95 @@ export type Database = {
           },
         ]
       }
+      safepass_breach_database: {
+        Row: {
+          breach_count: number | null
+          breach_sources: string[] | null
+          created_at: string
+          first_seen: string
+          id: string
+          last_seen: string
+          password_hash: string
+          updated_at: string
+        }
+        Insert: {
+          breach_count?: number | null
+          breach_sources?: string[] | null
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          password_hash: string
+          updated_at?: string
+        }
+        Update: {
+          breach_count?: number | null
+          breach_sources?: string[] | null
+          created_at?: string
+          first_seen?: string
+          id?: string
+          last_seen?: string
+          password_hash?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      safepass_emergency_access: {
+        Row: {
+          access_type: string
+          approved_at: string | null
+          created_at: string
+          emergency_contact_id: string
+          expires_at: string | null
+          id: string
+          reason: string | null
+          requested_at: string | null
+          status: string
+          updated_at: string
+          vault_id: string | null
+          vault_owner_id: string
+          wait_period_hours: number | null
+        }
+        Insert: {
+          access_type?: string
+          approved_at?: string | null
+          created_at?: string
+          emergency_contact_id: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_at?: string | null
+          status?: string
+          updated_at?: string
+          vault_id?: string | null
+          vault_owner_id: string
+          wait_period_hours?: number | null
+        }
+        Update: {
+          access_type?: string
+          approved_at?: string | null
+          created_at?: string
+          emergency_contact_id?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_at?: string | null
+          status?: string
+          updated_at?: string
+          vault_id?: string | null
+          vault_owner_id?: string
+          wait_period_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_emergency_access_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safepass_entries: {
         Row: {
           category: string | null
@@ -9531,6 +9620,237 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safepass_msp_policies: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean | null
+          is_enforced: boolean | null
+          msp_id: string
+          policy_config: Json
+          policy_type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          is_enforced?: boolean | null
+          msp_id: string
+          policy_config?: Json
+          policy_type: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          is_enforced?: boolean | null
+          msp_id?: string
+          policy_config?: Json
+          policy_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_msp_policies_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_security_monitoring: {
+        Row: {
+          created_at: string
+          details: Json | null
+          detected_at: string
+          entry_id: string | null
+          id: string
+          monitoring_type: string
+          resolved_at: string | null
+          status: string
+          threat_level: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          detected_at?: string
+          entry_id?: string | null
+          id?: string
+          monitoring_type: string
+          resolved_at?: string | null
+          status?: string
+          threat_level?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          detected_at?: string
+          entry_id?: string | null
+          id?: string
+          monitoring_type?: string
+          resolved_at?: string | null
+          status?: string
+          threat_level?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_security_monitoring_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_shared_vaults: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          permissions: Json | null
+          shared_by: string
+          team_id: string
+          updated_at: string
+          vault_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          shared_by: string
+          team_id: string
+          updated_at?: string
+          vault_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: Json | null
+          shared_by?: string
+          team_id?: string
+          updated_at?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_shared_vaults_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safepass_shared_vaults_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_team_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          is_active: boolean | null
+          joined_at: string | null
+          permissions: Json | null
+          role: string
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          permissions?: Json | null
+          role?: string
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
+          permissions?: Json | null
+          role?: string
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_team_memberships_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_members: number | null
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_members?: number | null
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_members?: number | null
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       safepass_usage_logs: {
         Row: {
