@@ -106,13 +106,13 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       .subscribe();
 
     const alertChannel = supabase
-      .channel('realtime_alerts')
+      .channel('security_alerts')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'realtime_alerts'
+          table: 'security_alerts'
         },
         (payload) => {
           const newAlert = payload.new as RealtimeAlert;
@@ -160,7 +160,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const loadAlerts = async () => {
     try {
       const { data, error } = await supabase
-        .from('realtime_alerts')
+        .from('security_alerts')
         .select('*')
         .is('resolved_at', null)
         .order('created_at', { ascending: false });
@@ -210,7 +210,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const acknowledgeAlert = async (id: string, notes?: string) => {
     try {
       const { error } = await supabase
-        .from('realtime_alerts')
+        .from('security_alerts')
         .update({ 
           acknowledged_at: new Date().toISOString(),
           resolution_notes: notes 
