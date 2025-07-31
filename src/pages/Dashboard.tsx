@@ -69,6 +69,7 @@ import { AIIntelligenceHub } from "@/components/AIIntelligenceHub";
 import { AIVoiceInterface } from "@/components/AIVoiceInterface";
 import { AIVisionAnalyzer } from "@/components/AIVisionAnalyzer";
 import SecurityMonitoring from "@/pages/SecurityMonitoring";
+import AIVoiceAssistantPage from "@/pages/AIVoiceAssistant";
 
 
 const Dashboard = () => {
@@ -158,6 +159,7 @@ const Dashboard = () => {
   const isSafeNetDashboard = location.pathname.includes('/safenet') && !location.pathname.includes('/app');
   const isSafeScanPage = location.pathname.includes('/safescan');
   const isSecurityMonitoringPage = location.pathname.includes('/security-monitoring');
+  const isAIVoiceAssistantPage = location.pathname.includes('/voice-assistant');
   
   // MSP Feature Pages
   const isMSPNotificationsPage = location.pathname.includes('/msp/notifications');
@@ -224,6 +226,7 @@ const Dashboard = () => {
     if (isAIIntelligenceHubPage) return "AI Intelligence Hub";
     if (isAIVoiceInterfacePage) return "AI Voice Interface";
     if (isAIVisionAnalyzerPage) return "AI Vision Analyzer";
+    if (isAIVoiceAssistantPage) return "AI Security Assistant";
     
     return "Dashboard";
   };
@@ -284,6 +287,7 @@ const Dashboard = () => {
     if (isAIIntelligenceHubPage) return <div className="p-6"><AIIntelligenceHub /></div>;
     if (isAIVoiceInterfacePage) return <div className="p-6"><AIVoiceInterface /></div>;
     if (isAIVisionAnalyzerPage) return <div className="p-6"><AIVisionAnalyzer /></div>;
+    if (isAIVoiceAssistantPage) return <AIVoiceAssistantPage />;
     
     return <DashboardOverview />;
   };

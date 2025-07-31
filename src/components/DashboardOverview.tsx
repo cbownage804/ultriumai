@@ -59,11 +59,19 @@ export const DashboardOverview = () => {
 
   const quickActions = [
     {
+      title: "AI Security Assistant",
+      description: "Voice-enabled security guidance",
+      icon: Brain,
+      action: () => navigate("/dashboard/voice-assistant"),
+      color: "bg-primary",
+      featured: true,
+    },
+    {
       title: "Run Security Scan",
       description: "Comprehensive security audit",
       icon: Scan,
       action: () => navigate("/dashboard/safescan"),
-      color: "bg-primary",
+      color: "bg-secondary",
       featured: true,
     },
     {
