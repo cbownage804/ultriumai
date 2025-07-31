@@ -32,7 +32,7 @@ export const NotificationCenter = () => {
     markAsRead, 
     markAllAsRead, 
     acknowledgeAlert,
-    isLoading 
+    loading
   } = useNotifications();
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [resolutionNotes, setResolutionNotes] = useState('');
@@ -130,7 +130,7 @@ export const NotificationCenter = () => {
 
               <ScrollArea className="h-[500px]">
                 <div className="space-y-3">
-                  {isLoading ? (
+                  {loading ? (
                     <div className="text-center py-8 text-muted-foreground">
                       Loading notifications...
                     </div>
@@ -143,9 +143,9 @@ export const NotificationCenter = () => {
                       <Card 
                         key={notification.id}
                         className={`cursor-pointer transition-colors ${
-                          !notification.read_at ? 'bg-muted/50' : ''
+                          !notification.read ? 'bg-muted/50' : ''
                         }`}
-                        onClick={() => !notification.read_at && markAsRead(notification.id)}
+                        onClick={() => !notification.read && markAsRead(notification.id)}
                       >
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
@@ -159,7 +159,7 @@ export const NotificationCenter = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              {!notification.read_at && (
+                              {!notification.read && (
                                 <div className="h-2 w-2 bg-primary rounded-full" />
                               )}
                               <span className="text-xs text-muted-foreground">

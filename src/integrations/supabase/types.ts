@@ -10396,6 +10396,69 @@ export type Database = {
           },
         ]
       }
+      security_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          affected_systems: Json | null
+          alert_type: string
+          created_at: string | null
+          description: string
+          id: string
+          indicators: Json | null
+          remediation_steps: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source_system: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          affected_systems?: Json | null
+          alert_type: string
+          created_at?: string | null
+          description: string
+          id?: string
+          indicators?: Json | null
+          remediation_steps?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity: string
+          source_system?: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          affected_systems?: Json | null
+          alert_type?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          indicators?: Json | null
+          remediation_steps?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_system?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_analytics: {
         Row: {
           created_at: string | null

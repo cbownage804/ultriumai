@@ -70,6 +70,7 @@ import { AIVoiceInterface } from "@/components/AIVoiceInterface";
 import { AIVisionAnalyzer } from "@/components/AIVisionAnalyzer";
 import SecurityMonitoring from "@/pages/SecurityMonitoring";
 import AIVoiceAssistantPage from "@/pages/AIVoiceAssistant";
+import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 
 
 const Dashboard = () => {
@@ -302,6 +303,7 @@ const Dashboard = () => {
             <div className="flex-1">
               <h1 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent animate-glow">{getPageTitle()}</h1>
             </div>
+            <NotificationCenter />
           </header>
           <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
             <div className="space-y-4 p-4 animate-fade-in-up stagger-1">

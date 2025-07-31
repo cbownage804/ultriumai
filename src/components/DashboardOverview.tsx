@@ -32,6 +32,7 @@ import {
   Brain
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { NotificationTester } from "@/components/notifications/NotificationTester";
 
 export const DashboardOverview = () => {
   const { user } = useAuth();
@@ -382,6 +383,11 @@ export const DashboardOverview = () => {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Notification System Tester (Development) */}
+      {(user?.email?.includes('@ultriumai.com')) && (
+        <NotificationTester />
       )}
     </div>
   );
