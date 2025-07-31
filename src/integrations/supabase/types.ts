@@ -12286,6 +12286,36 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_assistant_interactions: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          message_type: string
+          session_id: string | null
+          timestamp: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          message_type: string
+          session_id?: string | null
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          message_type?: string
+          session_id?: string | null
+          timestamp?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       web_crawl_jobs: {
         Row: {
           allowed_domains: string[] | null
