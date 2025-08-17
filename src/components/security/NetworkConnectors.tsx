@@ -422,9 +422,9 @@ export const NetworkConnectors = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       PowerShell-based agent for Windows environments
                     </p>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => window.open('/VanguardNetworkAgent.ps1', '_blank')}>
                       <Download className="mr-2 h-4 w-4" />
-                      Download .exe
+                      Download .ps1
                     </Button>
                   </CardContent>
                 </Card>
@@ -462,31 +462,29 @@ export const NetworkConnectors = () => {
                 <h3 className="text-lg font-semibold">Installation Instructions</h3>
                 
                 <div className="space-y-2">
-                  <h4 className="font-medium">1. Download Agent</h4>
+                  <h4 className="font-medium">Windows PowerShell Installation</h4>
+                  <div className="bg-muted p-3 rounded text-sm font-mono">
+                    # Download and run as Administrator<br/>
+                    PowerShell -ExecutionPolicy Bypass -File VanguardNetworkAgent.ps1 -Install -ApiKey "your-api-key" -ConnectorName "Office Network" -Location "Your Location"
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <h4 className="font-medium">Network Requirements</h4>
                   <p className="text-sm text-muted-foreground">
-                    Choose the appropriate agent for your target network environment
+                    Agent needs outbound HTTPS access to: nsyobmjpdpvesjwdphlh.supabase.co:443
                   </p>
                 </div>
                 
                 <div className="space-y-2">
-                  <h4 className="font-medium">2. Configure Network Access</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Ensure the agent can reach: api.vanguard-ai.com:443 (outbound HTTPS)
-                  </p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h4 className="font-medium">3. Deploy & Register</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Run the agent with your organization key to auto-register with the platform
-                  </p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h4 className="font-medium">4. Verify Connection</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Check the "Active Connectors" tab to confirm your agent is online and ready
-                  </p>
+                  <h4 className="font-medium">Features</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Auto-installs Nmap for advanced scanning</li>
+                    <li>• PowerShell fallback for basic port scanning</li>
+                    <li>• Runs as Windows service</li>
+                    <li>• Real-time communication with cloud platform</li>
+                    <li>• Automatic vulnerability assessment</li>
+                  </ul>
                 </div>
               </div>
             </CardContent>
