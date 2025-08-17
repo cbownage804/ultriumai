@@ -99,7 +99,8 @@ import SafeSIEM from '@/pages/SafeSIEM';
 import SafeSIEMAlertRules from '@/pages/SafeSIEMAlertRules';
 import SafeSIEMIncidents from '@/pages/SafeSIEMIncidents';
 import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
-import SecurityDashboard from '@/pages/SecurityDashboard';
+import CyberGuardDashboard from '@/pages/CyberGuardDashboard';
+import SecurityPolicy from '@/pages/SecurityPolicy';
 import SafeWebDashboard from '@/pages/SafeWebDashboard';
 import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
 import SafeShield from '@/pages/SafeShield';
@@ -193,7 +194,7 @@ function AppRouter() {
         <Route path="/credits" element={<CreditsPurchase />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
-        <Route path="/security" element={<Security />} />
+        <Route path="/security" element={<SecurityPolicy />} />
         <Route path="/onboarding" element={
           <ProtectedRoute>
             <OnboardingFlow />
@@ -322,9 +323,9 @@ function AppRouter() {
             <SafeSIEMAnalytics />
           </SubscriptionProtectedRoute>
         } />
-        <Route path="/security-dashboard" element={
+        <Route path="/cyberguard" element={
           <SubscriptionProtectedRoute requiresPremium>
-            <SecurityDashboard />
+            <CyberGuardDashboard />
           </SubscriptionProtectedRoute>
         } />
         <Route path="/safeweb-dashboard" element={
@@ -355,10 +356,10 @@ function AppRouter() {
           </ProtectedRoute>
         } />
         
-        {/* Security Operations Center */}
-        <Route path="/security" element={
+        {/* CyberGuard AI Operations Center */}
+        <Route path="/cyberguard-dashboard" element={
           <ProtectedRoute>
-            <SecurityDashboard />
+            <CyberGuardDashboard />
           </ProtectedRoute>
         } />
         
