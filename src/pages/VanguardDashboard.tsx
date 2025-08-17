@@ -29,7 +29,7 @@ interface SecurityScan {
   completed_at?: string;
 }
 
-const CyberGuardDashboard = () => {
+const VanguardDashboard = () => {
   const [recentScans, setRecentScans] = useState<SecurityScan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -108,8 +108,8 @@ const CyberGuardDashboard = () => {
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold text-foreground">CyberGuard AI</h1>
-              <p className="text-muted-foreground mt-1">AI-Powered Cybersecurity Platform</p>
+              <h1 className="text-3xl font-bold text-foreground">Vanguard AI</h1>
+              <p className="text-muted-foreground mt-1">Elite AI-Powered Cybersecurity Operations</p>
             </div>
           </div>
         </div>
@@ -297,4 +297,4 @@ const CyberGuardDashboard = () => {
   );
 };
 
-export default CyberGuardDashboard;
+export default VanguardDashboard;

@@ -33,9 +33,9 @@ const SecurityPolicy = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground leading-relaxed">
-              At CyberGuard AI, security is not an afterthought—it's built into every aspect of our platform. 
-              As a trusted cybersecurity solution serving businesses with sensitive data, we understand the critical 
-              importance of maintaining the highest security standards.
+                  At Vanguard AI, security is not an afterthought—it's built into every aspect of our platform. 
+                  As an elite cybersecurity solution serving businesses with sensitive data, we understand the critical 
+                  importance of maintaining the highest security standards.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">

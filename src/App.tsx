@@ -99,7 +99,7 @@ import SafeSIEM from '@/pages/SafeSIEM';
 import SafeSIEMAlertRules from '@/pages/SafeSIEMAlertRules';
 import SafeSIEMIncidents from '@/pages/SafeSIEMIncidents';
 import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
-import CyberGuardDashboard from '@/pages/CyberGuardDashboard';
+import VanguardDashboard from '@/pages/VanguardDashboard';
 import SecurityPolicy from '@/pages/SecurityPolicy';
 import SafeWebDashboard from '@/pages/SafeWebDashboard';
 import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
@@ -323,9 +323,9 @@ function AppRouter() {
             <SafeSIEMAnalytics />
           </SubscriptionProtectedRoute>
         } />
-        <Route path="/cyberguard" element={
+        <Route path="/vanguard" element={
           <SubscriptionProtectedRoute requiresPremium>
-            <CyberGuardDashboard />
+            <VanguardDashboard />
           </SubscriptionProtectedRoute>
         } />
         <Route path="/safeweb-dashboard" element={
@@ -356,10 +356,10 @@ function AppRouter() {
           </ProtectedRoute>
         } />
         
-        {/* CyberGuard AI Operations Center */}
-        <Route path="/cyberguard-dashboard" element={
+        {/* Vanguard AI Operations Center */}
+        <Route path="/vanguard-dashboard" element={
           <ProtectedRoute>
-            <CyberGuardDashboard />
+            <VanguardDashboard />
           </ProtectedRoute>
         } />
         
