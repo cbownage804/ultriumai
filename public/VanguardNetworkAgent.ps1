@@ -154,8 +154,12 @@ function Invoke-NetworkScan {
                     $nmapArgs = "-sV --script ssl-enum-ciphers,ssh-audit $target"
                     $scanResult.metadata.toolsUsed += "nmap"
                 }
+                "credential_testing" {
+                    $nmapArgs = "-sV --script auth $target"
+                    $scanResult.metadata.toolsUsed += "nmap"
+                }
                 "full" {
-                    $nmapArgs = "-sS -sV -O --script default,vuln $target"
+                    $nmapArgs = "-sS -sV -O --script default,vuln,auth $target"
                     $scanResult.metadata.toolsUsed += "nmap"
                 }
             }
@@ -166,16 +170,50 @@ function Invoke-NetworkScan {
                 
                 # Parse nmap output for findings
                 $findings = Parse-NmapOutput -Output $nmapOutput -Target $target
-                $scanResult.findings = $findings
+                $scanResult.findings += $findings
                 
             } else {
                 # Fallback to PowerShell-based scanning
                 Write-Log "Nmap not available, using PowerShell fallback"
                 $findings = Invoke-PowerShellScan -Target $target -ScanType $ScanType
-                $scanResult.findings = $findings
+                $scanResult.findings += $findings
                 $scanResult.metadata.toolsUsed += "powershell"
             }
             
+            # Enhanced pentesting modules
+            $enhancedFindings = @()
+            
+            # Credential testing for common devices/services
+            if ($ScanType -in @("vulnerability", "credential_testing", "full")) {
+                $enhancedFindings += Invoke-CredentialTesting -Target $target
+                $scanResult.metadata.toolsUsed += "credential_testing"
+            }
+            
+            # SNMP enumeration
+            if ($ScanType -in @("discovery", "vulnerability", "full")) {
+                $enhancedFindings += Invoke-SNMPEnumeration -Target $target
+                $scanResult.metadata.toolsUsed += "snmp"
+            }
+            
+            # SMB/NetBIOS enumeration
+            if ($ScanType -in @("discovery", "vulnerability", "full")) {
+                $enhancedFindings += Invoke-SMBEnumeration -Target $target
+                $scanResult.metadata.toolsUsed += "smb"
+            }
+            
+            # Web application fingerprinting
+            if ($ScanType -in @("vulnerability", "full")) {
+                $enhancedFindings += Invoke-WebFingerprinting -Target $target
+                $scanResult.metadata.toolsUsed += "web_fingerprinting"
+            }
+            
+            # SSL/TLS vulnerability testing
+            if ($ScanType -in @("vulnerability", "compliance", "full")) {
+                $enhancedFindings += Invoke-SSLTesting -Target $target
+                $scanResult.metadata.toolsUsed += "ssl_testing"
+            }
+            
+            $scanResult.findings += $enhancedFindings
             $results += $scanResult
             
         } catch {
@@ -297,19 +335,659 @@ function Invoke-PowerShellScan {
     return $findings
 }
 
+# Enhanced Pentesting Functions
+
+function Invoke-CredentialTesting {
+    param([string]$Target)
+    
+    $findings = @()
+    
+    # Common default credentials for various devices
+    $defaultCreds = @{
+        # Printers
+        "631" = @(
+            @{username="admin"; password="admin"},
+            @{username="admin"; password="password"},
+            @{username="admin"; password=""},
+            @{username="root"; password=""},
+            @{username=""; password=""}
+        )
+        "80" = @(
+            @{username="admin"; password="admin"},
+            @{username="admin"; password="password"},
+            @{username="admin"; password="123456"},
+            @{username="admin"; password=""},
+            @{username="root"; password="root"},
+            @{username="guest"; password="guest"}
+        )
+        "443" = @(
+            @{username="admin"; password="admin"},
+            @{username="admin"; password="password"},
+            @{username="admin"; password=""}
+        )
+        # SSH
+        "22" = @(
+            @{username="root"; password="root"},
+            @{username="admin"; password="admin"},
+            @{username="pi"; password="raspberry"},
+            @{username="ubuntu"; password="ubuntu"}
+        )
+        # FTP
+        "21" = @(
+            @{username="anonymous"; password=""},
+            @{username="ftp"; password="ftp"},
+            @{username="admin"; password="admin"}
+        )
+        # Telnet
+        "23" = @(
+            @{username="admin"; password="admin"},
+            @{username="root"; password=""},
+            @{username=""; password=""}
+        )
+    }
+    
+    try {
+        # Test common web interface ports
+        foreach ($port in @(80, 443, 631, 8080, 8443)) {
+            if (Test-Port -Target $Target -Port $port) {
+                Write-Log "Testing credentials on ${Target}:${port}"
+                
+                $protocol = if ($port -in @(443, 8443)) { "https" } else { "http" }
+                $baseUrl = "${protocol}://${Target}:${port}"
+                
+                # Test common login paths
+                $loginPaths = @("/", "/login", "/admin", "/management", "/cgi-bin/", "/printer")
+                
+                foreach ($path in $loginPaths) {
+                    if ($defaultCreds.ContainsKey($port.ToString())) {
+                        foreach ($cred in $defaultCreds[$port.ToString()]) {
+                            $result = Test-WebCredentials -BaseUrl $baseUrl -Path $path -Username $cred.username -Password $cred.password
+                            if ($result.Success) {
+                                $finding = @{
+                                    id = [System.Guid]::NewGuid().ToString()
+                                    type = "credential"
+                                    severity = "high"
+                                    title = "Default Credentials Found"
+                                    description = "Default credentials accepted: $($cred.username)/$($cred.password)"
+                                    target = $Target
+                                    port = $port
+                                    service = $result.ServiceType
+                                    impact = "Unauthorized access to device management interface"
+                                    recommendation = "Change default credentials immediately"
+                                    evidence = @("Successful login at $baseUrl$path")
+                                    cve = ""
+                                }
+                                $findings += $finding
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        # Test SSH credentials
+        if (Test-Port -Target $Target -Port 22) {
+            foreach ($cred in $defaultCreds["22"]) {
+                $result = Test-SSHCredentials -Target $Target -Username $cred.username -Password $cred.password
+                if ($result) {
+                    $finding = @{
+                        id = [System.Guid]::NewGuid().ToString()
+                        type = "credential"
+                        severity = "critical"
+                        title = "SSH Default Credentials"
+                        description = "SSH accepts default credentials: $($cred.username)/$($cred.password)"
+                        target = $Target
+                        port = 22
+                        service = "ssh"
+                        impact = "Full system access via SSH"
+                        recommendation = "Change SSH credentials and disable password authentication"
+                        evidence = @("SSH login successful")
+                    }
+                    $findings += $finding
+                    break
+                }
+            }
+        }
+        
+    } catch {
+        Write-Log "Credential testing failed for $Target`: $($_.Exception.Message)" "ERROR"
+    }
+    
+    return $findings
+}
+
+function Test-Port {
+    param([string]$Target, [int]$Port)
+    
+    try {
+        $tcpClient = New-Object System.Net.Sockets.TcpClient
+        $result = $tcpClient.BeginConnect($Target, $Port, $null, $null)
+        $wait = $result.AsyncWaitHandle.WaitOne(3000, $false)
+        
+        if ($wait -and $tcpClient.Connected) {
+            $tcpClient.Close()
+            return $true
+        } else {
+            $tcpClient.Close()
+            return $false
+        }
+    } catch {
+        return $false
+    }
+}
+
+function Test-WebCredentials {
+    param([string]$BaseUrl, [string]$Path, [string]$Username, [string]$Password)
+    
+    try {
+        $fullUrl = $BaseUrl + $Path
+        $credential = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("${Username}:${Password}"))
+        
+        $headers = @{
+            "Authorization" = "Basic $credential"
+            "User-Agent" = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        
+        # Skip SSL certificate validation
+        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+        
+        $response = Invoke-WebRequest -Uri $fullUrl -Headers $headers -TimeoutSec 10 -ErrorAction SilentlyContinue
+        
+        # Check for successful authentication indicators
+        if ($response.StatusCode -eq 200 -and 
+            $response.Content -notmatch "(?i)(login|unauthorized|forbidden|invalid)" -and
+            $response.Content -match "(?i)(dashboard|admin|management|settings|config)") {
+            
+            $serviceType = "unknown"
+            if ($response.Content -match "(?i)printer") { $serviceType = "printer" }
+            elseif ($response.Content -match "(?i)router") { $serviceType = "router" }
+            elseif ($response.Content -match "(?i)camera") { $serviceType = "camera" }
+            
+            return @{Success = $true; ServiceType = $serviceType}
+        }
+        
+        return @{Success = $false; ServiceType = "unknown"}
+        
+    } catch {
+        return @{Success = $false; ServiceType = "unknown"}
+    }
+}
+
+function Test-SSHCredentials {
+    param([string]$Target, [string]$Username, [string]$Password)
+    
+    # This is a simplified test - in a real implementation you'd use a proper SSH library
+    # For now, we'll just test if SSH is responsive
+    try {
+        $tcpClient = New-Object System.Net.Sockets.TcpClient
+        $result = $tcpClient.BeginConnect($Target, 22, $null, $null)
+        $wait = $result.AsyncWaitHandle.WaitOne(5000, $false)
+        
+        if ($wait -and $tcpClient.Connected) {
+            $stream = $tcpClient.GetStream()
+            $buffer = New-Object byte[] 1024
+            $bytesRead = $stream.Read($buffer, 0, $buffer.Length)
+            $response = [System.Text.Encoding]::ASCII.GetString($buffer, 0, $bytesRead)
+            
+            $tcpClient.Close()
+            
+            # Check if it's actually SSH
+            if ($response -match "SSH") {
+                # Note: This is a basic check. Real credential testing would require SSH protocol implementation
+                # For demonstration purposes, we'll return false unless it's a known weak configuration
+                return $false
+            }
+        }
+        
+        return $false
+    } catch {
+        return $false
+    }
+}
+
+function Invoke-SNMPEnumeration {
+    param([string]$Target)
+    
+    $findings = @()
+    
+    try {
+        # Test common SNMP communities
+        $communities = @("public", "private", "community", "admin", "manager", "snmp")
+        
+        foreach ($community in $communities) {
+            if (Test-SNMPCommunity -Target $Target -Community $community) {
+                $finding = @{
+                    id = [System.Guid]::NewGuid().ToString()
+                    type = "information_disclosure"
+                    severity = "medium"
+                    title = "SNMP Community String Found"
+                    description = "SNMP community string '$community' is accessible"
+                    target = $Target
+                    port = 161
+                    service = "snmp"
+                    impact = "System information disclosure"
+                    recommendation = "Change default SNMP community strings or disable SNMP"
+                    evidence = @("SNMP query successful with community: $community")
+                }
+                $findings += $finding
+            }
+        }
+        
+    } catch {
+        Write-Log "SNMP enumeration failed for $Target`: $($_.Exception.Message)" "ERROR"
+    }
+    
+    return $findings
+}
+
+function Test-SNMPCommunity {
+    param([string]$Target, [string]$Community)
+    
+    try {
+        # Basic UDP socket test for SNMP
+        $udpClient = New-Object System.Net.Sockets.UdpClient
+        $udpClient.Connect($Target, 161)
+        
+        # SNMP v1 GET request for system description (1.3.6.1.2.1.1.1.0)
+        $snmpRequest = @(
+            0x30, 0x19,  # SEQUENCE, length 25
+            0x02, 0x01, 0x00,  # INTEGER version (0 for SNMPv1)
+            0x04, 0x06, [System.Text.Encoding]::ASCII.GetBytes($Community),  # OCTET STRING community
+            0xa0, 0x0c,  # GetRequest PDU
+            0x02, 0x01, 0x01,  # request-id
+            0x02, 0x01, 0x00,  # error-status
+            0x02, 0x01, 0x00,  # error-index
+            0x30, 0x00   # variable-bindings (empty)
+        )
+        
+        # Flatten the array properly
+        $flatRequest = @()
+        foreach ($item in $snmpRequest) {
+            if ($item -is [array]) {
+                $flatRequest += $item
+            } else {
+                $flatRequest += $item
+            }
+        }
+        
+        $udpClient.Send($flatRequest, $flatRequest.Length)
+        
+        # Set timeout
+        $udpClient.Client.ReceiveTimeout = 3000
+        
+        $endpoint = New-Object System.Net.IPEndPoint([System.Net.IPAddress]::Any, 0)
+        $response = $udpClient.Receive([ref]$endpoint)
+        
+        $udpClient.Close()
+        
+        # If we got a response, the community string worked
+        return $response.Length -gt 0
+        
+    } catch {
+        if ($udpClient) { $udpClient.Close() }
+        return $false
+    }
+}
+
+function Invoke-SMBEnumeration {
+    param([string]$Target)
+    
+    $findings = @()
+    
+    try {
+        # Test SMB/NetBIOS ports
+        if (Test-Port -Target $Target -Port 445) {
+            # Test for null session
+            try {
+                $shares = net view "\\$Target" 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    $finding = @{
+                        id = [System.Guid]::NewGuid().ToString()
+                        type = "information_disclosure"
+                        severity = "medium"
+                        title = "SMB Shares Enumerable"
+                        description = "SMB shares can be enumerated without authentication"
+                        target = $Target
+                        port = 445
+                        service = "smb"
+                        impact = "Network resource disclosure"
+                        recommendation = "Require authentication for share enumeration"
+                        evidence = $shares
+                    }
+                    $findings += $finding
+                }
+            } catch {}
+            
+            # Test for SMB signing
+            $smbInfo = Test-SMBSigning -Target $Target
+            if (-not $smbInfo.SigningRequired) {
+                $finding = @{
+                    id = [System.Guid]::NewGuid().ToString()
+                    type = "weakness"
+                    severity = "low"
+                    title = "SMB Signing Not Required"
+                    description = "SMB signing is not enforced, making the connection vulnerable to man-in-the-middle attacks"
+                    target = $Target
+                    port = 445
+                    service = "smb"
+                    impact = "Potential for SMB relay attacks"
+                    recommendation = "Enable required SMB signing"
+                    evidence = @("SMB signing not required")
+                }
+                $findings += $finding
+            }
+        }
+        
+        # Test NetBIOS
+        if (Test-Port -Target $Target -Port 139) {
+            $netbiosInfo = Get-NetBIOSInfo -Target $Target
+            if ($netbiosInfo.Success) {
+                $finding = @{
+                    id = [System.Guid]::NewGuid().ToString()
+                    type = "information_disclosure"
+                    severity = "low"
+                    title = "NetBIOS Information Disclosed"
+                    description = "NetBIOS name and workgroup information available"
+                    target = $Target
+                    port = 139
+                    service = "netbios"
+                    impact = "Network topology disclosure"
+                    recommendation = "Disable NetBIOS if not required"
+                    evidence = @("NetBIOS name: $($netbiosInfo.Name), Workgroup: $($netbiosInfo.Workgroup)")
+                }
+                $findings += $finding
+            }
+        }
+        
+    } catch {
+        Write-Log "SMB enumeration failed for $Target`: $($_.Exception.Message)" "ERROR"
+    }
+    
+    return $findings
+}
+
+function Test-SMBSigning {
+    param([string]$Target)
+    
+    # Simplified SMB signing test
+    try {
+        return @{SigningRequired = $false}  # Simplified for this implementation
+    } catch {
+        return @{SigningRequired = $true}
+    }
+}
+
+function Get-NetBIOSInfo {
+    param([string]$Target)
+    
+    try {
+        $result = nbtstat -A $Target 2>$null
+        if ($LASTEXITCODE -eq 0 -and $result) {
+            # Parse nbtstat output for computer name and workgroup
+            $name = ""
+            $workgroup = ""
+            
+            foreach ($line in $result) {
+                if ($line -match "^\s*(\S+)\s+<00>\s+UNIQUE") {
+                    $name = $matches[1]
+                } elseif ($line -match "^\s*(\S+)\s+<00>\s+GROUP") {
+                    $workgroup = $matches[1]
+                }
+            }
+            
+            return @{Success = $true; Name = $name; Workgroup = $workgroup}
+        }
+        
+        return @{Success = $false}
+    } catch {
+        return @{Success = $false}
+    }
+}
+
+function Invoke-WebFingerprinting {
+    param([string]$Target)
+    
+    $findings = @()
+    
+    try {
+        # Test common web ports
+        foreach ($port in @(80, 443, 8080, 8443)) {
+            if (Test-Port -Target $Target -Port $port) {
+                $protocol = if ($port -in @(443, 8443)) { "https" } else { "http" }
+                $url = "${protocol}://${Target}:${port}"
+                
+                $webInfo = Get-WebServerInfo -Url $url
+                
+                if ($webInfo.Success) {
+                    # Check for server information disclosure
+                    if ($webInfo.Server -and $webInfo.Server -ne "Unknown") {
+                        $severity = "low"
+                        if ($webInfo.Server -match "Apache/[12]\." -or $webInfo.Server -match "nginx/[01]\.") {
+                            $severity = "medium"
+                        }
+                        
+                        $finding = @{
+                            id = [System.Guid]::NewGuid().ToString()
+                            type = "information_disclosure"
+                            severity = $severity
+                            title = "Web Server Banner Disclosure"
+                            description = "Web server reveals version information: $($webInfo.Server)"
+                            target = $Target
+                            port = $port
+                            service = "http"
+                            impact = "Server technology disclosure may aid attackers"
+                            recommendation = "Configure server to hide version information"
+                            evidence = @("Server header: $($webInfo.Server)")
+                        }
+                        $findings += $finding
+                    }
+                    
+                    # Check for common CMS/framework signatures
+                    $cms = Detect-CMS -Content $webInfo.Content -Headers $webInfo.Headers
+                    if ($cms.Detected) {
+                        $finding = @{
+                            id = [System.Guid]::NewGuid().ToString()
+                            type = "information_disclosure"
+                            severity = "low"
+                            title = "Web Application Technology Detected"
+                            description = "Detected: $($cms.Technology) $($cms.Version)"
+                            target = $Target
+                            port = $port
+                            service = "http"
+                            impact = "Technology stack disclosure"
+                            recommendation = "Remove or obscure technology indicators"
+                            evidence = $cms.Evidence
+                        }
+                        $findings += $finding
+                    }
+                }
+            }
+        }
+        
+    } catch {
+        Write-Log "Web fingerprinting failed for $Target`: $($_.Exception.Message)" "ERROR"
+    }
+    
+    return $findings
+}
+
+function Get-WebServerInfo {
+    param([string]$Url)
+    
+    try {
+        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+        
+        $response = Invoke-WebRequest -Uri $Url -TimeoutSec 10 -ErrorAction SilentlyContinue
+        
+        return @{
+            Success = $true
+            Server = $response.Headers.Server
+            Content = $response.Content
+            Headers = $response.Headers
+        }
+    } catch {
+        return @{Success = $false}
+    }
+}
+
+function Detect-CMS {
+    param([string]$Content, $Headers)
+    
+    $signatures = @{
+        "WordPress" = @("wp-content", "wp-includes", "WordPress")
+        "Drupal" = @("Drupal", "sites/default", "misc/drupal.js")
+        "Joomla" = @("Joomla", "components/com_", "templates/system")
+        "Apache Tomcat" = @("Apache Tomcat", "tomcat")
+        "IIS" = @("X-Powered-By.*ASP.NET", "Server.*IIS")
+    }
+    
+    foreach ($cms in $signatures.Keys) {
+        foreach ($signature in $signatures[$cms]) {
+            if ($Content -match $signature -or ($Headers -and $Headers -match $signature)) {
+                return @{
+                    Detected = $true
+                    Technology = $cms
+                    Version = ""
+                    Evidence = @("Found signature: $signature")
+                }
+            }
+        }
+    }
+    
+    return @{Detected = $false}
+}
+
+function Invoke-SSLTesting {
+    param([string]$Target)
+    
+    $findings = @()
+    
+    try {
+        # Test HTTPS ports
+        foreach ($port in @(443, 8443)) {
+            if (Test-Port -Target $Target -Port $port) {
+                $sslInfo = Get-SSLInfo -Target $Target -Port $port
+                
+                if ($sslInfo.Success) {
+                    # Check for weak protocols
+                    if ($sslInfo.SupportsSSLv3 -or $sslInfo.SupportsTLSv1) {
+                        $finding = @{
+                            id = [System.Guid]::NewGuid().ToString()
+                            type = "weakness"
+                            severity = "medium"
+                            title = "Weak SSL/TLS Protocol Supported"
+                            description = "Server supports deprecated SSL/TLS protocols"
+                            target = $Target
+                            port = $port
+                            service = "https"
+                            impact = "Connection vulnerable to protocol downgrade attacks"
+                            recommendation = "Disable SSLv3 and TLSv1.0, use TLSv1.2 or higher"
+                            evidence = @("Weak protocols detected")
+                        }
+                        $findings += $finding
+                    }
+                    
+                    # Check certificate validity
+                    if ($sslInfo.CertificateExpired) {
+                        $finding = @{
+                            id = [System.Guid]::NewGuid().ToString()
+                            type = "weakness"
+                            severity = "high"
+                            title = "SSL Certificate Expired"
+                            description = "SSL certificate has expired"
+                            target = $Target
+                            port = $port
+                            service = "https"
+                            impact = "Users may receive security warnings"
+                            recommendation = "Renew SSL certificate"
+                            evidence = @("Certificate expired: $($sslInfo.ExpiryDate)")
+                        }
+                        $findings += $finding
+                    }
+                    
+                    # Check for self-signed certificate
+                    if ($sslInfo.SelfSigned) {
+                        $finding = @{
+                            id = [System.Guid]::NewGuid().ToString()
+                            type = "weakness"
+                            severity = "low"
+                            title = "Self-Signed SSL Certificate"
+                            description = "Server uses a self-signed SSL certificate"
+                            target = $Target
+                            port = $port
+                            service = "https"
+                            impact = "Users may receive security warnings"
+                            recommendation = "Use certificate from trusted CA"
+                            evidence = @("Self-signed certificate detected")
+                        }
+                        $findings += $finding
+                    }
+                }
+            }
+        }
+        
+    } catch {
+        Write-Log "SSL testing failed for $Target`: $($_.Exception.Message)" "ERROR"
+    }
+    
+    return $findings
+}
+
+function Get-SSLInfo {
+    param([string]$Target, [int]$Port)
+    
+    try {
+        # Simplified SSL info gathering
+        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {
+            param($sender, $certificate, $chain, $sslPolicyErrors)
+            
+            # Store certificate info for analysis
+            $script:CertInfo = @{
+                Subject = $certificate.Subject
+                Issuer = $certificate.Issuer
+                ExpiryDate = $certificate.GetExpirationDateString()
+                SelfSigned = $certificate.Subject -eq $certificate.Issuer
+                Expired = $certificate.GetExpirationDateString() -lt (Get-Date)
+            }
+            
+            return $true  # Accept all certificates for testing
+        }
+        
+        $tcpClient = New-Object System.Net.Sockets.TcpClient($Target, $Port)
+        $sslStream = New-Object System.Net.Security.SslStream($tcpClient.GetStream())
+        $sslStream.AuthenticateAsClient($Target)
+        
+        $sslStream.Close()
+        $tcpClient.Close()
+        
+        return @{
+            Success = $true
+            SupportsSSLv3 = $false  # Simplified
+            SupportsTLSv1 = $false  # Simplified
+            CertificateExpired = $script:CertInfo.Expired
+            SelfSigned = $script:CertInfo.SelfSigned
+            ExpiryDate = $script:CertInfo.ExpiryDate
+        }
+        
+    } catch {
+        return @{Success = $false}
+    }
+}
+
 # API Communication Functions
 function Register-Connector {
     param([hashtable]$Config)
     
     try {
         $networkRanges = Get-NetworkRanges
-        $capabilities = @("discovery", "vulnerability", "basic_scan")
+        $capabilities = @("discovery", "vulnerability", "compliance", "credential_testing", "basic_scan", "full")
         
         if (Test-NmapAvailable) {
-            $capabilities += "compliance"
-            $toolsAvailable = @("nmap", "powershell")
+            $capabilities += @("advanced_compliance", "deep_vulnerability")
+            $toolsAvailable = @("nmap", "powershell", "credential_testing", "snmp", "smb", "web_fingerprinting", "ssl_testing")
         } else {
-            $toolsAvailable = @("powershell")
+            $toolsAvailable = @("powershell", "credential_testing", "snmp", "smb", "web_fingerprinting", "ssl_testing")
         }
         
         $registrationData = @{

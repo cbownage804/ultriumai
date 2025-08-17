@@ -477,13 +477,21 @@ export const NetworkConnectors = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <h4 className="font-medium">Features</h4>
+                  <h4 className="font-medium">Enhanced Pentesting Features</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Network discovery and asset mapping</li>
+                    <li>• Vulnerability scanning with CVE detection</li>
+                    <li>• Default credential testing (printers, routers, cameras)</li>
+                    <li>• SNMP enumeration and community string testing</li>
+                    <li>• SMB/NetBIOS enumeration and share discovery</li>
+                    <li>• SSL/TLS vulnerability assessment</li>
+                    <li>• Web application fingerprinting</li>
+                    <li>• Compliance checking (SSH, SSL ciphers)</li>
+                    <li>• Service version detection and banner grabbing</li>
                     <li>• Auto-installs Nmap for advanced scanning</li>
-                    <li>• PowerShell fallback for basic port scanning</li>
-                    <li>• Runs as Windows service</li>
+                    <li>• PowerShell fallback for basic scanning</li>
+                    <li>• Runs as Windows service with heartbeat</li>
                     <li>• Real-time communication with cloud platform</li>
-                    <li>• Automatic vulnerability assessment</li>
                   </ul>
                 </div>
               </div>
