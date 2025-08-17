@@ -9,7 +9,7 @@ import { RoleBasedRedirect } from '@/components/RoleBasedRedirect';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute';
-import ErrorBoundary from '@/components/ErrorBoundary';
+import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
@@ -181,7 +181,7 @@ function AppRouter() {
   };
 
   return (
-    <ErrorBoundary>
+    <EnhancedErrorBoundary context="Application Root" level="critical">
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/agent" element={<Agent />} />
@@ -531,7 +531,7 @@ function AppRouter() {
       
       {/* Cookie Consent Banner */}
       <CookieConsent />
-    </ErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 }
 
@@ -561,7 +561,7 @@ export default function App() {
   }, []);
 
   return (
-    <ErrorBoundary>
+    <EnhancedErrorBoundary context="Application Root" level="critical">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <NotificationProvider>
@@ -575,6 +575,6 @@ export default function App() {
           </NotificationProvider>
         </AuthProvider>
       </QueryClientProvider>
-    </ErrorBoundary>
+    </EnhancedErrorBoundary>
   );
 }
