@@ -41,7 +41,10 @@ interface NotificationContextType {
   markAllAsRead: () => Promise<void>;
   acknowledgeAlert: (id: string, notes?: string) => Promise<void>;
   sendNotification: (notification: Partial<Notification>) => Promise<void>;
+  createNotification: (notification: Partial<Notification>) => Promise<void>;
+  createSecurityAlert: (alert: Partial<RealtimeAlert>) => Promise<void>;
   isLoading: boolean;
+  loading: boolean;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -168,7 +171,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error;
       setAlerts((data || []).map(a => ({
         ...a,
-        severity: a.severity as 'low' | 'medium' | 'high' | 'critical'
+        severity: a.severity as 'low' | 'medium' | 'high' | 'critical',
+        metadata: a.affected_systems || {}
       })));
     } catch (error: any) {
       console.error('Error loading alerts:', error);
@@ -242,6 +246,30 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const createNotification = async (notification: Partial<Notification>) => {
+    return sendNotification(notification);
+  };
+
+  const createSecurityAlert = async (alert: Partial<RealtimeAlert>) => {
+    try {
+      const { error } = await supabase
+        .from('security_alerts')
+        .insert({
+          user_id: alert.user_id,
+          alert_type: alert.alert_type || 'general',
+          severity: alert.severity || 'low',
+          title: alert.title,
+          description: alert.description,
+          metadata: alert.metadata || {}
+        });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error creating security alert:', error);
+      throw error;
+    }
+  };
+
   const unreadCount = notifications.filter(n => !n.read_at).length;
 
   return (
@@ -254,7 +282,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         markAllAsRead,
         acknowledgeAlert,
         sendNotification,
-        isLoading
+        createNotification,
+        createSecurityAlert,
+        isLoading,
+        loading: isLoading
       }}
     >
       {children}

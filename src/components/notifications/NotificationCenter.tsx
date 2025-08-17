@@ -142,10 +142,10 @@ export const NotificationCenter = () => {
                     notifications.map((notification) => (
                       <Card 
                         key={notification.id}
-                        className={`cursor-pointer transition-colors ${
-                          !notification.read ? 'bg-muted/50' : ''
-                        }`}
-                        onClick={() => !notification.read && markAsRead(notification.id)}
+        className={`cursor-pointer transition-colors ${
+          !notification.read_at ? 'bg-muted/50' : ''
+        }`}
+        onClick={() => !notification.read_at && markAsRead(notification.id)}
                       >
                         <CardHeader className="pb-2">
                           <div className="flex items-start justify-between">
@@ -159,7 +159,7 @@ export const NotificationCenter = () => {
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              {!notification.read && (
+                              {!notification.read_at && (
                                 <div className="h-2 w-2 bg-primary rounded-full" />
                               )}
                               <span className="text-xs text-muted-foreground">
