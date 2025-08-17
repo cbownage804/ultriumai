@@ -1,28 +1,34 @@
 project_id = "nsyobmjpdpvesjwdphlh"
 
+# Hardened Edge Functions Configuration
+# Public functions that handle external webhooks/integrations
 [functions.safenet-connector-download]
-verify_jwt = false
-
-[functions.rmm-checkin]
-verify_jwt = false
-
-[functions.rmm-commands]
-verify_jwt = false
-
-[functions.rmm-command-result]
 verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
 
+[functions.rmm-checkin]
+verify_jwt = false
+
+[functions.rmm-agent-checkin]
+verify_jwt = false
+
+# Authenticated functions for web app usage
+[functions.rmm-commands]
+verify_jwt = true
+
+[functions.rmm-command-result]
+verify_jwt = true
+
 [functions.rmm-agent-manager]
 verify_jwt = true
 
 [functions.rmm-realtime]
-verify_jwt = false
+verify_jwt = true
 
 [functions.rmm-remote-session]
-verify_jwt = false
+verify_jwt = true
 
 [functions.safedoc-agent-integration]
 verify_jwt = true
@@ -33,60 +39,57 @@ verify_jwt = true
 [functions.ai-remote-assistant]
 verify_jwt = true
 
-# Security Tools Configuration
+[functions.business-billing]
+verify_jwt = true
+
+# Security Tools - Require authentication for admin operations
 [functions.siem-event-collector]
-verify_jwt = false
+verify_jwt = true
 
 [functions.siem-alert-processor]
-verify_jwt = false
+verify_jwt = true
 
 [functions.threat-intelligence-updater]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ai-edr-behavioral-engine]
-verify_jwt = false
+verify_jwt = true
 
 [functions.incident-manager]
-verify_jwt = false
+verify_jwt = true
 
 [functions.safedoc-scanner]
-verify_jwt = false
+verify_jwt = true
 
 [functions.safemail-scanner]
-verify_jwt = false
+verify_jwt = true
 
 [functions.safenet-scanner]
-verify_jwt = false
+verify_jwt = true
 
 [functions.safenet-connector]
 verify_jwt = false
 
 [functions.safepass-scanner]
-verify_jwt = false
+verify_jwt = true
 
 [functions.safescan-api]
-verify_jwt = false
+verify_jwt = true
 
 [functions.security-data-pipeline]
-verify_jwt = false
+verify_jwt = true
 
 [functions.security-automation-orchestrator]
-verify_jwt = false
+verify_jwt = true
 
 [functions.activate-security-suite]
-verify_jwt = false
+verify_jwt = true
 
 [functions.ultrium-safelink-scanner]
-verify_jwt = false
-
-[functions.business-billing]
 verify_jwt = true
 
 [functions.safenet-topology-processor]
-verify_jwt = false
+verify_jwt = true
 
 [functions.safenet-api]
-verify_jwt = false
-
-[functions.rmm-agent-checkin]
-verify_jwt = false
+verify_jwt = true

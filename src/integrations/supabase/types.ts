@@ -13144,6 +13144,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      validate_connector_key_secure: {
+        Args: { p_connector_key: string }
+        Returns: {
+          connector_id: string
+          is_valid: boolean
+          user_id: string
+        }[]
+      }
       vector_avg: {
         Args: { "": number[] }
         Returns: string

@@ -20,8 +20,43 @@ export const safeWindowOpen = (url: string, target?: string, features?: string):
 };
 
 /**
- * Validates and sanitizes form input
+ * Validates and sanitizes form input with enhanced security
  */
 export const sanitizeInput = (input: string): string => {
-  return input.trim().replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  // First trim whitespace
+  let sanitized = input.trim();
+  
+  // Remove dangerous script tags
+  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  
+  // Remove dangerous event handlers
+  sanitized = sanitized.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
+  
+  // Remove javascript: and data: protocols
+  sanitized = sanitized.replace(/javascript:\s*/gi, '');
+  sanitized = sanitized.replace(/data:\s*/gi, '');
+  
+  // Remove vbscript: protocol
+  sanitized = sanitized.replace(/vbscript:\s*/gi, '');
+  
+  return sanitized;
+};
+
+/**
+ * Enhanced HTML sanitization using DOMPurify for content that may contain HTML
+ */
+export const sanitizeHtmlContent = (html: string): string => {
+  return sanitizeHtml(html);
+};
+
+/**
+ * Validates URL protocols to prevent XSS
+ */
+export const isValidUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+    return ['http:', 'https:', 'mailto:', 'tel:'].includes(urlObj.protocol);
+  } catch {
+    return false;
+  }
 };
