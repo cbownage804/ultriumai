@@ -14,6 +14,7 @@ import { ComplianceAuditor } from "@/components/security/ComplianceAuditor";
 import { SecurityMetrics } from "@/components/security/SecurityMetrics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { NetworkConnectors } from "@/components/security/NetworkConnectors";
 
 interface SecurityScan {
   id: string;
@@ -173,8 +174,9 @@ const VanguardDashboard = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="connectors">Network Agents</TabsTrigger>
             <TabsTrigger value="scanner">Vulnerability Scanner</TabsTrigger>
             <TabsTrigger value="pentest">Penetration Testing</TabsTrigger>
             <TabsTrigger value="threats">Threat Detection</TabsTrigger>
@@ -234,6 +236,15 @@ const VanguardDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Button 
+                    onClick={() => setActiveTab("connectors")}
+                    variant="outline"
+                    className="h-auto p-4 flex-col gap-2"
+                  >
+                    <Shield className="h-6 w-6" />
+                    <span>Network Agents</span>
+                  </Button>
+                  
+                  <Button 
                     onClick={() => setActiveTab("scanner")}
                     className="h-auto p-4 flex-col gap-2"
                   >
@@ -251,15 +262,6 @@ const VanguardDashboard = () => {
                   </Button>
                   
                   <Button 
-                    onClick={() => setActiveTab("threats")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <Shield className="h-6 w-6" />
-                    <span>Threat Detection</span>
-                  </Button>
-                  
-                  <Button 
                     onClick={() => setActiveTab("compliance")}
                     variant="outline"
                     className="h-auto p-4 flex-col gap-2"
@@ -270,6 +272,10 @@ const VanguardDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="connectors">
+            <NetworkConnectors />
           </TabsContent>
 
           <TabsContent value="scanner">

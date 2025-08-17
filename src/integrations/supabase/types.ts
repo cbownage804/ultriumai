@@ -116,6 +116,50 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_analysis_results: {
+        Row: {
+          ai_analysis: string | null
+          analysis_type: string
+          created_at: string
+          findings_count: number | null
+          id: string
+          job_id: string | null
+          recommendations: Json | null
+          risk_score: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_analysis?: string | null
+          analysis_type: string
+          created_at?: string
+          findings_count?: number | null
+          id?: string
+          job_id?: string | null
+          recommendations?: Json | null
+          risk_score?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_analysis?: string | null
+          analysis_type?: string
+          created_at?: string
+          findings_count?: number | null
+          id?: string
+          job_id?: string | null
+          recommendations?: Json | null
+          risk_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_analysis_results_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "network_scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alert_notifications: {
         Row: {
           alert_rule_id: string | null
@@ -6411,6 +6455,191 @@ export type Database = {
           vulnerabilities?: string[] | null
         }
         Relationships: []
+      }
+      network_connectors: {
+        Row: {
+          active_scans: number | null
+          capabilities: string[] | null
+          created_at: string
+          id: string
+          last_heartbeat: string | null
+          location: string | null
+          name: string
+          network_ranges: string[] | null
+          os_info: Json | null
+          status: string
+          system_metrics: Json | null
+          tools_available: string[] | null
+          updated_at: string
+          user_id: string
+          version: string | null
+        }
+        Insert: {
+          active_scans?: number | null
+          capabilities?: string[] | null
+          created_at?: string
+          id?: string
+          last_heartbeat?: string | null
+          location?: string | null
+          name: string
+          network_ranges?: string[] | null
+          os_info?: Json | null
+          status?: string
+          system_metrics?: Json | null
+          tools_available?: string[] | null
+          updated_at?: string
+          user_id: string
+          version?: string | null
+        }
+        Update: {
+          active_scans?: number | null
+          capabilities?: string[] | null
+          created_at?: string
+          id?: string
+          last_heartbeat?: string | null
+          location?: string | null
+          name?: string
+          network_ranges?: string[] | null
+          os_info?: Json | null
+          status?: string
+          system_metrics?: Json | null
+          tools_available?: string[] | null
+          updated_at?: string
+          user_id?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
+      network_findings: {
+        Row: {
+          connector_id: string
+          created_at: string
+          cve: string | null
+          cvss: number | null
+          description: string | null
+          discovered_at: string
+          evidence: Json | null
+          id: string
+          impact: string | null
+          job_id: string
+          port: number | null
+          recommendation: string | null
+          service: string | null
+          severity: string
+          target: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          connector_id: string
+          created_at?: string
+          cve?: string | null
+          cvss?: number | null
+          description?: string | null
+          discovered_at?: string
+          evidence?: Json | null
+          id?: string
+          impact?: string | null
+          job_id: string
+          port?: number | null
+          recommendation?: string | null
+          service?: string | null
+          severity: string
+          target: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: string
+          created_at?: string
+          cve?: string | null
+          cvss?: number | null
+          description?: string | null
+          discovered_at?: string
+          evidence?: Json | null
+          id?: string
+          impact?: string | null
+          job_id?: string
+          port?: number | null
+          recommendation?: string | null
+          service?: string | null
+          severity?: string
+          target?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_findings_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "network_connectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "network_findings_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "network_scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      network_scan_jobs: {
+        Row: {
+          completed_at: string | null
+          connector_id: string
+          created_at: string
+          id: string
+          options: Json | null
+          results_summary: Json | null
+          scan_type: string
+          started_at: string
+          status: string
+          targets: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          connector_id: string
+          created_at?: string
+          id?: string
+          options?: Json | null
+          results_summary?: Json | null
+          scan_type: string
+          started_at?: string
+          status?: string
+          targets: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          connector_id?: string
+          created_at?: string
+          id?: string
+          options?: Json | null
+          results_summary?: Json | null
+          scan_type?: string
+          started_at?: string
+          status?: string
+          targets?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_scan_jobs_connector_id_fkey"
+            columns: ["connector_id"]
+            isOneToOne: false
+            referencedRelation: "network_connectors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       network_scans: {
         Row: {
