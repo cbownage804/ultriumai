@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { TestConnector } from "./TestConnector";
 
 interface NetworkConnector {
   id: string;
@@ -211,134 +212,78 @@ export const NetworkConnectors = () => {
         </TabsList>
 
         <TabsContent value="connectors" className="space-y-6">
-          {/* Demo Cards for Now */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="relative">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Server className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Main Office Network</CardTitle>
-                  </div>
-                  <Badge className="bg-green-500 text-white">ONLINE</Badge>
-                </div>
-                <CardDescription>Corporate headquarters - Dallas, TX</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Last seen: {new Date().toLocaleString()}</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <strong>Network Ranges:</strong>
-                    <div className="text-muted-foreground">192.168.1.0/24, 10.0.0.0/16</div>
-                  </div>
-                  
-                  <div className="text-sm">
-                    <strong>Capabilities:</strong>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      <Badge variant="outline" className="text-xs">vulnerability</Badge>
-                      <Badge variant="outline" className="text-xs">discovery</Badge>
-                      <Badge variant="outline" className="text-xs">compliance</Badge>
-                    </div>
-                  </div>
-                  
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span>CPU:</span>
-                      <span>15%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Memory:</span>
-                      <span>32%</span>
-                    </div>
-                  </div>
-                </div>
+          {connectors.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Monitor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Network Connectors</h3>
+                <p className="text-muted-foreground mb-4">
+                  Deploy Vanguard agents on your internal networks to enable penetration testing
+                </p>
+                <Button onClick={() => setActiveTab("setup")}>
+                  Setup Network Agent
+                </Button>
               </CardContent>
             </Card>
-
-            <Card className="relative">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Server className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Branch Office</CardTitle>
-                  </div>
-                  <Badge className="bg-green-500 text-white">ONLINE</Badge>
-                </div>
-                <CardDescription>Remote office - Austin, TX</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span>Last seen: {new Date(Date.now() - 300000).toLocaleString()}</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <strong>Network Ranges:</strong>
-                    <div className="text-muted-foreground">172.16.0.0/24</div>
-                  </div>
-                  
-                  <div className="text-sm">
-                    <strong>Capabilities:</strong>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      <Badge variant="outline" className="text-xs">discovery</Badge>
-                      <Badge variant="outline" className="text-xs">basic_scan</Badge>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {connectors.map((connector) => (
+                <Card key={connector.id} className="relative">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Server className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-lg">{connector.name}</CardTitle>
+                      </div>
+                      <Badge className={getStatusColor(connector.status)}>
+                        {connector.status.toUpperCase()}
+                      </Badge>
                     </div>
-                  </div>
-                  
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span>CPU:</span>
-                      <span>8%</span>
+                    <CardDescription>{connector.location}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      {getStatusIcon(connector.status)}
+                      <span>Last seen: {new Date(connector.last_heartbeat).toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Memory:</span>
-                      <span>24%</span>
+                    
+                    <div className="space-y-2">
+                      <div className="text-sm">
+                        <strong>Network Ranges:</strong>
+                        <div className="text-muted-foreground">
+                          {connector.network_ranges.join(', ') || 'Not configured'}
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm">
+                        <strong>Capabilities:</strong>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {connector.capabilities.map((cap) => (
+                            <Badge key={cap} variant="outline" className="text-xs">
+                              {cap}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {connector.system_metrics && (
+                        <div className="text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <span>CPU:</span>
+                            <span>{connector.system_metrics.cpu_usage}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Memory:</span>
+                            <span>{connector.system_metrics.memory_usage}%</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative opacity-60">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Server className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">AWS VPC Scanner</CardTitle>
-                  </div>
-                  <Badge className="bg-red-500 text-white">OFFLINE</Badge>
-                </div>
-                <CardDescription>Cloud infrastructure - us-east-1</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                  <span>Last seen: 2 hours ago</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="text-sm">
-                    <strong>Network Ranges:</strong>
-                    <div className="text-muted-foreground">10.1.0.0/16, 10.2.0.0/16</div>
-                  </div>
-                  
-                  <div className="text-sm">
-                    <strong>Capabilities:</strong>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      <Badge variant="outline" className="text-xs">cloud_scan</Badge>
-                      <Badge variant="outline" className="text-xs">vulnerability</Badge>
-                      <Badge variant="outline" className="text-xs">compliance</Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="scan" className="space-y-6">
@@ -358,9 +303,17 @@ export const NetworkConnectors = () => {
                   disabled={isScanning}
                 >
                   <option value="">Choose a connector...</option>
-                  <option value="main-office">Main Office Network - Dallas, TX</option>
-                  <option value="branch-office">Branch Office - Austin, TX</option>
+                  {connectors.filter(c => c.status === 'online').map((connector) => (
+                    <option key={connector.id} value={connector.id}>
+                      {connector.name} - {connector.location}
+                    </option>
+                  ))}
                 </select>
+                {connectors.filter(c => c.status === 'online').length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No online connectors available. Please deploy a network agent first.
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -406,63 +359,47 @@ export const NetworkConnectors = () => {
               <CardDescription>Internal network penetration testing results</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {/* Demo scan jobs */}
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="font-medium">Full Network Scan</span>
-                    </div>
-                    <Badge className="bg-green-500 text-white">COMPLETED</Badge>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <div>Targets: 192.168.1.0/24, 10.0.0.0/16</div>
-                    <div>Started: {new Date(Date.now() - 3600000).toLocaleString()}</div>
-                    <div>Completed: {new Date(Date.now() - 1800000).toLocaleString()}</div>
-                    <div>Findings: 23 vulnerabilities (3 critical, 8 high)</div>
-                  </div>
+              {scanJobs.length === 0 ? (
+                <div className="text-center py-8">
+                  <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No scan jobs yet</p>
+                  <p className="text-sm text-muted-foreground">Start your first internal network scan</p>
                 </div>
-
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-blue-500 animate-pulse" />
-                      <span className="font-medium">Compliance Audit</span>
+              ) : (
+                <div className="space-y-4">
+                  {scanJobs.map((job) => (
+                    <div key={job.id} className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(job.status)}
+                          <span className="font-medium">{job.scan_type} Scan</span>
+                        </div>
+                        <Badge className={getStatusColor(job.status)}>
+                          {job.status.toUpperCase()}
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground">
+                        <div>Targets: {job.targets.join(', ')}</div>
+                        <div>Started: {new Date(job.started_at).toLocaleString()}</div>
+                        {job.completed_at && (
+                          <div>Completed: {new Date(job.completed_at).toLocaleString()}</div>
+                        )}
+                        {job.findings_count !== undefined && (
+                          <div>Findings: {job.findings_count} vulnerabilities</div>
+                        )}
+                      </div>
                     </div>
-                    <Badge className="bg-blue-500 text-white">RUNNING</Badge>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <div>Targets: 172.16.0.0/24</div>
-                    <div>Started: {new Date(Date.now() - 900000).toLocaleString()}</div>
-                    <div>Progress: 67% complete</div>
-                  </div>
+                  ))}
                 </div>
-
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="font-medium">Discovery Scan</span>
-                    </div>
-                    <Badge className="bg-green-500 text-white">COMPLETED</Badge>
-                  </div>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <div>Targets: 10.1.0.0/16</div>
-                    <div>Started: {new Date(Date.now() - 7200000).toLocaleString()}</div>
-                    <div>Completed: {new Date(Date.now() - 6300000).toLocaleString()}</div>
-                    <div>Findings: 156 active hosts, 12 services</div>
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="setup" className="space-y-6">
+          <TestConnector />
+          
           <Card>
             <CardHeader>
               <CardTitle>Deploy Vanguard Network Agent</CardTitle>
