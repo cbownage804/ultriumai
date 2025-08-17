@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -10659,6 +10659,62 @@ export type Database = {
         }
         Relationships: []
       }
+      security_findings: {
+        Row: {
+          created_at: string
+          cve: string | null
+          cvss: number | null
+          description: string | null
+          evidence: string[] | null
+          id: string
+          impact: string | null
+          location: string | null
+          recommendation: string | null
+          scan_id: string
+          severity: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cve?: string | null
+          cvss?: number | null
+          description?: string | null
+          evidence?: string[] | null
+          id?: string
+          impact?: string | null
+          location?: string | null
+          recommendation?: string | null
+          scan_id: string
+          severity: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cve?: string | null
+          cvss?: number | null
+          description?: string | null
+          evidence?: string[] | null
+          id?: string
+          impact?: string | null
+          location?: string | null
+          recommendation?: string | null
+          scan_id?: string
+          severity?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_findings_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "security_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_incidents: {
         Row: {
           acknowledged_at: string | null
@@ -10738,6 +10794,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_scans: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          critical_count: number | null
+          findings_count: number | null
+          high_count: number | null
+          id: string
+          low_count: number | null
+          medium_count: number | null
+          options: Json | null
+          scan_type: string
+          started_at: string
+          status: string
+          target: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number | null
+          findings_count?: number | null
+          high_count?: number | null
+          id?: string
+          low_count?: number | null
+          medium_count?: number | null
+          options?: Json | null
+          scan_type: string
+          started_at?: string
+          status?: string
+          target: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          critical_count?: number | null
+          findings_count?: number | null
+          high_count?: number | null
+          id?: string
+          low_count?: number | null
+          medium_count?: number | null
+          options?: Json | null
+          scan_type?: string
+          started_at?: string
+          status?: string
+          target?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       security_settings: {
         Row: {
@@ -12632,7 +12742,7 @@ export type Database = {
         Returns: string
       }
       generate_analytics_snapshot: {
-        Args: { p_user_id: string; p_snapshot_type: string }
+        Args: { p_snapshot_type: string; p_user_id: string }
         Returns: string
       }
       generate_invoice_number: {
@@ -12652,23 +12762,23 @@ export type Database = {
         Returns: {
           critical: number
           high: number
-          medium: number
-          low: number
           info: number
+          low: number
+          medium: number
         }[]
       }
       get_device_latest_scan: {
         Args: { p_device_id: string }
         Returns: {
-          scan_id: string
-          scanned_at: string
           devices_found: number
           scan_duration: number
+          scan_id: string
           scan_type: string
+          scanned_at: string
         }[]
       }
       get_helpdesk_role: {
-        Args: { _user_id: string; _context_id?: string }
+        Args: { _context_id?: string; _user_id: string }
         Returns: Database["public"]["Enums"]["helpdesk_role"]
       }
       get_user_account_type: {
@@ -12699,8 +12809,8 @@ export type Database = {
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
@@ -12729,7 +12839,7 @@ export type Database = {
         Returns: boolean
       }
       is_team_member: {
-        Args: { _user_id: string; _team_id: string }
+        Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
       is_ultrium_employee: {
@@ -12758,13 +12868,13 @@ export type Database = {
       }
       send_notification: {
         Args: {
-          p_user_id: string
-          p_title: string
-          p_message: string
-          p_type?: string
-          p_category?: string
           p_action_url?: string
+          p_category?: string
+          p_message: string
           p_metadata?: Json
+          p_title: string
+          p_type?: string
+          p_user_id: string
         }
         Returns: string
       }
@@ -12782,27 +12892,27 @@ export type Database = {
       }
       upsert_device_from_checkin: {
         Args: {
-          p_connector_key: string
-          p_client_code: string
-          p_system_info: Json
           p_agent_version: string
+          p_client_code: string
+          p_connector_key: string
+          p_system_info: Json
         }
         Returns: string
       }
       validate_api_key: {
         Args: { key_hash: string }
         Returns: {
-          user_id: string
           is_valid: boolean
           rate_limit_rpd: number
+          user_id: string
         }[]
       }
       validate_connector_key: {
         Args: { p_connector_key: string }
         Returns: {
           connector_id: string
-          user_id: string
           is_valid: boolean
+          user_id: string
         }[]
       }
       vector_avg: {

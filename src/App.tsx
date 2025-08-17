@@ -355,6 +355,13 @@ function AppRouter() {
           </ProtectedRoute>
         } />
         
+        {/* Security Operations Center */}
+        <Route path="/security" element={
+          <ProtectedRoute>
+            <SecurityDashboard />
+          </ProtectedRoute>
+        } />
+        
         {/* Reports & Analytics Routes */}
         <Route path="/reports" element={
           <ProtectedRoute>
