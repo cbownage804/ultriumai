@@ -5,16 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp } from "lucide-react";
+import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Lock, Eye, Network } from "lucide-react";
 import { VulnerabilityScanner } from "@/components/security/VulnerabilityScanner";
 import { ThreatDetection } from "@/components/security/ThreatDetection";
 import { SecurityReports } from "@/components/security/SecurityReports";
 import { PenetrationTesting } from "@/components/security/PenetrationTesting";
 import { ComplianceAuditor } from "@/components/security/ComplianceAuditor";
 import { SecurityMetrics } from "@/components/security/SecurityMetrics";
+import { NetworkConnectors } from "@/components/security/NetworkConnectors";
+import { VanguardOverview } from "@/components/vanguard/VanguardOverview";
+import { VanguardSafePass } from "@/components/vanguard/VanguardSafePass";
+import { VanguardSOC } from "@/components/vanguard/VanguardSOC";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { NetworkConnectors } from "@/components/security/NetworkConnectors";
 
 interface SecurityScan {
   id: string;
@@ -109,8 +112,8 @@ const VanguardDashboard = () => {
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Vanguard AI</h1>
-              <p className="text-muted-foreground mt-1">Elite AI-Powered Cybersecurity Operations</p>
+              <h1 className="text-3xl font-bold text-foreground">Ultrium Vanguard</h1>
+              <p className="text-muted-foreground mt-1">Elite AI-Powered Cybersecurity Operations Platform</p>
             </div>
           </div>
         </div>
@@ -174,82 +177,73 @@ const VanguardDashboard = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="connectors">Network Agents</TabsTrigger>
-            <TabsTrigger value="scanner">Vulnerability Scanner</TabsTrigger>
+            <TabsTrigger value="soc">SOC Operations</TabsTrigger>
+            <TabsTrigger value="scanner">Threat Detection</TabsTrigger>
+            <TabsTrigger value="safepass">Identity & Access</TabsTrigger>
+            <TabsTrigger value="network">Network Security</TabsTrigger>
             <TabsTrigger value="pentest">Penetration Testing</TabsTrigger>
-            <TabsTrigger value="threats">Threat Detection</TabsTrigger>
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="threats">Advanced Threats</TabsTrigger>
+            <TabsTrigger value="reports">Analytics & Reports</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Recent Scans */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Security Scans</CardTitle>
-                  <CardDescription>Latest automated security assessments</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {recentScans.slice(0, 5).map((scan) => (
-                      <div key={scan.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          {getStatusIcon(scan.status)}
-                          <div>
-                            <p className="font-medium">{scan.target}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {scan.scan_type} scan • {new Date(scan.started_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {scan.critical_count > 0 && (
-                            <Badge className={getSeverityColor('critical')}>
-                              {scan.critical_count}
-                            </Badge>
-                          )}
-                          {scan.high_count > 0 && (
-                            <Badge className={getSeverityColor('high')}>
-                              {scan.high_count}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Security Metrics */}
-              <SecurityMetrics />
-            </div>
+            <VanguardOverview 
+              metrics={{
+                totalScans: recentScans.length,
+                criticalIssues: criticalFindings,
+                highPriorityIssues: highFindings,
+                totalFindings: totalFindings,
+                assetsProtected: 1247,
+                threatsBlocked: 856,
+                complianceScore: 94,
+                networkCoverage: 87
+              }}
+            />
 
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Start a new security assessment</CardDescription>
+                <CardTitle>Security Operations Center</CardTitle>
+                <CardDescription>Launch advanced security modules for comprehensive protection</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <Button 
-                    onClick={() => setActiveTab("connectors")}
+                    onClick={() => setActiveTab("soc")}
+                    className="h-auto p-4 flex-col gap-2"
+                  >
+                    <Eye className="h-6 w-6" />
+                    <span>SOC Dashboard</span>
+                  </Button>
+
+                  <Button 
+                    onClick={() => setActiveTab("scanner")}
                     variant="outline"
                     className="h-auto p-4 flex-col gap-2"
                   >
-                    <Shield className="h-6 w-6" />
-                    <span>Network Agents</span>
+                    <Search className="h-6 w-6" />
+                    <span>Threat Detection</span>
                   </Button>
                   
                   <Button 
-                    onClick={() => setActiveTab("scanner")}
+                    onClick={() => setActiveTab("safepass")}
+                    variant="outline"
                     className="h-auto p-4 flex-col gap-2"
                   >
-                    <Search className="h-6 w-6" />
-                    <span>Vulnerability Scan</span>
+                    <Lock className="h-6 w-6" />
+                    <span>Identity & Access</span>
+                  </Button>
+
+                  <Button 
+                    onClick={() => setActiveTab("network")}
+                    variant="outline"
+                    className="h-auto p-4 flex-col gap-2"
+                  >
+                    <Network className="h-6 w-6" />
+                    <span>Network Security</span>
                   </Button>
                   
                   <Button 
@@ -258,7 +252,7 @@ const VanguardDashboard = () => {
                     className="h-auto p-4 flex-col gap-2"
                   >
                     <Target className="h-6 w-6" />
-                    <span>Penetration Test</span>
+                    <span>Penetration Testing</span>
                   </Button>
                   
                   <Button 
@@ -267,31 +261,57 @@ const VanguardDashboard = () => {
                     className="h-auto p-4 flex-col gap-2"
                   >
                     <CheckCircle className="h-6 w-6" />
-                    <span>Compliance Check</span>
+                    <span>Compliance</span>
+                  </Button>
+
+                  <Button 
+                    onClick={() => setActiveTab("threats")}
+                    variant="outline"
+                    className="h-auto p-4 flex-col gap-2"
+                  >
+                    <AlertTriangle className="h-6 w-6" />
+                    <span>Advanced Threats</span>
+                  </Button>
+
+                  <Button 
+                    onClick={() => setActiveTab("reports")}
+                    variant="outline"
+                    className="h-auto p-4 flex-col gap-2"
+                  >
+                    <TrendingUp className="h-6 w-6" />
+                    <span>Analytics</span>
                   </Button>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="connectors">
-            <NetworkConnectors />
+          <TabsContent value="soc">
+            <VanguardSOC />
           </TabsContent>
 
           <TabsContent value="scanner">
             <VulnerabilityScanner onScanComplete={loadRecentScans} />
           </TabsContent>
 
+          <TabsContent value="safepass">
+            <VanguardSafePass />
+          </TabsContent>
+
+          <TabsContent value="network">
+            <NetworkConnectors />
+          </TabsContent>
+
           <TabsContent value="pentest">
             <PenetrationTesting onScanComplete={loadRecentScans} />
           </TabsContent>
 
-          <TabsContent value="threats">
-            <ThreatDetection />
-          </TabsContent>
-
           <TabsContent value="compliance">
             <ComplianceAuditor onScanComplete={loadRecentScans} />
+          </TabsContent>
+
+          <TabsContent value="threats">
+            <ThreatDetection />
           </TabsContent>
 
           <TabsContent value="reports">

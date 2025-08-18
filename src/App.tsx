@@ -99,6 +99,7 @@ import SafeSIEM from '@/pages/SafeSIEM';
 import SafeSIEMAlertRules from '@/pages/SafeSIEMAlertRules';
 import SafeSIEMIncidents from '@/pages/SafeSIEMIncidents';
 import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
+import UltriumVanguard from '@/pages/UltriumVanguard';
 import VanguardDashboard from '@/pages/VanguardDashboard';
 import SecurityPolicy from '@/pages/SecurityPolicy';
 import SafeWebDashboard from '@/pages/SafeWebDashboard';
@@ -323,40 +324,12 @@ function AppRouter() {
             <SafeSIEMAnalytics />
           </SubscriptionProtectedRoute>
         } />
+        <Route path="/ultrium-vanguard" element={<UltriumVanguard />} />
         <Route path="/vanguard" element={
           <SubscriptionProtectedRoute requiresPremium>
             <VanguardDashboard />
           </SubscriptionProtectedRoute>
         } />
-        <Route path="/safeweb-dashboard" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SafeWebDashboard />
-          </SubscriptionProtectedRoute>
-        } />
-        <Route path="/safeweb-msp-dashboard" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <SafeWebMSPDashboard />
-          </SubscriptionProtectedRoute>
-        } />
-        
-        {/* Product Pages */}
-        <Route path="/products/safescan" element={<SafeScanPage />} />
-        <Route path="/products/safepass" element={<SafePassPage />} />
-        <Route path="/products/safeweb" element={<SafeWebPage />} />
-        <Route path="/products/safescore" element={<SafeScorePage />} />
-        <Route path="/products/safenet" element={<SafeNetPage />} />
-        <Route path="/products/ticketing" element={<TicketingPage />} />
-        <Route path="/products/antivirus" element={<AntivirusPage />} />
-        <Route path="/products/safemdr" element={<SafeMDRPage />} />
-        
-        {/* Admin Routes */}
-        <Route path="/admin/helpdesk" element={
-          <ProtectedRoute>
-            <AdvancedHelpdeskAdmin />
-          </ProtectedRoute>
-        } />
-        
-        {/* Vanguard AI Operations Center */}
         <Route path="/vanguard-dashboard" element={
           <ProtectedRoute>
             <VanguardDashboard />
