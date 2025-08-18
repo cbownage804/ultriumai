@@ -64,7 +64,7 @@ export const NetworkConnectors = () => {
     loadScanJobs();
     
     // Set up real-time subscriptions
-    const connectorsSubscription = (supabase as any)
+    const connectorsSubscription = supabase
       .channel('network_connectors')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'network_connectors' },
@@ -72,7 +72,7 @@ export const NetworkConnectors = () => {
       )
       .subscribe();
 
-    const jobsSubscription = (supabase as any)
+    const jobsSubscription = supabase
       .channel('network_scan_jobs')
       .on('postgres_changes',
         { event: '*', schema: 'public', table: 'network_scan_jobs' },
@@ -88,13 +88,13 @@ export const NetworkConnectors = () => {
 
   const loadConnectors = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('network_connectors')
+      const { data, error } = await supabase
+        .from('network_connectors' as any)
         .select('*')
         .order('last_heartbeat', { ascending: false });
 
       if (error) throw error;
-      setConnectors((data || []) as NetworkConnector[]);
+      setConnectors((data as unknown) as NetworkConnector[]);
     } catch (error) {
       console.error('Error loading connectors:', error);
     }
@@ -102,14 +102,14 @@ export const NetworkConnectors = () => {
 
   const loadScanJobs = async () => {
     try {
-      const { data, error } = await (supabase as any)
-        .from('network_scan_jobs')
+      const { data, error } = await supabase
+        .from('network_scan_jobs' as any)
         .select('*')
         .order('started_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      setScanJobs((data || []) as ScanJob[]);
+      setScanJobs((data as unknown) as ScanJob[]);
     } catch (error) {
       console.error('Error loading scan jobs:', error);
     }
