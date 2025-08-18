@@ -56,6 +56,7 @@ import { SafeShieldApp } from '@/components/apps/SafeShieldApp';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
 import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
 import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
+import VanguardDemoPage from '@/pages/demos/VanguardDemoPage';
 import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
 import CustomGPTBuilderDemoPage from '@/pages/demos/CustomGPTBuilderDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
@@ -268,6 +269,7 @@ function AppRouter() {
         <Route path="/demos/custom-gpt-builder" element={<CustomGPTBuilderDemoPage />} />
         <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
         <Route path="/products/safescore" element={<SafeScorePage />} />
+        <Route path="/demos/vanguard" element={<VanguardDemoPage />} />
         <Route path="/safepass" element={<SafePassPage />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
         <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
