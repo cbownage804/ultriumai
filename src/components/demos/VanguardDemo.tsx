@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
+import { useVanguardData } from "@/hooks/useVanguardData";
 import { 
   Shield, 
   AlertTriangle, 
@@ -29,34 +31,35 @@ import {
   Microscope,
   Bot,
   Radar,
-  Workflow
+  Workflow,
+  PlayCircle
 } from "lucide-react";
 
 export const VanguardDemo = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const [realTimeThreats, setRealTimeThreats] = useState(247);
-  const [behavioralAlerts, setBehavioralAlerts] = useState(3);
-
-  // Simulate real-time updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRealTimeThreats(prev => prev + Math.floor(Math.random() * 3));
-      setBehavioralAlerts(prev => Math.max(0, prev + (Math.random() > 0.7 ? 1 : -1)));
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const { toast } = useToast();
+  const { 
+    metrics, 
+    threats, 
+    capabilities, 
+    isLoading,
+    triggerThreatDetection,
+    triggerBehavioralAnalysis,
+    triggerAutonomousResponse,
+    refreshData
+  } = useVanguardData();
 
   const securityMetrics = [
-    { label: "XDR Security Score", value: 98, icon: ShieldCheck, color: "text-emerald-500" },
-    { label: "Zero-Day Detection", value: behavioralAlerts, icon: Brain, color: "text-purple-500" },
-    { label: "Endpoints Protected", value: "50K+", icon: Cpu, color: "text-blue-500" },
-    { label: "Threats Stopped Today", value: realTimeThreats, icon: Target, color: "text-red-500" }
+    { label: "XDR Security Score", value: metrics.securityScore, icon: ShieldCheck, color: "text-emerald-500" },
+    { label: "Zero-Day Detection", value: metrics.behavioralAlerts, icon: Brain, color: "text-purple-500" },
+    { label: "Endpoints Protected", value: metrics.endpointsProtected, icon: Cpu, color: "text-blue-500" },
+    { label: "Threats Stopped Today", value: metrics.realTimeThreats, icon: Target, color: "text-red-500" }
   ];
 
-  const advancedThreats = [
+  // Use real threats from the hook, fallback to demo data if empty
+  const advancedThreats = threats.length > 0 ? threats : [
     { 
-      id: 1, 
+      id: "demo-1", 
       type: "Living-off-the-Land Attack", 
       severity: "Critical", 
       target: "Domain Controller", 
@@ -67,7 +70,7 @@ export const VanguardDemo = () => {
       technique: "Process Hollowing"
     },
     { 
-      id: 2, 
+      id: "demo-2", 
       type: "AI-Detected Anomaly", 
       severity: "High", 
       target: "CEO Workstation", 
@@ -78,7 +81,7 @@ export const VanguardDemo = () => {
       technique: "Web Protocols C2"
     },
     { 
-      id: 3, 
+      id: "demo-3", 
       type: "Zero-Day Exploit", 
       severity: "Critical", 
       target: "Exchange Server", 
@@ -90,36 +93,130 @@ export const VanguardDemo = () => {
     }
   ];
 
-  const xdrCapabilities = [
-    { 
-      name: "Behavioral AI Engine", 
-      status: "Active", 
-      score: 99,
-      description: "ML-powered anomaly detection with 0.01% false positive rate",
-      icon: Brain
-    },
-    { 
-      name: "Quantum-Safe Encryption", 
-      status: "Enabled", 
-      score: 100,
-      description: "Post-quantum cryptographic protection",
-      icon: Lock
-    },
-    { 
-      name: "Autonomous Response", 
-      status: "Learning", 
-      score: 94,
-      description: "Self-healing infrastructure with predictive remediation",
-      icon: Bot
-    },
-    { 
-      name: "Threat Intelligence Fusion", 
-      status: "Synchronized", 
-      score: 97,
-      description: "Real-time IOC feeds from 500+ global sources",
-      icon: Radar
+  // Use real capabilities from the hook
+  const xdrCapabilities = capabilities.map(cap => ({
+    ...cap,
+    icon: getCapabilityIcon(cap.name)
+  }));
+
+  function getCapabilityIcon(name: string) {
+    switch (name) {
+      case "Behavioral AI Engine": return Brain;
+      case "Quantum-Safe Encryption": return Lock;
+      case "Autonomous Response": return Bot;
+      case "Threat Intelligence Fusion": return Radar;
+      default: return Shield;
     }
-  ];
+  }
+
+  // Demo action handlers
+  const handleThreatDemo = async () => {
+    try {
+      toast({ title: "🧠 Vanguard AI", description: "Initiating advanced threat detection..." });
+      
+      const result = await triggerThreatDetection({
+        endpoint: "DEMO-WORKSTATION-01",
+        file_hash: "a1b2c3d4e5f6...",
+        network_activity: [{ destination: "suspicious-c2.com", port: 443 }],
+        process_data: { name: "powershell.exe", args: ["-enc", "encoded_payload"] },
+        scan_type: "behavioral_analysis"
+      });
+
+      if (result?.analysis?.threat_detected) {
+        toast({ 
+          title: "🚨 Threat Detected", 
+          description: `${result.analysis.threat_type}: ${result.analysis.title}`,
+          variant: "destructive"
+        });
+      } else {
+        toast({ 
+          title: "✅ System Secure", 
+          description: "No threats detected - Vanguard protection active"
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "⚠️ Analysis Error", 
+        description: "Failed to complete threat analysis",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBehavioralDemo = async () => {
+    try {
+      toast({ title: "🔬 Behavioral AI", description: "Running advanced behavioral analysis..." });
+      
+      const result = await triggerBehavioralAnalysis({
+        endpoint_data: {
+          hostname: "CEO-WORKSTATION",
+          user: "john.doe",
+          processes: [
+            { name: "outlook.exe", memory_usage: 150000, network_connections: 5 },
+            { name: "chrome.exe", memory_usage: 800000, network_connections: 23 }
+          ],
+          network_activity: [
+            { destination: "mail.company.com", bytes: 45000, protocol: "HTTPS" }
+          ],
+          file_activity: [
+            { path: "C:\\temp\\suspicious.exe", action: "created", size: 2048000 }
+          ]
+        },
+        analysis_type: "realtime"
+      });
+
+      if (result?.behavioral_analysis?.anomaly_score > 70) {
+        toast({ 
+          title: "🧠 Behavioral Anomaly", 
+          description: `${result.behavioral_analysis.behavior_type} detected`,
+          variant: "destructive"
+        });
+      } else {
+        toast({ 
+          title: "📊 Normal Behavior", 
+          description: "No behavioral anomalies detected"
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "⚠️ Analysis Error", 
+        description: "Behavioral analysis failed",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAutonomousDemo = async () => {
+    try {
+      toast({ title: "🤖 Autonomous Response", description: "Activating self-healing response system..." });
+      
+      const result = await triggerAutonomousResponse({
+        threat_type: "Advanced Persistent Threat",
+        severity: "high",
+        affected_assets: ["WORKSTATION-01", "SERVER-02"],
+        auto_remediation_enabled: true,
+        response_mode: "containment"
+      });
+
+      if (result?.executed_actions?.length > 0) {
+        toast({ 
+          title: "🛡️ Autonomous Response Executed", 
+          description: `${result.executed_actions.length} actions completed automatically`
+        });
+      } else {
+        toast({ 
+          title: "📋 Response Plan Generated", 
+          description: "Autonomous response plan created - awaiting approval"
+        });
+      }
+    } catch (error) {
+      toast({ 
+        title: "⚠️ Response Error", 
+        description: "Autonomous response system unavailable",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -179,10 +276,25 @@ export const VanguardDemo = () => {
           </Badge>
         </div>
 
-        <div className="pt-6">
+        <div className="pt-6 space-y-4">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500/10 to-emerald-500/10 px-6 py-3 rounded-full border border-green-500/20">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
             <span className="text-green-700 font-medium">Live Threat Detection Active</span>
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-3 pt-4">
+            <Button onClick={handleThreatDemo} className="bg-red-600 hover:bg-red-700">
+              <PlayCircle className="h-4 w-4 mr-2" />
+              Demo Threat Detection
+            </Button>
+            <Button onClick={handleBehavioralDemo} className="bg-purple-600 hover:bg-purple-700">
+              <Brain className="h-4 w-4 mr-2" />
+              Demo Behavioral AI
+            </Button>
+            <Button onClick={handleAutonomousDemo} className="bg-blue-600 hover:bg-blue-700">
+              <Bot className="h-4 w-4 mr-2" />
+              Demo Autonomous Response
+            </Button>
           </div>
         </div>
       </div>
@@ -297,9 +409,9 @@ export const VanguardDemo = () => {
                         <Target className="h-4 w-4" />
                         Threat Detection Accuracy
                       </span>
-                      <span className="font-bold text-green-600">99.97%</span>
+                      <span className="font-bold text-green-600">{metrics.detectionRate}%</span>
                     </div>
-                    <Progress value={99.97} className="h-3" />
+                    <Progress value={metrics.detectionRate} className="h-3" />
                   </div>
                   
                   <div>
@@ -328,11 +440,11 @@ export const VanguardDemo = () => {
                 <div className="pt-4 border-t bg-gradient-to-r from-purple-50/50 to-blue-50/50 p-4 rounded-lg">
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div>
-                      <p className="text-xl font-bold text-purple-600">{realTimeThreats}</p>
+                      <p className="text-xl font-bold text-purple-600">{metrics.realTimeThreats}</p>
                       <p className="text-xs text-muted-foreground">Threats Neutralized Today</p>
                     </div>
                     <div>
-                      <p className="text-xl font-bold text-indigo-600">50K+</p>
+                      <p className="text-xl font-bold text-indigo-600">{metrics.endpointsProtected}</p>
                       <p className="text-xs text-muted-foreground">Endpoints Protected</p>
                     </div>
                   </div>
@@ -356,7 +468,7 @@ export const VanguardDemo = () => {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-gradient-to-br from-red-500/10 to-red-600/5 rounded-xl border border-red-200">
                     <AlertTriangle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-red-700">{behavioralAlerts}</p>
+                    <p className="text-2xl font-bold text-red-700">{metrics.behavioralAlerts}</p>
                     <p className="text-sm text-red-600">Zero-Day Attempts</p>
                   </div>
                   <div className="text-center p-4 bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-xl border border-orange-200">
