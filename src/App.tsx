@@ -268,6 +268,7 @@ function AppRouter() {
         <Route path="/demos/custom-gpt-builder" element={<CustomGPTBuilderDemoPage />} />
         <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
         <Route path="/products/safescore" element={<SafeScorePage />} />
+        <Route path="/safepass" element={<SafePassPage />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
         <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
         <Route path="/demos/rmm" element={<RMMDemoPage />} />

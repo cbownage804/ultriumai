@@ -14,7 +14,6 @@ import { ComplianceAuditor } from "@/components/security/ComplianceAuditor";
 import { SecurityMetrics } from "@/components/security/SecurityMetrics";
 import { NetworkConnectors } from "@/components/security/NetworkConnectors";
 import { VanguardOverview } from "@/components/vanguard/VanguardOverview";
-import { VanguardSafePass } from "@/components/vanguard/VanguardSafePass";
 import { VanguardSOC } from "@/components/vanguard/VanguardSOC";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -177,11 +176,10 @@ const VanguardDashboard = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="soc">SOC Operations</TabsTrigger>
             <TabsTrigger value="scanner">Threat Detection</TabsTrigger>
-            <TabsTrigger value="safepass">Identity & Access</TabsTrigger>
             <TabsTrigger value="network">Network Security</TabsTrigger>
             <TabsTrigger value="pentest">Penetration Testing</TabsTrigger>
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
@@ -226,15 +224,6 @@ const VanguardDashboard = () => {
                   >
                     <Search className="h-6 w-6" />
                     <span>Threat Detection</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab("safepass")}
-                    variant="outline"
-                    className="h-auto p-4 flex-col gap-2"
-                  >
-                    <Lock className="h-6 w-6" />
-                    <span>Identity & Access</span>
                   </Button>
 
                   <Button 
@@ -294,9 +283,6 @@ const VanguardDashboard = () => {
             <VulnerabilityScanner onScanComplete={loadRecentScans} />
           </TabsContent>
 
-          <TabsContent value="safepass">
-            <VanguardSafePass />
-          </TabsContent>
 
           <TabsContent value="network">
             <NetworkConnectors />
