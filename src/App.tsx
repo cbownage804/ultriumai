@@ -102,6 +102,9 @@ import SafeSIEMIncidents from '@/pages/SafeSIEMIncidents';
 import SafeSIEMAnalytics from '@/pages/SafeSIEMAnalytics';
 import UltriumVanguard from '@/pages/UltriumVanguard';
 import VanguardDashboard from '@/pages/VanguardDashboard';
+import VanguardDevices from '@/pages/VanguardDevices';
+import VanguardDeviceDetail from '@/pages/VanguardDeviceDetail';
+import VanguardSetup from '@/pages/VanguardSetup';
 import SecurityPolicy from '@/pages/SecurityPolicy';
 import SafeWebDashboard from '@/pages/SafeWebDashboard';
 import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
@@ -336,6 +339,21 @@ function AppRouter() {
         <Route path="/vanguard-dashboard" element={
           <ProtectedRoute>
             <VanguardDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/vanguard/devices" element={
+          <ProtectedRoute>
+            <VanguardDevices />
+          </ProtectedRoute>
+        } />
+        <Route path="/vanguard/devices/:deviceId" element={
+          <ProtectedRoute>
+            <VanguardDeviceDetail />
+          </ProtectedRoute>
+        } />
+        <Route path="/vanguard/setup" element={
+          <ProtectedRoute>
+            <VanguardSetup />
           </ProtectedRoute>
         } />
         
