@@ -17,109 +17,25 @@ const PageLoader = () => (
   </div>
 );
 
-// Wrapper component for lazy loading
-const LazyPage = ({ component: Component }: { component: React.ComponentType }) => (
-  <Suspense fallback={<PageLoader />}>
-    <Component />
-  </Suspense>
+// Wrapper component for lazy loading with protection
+const LazyProtectedPage = ({ component: Component }: { component: React.ComponentType }) => (
+  <ProtectedRoute>
+    <Suspense fallback={<PageLoader />}>
+      <Component />
+    </Suspense>
+  </ProtectedRoute>
 );
 
-export const vanguardRoutes = [
-  {
-    path: '',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardHome} />
-      </ProtectedRoute>
-    ),
-    index: true
-  },
-  {
-    path: 'dashboard',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDashboard} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'devices',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDevices} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'devices/:deviceId',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDeviceDetail} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'setup',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardSetup} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'threats',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDashboard} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'soc',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDashboard} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'pentest',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDashboard} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'compliance',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDashboard} />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: 'reports',
-    element: (
-      <ProtectedRoute>
-        <LazyPage component={VanguardDashboard} />
-      </ProtectedRoute>
-    )
-  }
+// Export routes as an array to be spread into Routes
+export const getVanguardRoutes = () => [
+  <Route key="vanguard-index" index element={<LazyProtectedPage component={VanguardHome} />} />,
+  <Route key="vanguard-dashboard" path="dashboard" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-devices" path="devices" element={<LazyProtectedPage component={VanguardDevices} />} />,
+  <Route key="vanguard-device-detail" path="devices/:deviceId" element={<LazyProtectedPage component={VanguardDeviceDetail} />} />,
+  <Route key="vanguard-setup" path="setup" element={<LazyProtectedPage component={VanguardSetup} />} />,
+  <Route key="vanguard-threats" path="threats" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-soc" path="soc" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-pentest" path="pentest" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-compliance" path="compliance" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardDashboard} />} />,
 ];
-
-// Helper to generate Route components
-export function VanguardRouteElements() {
-  return (
-    <>
-      {vanguardRoutes.map((route, index) => (
-        <Route
-          key={route.path || 'index'}
-          index={route.index}
-          path={route.index ? undefined : route.path}
-          element={route.element}
-        />
-      ))}
-    </>
-  );
-}

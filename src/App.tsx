@@ -13,7 +13,7 @@ import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain } from '@/utils/subdomain';
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
-import { VanguardRouteElements } from '@/routes/vanguardRoutes';
+import { getVanguardRoutes } from '@/routes/vanguardRoutes';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
@@ -197,9 +197,9 @@ function AppRouter() {
       <EnhancedErrorBoundary context="Vanguard Application" level="critical">
         <Routes>
           <Route element={<VanguardLayout />}>
-            <VanguardRouteElements />
+            {getVanguardRoutes()}
           </Route>
-          <Route path="*" element={<Navigate to="/vanguard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <CookieConsent />
       </EnhancedErrorBoundary>
@@ -213,7 +213,7 @@ function AppRouter() {
         
         {/* Vanguard Routes (when accessed via /vanguard path) */}
         <Route path="/vanguard" element={<VanguardLayout />}>
-          <VanguardRouteElements />
+          {getVanguardRoutes()}
         </Route>
         <Route path="/agent" element={<Agent />} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
