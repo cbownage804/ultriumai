@@ -12688,6 +12688,166 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_agent_commands: {
+        Row: {
+          agent_id: string
+          command_type: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          payload: Json | null
+          response: Json | null
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          command_type: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          response?: Json | null
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          command_type?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json | null
+          response?: Json | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_agent_commands_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_agent_metrics: {
+        Row: {
+          agent_id: string
+          cpu_percent: number | null
+          custom_metrics: Json | null
+          disk_percent: number | null
+          hailo_status: Json | null
+          id: string
+          memory_percent: number | null
+          network_rx_bytes: number | null
+          network_tx_bytes: number | null
+          recorded_at: string
+          temperature: number | null
+        }
+        Insert: {
+          agent_id: string
+          cpu_percent?: number | null
+          custom_metrics?: Json | null
+          disk_percent?: number | null
+          hailo_status?: Json | null
+          id?: string
+          memory_percent?: number | null
+          network_rx_bytes?: number | null
+          network_tx_bytes?: number | null
+          recorded_at?: string
+          temperature?: number | null
+        }
+        Update: {
+          agent_id?: string
+          cpu_percent?: number | null
+          custom_metrics?: Json | null
+          disk_percent?: number | null
+          hailo_status?: Json | null
+          id?: string
+          memory_percent?: number | null
+          network_rx_bytes?: number | null
+          network_tx_bytes?: number | null
+          recorded_at?: string
+          temperature?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_agent_metrics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_agents: {
+        Row: {
+          agent_version: string | null
+          api_endpoint: string | null
+          config: Json | null
+          created_at: string
+          device_id: string
+          firmware_version: string | null
+          hailo_board_name: string | null
+          hailo_status: Json | null
+          id: string
+          ip_address: unknown
+          last_heartbeat: string | null
+          location: string | null
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+          vpn_ip: string | null
+        }
+        Insert: {
+          agent_version?: string | null
+          api_endpoint?: string | null
+          config?: Json | null
+          created_at?: string
+          device_id: string
+          firmware_version?: string | null
+          hailo_board_name?: string | null
+          hailo_status?: Json | null
+          id?: string
+          ip_address?: unknown
+          last_heartbeat?: string | null
+          location?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vpn_ip?: string | null
+        }
+        Update: {
+          agent_version?: string | null
+          api_endpoint?: string | null
+          config?: Json | null
+          created_at?: string
+          device_id?: string
+          firmware_version?: string | null
+          hailo_board_name?: string | null
+          hailo_status?: Json | null
+          id?: string
+          ip_address?: unknown
+          last_heartbeat?: string | null
+          location?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vpn_ip?: string | null
+        }
+        Relationships: []
+      }
       voice_assistant_interactions: {
         Row: {
           content: string

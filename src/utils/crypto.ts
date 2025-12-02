@@ -68,7 +68,7 @@ export async function deriveKeyFromPassword(
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: new Uint8Array(salt.buffer, salt.byteOffset, salt.byteLength) as BufferSource,
       iterations: iterations,
       hash: 'SHA-256'
     },
@@ -104,7 +104,7 @@ export async function encryptData(
   const encrypted = await crypto.subtle.encrypt(
     {
       name: ALGORITHM,
-      iv: iv,
+      iv: new Uint8Array(iv.buffer, iv.byteOffset, iv.byteLength) as BufferSource,
       tagLength: TAG_LENGTH * 8 // Convert to bits
     },
     key,
