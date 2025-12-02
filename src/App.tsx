@@ -11,6 +11,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute';
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
+import { isVanguardDomain } from '@/utils/subdomain';
+import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
+import { VanguardRouteElements } from '@/routes/vanguardRoutes';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
@@ -145,6 +148,9 @@ function AppRouter() {
   const [isAIMinimized, setIsAIMinimized] = useState(true);
   const { trackPageView, identifyUser } = useAnalytics();
   useScrollToTop();
+  
+  // Check if we're on Vanguard subdomain
+  const isVanguard = isVanguardDomain();
 
   // Track page views
   useEffect(() => {
@@ -185,10 +191,30 @@ function AppRouter() {
     return 'ultrium';
   };
 
+  // If on Vanguard subdomain, render Vanguard-specific routes
+  if (isVanguard) {
+    return (
+      <EnhancedErrorBoundary context="Vanguard Application" level="critical">
+        <Routes>
+          <Route element={<VanguardLayout />}>
+            <VanguardRouteElements />
+          </Route>
+          <Route path="*" element={<Navigate to="/vanguard" replace />} />
+        </Routes>
+        <CookieConsent />
+      </EnhancedErrorBoundary>
+    );
+  }
+
   return (
     <EnhancedErrorBoundary context="Application Root" level="critical">
       <Routes>
         <Route path="/" element={<Index />} />
+        
+        {/* Vanguard Routes (when accessed via /vanguard path) */}
+        <Route path="/vanguard" element={<VanguardLayout />}>
+          <VanguardRouteElements />
+        </Route>
         <Route path="/agent" element={<Agent />} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
         <Route path="/pricing" element={<Pricing />} />
@@ -331,31 +357,7 @@ function AppRouter() {
           </SubscriptionProtectedRoute>
         } />
         <Route path="/ultrium-vanguard" element={<UltriumVanguard />} />
-        <Route path="/vanguard" element={
-          <SubscriptionProtectedRoute requiresPremium>
-            <VanguardDashboard />
-          </SubscriptionProtectedRoute>
-        } />
-        <Route path="/vanguard-dashboard" element={
-          <ProtectedRoute>
-            <VanguardDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/vanguard/devices" element={
-          <ProtectedRoute>
-            <VanguardDevices />
-          </ProtectedRoute>
-        } />
-        <Route path="/vanguard/devices/:deviceId" element={
-          <ProtectedRoute>
-            <VanguardDeviceDetail />
-          </ProtectedRoute>
-        } />
-        <Route path="/vanguard/setup" element={
-          <ProtectedRoute>
-            <VanguardSetup />
-          </ProtectedRoute>
-        } />
+        <Route path="/vanguard-dashboard" element={<Navigate to="/vanguard/dashboard" replace />} />
         
         {/* Reports & Analytics Routes */}
         <Route path="/reports" element={
