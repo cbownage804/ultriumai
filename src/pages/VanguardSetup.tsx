@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, Check, Download, Terminal, Server } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Copy, Check, Terminal, Server } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Helmet } from 'react-helmet-async';
 
 const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
 const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
@@ -275,19 +274,18 @@ if __name__ == '__main__':
     main()
 `;
 
+  useEffect(() => {
+    document.title = 'Setup Vanguard Device | Ultrium Vanguard';
+  }, []);
+
   return (
-    <>
-      <Helmet>
-        <title>Setup Vanguard Device | Ultrium Vanguard</title>
-        <meta name="description" content="Connect your Vanguard security appliance to the Ultrium dashboard" />
-      </Helmet>
-      <div className="container mx-auto p-6 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Setup Vanguard Device</h1>
-          <p className="text-muted-foreground">
-            Connect your Raspberry Pi or Ubuntu server to the Ultrium Vanguard dashboard
-          </p>
-        </div>
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Setup Vanguard Device</h1>
+        <p className="text-muted-foreground">
+          Connect your Raspberry Pi or Ubuntu server to the Ultrium Vanguard dashboard
+        </p>
+      </div>
 
         <div className="space-y-6">
           {/* Connection Details */}
@@ -435,6 +433,5 @@ if __name__ == '__main__':
           </Card>
         </div>
       </div>
-    </>
   );
 }
