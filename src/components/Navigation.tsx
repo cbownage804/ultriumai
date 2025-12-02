@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, User, ChevronDown, Phone, Brain, LayoutDashboard, Bot } from "lucide-react";
+import { Menu, LogOut, User, ChevronDown, Phone, Brain, LayoutDashboard, Bot, Shield } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -156,6 +156,11 @@ const Navigation = () => {
                   Dashboard
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
                 </button>
+                <button onClick={() => handleNavigation('/vanguard')} className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 relative group flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  Vanguard
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </button>
                 <button onClick={() => handleNavigation('/ultrium-gpt')} className="text-sm font-medium text-primary hover:text-primary/80 transition-colors duration-200 relative group flex items-center gap-1">
                   <Bot className="h-3 w-3" />
                   Ultrium GPT
@@ -299,6 +304,10 @@ const Navigation = () => {
                      <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/dashboard')}>
                        <LayoutDashboard className="h-4 w-4 mr-2" />
                        Dashboard
+                     </Button>
+                     <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/vanguard')}>
+                       <Shield className="h-4 w-4 mr-2" />
+                       Vanguard
                      </Button>
                      <Button variant="outline" className="w-full" onClick={() => handleNavigationWithMenuClose('/ultrium-gpt')}>
                        <Bot className="h-4 w-4 mr-2" />
