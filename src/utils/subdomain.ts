@@ -10,6 +10,11 @@ export function getSubdomain(): string | null {
     return null;
   }
   
+  // Handle main domain explicitly (no subdomain)
+  if (hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com') {
+    return null;
+  }
+  
   // Handle preview URLs (e.g., xxx.lovableproject.com)
   if (hostname.includes('lovableproject.com') || hostname.includes('lovable.app')) {
     const parts = hostname.split('.');
@@ -24,9 +29,9 @@ export function getSubdomain(): string | null {
     return null;
   }
   
-  // Handle custom domains (e.g., vanguard.ultriumai.com)
+  // Handle custom domains with subdomains (e.g., vanguard.ultriumai.com)
   const parts = hostname.split('.');
-  if (parts.length >= 2) {
+  if (parts.length >= 3) {
     const subdomain = parts[0];
     if (subdomain === 'vanguard') {
       return 'vanguard';
