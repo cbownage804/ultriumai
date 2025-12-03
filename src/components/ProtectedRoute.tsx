@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { isVanguardDomain, getVanguardBasePath } from '@/utils/subdomain';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -21,6 +22,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
+    // Handle Vanguard subdomain - redirect to appropriate auth page
+    const isVanguard = isVanguardDomain();
+    if (isVanguard) {
+      const basePath = getVanguardBasePath();
+      return <Navigate to={`${basePath}/auth`} replace />;
+    }
     return <Navigate to="/auth" replace />;
   }
 
