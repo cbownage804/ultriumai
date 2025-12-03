@@ -28,7 +28,16 @@ const AuthPage = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  const from = location.state?.from?.pathname || '/';
+  // Determine redirect destination - on Vanguard subdomain, go to /app
+  const getDefaultRedirect = () => {
+    const hostname = window.location.hostname;
+    if (hostname.startsWith('vanguard.') || hostname === 'vanguard.ultriumai.com') {
+      return '/app';
+    }
+    return '/';
+  };
+
+  const from = location.state?.from?.pathname || getDefaultRedirect();
 
   useEffect(() => {
     if (user) {

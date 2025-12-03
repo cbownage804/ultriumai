@@ -54,9 +54,9 @@ export function isVanguardDomain(): boolean {
 
 export function getVanguardBasePath(): string {
   const subdomain = getSubdomain();
-  // If on vanguard subdomain, routes are at root
+  // If on vanguard subdomain, protected routes are at /app
   if (subdomain === 'vanguard') {
-    return '';
+    return '/app';
   }
   // Otherwise, use /vanguard prefix
   return '/vanguard';
