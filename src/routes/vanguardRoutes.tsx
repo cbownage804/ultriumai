@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Lazy load Vanguard pages for better performance
+const VanguardLanding = lazy(() => import('@/pages/vanguard/VanguardLanding'));
 const VanguardHome = lazy(() => import('@/pages/vanguard/VanguardHome'));
 const VanguardDashboard = lazy(() => import('@/pages/VanguardDashboard'));
 const VanguardDevices = lazy(() => import('@/pages/VanguardDevices'));
@@ -27,14 +28,16 @@ const LazyProtectedPage = ({ component: Component }: { component: React.Componen
   </ProtectedRoute>
 );
 
-// Export routes as an array to be spread into Routes
-export const getVanguardRoutes = () => [
-  <Route key="vanguard-auth" path="auth" element={
-    <Suspense fallback={<PageLoader />}>
-      <AuthPage />
-    </Suspense>
-  } />,
-  <Route key="vanguard-index" index element={<LazyProtectedPage component={VanguardHome} />} />,
+// Lazy page without protection
+const LazyPage = ({ component: Component }: { component: React.ComponentType }) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+);
+
+// Export protected routes (for inside VanguardLayout)
+export const getVanguardProtectedRoutes = () => [
+  <Route key="vanguard-home" index element={<LazyProtectedPage component={VanguardHome} />} />,
   <Route key="vanguard-dashboard" path="dashboard" element={<LazyProtectedPage component={VanguardDashboard} />} />,
   <Route key="vanguard-devices" path="devices" element={<LazyProtectedPage component={VanguardDevices} />} />,
   <Route key="vanguard-device-detail" path="devices/:deviceId" element={<LazyProtectedPage component={VanguardDeviceDetail} />} />,
@@ -45,3 +48,12 @@ export const getVanguardRoutes = () => [
   <Route key="vanguard-compliance" path="compliance" element={<LazyProtectedPage component={VanguardDashboard} />} />,
   <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardDashboard} />} />,
 ];
+
+// Export public routes (landing, auth - outside VanguardLayout)
+export const getVanguardPublicRoutes = () => [
+  <Route key="vanguard-landing" index element={<LazyPage component={VanguardLanding} />} />,
+  <Route key="vanguard-auth" path="auth" element={<LazyPage component={AuthPage} />} />,
+];
+
+// Legacy export for backwards compatibility
+export const getVanguardRoutes = getVanguardProtectedRoutes;
