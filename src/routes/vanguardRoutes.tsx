@@ -10,7 +10,7 @@ const VanguardDashboard = lazy(() => import('@/pages/VanguardDashboard'));
 const VanguardDevices = lazy(() => import('@/pages/VanguardDevices'));
 const VanguardDeviceDetail = lazy(() => import('@/pages/VanguardDeviceDetail'));
 const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
-const AuthPage = lazy(() => import('@/pages/AuthPage'));
+const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -52,7 +52,7 @@ export const getVanguardProtectedRoutes = () => [
 // Export public routes (landing, auth - outside VanguardLayout)
 export const getVanguardPublicRoutes = () => [
   <Route key="vanguard-landing" index element={<LazyPage component={VanguardLanding} />} />,
-  <Route key="vanguard-auth" path="auth" element={<LazyPage component={AuthPage} />} />,
+  <Route key="vanguard-auth" path="auth" element={<LazyPage component={VanguardAuthPage} />} />,
 ];
 
 // Legacy export for backwards compatibility
