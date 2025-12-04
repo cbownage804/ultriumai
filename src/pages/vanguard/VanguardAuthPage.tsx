@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,10 +8,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { Shield, Lock, Building, Users, Eye, EyeOff } from 'lucide-react';
+import { Lock, Building, Users, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import vanguardLogo from '@/assets/vanguard-logo.png';
 
-const AuthPage = () => {
+const VanguardAuthPage = () => {
   const [activeTab, setActiveTab] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +29,11 @@ const AuthPage = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/app';
+
+  useEffect(() => {
+    document.title = 'Sign In | Ultrium Vanguard';
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -55,7 +60,7 @@ const AuthPage = () => {
       } else {
         toast({
           title: "Welcome back!",
-          description: "You have successfully signed in.",
+          description: "You have successfully signed in to Vanguard.",
         });
       }
     } catch (err) {
@@ -110,37 +115,33 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center mb-4">
-            <Shield className="h-12 w-12 text-primary mr-2" />
-            <h1 className="text-3xl font-bold text-foreground">SafePass</h1>
+            <img src={vanguardLogo} alt="Ultrium Vanguard" className="h-16 w-auto" />
           </div>
+          <h1 className="text-3xl font-bold text-foreground">Ultrium Vanguard</h1>
           <p className="text-muted-foreground">
-            Enterprise Password Management Platform
+            Enterprise Security Platform
           </p>
         </div>
 
         <Card>
-          <CardHeader>
+          <CardContent className="pt-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
-            </Tabs>
-          </CardHeader>
 
-          <CardContent>
-            {error && (
-              <Alert className="mb-4 border-destructive/50 text-destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+              {error && (
+                <Alert className="mb-4 border-destructive/50 text-destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
               {/* Sign In Tab */}
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
@@ -313,4 +314,4 @@ const AuthPage = () => {
   );
 };
 
-export default AuthPage;
+export default VanguardAuthPage;
