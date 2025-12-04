@@ -13,8 +13,15 @@
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
     
     <!-- Favicon -->
-    <link rel="icon" href="/vanguard-favicon.png" type="image/png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/vanguard-favicon.png" />
+    <link rel="icon" id="favicon" href="/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png" type="image/png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png" />
+    
+    <!-- Dynamic favicon for Vanguard subdomain -->
+    <script>
+      if (window.location.hostname.startsWith('vanguard.')) {
+        document.getElementById('favicon').href = '/vanguard-favicon.png';
+      }
+    </script>
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
