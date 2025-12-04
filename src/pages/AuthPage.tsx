@@ -10,6 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { Shield, Lock, Building, Users, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import vanguardLogo from '@/assets/vanguard-logo.png';
+
+// Determine if we're on the Vanguard subdomain
+const isVanguardSubdomain = () => {
+  const hostname = window.location.hostname;
+  return hostname.startsWith('vanguard.') || hostname === 'vanguard.ultriumai.com';
+};
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState('signin');
@@ -23,6 +30,7 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const isVanguard = isVanguardSubdomain();
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,8 +38,7 @@ const AuthPage = () => {
 
   // Determine redirect destination - on Vanguard subdomain, go to /app
   const getDefaultRedirect = () => {
-    const hostname = window.location.hostname;
-    if (hostname.startsWith('vanguard.') || hostname === 'vanguard.ultriumai.com') {
+    if (isVanguard) {
       return '/app';
     }
     return '/';
@@ -121,15 +128,29 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Header */}
+        {/* Header - Dynamic based on subdomain */}
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center mb-4">
-            <Shield className="h-12 w-12 text-primary mr-2" />
-            <h1 className="text-3xl font-bold text-foreground">SafePass</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Enterprise Password Management Platform
-          </p>
+          {isVanguard ? (
+            <>
+              <div className="flex items-center justify-center mb-4">
+                <img src={vanguardLogo} alt="Ultrium Vanguard" className="h-16 w-auto" />
+              </div>
+              <h1 className="text-3xl font-bold text-foreground">Ultrium Vanguard</h1>
+              <p className="text-muted-foreground">
+                Enterprise Security Platform
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center mb-4">
+                <Shield className="h-12 w-12 text-primary mr-2" />
+                <h1 className="text-3xl font-bold text-foreground">SafePass</h1>
+              </div>
+              <p className="text-muted-foreground">
+                Enterprise Password Management Platform
+              </p>
+            </>
+          )}
         </div>
 
         <Card>
