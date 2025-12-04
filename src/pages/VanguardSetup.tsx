@@ -4,22 +4,70 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, Check, Terminal, Server } from 'lucide-react';
+import { Copy, Check, Terminal, Server, Plus, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
 const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
 
 export default function VanguardSetup() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [copied, setCopied] = useState<string | null>(null);
+  
+  // Manual device registration state
+  const [deviceName, setDeviceName] = useState('');
+  const [deviceLocation, setDeviceLocation] = useState('');
+  const [deviceIp, setDeviceIp] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
     setCopied(label);
     toast.success(`${label} copied to clipboard`);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const handleManualRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id || !deviceName) {
+      toast.error('Please enter a device name');
+      return;
+    }
+
+    setIsRegistering(true);
+    try {
+      // Generate a unique device ID
+      const deviceId = `manual_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+      const { error } = await supabase
+        .from('vanguard_agents')
+        .insert({
+          user_id: user.id,
+          device_id: deviceId,
+          name: deviceName,
+          location: deviceLocation || null,
+          ip_address: deviceIp || null,
+          status: 'offline',
+          agent_version: 'manual',
+        });
+
+      if (error) throw error;
+
+      toast.success('Device registered successfully!');
+      setDeviceName('');
+      setDeviceLocation('');
+      setDeviceIp('');
+      navigate('/vanguard/devices');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Failed to register device');
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   const configYaml = `# Vanguard Agent Configuration
@@ -288,6 +336,66 @@ if __name__ == '__main__':
       </div>
 
         <div className="space-y-6">
+          {/* Manual Device Registration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Quick Add Device
+              </CardTitle>
+              <CardDescription>
+                Manually register your Pi device for testing (no agent required)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleManualRegister} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <Label htmlFor="deviceName">Device Name *</Label>
+                    <Input
+                      id="deviceName"
+                      placeholder="e.g., Office-Pi-01"
+                      value={deviceName}
+                      onChange={(e) => setDeviceName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="deviceLocation">Location</Label>
+                    <Input
+                      id="deviceLocation"
+                      placeholder="e.g., Main Office"
+                      value={deviceLocation}
+                      onChange={(e) => setDeviceLocation(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="deviceIp">IP Address</Label>
+                    <Input
+                      id="deviceIp"
+                      placeholder="e.g., 192.168.1.100"
+                      value={deviceIp}
+                      onChange={(e) => setDeviceIp(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button type="submit" disabled={isRegistering || !deviceName}>
+                  {isRegistering ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Registering...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Register Device
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
           {/* Connection Details */}
           <Card>
             <CardHeader>
