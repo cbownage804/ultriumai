@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   ArrowLeft, 
   Cpu, 
@@ -19,7 +21,16 @@ import {
   Play,
   Terminal,
   MessageSquare,
-  Loader2
+  Loader2,
+  Download,
+  Upload,
+  Power,
+  Shield,
+  Package,
+  FileCode,
+  Monitor,
+  Wifi,
+  Settings
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -48,9 +59,9 @@ export function VanguardDeviceDetails() {
     }
   };
 
-  const handleCommand = async (commandType: string) => {
+  const handleCommand = async (commandType: string, payload?: Record<string, any>) => {
     try {
-      await sendCommand(commandType);
+      await sendCommand(commandType, payload);
     } catch (err: any) {
       toast.error(err.message || 'Failed to send command');
     }
@@ -204,68 +215,59 @@ export function VanguardDeviceDetails() {
         </Card>
       </div>
 
-      {/* Quick Actions & Device Info */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleCommand('scan_network')}>
-              <Play className="h-4 w-4 mr-2" />
-              Network Scan
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleCommand('scan_vulnerabilities')}>
-              <Play className="h-4 w-4 mr-2" />
-              Vulnerability Scan
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleCommand('update_rules')}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Update Rules
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => handleCommand('reboot')}>
-              <Terminal className="h-4 w-4 mr-2" />
-              Reboot
-            </Button>
-          </CardContent>
-        </Card>
+      {/* RMM Tabs Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Remote Management</CardTitle>
+          <CardDescription>Monitor, manage, and execute commands on this device</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RMMTabs agent={agent} handleCommand={handleCommand} />
+        </CardContent>
+      </Card>
 
-        {/* Device Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Device Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <dt className="text-muted-foreground">Device ID</dt>
-                <dd className="font-mono text-xs">{agent.device_id}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Agent Version</dt>
-                <dd>{agent.agent_version || 'Unknown'}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Firmware</dt>
-                <dd>{agent.firmware_version || 'Unknown'}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Hailo Board</dt>
-                <dd>{agent.hailo_board_name || 'Not detected'}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">VPN IP</dt>
-                <dd>{agent.vpn_ip || 'N/A'}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Last Heartbeat</dt>
-                <dd>{agent.last_heartbeat ? formatDistanceToNow(new Date(agent.last_heartbeat), { addSuffix: true }) : 'Never'}</dd>
-              </div>
-            </dl>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Device Info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Device Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <dt className="text-muted-foreground">Device ID</dt>
+              <dd className="font-mono text-xs">{agent.device_id}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Agent Version</dt>
+              <dd>{agent.agent_version || 'Unknown'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Firmware</dt>
+              <dd>{agent.firmware_version || 'Unknown'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Hailo Board</dt>
+              <dd>{agent.hailo_board_name || 'Not detected'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">VPN IP</dt>
+              <dd>{agent.vpn_ip || 'N/A'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Local IP</dt>
+              <dd>{agent.ip_address || 'N/A'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Location</dt>
+              <dd>{agent.location || 'Not set'}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Last Heartbeat</dt>
+              <dd>{agent.last_heartbeat ? formatDistanceToNow(new Date(agent.last_heartbeat), { addSuffix: true }) : 'Never'}</dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
 
       {/* Command History */}
       <Card>
@@ -336,5 +338,211 @@ function MetricCard({
         <Progress value={value} className="mt-3 h-2" />
       </CardContent>
     </Card>
+  );
+}
+
+// RMM Tabs Component
+function RMMTabs({ agent, handleCommand }: { agent: any; handleCommand: (cmd: string, payload?: any) => void }) {
+  const [script, setScript] = useState('');
+  const [scriptOutput, setScriptOutput] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
+
+  const runScript = async () => {
+    if (!script.trim()) return;
+    setIsRunning(true);
+    setScriptOutput('Executing script...');
+    try {
+      await handleCommand('run_script', { script, shell: 'bash' });
+      setScriptOutput('Script queued for execution. Check command history for results.');
+    } catch (err) {
+      setScriptOutput('Failed to queue script');
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  return (
+    <Tabs defaultValue="actions" className="w-full">
+      <TabsList className="grid w-full grid-cols-5">
+        <TabsTrigger value="actions">Quick Actions</TabsTrigger>
+        <TabsTrigger value="scripts">Scripts</TabsTrigger>
+        <TabsTrigger value="software">Software</TabsTrigger>
+        <TabsTrigger value="network">Network</TabsTrigger>
+        <TabsTrigger value="power">Power</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="actions" className="space-y-4 mt-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('scan_network')}>
+            <Wifi className="h-5 w-5" />
+            <span className="text-xs">Network Scan</span>
+          </Button>
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('scan_vulnerabilities')}>
+            <Shield className="h-5 w-5" />
+            <span className="text-xs">Vuln Scan</span>
+          </Button>
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('get_inventory')}>
+            <Package className="h-5 w-5" />
+            <span className="text-xs">Get Inventory</span>
+          </Button>
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('update_agent')}>
+            <Download className="h-5 w-5" />
+            <span className="text-xs">Update Agent</span>
+          </Button>
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('check_patches')}>
+            <RefreshCw className="h-5 w-5" />
+            <span className="text-xs">Check Patches</span>
+          </Button>
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('clear_cache')}>
+            <HardDrive className="h-5 w-5" />
+            <span className="text-xs">Clear Cache</span>
+          </Button>
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('sync_time')}>
+            <Settings className="h-5 w-5" />
+            <span className="text-xs">Sync Time</span>
+          </Button>
+          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('health_check')}>
+            <Monitor className="h-5 w-5" />
+            <span className="text-xs">Health Check</span>
+          </Button>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="scripts" className="space-y-4 mt-4">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium">Execute Script</h4>
+            <Badge variant="outline">Bash</Badge>
+          </div>
+          <Textarea
+            placeholder="#!/bin/bash&#10;# Enter your script here...&#10;echo 'Hello from Vanguard'"
+            value={script}
+            onChange={(e) => setScript(e.target.value)}
+            className="font-mono text-sm h-32"
+          />
+          <div className="flex gap-2">
+            <Button onClick={runScript} disabled={isRunning || !script.trim()}>
+              {isRunning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
+              Run Script
+            </Button>
+            <Button variant="outline" onClick={() => setScript('')}>Clear</Button>
+          </div>
+          {scriptOutput && (
+            <div className="p-3 bg-muted rounded-lg font-mono text-xs">
+              <pre className="whitespace-pre-wrap">{scriptOutput}</pre>
+            </div>
+          )}
+        </div>
+        
+        <div className="border-t pt-4">
+          <h4 className="text-sm font-medium mb-3">Quick Scripts</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" size="sm" onClick={() => handleCommand('run_script', { script: 'df -h', shell: 'bash' })}>
+              <FileCode className="h-4 w-4 mr-2" />
+              Disk Usage
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => handleCommand('run_script', { script: 'top -bn1 | head -20', shell: 'bash' })}>
+              <FileCode className="h-4 w-4 mr-2" />
+              Top Processes
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => handleCommand('run_script', { script: 'netstat -tuln', shell: 'bash' })}>
+              <FileCode className="h-4 w-4 mr-2" />
+              Open Ports
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => handleCommand('run_script', { script: 'uptime', shell: 'bash' })}>
+              <FileCode className="h-4 w-4 mr-2" />
+              Uptime
+            </Button>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="software" className="space-y-4 mt-4">
+        <div className="flex justify-between items-center">
+          <h4 className="text-sm font-medium">Software Management</h4>
+          <Button variant="outline" size="sm" onClick={() => handleCommand('get_software_list')}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh List
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('apt_update')}>
+            <Download className="h-4 w-4 mr-2" />
+            Update Package Lists
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('apt_upgrade')}>
+            <Upload className="h-4 w-4 mr-2" />
+            Upgrade All Packages
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('apt_autoremove')}>
+            <Package className="h-4 w-4 mr-2" />
+            Remove Unused
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('check_security_updates')}>
+            <Shield className="h-4 w-4 mr-2" />
+            Security Updates
+          </Button>
+        </div>
+        <div className="p-4 bg-muted/50 rounded-lg text-center text-sm text-muted-foreground">
+          Software inventory will appear here after running "Get Inventory"
+        </div>
+      </TabsContent>
+
+      <TabsContent value="network" className="space-y-4 mt-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('scan_network')}>
+            <Wifi className="h-4 w-4 mr-2" />
+            Scan Local Network
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('get_interfaces')}>
+            <Monitor className="h-4 w-4 mr-2" />
+            Network Interfaces
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('get_routing_table')}>
+            <Settings className="h-4 w-4 mr-2" />
+            Routing Table
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('get_dns_config')}>
+            <FileCode className="h-4 w-4 mr-2" />
+            DNS Configuration
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('get_firewall_rules')}>
+            <Shield className="h-4 w-4 mr-2" />
+            Firewall Rules
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('get_connections')}>
+            <Wifi className="h-4 w-4 mr-2" />
+            Active Connections
+          </Button>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="power" className="space-y-4 mt-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('reboot')}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reboot Device
+          </Button>
+          <Button variant="outline" className="justify-start text-destructive" onClick={() => handleCommand('shutdown')}>
+            <Power className="h-4 w-4 mr-2" />
+            Shutdown
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('restart_agent')}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Restart Agent
+          </Button>
+          <Button variant="outline" className="justify-start" onClick={() => handleCommand('restart_services')}>
+            <Settings className="h-4 w-4 mr-2" />
+            Restart Services
+          </Button>
+        </div>
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <p className="text-sm text-destructive font-medium">Warning</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Power commands will affect device availability. Use with caution.
+          </p>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
