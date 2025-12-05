@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, Video, Mail, FileText, Link, Network, Server, Activity, Eye, HeadphonesIcon, ChevronDown, ChevronRight, Database, Building2, Bell, Workflow, DollarSign, Globe, CloudCog, Monitor, Brain, Mic } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, ChevronDown, ChevronRight, Brain, Mic, Eye, ExternalLink } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,9 +17,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarHeader,
   SidebarFooter,
   useSidebar,
@@ -38,35 +35,10 @@ const gptItems = [
   { title: "Deploy", url: "/dashboard/gpt/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
 ];
 
-const safeSuiteItems = [
-  { title: "SafeShield", url: "/dashboard/safeshield", icon: Shield, tooltip: "Unified endpoint security platform with EDR, MDR, and Antivirus" },
-  { title: "SafePass", url: "/dashboard/safepass", icon: Key, tooltip: "Enterprise password management and security" },
-  { title: "SafeScan", url: "/dashboard/safescan", icon: Shield, tooltip: "Comprehensive security scanning for emails, documents, and URLs" },
-  { title: "SafeNet", url: "/dashboard/safenet", icon: Network, tooltip: "Advanced network monitoring and vulnerability management" },
-  { title: "SafeKB", url: "/dashboard/safekb", icon: Database, tooltip: "Knowledge base, asset management, and documentation" },
-  { title: "SafeIntel", url: "/dashboard/safeintel", icon: Eye, tooltip: "Dark web monitoring and threat intelligence gathering" },
-  { title: "SafeSIEM", url: "/safesiem", icon: Shield, tooltip: "Security Information and Event Management dashboard" },
-];
-
-const managedServicesItems = [
-  { title: "RMM", url: "/dashboard/rmm", icon: Server, tooltip: "Remote Monitoring and Management" },
-  { title: "SafeDesk", url: "/dashboard/helpdesk", icon: HeadphonesIcon, tooltip: "AI-powered ticketing and support system" },
-];
-
-const mspItems = [
-  { title: "Real-time Events", url: "/dashboard/msp/real-time-events", icon: Activity, tooltip: "Live security event streaming and monitoring" },
-  { title: "Security Hub", url: "/dashboard/msp/security-hub", icon: Shield, tooltip: "Advanced security monitoring and compliance" },
-  { title: "Asset Management", url: "/dashboard/msp/asset-management", icon: Monitor, tooltip: "IT asset tracking and lifecycle management" },
-  { title: "Integrations Hub", url: "/dashboard/msp/integrations", icon: CloudCog, tooltip: "Connect and manage business tools" },
-  { title: "Notifications", url: "/dashboard/msp/notifications", icon: Bell, tooltip: "MSP notification management and alerts" },
-  { title: "Workflow Automation", url: "/dashboard/msp/workflow", icon: Workflow, tooltip: "Automate MSP workflows and processes" },
-  { title: "Billing Management", url: "/dashboard/msp/billing", icon: DollarSign, tooltip: "Manage MSP billing, invoices, and revenue" },
-  { title: "QuickBooks Integration", url: "/dashboard/msp/quickbooks", icon: DollarSign, tooltip: "Integrate with QuickBooks for billing and accounting" },
-  { title: "API Management", url: "/dashboard/msp/api-management", icon: Key, tooltip: "Manage MSP APIs and integrations" },
-  { title: "Client Portal", url: "/dashboard/msp/client-portal", icon: Globe, tooltip: "Manage client self-service portals" },
-  { title: "Role Management", url: "/dashboard/msp/roles", icon: Shield, tooltip: "Manage team roles and permissions" },
-  { title: "Business Operations", url: "/dashboard/msp/business", icon: BarChart3, tooltip: "Manage contracts, invoicing, and SLA performance" },
-  { title: "Advanced Analytics", url: "/dashboard/msp/analytics", icon: TrendingUp, tooltip: "Comprehensive insights into MSP operations" },
+const aiItems = [
+  { title: "AI Intelligence Hub", url: "/dashboard/ai/intelligence", icon: Brain, tooltip: "Advanced AI analysis and automation" },
+  { title: "AI Voice Interface", url: "/dashboard/ai/voice", icon: Mic, tooltip: "Voice-to-text and text-to-speech AI" },
+  { title: "AI Vision Analyzer", url: "/dashboard/ai/vision", icon: Eye, tooltip: "Computer vision and image analysis" },
 ];
 
 const managementItems = [
@@ -75,15 +47,6 @@ const managementItems = [
   { title: "Team Management", url: "/dashboard/teams", icon: Users, tooltip: "Manage team members, roles, and permissions" },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3, tooltip: "View usage statistics and performance metrics" },
 ];
-
-const aiItems = [
-  { title: "AI Intelligence Hub", url: "/dashboard/ai/intelligence", icon: Brain, tooltip: "Advanced AI analysis and automation" },
-  { title: "AI Voice Interface", url: "/dashboard/ai/voice", icon: Mic, tooltip: "Voice-to-text and text-to-speech AI" },
-  { title: "AI Vision Analyzer", url: "/dashboard/ai/vision", icon: Eye, tooltip: "Computer vision and image analysis" },
-];
-
-// Add AI section to sidebar
-const sectionAI = { key: 'ai', items: aiItems, label: 'AI Features', icon: Brain };
 
 const accountItems = [
   { title: "Profile", url: "/dashboard/profile", icon: User, tooltip: "Manage your account profile and personal information" },
@@ -106,9 +69,7 @@ export function AppSidebar() {
   
   const [openSections, setOpenSections] = useState({
     gpt: true,
-    security: true,
-    managed: true,
-    msp: false,
+    ai: true,
     management: false
   });
   
@@ -145,7 +106,7 @@ export function AppSidebar() {
           <NavLink to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <img src={ultraiumAiLogo} alt="UltriumAI" className="h-12 w-auto" />
             {!isCollapsed && (
-              <span className="text-lg font-bold text-foreground">Ultrium AI</span>
+              <span className="text-lg font-bold text-foreground">AI Studio</span>
             )}
           </NavLink>
         </div>
@@ -221,90 +182,24 @@ export function AppSidebar() {
           </SidebarGroup>
         </Collapsible>
 
-        {/* SafeSuite Section */}
-        <Collapsible open={openSections.security} onOpenChange={() => toggleSection('security')}>
+        {/* AI Features Section */}
+        <Collapsible open={openSections.ai} onOpenChange={() => toggleSection('ai')}>
           <SidebarGroup>
             <SidebarGroupLabel asChild>
               <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
                 <span className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  {!isCollapsed && "SafeSuite"}
+                  <Brain className="h-4 w-4" />
+                  {!isCollapsed && "AI Features"}
                 </span>
                 {!isCollapsed && (
-                  openSections.security ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                  openSections.ai ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
                 )}
               </CollapsibleTrigger>
             </SidebarGroupLabel>
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {safeSuiteItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild tooltip={item.tooltip}>
-                        <NavLink to={item.url} className={getNavClass}>
-                          <item.icon className="h-4 w-4" />
-                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-
-        {/* Managed Services Section */}
-        <Collapsible open={openSections.managed} onOpenChange={() => toggleSection('managed')}>
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
-                <span className="flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  {!isCollapsed && "Managed Services"}
-                </span>
-                {!isCollapsed && (
-                  openSections.managed ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {managedServicesItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild tooltip={item.tooltip}>
-                        <NavLink to={item.url} className={getNavClass}>
-                          <item.icon className="h-4 w-4" />
-                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-
-        {/* MSP Features Section */}
-        <Collapsible open={openSections.msp} onOpenChange={() => toggleSection('msp')}>
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
-                <span className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  {!isCollapsed && "MSP Features"}
-                </span>
-                {!isCollapsed && (
-                  openSections.msp ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {mspItems.map((item) => (
+                  {aiItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild tooltip={item.tooltip}>
                         <NavLink to={item.url} className={getNavClass}>
@@ -353,64 +248,71 @@ export function AppSidebar() {
           </SidebarGroup>
         </Collapsible>
 
+        {/* Vanguard Link */}
+        {!isCollapsed && (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <Card className="mx-2 mb-2 border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
+                <CardHeader className="p-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-primary" />
+                    Ultrium Vanguard
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    AI-powered cybersecurity platform
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full text-xs"
+                    onClick={() => window.open('https://vanguard.ultriumai.com', '_blank')}
+                  >
+                    <ExternalLink className="h-3 w-3 mr-1" />
+                    Open Vanguard
+                  </Button>
+                </CardContent>
+              </Card>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Premium Upgrade Section */}
         {subscription.subscription_tier === "free" && !isCollapsed && (
           <SidebarGroup>
             <SidebarGroupContent>
-              <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50">
+              <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30">
                 <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-black">
-                    <Star className="h-4 w-4 text-purple-500" />
-                    Go Premium
+                  <CardTitle className="text-sm flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                    <Crown className="h-4 w-4" />
+                    Upgrade to Pro
                   </CardTitle>
-                  <CardDescription className="text-xs text-black/70">
-                    Unlock advanced features
+                  <CardDescription className="text-xs text-purple-600 dark:text-purple-400">
+                    Unlock advanced AI features
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-3 pt-0">
-                  <div className="space-y-1 mb-3">
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        Document Upload
-                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        API Access
-                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        Embed Widgets
-                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        Custom Branding
-                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        Export Conversations
-                        <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">Premium</span>
-                      </span>
-                    </div>
-                  </div>
+                  <ul className="text-xs space-y-1 mb-3 text-purple-600 dark:text-purple-400">
+                    <li className="flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      5,000 monthly credits
+                    </li>
+                    <li className="flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Unlimited GPT builds
+                    </li>
+                    <li className="flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Priority support
+                    </li>
+                  </ul>
                   <Button 
                     size="sm" 
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-xs"
                     onClick={() => navigate('/pricing')}
                   >
-                    <Star className="h-3 w-3 mr-2" />
+                    <Zap className="h-3 w-3 mr-1" />
                     Upgrade Now
                   </Button>
                 </CardContent>
@@ -419,92 +321,12 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Enterprise Upgrade Section */}
-        {subscription.subscription_tier === "free" && !isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <Card className="mx-2 mb-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
-                <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-black">
-                    <Crown className="h-4 w-4 text-orange-500" />
-                    Go Enterprise
-                  </CardTitle>
-                  <CardDescription className="text-xs text-black/70">
-                    Maximum power & flexibility
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-3 pt-0">
-                  <div className="space-y-1 mb-3">
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span>Everything in Premium</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        GPT Integrations
-                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        AI Model Selection
-                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        Priority Support
-                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-black">
-                      <Check className="h-3 w-3 text-green-500" />
-                      <span className="flex items-center gap-2">
-                        Advanced Analytics
-                        <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded">Enterprise</span>
-                      </span>
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white"
-                    onClick={() => navigate('/pricing')}
-                  >
-                    <Crown className="h-3 w-3 mr-2" />
-                    Go Enterprise
-                  </Button>
-                </CardContent>
-              </Card>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* Admin Section - Only for UltriumAI employees */}
-        {isAdmin && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Administration</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild tooltip={item.tooltip}>
-                      <NavLink to={item.url} className={getNavClass}>
-                        <item.icon className="h-4 w-4 text-orange-500" />
-                        {!isCollapsed && <span className="ml-2 font-semibold text-orange-500">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Account</SidebarGroupLabel>
+        {/* Account Section */}
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupLabel className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            {!isCollapsed && "Account"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {accountItems.map((item) => (
@@ -517,26 +339,50 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Admin link for UltriumAI employees */}
+              {isAdmin && adminItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.tooltip}>
+                    <NavLink to={item.url} className={getNavClass}>
+                      <item.icon className="h-4 w-4 text-amber-500" />
+                      {!isCollapsed && <span className="ml-2 text-amber-500">{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <div className="flex items-center justify-between">
-          {!isCollapsed && user && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {user.user_metadata?.full_name || user.email}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip="Sign out of your account">
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+                {!isCollapsed && <span className="ml-2">Sign Out</span>}
+              </Button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        
+        {/* User info */}
+        {!isCollapsed && user && (
+          <div className="mt-2 pt-2 border-t">
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            {subscription.subscription_tier && (
+              <p className="text-xs text-primary font-medium capitalize">
+                {subscription.subscription_tier} Plan
               </p>
-              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-            </div>
-          )}
-          <SidebarMenuButton onClick={handleSignOut} className="shrink-0">
-            <LogOut className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-2">Sign Out</span>}
-          </SidebarMenuButton>
-        </div>
+            )}
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

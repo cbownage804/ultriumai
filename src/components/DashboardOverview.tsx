@@ -9,30 +9,22 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserCredits } from "@/hooks/useUserCredits";
 import { 
-  Shield, 
   TrendingUp, 
-  Users, 
-  AlertTriangle, 
   CheckCircle, 
-  Clock,
-  Lock,
-  Mail,
-  Globe,
-  Database,
   Zap,
   Bot,
   MessageSquare,
   Star,
-  Activity,
-  Search,
-  FileText,
-  Settings,
-  BarChart3,
-  Scan,
-  Brain
+  Brain,
+  Mic,
+  Eye,
+  Sparkles,
+  Code,
+  Palette,
+  Shield,
+  ExternalLink
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { NotificationTester } from "@/components/notifications/NotificationTester";
 
 export const DashboardOverview = () => {
   const { user } = useAuth();
@@ -55,70 +47,59 @@ export const DashboardOverview = () => {
     return 'evening';
   };
 
-  const securityScore = 85; // Mock data - will be calculated from real security metrics
-  const threatsBlocked = 147; // Mock data
-  const activeScans = 3; // Mock data
-
   const quickActions = [
     {
-      title: "AI Security Assistant",
-      description: "Voice-enabled security guidance",
-      icon: Brain,
-      action: () => navigate("/dashboard/voice-assistant"),
+      title: "Build a GPT",
+      description: "Create custom AI assistants",
+      icon: Bot,
+      action: () => navigate("/dashboard/gpt/build"),
       color: "bg-primary",
       featured: true,
     },
     {
-      title: "Run Security Scan",
-      description: "Comprehensive security audit",
-      icon: Scan,
-      action: () => navigate("/dashboard/safescan"),
+      title: "GPT Templates",
+      description: "Start from pre-built templates",
+      icon: Star,
+      action: () => navigate("/dashboard/gpt/templates"),
       color: "bg-secondary",
       featured: true,
     },
     {
-      title: "SafePass Manager",
-      description: "Manage passwords securely",
-      icon: Lock,
-      action: () => navigate("/dashboard/safepass"),
-      color: "bg-blue-500",
-    },
-    {
-      title: "Email Security",
-      description: "Monitor email threats",
-      icon: Mail,
-      action: () => navigate("/dashboard/safemail"),
-      color: "bg-green-500",
-    },
-    {
-      title: "Network Monitor",
-      description: "Network security status",
-      icon: Globe,
-      action: () => navigate("/dashboard/safenet"),
+      title: "AI Intelligence Hub",
+      description: "Advanced AI analysis",
+      icon: Brain,
+      action: () => navigate("/dashboard/ai/intelligence"),
       color: "bg-purple-500",
     },
     {
-      title: "UltriumGPT",
-      description: "AI security assistant",
-      icon: Bot,
+      title: "Voice Interface",
+      description: "Voice-to-text AI",
+      icon: Mic,
+      action: () => navigate("/dashboard/ai/voice"),
+      color: "bg-blue-500",
+    },
+    {
+      title: "Vision Analyzer",
+      description: "Image analysis AI",
+      icon: Eye,
+      action: () => navigate("/dashboard/ai/vision"),
+      color: "bg-green-500",
+    },
+    {
+      title: "Ultrium GPT",
+      description: "Your AI co-pilot",
+      icon: Sparkles,
       action: () => navigate("/dashboard/ultrium-gpt"),
       color: "bg-orange-500",
     },
-    {
-      title: "Security Settings",
-      description: "Configure security",
-      icon: Settings,
-      action: () => navigate("/dashboard/security"),
-      color: "bg-red-500",
-    },
   ];
 
-  const recentActivity = [
-    { action: "Security scan completed", time: "2 hours ago", type: "scan", status: "success" },
-    { action: "Password breach detected", time: "1 day ago", type: "breach", status: "warning" },
-    { action: "Email threat blocked", time: "2 days ago", type: "block", status: "success" },
-    { action: "Network device discovered", time: "3 days ago", type: "discovery", status: "info" },
-  ];
+  const gptStats = {
+    totalGPTs: 3,
+    activeGPTs: 2,
+    totalConversations: 156,
+    avgSatisfaction: 4.8,
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -129,7 +110,7 @@ export const DashboardOverview = () => {
             Good {getTimeOfDay()}, {profile?.full_name || user?.email?.split('@')[0]}!
           </h1>
           <p className="text-muted-foreground mt-1 animate-fade-in stagger-1">
-            Welcome to your UltriumAI security dashboard
+            Welcome to UltriumAI Studio - Build powerful AI solutions
           </p>
         </div>
         <div className="flex items-center space-x-3 animate-fade-in stagger-2">
@@ -149,27 +130,24 @@ export const DashboardOverview = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up stagger-3">
         <Card className="border-l-4 border-l-primary hover-scale hover-glow animate-fade-in stagger-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Score</CardTitle>
-            <Shield className="h-4 w-4 text-primary animate-bounce-gentle" />
+            <CardTitle className="text-sm font-medium">Your GPTs</CardTitle>
+            <Bot className="h-4 w-4 text-primary animate-bounce-gentle" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary animate-glow">{securityScore}/100</div>
-            <div className="mt-2">
-              <Progress value={securityScore} className="h-2" />
-            </div>
+            <div className="text-2xl font-bold text-primary animate-glow">{gptStats.totalGPTs}</div>
             <p className="text-xs text-muted-foreground mt-2">
-              +5 from last week
+              {gptStats.activeGPTs} active
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-green-500 hover-scale hover-glow animate-fade-in stagger-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Threats Blocked</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-green-500 animate-pulse" />
+            <CardTitle className="text-sm font-medium">Conversations</CardTitle>
+            <MessageSquare className="h-4 w-4 text-green-500 animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600 animate-glow">{threatsBlocked}</div>
+            <div className="text-2xl font-bold text-green-600 animate-glow">{gptStats.totalConversations}</div>
             <p className="text-xs text-muted-foreground">
               This month
             </p>
@@ -178,13 +156,13 @@ export const DashboardOverview = () => {
 
         <Card className="border-l-4 border-l-blue-500 hover-scale hover-glow animate-fade-in stagger-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Scans</CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-500 animate-pulse" />
+            <CardTitle className="text-sm font-medium">Satisfaction</CardTitle>
+            <Star className="h-4 w-4 text-blue-500 animate-pulse" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600 animate-glow">{activeScans}</div>
+            <div className="text-2xl font-bold text-blue-600 animate-glow">{gptStats.avgSatisfaction}/5</div>
             <p className="text-xs text-muted-foreground">
-              Running now
+              Average rating
             </p>
           </CardContent>
         </Card>
@@ -208,97 +186,6 @@ export const DashboardOverview = () => {
         </Card>
       </div>
 
-      {/* Security Services Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Shield className="h-5 w-5" />
-              <span>Security Services</span>
-            </CardTitle>
-            <CardDescription>
-              Overview of your active security tools
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Lock className="h-8 w-8 text-primary" />
-                <div>
-                  <h3 className="font-semibold">SafePass</h3>
-                  <p className="text-sm text-muted-foreground">Password Manager</p>
-                </div>
-              </div>
-              <Badge variant="outline">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Mail className="h-8 w-8 text-blue-500" />
-                <div>
-                  <h3 className="font-semibold">SafeMail</h3>
-                  <p className="text-sm text-muted-foreground">Email Security</p>
-                </div>
-              </div>
-              <Badge variant="outline">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Globe className="h-8 w-8 text-green-500" />
-                <div>
-                  <h3 className="font-semibold">SafeWeb</h3>
-                  <p className="text-sm text-muted-foreground">Web Protection</p>
-                </div>
-              </div>
-              <Badge variant="outline">Active</Badge>
-            </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Database className="h-8 w-8 text-purple-500" />
-                <div>
-                  <h3 className="font-semibold">SafeNet</h3>
-                  <p className="text-sm text-muted-foreground">Network Security</p>
-                </div>
-              </div>
-              <Badge variant="outline">Active</Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5" />
-              <span>Recent Activity</span>
-            </CardTitle>
-            <CardDescription>
-              Latest security events and updates
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentActivity.map((activity, index) => (
-              <div key={index} className="flex items-start space-x-3 p-3 border rounded-lg">
-                <div className={`h-5 w-5 mt-0.5 ${
-                  activity.status === 'success' ? 'text-green-500' :
-                  activity.status === 'warning' ? 'text-yellow-500' :
-                  activity.status === 'error' ? 'text-red-500' : 'text-blue-500'
-                }`}>
-                  {activity.status === 'success' && <CheckCircle className="h-5 w-5" />}
-                  {activity.status === 'warning' && <AlertTriangle className="h-5 w-5" />}
-                  {activity.status === 'info' && <Activity className="h-5 w-5" />}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{activity.action}</p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Quick Actions */}
       <Card className="animate-fade-in-up stagger-4">
         <CardHeader>
@@ -307,7 +194,7 @@ export const DashboardOverview = () => {
             <span>Quick Actions</span>
           </CardTitle>
           <CardDescription>
-            Common security tasks and operations
+            Get started building AI solutions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -337,6 +224,98 @@ export const DashboardOverview = () => {
         </CardContent>
       </Card>
 
+      {/* Features Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Bot className="h-5 w-5" />
+              <span>AI Studio Features</span>
+            </CardTitle>
+            <CardDescription>
+              Build and deploy custom AI solutions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/gpt/build')}>
+              <div className="flex items-center space-x-3">
+                <Code className="h-8 w-8 text-primary" />
+                <div>
+                  <h3 className="font-semibold">Custom GPT Builder</h3>
+                  <p className="text-sm text-muted-foreground">Create AI assistants trained on your data</p>
+                </div>
+              </div>
+              <Badge variant="outline">Available</Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/white-label')}>
+              <div className="flex items-center space-x-3">
+                <Palette className="h-8 w-8 text-blue-500" />
+                <div>
+                  <h3 className="font-semibold">White-Label Branding</h3>
+                  <p className="text-sm text-muted-foreground">Deploy GPTs under your brand</p>
+                </div>
+              </div>
+              <Badge variant="outline">Available</Badge>
+            </div>
+
+            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/api-management')}>
+              <div className="flex items-center space-x-3">
+                <TrendingUp className="h-8 w-8 text-green-500" />
+                <div>
+                  <h3 className="font-semibold">API Integration</h3>
+                  <p className="text-sm text-muted-foreground">Connect GPTs to external services</p>
+                </div>
+              </div>
+              <Badge variant="outline">Available</Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Vanguard CTA */}
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Shield className="h-5 w-5 text-primary" />
+              <span>Ultrium Vanguard</span>
+            </CardTitle>
+            <CardDescription>
+              Enterprise cybersecurity platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Our all-in-one AI-powered cybersecurity operations platform with:
+            </p>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                XDR/EDR threat detection
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                AI-powered service desk with ticketing
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Network scanning & penetration testing
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                Compliance monitoring & reporting
+              </li>
+            </ul>
+            <Button 
+              className="w-full mt-4"
+              onClick={() => window.open('https://vanguard.ultriumai.com', '_blank')}
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Explore Vanguard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Subscription Management Section */}
       <div className="grid gap-6 lg:grid-cols-2">
         <SubscriptionStatus />
@@ -354,10 +333,10 @@ export const DashboardOverview = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
               <Star className="h-5 w-5" />
-              Upgrade to Premium
+              Upgrade to Pro
             </CardTitle>
             <CardDescription className="text-purple-600 dark:text-purple-400">
-              Unlock advanced security features and increased limits
+              Unlock advanced AI features and increased limits
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -368,11 +347,11 @@ export const DashboardOverview = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">Unlimited</div>
-                <div className="text-sm text-purple-600 dark:text-purple-400">Security Scans</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">GPT Builds</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">Advanced</div>
-                <div className="text-sm text-purple-600 dark:text-purple-400">Security Tools</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400">AI Features</div>
               </div>
             </div>
             <Button 
@@ -383,11 +362,6 @@ export const DashboardOverview = () => {
             </Button>
           </CardContent>
         </Card>
-      )}
-
-      {/* Notification System Tester (Development) */}
-      {(user?.email?.includes('@ultriumai.com')) && (
-        <NotificationTester />
       )}
     </div>
   );
