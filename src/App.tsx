@@ -29,6 +29,7 @@ import MSPPricing from '@/pages/MSPPricing';
 import UltriumGPT from '@/pages/UltriumGPT';
 import Solutions from '@/pages/Solutions';
 import LiveDemos from '@/pages/LiveDemos';
+import Portfolio from '@/pages/Portfolio';
 import Docs from '@/pages/Docs';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
@@ -274,6 +275,7 @@ function AppRouter() {
         <Route path="/mssps" element={<MSSPs />} />
         <Route path="/solutions" element={<Solutions />} />
         <Route path="/demos" element={<LiveDemos />} />
+        <Route path="/portfolio" element={<Portfolio />} />
         <Route path="/msp-demos" element={<MSPDemos />} />
           <Route path="/msp-control-center" element={
             <SubscriptionProtectedRoute requiresPremium>
