@@ -1,521 +1,367 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
-  Shield, Users, Building2, Zap, ArrowRight, CheckCircle, Globe, Lock, 
-  Headphones, Menu, X, Star, TrendingUp, Clock, Award, Search, 
-  Database, Wifi, Monitor, Bot, FileText, Smartphone, Eye, User, LogOut
+  Shield, Brain, ArrowRight, CheckCircle, Zap, Star, Users, Wrench, 
+  Play, Lock, Network, Bot, Headphones, FileText, Award, Building
 } from 'lucide-react';
-import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
 import Navigation from '@/components/Navigation';
-import Hero from '@/components/Hero';
-import AboutSection from '@/components/AboutSection';
+import Footer from '@/components/Footer';
 import { FAQSection } from '@/components/FAQSection';
 import { FAQSchema, OrganizationSchema, ServiceSchema } from '@/components/SEOSchemas';
+import { safeWindowOpen } from '@/utils/security';
 
 const Index = () => {
   const mainFAQs = [
     {
-      question: "What is UltriumAI and how does it protect my business?",
-      answer: "UltriumAI is a comprehensive cybersecurity platform that combines AI-powered threat detection, remote monitoring tools, and MSP management capabilities. Our platform provides 24/7 protection against cyber threats, automated incident response, and complete visibility into your digital infrastructure."
+      question: "What is UltriumAI and what do you build?",
+      answer: "UltriumAI is an AI development agency that builds custom AI solutions for businesses. We offer two flagship products: UltriumAI Studio™ for building custom GPTs, and Ultrium Vanguard™ for complete security operations. We also provide full-service custom AI development for enterprises."
     },
     {
-      question: "How quickly can I implement UltriumAI in my organization?",
-      answer: "Most businesses can be up and running with UltriumAI within 24-48 hours. Our onboarding team provides white-glove setup, agent deployment assistance, and initial configuration to ensure seamless integration with your existing infrastructure."
+      question: "What's the difference between AI Studio and custom development?",
+      answer: "AI Studio is our self-service platform where you can build custom GPTs in minutes with no code required. Custom development is our full-service option where our team builds, trains, and deploys sophisticated AI solutions tailored to your specific workflows and data."
     },
     {
-      question: "What makes UltriumAI different from other cybersecurity solutions?",
-      answer: "UltriumAI uniquely combines AI-powered security operations with comprehensive RMM tools in a single platform. Our UltriumGPT AI assistant provides intelligent threat analysis, automated response capabilities, and can integrate with your existing security stack for enhanced protection."
+      question: "How secure are your AI solutions?",
+      answer: "Security is foundational to everything we build. All solutions include enterprise-grade encryption, data isolation, and compliance with major frameworks. Our Vanguard platform specifically provides AI-powered security operations with threat detection and autonomous response."
     },
     {
-      question: "Can I buy UltriumAI direct or through my MSP?",
-      answer: "Absolutely! UltriumAI is available both direct-to-business and through our trusted MSP partner network. Buy directly from us for immediate access, or get it through your existing MSP with their expert support and integration services. We support both business models with flexible pricing and deployment options."
+      question: "Can I white-label your AI solutions?",
+      answer: "Yes! Both AI Studio GPTs and custom-built solutions can be white-labeled with your branding. This is popular with agencies, MSPs, and enterprises who want to offer AI-powered services to their clients."
     },
     {
-      question: "What kind of support and training do you provide?",
-      answer: "We provide comprehensive support including 24/7 technical assistance, onboarding training, regular security briefings, and access to our knowledge base. Enterprise customers receive dedicated account management and custom training programs."
+      question: "How quickly can I get started?",
+      answer: "With AI Studio, you can build and deploy your first custom GPT in under an hour. For custom development projects, our team typically delivers initial solutions within 2-4 weeks depending on complexity."
     },
     {
-      question: "How does your pricing work for different business sizes?",
-      answer: "We offer flexible pricing whether you buy direct or through your MSP. Direct pricing starts at $20/user/month for custom GPT solutions. MSP partners receive volume discounts and white-label options with high profit margins. All plans include core features, with advanced capabilities in enterprise tiers."
+      question: "What kind of support do you provide?",
+      answer: "We provide comprehensive support including 24/7 technical assistance, onboarding training, and ongoing optimization. Enterprise customers receive dedicated account management and custom training programs."
     }
   ];
 
   const services = [
-    { name: "AI-Powered Threat Detection", description: "Advanced machine learning algorithms for real-time threat identification", url: "https://ultriumai.com/products/safescan" },
-    { name: "SafeSOC", description: "Complete SOC dashboard with real-time monitoring and incident response", url: "https://ultriumai.com/security-dashboard" },
-    { name: "Remote Monitoring & Management", description: "Comprehensive RMM tools for endpoint management", url: "https://ultriumai.com/products/safenet" },
-    { name: "MSP Management Platform", description: "Multi-tenant platform for service providers", url: "https://ultriumai.com/msps" },
-    { name: "Password Management", description: "Enterprise-grade password security solution", url: "https://ultriumai.com/products/safepass" },
-    { name: "Security Analytics", description: "Advanced security intelligence and reporting", url: "https://ultriumai.com/products/safescore" }
+    { name: "Custom GPT Development", description: "Build intelligent AI assistants tailored to your business", url: "https://ultriumai.com/ai-studio" },
+    { name: "AI Security Operations", description: "Complete security platform with AI copilot", url: "https://vanguard.ultriumai.com" },
+    { name: "Enterprise AI Solutions", description: "Full-service custom AI development", url: "https://ultriumai.com/contact" }
+  ];
+
+  const portfolioItems = [
+    { name: "SafeScan™", description: "AI-powered unified security scanner", icon: Shield, link: "/demos/safescan" },
+    { name: "UltriumGPT", description: "Intelligent business assistant", icon: Bot, link: "/demos/ultriumgpt" },
+    { name: "SafeNet™", description: "Network discovery & monitoring", icon: Network, link: "/demos/safenet" },
+    { name: "SafePass™", description: "Enterprise password management", icon: Lock, link: "/demos/safepass" },
+    { name: "Helpdesk AI", description: "AI-powered ticket automation", icon: Headphones, link: "/demos/ticketing" },
+    { name: "RMM Platform", description: "Remote monitoring & management", icon: Wrench, link: "/demos/rmm" }
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* SEO Schemas */}
       <OrganizationSchema />
       <ServiceSchema services={services} />
       <FAQSchema faqs={mainFAQs} />
       
       <Navigation />
       
-      {/* Original Hero Section with GIF */}
-      <Hero />
-
-      {/* About Section */}
-      <AboutSection />
-
-      {/* Key Features Highlight */}
-      <section className="py-16 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-gradient-to-br from-primary/10 to-secondary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Bot className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">UltriumGPT AI Assistant</h3>
-              <p className="text-muted-foreground">Intelligent security analysis and automated response with advanced reasoning</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Monitor className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Complete RMM Suite</h3>
-              <p className="text-muted-foreground">Remote monitoring and management tools</p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">MSP-Ready Platform</h3>
-              <p className="text-muted-foreground">Multi-tenant architecture for service providers</p>
-            </div>
-          </div>
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-primary/5"></div>
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent"></div>
         </div>
-      </section>
-
-      {/* Solutions Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">💼 Choose Your Security Victory</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              <strong>Buy Direct</strong> or <strong>Partner with us to sell to your clients</strong> - Every business size gets enterprise-grade protection. 
-              From startup to Fortune 500, <strong>your competition wishes they had what you're about to get.</strong>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 animate-fade-in">
+              <Brain className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">AI Development Agency</span>
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight animate-slide-up">
+              We Build Custom AI Solutions for Business
+            </h1>
+            
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed animate-fade-in">
+              From intelligent GPTs to enterprise security platforms—UltriumAI creates AI tools that work the way your business works. Built for Business. Secure by Design.
             </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="text-center hover-scale border-2 hover:border-primary/50 transition-all duration-300">
-              <CardHeader>
-                <Building2 className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <CardTitle>Small Business</CardTitle>
-                <CardDescription>Essential security for growing companies</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/small-business">
-                  <Button variant="outline" className="w-full">Learn More</Button>
-                </Link>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center hover-scale border-2 hover:border-primary/50 transition-all duration-300">
-              <CardHeader>
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <CardTitle>Medium Business</CardTitle>
-                <CardDescription>Advanced security operations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/medium-business">
-                  <Button variant="outline" className="w-full">Learn More</Button>
-                </Link>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center hover-scale border-2 hover:border-primary/50 transition-all duration-300">
-              <CardHeader>
-                <Globe className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <CardTitle>Enterprise</CardTitle>
-                <CardDescription>Full-scale security platforms</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/enterprise">
-                  <Button variant="outline" className="w-full">Learn More</Button>
-                </Link>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center hover-scale border-2 hover:border-primary/50 transition-all duration-300">
-              <CardHeader>
-                <Users className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <CardTitle>MSP/MSSP</CardTitle>
-                <CardDescription>Multi-tenant service provider platform</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/msps">
-                  <Button variant="outline" className="w-full">Learn More</Button>
-                </Link>
-              </CardContent>
-            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in">
+              <Link to="/ai-studio">
+                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                  <Brain className="mr-2 h-5 w-5" />
+                  Explore AI Studio
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-lg px-8 py-6 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105"
+                onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
+              >
+                <Shield className="mr-2 h-5 w-5" />
+                Explore Vanguard
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Live Demos Section */}
+      {/* Two Flagship Products Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">🔥 Experience The Security Revolution</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Flagship Products</h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Don't just protect your business - <strong>dominate cyber threats</strong> with our AI-powered security arsenal. 
-              These aren't just demos - they're your competitive advantage waiting to be unleashed.
+              Two powerful platforms designed for different needs—both built with security at the core
             </p>
-            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary/10 to-success/10 rounded-full border border-primary/20">
-              <Shield className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Join 50,000+ businesses already protected</span>
-            </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {/* SafeShield - Revolutionary Platform */}
-            <Card className="hover-scale border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
-              <CardHeader>
-                <Shield className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">🚀 SafeShield™ Platform</CardTitle>
-                <CardDescription className="font-medium text-primary/80">Revolutionary AI-powered security ecosystem</CardDescription>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            {/* AI Studio Card */}
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <CardHeader className="pb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-xl flex items-center justify-center mb-4">
+                  <Brain className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <CardTitle className="text-2xl">UltriumAI Studio™</CardTitle>
+                <CardDescription className="text-base">Custom GPT Builder Platform</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Link to="/demos/safeshield">
-                  <Button variant="hero" className="w-full">Experience Revolution</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale border-2 border-primary/50 bg-gradient-to-br from-primary/10 to-secondary/10">
-              <CardHeader>
-                <Bot className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">🚀 UltriumGPT AI Assistant</CardTitle>
-                <CardDescription className="font-medium text-primary/80">Revolutionary AI-powered intelligent assistant</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/demos/ultriumgpt">
-                  <Button variant="hero" className="w-full">Experience UltriumGPT</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale">
-              <CardHeader>
-                <Bot className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">UltriumGPT Chat</CardTitle>
-                <CardDescription>Your intelligent security co-pilot with web browsing & memory</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/ultrium-gpt">
-                  <Button variant="outline" className="w-full">Try Interactive Chat</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale">
-              <CardHeader>
-                <Lock className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">SafePass Manager</CardTitle>
-                <CardDescription>Unbreakable password fortress</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/demos/safepass">
-                  <Button variant="outline" className="w-full">Try Demo</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale">
-              <CardHeader>
-                <Wifi className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">SafeNet Monitor</CardTitle>
-                <CardDescription>Network fortress protection</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/demos/safenet">
-                  <Button variant="outline" className="w-full">Try Demo</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale">
-              <CardHeader>
-                <Search className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">SafeScan™ Analyzer</CardTitle>
-                <CardDescription>Advanced threat detection engine</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/demos/safescan">
-                  <Button variant="outline" className="w-full">Try Demo</Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-scale border-2 border-success/30 bg-gradient-to-br from-success/5 to-success/10">
-              <CardHeader>
-                <Monitor className="h-8 w-8 text-success mb-2" />
-                <CardTitle className="text-lg">🔥 SafeSOC</CardTitle>
-                <CardDescription className="font-medium text-success/80">Full SOC dashboard with real-time threat intelligence</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Link to="/security-dashboard">
-                  <Button variant="outline" className="w-full border-success text-success hover:bg-success hover:text-success-foreground">
-                    Launch SOC Dashboard
+              <CardContent className="space-y-6">
+                <p className="text-muted-foreground">
+                  Build intelligent AI assistants in minutes. Upload your knowledge, train your GPT, deploy anywhere.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span className="text-sm">No-code GPT builder</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span className="text-sm">Knowledge training & RAG</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span className="text-sm">White-label ready</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span className="text-sm">Full API access</span>
+                  </div>
+                </div>
+                <Link to="/ai-studio">
+                  <Button className="w-full" size="lg">
+                    Start Building <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            <Card className="hover-scale">
-              <CardHeader>
-                <Eye className="h-8 w-8 text-primary mb-2" />
-                <CardTitle className="text-lg">SafeIntel™ Monitor</CardTitle>
-                <CardDescription>Elite threat intelligence platform</CardDescription>
+            {/* Vanguard Card */}
+            <Card className="border-2 border-destructive/20 bg-gradient-to-br from-destructive/5 to-destructive/10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              <CardHeader className="pb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-destructive to-destructive/60 rounded-xl flex items-center justify-center mb-4">
+                  <Shield className="h-8 w-8 text-destructive-foreground" />
+                </div>
+                <CardTitle className="text-2xl">Ultrium Vanguard™</CardTitle>
+                <CardDescription className="text-base">All-in-One Security AI Platform</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Link to="/demos/safeintel">
-                  <Button variant="outline" className="w-full">Try Demo</Button>
-                </Link>
+              <CardContent className="space-y-6">
+                <p className="text-muted-foreground">
+                  Complete security operations with AI copilot. Threat detection, network scanning, pentesting, and AI-powered service desk.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                    <span className="text-sm">XDR/EDR capabilities</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                    <span className="text-sm">Network & vulnerability scanning</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                    <span className="text-sm">Penetration testing tools</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                    <span className="text-sm">AI Service Desk</span>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full bg-destructive hover:bg-destructive/90" 
+                  size="lg"
+                  onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
+                >
+                  Explore Vanguard <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </CardContent>
             </Card>
-          </div>
-
-          <div className="text-center">
-            <Link to="/demos">
-              <Button size="lg" variant="hero" className="px-8 py-4 text-lg">
-                🚀 Experience All Revolutionary Tools <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <p className="text-sm text-muted-foreground mt-3">
-              See why competitors can't keep up with businesses using UltriumAI
-            </p>
           </div>
         </div>
       </section>
 
-      {/* Pricing Overview */}
+      {/* Services Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Pricing Path</h2>
-            <p className="text-xl text-muted-foreground">Direct business sales or MSP partner program with high margins</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How We Work With You</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Choose the path that fits your needs—self-service or full-service
+            </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Business Pricing */}
-            <Card className="text-center hover-scale border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
-              <CardHeader className="pb-8">
-                <Building2 className="h-16 w-16 mx-auto mb-4 text-primary" />
-                <CardTitle className="text-2xl mb-2">Direct Business</CardTitle>
-                <CardDescription className="text-base">
-                  Buy directly from UltriumAI to protect your company infrastructure
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-3 text-left">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Direct endpoint protection</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">AI-powered threat detection</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">24/7 monitoring & support</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Starting at $20/user/month</span>
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Build It Yourself */}
+            <Card className="border-2 hover:border-primary/50 transition-all duration-300">
+              <CardHeader>
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                  <Zap className="h-6 w-6 text-primary" />
                 </div>
+                <CardTitle className="text-xl">Build It Yourself</CardTitle>
+                <CardDescription>Self-service AI platform</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Access to AI Studio platform</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> DIY GPT creation tools</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Templates and guides</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Monthly subscription pricing</li>
+                </ul>
                 <Link to="/pricing">
-                  <Button variant="hero" className="w-full" size="lg">
-                    View Business Pricing
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  <Button variant="outline" className="w-full">View Pricing</Button>
                 </Link>
               </CardContent>
             </Card>
 
-            {/* MSP Pricing */}
-            <Card className="text-center hover-scale border-2 border-success/30 bg-gradient-to-br from-success/5 to-success/10">
-              <CardHeader className="pb-8">
-                <Users className="h-16 w-16 mx-auto mb-4 text-success" />
-                <CardTitle className="text-2xl mb-2">MSP Partners</CardTitle>
-                <CardDescription className="text-base">
-                  Partner with us to sell UltriumAI solutions to your clients
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-3 text-left">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Multi-tenant architecture</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">White-label solutions</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">High profit margins (90%+)</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">Per-user pricing model</span>
-                  </div>
+            {/* We Build It For You */}
+            <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6 text-primary" />
                 </div>
-                <Link to="/msp-pricing">
-                  <Button variant="outline" className="w-full border-success text-success hover:bg-success hover:text-success-foreground" size="lg">
-                    View MSP Pricing
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                <CardTitle className="text-xl">We Build It For You</CardTitle>
+                <CardDescription>Full-service AI development</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Custom GPT training on your data</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> White-label solutions</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Enterprise integrations</li>
+                  <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-primary" /> Dedicated support</li>
+                </ul>
+                <Link to="/contact">
+                  <Button className="w-full">Schedule Consultation</Button>
                 </Link>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Portfolio/Showcase Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">See What We Build</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Examples of AI solutions we've created—imagine what we can build for you
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {portfolioItems.map((item) => (
+              <Card key={item.name} className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <CardHeader className="pb-2">
+                  <item.icon className="h-8 w-8 text-primary mb-2" />
+                  <CardTitle className="text-lg">{item.name}</CardTitle>
+                  <CardDescription>{item.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link to={item.link}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      <Play className="mr-2 h-4 w-4" /> Try Demo
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
           <div className="text-center mt-12">
-            <p className="text-muted-foreground mb-6">
-              Not sure which pricing model fits your needs?
-            </p>
-            <Link to="/contact">
-              <Button variant="outline" size="lg">
-                Contact Our Sales Team
-                <ArrowRight className="w-4 h-4 ml-2" />
+            <Link to="/portfolio">
+              <Button size="lg" variant="outline" className="px-8">
+                View Full Portfolio <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Why Choose UltriumAI */}
-      <section className="py-20 px-4 bg-muted/30">
+      {/* Trust Section */}
+      <section className="py-20 px-4">
         <div className="container mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Why Choose UltriumAI?</h2>
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-2 rounded-lg">
-                    <Award className="h-6 w-6 text-primary" />
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+              <CardContent className="p-8 md:p-12">
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  <div className="flex-shrink-0">
+                    <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Award className="h-12 w-12 text-primary" />
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">Industry-Leading Security</h3>
-                    <p className="text-muted-foreground">SOC2 compliant with enterprise-grade encryption and security protocols</p>
+                  <div className="text-center md:text-left space-y-4">
+                    <h3 className="text-2xl font-bold">Veteran-Owned. Security-First.</h3>
+                    <p className="text-muted-foreground">
+                      UltriumAI is proudly developed by Ultrium LLC, a veteran-owned IT solutions company with 15+ years of experience. Every AI solution we build is designed with enterprise-grade security from the ground up.
+                    </p>
+                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Star className="h-4 w-4 text-primary" />
+                        <span>15+ Years IT Experience</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <span>Security-First Design</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Building className="h-4 w-4 text-primary" />
+                        <span>Veteran-Owned</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-2 rounded-lg">
-                    <Clock className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">24/7 Real-Time Monitoring</h3>
-                    <p className="text-muted-foreground">Continuous threat detection and automated response capabilities</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-2 rounded-lg">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">Scalable Platform</h3>
-                    <p className="text-muted-foreground">Grows seamlessly from small business to enterprise scale</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <Card className="p-8">
-              <div className="text-center">
-                <Headphones className="h-16 w-16 mx-auto mb-4 text-primary" />
-                <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
-                <p className="text-muted-foreground mb-6">
-                  Join over 10,000+ businesses securing their digital infrastructure with UltriumAI
-                </p>
-                <div className="space-y-3">
-                  <Link to="/auth">
-                    <Button size="lg" variant="hero" className="w-full">
-                      Start Free Trial
-                    </Button>
-                  </Link>
-                  <Link to="/contact">
-                    <Button size="lg" variant="outline" className="w-full">
-                      Schedule Demo
-                    </Button>
-                  </Link>
-                </div>
-                <p className="text-xs text-muted-foreground mt-4">
-                  No credit card required • 14-day free trial
-                </p>
-              </div>
+              </CardContent>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-primary/10 to-secondary/10">
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Build Your AI Solution?</h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            Start building on AI Studio today or schedule a consultation for custom development
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/ai-studio">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto">
+                <Brain className="mr-2 h-5 w-5" />
+                Start Free on AI Studio
+              </Button>
+            </Link>
+            <Link to="/contact">
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto">
+                Schedule Consultation
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <FAQSection faqs={mainFAQs} className="bg-muted/30" />
-
-      {/* Footer */}
-      <footer className="border-t py-16 px-4 bg-background">
-        <div className="container mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <Link to="/" className="flex items-center space-x-3 mb-4">
-                <span className="text-xl font-bold">UltriumAI</span>
-              </Link>
-              <p className="text-muted-foreground text-sm">
-                Complete cybersecurity platform for modern businesses.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Solutions</h4>
-              <div className="space-y-2 text-sm">
-                <Link to="/small-business" className="block text-muted-foreground hover:text-foreground">Small Business</Link>
-                <Link to="/medium-business" className="block text-muted-foreground hover:text-foreground">Medium Business</Link>
-                <Link to="/enterprise" className="block text-muted-foreground hover:text-foreground">Enterprise</Link>
-                <Link to="/msps" className="block text-muted-foreground hover:text-foreground">MSP/MSSP</Link>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Platform</h4>
-              <div className="space-y-2 text-sm">
-                <Link to="/demos" className="block text-muted-foreground hover:text-foreground">Live Demos</Link>
-                <Link to="/pricing" className="block text-muted-foreground hover:text-foreground">Pricing</Link>
-                <Link to="/docs" className="block text-muted-foreground hover:text-foreground">Documentation</Link>
-                <Link to="/security" className="block text-muted-foreground hover:text-foreground">Security</Link>
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <div className="space-y-2 text-sm">
-                <Link to="/about" className="block text-muted-foreground hover:text-foreground">About Us</Link>
-                <Link to="/contact" className="block text-muted-foreground hover:text-foreground">Contact Us</Link>
-                <Link to="/terms" className="block text-muted-foreground hover:text-foreground">Terms of Service</Link>
-                <Link to="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy Policy</Link>
-              </div>
-            </div>
-          </div>
-          
-          <hr className="my-8" />
-          
-          <div className="text-center text-sm text-muted-foreground">
-            © 2024 UltriumAI. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <FAQSection faqs={mainFAQs} />
+      
+      <Footer />
     </div>
   );
 };

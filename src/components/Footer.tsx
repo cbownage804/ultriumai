@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Copyright, Shield, Mail, Phone, MapPin, Globe, Facebook, Instagram, Youtube, Linkedin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Shield, Mail, Phone, MapPin, Brain } from "lucide-react";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
+import { safeWindowOpen } from "@/utils/security";
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -23,160 +22,120 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-muted/30 border-t border-border">
+    <footer className="bg-muted/50 border-t border-border/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          
           {/* Company Info */}
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <img src={ultraiumAiLogo} alt="UltriumAI - AI-powered knowledge management platform" className="h-12 w-auto" />
-              <div>
-                <span className="text-xl font-bold text-foreground">UltriumAI</span>
-                <div className="text-xs text-muted-foreground">
-                  A Division of <a 
-                    href="https://ultriumllc.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-primary hover:text-primary/80 transition-colors font-medium"
-                  >
-                    Ultrium
-                  </a>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
+              <span className="text-lg font-bold">UltriumAI</span>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Veteran-owned AI solutions company specializing in custom GPT development, cybersecurity automation, and knowledge management for MSPs and businesses.
+            <p className="text-sm text-muted-foreground">
+              We build custom AI solutions for business. From intelligent GPTs to enterprise security platforms.
             </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="h-4 w-4 text-primary" />
-              <span>Built for Business. Secure by Design</span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="bg-primary/10 text-primary px-2 py-1 rounded">Veteran-Owned</span>
+              <span>•</span>
+              <span>15+ Years IT Experience</span>
             </div>
+          </div>
+
+          {/* Flagship Products */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-foreground">Flagship Products</h4>
+            <ul className="space-y-2">
+              <li>
+                <button 
+                  onClick={() => handleNavigation('/ai-studio')} 
+                  className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2"
+                >
+                  <Brain className="h-4 w-4" />
+                  UltriumAI Studio™
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')} 
+                  className="text-sm text-muted-foreground hover:text-destructive flex items-center gap-2"
+                >
+                  <Shield className="h-4 w-4" />
+                  Ultrium Vanguard™
+                </button>
+              </li>
+            </ul>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Solutions</h3>
-            <div className="space-y-2">
-              <button onClick={() => handleNavigation('/ultriumgpt')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                UltriumGPT Platform
-              </button>
-              <button onClick={() => handleNavigation('/solutions')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Business Solutions
-              </button>
-              <button onClick={() => handleNavigation('/demos')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Live AI Demos
-              </button>
-              <button onClick={() => handleNavigation('/pricing')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Pricing Plans
-              </button>
-              <button onClick={() => handleNavigation('/docs')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Documentation
-              </button>
-            </div>
+            <h4 className="font-semibold text-foreground">Quick Links</h4>
+            <ul className="space-y-2">
+              <li>
+                <button onClick={() => handleNavigation('/portfolio')} className="text-sm text-muted-foreground hover:text-foreground">
+                  Portfolio
+                </button>
+              </li>
+              <li>
+                <button onClick={() => handleNavigation('/pricing')} className="text-sm text-muted-foreground hover:text-foreground">
+                  Pricing
+                </button>
+              </li>
+              <li>
+                <button onClick={() => handleNavigation('/contact')} className="text-sm text-muted-foreground hover:text-foreground">
+                  Contact
+                </button>
+              </li>
+              <li>
+                <button onClick={() => handleNavigation('/about')} className="text-sm text-muted-foreground hover:text-foreground">
+                  About Us
+                </button>
+              </li>
+            </ul>
           </div>
 
-          {/* AI Security Apps */}
+          {/* Contact */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Revolutionary Security Platform</h3>
-            <div className="space-y-2">
-              <button onClick={() => handleNavigation('/products/safeshield')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                🛡️ SafeShield™ - Complete Security Platform
-              </button>
-              <button onClick={() => handleNavigation('/products/safescan')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                🔍 SafeScan™ - Advanced Threat Detection
-              </button>
-              <button onClick={() => handleNavigation('/products/safepass')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                🔐 SafePass™ - Password Security
-              </button>
-              <button onClick={() => handleNavigation('/products/safenet')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                🌐 SafeNet™ - Network Protection
-              </button>
-              <button onClick={() => handleNavigation('/products/safescore')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                📊 SafeScore™ - Security Assessment
-              </button>
-              <button onClick={() => handleNavigation('/products/safeintel')} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
-                🕵️ SafeIntel™ - Threat Intelligence
-              </button>
-            </div>
-          </div>
-
-          {/* Contact & Support */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-foreground">Contact</h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4 text-primary" />
-                <a href="tel:888-884-1410" className="hover:text-foreground transition-colors">
-                  (888) 884-1410
+            <h4 className="font-semibold text-foreground">Contact</h4>
+            <ul className="space-y-3">
+              <li>
+                <a href="tel:888-884-1410" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  888-884-1410
                 </a>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4 text-primary" />
-                <a href="mailto:support@ultriumai.com" className="hover:text-foreground transition-colors">
+              </li>
+              <li>
+                <a href="mailto:support@ultriumai.com" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
                   support@ultriumai.com
                 </a>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>Richmond, Virginia</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Globe className="h-4 w-4 text-primary" />
-                <a href="https://ultriumai.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-                  ultriumai.com
-                </a>
-              </div>
-            </div>
-            
-            {/* Social Links */}
-            <div className="flex items-center gap-3 pt-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10">
-                <Facebook className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10">
-                <Instagram className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10">
-                <Youtube className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/10">
-                <Linkedin className="h-4 w-4" />
-              </Button>
-            </div>
+              </li>
+              <li>
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Virginia, USA
+                </span>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <Separator className="my-8" />
-
-        {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Copyright className="h-4 w-4" />
-            <span>{currentYear} Ultrium LLC. All rights reserved.</span>
-          </div>
-          
-          <div className="flex items-center gap-6 text-sm">
-            <Link to="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
-              Privacy Policy
-            </Link>
-            <Link to="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
-              Terms of Service
-            </Link>
-            <Link to="/security" className="text-muted-foreground hover:text-foreground transition-colors">
-              Security Policy
-            </Link>
-            <button onClick={() => handleNavigation('#contact')} className="text-muted-foreground hover:text-foreground transition-colors">
-              Contact Us
-            </button>
-          </div>
-        </div>
-
-        {/* Veteran-Owned Badge */}
-        <div className="text-center pt-6 border-t border-border/50 mt-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
-            <Shield className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Proudly Veteran-Owned & Operated</span>
+        {/* Bottom Bar */}
+        <div className="mt-12 pt-8 border-t border-border/50">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              © {currentYear} UltriumAI. Proudly developed by Ultrium LLC.
+            </p>
+            <div className="flex flex-wrap gap-4 text-sm">
+              <Link to="/privacy" className="text-muted-foreground hover:text-foreground">
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="text-muted-foreground hover:text-foreground">
+                Terms of Service
+              </Link>
+              <Link to="/security" className="text-muted-foreground hover:text-foreground">
+                Security
+              </Link>
+            </div>
           </div>
         </div>
       </div>
