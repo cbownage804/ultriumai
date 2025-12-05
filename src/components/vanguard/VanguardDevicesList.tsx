@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useVanguardAgents, VanguardAgent } from '@/hooks/useVanguardAgents';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -5,17 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Server, 
-  Cpu, 
-  HardDrive, 
-  MemoryStick, 
   Wifi, 
   WifiOff, 
   AlertTriangle,
   RefreshCw,
-  Plus
+  Plus,
+  Zap,
+  Loader2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const statusColors: Record<string, string> = {
   online: 'bg-green-500',
@@ -102,6 +104,8 @@ export function VanguardDevicesList() {
 }
 
 function DeviceCard({ agent, onClick }: { agent: VanguardAgent; onClick: () => void }) {
+  const [isTesting, setIsTesting] = useState(false);
+  
   const lastHeartbeat = agent.last_heartbeat 
     ? formatDistanceToNow(new Date(agent.last_heartbeat), { addSuffix: true })
     : 'Never';
@@ -109,6 +113,44 @@ function DeviceCard({ agent, onClick }: { agent: VanguardAgent; onClick: () => v
   const StatusIcon = agent.status === 'online' ? Wifi : 
                      agent.status === 'offline' ? WifiOff : 
                      AlertTriangle;
+
+  const testConnection = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click navigation
+    setIsTesting(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      const response = await supabase.functions.invoke('vanguard-agent-api', {
+        body: { 
+          agent_id: agent.id, 
+          command_type: 'ping',
+          payload: { timestamp: Date.now() }
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast.success(`Ping command queued for ${agent.name}`, {
+        description: 'Waiting for agent response...'
+      });
+    } catch (err: any) {
+      toast.error('Test failed', {
+        description: err.message || 'Could not reach agent'
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   return (
     <Card 
@@ -145,8 +187,24 @@ function DeviceCard({ agent, onClick }: { agent: VanguardAgent; onClick: () => v
             </div>
           )}
 
-          <div className="pt-2 border-t text-xs text-muted-foreground">
-            Last heartbeat: {lastHeartbeat}
+          <div className="pt-2 border-t flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              Last heartbeat: {lastHeartbeat}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={testConnection}
+              disabled={isTesting}
+              className="h-7 text-xs"
+            >
+              {isTesting ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Zap className="h-3 w-3 mr-1" />
+              )}
+              {isTesting ? 'Testing...' : 'Test'}
+            </Button>
           </div>
         </div>
       </CardContent>
