@@ -11640,7 +11640,10 @@ export type Database = {
       }
       support_tickets: {
         Row: {
+          ai_auto_responded: boolean | null
           ai_confidence_score: number | null
+          ai_processing_status: string | null
+          ai_response_sent_at: string | null
           ai_suggested_solution: string | null
           ai_summary: string | null
           asset_name: string | null
@@ -11665,16 +11668,23 @@ export type Database = {
           resolution_notes: string | null
           resolution_time_minutes: number | null
           resolved_at: string | null
+          security_category: string | null
           sla_due_at: string | null
           sla_policy_id: string | null
           source_type: string | null
           status: string
+          tech_action: string | null
           title: string
           updated_at: string
+          user_feedback: string | null
           user_id: string
+          vanguard_source: string | null
         }
         Insert: {
+          ai_auto_responded?: boolean | null
           ai_confidence_score?: number | null
+          ai_processing_status?: string | null
+          ai_response_sent_at?: string | null
           ai_suggested_solution?: string | null
           ai_summary?: string | null
           asset_name?: string | null
@@ -11699,16 +11709,23 @@ export type Database = {
           resolution_notes?: string | null
           resolution_time_minutes?: number | null
           resolved_at?: string | null
+          security_category?: string | null
           sla_due_at?: string | null
           sla_policy_id?: string | null
           source_type?: string | null
           status?: string
+          tech_action?: string | null
           title: string
           updated_at?: string
+          user_feedback?: string | null
           user_id: string
+          vanguard_source?: string | null
         }
         Update: {
+          ai_auto_responded?: boolean | null
           ai_confidence_score?: number | null
+          ai_processing_status?: string | null
+          ai_response_sent_at?: string | null
           ai_suggested_solution?: string | null
           ai_summary?: string | null
           asset_name?: string | null
@@ -11733,13 +11750,17 @@ export type Database = {
           resolution_notes?: string | null
           resolution_time_minutes?: number | null
           resolved_at?: string | null
+          security_category?: string | null
           sla_due_at?: string | null
           sla_policy_id?: string | null
           source_type?: string | null
           status?: string
+          tech_action?: string | null
           title?: string
           updated_at?: string
+          user_feedback?: string | null
           user_id?: string
+          vanguard_source?: string | null
         }
         Relationships: []
       }
@@ -12845,6 +12866,143 @@ export type Database = {
           updated_at?: string
           user_id?: string
           vpn_ip?: string | null
+        }
+        Relationships: []
+      }
+      vanguard_ai_feedback: {
+        Row: {
+          ai_solution_used: boolean | null
+          confidence_score: number | null
+          created_at: string | null
+          feedback_notes: string | null
+          feedback_rating: number | null
+          id: string
+          resolution_time_minutes: number | null
+          tech_modified_solution: boolean | null
+          ticket_id: string | null
+          updated_at: string | null
+          user_confirmed_resolved: boolean | null
+        }
+        Insert: {
+          ai_solution_used?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          feedback_notes?: string | null
+          feedback_rating?: number | null
+          id?: string
+          resolution_time_minutes?: number | null
+          tech_modified_solution?: boolean | null
+          ticket_id?: string | null
+          updated_at?: string | null
+          user_confirmed_resolved?: boolean | null
+        }
+        Update: {
+          ai_solution_used?: boolean | null
+          confidence_score?: number | null
+          created_at?: string | null
+          feedback_notes?: string | null
+          feedback_rating?: number | null
+          id?: string
+          resolution_time_minutes?: number | null
+          tech_modified_solution?: boolean | null
+          ticket_id?: string | null
+          updated_at?: string | null
+          user_confirmed_resolved?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_ai_feedback_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_service_tickets: {
+        Row: {
+          ai_auto_responded: boolean | null
+          ai_confidence_score: number | null
+          ai_processing_status: string | null
+          ai_response_sent_at: string | null
+          ai_suggested_solution: string | null
+          ai_summary: string | null
+          assigned_to: string | null
+          auto_resolved: boolean | null
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          priority: string
+          related_scan_id: string | null
+          related_security_event_id: string | null
+          requester_email: string | null
+          requester_name: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          security_category: string | null
+          status: string
+          tech_action: string | null
+          title: string
+          updated_at: string | null
+          user_feedback: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_auto_responded?: boolean | null
+          ai_confidence_score?: number | null
+          ai_processing_status?: string | null
+          ai_response_sent_at?: string | null
+          ai_suggested_solution?: string | null
+          ai_summary?: string | null
+          assigned_to?: string | null
+          auto_resolved?: boolean | null
+          category?: string
+          created_at?: string | null
+          description: string
+          id?: string
+          priority?: string
+          related_scan_id?: string | null
+          related_security_event_id?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          security_category?: string | null
+          status?: string
+          tech_action?: string | null
+          title: string
+          updated_at?: string | null
+          user_feedback?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_auto_responded?: boolean | null
+          ai_confidence_score?: number | null
+          ai_processing_status?: string | null
+          ai_response_sent_at?: string | null
+          ai_suggested_solution?: string | null
+          ai_summary?: string | null
+          assigned_to?: string | null
+          auto_resolved?: boolean | null
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          priority?: string
+          related_scan_id?: string | null
+          related_security_event_id?: string | null
+          requester_email?: string | null
+          requester_name?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          security_category?: string | null
+          status?: string
+          tech_action?: string | null
+          title?: string
+          updated_at?: string | null
+          user_feedback?: string | null
+          user_id?: string
         }
         Relationships: []
       }

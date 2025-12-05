@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Lock, Eye, Network } from "lucide-react";
+import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Lock, Eye, Network, Headphones, Bot } from "lucide-react";
 import { VulnerabilityScanner } from "@/components/security/VulnerabilityScanner";
 import { ThreatDetection } from "@/components/security/ThreatDetection";
 import { SecurityReports } from "@/components/security/SecurityReports";
@@ -15,6 +15,8 @@ import { SecurityMetrics } from "@/components/security/SecurityMetrics";
 import { NetworkConnectors } from "@/components/security/NetworkConnectors";
 import { VanguardOverview } from "@/components/vanguard/VanguardOverview";
 import { VanguardSOC } from "@/components/vanguard/VanguardSOC";
+import { VanguardServiceDesk } from "@/components/vanguard/VanguardServiceDesk";
+import { VanguardAICopilot } from "@/components/vanguard/VanguardAICopilot";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -176,8 +178,10 @@ const VanguardDashboard = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="servicedesk">Service Desk</TabsTrigger>
+            <TabsTrigger value="copilot">AI Copilot</TabsTrigger>
             <TabsTrigger value="soc">SOC Operations</TabsTrigger>
             <TabsTrigger value="scanner">Threat Detection</TabsTrigger>
             <TabsTrigger value="network">Network Security</TabsTrigger>
@@ -273,6 +277,14 @@ const VanguardDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="servicedesk">
+            <VanguardServiceDesk />
+          </TabsContent>
+
+          <TabsContent value="copilot">
+            <VanguardAICopilot />
           </TabsContent>
 
           <TabsContent value="soc">
