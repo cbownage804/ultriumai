@@ -3,13 +3,14 @@
 Ultrium Vanguard Agent
 ======================
 A production-ready agent for the Vanguard security operations platform.
-Sends system metrics, polls for commands, and reports scan results.
+Sends system metrics, polls for commands, runs network scans, and reports results.
 
 Usage:
     python vanguard_agent.py                    # Run with config.yaml
     python vanguard_agent.py --config /path/to/config.yaml
     python vanguard_agent.py --register         # One-time registration
     python vanguard_agent.py --test             # Test connection
+    python vanguard_agent.py --scan             # Run one-time network scan
 """
 
 import asyncio
@@ -17,15 +18,18 @@ import aiohttp
 import argparse
 import logging
 import platform
+import shutil
 import signal
 import socket
+import subprocess
 import sys
 import time
 import uuid
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 # Optional imports
 try:
@@ -61,6 +65,7 @@ DEFAULT_CONFIG = {
     "intervals": {
         "heartbeat": 60,  # seconds
         "command_poll": 30,  # seconds
+        "scan": 3600,  # seconds (1 hour)
     },
     "logging": {
         "level": "INFO",
@@ -72,6 +77,19 @@ DEFAULT_CONFIG = {
         "collect_temperature": True,
         "collect_network_io": True,
         "execute_commands": True,
+    },
+    "scanning": {
+        "enabled": False,  # Disabled by default
+        "targets": [],  # Auto-detect if empty
+        "scan_types": {
+            "discovery": True,
+            "ports": True,
+            "os_detection": False,  # Requires sudo
+            "service_detection": True,
+        },
+        "port_range": "1-1024",
+        "timeout": 600,  # 10 minutes max per scan
+        "sudo_required": False,
     },
 }
 
@@ -139,7 +157,14 @@ def load_config(config_path: str = "config.yaml") -> Dict[str, Any]:
             # Deep merge
             for section, values in user_cfg.items():
                 if section in cfg and isinstance(cfg[section], dict):
-                    cfg[section].update(values)
+                    if isinstance(values, dict):
+                        for k, v in values.items():
+                            if k in cfg[section] and isinstance(cfg[section][k], dict) and isinstance(v, dict):
+                                cfg[section][k].update(v)
+                            else:
+                                cfg[section][k] = v
+                    else:
+                        cfg[section] = values
                 else:
                     cfg[section] = values
             
@@ -257,6 +282,259 @@ def get_ip_address() -> str:
         return "127.0.0.1"
 
 
+def get_local_network_cidr() -> str:
+    """Auto-detect the local network CIDR."""
+    ip = get_ip_address()
+    if ip == "127.0.0.1":
+        return "192.168.1.0/24"  # Default fallback
+    
+    # Assume /24 for most home/office networks
+    parts = ip.split(".")
+    return f"{parts[0]}.{parts[1]}.{parts[2]}.0/24"
+
+
+# =============================================================================
+# Network Scanning (nmap)
+# =============================================================================
+
+def check_nmap_installed() -> bool:
+    """Check if nmap is installed and accessible."""
+    return shutil.which("nmap") is not None
+
+
+def parse_nmap_xml(xml_output: str) -> List[Dict[str, Any]]:
+    """Parse nmap XML output into structured device data."""
+    devices = []
+    
+    try:
+        root = ET.fromstring(xml_output)
+        
+        for host in root.findall(".//host"):
+            # Check if host is up
+            status = host.find("status")
+            if status is None or status.get("state") != "up":
+                continue
+            
+            device = {
+                "ip_address": None,
+                "hostname": None,
+                "mac_address": None,
+                "manufacturer": None,
+                "device_type": "unknown",
+                "os_info": None,
+                "open_ports": [],
+            }
+            
+            # Get IP address
+            for addr in host.findall("address"):
+                if addr.get("addrtype") == "ipv4":
+                    device["ip_address"] = addr.get("addr")
+                elif addr.get("addrtype") == "mac":
+                    device["mac_address"] = addr.get("addr")
+                    device["manufacturer"] = addr.get("vendor")
+            
+            # Get hostname
+            hostnames = host.find("hostnames")
+            if hostnames is not None:
+                hostname_elem = hostnames.find("hostname")
+                if hostname_elem is not None:
+                    device["hostname"] = hostname_elem.get("name")
+            
+            # Get OS info
+            os_elem = host.find("os")
+            if os_elem is not None:
+                osmatch = os_elem.find("osmatch")
+                if osmatch is not None:
+                    device["os_info"] = osmatch.get("name")
+                    # Infer device type from OS
+                    os_name = device["os_info"].lower() if device["os_info"] else ""
+                    if "windows" in os_name:
+                        device["device_type"] = "workstation"
+                    elif "linux" in os_name:
+                        device["device_type"] = "server"
+                    elif "router" in os_name or "cisco" in os_name:
+                        device["device_type"] = "network"
+                    elif "printer" in os_name or "hp" in os_name:
+                        device["device_type"] = "printer"
+            
+            # Get open ports
+            ports = host.find("ports")
+            if ports is not None:
+                for port in ports.findall("port"):
+                    state = port.find("state")
+                    if state is not None and state.get("state") == "open":
+                        service = port.find("service")
+                        port_info = {
+                            "port": int(port.get("portid")),
+                            "protocol": port.get("protocol"),
+                            "service": service.get("name") if service is not None else "unknown",
+                            "version": None,
+                        }
+                        if service is not None:
+                            version_parts = []
+                            if service.get("product"):
+                                version_parts.append(service.get("product"))
+                            if service.get("version"):
+                                version_parts.append(service.get("version"))
+                            if version_parts:
+                                port_info["version"] = " ".join(version_parts)
+                        
+                        device["open_ports"].append(port_info)
+                        
+                        # Infer device type from services if not already set
+                        if device["device_type"] == "unknown":
+                            svc = port_info["service"].lower()
+                            if svc in ["http", "https", "www"]:
+                                device["device_type"] = "server"
+                            elif svc in ["printer", "ipp", "jetdirect"]:
+                                device["device_type"] = "printer"
+                            elif svc in ["ssh", "telnet"]:
+                                device["device_type"] = "server"
+            
+            if device["ip_address"]:
+                devices.append(device)
+    
+    except ET.ParseError as e:
+        log.error(f"Failed to parse nmap XML: {e}")
+    
+    return devices
+
+
+async def run_nmap_scan(
+    targets: List[str],
+    scan_type: str = "discovery",
+    port_range: str = "1-1024",
+    timeout: int = 600,
+    use_sudo: bool = False
+) -> List[Dict[str, Any]]:
+    """
+    Run an nmap scan and return discovered devices.
+    
+    scan_type options:
+        - "discovery": Quick ping scan to find live hosts
+        - "ports": Port scan with service detection
+        - "full": Full scan with OS detection (requires sudo)
+    """
+    if not check_nmap_installed():
+        log.error("nmap is not installed. Install with: sudo apt install nmap")
+        return []
+    
+    # Build nmap command
+    cmd = ["nmap", "-oX", "-"]  # XML output to stdout
+    
+    if scan_type == "discovery":
+        cmd.extend(["-sn"])  # Ping scan only
+    elif scan_type == "ports":
+        cmd.extend(["-sS", "-sV", "-p", port_range])  # SYN scan with service detection
+    elif scan_type == "full":
+        cmd.extend(["-sS", "-sV", "-O", "-p", port_range])  # Include OS detection
+        use_sudo = True
+    
+    # Add timeout
+    cmd.extend(["--host-timeout", f"{timeout}s"])
+    
+    # Add targets
+    cmd.extend(targets)
+    
+    # Prepend sudo if needed
+    if use_sudo:
+        cmd = ["sudo"] + cmd
+    
+    log.info(f"Running nmap scan: {' '.join(cmd)}")
+    
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        stdout, stderr = await asyncio.wait_for(
+            proc.communicate(),
+            timeout=timeout + 60  # Extra buffer for process overhead
+        )
+        
+        if proc.returncode != 0:
+            log.warning(f"nmap returned non-zero: {stderr.decode()[:200]}")
+        
+        xml_output = stdout.decode()
+        devices = parse_nmap_xml(xml_output)
+        log.info(f"Scan complete: discovered {len(devices)} devices")
+        
+        return devices
+        
+    except asyncio.TimeoutError:
+        log.error(f"nmap scan timed out after {timeout}s")
+        return []
+    except Exception as e:
+        log.error(f"nmap scan failed: {e}")
+        return []
+
+
+async def run_full_network_scan(targets: List[str] = None) -> List[Dict[str, Any]]:
+    """
+    Run a comprehensive network scan in stages:
+    1. Discovery scan to find live hosts
+    2. Port scan on discovered hosts
+    3. Optionally OS detection (if enabled and sudo available)
+    """
+    scan_cfg = config.get("scanning", {})
+    scan_types = scan_cfg.get("scan_types", {})
+    port_range = scan_cfg.get("port_range", "1-1024")
+    timeout = scan_cfg.get("timeout", 600)
+    
+    # Determine targets
+    if not targets:
+        targets = scan_cfg.get("targets", [])
+    if not targets:
+        targets = [get_local_network_cidr()]
+        log.info(f"Auto-detected network: {targets[0]}")
+    
+    all_devices = []
+    
+    # Stage 1: Discovery
+    if scan_types.get("discovery", True):
+        log.info("Stage 1: Running host discovery...")
+        devices = await run_nmap_scan(targets, "discovery", timeout=timeout)
+        
+        if not devices:
+            log.info("No hosts discovered")
+            return []
+        
+        log.info(f"Discovered {len(devices)} live hosts")
+        
+        # If only discovery is enabled, return now
+        if not scan_types.get("ports", True):
+            return devices
+        
+        # Get list of live IPs for port scanning
+        live_ips = [d["ip_address"] for d in devices if d["ip_address"]]
+    else:
+        live_ips = targets
+    
+    # Stage 2: Port scan
+    if scan_types.get("ports", True) and live_ips:
+        log.info(f"Stage 2: Running port scan on {len(live_ips)} hosts...")
+        
+        # Determine scan type based on OS detection setting
+        scan_type = "ports"
+        use_sudo = False
+        
+        if scan_types.get("os_detection", False):
+            scan_type = "full"
+            use_sudo = scan_cfg.get("sudo_required", False)
+        
+        all_devices = await run_nmap_scan(
+            live_ips,
+            scan_type,
+            port_range,
+            timeout,
+            use_sudo
+        )
+    
+    return all_devices
+
+
 # =============================================================================
 # API Communication
 # =============================================================================
@@ -328,7 +606,11 @@ async def register_agent(session: aiohttp.ClientSession) -> bool:
         "ip_address": get_ip_address(),
         "os_type": platform.system(),
         "os_version": platform.release(),
-        "agent_version": "1.0.0",
+        "agent_version": "1.1.0",  # Updated for nmap support
+        "capabilities": {
+            "network_scanning": check_nmap_installed(),
+            "os_detection": config.get("scanning", {}).get("scan_types", {}).get("os_detection", False),
+        },
     }
     
     log.info(f"Registering agent: {payload['device_id']}")
@@ -360,6 +642,7 @@ async def send_heartbeat(session: aiohttp.ClientSession) -> bool:
             "uptime_seconds": metrics.get("uptime_seconds"),
             "load_1m": metrics.get("load_1m"),
             "hostname": metrics.get("hostname"),
+            "nmap_available": check_nmap_installed(),
         },
     }
     
@@ -391,7 +674,7 @@ async def poll_commands(session: aiohttp.ClientSession) -> list:
     return []
 
 
-async def execute_command(command: Dict[str, Any]) -> Dict[str, Any]:
+async def execute_command(session: aiohttp.ClientSession, command: Dict[str, Any]) -> Dict[str, Any]:
     """Execute a command and return the result."""
     cmd_id = command.get("id")
     cmd_type = command.get("command_type")
@@ -413,7 +696,6 @@ async def execute_command(command: Dict[str, Any]) -> Dict[str, Any]:
                 result["status"] = "rejected"
                 result["error"] = "Command execution disabled"
             else:
-                import subprocess
                 script = payload.get("script", "")
                 proc = subprocess.run(
                     script,
@@ -433,6 +715,22 @@ async def execute_command(command: Dict[str, Any]) -> Dict[str, Any]:
         elif cmd_type == "ping":
             result["output"] = {"pong": True, "timestamp": int(time.time())}
             
+        elif cmd_type == "network_scan":
+            # On-demand network scan
+            if not check_nmap_installed():
+                result["status"] = "failed"
+                result["error"] = "nmap is not installed"
+            else:
+                targets = payload.get("targets", config.get("scanning", {}).get("targets", []))
+                devices = await run_full_network_scan(targets if targets else None)
+                result["output"] = {
+                    "devices_found": len(devices),
+                    "devices": devices,
+                    "scan_time": datetime.utcnow().isoformat(),
+                }
+                # Also send results to the API
+                await send_scan_results(session, [], devices)
+                
         else:
             result["status"] = "unknown"
             result["error"] = f"Unknown command type: {cmd_type}"
@@ -508,11 +806,43 @@ async def command_loop(session: aiohttp.ClientSession) -> None:
             commands = await poll_commands(session)
             
             for cmd in commands:
-                result = await execute_command(cmd)
+                result = await execute_command(session, cmd)
                 await send_command_response(session, result)
                 
         except Exception as e:
             log.error(f"Command loop error: {e}")
+        
+        await asyncio.sleep(interval)
+
+
+async def scan_loop(session: aiohttp.ClientSession) -> None:
+    """Periodically run network scans and report results."""
+    scan_cfg = config.get("scanning", {})
+    
+    if not scan_cfg.get("enabled", False):
+        log.info("Network scanning is disabled")
+        return
+    
+    if not check_nmap_installed():
+        log.warning("Network scanning enabled but nmap is not installed")
+        return
+    
+    interval = config["intervals"].get("scan", 3600)
+    log.info(f"Starting scan loop (interval: {interval}s)")
+    
+    # Initial delay to let other loops start first
+    await asyncio.sleep(10)
+    
+    while running:
+        try:
+            log.info("Starting scheduled network scan...")
+            devices = await run_full_network_scan()
+            
+            if devices:
+                await send_scan_results(session, [], devices)
+            
+        except Exception as e:
+            log.error(f"Scan loop error: {e}")
         
         await asyncio.sleep(interval)
 
@@ -529,6 +859,7 @@ async def main_async(args: argparse.Namespace) -> None:
     log.info("Ultrium Vanguard Agent Starting")
     log.info(f"Device ID: {config['agent']['device_id']}")
     log.info(f"Endpoint: {config['api']['endpoint']}")
+    log.info(f"nmap available: {check_nmap_installed()}")
     log.info("=" * 60)
     
     # Validate config
@@ -552,15 +883,36 @@ async def main_async(args: argparse.Namespace) -> None:
             await register_agent(session)
             return
         
+        # Scan mode (one-time scan)
+        if args.scan:
+            log.info("Running one-time network scan...")
+            devices = await run_full_network_scan()
+            if devices:
+                print(f"\nDiscovered {len(devices)} devices:\n")
+                for d in devices:
+                    print(f"  {d['ip_address']:15} | {d.get('hostname') or 'N/A':20} | {d.get('os_info') or 'Unknown OS'}")
+                    if d.get("open_ports"):
+                        ports = ", ".join(str(p["port"]) for p in d["open_ports"][:5])
+                        print(f"                    └─ Ports: {ports}")
+                
+                # Send results if we have valid config
+                if validate_config(config):
+                    await send_scan_results(session, [], devices)
+                    log.info("Scan results sent to Vanguard")
+            else:
+                print("\nNo devices discovered")
+            return
+        
         # Normal operation: register first, then run loops
         if not await register_agent(session):
             log.error("Failed to register, exiting")
             sys.exit(1)
         
-        # Run heartbeat and command loops concurrently
+        # Run all loops concurrently
         tasks = [
             asyncio.create_task(heartbeat_loop(session)),
             asyncio.create_task(command_loop(session)),
+            asyncio.create_task(scan_loop(session)),
         ]
         
         try:
@@ -597,6 +949,11 @@ def main() -> None:
         "--test", "-t",
         action="store_true",
         help="Test connection and exit"
+    )
+    parser.add_argument(
+        "--scan", "-s",
+        action="store_true",
+        help="Run one-time network scan and exit"
     )
     
     args = parser.parse_args()
