@@ -42,6 +42,10 @@ intervals:
   
   # How often to poll for commands (seconds)
   command_poll: 30
+  
+  # How often to run network scans (seconds)
+  # Default: 3600 (1 hour)
+  scan: 3600
 
 logging:
   # Log level: DEBUG, INFO, WARNING, ERROR
@@ -66,3 +70,49 @@ features:
   # Allow remote command execution
   # WARNING: Only enable on trusted networks!
   execute_commands: true
+
+# =============================================================================
+# Network Scanning Configuration
+# =============================================================================
+# Requires nmap to be installed: sudo apt install nmap
+# Run a one-time scan: python vanguard_agent.py --scan
+# =============================================================================
+
+scanning:
+  # Enable periodic network scanning
+  enabled: true
+  
+  # Network targets to scan (CIDR notation)
+  # Leave empty to auto-detect local network
+  targets:
+    # - "192.168.1.0/24"
+    # - "10.0.0.0/24"
+  
+  # Scan types to perform
+  scan_types:
+    # Host discovery (ping scan) - fast, finds live hosts
+    discovery: true
+    
+    # Port scanning - finds open services
+    ports: true
+    
+    # OS detection - identifies operating systems
+    # WARNING: Requires sudo/root privileges
+    os_detection: false
+    
+    # Service version detection - identifies software versions
+    service_detection: true
+  
+  # Port range to scan (only used if ports: true)
+  # Common options:
+  #   "1-1024"     - Well-known ports (fast)
+  #   "1-10000"    - Extended range (moderate)
+  #   "1-65535"    - All ports (slow)
+  port_range: "1-1024"
+  
+  # Maximum time for a single scan operation (seconds)
+  timeout: 600
+  
+  # Whether to use sudo for privileged scans (OS detection)
+  # Only enable if the agent runs as root or has passwordless sudo
+  sudo_required: false

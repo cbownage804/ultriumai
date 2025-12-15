@@ -19,11 +19,12 @@ set -e
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}"
 echo "=============================================="
-echo "   Ultrium Vanguard Agent Installer"
+echo "   Ultrium Vanguard Agent Installer v1.1"
 echo "=============================================="
 echo -e "${NC}"
 
@@ -41,7 +42,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo -e "${YELLOW}Step 1: Installing system dependencies...${NC}"
 apt-get update -qq
-apt-get install -y -qq python3 python3-pip python3-venv curl
+apt-get install -y -qq python3 python3-pip python3-venv curl nmap
+
+# Verify nmap installation
+if command -v nmap &> /dev/null; then
+    NMAP_VERSION=$(nmap --version | head -n1)
+    echo -e "${GREEN}  → nmap installed: ${NMAP_VERSION}${NC}"
+else
+    echo -e "${RED}  → Warning: nmap installation may have failed${NC}"
+fi
 
 echo -e "${YELLOW}Step 2: Creating installation directory...${NC}"
 mkdir -p "$INSTALL_DIR"
@@ -87,7 +96,9 @@ ExecStart=/opt/vanguard/.venv/bin/python /opt/vanguard/vanguard_agent.py --confi
 Restart=always
 RestartSec=10
 Environment=PYTHONUNBUFFERED=1
-NoNewPrivileges=yes
+
+# Security hardening (relaxed for nmap scanning)
+NoNewPrivileges=no
 ProtectSystem=strict
 ProtectHome=yes
 ReadWritePaths=/var/log /opt/vanguard
@@ -95,6 +106,9 @@ PrivateTmp=yes
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=vanguard-agent
+
+# Allow raw packet access for nmap
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
 
 [Install]
 WantedBy=multi-user.target
@@ -120,11 +134,20 @@ echo ""
 echo "  3. Test the connection:"
 echo "     ${YELLOW}sudo /opt/vanguard/.venv/bin/python /opt/vanguard/vanguard_agent.py --test${NC}"
 echo ""
-echo "  4. Start the service:"
+echo "  4. Run a test network scan:"
+echo "     ${YELLOW}sudo /opt/vanguard/.venv/bin/python /opt/vanguard/vanguard_agent.py --scan${NC}"
+echo ""
+echo "  5. Start the service:"
 echo "     ${YELLOW}sudo systemctl enable --now ${SERVICE_NAME}${NC}"
 echo ""
-echo "  5. Check status:"
+echo "  6. Check status:"
 echo "     ${YELLOW}sudo systemctl status ${SERVICE_NAME}${NC}"
 echo "     ${YELLOW}sudo journalctl -u ${SERVICE_NAME} -f${NC}"
+echo ""
+echo -e "${BLUE}Network Scanning Notes:${NC}"
+echo "  - nmap is installed and ready for network discovery"
+echo "  - Scanning is ${YELLOW}enabled by default${NC} in config"
+echo "  - OS detection requires running as root (already configured)"
+echo "  - Run ${YELLOW}--scan${NC} flag for one-time manual scan"
 echo ""
 echo -e "${GREEN}Done!${NC}"
