@@ -1,0 +1,68 @@
+# =============================================================================
+# Ultrium Vanguard Agent Configuration
+# =============================================================================
+# Copy this file to config.yaml and update the values below.
+# 
+# Required fields:
+#   - api.secret_key: Your X-VANGUARD-KEY from the Vanguard dashboard
+#   - agent.user_id: Your Vanguard user UUID
+#
+# Usage:
+#   python vanguard_agent.py --config config.yaml
+# =============================================================================
+
+agent:
+  # Unique identifier for this agent (auto-generated if not set)
+  device_id: "vanguard-pi-01"
+  
+  # Human-readable name shown in the dashboard
+  name: "Lab Vanguard Agent"
+  
+  # Physical location (for organization)
+  location: "server-room-1"
+  
+  # REQUIRED: Your Vanguard user UUID
+  # Get this from your Vanguard dashboard or Supabase auth.users table
+  user_id: "YOUR_USER_UUID_HERE"
+
+api:
+  # Vanguard API endpoint (don't change unless using custom deployment)
+  endpoint: "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api"
+  
+  # REQUIRED: Your agent secret key
+  # This is the X-VANGUARD-KEY header value
+  secret_key: "vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA"
+  
+  # Request timeout in seconds
+  timeout: 30
+
+intervals:
+  # How often to send heartbeats (seconds)
+  heartbeat: 60
+  
+  # How often to poll for commands (seconds)
+  command_poll: 30
+
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+  
+  # Log file path (set to null for console only)
+  file: "/var/log/vanguard-agent.log"
+  
+  # Max log file size before rotation (bytes)
+  max_bytes: 10485760  # 10MB
+  
+  # Number of backup log files to keep
+  backup_count: 5
+
+features:
+  # Collect CPU temperature (Linux only)
+  collect_temperature: true
+  
+  # Collect network I/O statistics
+  collect_network_io: true
+  
+  # Allow remote command execution
+  # WARNING: Only enable on trusted networks!
+  execute_commands: true
