@@ -3,7 +3,8 @@
 Ultrium Vanguard Agent
 ======================
 A production-ready agent for the Vanguard security operations platform.
-Sends system metrics, polls for commands, runs network scans, collects Meraki data, and reports results.
+Sends system metrics, polls for commands, runs network scans, collects Meraki data,
+monitors network devices via SNMP, and supports sub-agent collection.
 
 Usage:
     python vanguard_agent.py                    # Run with config.yaml
@@ -12,16 +13,21 @@ Usage:
     python vanguard_agent.py --test             # Test connection
     python vanguard_agent.py --scan             # Run one-time network scan
     python vanguard_agent.py --meraki           # Run one-time Meraki sync
+    python vanguard_agent.py --snmp             # Run one-time SNMP poll
+    python vanguard_agent.py --discover         # Run ARP network discovery
 """
 
 import asyncio
 import aiohttp
 import argparse
+import json
 import logging
 import platform
+import re
 import shutil
 import signal
 import socket
+import struct
 import subprocess
 import sys
 import time
@@ -30,7 +36,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 # Optional imports
 try:
@@ -46,6 +52,13 @@ try:
 except ImportError:
     HAS_YAML = False
     print("Warning: PyYAML not installed. Install with: pip install pyyaml")
+
+# SNMP support (optional)
+try:
+    from pysnmp.hlapi.asyncio import *
+    HAS_SNMP = True
+except ImportError:
+    HAS_SNMP = False
 
 # =============================================================================
 # Configuration
@@ -68,6 +81,8 @@ DEFAULT_CONFIG = {
         "command_poll": 30,  # seconds
         "scan": 3600,  # seconds (1 hour)
         "meraki": 300,  # seconds (5 minutes)
+        "snmp": 300,  # seconds (5 minutes)
+        "discovery": 1800,  # seconds (30 minutes)
     },
     "logging": {
         "level": "INFO",
@@ -104,6 +119,28 @@ DEFAULT_CONFIG = {
         "collect_uplinks": True,
         "collect_vpn_status": False,
         "client_timespan": 86400,  # 24 hours in seconds
+    },
+    "snmp": {
+        "enabled": False,
+        "community": "public",  # SNMP v2c community string
+        "version": 2,  # 1, 2, or 3
+        "port": 161,
+        "timeout": 5,  # seconds
+        "retries": 2,
+        "targets": [],  # List of IPs or auto-discover
+        "v3_credentials": {  # Only for SNMPv3
+            "username": None,
+            "auth_protocol": "SHA",  # MD5, SHA, SHA224, SHA256, SHA384, SHA512
+            "auth_password": None,
+            "priv_protocol": "AES",  # DES, 3DES, AES, AES192, AES256
+            "priv_password": None,
+        },
+    },
+    "sub_agents": {
+        "enabled": False,
+        "listen_port": 5678,  # Port for sub-agents to report to
+        "auth_token": None,  # Shared secret for sub-agent auth
+        "agents": [],  # List of registered sub-agents
     },
 }
 
@@ -784,6 +821,454 @@ async def send_meraki_data(session: aiohttp.ClientSession, meraki_data: Dict[str
 
 
 # =============================================================================
+# SNMP Monitoring
+# =============================================================================
+
+# Common SNMP OIDs for network device monitoring
+SNMP_OIDS = {
+    # System information
+    "sysDescr": "1.3.6.1.2.1.1.1.0",
+    "sysUpTime": "1.3.6.1.2.1.1.3.0",
+    "sysName": "1.3.6.1.2.1.1.5.0",
+    "sysLocation": "1.3.6.1.2.1.1.6.0",
+    "sysContact": "1.3.6.1.2.1.1.4.0",
+    
+    # Interface statistics
+    "ifNumber": "1.3.6.1.2.1.2.1.0",
+    "ifDescr": "1.3.6.1.2.1.2.2.1.2",
+    "ifType": "1.3.6.1.2.1.2.2.1.3",
+    "ifSpeed": "1.3.6.1.2.1.2.2.1.5",
+    "ifPhysAddress": "1.3.6.1.2.1.2.2.1.6",
+    "ifAdminStatus": "1.3.6.1.2.1.2.2.1.7",
+    "ifOperStatus": "1.3.6.1.2.1.2.2.1.8",
+    "ifInOctets": "1.3.6.1.2.1.2.2.1.10",
+    "ifOutOctets": "1.3.6.1.2.1.2.2.1.16",
+    "ifInErrors": "1.3.6.1.2.1.2.2.1.14",
+    "ifOutErrors": "1.3.6.1.2.1.2.2.1.20",
+    
+    # CPU/Memory (varies by vendor)
+    "hrProcessorLoad": "1.3.6.1.2.1.25.3.3.1.2",  # HOST-RESOURCES-MIB
+    "hrStorageUsed": "1.3.6.1.2.1.25.2.3.1.6",
+    "hrStorageSize": "1.3.6.1.2.1.25.2.3.1.5",
+    
+    # Cisco specific
+    "cpmCPUTotal5min": "1.3.6.1.4.1.9.9.109.1.1.1.1.5",
+    "ciscoMemoryPoolUsed": "1.3.6.1.4.1.9.9.48.1.1.1.5",
+    "ciscoMemoryPoolFree": "1.3.6.1.4.1.9.9.48.1.1.1.6",
+}
+
+
+async def snmp_get(target: str, oid: str, snmp_cfg: Dict) -> Optional[Any]:
+    """Perform an SNMP GET request."""
+    if not HAS_SNMP:
+        return None
+    
+    try:
+        community = snmp_cfg.get("community", "public")
+        port = snmp_cfg.get("port", 161)
+        timeout_val = snmp_cfg.get("timeout", 5)
+        retries = snmp_cfg.get("retries", 2)
+        
+        errorIndication, errorStatus, errorIndex, varBinds = await getCmd(
+            SnmpEngine(),
+            CommunityData(community),
+            UdpTransportTarget((target, port), timeout=timeout_val, retries=retries),
+            ContextData(),
+            ObjectType(ObjectIdentity(oid))
+        )
+        
+        if errorIndication:
+            log.debug(f"SNMP error for {target}: {errorIndication}")
+            return None
+        elif errorStatus:
+            log.debug(f"SNMP status error for {target}: {errorStatus}")
+            return None
+        else:
+            for varBind in varBinds:
+                return varBind[1].prettyPrint()
+        
+    except Exception as e:
+        log.debug(f"SNMP get failed for {target}: {e}")
+    
+    return None
+
+
+async def snmp_walk(target: str, base_oid: str, snmp_cfg: Dict) -> List[Tuple[str, Any]]:
+    """Perform an SNMP WALK request."""
+    if not HAS_SNMP:
+        return []
+    
+    results = []
+    try:
+        community = snmp_cfg.get("community", "public")
+        port = snmp_cfg.get("port", 161)
+        timeout_val = snmp_cfg.get("timeout", 5)
+        
+        async for errorIndication, errorStatus, errorIndex, varBinds in walkCmd(
+            SnmpEngine(),
+            CommunityData(community),
+            UdpTransportTarget((target, port), timeout=timeout_val),
+            ContextData(),
+            ObjectType(ObjectIdentity(base_oid))
+        ):
+            if errorIndication or errorStatus:
+                break
+            for varBind in varBinds:
+                oid_str = str(varBind[0])
+                value = varBind[1].prettyPrint()
+                results.append((oid_str, value))
+        
+    except Exception as e:
+        log.debug(f"SNMP walk failed for {target}: {e}")
+    
+    return results
+
+
+async def poll_snmp_device(target: str, snmp_cfg: Dict) -> Optional[Dict[str, Any]]:
+    """Poll a single device via SNMP and return its data."""
+    device_data = {
+        "ip_address": target,
+        "polled_at": datetime.utcnow().isoformat(),
+        "snmp_reachable": False,
+        "system": {},
+        "interfaces": [],
+        "metrics": {},
+    }
+    
+    # Get system information
+    sys_name = await snmp_get(target, SNMP_OIDS["sysName"], snmp_cfg)
+    if sys_name:
+        device_data["snmp_reachable"] = True
+        device_data["system"]["name"] = sys_name
+    else:
+        # Device not reachable via SNMP
+        return None
+    
+    device_data["system"]["description"] = await snmp_get(target, SNMP_OIDS["sysDescr"], snmp_cfg)
+    device_data["system"]["uptime"] = await snmp_get(target, SNMP_OIDS["sysUpTime"], snmp_cfg)
+    device_data["system"]["location"] = await snmp_get(target, SNMP_OIDS["sysLocation"], snmp_cfg)
+    device_data["system"]["contact"] = await snmp_get(target, SNMP_OIDS["sysContact"], snmp_cfg)
+    
+    # Get interface information
+    if_count = await snmp_get(target, SNMP_OIDS["ifNumber"], snmp_cfg)
+    if if_count:
+        device_data["interface_count"] = int(if_count)
+        
+        # Walk interface descriptions
+        if_data = await snmp_walk(target, SNMP_OIDS["ifDescr"], snmp_cfg)
+        if_oper_status = await snmp_walk(target, SNMP_OIDS["ifOperStatus"], snmp_cfg)
+        if_in_octets = await snmp_walk(target, SNMP_OIDS["ifInOctets"], snmp_cfg)
+        if_out_octets = await snmp_walk(target, SNMP_OIDS["ifOutOctets"], snmp_cfg)
+        
+        # Build interface list
+        for oid, name in if_data:
+            if_index = oid.split(".")[-1]
+            interface = {
+                "index": if_index,
+                "name": name,
+                "status": None,
+                "in_octets": None,
+                "out_octets": None,
+            }
+            
+            # Find matching status and counters
+            for status_oid, status in if_oper_status:
+                if status_oid.endswith(f".{if_index}"):
+                    interface["status"] = "up" if status == "1" else "down"
+                    break
+            
+            for in_oid, in_val in if_in_octets:
+                if in_oid.endswith(f".{if_index}"):
+                    interface["in_octets"] = int(in_val)
+                    break
+            
+            for out_oid, out_val in if_out_octets:
+                if out_oid.endswith(f".{if_index}"):
+                    interface["out_octets"] = int(out_val)
+                    break
+            
+            device_data["interfaces"].append(interface)
+    
+    # Try to get CPU (host-resources MIB)
+    cpu_load = await snmp_get(target, SNMP_OIDS["hrProcessorLoad"] + ".1", snmp_cfg)
+    if cpu_load:
+        device_data["metrics"]["cpu_percent"] = int(cpu_load)
+    
+    # Try Cisco-specific OIDs
+    cisco_cpu = await snmp_get(target, SNMP_OIDS["cpmCPUTotal5min"] + ".1", snmp_cfg)
+    if cisco_cpu:
+        device_data["metrics"]["cpu_percent"] = int(cisco_cpu)
+        device_data["vendor"] = "Cisco"
+    
+    return device_data
+
+
+async def collect_snmp_data(targets: List[str] = None) -> List[Dict[str, Any]]:
+    """Collect SNMP data from all configured or discovered targets."""
+    snmp_cfg = config.get("snmp", {})
+    
+    if not HAS_SNMP:
+        log.warning("SNMP support not available. Install with: pip install pysnmp")
+        return []
+    
+    # Determine targets
+    if not targets:
+        targets = snmp_cfg.get("targets", [])
+    
+    if not targets:
+        # Auto-discover targets via nmap or ARP
+        log.info("No SNMP targets configured, attempting auto-discovery...")
+        discovered = await discover_network_devices()
+        targets = [d["ip_address"] for d in discovered if d.get("ip_address")]
+    
+    log.info(f"Polling {len(targets)} targets via SNMP...")
+    
+    # Poll devices concurrently
+    tasks = [poll_snmp_device(target, snmp_cfg) for target in targets]
+    results = await asyncio.gather(*tasks)
+    
+    # Filter out None results (unreachable devices)
+    devices = [d for d in results if d is not None]
+    
+    log.info(f"SNMP collection complete: {len(devices)}/{len(targets)} devices responded")
+    return devices
+
+
+async def send_snmp_data(session: aiohttp.ClientSession, snmp_data: List[Dict]) -> bool:
+    """Send SNMP data to the Vanguard backend."""
+    payload = {
+        "device_id": config["agent"]["device_id"],
+        "data_type": "snmp",
+        "snmp_devices": snmp_data,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    
+    result = await api_request(session, "snmp_data", payload)
+    
+    if result and result.get("status") == "ok":
+        log.info(f"SNMP data sent: {len(snmp_data)} devices")
+        return True
+    return False
+
+
+# =============================================================================
+# Network Discovery (ARP / Ping Sweep)
+# =============================================================================
+
+def get_arp_table() -> List[Dict[str, str]]:
+    """Get the current ARP table."""
+    devices = []
+    
+    try:
+        if platform.system() == "Windows":
+            output = subprocess.check_output(["arp", "-a"], text=True)
+            # Parse Windows ARP output
+            for line in output.split("\n"):
+                match = re.search(r"(\d+\.\d+\.\d+\.\d+)\s+([\w-]+)", line)
+                if match:
+                    ip = match.group(1)
+                    mac = match.group(2).replace("-", ":").lower()
+                    if ip != "255.255.255.255" and not ip.startswith("224."):
+                        devices.append({"ip_address": ip, "mac_address": mac})
+        else:
+            # Linux/Mac
+            output = subprocess.check_output(["arp", "-a"], text=True)
+            for line in output.split("\n"):
+                match = re.search(r"\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([\w:]+)", line)
+                if match:
+                    devices.append({
+                        "ip_address": match.group(1),
+                        "mac_address": match.group(2).lower()
+                    })
+    except Exception as e:
+        log.warning(f"Failed to get ARP table: {e}")
+    
+    return devices
+
+
+async def ping_sweep(network_cidr: str) -> List[str]:
+    """Perform a ping sweep to discover active hosts."""
+    live_hosts = []
+    
+    try:
+        # Use nmap for fast ping sweep if available
+        if check_nmap_installed():
+            proc = await asyncio.create_subprocess_exec(
+                "nmap", "-sn", "-n", network_cidr, "-oG", "-",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=120)
+            
+            for line in stdout.decode().split("\n"):
+                match = re.search(r"Host:\s+(\d+\.\d+\.\d+\.\d+)", line)
+                if match:
+                    live_hosts.append(match.group(1))
+        else:
+            # Fallback to Python ping (slower)
+            import ipaddress
+            network = ipaddress.ip_network(network_cidr, strict=False)
+            
+            async def ping_host(ip):
+                try:
+                    proc = await asyncio.create_subprocess_exec(
+                        "ping", "-c", "1", "-W", "1", str(ip),
+                        stdout=asyncio.subprocess.DEVNULL,
+                        stderr=asyncio.subprocess.DEVNULL
+                    )
+                    await asyncio.wait_for(proc.wait(), timeout=2)
+                    if proc.returncode == 0:
+                        return str(ip)
+                except:
+                    pass
+                return None
+            
+            # Ping all hosts concurrently (in batches)
+            for batch_start in range(0, min(network.num_addresses, 256), 50):
+                batch = list(network.hosts())[batch_start:batch_start+50]
+                results = await asyncio.gather(*[ping_host(ip) for ip in batch])
+                live_hosts.extend([ip for ip in results if ip])
+    
+    except Exception as e:
+        log.warning(f"Ping sweep failed: {e}")
+    
+    return live_hosts
+
+
+async def discover_network_devices() -> List[Dict[str, Any]]:
+    """Discover devices on the network using multiple methods."""
+    devices = {}
+    
+    # Get local network
+    network_cidr = get_local_network_cidr()
+    log.info(f"Discovering devices on {network_cidr}...")
+    
+    # Method 1: ARP table
+    arp_devices = get_arp_table()
+    for dev in arp_devices:
+        ip = dev["ip_address"]
+        if ip not in devices:
+            devices[ip] = dev
+        else:
+            devices[ip].update(dev)
+    
+    log.info(f"Found {len(arp_devices)} devices in ARP table")
+    
+    # Method 2: Ping sweep
+    live_hosts = await ping_sweep(network_cidr)
+    for ip in live_hosts:
+        if ip not in devices:
+            devices[ip] = {"ip_address": ip}
+    
+    log.info(f"Found {len(live_hosts)} live hosts via ping sweep")
+    
+    # Try to get hostnames via DNS
+    for ip, dev in devices.items():
+        try:
+            hostname, _, _ = socket.gethostbyaddr(ip)
+            dev["hostname"] = hostname
+        except:
+            pass
+    
+    result = list(devices.values())
+    log.info(f"Total discovered devices: {len(result)}")
+    return result
+
+
+# =============================================================================
+# Sub-Agent Collection
+# =============================================================================
+
+# Storage for sub-agent data
+sub_agent_data: Dict[str, Dict] = {}
+
+
+async def handle_sub_agent_report(data: Dict) -> Dict:
+    """Handle incoming report from a sub-agent."""
+    agent_id = data.get("agent_id")
+    if not agent_id:
+        return {"error": "Missing agent_id"}
+    
+    # Validate auth token
+    expected_token = config.get("sub_agents", {}).get("auth_token")
+    if expected_token and data.get("auth_token") != expected_token:
+        return {"error": "Invalid auth token"}
+    
+    # Store sub-agent data
+    sub_agent_data[agent_id] = {
+        "agent_id": agent_id,
+        "hostname": data.get("hostname"),
+        "ip_address": data.get("ip_address"),
+        "metrics": data.get("metrics", {}),
+        "last_seen": datetime.utcnow().isoformat(),
+    }
+    
+    log.info(f"Received report from sub-agent: {agent_id}")
+    return {"status": "ok"}
+
+
+async def sub_agent_server():
+    """Run a simple HTTP server for sub-agents to report to."""
+    sub_cfg = config.get("sub_agents", {})
+    
+    if not sub_cfg.get("enabled"):
+        return
+    
+    port = sub_cfg.get("listen_port", 5678)
+    
+    async def handler(reader, writer):
+        try:
+            # Read request
+            data = await asyncio.wait_for(reader.read(65536), timeout=10)
+            
+            # Parse HTTP request (simple)
+            lines = data.decode().split("\r\n")
+            body_start = lines.index("") + 1 if "" in lines else -1
+            
+            if body_start > 0:
+                body = "\r\n".join(lines[body_start:])
+                try:
+                    json_data = json.loads(body)
+                    result = await handle_sub_agent_report(json_data)
+                    response_body = json.dumps(result)
+                except:
+                    response_body = '{"error": "Invalid JSON"}'
+            else:
+                response_body = '{"error": "No body"}'
+            
+            # Send response
+            response = f"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {len(response_body)}\r\n\r\n{response_body}"
+            writer.write(response.encode())
+            await writer.drain()
+        except Exception as e:
+            log.debug(f"Sub-agent handler error: {e}")
+        finally:
+            writer.close()
+    
+    server = await asyncio.start_server(handler, "0.0.0.0", port)
+    log.info(f"Sub-agent server listening on port {port}")
+    
+    async with server:
+        await server.serve_forever()
+
+
+async def send_sub_agent_data(session: aiohttp.ClientSession) -> bool:
+    """Send collected sub-agent data to the backend."""
+    if not sub_agent_data:
+        return True
+    
+    payload = {
+        "device_id": config["agent"]["device_id"],
+        "data_type": "sub_agents",
+        "sub_agents": list(sub_agent_data.values()),
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    
+    result = await api_request(session, "sub_agent_data", payload)
+    return result and result.get("status") == "ok"
+
+
+# =============================================================================
 # API Communication
 # =============================================================================
 
@@ -847,6 +1332,8 @@ async def register_agent(session: aiohttp.ClientSession) -> bool:
     global agent_id
     
     meraki_cfg = config.get("meraki", {})
+    snmp_cfg = config.get("snmp", {})
+    sub_agent_cfg = config.get("sub_agents", {})
     
     payload = {
         "device_id": config["agent"]["device_id"],
@@ -856,11 +1343,14 @@ async def register_agent(session: aiohttp.ClientSession) -> bool:
         "ip_address": get_ip_address(),
         "os_type": platform.system(),
         "os_version": platform.release(),
-        "agent_version": "1.2.0",  # Updated for Meraki support
+        "agent_version": "2.0.0",  # Updated for comprehensive network monitoring
         "capabilities": {
             "network_scanning": check_nmap_installed(),
             "os_detection": config.get("scanning", {}).get("scan_types", {}).get("os_detection", False),
             "meraki_integration": bool(meraki_cfg.get("enabled") and meraki_cfg.get("api_key")),
+            "snmp_polling": HAS_SNMP and snmp_cfg.get("enabled", False),
+            "network_discovery": True,  # Always available via ARP/ping
+            "sub_agent_collection": sub_agent_cfg.get("enabled", False),
         },
     }
     
@@ -1011,6 +1501,45 @@ async def execute_command(session: aiohttp.ClientSession, command: Dict[str, Any
                 client = MerakiClient(meraki_cfg["api_key"])
                 orgs = await client.get_organizations(session)
                 result["output"] = orgs
+        
+        elif cmd_type == "snmp_poll":
+            # On-demand SNMP poll
+            if not HAS_SNMP:
+                result["status"] = "failed"
+                result["error"] = "pysnmp not installed. Install with: pip install pysnmp"
+            else:
+                targets = payload.get("targets", [])
+                snmp_data = await collect_snmp_data(targets if targets else None)
+                result["output"] = {
+                    "devices_polled": len(snmp_data),
+                    "devices": snmp_data,
+                    "poll_time": datetime.utcnow().isoformat(),
+                }
+                await send_snmp_data(session, snmp_data)
+        
+        elif cmd_type == "discover":
+            # On-demand network discovery
+            discovered = await discover_network_devices()
+            result["output"] = {
+                "devices_found": len(discovered),
+                "devices": discovered,
+                "discovery_time": datetime.utcnow().isoformat(),
+            }
+        
+        elif cmd_type == "get_arp":
+            # Get ARP table
+            arp_table = get_arp_table()
+            result["output"] = {
+                "entries": len(arp_table),
+                "arp_table": arp_table,
+            }
+        
+        elif cmd_type == "get_sub_agents":
+            # Get sub-agent data
+            result["output"] = {
+                "sub_agent_count": len(sub_agent_data),
+                "sub_agents": list(sub_agent_data.values()),
+            }
                 
         else:
             result["status"] = "unknown"
@@ -1160,6 +1689,70 @@ async def meraki_loop(session: aiohttp.ClientSession) -> None:
         await asyncio.sleep(interval)
 
 
+async def snmp_loop(session: aiohttp.ClientSession) -> None:
+    """Periodically poll SNMP devices and report data."""
+    snmp_cfg = config.get("snmp", {})
+    
+    if not snmp_cfg.get("enabled", False):
+        log.info("SNMP polling is disabled")
+        return
+    
+    if not HAS_SNMP:
+        log.warning("SNMP enabled but pysnmp not installed")
+        return
+    
+    interval = config["intervals"].get("snmp", 300)
+    log.info(f"Starting SNMP loop (interval: {interval}s)")
+    
+    # Initial delay
+    await asyncio.sleep(20)
+    
+    while running:
+        try:
+            log.info("Starting SNMP data collection...")
+            snmp_data = await collect_snmp_data()
+            
+            if snmp_data:
+                await send_snmp_data(session, snmp_data)
+            
+        except Exception as e:
+            log.error(f"SNMP loop error: {e}")
+        
+        await asyncio.sleep(interval)
+
+
+async def discovery_loop(session: aiohttp.ClientSession) -> None:
+    """Periodically discover network devices."""
+    interval = config["intervals"].get("discovery", 1800)
+    
+    # Only run if explicitly enabled or no other discovery method is active
+    scan_enabled = config.get("scanning", {}).get("enabled", False)
+    snmp_enabled = config.get("snmp", {}).get("enabled", False)
+    
+    if scan_enabled or snmp_enabled:
+        log.info("Discovery handled by nmap/SNMP, skipping passive discovery loop")
+        return
+    
+    log.info(f"Starting discovery loop (interval: {interval}s)")
+    
+    # Initial delay
+    await asyncio.sleep(25)
+    
+    while running:
+        try:
+            log.info("Starting network discovery...")
+            devices = await discover_network_devices()
+            
+            if devices:
+                # Send as scan results
+                await send_scan_results(session, [], devices)
+            
+        except Exception as e:
+            log.error(f"Discovery loop error: {e}")
+        
+        await asyncio.sleep(interval)
+
+
 async def main_async(args: argparse.Namespace) -> None:
     """Main async entry point."""
     global config, running
@@ -1169,13 +1762,16 @@ async def main_async(args: argparse.Namespace) -> None:
     setup_logging(config)
     
     meraki_cfg = config.get("meraki", {})
+    snmp_cfg = config.get("snmp", {})
     
     log.info("=" * 60)
     log.info("Ultrium Vanguard Agent Starting")
     log.info(f"Device ID: {config['agent']['device_id']}")
     log.info(f"Endpoint: {config['api']['endpoint']}")
     log.info(f"nmap available: {check_nmap_installed()}")
+    log.info(f"SNMP available: {HAS_SNMP}")
     log.info(f"Meraki enabled: {meraki_cfg.get('enabled', False)}")
+    log.info(f"SNMP enabled: {snmp_cfg.get('enabled', False)}")
     log.info("=" * 60)
     
     # Validate config
@@ -1245,6 +1841,48 @@ async def main_async(args: argparse.Namespace) -> None:
                 log.info("Meraki data sent to Vanguard")
             return
         
+        # SNMP mode (one-time poll)
+        if args.snmp:
+            log.info("Running one-time SNMP poll...")
+            if not HAS_SNMP:
+                log.error("pysnmp not installed. Install with: pip install pysnmp")
+                sys.exit(1)
+            
+            snmp_data = await collect_snmp_data()
+            
+            print(f"\nSNMP Poll Summary:")
+            print(f"  Devices responded: {len(snmp_data)}")
+            
+            for dev in snmp_data:
+                print(f"\n  {dev['ip_address']}: {dev['system'].get('name', 'Unknown')}")
+                if dev.get('system', {}).get('description'):
+                    print(f"    Description: {dev['system']['description'][:60]}...")
+                if dev.get('interface_count'):
+                    print(f"    Interfaces: {dev['interface_count']}")
+            
+            # Send to Vanguard if config is valid
+            if validate_config(config):
+                await send_snmp_data(session, snmp_data)
+                log.info("SNMP data sent to Vanguard")
+            return
+        
+        # Discovery mode (one-time discovery)
+        if args.discover:
+            log.info("Running network discovery...")
+            devices = await discover_network_devices()
+            
+            print(f"\nDiscovered {len(devices)} devices:\n")
+            for d in devices:
+                mac = d.get('mac_address', 'N/A')
+                hostname = d.get('hostname', 'N/A')
+                print(f"  {d['ip_address']:15} | {mac:17} | {hostname}")
+            
+            # Send to Vanguard if config is valid
+            if validate_config(config):
+                await send_scan_results(session, [], devices)
+                log.info("Discovery results sent to Vanguard")
+            return
+        
         # Normal operation: register first, then run loops
         if not await register_agent(session):
             log.error("Failed to register, exiting")
@@ -1256,7 +1894,14 @@ async def main_async(args: argparse.Namespace) -> None:
             asyncio.create_task(command_loop(session)),
             asyncio.create_task(scan_loop(session)),
             asyncio.create_task(meraki_loop(session)),
+            asyncio.create_task(snmp_loop(session)),
+            asyncio.create_task(discovery_loop(session)),
         ]
+        
+        # Start sub-agent server if enabled
+        sub_cfg = config.get("sub_agents", {})
+        if sub_cfg.get("enabled"):
+            tasks.append(asyncio.create_task(sub_agent_server()))
         
         try:
             await asyncio.gather(*tasks)
@@ -1296,12 +1941,22 @@ def main() -> None:
     parser.add_argument(
         "--scan", "-s",
         action="store_true",
-        help="Run one-time network scan and exit"
+        help="Run one-time network scan (nmap) and exit"
     )
     parser.add_argument(
         "--meraki", "-m",
         action="store_true",
         help="Run one-time Meraki sync and exit"
+    )
+    parser.add_argument(
+        "--snmp",
+        action="store_true",
+        help="Run one-time SNMP poll and exit"
+    )
+    parser.add_argument(
+        "--discover", "-d",
+        action="store_true",
+        help="Run network discovery (ARP/ping) and exit"
     )
     
     args = parser.parse_args()

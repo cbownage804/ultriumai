@@ -90,3 +90,30 @@ meraki:
   collect_uplinks: true
   collect_vpn_status: false
   client_timespan: 86400
+
+# =============================================================================
+# SNMP Polling
+# =============================================================================
+# Monitor network devices (routers, switches, printers) via SNMP
+# Install pysnmp: pip install pysnmp
+# =============================================================================
+
+snmp:
+  enabled: false
+  community: "public"  # SNMPv2c community string
+  version: 2  # 1, 2, or 3
+  port: 161
+  timeout: 5
+  retries: 2
+  targets: []  # List of IPs to poll, or leave empty to auto-discover
+
+# =============================================================================
+# Sub-Agent Collection
+# =============================================================================
+# Deploy lightweight agents on other devices that report to this Pi
+# =============================================================================
+
+sub_agents:
+  enabled: false
+  listen_port: 5678
+  auth_token: null  # Shared secret for sub-agent authentication
