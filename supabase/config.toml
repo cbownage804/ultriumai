@@ -93,3 +93,6 @@ verify_jwt = true
 
 [functions.safenet-api]
 verify_jwt = true
+
+[functions.vanguard-agent-api]
+verify_jwt = false
