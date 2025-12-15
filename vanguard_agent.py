@@ -3,7 +3,7 @@
 Ultrium Vanguard Agent
 ======================
 A production-ready agent for the Vanguard security operations platform.
-Sends system metrics, polls for commands, runs network scans, and reports results.
+Sends system metrics, polls for commands, runs network scans, collects Meraki data, and reports results.
 
 Usage:
     python vanguard_agent.py                    # Run with config.yaml
@@ -11,6 +11,7 @@ Usage:
     python vanguard_agent.py --register         # One-time registration
     python vanguard_agent.py --test             # Test connection
     python vanguard_agent.py --scan             # Run one-time network scan
+    python vanguard_agent.py --meraki           # Run one-time Meraki sync
 """
 
 import asyncio
@@ -66,6 +67,7 @@ DEFAULT_CONFIG = {
         "heartbeat": 60,  # seconds
         "command_poll": 30,  # seconds
         "scan": 3600,  # seconds (1 hour)
+        "meraki": 300,  # seconds (5 minutes)
     },
     "logging": {
         "level": "INFO",
@@ -90,6 +92,18 @@ DEFAULT_CONFIG = {
         "port_range": "1-1024",
         "timeout": 600,  # 10 minutes max per scan
         "sudo_required": False,
+    },
+    "meraki": {
+        "enabled": False,
+        "api_key": None,  # Meraki Dashboard API key
+        "base_url": "https://api.meraki.com/api/v1",
+        "collect_organizations": True,
+        "collect_networks": True,
+        "collect_devices": True,
+        "collect_clients": True,
+        "collect_uplinks": True,
+        "collect_vpn_status": False,
+        "client_timespan": 86400,  # 24 hours in seconds
     },
 }
 
@@ -536,6 +550,240 @@ async def run_full_network_scan(targets: List[str] = None) -> List[Dict[str, Any
 
 
 # =============================================================================
+# Cisco Meraki Integration
+# =============================================================================
+
+class MerakiClient:
+    """Client for Cisco Meraki Dashboard API."""
+    
+    def __init__(self, api_key: str, base_url: str = "https://api.meraki.com/api/v1"):
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "X-Cisco-Meraki-API-Key": api_key,
+        }
+    
+    async def _request(
+        self,
+        session: aiohttp.ClientSession,
+        method: str,
+        endpoint: str,
+        params: Dict = None,
+        data: Dict = None
+    ) -> Optional[Any]:
+        """Make a request to the Meraki API."""
+        url = f"{self.base_url}{endpoint}"
+        
+        try:
+            async with session.request(
+                method,
+                url,
+                headers=self.headers,
+                params=params,
+                json=data,
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                if resp.status == 200:
+                    return await resp.json()
+                elif resp.status == 429:
+                    # Rate limited - wait and retry
+                    retry_after = int(resp.headers.get("Retry-After", 1))
+                    log.warning(f"Meraki rate limited, waiting {retry_after}s")
+                    await asyncio.sleep(retry_after)
+                    return await self._request(session, method, endpoint, params, data)
+                else:
+                    text = await resp.text()
+                    log.warning(f"Meraki API error ({resp.status}): {text[:200]}")
+                    return None
+        except Exception as e:
+            log.error(f"Meraki API request failed: {e}")
+            return None
+    
+    async def get_organizations(self, session: aiohttp.ClientSession) -> List[Dict]:
+        """Get all organizations the API key has access to."""
+        result = await self._request(session, "GET", "/organizations")
+        return result or []
+    
+    async def get_networks(self, session: aiohttp.ClientSession, org_id: str) -> List[Dict]:
+        """Get all networks in an organization."""
+        result = await self._request(session, "GET", f"/organizations/{org_id}/networks")
+        return result or []
+    
+    async def get_devices(self, session: aiohttp.ClientSession, org_id: str) -> List[Dict]:
+        """Get all devices in an organization."""
+        result = await self._request(session, "GET", f"/organizations/{org_id}/devices")
+        return result or []
+    
+    async def get_device_statuses(self, session: aiohttp.ClientSession, org_id: str) -> List[Dict]:
+        """Get device statuses for an organization."""
+        result = await self._request(session, "GET", f"/organizations/{org_id}/devices/statuses")
+        return result or []
+    
+    async def get_network_clients(
+        self,
+        session: aiohttp.ClientSession,
+        network_id: str,
+        timespan: int = 86400
+    ) -> List[Dict]:
+        """Get clients in a network (default: last 24 hours)."""
+        params = {"timespan": min(timespan, 2592000)}  # Max 30 days
+        result = await self._request(session, "GET", f"/networks/{network_id}/clients", params)
+        return result or []
+    
+    async def get_appliance_uplinks(self, session: aiohttp.ClientSession, org_id: str) -> List[Dict]:
+        """Get uplink statuses for appliances in an organization."""
+        result = await self._request(
+            session, "GET",
+            f"/organizations/{org_id}/appliance/uplink/statuses"
+        )
+        return result or []
+    
+    async def get_vpn_statuses(self, session: aiohttp.ClientSession, org_id: str) -> List[Dict]:
+        """Get VPN statuses for an organization."""
+        result = await self._request(
+            session, "GET",
+            f"/organizations/{org_id}/appliance/vpn/statuses"
+        )
+        return result or []
+    
+    async def get_org_summary(self, session: aiohttp.ClientSession, org_id: str) -> Dict:
+        """Get organization license overview."""
+        result = await self._request(session, "GET", f"/organizations/{org_id}/licenses/overview")
+        return result or {}
+
+
+async def collect_meraki_data(session: aiohttp.ClientSession) -> Dict[str, Any]:
+    """Collect data from Meraki Dashboard API."""
+    meraki_cfg = config.get("meraki", {})
+    
+    api_key = meraki_cfg.get("api_key")
+    if not api_key:
+        log.error("Meraki API key not configured")
+        return {}
+    
+    base_url = meraki_cfg.get("base_url", "https://api.meraki.com/api/v1")
+    client = MerakiClient(api_key, base_url)
+    
+    data = {
+        "collected_at": datetime.utcnow().isoformat(),
+        "organizations": [],
+        "networks": [],
+        "devices": [],
+        "device_statuses": [],
+        "clients": [],
+        "uplinks": [],
+        "vpn_statuses": [],
+    }
+    
+    try:
+        # Get organizations
+        if meraki_cfg.get("collect_organizations", True):
+            log.info("Collecting Meraki organizations...")
+            orgs = await client.get_organizations(session)
+            data["organizations"] = orgs
+            log.info(f"Found {len(orgs)} organizations")
+        
+        # For each organization, collect additional data
+        for org in data["organizations"]:
+            org_id = org.get("id")
+            org_name = org.get("name", "Unknown")
+            
+            if not org_id:
+                continue
+            
+            # Get networks
+            if meraki_cfg.get("collect_networks", True):
+                log.info(f"Collecting networks for org: {org_name}")
+                networks = await client.get_networks(session, org_id)
+                for net in networks:
+                    net["organization_id"] = org_id
+                    net["organization_name"] = org_name
+                data["networks"].extend(networks)
+            
+            # Get devices
+            if meraki_cfg.get("collect_devices", True):
+                log.info(f"Collecting devices for org: {org_name}")
+                devices = await client.get_devices(session, org_id)
+                for dev in devices:
+                    dev["organization_id"] = org_id
+                    dev["organization_name"] = org_name
+                data["devices"].extend(devices)
+                
+                # Get device statuses
+                statuses = await client.get_device_statuses(session, org_id)
+                for status in statuses:
+                    status["organization_id"] = org_id
+                data["device_statuses"].extend(statuses)
+            
+            # Get uplinks
+            if meraki_cfg.get("collect_uplinks", True):
+                log.info(f"Collecting uplinks for org: {org_name}")
+                uplinks = await client.get_appliance_uplinks(session, org_id)
+                for uplink in uplinks:
+                    uplink["organization_id"] = org_id
+                data["uplinks"].extend(uplinks)
+            
+            # Get VPN statuses
+            if meraki_cfg.get("collect_vpn_status", False):
+                log.info(f"Collecting VPN status for org: {org_name}")
+                vpn_statuses = await client.get_vpn_statuses(session, org_id)
+                for vpn in vpn_statuses:
+                    vpn["organization_id"] = org_id
+                data["vpn_statuses"].extend(vpn_statuses)
+        
+        # Get clients for each network
+        if meraki_cfg.get("collect_clients", True):
+            timespan = meraki_cfg.get("client_timespan", 86400)
+            for network in data["networks"]:
+                net_id = network.get("id")
+                net_name = network.get("name", "Unknown")
+                
+                if not net_id:
+                    continue
+                
+                log.info(f"Collecting clients for network: {net_name}")
+                clients = await client.get_network_clients(session, net_id, timespan)
+                for cli in clients:
+                    cli["network_id"] = net_id
+                    cli["network_name"] = net_name
+                    cli["organization_id"] = network.get("organization_id")
+                data["clients"].extend(clients)
+                
+                # Rate limiting - small delay between network requests
+                await asyncio.sleep(0.2)
+        
+        log.info(f"Meraki collection complete: {len(data['organizations'])} orgs, "
+                 f"{len(data['networks'])} networks, {len(data['devices'])} devices, "
+                 f"{len(data['clients'])} clients")
+        
+    except Exception as e:
+        log.error(f"Error collecting Meraki data: {e}")
+    
+    return data
+
+
+async def send_meraki_data(session: aiohttp.ClientSession, meraki_data: Dict[str, Any]) -> bool:
+    """Send Meraki data to the Vanguard backend."""
+    payload = {
+        "device_id": config["agent"]["device_id"],
+        "data_type": "meraki",
+        "meraki_data": meraki_data,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
+    
+    result = await api_request(session, "meraki_data", payload)
+    
+    if result and result.get("status") == "ok":
+        log.info("Meraki data sent successfully")
+        return True
+    else:
+        log.warning("Failed to send Meraki data")
+        return False
+
+
+# =============================================================================
 # API Communication
 # =============================================================================
 
@@ -598,6 +846,8 @@ async def register_agent(session: aiohttp.ClientSession) -> bool:
     """Register this agent with the Vanguard backend."""
     global agent_id
     
+    meraki_cfg = config.get("meraki", {})
+    
     payload = {
         "device_id": config["agent"]["device_id"],
         "name": config["agent"].get("name", platform.node()),
@@ -606,10 +856,11 @@ async def register_agent(session: aiohttp.ClientSession) -> bool:
         "ip_address": get_ip_address(),
         "os_type": platform.system(),
         "os_version": platform.release(),
-        "agent_version": "1.1.0",  # Updated for nmap support
+        "agent_version": "1.2.0",  # Updated for Meraki support
         "capabilities": {
             "network_scanning": check_nmap_installed(),
             "os_detection": config.get("scanning", {}).get("scan_types", {}).get("os_detection", False),
+            "meraki_integration": bool(meraki_cfg.get("enabled") and meraki_cfg.get("api_key")),
         },
     }
     
@@ -629,6 +880,7 @@ async def register_agent(session: aiohttp.ClientSession) -> bool:
 async def send_heartbeat(session: aiohttp.ClientSession) -> bool:
     """Send heartbeat with system metrics."""
     metrics = get_system_metrics()
+    meraki_cfg = config.get("meraki", {})
     
     payload = {
         "device_id": config["agent"]["device_id"],
@@ -643,6 +895,7 @@ async def send_heartbeat(session: aiohttp.ClientSession) -> bool:
             "load_1m": metrics.get("load_1m"),
             "hostname": metrics.get("hostname"),
             "nmap_available": check_nmap_installed(),
+            "meraki_enabled": bool(meraki_cfg.get("enabled") and meraki_cfg.get("api_key")),
         },
     }
     
@@ -730,6 +983,34 @@ async def execute_command(session: aiohttp.ClientSession, command: Dict[str, Any
                 }
                 # Also send results to the API
                 await send_scan_results(session, [], devices)
+        
+        elif cmd_type == "meraki_sync":
+            # On-demand Meraki data sync
+            meraki_cfg = config.get("meraki", {})
+            if not meraki_cfg.get("api_key"):
+                result["status"] = "failed"
+                result["error"] = "Meraki API key not configured"
+            else:
+                meraki_data = await collect_meraki_data(session)
+                result["output"] = {
+                    "organizations": len(meraki_data.get("organizations", [])),
+                    "networks": len(meraki_data.get("networks", [])),
+                    "devices": len(meraki_data.get("devices", [])),
+                    "clients": len(meraki_data.get("clients", [])),
+                    "sync_time": datetime.utcnow().isoformat(),
+                }
+                await send_meraki_data(session, meraki_data)
+        
+        elif cmd_type == "meraki_get_orgs":
+            # Get Meraki organizations
+            meraki_cfg = config.get("meraki", {})
+            if not meraki_cfg.get("api_key"):
+                result["status"] = "failed"
+                result["error"] = "Meraki API key not configured"
+            else:
+                client = MerakiClient(meraki_cfg["api_key"])
+                orgs = await client.get_organizations(session)
+                result["output"] = orgs
                 
         else:
             result["status"] = "unknown"
@@ -847,6 +1128,38 @@ async def scan_loop(session: aiohttp.ClientSession) -> None:
         await asyncio.sleep(interval)
 
 
+async def meraki_loop(session: aiohttp.ClientSession) -> None:
+    """Periodically collect and report Meraki data."""
+    meraki_cfg = config.get("meraki", {})
+    
+    if not meraki_cfg.get("enabled", False):
+        log.info("Meraki integration is disabled")
+        return
+    
+    if not meraki_cfg.get("api_key"):
+        log.warning("Meraki enabled but API key not configured")
+        return
+    
+    interval = config["intervals"].get("meraki", 300)
+    log.info(f"Starting Meraki loop (interval: {interval}s)")
+    
+    # Initial delay
+    await asyncio.sleep(15)
+    
+    while running:
+        try:
+            log.info("Starting Meraki data collection...")
+            meraki_data = await collect_meraki_data(session)
+            
+            if meraki_data.get("organizations"):
+                await send_meraki_data(session, meraki_data)
+            
+        except Exception as e:
+            log.error(f"Meraki loop error: {e}")
+        
+        await asyncio.sleep(interval)
+
+
 async def main_async(args: argparse.Namespace) -> None:
     """Main async entry point."""
     global config, running
@@ -855,11 +1168,14 @@ async def main_async(args: argparse.Namespace) -> None:
     config = load_config(args.config)
     setup_logging(config)
     
+    meraki_cfg = config.get("meraki", {})
+    
     log.info("=" * 60)
     log.info("Ultrium Vanguard Agent Starting")
     log.info(f"Device ID: {config['agent']['device_id']}")
     log.info(f"Endpoint: {config['api']['endpoint']}")
     log.info(f"nmap available: {check_nmap_installed()}")
+    log.info(f"Meraki enabled: {meraki_cfg.get('enabled', False)}")
     log.info("=" * 60)
     
     # Validate config
@@ -903,6 +1219,32 @@ async def main_async(args: argparse.Namespace) -> None:
                 print("\nNo devices discovered")
             return
         
+        # Meraki mode (one-time sync)
+        if args.meraki:
+            log.info("Running one-time Meraki sync...")
+            if not meraki_cfg.get("api_key"):
+                log.error("Meraki API key not configured in config.yaml")
+                sys.exit(1)
+            
+            meraki_data = await collect_meraki_data(session)
+            
+            print(f"\nMeraki Data Summary:")
+            print(f"  Organizations: {len(meraki_data.get('organizations', []))}")
+            print(f"  Networks:      {len(meraki_data.get('networks', []))}")
+            print(f"  Devices:       {len(meraki_data.get('devices', []))}")
+            print(f"  Clients:       {len(meraki_data.get('clients', []))}")
+            print(f"  Uplinks:       {len(meraki_data.get('uplinks', []))}")
+            
+            # Print organization details
+            for org in meraki_data.get("organizations", []):
+                print(f"\n  Org: {org.get('name')} (ID: {org.get('id')})")
+            
+            # Send to Vanguard if config is valid
+            if validate_config(config):
+                await send_meraki_data(session, meraki_data)
+                log.info("Meraki data sent to Vanguard")
+            return
+        
         # Normal operation: register first, then run loops
         if not await register_agent(session):
             log.error("Failed to register, exiting")
@@ -913,6 +1255,7 @@ async def main_async(args: argparse.Namespace) -> None:
             asyncio.create_task(heartbeat_loop(session)),
             asyncio.create_task(command_loop(session)),
             asyncio.create_task(scan_loop(session)),
+            asyncio.create_task(meraki_loop(session)),
         ]
         
         try:
@@ -954,6 +1297,11 @@ def main() -> None:
         "--scan", "-s",
         action="store_true",
         help="Run one-time network scan and exit"
+    )
+    parser.add_argument(
+        "--meraki", "-m",
+        action="store_true",
+        help="Run one-time Meraki sync and exit"
     )
     
     args = parser.parse_args()
