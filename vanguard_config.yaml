@@ -46,6 +46,10 @@ intervals:
   # How often to run network scans (seconds)
   # Default: 3600 (1 hour)
   scan: 3600
+  
+  # How often to sync Meraki data (seconds)
+  # Default: 300 (5 minutes)
+  meraki: 300
 
 logging:
   # Log level: DEBUG, INFO, WARNING, ERROR
@@ -116,3 +120,36 @@ scanning:
   # Whether to use sudo for privileged scans (OS detection)
   # Only enable if the agent runs as root or has passwordless sudo
   sudo_required: false
+
+# =============================================================================
+# Cisco Meraki Integration
+# =============================================================================
+# Collects data from your Meraki Dashboard via API
+# Get your API key from: Dashboard → Organization → Settings → API access
+# Run a one-time sync: python vanguard_agent.py --meraki
+# =============================================================================
+
+meraki:
+  # Enable Meraki data collection
+  enabled: true
+  
+  # REQUIRED: Your Meraki Dashboard API key
+  # Generate at: Dashboard → Organization → Settings → Dashboard API access
+  api_key: "YOUR_MERAKI_API_KEY_HERE"
+  
+  # Meraki API base URL (don't change unless using custom region)
+  base_url: "https://api.meraki.com/api/v1"
+  
+  # Data to collect (set to false to skip)
+  collect_organizations: true
+  collect_networks: true
+  collect_devices: true
+  collect_clients: true
+  collect_uplinks: true
+  
+  # VPN status collection (may require additional permissions)
+  collect_vpn_status: false
+  
+  # Timespan for client data in seconds
+  # Default: 86400 (24 hours), Max: 2592000 (30 days)
+  client_timespan: 86400
