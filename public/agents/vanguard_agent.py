@@ -1562,6 +1562,22 @@ class VanguardAgent:
                 )
                 self.send_command_response(command_id, {"output": result.stdout}, result.returncode == 0)
             
+            elif command_type == "update_agent":
+                result = self.update_self()
+                self.send_command_response(command_id, result, result.get("success", False))
+            
+            elif command_type == "clear_cache":
+                result = self.clear_system_cache()
+                self.send_command_response(command_id, result, result.get("success", False))
+            
+            elif command_type == "sync_time":
+                result = self.sync_system_time()
+                self.send_command_response(command_id, result, result.get("success", False))
+            
+            elif command_type == "health_check":
+                result = self.perform_health_check()
+                self.send_command_response(command_id, result, True)
+            
             else:
                 self.send_command_response(
                     command_id, 
@@ -1876,6 +1892,314 @@ class VanguardAgent:
                 time.sleep(10)
         
         self.log("Agent stopped.")
+
+    def update_self(self) -> Dict[str, Any]:
+        """Self-update the agent from the server."""
+        try:
+            import urllib.request
+            import shutil
+            
+            # Download latest agent from the server
+            update_url = f"{API_URL.rsplit('/functions', 1)[0]}/storage/v1/object/public/agents/vanguard_agent.py"
+            
+            current_file = os.path.abspath(__file__)
+            backup_file = current_file + ".backup"
+            temp_file = current_file + ".new"
+            
+            # Create backup
+            shutil.copy2(current_file, backup_file)
+            
+            # Download new version
+            urllib.request.urlretrieve(update_url, temp_file)
+            
+            # Verify download
+            if os.path.getsize(temp_file) < 1000:
+                os.remove(temp_file)
+                return {"success": False, "error": "Downloaded file too small, likely invalid"}
+            
+            # Replace current file
+            shutil.move(temp_file, current_file)
+            
+            return {
+                "success": True,
+                "message": "Agent updated successfully. Please restart the agent.",
+                "backup_location": backup_file,
+                "version": AGENT_VERSION
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def clear_system_cache(self) -> Dict[str, Any]:
+        """Clear system caches."""
+        results = {"success": True, "operations": []}
+        
+        try:
+            # Sync filesystems
+            result = subprocess.run(["sync"], capture_output=True, text=True, timeout=30)
+            results["operations"].append({"action": "sync", "success": result.returncode == 0})
+            
+            # Try to drop caches (requires root)
+            try:
+                result = subprocess.run(
+                    ["sudo", "sh", "-c", "echo 3 > /proc/sys/vm/drop_caches"],
+                    capture_output=True, text=True, timeout=30
+                )
+                results["operations"].append({
+                    "action": "drop_caches", 
+                    "success": result.returncode == 0,
+                    "note": "Requires root privileges"
+                })
+            except:
+                results["operations"].append({"action": "drop_caches", "success": False, "note": "Requires root"})
+            
+            # Clear apt cache
+            try:
+                result = subprocess.run(
+                    ["sudo", "apt", "clean"],
+                    capture_output=True, text=True, timeout=60
+                )
+                results["operations"].append({"action": "apt_clean", "success": result.returncode == 0})
+            except:
+                pass
+            
+            # Clear temp files older than 7 days
+            try:
+                result = subprocess.run(
+                    ["find", "/tmp", "-type", "f", "-mtime", "+7", "-delete"],
+                    capture_output=True, text=True, timeout=60
+                )
+                results["operations"].append({"action": "clear_old_tmp", "success": True})
+            except:
+                pass
+            
+            # Get memory before/after
+            with open("/proc/meminfo") as f:
+                meminfo = f.read()
+                for line in meminfo.split("\n"):
+                    if "MemAvailable" in line:
+                        results["memory_available"] = line.split(":")[1].strip()
+                        break
+            
+            return results
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def sync_system_time(self) -> Dict[str, Any]:
+        """Synchronize system clock with NTP servers."""
+        try:
+            result = {"success": False, "method": None}
+            
+            # Try timedatectl first (systemd)
+            try:
+                check = subprocess.run(
+                    ["timedatectl", "status"],
+                    capture_output=True, text=True, timeout=10
+                )
+                if check.returncode == 0:
+                    # Enable NTP sync
+                    sync_result = subprocess.run(
+                        ["sudo", "timedatectl", "set-ntp", "true"],
+                        capture_output=True, text=True, timeout=30
+                    )
+                    if sync_result.returncode == 0:
+                        result = {"success": True, "method": "timedatectl", "message": "NTP sync enabled"}
+                        # Get current time status
+                        status = subprocess.run(
+                            ["timedatectl", "show", "--property=NTPSynchronized"],
+                            capture_output=True, text=True, timeout=10
+                        )
+                        result["ntp_synchronized"] = "yes" in status.stdout.lower()
+                        return result
+            except FileNotFoundError:
+                pass
+            
+            # Try ntpdate as fallback
+            try:
+                sync_result = subprocess.run(
+                    ["sudo", "ntpdate", "-u", "pool.ntp.org"],
+                    capture_output=True, text=True, timeout=60
+                )
+                if sync_result.returncode == 0:
+                    result = {
+                        "success": True, 
+                        "method": "ntpdate",
+                        "output": sync_result.stdout.strip()
+                    }
+                    return result
+            except FileNotFoundError:
+                pass
+            
+            # Try chronyd
+            try:
+                sync_result = subprocess.run(
+                    ["sudo", "chronyc", "makestep"],
+                    capture_output=True, text=True, timeout=30
+                )
+                if sync_result.returncode == 0:
+                    result = {
+                        "success": True,
+                        "method": "chrony",
+                        "output": sync_result.stdout.strip()
+                    }
+                    return result
+            except FileNotFoundError:
+                pass
+            
+            # Get current time even if sync failed
+            result["current_time"] = datetime.now().isoformat()
+            result["error"] = "No NTP sync method available (tried timedatectl, ntpdate, chrony)"
+            
+            return result
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    
+    def perform_health_check(self) -> Dict[str, Any]:
+        """Perform comprehensive system health check."""
+        health = {
+            "timestamp": datetime.now().isoformat(),
+            "overall_status": "healthy",
+            "checks": {}
+        }
+        
+        try:
+            # CPU check
+            try:
+                with open("/proc/loadavg") as f:
+                    load = f.read().split()
+                    load_1min = float(load[0])
+                    cpu_count = os.cpu_count() or 1
+                    cpu_usage_pct = (load_1min / cpu_count) * 100
+                    health["checks"]["cpu"] = {
+                        "load_1min": load_1min,
+                        "load_5min": float(load[1]),
+                        "load_15min": float(load[2]),
+                        "cores": cpu_count,
+                        "usage_percent": round(cpu_usage_pct, 2),
+                        "status": "warning" if cpu_usage_pct > 80 else "healthy"
+                    }
+                    if cpu_usage_pct > 80:
+                        health["overall_status"] = "warning"
+            except:
+                health["checks"]["cpu"] = {"status": "unknown"}
+            
+            # Memory check
+            try:
+                with open("/proc/meminfo") as f:
+                    meminfo = {}
+                    for line in f:
+                        parts = line.split(":")
+                        if len(parts) == 2:
+                            meminfo[parts[0].strip()] = int(parts[1].strip().split()[0])
+                    
+                    total = meminfo.get("MemTotal", 0)
+                    available = meminfo.get("MemAvailable", 0)
+                    used_pct = ((total - available) / total * 100) if total > 0 else 0
+                    
+                    health["checks"]["memory"] = {
+                        "total_mb": round(total / 1024, 2),
+                        "available_mb": round(available / 1024, 2),
+                        "used_percent": round(used_pct, 2),
+                        "status": "critical" if used_pct > 90 else "warning" if used_pct > 80 else "healthy"
+                    }
+                    if used_pct > 90:
+                        health["overall_status"] = "critical"
+                    elif used_pct > 80 and health["overall_status"] != "critical":
+                        health["overall_status"] = "warning"
+            except:
+                health["checks"]["memory"] = {"status": "unknown"}
+            
+            # Disk check
+            try:
+                result = subprocess.run(
+                    ["df", "-h", "/"],
+                    capture_output=True, text=True, timeout=10
+                )
+                if result.returncode == 0:
+                    lines = result.stdout.strip().split("\n")
+                    if len(lines) >= 2:
+                        parts = lines[1].split()
+                        used_pct = int(parts[4].replace("%", ""))
+                        health["checks"]["disk"] = {
+                            "filesystem": parts[0],
+                            "size": parts[1],
+                            "used": parts[2],
+                            "available": parts[3],
+                            "used_percent": used_pct,
+                            "status": "critical" if used_pct > 90 else "warning" if used_pct > 80 else "healthy"
+                        }
+                        if used_pct > 90:
+                            health["overall_status"] = "critical"
+                        elif used_pct > 80 and health["overall_status"] != "critical":
+                            health["overall_status"] = "warning"
+            except:
+                health["checks"]["disk"] = {"status": "unknown"}
+            
+            # Network connectivity check
+            try:
+                result = subprocess.run(
+                    ["ping", "-c", "1", "-W", "3", "8.8.8.8"],
+                    capture_output=True, text=True, timeout=10
+                )
+                health["checks"]["network"] = {
+                    "internet_connectivity": result.returncode == 0,
+                    "status": "healthy" if result.returncode == 0 else "critical"
+                }
+                if result.returncode != 0:
+                    health["overall_status"] = "critical"
+            except:
+                health["checks"]["network"] = {"status": "unknown", "internet_connectivity": False}
+            
+            # Services check (systemd)
+            try:
+                result = subprocess.run(
+                    ["systemctl", "list-units", "--type=service", "--state=failed", "--no-pager", "--plain"],
+                    capture_output=True, text=True, timeout=30
+                )
+                failed_services = []
+                for line in result.stdout.split("\n"):
+                    if ".service" in line and "failed" in line.lower():
+                        service_name = line.split()[0]
+                        failed_services.append(service_name)
+                
+                health["checks"]["services"] = {
+                    "failed_count": len(failed_services),
+                    "failed_services": failed_services[:10],  # Limit to 10
+                    "status": "warning" if len(failed_services) > 0 else "healthy"
+                }
+                if len(failed_services) > 0 and health["overall_status"] == "healthy":
+                    health["overall_status"] = "warning"
+            except:
+                health["checks"]["services"] = {"status": "unknown"}
+            
+            # Uptime
+            try:
+                with open("/proc/uptime") as f:
+                    uptime_seconds = float(f.read().split()[0])
+                    days = int(uptime_seconds // 86400)
+                    hours = int((uptime_seconds % 86400) // 3600)
+                    minutes = int((uptime_seconds % 3600) // 60)
+                    health["checks"]["uptime"] = {
+                        "seconds": uptime_seconds,
+                        "formatted": f"{days}d {hours}h {minutes}m",
+                        "status": "healthy"
+                    }
+            except:
+                health["checks"]["uptime"] = {"status": "unknown"}
+            
+            # Agent status
+            health["checks"]["agent"] = {
+                "version": AGENT_VERSION,
+                "device_id": self.device_id,
+                "status": "healthy"
+            }
+            
+            return health
+            
+        except Exception as e:
+            return {"success": False, "error": str(e), "overall_status": "error"}
 
 
 def main():
