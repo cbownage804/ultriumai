@@ -12,7 +12,7 @@ Requirements:
     
 Optional for full pentest capabilities:
     sudo apt install nmap nikto hydra smbclient ldap-utils sslscan masscan gobuster curl
-    git clone https://github.com/CiscoCXSecurity/enum4linux-ng.git /opt/enum4linux-ng
+    git clone https://github.com/CiscoCXSecurity/enum4linux-ng.git ~/enum4linux-ng
 """
 
 import os
@@ -772,16 +772,23 @@ class VanguardAgent:
             except:
                 pass
             
-            # Try enum4linux-ng
-            try:
-                enum_result = subprocess.run(
-                    ["/opt/enum4linux-ng/enum4linux-ng.py", "-A", target],
-                    capture_output=True, text=True, timeout=120
-                )
-                if enum_result.returncode == 0:
-                    results["enum4linux_output"] = enum_result.stdout[:2000]
-            except:
-                pass
+            # Try enum4linux-ng (check multiple locations)
+            enum4linux_paths = [
+                os.path.expanduser("~/enum4linux-ng/enum4linux-ng.py"),
+                "/opt/enum4linux-ng/enum4linux-ng.py",
+                "enum4linux-ng",  # If in PATH
+            ]
+            for enum_path in enum4linux_paths:
+                try:
+                    enum_result = subprocess.run(
+                        [enum_path, "-A", target],
+                        capture_output=True, text=True, timeout=120
+                    )
+                    if enum_result.returncode == 0:
+                        results["enum4linux_output"] = enum_result.stdout[:2000]
+                        break
+                except:
+                    continue
             
         except Exception as e:
             results["error"] = str(e)
