@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
@@ -8,6 +8,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -21,7 +22,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    // Auth is always at /auth regardless of subdomain
+    // Redirect to Vanguard auth for Vanguard routes
+    if (location.pathname.startsWith('/vanguard')) {
+      return <Navigate to="/vanguard/auth" state={{ from: location }} replace />;
+    }
     return <Navigate to="/auth" replace />;
   }
 

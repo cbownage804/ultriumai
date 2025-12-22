@@ -215,7 +215,12 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Index />} />
         
-        {/* Vanguard Routes (when accessed via /vanguard path) */}
+        {/* Vanguard Public Routes (auth page) */}
+        {getVanguardPublicRoutes().map((route) => (
+          <Route key={route.key} path={`/vanguard${route.props.path || ''}`} element={route.props.element} />
+        ))}
+        
+        {/* Vanguard Protected Routes (inside layout) */}
         <Route path="/vanguard" element={<VanguardLayout />}>
           {getVanguardProtectedRoutes()}
         </Route>
