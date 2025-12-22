@@ -7,13 +7,13 @@ import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, Trendin
 import { VulnerabilityScanner } from "@/components/security/VulnerabilityScanner";
 import { ThreatDetection } from "@/components/security/ThreatDetection";
 import { SecurityReports } from "@/components/security/SecurityReports";
-import { PenetrationTesting } from "@/components/security/PenetrationTesting";
 import { ComplianceAuditor } from "@/components/security/ComplianceAuditor";
 import { NetworkConnectors } from "@/components/security/NetworkConnectors";
 import { VanguardOverview } from "@/components/vanguard/VanguardOverview";
 import { VanguardSOC } from "@/components/vanguard/VanguardSOC";
 import { VanguardServiceDesk } from "@/components/vanguard/VanguardServiceDesk";
 import { VanguardAICopilot } from "@/components/vanguard/VanguardAICopilot";
+import { VanguardPentest } from "@/components/vanguard/VanguardPentest";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
@@ -296,7 +296,7 @@ const VanguardDashboard = () => {
           </TabsContent>
 
           <TabsContent value="pentest">
-            <PenetrationTesting onScanComplete={loadRecentScans} />
+            <VanguardPentest />
           </TabsContent>
 
           <TabsContent value="compliance">
