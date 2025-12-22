@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom';
+import { Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -47,6 +47,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-pentest" path="pentest" element={<LazyProtectedPage component={VanguardDashboard} />} />,
   <Route key="vanguard-compliance" path="compliance" element={<LazyProtectedPage component={VanguardDashboard} />} />,
   <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
 // Export public routes (landing, auth - outside VanguardLayout)
