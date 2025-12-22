@@ -10948,6 +10948,7 @@ export type Database = {
         Row: {
           acknowledged_at: string | null
           affected_assets: Json | null
+          agent_id: string | null
           assigned_to: string | null
           created_at: string
           description: string | null
@@ -10971,6 +10972,7 @@ export type Database = {
         Insert: {
           acknowledged_at?: string | null
           affected_assets?: Json | null
+          agent_id?: string | null
           assigned_to?: string | null
           created_at?: string
           description?: string | null
@@ -10994,6 +10996,7 @@ export type Database = {
         Update: {
           acknowledged_at?: string | null
           affected_assets?: Json | null
+          agent_id?: string | null
           assigned_to?: string | null
           created_at?: string
           description?: string | null
@@ -11015,6 +11018,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "security_incidents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "security_incidents_msp_org_id_fkey"
             columns: ["msp_org_id"]

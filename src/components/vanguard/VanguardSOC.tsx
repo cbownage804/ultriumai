@@ -26,6 +26,8 @@ interface SecurityAlert {
   status: 'new' | 'investigating' | 'resolved' | 'false_positive';
   source: string;
   timestamp: string;
+  deviceName?: string;
+  deviceIp?: string;
 }
 
 interface IncidentMetrics {
@@ -73,39 +75,74 @@ export const VanguardSOC = () => {
     try {
       setIsLoading(true);
       
-      // Load security scans as alerts
-      const { data: scans, error: scansError } = await supabase
+      // Load security incidents (real threats tied to agents)
+      const { data: incidents, error: incidentsError } = await supabase
+        .from('security_incidents')
+        .select(`
+          *,
+          vanguard_agents:agent_id (
+            id,
+            name,
+            ip_address,
+            location
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (incidentsError) throw incidentsError;
+
+      // Transform incidents into alerts with device info
+      const incidentAlerts: SecurityAlert[] = (incidents || []).map(incident => {
+        const agent = incident.vanguard_agents as any;
+        const affectedAssets = incident.affected_assets as any[];
+        return {
+          id: incident.id,
+          title: incident.title,
+          description: incident.description || 'Security incident detected',
+          severity: (incident.severity as 'critical' | 'high' | 'medium' | 'low') || 'medium',
+          status: (incident.status === 'open' ? 'new' : 
+                  incident.status === 'investigating' ? 'investigating' : 
+                  incident.status === 'resolved' ? 'resolved' : 'new') as SecurityAlert['status'],
+          source: incident.source_system || 'Vanguard',
+          timestamp: getRelativeTime(incident.created_at),
+          deviceName: agent?.name || affectedAssets?.[0]?.device_name || undefined,
+          deviceIp: agent?.ip_address || affectedAssets?.[0]?.device_ip || undefined
+        };
+      });
+
+      // Also load security scans for additional context
+      const { data: scans } = await supabase
         .from('security_scans')
         .select('*')
         .order('started_at', { ascending: false })
         .limit(20);
 
-      if (scansError) throw scansError;
-
-      // Transform scans into alerts
-      const transformedAlerts: SecurityAlert[] = (scans || [])
+      const scanAlerts: SecurityAlert[] = (scans || [])
         .filter(scan => scan.critical_count > 0 || scan.high_count > 0)
         .map(scan => ({
           id: scan.id,
           title: `Security findings on ${scan.target}`,
           description: `${scan.critical_count} critical, ${scan.high_count} high, ${scan.medium_count} medium issues found`,
           severity: scan.critical_count > 0 ? 'critical' as const : 'high' as const,
-          status: scan.status === 'completed' ? 'new' as const : 'investigating' as const,
+          status: 'new' as const,
           source: scan.scan_type || 'Security Scan',
           timestamp: getRelativeTime(scan.started_at)
         }));
 
-      setAlerts(transformedAlerts);
+      // Combine and deduplicate alerts
+      const allAlerts = [...incidentAlerts, ...scanAlerts];
+      setAlerts(allAlerts);
 
       // Calculate metrics
+      const openIncidents = (incidents || []).filter(i => i.status === 'open' || i.status === 'investigating').length;
       const criticalCount = (scans || []).reduce((sum, s) => sum + (s.critical_count || 0), 0);
-      const highCount = (scans || []).reduce((sum, s) => sum + (s.high_count || 0), 0);
 
       setMetrics(prev => ({
         ...prev,
-        totalAlerts: (scans || []).length,
-        activeIncidents: criticalCount + highCount,
-        resolvedToday: (scans || []).filter(s => s.status === 'completed').length
+        totalAlerts: allAlerts.length,
+        activeIncidents: openIncidents + criticalCount,
+        resolvedToday: (incidents || []).filter(i => i.status === 'resolved').length
       }));
 
     } catch (error) {
@@ -285,6 +322,13 @@ export const VanguardSOC = () => {
                       </div>
                       <p className="text-sm text-muted-foreground">{alert.description}</p>
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        {(alert.deviceName || alert.deviceIp) && (
+                          <span className="flex items-center gap-1">
+                            <Server className="h-3 w-3" />
+                            <strong>{alert.deviceName || 'Unknown Device'}</strong>
+                            {alert.deviceIp && <span>({alert.deviceIp})</span>}
+                          </span>
+                        )}
                         <span>Source: {alert.source}</span>
                         <span>Time: {alert.timestamp}</span>
                       </div>
