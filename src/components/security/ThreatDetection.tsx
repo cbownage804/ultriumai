@@ -176,11 +176,25 @@ export const ThreatDetection = () => {
     setAnalysisResult(null);
     
     try {
-      const { data, error } = await supabase.functions.invoke('ai-threat-investigator', {
-        body: { threat }
-      });
+      const response = await fetch(
+        `https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/ai-threat-investigator`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ threat })
+        }
+      );
       
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) throw new Error(data.error);
       
       setAnalysisResult(data.analysis);
       
@@ -197,7 +211,7 @@ export const ThreatDetection = () => {
       console.error('AI investigation error:', error);
       toast({
         title: "Investigation Failed",
-        description: "Could not complete AI analysis",
+        description: error instanceof Error ? error.message : "Could not complete AI analysis",
         variant: "destructive",
       });
     } finally {

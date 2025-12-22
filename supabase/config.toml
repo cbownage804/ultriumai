@@ -98,4 +98,4 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.ai-threat-investigator]
-verify_jwt = true
+verify_jwt = false
