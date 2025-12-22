@@ -43,13 +43,7 @@ export function getSubdomain(): string | null {
 
 export function isVanguardDomain(): boolean {
   const subdomain = getSubdomain();
-  if (subdomain === 'vanguard') {
-    return true;
-  }
-  
-  // Also check for /vanguard path prefix for development
-  const pathname = window.location.pathname;
-  return pathname.startsWith('/vanguard');
+  return subdomain === 'vanguard';
 }
 
 export function getVanguardBasePath(): string {

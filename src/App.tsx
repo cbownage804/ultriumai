@@ -203,7 +203,7 @@ function AppRouter() {
           <Route path="/app" element={<VanguardLayout />}>
             {getVanguardProtectedRoutes()}
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>
         <CookieConsent />
       </EnhancedErrorBoundary>
