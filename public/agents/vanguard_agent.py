@@ -52,7 +52,7 @@ except ImportError:
 
 # Configuration
 AGENT_VERSION = "2.0.0"
-API_URL = "https://mwngjymbntbhpxrnjojs.supabase.co/functions/v1/vanguard-agent-api"
+API_URL = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api"
 VANGUARD_SECRET = "vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA"
 
 # Default credentials database for testing
