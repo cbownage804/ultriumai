@@ -275,26 +275,49 @@ export function VanguardDeviceDetails() {
           <CardTitle>Command History</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[200px]">
+          <ScrollArea className="h-[300px]">
             {commands.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No commands sent yet</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {commands.map(cmd => (
-                  <div key={cmd.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{cmd.command_type}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(cmd.created_at), { addSuffix: true })}
-                      </p>
+                  <div key={cmd.id} className="p-3 bg-muted/50 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Terminal className="h-4 w-4 text-muted-foreground" />
+                        <p className="font-medium text-sm">{cmd.command_type}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(cmd.created_at), { addSuffix: true })}
+                        </span>
+                        <Badge variant={
+                          cmd.status === 'completed' ? 'default' : 
+                          cmd.status === 'failed' ? 'destructive' : 
+                          'secondary'
+                        }>
+                          {cmd.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <Badge variant={
-                      cmd.status === 'completed' ? 'default' : 
-                      cmd.status === 'failed' ? 'destructive' : 
-                      'secondary'
-                    }>
-                      {cmd.status}
-                    </Badge>
+                    {cmd.payload && Object.keys(cmd.payload).length > 0 && (
+                      <div className="text-xs text-muted-foreground font-mono bg-muted p-2 rounded">
+                        Payload: {JSON.stringify(cmd.payload)}
+                      </div>
+                    )}
+                    {cmd.response && (
+                      <div className="text-xs bg-green-500/10 border border-green-500/20 p-2 rounded font-mono">
+                        <span className="text-green-600 font-semibold">Output:</span>
+                        <pre className="whitespace-pre-wrap mt-1 text-foreground">
+                          {typeof cmd.response === 'string' ? cmd.response : JSON.stringify(cmd.response, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                    {cmd.error_message && (
+                      <div className="text-xs bg-destructive/10 border border-destructive/20 p-2 rounded">
+                        <span className="text-destructive font-semibold">Error:</span> {cmd.error_message}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
