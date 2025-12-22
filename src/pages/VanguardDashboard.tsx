@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Eye, Network } from "lucide-react";
 import { VulnerabilityScanner } from "@/components/security/VulnerabilityScanner";
 import { ThreatDetection } from "@/components/security/ThreatDetection";
@@ -175,18 +176,21 @@ const VanguardDashboard = () => {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="servicedesk">Service Desk</TabsTrigger>
-            <TabsTrigger value="copilot">AI Copilot</TabsTrigger>
-            <TabsTrigger value="soc">SOC Operations</TabsTrigger>
-            <TabsTrigger value="scanner">Threat Detection</TabsTrigger>
-            <TabsTrigger value="network">Network Security</TabsTrigger>
-            <TabsTrigger value="pentest">Penetration Testing</TabsTrigger>
-            <TabsTrigger value="compliance">Compliance</TabsTrigger>
-            <TabsTrigger value="threats">Advanced Threats</TabsTrigger>
-            <TabsTrigger value="reports">Analytics & Reports</TabsTrigger>
-          </TabsList>
+          <ScrollArea className="w-full whitespace-nowrap">
+            <TabsList className="inline-flex h-10 w-max items-center justify-start gap-1 rounded-md bg-muted p-1">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="servicedesk">Service Desk</TabsTrigger>
+              <TabsTrigger value="copilot">AI Copilot</TabsTrigger>
+              <TabsTrigger value="soc">SOC</TabsTrigger>
+              <TabsTrigger value="scanner">Threats</TabsTrigger>
+              <TabsTrigger value="network">Network</TabsTrigger>
+              <TabsTrigger value="pentest">Pentest</TabsTrigger>
+              <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              <TabsTrigger value="threats">Advanced</TabsTrigger>
+              <TabsTrigger value="reports">Reports</TabsTrigger>
+            </TabsList>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
 
           <TabsContent value="overview" className="space-y-6">
             <VanguardOverview 
