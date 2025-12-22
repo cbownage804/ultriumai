@@ -152,7 +152,7 @@ async function handleRegister(supabase: any, body: any) {
 }
 
 async function handleHeartbeat(supabase: any, body: any) {
-  const { device_id, cpu_percent, memory_percent, disk_percent, network_rx_bytes, network_tx_bytes, temperature, hailo_status, custom_metrics } = body;
+  const { device_id } = body;
   
   if (!device_id) {
     return new Response(
@@ -160,6 +160,50 @@ async function handleHeartbeat(supabase: any, body: any) {
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
+
+  // Log raw body to debug what the agent is actually sending
+  console.log(`[vanguard-agent-api] Heartbeat raw body:`, JSON.stringify(body));
+  
+  // Parse metrics - handle both nested format (from real agent) and flat format
+  const metrics = body.metrics || body;
+  const system = metrics.system || {};
+  
+  // Try nested format first (real agent), then flat format (simple agent)
+  const cpu_percent = parseFloat(system.cpu_percent ?? metrics.cpu_percent ?? body.cpu_percent) || 0;
+  const memory_percent = parseFloat(system.memory?.percent ?? metrics.memory_percent ?? body.memory_percent) || 0;
+  const disk_percent = parseFloat(system.disk_root?.percent ?? metrics.disk_percent ?? body.disk_percent) || 0;
+  
+  // Network I/O - sum all interfaces or use direct values
+  let network_rx_bytes: number | null = null;
+  let network_tx_bytes: number | null = null;
+  
+  if (system.net_io) {
+    // Sum bytes from all network interfaces
+    network_rx_bytes = 0;
+    network_tx_bytes = 0;
+    for (const iface of Object.values(system.net_io) as any[]) {
+      network_rx_bytes += (iface.bytes_recv || 0);
+      network_tx_bytes += (iface.bytes_sent || 0);
+    }
+  } else {
+    network_rx_bytes = parseInt(metrics.network_rx_bytes ?? body.network_rx_bytes) || null;
+    network_tx_bytes = parseInt(metrics.network_tx_bytes ?? body.network_tx_bytes) || null;
+  }
+  
+  // Temperature - try various sources
+  const temperature = parseFloat(system.temperature ?? metrics.temperature ?? body.temperature) || null;
+  
+  // Hailo status from nested metrics or body
+  const hailo_status = metrics.hailo || body.hailo_status || {};
+  const custom_metrics = {
+    ...(body.custom_metrics || {}),
+    load_avg: system.load_avg,
+    boot_time: system.boot_time,
+    memory_total: system.memory?.total,
+    memory_available: system.memory?.available,
+    disk_total: system.disk_root?.total,
+    disk_free: system.disk_root?.free,
+  };
   
   // Get agent by device_id
   const { data: agent, error: agentError } = await supabase
@@ -190,12 +234,12 @@ async function handleHeartbeat(supabase: any, body: any) {
     .update({
       status,
       last_heartbeat: new Date().toISOString(),
-      hailo_status: hailo_status || {},
+      hailo_status: hailo_status,
       updated_at: new Date().toISOString()
     })
     .eq('id', agent.id);
   
-  // Insert metrics
+  // Insert metrics with parsed values
   await supabase
     .from('vanguard_agent_metrics')
     .insert({
@@ -213,7 +257,7 @@ async function handleHeartbeat(supabase: any, body: any) {
   console.log(`[vanguard-agent-api] Heartbeat from ${device_id}: CPU=${cpu_percent}%, MEM=${memory_percent}%, DISK=${disk_percent}%`);
   
   return new Response(
-    JSON.stringify({ status: 'ok' }),
+    JSON.stringify({ status: 'ok', received: { cpu_percent, memory_percent, disk_percent } }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 }
