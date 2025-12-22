@@ -31,9 +31,7 @@ import {
   Monitor,
   Wifi,
   Settings,
-  Crosshair,
-  AlertTriangle,
-  CheckCircle2
+  AlertTriangle
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -49,7 +47,6 @@ export function VanguardDeviceDetails() {
   const [answer, setAnswer] = useState('');
   const [isAsking, setIsAsking] = useState(false);
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
-  const [isPentesting, setIsPentesting] = useState(false);
 
   // Use AI Copilot directly for instant responses
   const handleAsk = async () => {
@@ -127,31 +124,7 @@ export function VanguardDeviceDetails() {
     }
   };
 
-  const handleFullPentest = async () => {
-    setIsPentesting(true);
-    toast.info("Starting Full Pentest", { description: "Queuing network scan, vulnerability scan, and security checks..." });
-    
-    try {
-      // Queue all pentest commands
-      await Promise.all([
-        sendCommand('scan_network'),
-        sendCommand('scan_vulnerabilities'),
-        sendCommand('get_inventory'),
-        sendCommand('check_security_updates'),
-        sendCommand('get_firewall_rules'),
-      ]);
-      
-      toast.success("Full Pentest Started", {
-        description: "All security scans queued. Results will appear in command history as they complete."
-      });
-      
-      // Keep pentesting state for a reasonable time (commands take ~30s to poll + execution time)
-      setTimeout(() => setIsPentesting(false), 60000);
-    } catch (err: any) {
-      toast.error("Failed to start pentest", { description: err.message });
-      setIsPentesting(false);
-    }
-  };
+
 
   if (isLoading || !agent) {
     return (
@@ -198,25 +171,6 @@ export function VanguardDeviceDetails() {
         <Badge variant={agent.status === 'online' ? 'default' : agent.status === 'critical' ? 'destructive' : 'secondary'}>
           {agent.status}
         </Badge>
-        <Button 
-          variant="default" 
-          size="sm" 
-          onClick={handleFullPentest} 
-          disabled={isPentesting}
-          className="bg-destructive hover:bg-destructive/90"
-        >
-          {isPentesting ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Pentesting...
-            </>
-          ) : (
-            <>
-              <Crosshair className="h-4 w-4 mr-2" />
-              Start Pentest
-            </>
-          )}
-        </Button>
         <Button variant="outline" size="sm" onClick={refetch}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
