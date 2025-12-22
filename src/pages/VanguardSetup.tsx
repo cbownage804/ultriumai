@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Copy, Check, Terminal, Server, Plus, Loader2 } from 'lucide-react';
+import { Copy, Check, Terminal, Server, Plus, Loader2, Download, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { generateVanguardZip, downloadBlob } from '@/utils/generateVanguardZip';
 
 const API_ENDPOINT = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api';
 const VANGUARD_SECRET = 'vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA';
@@ -23,6 +24,7 @@ export default function VanguardSetup() {
   const [deviceLocation, setDeviceLocation] = useState('');
   const [deviceIp, setDeviceIp] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -322,6 +324,32 @@ if __name__ == '__main__':
     main()
 `;
 
+  const handleDownloadZip = async () => {
+    if (!user?.id) {
+      toast.error('Please log in to download the agent bundle');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const blob = await generateVanguardZip({
+        userId: user.id,
+        apiEndpoint: API_ENDPOINT,
+        secretKey: VANGUARD_SECRET,
+        deviceName: 'Vanguard-Agent',
+        deviceLocation: 'Default Location',
+      });
+
+      downloadBlob(blob, 'vanguard-agent-bundle.zip');
+      toast.success('Agent bundle downloaded successfully!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to generate download');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   useEffect(() => {
     document.title = 'Setup Vanguard Device | Ultrium Vanguard';
   }, []);
@@ -336,6 +364,62 @@ if __name__ == '__main__':
       </div>
 
         <div className="space-y-6">
+          {/* Download Agent Bundle */}
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5 text-primary" />
+                Download Agent Bundle
+              </CardTitle>
+              <CardDescription>
+                Download a ready-to-install ZIP package with your credentials pre-configured
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>vanguard_agent.py</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>config.yaml</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>install.sh</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    <span>README.md</span>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleDownloadZip} 
+                  disabled={isDownloading || !user?.id}
+                  className="w-full md:w-auto"
+                  size="lg"
+                >
+                  {isDownloading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download vanguard-agent-bundle.zip
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Transfer to your Pi, extract, and run <code className="bg-muted px-1 rounded">sudo ./install.sh</code>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Manual Device Registration */}
           <Card>
             <CardHeader>
