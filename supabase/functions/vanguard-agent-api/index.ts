@@ -106,7 +106,7 @@ serve(async (req) => {
 // ============ AGENT-SIDE HANDLERS ============
 
 async function handleRegister(supabase: any, body: any) {
-  const { device_id, name, location, ip_address, vpn_ip, api_endpoint, agent_version, firmware_version, hailo_board_name, user_id } = body;
+  const { device_id, user_id } = body;
   
   if (!device_id || !user_id) {
     return new Response(
@@ -115,24 +115,46 @@ async function handleRegister(supabase: any, body: any) {
     );
   }
   
+  console.log(`[vanguard-agent-api] Register payload:`, JSON.stringify(body));
+  
+  // Parse registration data - handle both flat and nested formats
+  const systemInfo = body.system_info || body.metrics?.system || {};
+  
+  // Extract IP address from various sources
+  let ip_address = body.ip_address || systemInfo.ip_address;
+  if (!ip_address && systemInfo.net_io) {
+    // Try to extract from network interfaces
+    const interfaces = Object.keys(systemInfo.net_io);
+    if (interfaces.length > 0) {
+      ip_address = systemInfo.net_io[interfaces[0]]?.ip_address;
+    }
+  }
+  
+  // Build the agent record with all available fields
+  const agentData: Record<string, any> = {
+    device_id,
+    user_id,
+    name: body.name || body.hostname || systemInfo.hostname || `Vanguard-${device_id.slice(0, 8)}`,
+    location: body.location,
+    vpn_ip: body.vpn_ip,
+    api_endpoint: body.api_endpoint,
+    agent_version: body.agent_version || body.version,
+    firmware_version: body.firmware_version || systemInfo.os_version,
+    hailo_board_name: body.hailo_board_name || body.hailo?.board_name,
+    status: 'online',
+    last_heartbeat: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  // Only include ip_address if valid
+  if (ip_address) {
+    agentData.ip_address = ip_address;
+  }
+
   // Upsert the agent
   const { data, error } = await supabase
     .from('vanguard_agents')
-    .upsert({
-      device_id,
-      user_id,
-      name: name || `Vanguard-${device_id.slice(0, 8)}`,
-      location,
-      ip_address,
-      vpn_ip,
-      api_endpoint,
-      agent_version,
-      firmware_version,
-      hailo_board_name,
-      status: 'online',
-      last_heartbeat: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'device_id' })
+    .upsert(agentData, { onConflict: 'device_id' })
     .select()
     .single();
   
@@ -144,7 +166,7 @@ async function handleRegister(supabase: any, body: any) {
     );
   }
   
-  console.log(`[vanguard-agent-api] Agent registered: ${device_id}`);
+  console.log(`[vanguard-agent-api] Agent registered: ${device_id}, IP: ${ip_address}, Version: ${agentData.agent_version}`);
   return new Response(
     JSON.stringify({ status: 'ok', agent_id: data.id }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -228,15 +250,56 @@ async function handleHeartbeat(supabase: any, body: any) {
     status = 'warning';
   }
   
-  // Update agent status
+  // Build update object - include device info fields if provided in heartbeat
+  const updateData: Record<string, any> = {
+    status,
+    last_heartbeat: new Date().toISOString(),
+    hailo_status: hailo_status,
+    updated_at: new Date().toISOString()
+  };
+  
+  // Update agent version if provided
+  const agentVersion = body.agent_version || metrics.agent_version;
+  if (agentVersion) updateData.agent_version = agentVersion;
+  
+  // Update firmware version (OS version) if provided
+  const firmwareVersion = system.os_version || body.firmware_version;
+  if (firmwareVersion) updateData.firmware_version = firmwareVersion;
+  
+  // Update Hailo board name if provided
+  const hailoBoardName = metrics.hailo?.board_name || body.hailo_board_name;
+  if (hailoBoardName) updateData.hailo_board_name = hailoBoardName;
+  
+  // Extract and update IP address from network info
+  let ipToUpdate: string | null = null;
+  if (system.net_io) {
+    // Find the primary interface IP
+    const primaryInterfaces = ['eth0', 'en0', 'wlan0', 'ens3'];
+    for (const iface of primaryInterfaces) {
+      if (system.net_io[iface]?.ip_address) {
+        ipToUpdate = system.net_io[iface].ip_address;
+        break;
+      }
+    }
+    // Fallback to first interface
+    if (!ipToUpdate) {
+      const interfaces = Object.keys(system.net_io);
+      if (interfaces.length > 0 && system.net_io[interfaces[0]]?.ip_address) {
+        ipToUpdate = system.net_io[interfaces[0]].ip_address;
+      }
+    }
+  } else if (body.ip_address) {
+    ipToUpdate = body.ip_address;
+  }
+  
+  if (ipToUpdate) {
+    updateData.ip_address = ipToUpdate;
+  }
+  
+  // Update agent with all fields
   await supabase
     .from('vanguard_agents')
-    .update({
-      status,
-      last_heartbeat: new Date().toISOString(),
-      hailo_status: hailo_status,
-      updated_at: new Date().toISOString()
-    })
+    .update(updateData)
     .eq('id', agent.id);
   
   // Insert metrics with parsed values
