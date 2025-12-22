@@ -58,7 +58,7 @@ serve(async (req) => {
     }
     
     // Dashboard-side actions (require JWT auth)
-    if (['ask', 'send_command', 'list_agents', 'get_metrics'].includes(action)) {
+    if (['ask', 'send_command', 'list_agents', 'get_metrics', 'delete_agent'].includes(action)) {
       if (!authHeader) {
         return new Response(
           JSON.stringify({ error: 'Authorization required' }),
@@ -86,7 +86,14 @@ serve(async (req) => {
           return await listAgents(supabase, user.id);
         case 'get_metrics':
           return await getMetrics(supabase, user.id, body);
+        case 'delete_agent':
+          return await deleteAgent(supabase, user.id, body);
       }
+    }
+    
+    // Public action - download agent script
+    if (action === 'download_agent') {
+      return await downloadAgent();
     }
     
     return new Response(
@@ -630,4 +637,86 @@ async function getMetrics(supabase: any, userId: string, body: any) {
     JSON.stringify({ status: 'ok', metrics: metrics || [] }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
+}
+
+async function deleteAgent(supabase: any, userId: string, body: any) {
+  const { agent_id } = body;
+  
+  if (!agent_id) {
+    return new Response(
+      JSON.stringify({ error: 'agent_id is required' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Verify agent belongs to user before deletion
+  const { data: agent } = await supabase
+    .from('vanguard_agents')
+    .select('id, name')
+    .eq('id', agent_id)
+    .eq('user_id', userId)
+    .single();
+  
+  if (!agent) {
+    return new Response(
+      JSON.stringify({ error: 'Agent not found or not authorized' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Delete related data first
+  await supabase.from('vanguard_agent_metrics').delete().eq('agent_id', agent_id);
+  await supabase.from('vanguard_agent_commands').delete().eq('agent_id', agent_id);
+  
+  // Delete the agent
+  const { error } = await supabase
+    .from('vanguard_agents')
+    .delete()
+    .eq('id', agent_id)
+    .eq('user_id', userId);
+  
+  if (error) {
+    console.error('[vanguard-agent-api] Delete error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Failed to delete agent' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  console.log(`[vanguard-agent-api] Agent ${agent.name} (${agent_id}) deleted by user ${userId}`);
+  
+  return new Response(
+    JSON.stringify({ status: 'ok', message: `Agent ${agent.name} deleted successfully` }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+async function downloadAgent() {
+  // Return an installer script that downloads the Python agent
+  const installerScript = `#!/bin/bash
+# Vanguard Agent Installer
+# Run: curl -sSL "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api?action=download_agent" | bash
+
+echo "Downloading Vanguard Agent..."
+curl -sSL -o vanguard_agent.py "https://raw.githubusercontent.com/lovable-dev/ultrium-ai/main/public/agents/vanguard_agent.py" || {
+  echo "Failed to download from GitHub."
+  echo "Please download the agent manually from the Vanguard dashboard."
+  exit 1
+}
+
+echo "Installing dependencies..."
+pip3 install psutil requests 2>/dev/null || pip install psutil requests
+
+echo ""
+echo "Vanguard Agent downloaded successfully!"
+echo "Run with: python3 vanguard_agent.py --device-id YOUR_DEVICE_ID --user-id YOUR_USER_ID"
+`;
+
+  return new Response(installerScript, { 
+    headers: { 
+      ...corsHeaders, 
+      'Content-Type': 'text/plain',
+      'Content-Disposition': 'attachment; filename="install_vanguard.sh"'
+    } 
+  });
 }
