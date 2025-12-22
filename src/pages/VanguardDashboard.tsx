@@ -2,16 +2,13 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Lock, Eye, Network, Headphones, Bot } from "lucide-react";
+import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Eye, Network } from "lucide-react";
 import { VulnerabilityScanner } from "@/components/security/VulnerabilityScanner";
 import { ThreatDetection } from "@/components/security/ThreatDetection";
 import { SecurityReports } from "@/components/security/SecurityReports";
 import { PenetrationTesting } from "@/components/security/PenetrationTesting";
 import { ComplianceAuditor } from "@/components/security/ComplianceAuditor";
-import { SecurityMetrics } from "@/components/security/SecurityMetrics";
 import { NetworkConnectors } from "@/components/security/NetworkConnectors";
 import { VanguardOverview } from "@/components/vanguard/VanguardOverview";
 import { VanguardSOC } from "@/components/vanguard/VanguardSOC";
@@ -19,6 +16,7 @@ import { VanguardServiceDesk } from "@/components/vanguard/VanguardServiceDesk";
 import { VanguardAICopilot } from "@/components/vanguard/VanguardAICopilot";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 
 interface SecurityScan {
   id: string;
@@ -39,6 +37,7 @@ const VanguardDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const { toast } = useToast();
+  const { agents } = useVanguardAgents();
 
   useEffect(() => {
     loadRecentScans();
@@ -66,16 +65,6 @@ const VanguardDashboard = () => {
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'bg-destructive text-destructive-foreground';
-      case 'high': return 'bg-orange-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-blue-500 text-white';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed': return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -88,6 +77,14 @@ const VanguardDashboard = () => {
   const totalFindings = recentScans.reduce((sum, scan) => sum + scan.findings_count, 0);
   const criticalFindings = recentScans.reduce((sum, scan) => sum + scan.critical_count, 0);
   const highFindings = recentScans.reduce((sum, scan) => sum + scan.high_count, 0);
+
+  // Calculate online agents (last heartbeat within 5 minutes)
+  const onlineAgentCount = agents.filter(agent => {
+    if (!agent.last_heartbeat) return false;
+    const lastHeartbeat = new Date(agent.last_heartbeat).getTime();
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    return lastHeartbeat > fiveMinutesAgo;
+  }).length;
 
   if (isLoading) {
     return (
@@ -125,13 +122,13 @@ const VanguardDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Scans</CardTitle>
-              <Search className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Network Agents</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{recentScans.length}</div>
+              <div className="text-2xl font-bold">{agents.length}</div>
               <p className="text-xs text-muted-foreground">
-                Last 30 days
+                {onlineAgentCount} online
               </p>
             </CardContent>
           </Card>
@@ -164,13 +161,13 @@ const VanguardDashboard = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Findings</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Total Scans</CardTitle>
+              <Search className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalFindings}</div>
+              <div className="text-2xl font-bold">{recentScans.length}</div>
               <p className="text-xs text-muted-foreground">
-                All severity levels
+                {totalFindings} findings
               </p>
             </CardContent>
           </Card>
@@ -198,10 +195,8 @@ const VanguardDashboard = () => {
                 criticalIssues: criticalFindings,
                 highPriorityIssues: highFindings,
                 totalFindings: totalFindings,
-                assetsProtected: 1247,
-                threatsBlocked: 856,
-                complianceScore: 94,
-                networkCoverage: 87
+                agentCount: agents.length,
+                onlineAgentCount: onlineAgentCount
               }}
             />
 
