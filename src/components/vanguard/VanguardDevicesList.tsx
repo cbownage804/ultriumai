@@ -125,7 +125,7 @@ function DeviceCard({ agent, onClick }: { agent: VanguardAgent; onClick: () => v
         return;
       }
 
-      const response = await supabase.functions.invoke('vanguard-agent-api', {
+      const response = await supabase.functions.invoke('vanguard-agent-api?action=send_command', {
         body: { 
           agent_id: agent.id, 
           command_type: 'ping',
