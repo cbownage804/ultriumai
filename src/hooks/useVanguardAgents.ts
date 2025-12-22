@@ -187,7 +187,7 @@ export function useVanguardAgent(agentId: string | undefined) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('No session');
 
-    const response = await supabase.functions.invoke('vanguard-agent-api', {
+    const response = await supabase.functions.invoke('vanguard-agent-api?action=ask', {
       body: { agent_id: agentId, question },
       headers: {
         Authorization: `Bearer ${session.access_token}`
@@ -209,7 +209,7 @@ export function useVanguardAgent(agentId: string | undefined) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('No session');
 
-    const response = await supabase.functions.invoke('vanguard-agent-api', {
+    const response = await supabase.functions.invoke('vanguard-agent-api?action=send_command', {
       body: { agent_id: agentId, command_type: commandType, payload },
       headers: {
         Authorization: `Bearer ${session.access_token}`
