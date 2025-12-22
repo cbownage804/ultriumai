@@ -35,25 +35,67 @@ import {
 import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export function VanguardDeviceDetails() {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
-  const { agent, metrics, commands, isLoading, askVanguard, sendCommand, refetch } = useVanguardAgent(deviceId);
+  const { agent, metrics, commands, isLoading, sendCommand, refetch } = useVanguardAgent(deviceId);
   
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [isAsking, setIsAsking] = useState(false);
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
 
+  // Use AI Copilot directly for instant responses
   const handleAsk = async () => {
-    if (!question.trim()) return;
+    if (!question.trim() || !deviceId) return;
     
     setIsAsking(true);
+    const userMessage = question;
+    setQuestion('');
+    
+    // Add user message to history
+    const newHistory = [...chatHistory, { role: 'user' as const, content: userMessage }];
+    setChatHistory(newHistory);
+    
     try {
-      const response = await askVanguard(question);
-      setAnswer(response);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(
+        `https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-ai-copilot`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            messages: newHistory,
+            agentId: deviceId,
+            stream: false,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error('AI request failed');
+      
+      const data = await response.json();
+      const aiResponse = data.response || 'No response';
+      
+      // Add AI response to history
+      setChatHistory([...newHistory, { role: 'assistant', content: aiResponse }]);
+      setAnswer(aiResponse);
+      
+      // If AI returned a command, execute it
+      if (data.command) {
+        toast.info(`Executing: ${data.command.command_type}`);
+        await sendCommand(data.command.command_type, data.command.payload);
+      }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to ask Vanguard');
+      toast.error(err.message || 'Failed to get response');
+      setAnswer('Error: ' + (err.message || 'Failed to connect to AI'));
     } finally {
       setIsAsking(false);
     }
@@ -181,36 +223,67 @@ export function VanguardDeviceDetails() {
           </CardContent>
         </Card>
 
-        {/* Ask Vanguard Panel */}
+        {/* Ask Vanguard AI Panel */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Ask Vanguard
+              Vanguard AI Copilot
             </CardTitle>
             <CardDescription>
-              Query the on-device AI assistant
+              Chat with AI about this device - get instant answers and issue commands
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Chat History */}
+            {chatHistory.length > 0 && (
+              <ScrollArea className="h-[200px] border rounded-lg p-3">
+                <div className="space-y-3">
+                  {chatHistory.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                        msg.role === 'user' 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted'
+                      }`}>
+                        <p className="whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
+            
+            {/* Input */}
             <div className="flex gap-2">
               <Input 
-                placeholder="Ask a question..."
+                placeholder="Ask about status, run scans, get security insights..."
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
+                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleAsk()}
                 disabled={isAsking}
               />
               <Button onClick={handleAsk} disabled={isAsking || !question.trim()}>
                 {isAsking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
-            {answer && (
-              <div className="p-4 bg-muted rounded-lg text-sm">
-                <p className="font-medium mb-1">Response:</p>
-                <p className="text-muted-foreground">{answer}</p>
-              </div>
-            )}
+            
+            {/* Quick prompts */}
+            <div className="flex flex-wrap gap-2">
+              {['What is the status?', 'Scan the network', 'Check for vulnerabilities', 'Show recent activity'].map(prompt => (
+                <Button
+                  key={prompt}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => {
+                    setQuestion(prompt);
+                  }}
+                >
+                  {prompt}
+                </Button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
