@@ -30,7 +30,10 @@ import {
   FileCode,
   Monitor,
   Wifi,
-  Settings
+  Settings,
+  Crosshair,
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -101,11 +104,46 @@ export function VanguardDeviceDetails() {
     }
   };
 
+  const [commandsInProgress, setCommandsInProgress] = useState<Set<string>>(new Set());
+
   const handleCommand = async (commandType: string, payload?: Record<string, any>) => {
+    setCommandsInProgress(prev => new Set(prev).add(commandType));
     try {
       await sendCommand(commandType, payload);
+      toast.success(`Command "${commandType}" queued successfully`, {
+        description: "The agent will execute it on the next poll cycle (~30s)"
+      });
     } catch (err: any) {
       toast.error(err.message || 'Failed to send command');
+    } finally {
+      setTimeout(() => {
+        setCommandsInProgress(prev => {
+          const next = new Set(prev);
+          next.delete(commandType);
+          return next;
+        });
+      }, 2000);
+    }
+  };
+
+  const handleFullPentest = async () => {
+    toast.info("Starting Full Pentest", { description: "Queuing network scan, vulnerability scan, and security checks..." });
+    
+    try {
+      // Queue all pentest commands
+      await Promise.all([
+        sendCommand('scan_network'),
+        sendCommand('scan_vulnerabilities'),
+        sendCommand('get_inventory'),
+        sendCommand('check_security_updates'),
+        sendCommand('get_firewall_rules'),
+      ]);
+      
+      toast.success("Full Pentest Started", {
+        description: "All security scans queued. Results will appear in command history as they complete."
+      });
+    } catch (err: any) {
+      toast.error("Failed to start pentest", { description: err.message });
     }
   };
 
@@ -154,6 +192,10 @@ export function VanguardDeviceDetails() {
         <Badge variant={agent.status === 'online' ? 'default' : agent.status === 'critical' ? 'destructive' : 'secondary'}>
           {agent.status}
         </Badge>
+        <Button variant="default" size="sm" onClick={handleFullPentest} className="bg-destructive hover:bg-destructive/90">
+          <Crosshair className="h-4 w-4 mr-2" />
+          Start Pentest
+        </Button>
         <Button variant="outline" size="sm" onClick={refetch}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
@@ -295,7 +337,7 @@ export function VanguardDeviceDetails() {
           <CardDescription>Monitor, manage, and execute commands on this device</CardDescription>
         </CardHeader>
         <CardContent>
-          <RMMTabs agent={agent} handleCommand={handleCommand} />
+          <RMMTabs agent={agent} handleCommand={handleCommand} commandsInProgress={commandsInProgress} />
         </CardContent>
       </Card>
 
@@ -438,7 +480,15 @@ function MetricCard({
 }
 
 // RMM Tabs Component
-function RMMTabs({ agent, handleCommand }: { agent: any; handleCommand: (cmd: string, payload?: any) => void }) {
+function RMMTabs({ 
+  agent, 
+  handleCommand, 
+  commandsInProgress 
+}: { 
+  agent: any; 
+  handleCommand: (cmd: string, payload?: any) => void;
+  commandsInProgress: Set<string>;
+}) {
   const [script, setScript] = useState('');
   const [scriptOutput, setScriptOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
@@ -457,6 +507,21 @@ function RMMTabs({ agent, handleCommand }: { agent: any; handleCommand: (cmd: st
     }
   };
 
+  const ActionButton = ({ cmd, icon: Icon, label }: { cmd: string; icon: any; label: string }) => {
+    const isLoading = commandsInProgress.has(cmd);
+    return (
+      <Button 
+        variant="outline" 
+        className="h-20 flex-col gap-2" 
+        onClick={() => handleCommand(cmd)}
+        disabled={isLoading}
+      >
+        {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Icon className="h-5 w-5" />}
+        <span className="text-xs">{label}</span>
+      </Button>
+    );
+  };
+
   return (
     <Tabs defaultValue="actions" className="w-full">
       <TabsList className="grid w-full grid-cols-5">
@@ -469,38 +534,14 @@ function RMMTabs({ agent, handleCommand }: { agent: any; handleCommand: (cmd: st
 
       <TabsContent value="actions" className="space-y-4 mt-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('scan_network')}>
-            <Wifi className="h-5 w-5" />
-            <span className="text-xs">Network Scan</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('scan_vulnerabilities')}>
-            <Shield className="h-5 w-5" />
-            <span className="text-xs">Vuln Scan</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('get_inventory')}>
-            <Package className="h-5 w-5" />
-            <span className="text-xs">Get Inventory</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('update_agent')}>
-            <Download className="h-5 w-5" />
-            <span className="text-xs">Update Agent</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('check_patches')}>
-            <RefreshCw className="h-5 w-5" />
-            <span className="text-xs">Check Patches</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('clear_cache')}>
-            <HardDrive className="h-5 w-5" />
-            <span className="text-xs">Clear Cache</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('sync_time')}>
-            <Settings className="h-5 w-5" />
-            <span className="text-xs">Sync Time</span>
-          </Button>
-          <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => handleCommand('health_check')}>
-            <Monitor className="h-5 w-5" />
-            <span className="text-xs">Health Check</span>
-          </Button>
+          <ActionButton cmd="scan_network" icon={Wifi} label="Network Scan" />
+          <ActionButton cmd="scan_vulnerabilities" icon={Shield} label="Vuln Scan" />
+          <ActionButton cmd="get_inventory" icon={Package} label="Get Inventory" />
+          <ActionButton cmd="update_agent" icon={Download} label="Update Agent" />
+          <ActionButton cmd="check_patches" icon={RefreshCw} label="Check Patches" />
+          <ActionButton cmd="clear_cache" icon={HardDrive} label="Clear Cache" />
+          <ActionButton cmd="sync_time" icon={Settings} label="Sync Time" />
+          <ActionButton cmd="health_check" icon={Monitor} label="Health Check" />
         </div>
       </TabsContent>
 
