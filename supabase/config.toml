@@ -96,3 +96,6 @@ verify_jwt = true
 
 [functions.vanguard-agent-api]
 verify_jwt = false
+
+[functions.ai-threat-investigator]
+verify_jwt = true
