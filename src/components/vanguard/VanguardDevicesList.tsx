@@ -12,12 +12,24 @@ import {
   RefreshCw,
   Plus,
   Zap,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const statusColors: Record<string, string> = {
   online: 'bg-green-500',
@@ -34,7 +46,7 @@ const statusBadgeVariants: Record<string, 'default' | 'secondary' | 'destructive
 };
 
 export function VanguardDevicesList() {
-  const { agents, isLoading, refetch } = useVanguardAgents();
+  const { agents, isLoading, refetch, deleteAgent } = useVanguardAgents();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -95,6 +107,7 @@ export function VanguardDevicesList() {
               key={agent.id} 
               agent={agent} 
               onClick={() => navigate(`/vanguard/devices/${agent.id}`)}
+              onDelete={() => deleteAgent(agent.id)}
             />
           ))}
         </div>
@@ -103,8 +116,17 @@ export function VanguardDevicesList() {
   );
 }
 
-function DeviceCard({ agent, onClick }: { agent: VanguardAgent; onClick: () => void }) {
+function DeviceCard({
+  agent,
+  onClick,
+  onDelete,
+}: {
+  agent: VanguardAgent;
+  onClick: () => void;
+  onDelete: () => Promise<void>;
+}) {
   const [isTesting, setIsTesting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const lastHeartbeat = agent.last_heartbeat 
     ? formatDistanceToNow(new Date(agent.last_heartbeat), { addSuffix: true })
@@ -187,24 +209,72 @@ function DeviceCard({ agent, onClick }: { agent: VanguardAgent; onClick: () => v
             </div>
           )}
 
-          <div className="pt-2 border-t flex items-center justify-between">
+          <div className="pt-2 border-t flex items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">
               Last heartbeat: {lastHeartbeat}
             </span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={testConnection}
-              disabled={isTesting}
-              className="h-7 text-xs"
-            >
-              {isTesting ? (
-                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-              ) : (
-                <Zap className="h-3 w-3 mr-1" />
-              )}
-              {isTesting ? 'Testing...' : 'Test'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={isDeleting}
+                    className="h-7 px-2"
+                    aria-label={`Delete ${agent.name}`}
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete device?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete "{agent.name}" and its metrics/commands.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction asChild>
+                      <Button
+                        variant="destructive"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          setIsDeleting(true);
+                          try {
+                            await onDelete();
+                          } finally {
+                            setIsDeleting(false);
+                          }
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={testConnection}
+                disabled={isTesting}
+                className="h-7 text-xs"
+              >
+                {isTesting ? (
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                ) : (
+                  <Zap className="h-3 w-3 mr-1" />
+                )}
+                {isTesting ? 'Testing...' : 'Test'}
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>

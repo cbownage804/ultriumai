@@ -62,6 +62,7 @@ export function useVanguardAgents() {
       const { data, error: fetchError } = await supabase
         .from('vanguard_agents')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -77,7 +78,7 @@ export function useVanguardAgents() {
 
   useEffect(() => {
     fetchAgents();
-    
+
     // Set up real-time subscription
     const channel = supabase
       .channel('vanguard_agents_changes')
@@ -95,7 +96,32 @@ export function useVanguardAgents() {
     };
   }, [fetchAgents]);
 
-  return { agents, isLoading, error, refetch: fetchAgents };
+  const deleteAgent = useCallback(async (agentId: string) => {
+    if (!user) throw new Error('Not authenticated');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      const resp = await supabase.functions.invoke('vanguard-agent-api?action=delete_agent', {
+        body: { agent_id: agentId },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (resp.error) throw resp.error;
+
+      toast.success('Device deleted');
+      await fetchAgents();
+    } catch (err: any) {
+      console.error('Error deleting vanguard agent:', err);
+      toast.error('Failed to delete device', { description: err.message });
+      throw err;
+    }
+  }, [user, fetchAgents]);
+
+  return { agents, isLoading, error, refetch: fetchAgents, deleteAgent };
 }
 
 export function useVanguardAgent(agentId: string | undefined) {
@@ -112,11 +138,12 @@ export function useVanguardAgent(agentId: string | undefined) {
       setIsLoading(true);
       
       // Fetch agent details
-      const { data: agentData, error: agentError } = await supabase
-        .from('vanguard_agents')
-        .select('*')
-        .eq('id', agentId)
-        .single();
+       const { data: agentData, error: agentError } = await supabase
+         .from('vanguard_agents')
+         .select('*')
+         .eq('id', agentId)
+         .eq('user_id', user.id)
+         .single();
 
       if (agentError) throw agentError;
       setAgent(agentData as VanguardAgent);
