@@ -6,7 +6,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, AlertTriangle, Eye, Activity, Zap, Clock, Globe, Server } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Shield, AlertTriangle, Eye, Activity, Zap, Clock, Globe, Server, Brain, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +21,7 @@ interface ThreatAlert {
   source: string;
   timestamp: string;
   status: 'active' | 'investigating' | 'resolved';
+  aiAnalysis?: string;
 }
 
 interface ThreatConfig {
@@ -42,6 +45,9 @@ export const ThreatDetection = () => {
     ddosProtection: false,
   });
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [investigatingThreat, setInvestigatingThreat] = useState<ThreatAlert | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -164,6 +170,41 @@ export const ThreatDetection = () => {
     }
   };
 
+  const investigateThreat = async (threat: ThreatAlert) => {
+    setInvestigatingThreat(threat);
+    setIsAnalyzing(true);
+    setAnalysisResult(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-threat-investigator', {
+        body: { threat }
+      });
+      
+      if (error) throw error;
+      
+      setAnalysisResult(data.analysis);
+      
+      // Update threat with AI analysis
+      setThreats(prev => prev.map(t => 
+        t.id === threat.id ? { ...t, aiAnalysis: data.analysis, status: 'investigating' as const } : t
+      ));
+      
+      toast({
+        title: "AI Investigation Complete",
+        description: "Threat has been analyzed with recommendations",
+      });
+    } catch (error) {
+      console.error('AI investigation error:', error);
+      toast({
+        title: "Investigation Failed",
+        description: "Could not complete AI analysis",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const activeThreatCount = threats.filter(t => t.status === 'active').length;
   const criticalThreatCount = threats.filter(t => t.severity === 'critical').length;
 
@@ -247,7 +288,16 @@ export const ThreatDetection = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="gap-1"
+                        onClick={() => investigateThreat(threat)}
+                      >
+                        <Brain className="h-3 w-3" />
+                        AI Investigate
+                      </Button>
                       <Badge className={getSeverityColor(threat.severity)}>
                         {threat.severity}
                       </Badge>
@@ -331,8 +381,29 @@ export const ThreatDetection = () => {
                         Source: {threat.source} • {new Date(threat.timestamp).toLocaleString()}
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Investigate</Button>
-                        <Button size="sm">Resolve</Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="gap-1"
+                          onClick={() => investigateThreat(threat)}
+                        >
+                          <Brain className="h-3 w-3" />
+                          AI Investigate
+                        </Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setThreats(prev => prev.map(t => 
+                              t.id === threat.id ? { ...t, status: 'resolved' as const } : t
+                            ));
+                            toast({
+                              title: "Threat Resolved",
+                              description: "Threat has been marked as resolved",
+                            });
+                          }}
+                        >
+                          Resolve
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -510,6 +581,98 @@ export const ThreatDetection = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* AI Investigation Dialog */}
+      <Dialog open={investigatingThreat !== null} onOpenChange={() => {
+        setInvestigatingThreat(null);
+        setAnalysisResult(null);
+      }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-primary" />
+              AI Threat Investigation
+            </DialogTitle>
+            <DialogDescription>
+              AI-powered analysis and remediation recommendations
+            </DialogDescription>
+          </DialogHeader>
+          
+          {investigatingThreat && (
+            <div className="space-y-4">
+              {/* Threat Summary */}
+              <div className="p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {getThreatIcon(investigatingThreat.type)}
+                    <span className="font-semibold">{investigatingThreat.title}</span>
+                  </div>
+                  <Badge className={getSeverityColor(investigatingThreat.severity)}>
+                    {investigatingThreat.severity}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{investigatingThreat.description}</p>
+                <div className="text-xs text-muted-foreground mt-2">
+                  Source: {investigatingThreat.source} • {new Date(investigatingThreat.timestamp).toLocaleString()}
+                </div>
+              </div>
+
+              {/* AI Analysis */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="font-medium">AI Analysis</span>
+                </div>
+                
+                {isAnalyzing ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <span className="ml-2 text-muted-foreground">Analyzing threat...</span>
+                  </div>
+                ) : analysisResult ? (
+                  <ScrollArea className="h-[300px] border rounded-lg p-4">
+                    <div className="prose prose-sm dark:prose-invert whitespace-pre-wrap">
+                      {analysisResult}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Click "Start Investigation" to analyze this threat</p>
+                    <Button 
+                      className="mt-4" 
+                      onClick={() => investigateThreat(investigatingThreat)}
+                    >
+                      <Brain className="h-4 w-4 mr-2" />
+                      Start Investigation
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {analysisResult && (
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" onClick={() => setInvestigatingThreat(null)}>
+                    Close
+                  </Button>
+                  <Button onClick={() => {
+                    setThreats(prev => prev.map(t => 
+                      t.id === investigatingThreat.id ? { ...t, status: 'resolved' as const } : t
+                    ));
+                    setInvestigatingThreat(null);
+                    toast({
+                      title: "Threat Resolved",
+                      description: "Threat has been marked as resolved",
+                    });
+                  }}>
+                    Mark as Resolved
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
