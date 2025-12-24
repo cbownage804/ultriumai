@@ -56,8 +56,9 @@ serve(async (req) => {
       };
 
       // Try Meraki lookup only if not skipped
+      let merakiData: any = null;
       if (!skipMeraki) {
-        const merakiData = await getMerakiClientByIp(body.ip_address, body.mac_address, expectedClientName);
+        merakiData = await getMerakiClientByIp(body.ip_address, body.mac_address, expectedClientName);
         if (merakiData) {
           results.meraki = merakiData;
           
