@@ -440,7 +440,7 @@ async function getCommands(supabase: any, body: any) {
 }
 
 async function handleCommandResponse(supabase: any, body: any) {
-  const { command_id, response, error_message, success } = body;
+  const { command_id } = body;
   
   if (!command_id) {
     return new Response(
@@ -449,15 +449,41 @@ async function handleCommandResponse(supabase: any, body: any) {
     );
   }
   
-  await supabase
+  // Support both agent formats:
+  // Format 1 (Python agent): { status: "completed"|"failed", output: {...}, error: "..." }
+  // Format 2 (legacy): { success: boolean, response: {...}, error_message: "..." }
+  
+  let finalStatus: string;
+  let finalResponse: any;
+  let finalError: string | null;
+  
+  if (body.status !== undefined) {
+    // Python agent format
+    finalStatus = body.status === 'completed' ? 'completed' : 'failed';
+    finalResponse = body.output || null;
+    finalError = body.error || null;
+  } else {
+    // Legacy format
+    finalStatus = body.success ? 'completed' : 'failed';
+    finalResponse = body.response || null;
+    finalError = body.error_message || null;
+  }
+  
+  console.log(`[vanguard-agent-api] Command ${command_id} result: status=${finalStatus}, hasResponse=${!!finalResponse}, error=${finalError}`);
+  
+  const { error: updateError } = await supabase
     .from('vanguard_agent_commands')
     .update({
-      status: success ? 'completed' : 'failed',
-      response,
-      error_message,
+      status: finalStatus,
+      response: finalResponse,
+      error_message: finalError,
       completed_at: new Date().toISOString()
     })
     .eq('id', command_id);
+  
+  if (updateError) {
+    console.error(`[vanguard-agent-api] Failed to update command ${command_id}:`, updateError);
+  }
   
   return new Response(
     JSON.stringify({ status: 'ok' }),
@@ -1017,7 +1043,8 @@ class VanguardAgent:
     def handle_command(self, command: dict):
         cmd_id = command.get("id")
         cmd_type = command.get("command_type")
-        params = command.get("parameters", {})
+        # Support both "parameters" and "payload" keys
+        params = command.get("payload") or command.get("parameters") or {}
         
         logger.info(f"Executing command: {cmd_type}")
         
