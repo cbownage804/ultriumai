@@ -99,3 +99,6 @@ verify_jwt = false
 
 [functions.ai-threat-investigator]
 verify_jwt = false
+
+[functions.device-enrich]
+verify_jwt = true
