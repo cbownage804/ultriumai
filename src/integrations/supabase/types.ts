@@ -7258,6 +7258,178 @@ export type Database = {
           },
         ]
       }
+      pentest_remediation_playbooks: {
+        Row: {
+          compliance_frameworks: Json | null
+          created_at: string
+          description: string
+          estimated_fix_time: string | null
+          id: string
+          impact: string
+          reference_links: Json | null
+          remediation_steps: Json
+          severity: string
+          title: string
+          updated_at: string
+          verification_steps: Json | null
+          vulnerability_type: string
+        }
+        Insert: {
+          compliance_frameworks?: Json | null
+          created_at?: string
+          description: string
+          estimated_fix_time?: string | null
+          id?: string
+          impact: string
+          reference_links?: Json | null
+          remediation_steps?: Json
+          severity: string
+          title: string
+          updated_at?: string
+          verification_steps?: Json | null
+          vulnerability_type: string
+        }
+        Update: {
+          compliance_frameworks?: Json | null
+          created_at?: string
+          description?: string
+          estimated_fix_time?: string | null
+          id?: string
+          impact?: string
+          reference_links?: Json | null
+          remediation_steps?: Json
+          severity?: string
+          title?: string
+          updated_at?: string
+          verification_steps?: Json | null
+          vulnerability_type?: string
+        }
+        Relationships: []
+      }
+      pentest_reports: {
+        Row: {
+          agent_id: string | null
+          attack_paths: Json | null
+          command_id: string | null
+          compliance_mapping: Json | null
+          detailed_findings: Json | null
+          executive_summary: string | null
+          findings_summary: Json | null
+          generated_at: string
+          id: string
+          remediation_priority: Json | null
+          report_name: string
+          report_status: string | null
+          risk_score: number | null
+          scan_type: string
+          target: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          attack_paths?: Json | null
+          command_id?: string | null
+          compliance_mapping?: Json | null
+          detailed_findings?: Json | null
+          executive_summary?: string | null
+          findings_summary?: Json | null
+          generated_at?: string
+          id?: string
+          remediation_priority?: Json | null
+          report_name: string
+          report_status?: string | null
+          risk_score?: number | null
+          scan_type: string
+          target: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          attack_paths?: Json | null
+          command_id?: string | null
+          compliance_mapping?: Json | null
+          detailed_findings?: Json | null
+          executive_summary?: string | null
+          findings_summary?: Json | null
+          generated_at?: string
+          id?: string
+          remediation_priority?: Json | null
+          report_name?: string
+          report_status?: string | null
+          risk_score?: number | null
+          scan_type?: string
+          target?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pentest_reports_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pentest_schedules: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          frequency: string
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          next_run_at: string | null
+          notification_emails: string[] | null
+          scan_options: Json | null
+          scan_type: string
+          schedule_name: string
+          target: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          notification_emails?: string[] | null
+          scan_options?: Json | null
+          scan_type: string
+          schedule_name: string
+          target: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          notification_emails?: string[] | null
+          scan_options?: Json | null
+          scan_type?: string
+          schedule_name?: string
+          target?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pentest_schedules_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       performance_metrics: {
         Row: {
           comparison_period: string | null
