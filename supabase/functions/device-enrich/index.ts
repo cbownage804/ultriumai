@@ -38,6 +38,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
+    const expectedClientName = body.expected_client_name; // For validation
 
     if (action === "meraki_lookup") {
       // Look up device in Meraki by IP
@@ -47,16 +48,42 @@ serve(async (req) => {
       return await aiAnalyzeDevice(body.device);
     } else {
       // Combined enrichment
-      const results: any = { ip: body.ip_address };
+      const results: any = { 
+        ip: body.ip_address,
+        expected_client: expectedClientName || null
+      };
 
-      // Try Meraki lookup
-      const merakiData = await getMerakiClientByIp(body.ip_address);
+      // Try Meraki lookup (search all orgs/networks)
+      const merakiData = await getMerakiClientByIp(body.ip_address, body.mac_address);
       if (merakiData) {
         results.meraki = merakiData;
+        
+        // Check if device is in expected network (if provided)
+        if (expectedClientName && merakiData.found) {
+          const networkName = merakiData.network?.toLowerCase() || '';
+          const orgName = merakiData.organization?.toLowerCase() || '';
+          const expectedLower = expectedClientName.toLowerCase();
+          
+          results.client_match = 
+            networkName.includes(expectedLower) || 
+            orgName.includes(expectedLower) ||
+            expectedLower.includes(networkName) ||
+            expectedLower.includes(orgName);
+            
+          if (!results.client_match) {
+            results.client_warning = `Device found in "${merakiData.network}" but expected client is "${expectedClientName}"`;
+          }
+        }
       }
 
-      // AI analysis
-      const aiAnalysis = await getAiAnalysis(body.device || { ip: body.ip_address });
+      // AI analysis with network context
+      const deviceWithContext = {
+        ...body.device,
+        meraki_network: merakiData?.network,
+        meraki_org: merakiData?.organization,
+        expected_client: expectedClientName
+      };
+      const aiAnalysis = await getAiAnalysis(deviceWithContext);
       if (aiAnalysis) {
         results.ai_analysis = aiAnalysis;
       }
@@ -81,7 +108,7 @@ async function merakiLookup(ipAddress: string) {
   });
 }
 
-async function getMerakiClientByIp(ipAddress: string): Promise<any | null> {
+async function getMerakiClientByIp(ipAddress: string, macAddress?: string): Promise<any | null> {
   const apiKey = Deno.env.get("MERAKI_API_KEY");
   if (!apiKey) {
     console.log("No MERAKI_API_KEY configured");
@@ -100,6 +127,7 @@ async function getMerakiClientByIp(ipAddress: string): Promise<any | null> {
     }
 
     const orgs = await orgsRes.json();
+    console.log(`Searching ${orgs.length} Meraki organizations for IP: ${ipAddress}`);
     
     for (const org of orgs) {
       // Get networks for this org
@@ -112,23 +140,30 @@ async function getMerakiClientByIp(ipAddress: string): Promise<any | null> {
       const networks = await networksRes.json();
 
       for (const network of networks) {
-        // Search clients in this network
+        // Search clients in this network (last 7 days for better coverage)
         const clientsRes = await fetch(
-          `https://api.meraki.com/api/v1/networks/${network.id}/clients?timespan=86400`,
+          `https://api.meraki.com/api/v1/networks/${network.id}/clients?timespan=604800`,
           { headers: { "X-Cisco-Meraki-API-Key": apiKey } }
         );
         
         if (!clientsRes.ok) continue;
         const clients = await clientsRes.json();
 
-        // Find client by IP
-        const client = clients.find((c: any) => c.ip === ipAddress);
+        // Find client by IP or MAC
+        const client = clients.find((c: any) => 
+          c.ip === ipAddress || 
+          (macAddress && c.mac?.toLowerCase() === macAddress?.toLowerCase())
+        );
+        
         if (client) {
+          console.log(`Found device in org: ${org.name}, network: ${network.name}`);
           return {
             found: true,
             source: "meraki",
             organization: org.name,
+            organization_id: org.id,
             network: network.name,
+            network_id: network.id,
             client: {
               id: client.id,
               mac: client.mac,
@@ -152,6 +187,7 @@ async function getMerakiClientByIp(ipAddress: string): Promise<any | null> {
       }
     }
 
+    console.log(`Device ${ipAddress} not found in any Meraki network`);
     return { found: false, source: "meraki", message: "Device not found in Meraki networks" };
   } catch (error) {
     console.error("Meraki lookup error:", error);
