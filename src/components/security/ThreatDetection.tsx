@@ -60,79 +60,91 @@ export const ThreatDetection = () => {
 
   const loadThreats = async () => {
     try {
-      // Simulate loading threat data
-      const mockThreats: ThreatAlert[] = [
-        {
-          id: '1',
-          type: 'intrusion',
-          severity: 'high',
-          title: 'Suspicious Login Attempt',
-          description: 'Multiple failed login attempts from unusual location',
-          source: '192.168.1.100',
-          timestamp: new Date(Date.now() - 300000).toISOString(),
-          status: 'active'
-        },
-        {
-          id: '2',
-          type: 'anomaly',
-          severity: 'medium',
-          title: 'Unusual Network Traffic',
-          description: 'Abnormal data transfer patterns detected',
-          source: 'Web Server',
-          timestamp: new Date(Date.now() - 600000).toISOString(),
-          status: 'investigating'
-        },
-        {
-          id: '3',
-          type: 'malware',
-          severity: 'critical',
-          title: 'Malware Signature Detected',
-          description: 'Known malware pattern found in uploaded file',
-          source: 'File Upload System',
-          timestamp: new Date(Date.now() - 900000).toISOString(),
-          status: 'resolved'
-        }
-      ];
-      setThreats(mockThreats);
+      // Load real security incidents from database
+      const { data: incidents, error } = await supabase
+        .from('security_incidents')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // Transform incidents into ThreatAlert format
+      const realThreats: ThreatAlert[] = (incidents || []).map(incident => ({
+        id: incident.id,
+        type: mapIncidentType(incident.incident_type || 'anomaly'),
+        severity: (incident.severity as 'critical' | 'high' | 'medium' | 'low') || 'medium',
+        title: incident.title,
+        description: incident.description || 'Security incident detected',
+        source: incident.source_system || 'Vanguard',
+        timestamp: incident.created_at,
+        status: incident.status === 'open' ? 'active' : 
+                incident.status === 'investigating' ? 'investigating' : 'resolved'
+      }));
+
+      setThreats(realThreats);
     } catch (error) {
       console.error('Error loading threats:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load threat data",
-        variant: "destructive",
-      });
+      // Show empty state instead of mock data
+      setThreats([]);
     }
+  };
+
+  const mapIncidentType = (type: string): ThreatAlert['type'] => {
+    const typeMap: Record<string, ThreatAlert['type']> = {
+      'vulnerability': 'malware',
+      'intrusion': 'intrusion',
+      'anomaly': 'anomaly',
+      'phishing': 'phishing',
+      'ddos': 'ddos',
+      'breach': 'breach',
+      'malware': 'malware'
+    };
+    return typeMap[type.toLowerCase()] || 'anomaly';
   };
 
   const startMonitoring = () => {
     setIsMonitoring(true);
-    // Simulate real-time threat detection
-    const interval = setInterval(() => {
-      if (Math.random() > 0.95) { // 5% chance of new threat
-        const newThreat: ThreatAlert = {
-          id: crypto.randomUUID(),
-          type: ['malware', 'intrusion', 'anomaly', 'phishing', 'ddos'][Math.floor(Math.random() * 5)] as any,
-          severity: ['critical', 'high', 'medium', 'low'][Math.floor(Math.random() * 4)] as any,
-          title: 'New Threat Detected',
-          description: 'AI-powered threat detection identified suspicious activity',
-          source: `System-${Math.floor(Math.random() * 100)}`,
-          timestamp: new Date().toISOString(),
-          status: 'active'
-        };
-        
-        setThreats(prev => [newThreat, ...prev.slice(0, 9)]);
-        
-        if (newThreat.severity === 'critical' || newThreat.severity === 'high') {
-          toast({
-            title: `${newThreat.severity.toUpperCase()} Threat Detected!`,
-            description: newThreat.title,
-            variant: newThreat.severity === 'critical' ? 'destructive' : 'default',
-          });
+    
+    // Set up real-time subscription for new incidents
+    const channel = supabase
+      .channel('threat-detection')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'security_incidents'
+        },
+        (payload) => {
+          const incident = payload.new as any;
+          const newThreat: ThreatAlert = {
+            id: incident.id,
+            type: mapIncidentType(incident.incident_type || 'anomaly'),
+            severity: incident.severity || 'medium',
+            title: incident.title,
+            description: incident.description || 'New security incident detected',
+            source: incident.source_system || 'Vanguard',
+            timestamp: incident.created_at,
+            status: 'active'
+          };
+          
+          setThreats(prev => [newThreat, ...prev.slice(0, 19)]);
+          
+          if (newThreat.severity === 'critical' || newThreat.severity === 'high') {
+            toast({
+              title: `${newThreat.severity.toUpperCase()} Threat Detected!`,
+              description: newThreat.title,
+              variant: newThreat.severity === 'critical' ? 'destructive' : 'default',
+            });
+          }
         }
-      }
-    }, 10000); // Check every 10 seconds
+      )
+      .subscribe();
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const stopMonitoring = () => {

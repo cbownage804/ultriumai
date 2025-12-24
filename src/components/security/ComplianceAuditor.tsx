@@ -113,15 +113,24 @@ export const ComplianceAuditor = ({ onScanComplete }: ComplianceAuditorProps) =>
 
       setAuditProgress(100);
       
-      // Generate mock compliance results
-      const results: ComplianceResult[] = selectedStandards.map(standard => ({
-        standard: standard.name,
-        score: Math.floor(Math.random() * 40) + 60, // 60-100%
-        passed: Math.floor(Math.random() * 20) + 15,
-        failed: Math.floor(Math.random() * 10) + 2,
-        total: Math.floor(Math.random() * 30) + 20,
-        findings: generateMockFindings(standard.name)
-      }));
+      // Use real compliance results from API response if available
+      const apiResults = response.data?.results || [];
+      
+      let results: ComplianceResult[];
+      if (apiResults.length > 0) {
+        // Use real results from the API
+        results = apiResults;
+      } else {
+        // If no API results, show empty state requiring configuration
+        results = selectedStandards.map(standard => ({
+          standard: standard.name,
+          score: 0,
+          passed: 0,
+          failed: 0,
+          total: 0,
+          findings: []
+        }));
+      }
 
       setAuditResults(results);
       setActiveTab("results");
@@ -146,37 +155,6 @@ export const ComplianceAuditor = ({ onScanComplete }: ComplianceAuditorProps) =>
       setIsAuditing(false);
       setAuditProgress(0);
     }
-  };
-
-  const generateMockFindings = (standard: string): ComplianceFinding[] => {
-    const baseFindings = [
-      {
-        control: 'Access Control',
-        status: 'pass' as const,
-        description: 'Strong authentication mechanisms implemented',
-        remediation: 'Continue monitoring access patterns'
-      },
-      {
-        control: 'Data Encryption',
-        status: 'warning' as const,
-        description: 'Encryption in transit present, at-rest encryption needs review',
-        remediation: 'Implement database encryption for sensitive data'
-      },
-      {
-        control: 'Security Logging',
-        status: 'fail' as const,
-        description: 'Insufficient security event logging detected',
-        remediation: 'Implement comprehensive audit logging system'
-      },
-      {
-        control: 'Vulnerability Management',
-        status: 'pass' as const,
-        description: 'Regular security assessments are conducted',
-        remediation: 'Maintain current vulnerability scanning schedule'
-      }
-    ];
-
-    return baseFindings.slice(0, Math.floor(Math.random() * 4) + 2);
   };
 
   const toggleStandard = (id: string) => {

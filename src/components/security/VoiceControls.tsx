@@ -41,13 +41,14 @@ export const VoiceControls = ({ onVoiceMessage, className }: VoiceControlsProps)
 
   const toggleListening = () => {
     setIsListening(!isListening);
-    // Voice recognition would be implemented here
-    if (onVoiceMessage && !isListening) {
-      // Simulated voice input for demo
-      setTimeout(() => {
-        onVoiceMessage("Show me the current security status");
-        setIsListening(false);
-      }, 2000);
+    // Note: Real voice recognition would require Web Speech API or similar
+    // For now, just toggle the listening state
+    if (isListening) {
+      setIsListening(false);
+    } else {
+      setIsListening(true);
+      // Auto-stop after 5 seconds if no input
+      setTimeout(() => setIsListening(false), 5000);
     }
   };
 
