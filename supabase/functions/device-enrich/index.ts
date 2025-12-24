@@ -53,8 +53,8 @@ serve(async (req) => {
         expected_client: expectedClientName || null
       };
 
-      // Try Meraki lookup (search all orgs/networks)
-      const merakiData = await getMerakiClientByIp(body.ip_address, body.mac_address);
+      // Try Meraki lookup (search all orgs/networks, prioritize expected client)
+      const merakiData = await getMerakiClientByIp(body.ip_address, body.mac_address, expectedClientName);
       if (merakiData) {
         results.meraki = merakiData;
         
@@ -108,7 +108,7 @@ async function merakiLookup(ipAddress: string) {
   });
 }
 
-async function getMerakiClientByIp(ipAddress: string, macAddress?: string): Promise<any | null> {
+async function getMerakiClientByIp(ipAddress: string, macAddress?: string, expectedClientName?: string): Promise<any | null> {
   const apiKey = Deno.env.get("MERAKI_API_KEY");
   if (!apiKey) {
     console.log("No MERAKI_API_KEY configured");
@@ -127,7 +127,10 @@ async function getMerakiClientByIp(ipAddress: string, macAddress?: string): Prom
     }
 
     const orgs = await orgsRes.json();
-    console.log(`Searching ${orgs.length} Meraki organizations for IP: ${ipAddress}`);
+    console.log(`Searching ${orgs.length} Meraki organizations for IP: ${ipAddress}, expected client: ${expectedClientName || 'none'}`);
+    
+    // Collect all matches, prioritize by expected client
+    const allMatches: any[] = [];
     
     for (const org of orgs) {
       // Get networks for this org
@@ -149,21 +152,20 @@ async function getMerakiClientByIp(ipAddress: string, macAddress?: string): Prom
         if (!clientsRes.ok) continue;
         const clients = await clientsRes.json();
 
-        // Find client by IP or MAC
-        const client = clients.find((c: any) => 
-          c.ip === ipAddress || 
-          (macAddress && c.mac?.toLowerCase() === macAddress?.toLowerCase())
-        );
+        // Find client by IP (prioritize) or MAC
+        const clientByIp = clients.find((c: any) => c.ip === ipAddress);
+        const clientByMac = macAddress ? clients.find((c: any) => c.mac?.toLowerCase() === macAddress?.toLowerCase()) : null;
+        const client = clientByIp || clientByMac;
         
         if (client) {
-          console.log(`Found device in org: ${org.name}, network: ${network.name}`);
-          return {
+          const matchData = {
             found: true,
             source: "meraki",
             organization: org.name,
             organization_id: org.id,
             network: network.name,
             network_id: network.id,
+            matchedByIp: !!clientByIp,
             client: {
               id: client.id,
               mac: client.mac,
@@ -183,12 +185,56 @@ async function getMerakiClientByIp(ipAddress: string, macAddress?: string): Prom
               usage: client.usage,
             },
           };
+          
+          allMatches.push(matchData);
+          console.log(`Found device in org: ${org.name}, network: ${network.name}, matchedByIp: ${!!clientByIp}`);
         }
       }
     }
 
-    console.log(`Device ${ipAddress} not found in any Meraki network`);
-    return { found: false, source: "meraki", message: "Device not found in Meraki networks" };
+    if (allMatches.length === 0) {
+      console.log(`Device ${ipAddress} not found in any Meraki network`);
+      return { found: false, source: "meraki", message: "Device not found in Meraki networks" };
+    }
+
+    // If we have an expected client, prioritize matches that contain the client name
+    if (expectedClientName && allMatches.length > 1) {
+      const expectedLower = expectedClientName.toLowerCase();
+      
+      // First priority: IP match in expected network
+      const ipMatchInExpected = allMatches.find(m => 
+        m.matchedByIp && (
+          m.network.toLowerCase().includes(expectedLower) || 
+          m.organization.toLowerCase().includes(expectedLower)
+        )
+      );
+      if (ipMatchInExpected) {
+        console.log(`Prioritizing IP match in expected network: ${ipMatchInExpected.network}`);
+        return ipMatchInExpected;
+      }
+      
+      // Second priority: Any match in expected network
+      const anyMatchInExpected = allMatches.find(m => 
+        m.network.toLowerCase().includes(expectedLower) || 
+        m.organization.toLowerCase().includes(expectedLower)
+      );
+      if (anyMatchInExpected) {
+        console.log(`Prioritizing match in expected network: ${anyMatchInExpected.network}`);
+        return anyMatchInExpected;
+      }
+      
+      // Third priority: IP match anywhere
+      const ipMatchAnywhere = allMatches.find(m => m.matchedByIp);
+      if (ipMatchAnywhere) {
+        console.log(`Using IP match in different network: ${ipMatchAnywhere.network}`);
+        return ipMatchAnywhere;
+      }
+    }
+    
+    // Default: return first match (prefer IP match)
+    const bestMatch = allMatches.find(m => m.matchedByIp) || allMatches[0];
+    console.log(`Returning best match from: ${bestMatch.network}`);
+    return bestMatch;
   } catch (error) {
     console.error("Meraki lookup error:", error);
     return null;
