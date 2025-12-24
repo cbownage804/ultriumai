@@ -388,13 +388,49 @@ async def execute_command(session: aiohttp.ClientSession, command: Dict[str, Any
                 result["error"] = proc.stderr if proc.returncode != 0 else None
                 result["status"] = "completed" if proc.returncode == 0 else "failed"
                 result["return_code"] = proc.returncode
+
+        elif cmd_type == "scan_network":
+            if not check_nmap_installed():
+                result["status"] = "failed"
+                result["error"] = "nmap not installed (install with: sudo apt-get install nmap)"
+            else:
+                target = payload.get("target") or get_local_network_cidr()
+                if target == "auto":
+                    target = get_local_network_cidr()
+
+                # Grepable output is easy to parse without extra deps.
+                proc = subprocess.run(
+                    ["nmap", "-sn", "-T4", "-oG", "-", target],
+                    capture_output=True,
+                    text=True,
+                    timeout=600,
+                )
+
+                if proc.returncode != 0:
+                    raise RuntimeError(proc.stderr.strip() or f"nmap failed ({proc.returncode})")
+
+                devices: List[Dict[str, Any]] = []
+                for line in proc.stdout.splitlines():
+                    m = re.match(r"Host:\\s+(\\S+)\\s+\\((.*?)\\)\\s+Status:\\s+Up", line)
+                    if m:
+                        ip = m.group(1)
+                        hostname = (m.group(2) or "").strip()
+                        devices.append({"ip": ip, "hostname": hostname or None, "state": "up"})
+
+                result["output"] = {
+                    "target": target,
+                    "devices": devices,
+                    "findings": devices,
+                    "total": len(devices),
+                }
+
         elif cmd_type == "get_metrics":
             result["output"] = get_system_metrics()
         elif cmd_type == "ping":
             result["output"] = {"pong": True, "timestamp": int(time.time())}
         else:
-            result["status"] = "unknown"
-            result["error"] = f"Unknown command type: {cmd_type}"
+            result["status"] = "failed"
+            result["error"] = f"Unsupported command type: {cmd_type}"
     except Exception as e:
         result["status"] = "failed"
         result["error"] = str(e)
