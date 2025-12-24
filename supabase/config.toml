@@ -102,3 +102,6 @@ verify_jwt = false
 
 [functions.device-enrich]
 verify_jwt = true
+
+[functions.meraki-networks]
+verify_jwt = true
