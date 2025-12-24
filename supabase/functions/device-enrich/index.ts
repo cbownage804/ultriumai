@@ -39,6 +39,7 @@ serve(async (req) => {
 
     const body = await req.json();
     const expectedClientName = body.expected_client_name; // For validation
+    const skipMeraki = body.skip_meraki === true; // Skip Meraki lookup for non-Meraki clients
 
     if (action === "meraki_lookup") {
       // Look up device in Meraki by IP
@@ -50,30 +51,35 @@ serve(async (req) => {
       // Combined enrichment
       const results: any = { 
         ip: body.ip_address,
-        expected_client: expectedClientName || null
+        expected_client: expectedClientName || null,
+        meraki_skipped: skipMeraki
       };
 
-      // Try Meraki lookup (search all orgs/networks, prioritize expected client)
-      const merakiData = await getMerakiClientByIp(body.ip_address, body.mac_address, expectedClientName);
-      if (merakiData) {
-        results.meraki = merakiData;
-        
-        // Check if device is in expected network (if provided)
-        if (expectedClientName && merakiData.found) {
-          const networkName = merakiData.network?.toLowerCase() || '';
-          const orgName = merakiData.organization?.toLowerCase() || '';
-          const expectedLower = expectedClientName.toLowerCase();
+      // Try Meraki lookup only if not skipped
+      if (!skipMeraki) {
+        const merakiData = await getMerakiClientByIp(body.ip_address, body.mac_address, expectedClientName);
+        if (merakiData) {
+          results.meraki = merakiData;
           
-          results.client_match = 
-            networkName.includes(expectedLower) || 
-            orgName.includes(expectedLower) ||
-            expectedLower.includes(networkName) ||
-            expectedLower.includes(orgName);
+          // Check if device is in expected network (if provided)
+          if (expectedClientName && merakiData.found) {
+            const networkName = merakiData.network?.toLowerCase() || '';
+            const orgName = merakiData.organization?.toLowerCase() || '';
+            const expectedLower = expectedClientName.toLowerCase();
             
-          if (!results.client_match) {
-            results.client_warning = `Device found in "${merakiData.network}" but expected client is "${expectedClientName}"`;
+            results.client_match = 
+              networkName.includes(expectedLower) || 
+              orgName.includes(expectedLower) ||
+              expectedLower.includes(networkName) ||
+              expectedLower.includes(orgName);
+              
+            if (!results.client_match) {
+              results.client_warning = `Device found in "${merakiData.network}" but expected client is "${expectedClientName}"`;
+            }
           }
         }
+      } else {
+        results.meraki = { found: false, skipped: true };
       }
 
       // AI analysis with network context
