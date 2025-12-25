@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users, Phone, RefreshCw, Trash2 } from 'lucide-react';
+import { Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users, RefreshCw, Trash2, Phone, CreditCard, MapPin, Key, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -18,9 +18,23 @@ interface Breach {
   is_verified: boolean;
 }
 
+// Map data classes to icons and colors for visual highlighting
+const dataClassConfig: Record<string, { icon: React.ReactNode; color: string; sensitive: boolean }> = {
+  'Phone numbers': { icon: <Phone className="h-3 w-3" />, color: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-500/30', sensitive: true },
+  'Passwords': { icon: <Key className="h-3 w-3" />, color: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30', sensitive: true },
+  'Credit cards': { icon: <CreditCard className="h-3 w-3" />, color: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30', sensitive: true },
+  'Physical addresses': { icon: <MapPin className="h-3 w-3" />, color: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30', sensitive: true },
+  'Email addresses': { icon: <Mail className="h-3 w-3" />, color: 'bg-blue-500/20 text-blue-700 dark:text-blue-300 border-blue-500/30', sensitive: false },
+  'Names': { icon: <User className="h-3 w-3" />, color: 'bg-muted text-muted-foreground', sensitive: false },
+  'Usernames': { icon: <User className="h-3 w-3" />, color: 'bg-muted text-muted-foreground', sensitive: false },
+};
+
+const getDataClassStyle = (dataClass: string) => {
+  return dataClassConfig[dataClass] || { icon: null, color: 'bg-muted text-muted-foreground', sensitive: false };
+};
+
 export const DarkWebMonitor = () => {
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [domain, setDomain] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingType, setLoadingType] = useState<string | null>(null);
@@ -37,6 +51,7 @@ export const DarkWebMonitor = () => {
       .from('dark_web_monitors')
       .select('*')
       .eq('user_id', user?.id)
+      .eq('monitor_type', 'email')
       .order('last_checked', { ascending: false });
     
     if (error) {
@@ -81,40 +96,6 @@ export const DarkWebMonitor = () => {
         toast.success('No breaches found for this email!');
       }
       
-      loadMonitoredItems();
-    } catch (error: any) {
-      console.error('Check error:', error);
-      toast.error(error.message || 'Check failed');
-    } finally {
-      setIsLoading(false);
-      setLoadingType(null);
-    }
-  };
-
-  const checkPhone = async () => {
-    if (!phone.trim()) {
-      toast.error('Please enter a phone number');
-      return;
-    }
-
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
-      toast.error('Phone number must be at least 10 digits');
-      return;
-    }
-
-    setIsLoading(true);
-    setLoadingType('phone');
-    setResults(null);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('dark-web-monitor', {
-        body: { action: 'check_phone', phone: cleanPhone, user_id: user?.id }
-      });
-
-      if (error) throw error;
-      setResults(data);
-      toast.info(data.message || 'Phone check complete');
       loadMonitoredItems();
     } catch (error: any) {
       console.error('Check error:', error);
@@ -177,9 +158,16 @@ export const DarkWebMonitor = () => {
     return <Badge className={colors[level] || 'bg-muted'}>{level?.toUpperCase()}</Badge>;
   };
 
+  // Get sensitive data leaked across all breaches
+  const getSensitiveDataSummary = (breaches: Breach[]) => {
+    const allDataClasses = new Set<string>();
+    breaches.forEach(b => b.data_classes?.forEach(dc => allDataClasses.add(dc)));
+    return Array.from(allDataClasses).filter(dc => getDataClassStyle(dc).sensitive);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Email Check */}
         <Card>
           <CardHeader>
@@ -188,7 +176,7 @@ export const DarkWebMonitor = () => {
               Email Breach Check
             </CardTitle>
             <CardDescription>
-              Check if an email has been exposed in data breaches
+              Check if an email has been exposed in data breaches. Results include any leaked phone numbers, passwords, and other data.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -202,33 +190,6 @@ export const DarkWebMonitor = () => {
               />
               <Button onClick={checkEmail} disabled={isLoading}>
                 {loadingType === 'email' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Phone Check */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5" />
-              Phone Number Check
-            </CardTitle>
-            <CardDescription>
-              Check if a phone number has been exposed
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Input
-                type="tel"
-                placeholder="+1 (555) 123-4567"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && checkPhone()}
-              />
-              <Button onClick={checkPhone} disabled={isLoading}>
-                {loadingType === 'phone' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </CardContent>
@@ -289,14 +250,27 @@ export const DarkWebMonitor = () => {
               </div>
             )}
 
-            {results.recommendations && (
-              <div className="p-4 bg-blue-500/10 rounded-lg mb-4">
-                <h4 className="font-medium mb-2">Recommendations:</h4>
-                <ul className="list-disc list-inside text-sm space-y-1">
-                  {results.recommendations.map((rec: string, i: number) => (
-                    <li key={i}>{rec}</li>
-                  ))}
-                </ul>
+            {/* Sensitive Data Summary */}
+            {results.breaches?.length > 0 && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg mb-4">
+                <h4 className="font-semibold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  Exposed Data Types
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {getSensitiveDataSummary(results.breaches).map((dc: string) => {
+                    const style = getDataClassStyle(dc);
+                    return (
+                      <Badge key={dc} variant="outline" className={`${style.color} border flex items-center gap-1`}>
+                        {style.icon}
+                        {dc}
+                      </Badge>
+                    );
+                  })}
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  This data may have been leaked and could be used for identity theft, phishing, or fraud.
+                </p>
               </div>
             )}
 
@@ -304,7 +278,7 @@ export const DarkWebMonitor = () => {
               <div className="flex items-center gap-2 p-4 bg-green-500/10 rounded-lg">
                 <Shield className="h-5 w-5 text-green-500" />
                 <span className="text-green-600 dark:text-green-400 font-medium">
-                  No breaches found! This identifier is not in known data breaches.
+                  No breaches found! This email is not in known data breaches.
                 </span>
               </div>
             )}
@@ -330,10 +304,19 @@ export const DarkWebMonitor = () => {
                         <span>{breach.pwn_count?.toLocaleString()} accounts affected</span>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {breach.data_classes?.map((dc: string) => (
-                        <Badge key={dc} variant="secondary" className="text-xs">{dc}</Badge>
-                      ))}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Leaked data in this breach:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {breach.data_classes?.map((dc: string) => {
+                          const style = getDataClassStyle(dc);
+                          return (
+                            <Badge key={dc} variant="outline" className={`text-xs ${style.color} border flex items-center gap-1`}>
+                              {style.icon}
+                              {dc}
+                            </Badge>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -369,7 +352,7 @@ export const DarkWebMonitor = () => {
                 Scan History
               </CardTitle>
               <CardDescription>
-                Previously checked emails, phones, and domains
+                Previously checked emails and domains
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={loadMonitoredItems}>
@@ -386,15 +369,9 @@ export const DarkWebMonitor = () => {
               monitoredItems.map((monitor) => (
                 <div key={monitor.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    {monitor.monitor_type === 'phone' ? (
-                      <Phone className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <Mail className="h-5 w-5 text-muted-foreground" />
-                    )}
+                    <Mail className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <p className="font-medium">
-                        {monitor.monitor_type === 'phone' ? monitor.phone_number : monitor.email}
-                      </p>
+                      <p className="font-medium">{monitor.email}</p>
                       <p className="text-xs text-muted-foreground">
                         Last checked: {monitor.last_checked ? new Date(monitor.last_checked).toLocaleString() : 'Never'}
                       </p>

@@ -173,54 +173,7 @@ serve(async (req) => {
       }
     }
 
-    // Phone number check
-    if (action === 'check_phone' && phone) {
-      console.log('[Dark Web Monitor] Checking phone number...');
-      
-      // Clean phone number
-      const cleanPhone = phone.replace(/\D/g, '');
-      
-      if (cleanPhone.length < 10) {
-        return new Response(JSON.stringify({ 
-          error: 'Invalid phone number - must be at least 10 digits',
-          breaches: [],
-          risk_level: 'unknown'
-        }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Note: HIBP doesn't directly support phone lookups
-      // For phone numbers, we'd need to integrate with services like:
-      // - SpyCloud
-      // - Constella Intelligence
-      // - Have I Been Sold
-      // For now, we'll provide a simulated response with guidance
-      
-      results.phone_checked = cleanPhone;
-      results.message = 'Phone number breach checking requires specialized services (SpyCloud, Constella). Contact us for enterprise integration.';
-      results.recommendations = [
-        'Enable 2FA on accounts linked to this phone',
-        'Be cautious of SIM-swap attacks',
-        'Use an authenticator app instead of SMS for 2FA',
-        'Consider using a Google Voice or virtual number for sensitive accounts'
-      ];
-      results.risk_level = 'unknown';
-      results.simulated = true;
-
-      // Store phone monitor
-      if (user_id) {
-        await supabase.from('dark_web_monitors').insert({
-          user_id,
-          email: `phone:${cleanPhone}`,
-          phone_number: cleanPhone,
-          monitor_type: 'phone',
-          breach_count: 0,
-          last_checked: new Date().toISOString(),
-          is_active: true
-        });
-      }
+    // Phone number check removed - HIBP email scans already reveal phone data in data_classes
     }
 
     // Domain check
