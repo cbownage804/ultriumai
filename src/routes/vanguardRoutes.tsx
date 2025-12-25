@@ -21,6 +21,22 @@ const ComplianceAuditor = lazy(() => import('@/components/security/ComplianceAud
 const RemediationAutomation = lazy(() => import('@/components/vanguard/RemediationAutomation').then(m => ({ default: m.RemediationAutomation })));
 const AlertingSettings = lazy(() => import('@/components/vanguard/AlertingSettings').then(m => ({ default: m.AlertingSettings })));
 
+// New feature components
+const ThreatIntelligence = lazy(() => import('@/components/vanguard/ThreatIntelligence').then(m => ({ default: m.ThreatIntelligence })));
+const DarkWebMonitor = lazy(() => import('@/components/vanguard/DarkWebMonitor').then(m => ({ default: m.DarkWebMonitor })));
+const UserBehaviorAnalytics = lazy(() => import('@/components/vanguard/UserBehaviorAnalytics').then(m => ({ default: m.UserBehaviorAnalytics })));
+const SIEMDashboard = lazy(() => import('@/components/vanguard/SIEMDashboard').then(m => ({ default: m.SIEMDashboard })));
+const PatchManagement = lazy(() => import('@/components/vanguard/PatchManagement').then(m => ({ default: m.PatchManagement })));
+const BackupMonitoring = lazy(() => import('@/components/vanguard/BackupMonitoring').then(m => ({ default: m.BackupMonitoring })));
+const NetworkTopologyMap = lazy(() => import('@/components/vanguard/NetworkTopologyMap').then(m => ({ default: m.NetworkTopologyMap })));
+const AssetInventory = lazy(() => import('@/components/vanguard/AssetInventory').then(m => ({ default: m.AssetInventory })));
+const ExecutiveDashboard = lazy(() => import('@/components/vanguard/ExecutiveDashboard').then(m => ({ default: m.ExecutiveDashboard })));
+const ComplianceScorecard = lazy(() => import('@/components/vanguard/ComplianceScorecard').then(m => ({ default: m.ComplianceScorecard })));
+const CustomReportBuilder = lazy(() => import('@/components/vanguard/CustomReportBuilder').then(m => ({ default: m.CustomReportBuilder })));
+const MultiTenantManager = lazy(() => import('@/components/vanguard/MultiTenantManager').then(m => ({ default: m.MultiTenantManager })));
+const APIMarketplace = lazy(() => import('@/components/vanguard/APIMarketplace').then(m => ({ default: m.APIMarketplace })));
+const IncidentResponsePlaybooks = lazy(() => import('@/components/vanguard/IncidentResponsePlaybooks').then(m => ({ default: m.IncidentResponsePlaybooks })));
+
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
   <div className="min-h-[60vh] flex items-center justify-center">
@@ -58,6 +74,21 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardReports} />} />,
   <Route key="vanguard-remediation" path="remediation" element={<LazyProtectedPage component={RemediationAutomation} />} />,
   <Route key="vanguard-alerting" path="alerting" element={<LazyProtectedPage component={AlertingSettings} />} />,
+  // New feature routes
+  <Route key="vanguard-threat-intel" path="threat-intel" element={<LazyProtectedPage component={ThreatIntelligence} />} />,
+  <Route key="vanguard-dark-web" path="dark-web" element={<LazyProtectedPage component={DarkWebMonitor} />} />,
+  <Route key="vanguard-uba" path="user-behavior" element={<LazyProtectedPage component={UserBehaviorAnalytics} />} />,
+  <Route key="vanguard-siem" path="siem" element={<LazyProtectedPage component={SIEMDashboard} />} />,
+  <Route key="vanguard-patches" path="patches" element={<LazyProtectedPage component={PatchManagement} />} />,
+  <Route key="vanguard-backups" path="backups" element={<LazyProtectedPage component={BackupMonitoring} />} />,
+  <Route key="vanguard-network" path="network" element={<LazyProtectedPage component={NetworkTopologyMap} />} />,
+  <Route key="vanguard-assets" path="assets" element={<LazyProtectedPage component={AssetInventory} />} />,
+  <Route key="vanguard-executive" path="executive" element={<LazyProtectedPage component={ExecutiveDashboard} />} />,
+  <Route key="vanguard-scorecard" path="scorecard" element={<LazyProtectedPage component={ComplianceScorecard} />} />,
+  <Route key="vanguard-report-builder" path="report-builder" element={<LazyProtectedPage component={CustomReportBuilder} />} />,
+  <Route key="vanguard-tenants" path="tenants" element={<LazyProtectedPage component={MultiTenantManager} />} />,
+  <Route key="vanguard-marketplace" path="marketplace" element={<LazyProtectedPage component={APIMarketplace} />} />,
+  <Route key="vanguard-playbooks" path="playbooks" element={<LazyProtectedPage component={IncidentResponsePlaybooks} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
