@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Key, Plus, Trash2, Edit, Shield, Server, Terminal, Network,
-  Eye, EyeOff, CheckCircle, XCircle, RefreshCw, Lock
+  Eye, EyeOff, CheckCircle, XCircle, RefreshCw, Lock, Monitor, Info, Copy, ExternalLink
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,13 +35,277 @@ interface Credential {
   created_at: string;
 }
 
+// Device categories with their protocols
+const DEVICE_CATEGORIES = {
+  windows: {
+    name: 'Windows PCs & Servers',
+    icon: Monitor,
+    protocol: 'WinRM',
+    color: 'blue',
+    description: 'Windows Remote Management (built-in)',
+    types: ['winrm']
+  },
+  linux: {
+    name: 'Linux Machines',
+    icon: Terminal,
+    protocol: 'SSH',
+    color: 'green',
+    description: 'Secure Shell (standard)',
+    types: ['ssh_password', 'ssh_key']
+  },
+  network: {
+    name: 'Network Devices',
+    icon: Network,
+    protocol: 'SNMP',
+    color: 'orange',
+    description: 'Simple Network Management Protocol',
+    types: ['snmp_v2', 'snmp_v3']
+  }
+};
+
 const CREDENTIAL_TYPES = [
-  { id: 'winrm', name: 'WinRM (Windows)', icon: Server, description: 'PowerShell remoting for Windows compliance' },
-  { id: 'ssh_password', name: 'SSH (Password)', icon: Terminal, description: 'SSH access with password auth' },
-  { id: 'ssh_key', name: 'SSH (Key)', icon: Key, description: 'SSH access with private key' },
-  { id: 'snmp_v2', name: 'SNMP v2c', icon: Network, description: 'SNMP community string for network devices' },
-  { id: 'snmp_v3', name: 'SNMP v3', icon: Shield, description: 'Secure SNMP with authentication' },
+  { id: 'winrm', name: 'WinRM (Windows)', icon: Monitor, description: 'PowerShell remoting for Windows compliance', category: 'windows' },
+  { id: 'ssh_password', name: 'SSH (Password)', icon: Terminal, description: 'SSH access with password auth', category: 'linux' },
+  { id: 'ssh_key', name: 'SSH (Key)', icon: Key, description: 'SSH access with private key', category: 'linux' },
+  { id: 'snmp_v2', name: 'SNMP v2c', icon: Network, description: 'SNMP community string for network devices', category: 'network' },
+  { id: 'snmp_v3', name: 'SNMP v3', icon: Shield, description: 'Secure SNMP with authentication', category: 'network' },
 ];
+
+// Setup instructions component
+function SetupInstructionsDialog({ category }: { category: 'windows' | 'linux' | 'network' }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(id);
+    toast.success('Copied to clipboard');
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const instructions = {
+    windows: {
+      title: 'Enable WinRM on Windows',
+      description: 'WinRM (Windows Remote Management) is built into Windows. No additional software installation required.',
+      steps: [
+        {
+          title: 'Option 1: PowerShell (Quick Setup)',
+          description: 'Run as Administrator on each Windows machine:',
+          code: `# Enable WinRM and configure firewall
+Enable-PSRemoting -Force
+Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value "*" -Force
+Enable-NetFirewallRule -DisplayGroup "Windows Remote Management"`,
+          note: 'For production, replace "*" with your Pi appliance IP address'
+        },
+        {
+          title: 'Option 2: Group Policy (Domain Environment)',
+          description: 'For domain-joined machines, use GPO for centralized configuration:',
+          steps: [
+            'Open Group Policy Management Console',
+            'Navigate to: Computer Configuration → Policies → Administrative Templates → Windows Components → Windows Remote Management',
+            'Enable "Allow remote server management through WinRM"',
+            'Set IPv4/IPv6 filters to your Pi appliance subnet',
+            'Configure Windows Firewall to allow WinRM (TCP 5985/5986)'
+          ]
+        },
+        {
+          title: 'Option 3: Intune/Azure AD',
+          description: 'For cloud-managed devices, use Intune configuration profile:',
+          steps: [
+            'Create a new Configuration Profile',
+            'Select "Custom" template',
+            'Add OMA-URI settings for WinRM configuration',
+            'Deploy to target device groups'
+          ]
+        }
+      ],
+      ports: ['5985 (HTTP)', '5986 (HTTPS - Recommended)'],
+      verification: `# Test WinRM connectivity from Pi appliance
+Test-WSMan -ComputerName TARGET_IP`
+    },
+    linux: {
+      title: 'Configure SSH on Linux',
+      description: 'SSH is typically pre-installed on Linux. Just ensure it\'s enabled and accessible.',
+      steps: [
+        {
+          title: 'Verify SSH is Running',
+          description: 'Check SSH service status:',
+          code: `# Check SSH status
+sudo systemctl status sshd
+
+# If not running, start and enable it
+sudo systemctl enable sshd
+sudo systemctl start sshd`
+        },
+        {
+          title: 'Configure SSH for Key-Based Auth (Recommended)',
+          description: 'Generate and deploy SSH keys for passwordless access:',
+          code: `# On the Pi appliance, generate key pair
+ssh-keygen -t ed25519 -C "vanguard-scanner"
+
+# Copy public key to target machine
+ssh-copy-id user@target_ip`
+        },
+        {
+          title: 'Firewall Configuration',
+          description: 'Ensure SSH port is open:',
+          code: `# Ubuntu/Debian
+sudo ufw allow ssh
+
+# CentOS/RHEL
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --reload`
+        }
+      ],
+      ports: ['22 (SSH - default)'],
+      verification: `# Test SSH connectivity from Pi appliance
+ssh -o ConnectTimeout=5 user@TARGET_IP "echo 'Connection successful'"`
+    },
+    network: {
+      title: 'Enable SNMP on Network Devices',
+      description: 'SNMP allows monitoring of routers, switches, firewalls, and other network devices.',
+      steps: [
+        {
+          title: 'Cisco IOS/IOS-XE',
+          description: 'Configure SNMP on Cisco devices:',
+          code: `! SNMP v2c configuration
+snmp-server community YOUR_COMMUNITY RO
+snmp-server host PI_IP_ADDRESS version 2c YOUR_COMMUNITY
+
+! SNMP v3 (Recommended)
+snmp-server group VANGUARD v3 priv
+snmp-server user vanguard VANGUARD v3 auth sha AUTH_PASSWORD priv aes 128 PRIV_PASSWORD`
+        },
+        {
+          title: 'Ubiquiti UniFi',
+          description: 'Enable via UniFi Controller:',
+          steps: [
+            'Go to Settings → System → SNMP',
+            'Enable SNMP v1/v2c or v3',
+            'Set community string or v3 credentials',
+            'Save and apply to devices'
+          ]
+        },
+        {
+          title: 'Fortinet FortiGate',
+          description: 'Configure via CLI:',
+          code: `config system snmp community
+  edit 1
+    set name "vanguard"
+    config hosts
+      edit 1
+        set ip PI_IP_ADDRESS
+      next
+    end
+  next
+end`
+        }
+      ],
+      ports: ['161 (SNMP queries)', '162 (SNMP traps)'],
+      verification: `# Test SNMP from Pi appliance
+snmpwalk -v2c -c COMMUNITY TARGET_IP system`
+    }
+  };
+
+  const info = instructions[category];
+  const categoryInfo = DEVICE_CATEGORIES[category];
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Info className="h-4 w-4" />
+          Setup Guide
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <categoryInfo.icon className="h-5 w-5" />
+            {info.title}
+          </DialogTitle>
+          <DialogDescription>{info.description}</DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-6 py-4">
+          {/* Required Ports */}
+          <div className="p-3 bg-muted/50 rounded-lg">
+            <p className="text-sm font-medium mb-1">Required Ports:</p>
+            <div className="flex flex-wrap gap-2">
+              {info.ports.map(port => (
+                <Badge key={port} variant="secondary">{port}</Badge>
+              ))}
+            </div>
+          </div>
+
+          {/* Setup Steps */}
+          {info.steps.map((step, idx) => (
+            <div key={idx} className="space-y-2">
+              <h4 className="font-semibold text-sm">{step.title}</h4>
+              <p className="text-sm text-muted-foreground">{step.description}</p>
+              
+              {step.code && (
+                <div className="relative">
+                  <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto">
+                    {step.code}
+                  </pre>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6"
+                    onClick={() => copyToClipboard(step.code!, `step-${idx}`)}
+                  >
+                    {copied === `step-${idx}` ? (
+                      <CheckCircle className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
+              )}
+              
+              {step.steps && (
+                <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground ml-2">
+                  {step.steps.map((s, i) => (
+                    <li key={i}>{s}</li>
+                  ))}
+                </ol>
+              )}
+              
+              {step.note && (
+                <p className="text-xs text-amber-500 flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  {step.note}
+                </p>
+              )}
+            </div>
+          ))}
+
+          {/* Verification */}
+          <div className="border-t pt-4">
+            <h4 className="font-semibold text-sm mb-2">Verify Connectivity</h4>
+            <div className="relative">
+              <pre className="p-3 bg-muted rounded-lg text-xs font-mono overflow-x-auto">
+                {info.verification}
+              </pre>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-6 w-6"
+                onClick={() => copyToClipboard(info.verification, 'verify')}
+              >
+                {copied === 'verify' ? (
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                ) : (
+                  <Copy className="h-3 w-3" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function CredentialVault() {
   const { user } = useAuth();
@@ -456,142 +721,216 @@ export function CredentialVault() {
         </Dialog>
       </div>
 
-      {/* Info banner */}
-      <Card className="border-primary/50 bg-primary/5">
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <Shield className="h-8 w-8 text-primary shrink-0" />
-            <div>
-              <h3 className="font-semibold">Agentless Scanning Credentials</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Store credentials for remote access to endpoints without installing agents. 
-                The Vanguard Pi appliance uses these credentials to perform compliance checks via WinRM (Windows), SSH (Linux), and SNMP (network devices).
+      {/* Protocol Overview Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {Object.entries(DEVICE_CATEGORIES).map(([key, cat]) => {
+          const credsCount = credentials.filter(c => cat.types.includes(c.credential_type)).length;
+          const Icon = cat.icon;
+          
+          return (
+            <Card key={key} className={`border-${cat.color}-500/30 bg-${cat.color}-500/5`}>
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg bg-${cat.color}-500/10`}>
+                      <Icon className={`h-5 w-5 text-${cat.color}-500`} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-sm">{cat.name}</h3>
+                      <Badge variant="outline" className="mt-1">{cat.protocol}</Badge>
+                    </div>
+                  </div>
+                  <SetupInstructionsDialog category={key as 'windows' | 'linux' | 'network'} />
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">{cat.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">
+                    <span className="font-semibold">{credsCount}</span> credential{credsCount !== 1 ? 's' : ''}
+                  </span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => {
+                      setFormData(f => ({ ...f, credential_type: cat.types[0] }));
+                      setShowAddDialog(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Important Note */}
+      <Card className="border-amber-500/30 bg-amber-500/5">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex gap-3 items-start">
+            <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="font-medium text-amber-700 dark:text-amber-400">No software installation required</p>
+              <p className="text-muted-foreground mt-1">
+                Agentless scanning uses built-in protocols: WinRM is native to Windows, SSH is standard on Linux, and SNMP is supported by most network devices. The Vanguard Pi appliance connects remotely using these credentials.
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Credentials list */}
-      <div className="grid gap-4">
-        {isLoading ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
-        ) : credentials.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="font-medium mb-2">No credentials configured</h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  Add credentials to enable agentless compliance scanning
-                </p>
-                <Button onClick={() => setShowAddDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add First Credential
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          credentials.map(cred => {
-            const typeInfo = getTypeInfo(cred.credential_type);
-            const Icon = typeInfo.icon;
-            
-            return (
-              <Card key={cred.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-lg bg-primary/10">
-                        <Icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{cred.credential_name}</h3>
-                          {cred.is_active ? (
-                            <Badge variant="outline" className="text-green-500 border-green-500">Active</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-muted-foreground">Inactive</Badge>
-                          )}
-                          {cred.last_test_result === 'success' && (
-                            <Badge className="bg-green-500/10 text-green-500">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Verified
-                            </Badge>
-                          )}
-                          {cred.last_test_result === 'failed' && (
-                            <Badge className="bg-red-500/10 text-red-500">
-                              <XCircle className="h-3 w-3 mr-1" />
-                              Failed
-                            </Badge>
-                          )}
+      {/* Credentials by Category */}
+      {isLoading ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      ) : credentials.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-12">
+              <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="font-medium mb-2">No credentials configured</h3>
+              <p className="text-muted-foreground text-sm mb-4">
+                Add credentials to enable agentless compliance scanning
+              </p>
+              <Button onClick={() => setShowAddDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add First Credential
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList>
+            <TabsTrigger value="all">All ({credentials.length})</TabsTrigger>
+            {Object.entries(DEVICE_CATEGORIES).map(([key, cat]) => {
+              const count = credentials.filter(c => cat.types.includes(c.credential_type)).length;
+              if (count === 0) return null;
+              return (
+                <TabsTrigger key={key} value={key} className="gap-2">
+                  <cat.icon className="h-4 w-4" />
+                  {cat.protocol} ({count})
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          
+          {['all', ...Object.keys(DEVICE_CATEGORIES)].map(tabKey => (
+            <TabsContent key={tabKey} value={tabKey} className="space-y-4 mt-4">
+              {credentials
+                .filter(cred => {
+                  if (tabKey === 'all') return true;
+                  const cat = DEVICE_CATEGORIES[tabKey as keyof typeof DEVICE_CATEGORIES];
+                  return cat?.types.includes(cred.credential_type);
+                })
+                .map(cred => {
+                  const typeInfo = getTypeInfo(cred.credential_type);
+                  const Icon = typeInfo.icon;
+                  const category = CREDENTIAL_TYPES.find(t => t.id === cred.credential_type)?.category;
+                  const catInfo = category ? DEVICE_CATEGORIES[category as keyof typeof DEVICE_CATEGORIES] : null;
+                  
+                  return (
+                    <Card key={cred.id}>
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-4">
+                            <div className="p-3 rounded-lg bg-primary/10">
+                              <Icon className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold">{cred.credential_name}</h3>
+                                {catInfo && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {catInfo.protocol}
+                                  </Badge>
+                                )}
+                                {cred.is_active ? (
+                                  <Badge variant="outline" className="text-green-500 border-green-500">Active</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-muted-foreground">Inactive</Badge>
+                                )}
+                                {cred.last_test_result === 'success' && (
+                                  <Badge className="bg-green-500/10 text-green-500">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Verified
+                                  </Badge>
+                                )}
+                                {cred.last_test_result === 'failed' && (
+                                  <Badge className="bg-red-500/10 text-red-500">
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    Failed
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{typeInfo.name}</p>
+                              
+                              <div className="flex flex-wrap gap-4 mt-3 text-sm">
+                                {cred.username && (
+                                  <div>
+                                    <span className="text-muted-foreground">User: </span>
+                                    <span className="font-mono">
+                                      {cred.domain ? `${cred.domain}\\` : ''}{cred.username}
+                                    </span>
+                                  </div>
+                                )}
+                                {cred.port && cred.credential_type.startsWith('ssh') && (
+                                  <div>
+                                    <span className="text-muted-foreground">Port: </span>
+                                    <span>{cred.port}</span>
+                                  </div>
+                                )}
+                                {cred.target_scope?.length > 0 && (
+                                  <div>
+                                    <span className="text-muted-foreground">Scope: </span>
+                                    <span className="font-mono text-xs">
+                                      {cred.target_scope.slice(0, 3).join(', ')}
+                                      {cred.target_scope.length > 3 && ` +${cred.target_scope.length - 3} more`}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => testCredential(cred)}
+                              disabled={isTesting === cred.id}
+                            >
+                              {isTesting === cred.id ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Test
+                                </>
+                              )}
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(cred)}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(cred.id)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{typeInfo.name}</p>
-                        
-                        <div className="flex flex-wrap gap-4 mt-3 text-sm">
-                          {cred.username && (
-                            <div>
-                              <span className="text-muted-foreground">User: </span>
-                              <span className="font-mono">
-                                {cred.domain ? `${cred.domain}\\` : ''}{cred.username}
-                              </span>
-                            </div>
-                          )}
-                          {cred.port && cred.credential_type.startsWith('ssh') && (
-                            <div>
-                              <span className="text-muted-foreground">Port: </span>
-                              <span>{cred.port}</span>
-                            </div>
-                          )}
-                          {cred.target_scope?.length > 0 && (
-                            <div>
-                              <span className="text-muted-foreground">Scope: </span>
-                              <span className="font-mono text-xs">
-                                {cred.target_scope.slice(0, 3).join(', ')}
-                                {cred.target_scope.length > 3 && ` +${cred.target_scope.length - 3} more`}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => testCredential(cred)}
-                        disabled={isTesting === cred.id}
-                      >
-                        {isTesting === cred.id ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Test
-                          </>
-                        )}
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(cred)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(cred.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
     </div>
   );
 }
