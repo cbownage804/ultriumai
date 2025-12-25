@@ -33,10 +33,10 @@ export const useVanguardData = () => {
   const [metrics, setMetrics] = useState<VanguardMetrics>({
     realTimeThreats: 0,
     behavioralAlerts: 0,
-    securityScore: 98,
-    endpointsProtected: "50K+",
-    detectionRate: 99.97,
-    responseTime: "0.1s"
+    securityScore: 0,
+    endpointsProtected: "0",
+    detectionRate: 0,
+    responseTime: "—"
   });
 
   const [threats, setThreats] = useState<VanguardThreat[]>([]);
@@ -143,7 +143,7 @@ export const useVanguardData = () => {
 
       setThreats(realThreats.slice(0, 6)); // Limit to 6 threats for display
 
-      // Update metrics based on real data
+      // Update metrics based on REAL data only - no artificial inflation
       const totalIncidents = (incidents?.length || 0) + (mdrAlerts?.length || 0) + (safwebThreats?.length || 0);
       const recentThreats = incidents?.filter(i => {
         const createdAt = new Date(i.created_at);
@@ -151,10 +151,18 @@ export const useVanguardData = () => {
         return createdAt.toDateString() === today.toDateString();
       }).length || 0;
 
+      // Calculate real security score based on active vs resolved incidents
+      const resolvedIncidents = incidents?.filter(i => i.status === 'resolved').length || 0;
+      const totalIncidentCount = incidents?.length || 0;
+      const securityScore = totalIncidentCount > 0 
+        ? Math.round((resolvedIncidents / totalIncidentCount) * 100) 
+        : 100; // If no incidents, score is 100%
+
       setMetrics(prev => ({
         ...prev,
-        realTimeThreats: Math.max(totalIncidents * 12, 247), // Scale up for demo
-        behavioralAlerts: Math.max(recentThreats, 3)
+        realTimeThreats: totalIncidents, // REAL count only
+        behavioralAlerts: recentThreats, // REAL count only
+        securityScore: securityScore
       }));
 
     } catch (error) {
@@ -303,20 +311,10 @@ export const useVanguardData = () => {
       )
       .subscribe();
 
-    // Simulate real-time updates
-    const simulationInterval = setInterval(() => {
-      setMetrics(prev => ({
-        ...prev,
-        realTimeThreats: prev.realTimeThreats + Math.floor(Math.random() * 3),
-        behavioralAlerts: Math.max(0, prev.behavioralAlerts + (Math.random() > 0.7 ? 1 : -1))
-      }));
-    }, 5000);
-
     return () => {
       supabase.removeChannel(incidentsChannel);
       supabase.removeChannel(alertsChannel);
       supabase.removeChannel(behavioralChannel);
-      clearInterval(simulationInterval);
     };
   }, []);
 
