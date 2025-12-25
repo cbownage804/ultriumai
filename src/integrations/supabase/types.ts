@@ -116,6 +116,139 @@ export type Database = {
         }
         Relationships: []
       }
+      agentless_check_results: {
+        Row: {
+          actual_value: string | null
+          category: string | null
+          check_description: string | null
+          check_id: string
+          check_name: string
+          cis_benchmark_id: string | null
+          created_at: string
+          evidence: Json | null
+          expected_value: string | null
+          framework_type: string | null
+          id: string
+          job_id: string | null
+          remediation_steps: string | null
+          severity: string | null
+          status: string
+          target_host: string
+          user_id: string
+        }
+        Insert: {
+          actual_value?: string | null
+          category?: string | null
+          check_description?: string | null
+          check_id: string
+          check_name: string
+          cis_benchmark_id?: string | null
+          created_at?: string
+          evidence?: Json | null
+          expected_value?: string | null
+          framework_type?: string | null
+          id?: string
+          job_id?: string | null
+          remediation_steps?: string | null
+          severity?: string | null
+          status: string
+          target_host: string
+          user_id: string
+        }
+        Update: {
+          actual_value?: string | null
+          category?: string | null
+          check_description?: string | null
+          check_id?: string
+          check_name?: string
+          cis_benchmark_id?: string | null
+          created_at?: string
+          evidence?: Json | null
+          expected_value?: string | null
+          framework_type?: string | null
+          id?: string
+          job_id?: string | null
+          remediation_steps?: string | null
+          severity?: string | null
+          status?: string
+          target_host?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agentless_check_results_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "agentless_scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agentless_scan_jobs: {
+        Row: {
+          agent_id: string | null
+          completed_at: string | null
+          compliance_results: Json | null
+          created_at: string
+          credential_ids: Json | null
+          error_message: string | null
+          framework_type: string | null
+          id: string
+          scan_status: string
+          scan_type: string
+          scanned_hosts: number | null
+          started_at: string | null
+          target_hosts: Json
+          total_hosts: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          completed_at?: string | null
+          compliance_results?: Json | null
+          created_at?: string
+          credential_ids?: Json | null
+          error_message?: string | null
+          framework_type?: string | null
+          id?: string
+          scan_status?: string
+          scan_type: string
+          scanned_hosts?: number | null
+          started_at?: string | null
+          target_hosts?: Json
+          total_hosts?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          completed_at?: string | null
+          compliance_results?: Json | null
+          created_at?: string
+          credential_ids?: Json | null
+          error_message?: string | null
+          framework_type?: string | null
+          id?: string
+          scan_status?: string
+          scan_type?: string
+          scanned_hosts?: number | null
+          started_at?: string | null
+          target_hosts?: Json
+          total_hosts?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agentless_scan_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_analysis_results: {
         Row: {
           ai_analysis: string | null
@@ -13896,6 +14029,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_agent_credentials: {
+        Row: {
+          created_at: string
+          credential_name: string
+          credential_type: string
+          domain: string | null
+          encrypted_password: string | null
+          encrypted_private_key: string | null
+          id: string
+          is_active: boolean | null
+          last_test_result: string | null
+          last_used_at: string | null
+          notes: string | null
+          port: number | null
+          snmp_auth_protocol: string | null
+          snmp_community: string | null
+          snmp_priv_protocol: string | null
+          target_scope: Json | null
+          updated_at: string
+          use_ssl: boolean | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          credential_name: string
+          credential_type: string
+          domain?: string | null
+          encrypted_password?: string | null
+          encrypted_private_key?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_test_result?: string | null
+          last_used_at?: string | null
+          notes?: string | null
+          port?: number | null
+          snmp_auth_protocol?: string | null
+          snmp_community?: string | null
+          snmp_priv_protocol?: string | null
+          target_scope?: Json | null
+          updated_at?: string
+          use_ssl?: boolean | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          credential_name?: string
+          credential_type?: string
+          domain?: string | null
+          encrypted_password?: string | null
+          encrypted_private_key?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_test_result?: string | null
+          last_used_at?: string | null
+          notes?: string | null
+          port?: number | null
+          snmp_auth_protocol?: string | null
+          snmp_community?: string | null
+          snmp_priv_protocol?: string | null
+          target_scope?: Json | null
+          updated_at?: string
+          use_ssl?: boolean | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
       }
       vanguard_agent_metrics: {
         Row: {
