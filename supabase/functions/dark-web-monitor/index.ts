@@ -298,8 +298,9 @@ serve(async (req) => {
         
         try {
           const authString = btoa(`${dehashedEmail}:${dehashedKey}`);
+          // Use domain: field to search for all entries from this domain
           const dehashedResponse = await fetch(
-            `https://api.dehashed.com/search?query=email:@${encodeURIComponent(domain)}`,
+            `https://api.dehashed.com/search?query=domain:${encodeURIComponent(domain)}&size=100`,
             {
               headers: {
                 'Accept': 'application/json',
