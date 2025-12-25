@@ -1,0 +1,298 @@
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Package, Shield, AlertTriangle, CheckCircle, Clock, Download, Server, Calendar } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+
+interface PatchInfo {
+  id: string;
+  name: string;
+  severity: string;
+  category: string;
+  size: string;
+  release_date: string;
+  status: string;
+  devices_affected: number;
+  devices_patched: number;
+}
+
+export const PatchManagement = () => {
+  const { user } = useAuth();
+  const [patches, setPatches] = useState<PatchInfo[]>([]);
+  const [stats, setStats] = useState({
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    compliance: 85
+  });
+
+  useEffect(() => {
+    if (user) loadPatches();
+  }, [user]);
+
+  const loadPatches = async () => {
+    // Mock patch data - in production would come from agent scan results
+    const mockPatches: PatchInfo[] = [
+      { id: '1', name: 'KB5034441 - Windows Security Update', severity: 'critical', category: 'Security', size: '245 MB', release_date: '2024-12-20', status: 'pending', devices_affected: 15, devices_patched: 5 },
+      { id: '2', name: 'KB5034467 - .NET Framework Update', severity: 'high', category: 'Framework', size: '78 MB', release_date: '2024-12-18', status: 'in_progress', devices_affected: 22, devices_patched: 18 },
+      { id: '3', name: 'Chrome 121.0.6167.85', severity: 'high', category: 'Browser', size: '95 MB', release_date: '2024-12-15', status: 'pending', devices_affected: 30, devices_patched: 12 },
+      { id: '4', name: 'Adobe Reader 2024.001.20604', severity: 'medium', category: 'Application', size: '156 MB', release_date: '2024-12-10', status: 'completed', devices_affected: 18, devices_patched: 18 },
+      { id: '5', name: 'KB5034129 - Office Security Update', severity: 'medium', category: 'Office', size: '312 MB', release_date: '2024-12-08', status: 'pending', devices_affected: 25, devices_patched: 8 },
+    ];
+
+    setPatches(mockPatches);
+    setStats({
+      critical: mockPatches.filter(p => p.severity === 'critical' && p.status !== 'completed').length,
+      high: mockPatches.filter(p => p.severity === 'high' && p.status !== 'completed').length,
+      medium: mockPatches.filter(p => p.severity === 'medium' && p.status !== 'completed').length,
+      low: mockPatches.filter(p => p.severity === 'low' && p.status !== 'completed').length,
+      compliance: Math.round(mockPatches.reduce((sum, p) => sum + (p.devices_patched / p.devices_affected * 100), 0) / mockPatches.length)
+    });
+  };
+
+  const deployPatch = async (patchId: string) => {
+    toast.success('Patch deployment scheduled');
+    // Would trigger agent command to deploy patch
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    const colors: Record<string, string> = {
+      critical: 'bg-red-500',
+      high: 'bg-orange-500',
+      medium: 'bg-yellow-500',
+      low: 'bg-blue-500'
+    };
+    return <Badge className={colors[severity] || 'bg-muted'}>{severity}</Badge>;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: 'bg-gray-500',
+      in_progress: 'bg-blue-500',
+      completed: 'bg-green-500',
+      failed: 'bg-red-500'
+    };
+    return <Badge className={colors[status] || 'bg-muted'}>{status.replace('_', ' ')}</Badge>;
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+              Critical
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-500">{stats.critical}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Shield className="h-4 w-4 text-orange-500" />
+              High
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-500">{stats.high}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Package className="h-4 w-4 text-yellow-500" />
+              Medium
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-500">{stats.medium}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Package className="h-4 w-4 text-blue-500" />
+              Low
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-500">{stats.low}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              Compliance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-500">{stats.compliance}%</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="pending">
+        <TabsList>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="in_progress">In Progress</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Pending Patches
+              </CardTitle>
+              <CardDescription>
+                Patches awaiting deployment
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {patches.filter(p => p.status === 'pending').map(patch => (
+                  <div key={patch.id} className="p-4 border rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium">{patch.name}</h4>
+                          {getSeverityBadge(patch.severity)}
+                          <Badge variant="outline">{patch.category}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Server className="h-4 w-4" />
+                            {patch.devices_patched}/{patch.devices_affected} devices
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Download className="h-4 w-4" />
+                            {patch.size}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(patch.release_date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <Progress value={(patch.devices_patched / patch.devices_affected) * 100} className="h-2" />
+                        </div>
+                      </div>
+                      <Button size="sm" onClick={() => deployPatch(patch.id)}>
+                        Deploy
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="in_progress" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Patches In Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {patches.filter(p => p.status === 'in_progress').map(patch => (
+                  <div key={patch.id} className="p-4 border rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium">{patch.name}</h4>
+                          {getSeverityBadge(patch.severity)}
+                          {getStatusBadge(patch.status)}
+                        </div>
+                        <div className="mt-2">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>{patch.devices_patched}/{patch.devices_affected} devices</span>
+                            <span>{Math.round((patch.devices_patched / patch.devices_affected) * 100)}%</span>
+                          </div>
+                          <Progress value={(patch.devices_patched / patch.devices_affected) * 100} className="h-2" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="completed" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Completed Patches
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {patches.filter(p => p.status === 'completed').map(patch => (
+                  <div key={patch.id} className="p-4 border rounded-lg bg-green-500/5">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <h4 className="font-medium">{patch.name}</h4>
+                      {getSeverityBadge(patch.severity)}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      All {patch.devices_affected} devices patched successfully
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Patch Schedule
+              </CardTitle>
+              <CardDescription>
+                Configure automatic patch deployment windows
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Critical Patches</h4>
+                  <p className="text-sm text-muted-foreground">Deploy immediately with 4-hour grace period</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">High Priority</h4>
+                  <p className="text-sm text-muted-foreground">Deploy within 24 hours during maintenance window</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Medium Priority</h4>
+                  <p className="text-sm text-muted-foreground">Deploy within 7 days during weekends</p>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Low Priority</h4>
+                  <p className="text-sm text-muted-foreground">Deploy within 30 days during scheduled maintenance</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
