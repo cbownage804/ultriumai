@@ -1753,6 +1753,461 @@ async def discovery_loop(session: aiohttp.ClientSession) -> None:
         await asyncio.sleep(interval)
 
 
+# =============================================================================
+# Agentless Compliance Scanning (WinRM, SSH, SNMP)
+# =============================================================================
+
+# WinRM support (optional)
+try:
+    import winrm
+    HAS_WINRM = True
+except ImportError:
+    HAS_WINRM = False
+
+# Paramiko SSH support (optional)
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
+
+
+# CIS Windows Checks via WinRM
+CIS_WINDOWS_CHECKS = [
+    {
+        "check_id": "1.1.1",
+        "check_name": "Ensure password history is configured",
+        "category": "Account Policies",
+        "severity": "medium",
+        "command": "net accounts | findstr /i 'password history'",
+        "expected": "24",
+        "cis_benchmark_id": "CIS-WIN-1.1.1"
+    },
+    {
+        "check_id": "1.1.2",
+        "check_name": "Ensure minimum password length is 14 or more",
+        "category": "Account Policies",
+        "severity": "high",
+        "command": "net accounts | findstr /i 'Minimum password length'",
+        "expected": "14",
+        "cis_benchmark_id": "CIS-WIN-1.1.2"
+    },
+    {
+        "check_id": "2.3.1",
+        "check_name": "Ensure Windows Firewall is enabled",
+        "category": "Windows Firewall",
+        "severity": "critical",
+        "command": "netsh advfirewall show allprofiles state",
+        "expected": "ON",
+        "cis_benchmark_id": "CIS-WIN-2.3.1"
+    },
+    {
+        "check_id": "2.3.5",
+        "check_name": "Ensure BitLocker Drive Encryption is enabled",
+        "category": "Encryption",
+        "severity": "high",
+        "command": "manage-bde -status C: | findstr /i 'Protection Status'",
+        "expected": "Protection On",
+        "cis_benchmark_id": "CIS-WIN-2.3.5"
+    },
+    {
+        "check_id": "5.1.1",
+        "check_name": "Ensure Guest account is disabled",
+        "category": "Local Policies",
+        "severity": "high",
+        "command": "net user guest | findstr /i 'Account active'",
+        "expected": "No",
+        "cis_benchmark_id": "CIS-WIN-5.1.1"
+    },
+    {
+        "check_id": "9.1.1",
+        "check_name": "Ensure Windows Update service is running",
+        "category": "System Services",
+        "severity": "high",
+        "command": "sc query wuauserv | findstr /i 'STATE'",
+        "expected": "RUNNING",
+        "cis_benchmark_id": "CIS-WIN-9.1.1"
+    },
+    {
+        "check_id": "17.1.1",
+        "check_name": "Ensure audit policy is configured",
+        "category": "Audit Policies",
+        "severity": "medium",
+        "command": "auditpol /get /category:* | findstr /i 'Logon'",
+        "expected": "Success and Failure",
+        "cis_benchmark_id": "CIS-WIN-17.1.1"
+    },
+    {
+        "check_id": "18.1.1",
+        "check_name": "Ensure SMB signing is required",
+        "category": "Network Security",
+        "severity": "high",
+        "command": "reg query HKLM\\SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters /v RequireSecuritySignature",
+        "expected": "0x1",
+        "cis_benchmark_id": "CIS-WIN-18.1.1"
+    },
+]
+
+# CIS Linux Checks via SSH
+CIS_LINUX_CHECKS = [
+    {
+        "check_id": "1.1.1",
+        "check_name": "Ensure mounting of cramfs filesystems is disabled",
+        "category": "Filesystem Configuration",
+        "severity": "low",
+        "command": "modprobe -n -v cramfs 2>&1 | grep -v 'install /bin/'",
+        "expected": "install /bin/true",
+        "cis_benchmark_id": "CIS-LNX-1.1.1"
+    },
+    {
+        "check_id": "1.4.1",
+        "check_name": "Ensure permissions on bootloader config are configured",
+        "category": "Secure Boot",
+        "severity": "high",
+        "command": "stat -c '%a' /boot/grub/grub.cfg 2>/dev/null || stat -c '%a' /boot/grub2/grub.cfg 2>/dev/null",
+        "expected": "600",
+        "cis_benchmark_id": "CIS-LNX-1.4.1"
+    },
+    {
+        "check_id": "5.2.1",
+        "check_name": "Ensure SSH root login is disabled",
+        "category": "SSH Server",
+        "severity": "critical",
+        "command": "grep -i '^PermitRootLogin' /etc/ssh/sshd_config",
+        "expected": "no",
+        "cis_benchmark_id": "CIS-LNX-5.2.1"
+    },
+    {
+        "check_id": "5.2.2",
+        "check_name": "Ensure SSH protocol is set to 2",
+        "category": "SSH Server",
+        "severity": "high",
+        "command": "grep -i '^Protocol' /etc/ssh/sshd_config || echo 'Protocol 2'",
+        "expected": "2",
+        "cis_benchmark_id": "CIS-LNX-5.2.2"
+    },
+    {
+        "check_id": "5.2.8",
+        "check_name": "Ensure SSH MaxAuthTries is set to 4 or less",
+        "category": "SSH Server",
+        "severity": "medium",
+        "command": "grep -i '^MaxAuthTries' /etc/ssh/sshd_config | awk '{print $2}'",
+        "expected": "4",
+        "cis_benchmark_id": "CIS-LNX-5.2.8"
+    },
+    {
+        "check_id": "6.1.1",
+        "check_name": "Ensure permissions on /etc/passwd are configured",
+        "category": "System File Permissions",
+        "severity": "high",
+        "command": "stat -c '%a' /etc/passwd",
+        "expected": "644",
+        "cis_benchmark_id": "CIS-LNX-6.1.1"
+    },
+    {
+        "check_id": "6.1.2",
+        "check_name": "Ensure permissions on /etc/shadow are configured",
+        "category": "System File Permissions",
+        "severity": "critical",
+        "command": "stat -c '%a' /etc/shadow",
+        "expected": "000",
+        "cis_benchmark_id": "CIS-LNX-6.1.2"
+    },
+    {
+        "check_id": "3.5.1",
+        "check_name": "Ensure UFW is installed and enabled",
+        "category": "Firewall",
+        "severity": "critical",
+        "command": "ufw status 2>/dev/null | head -1 || iptables -L 2>/dev/null | head -1",
+        "expected": "active",
+        "cis_benchmark_id": "CIS-LNX-3.5.1"
+    },
+]
+
+
+async def run_winrm_check(target: str, username: str, password: str, domain: str, command: str, use_ssl: bool = True) -> Tuple[bool, str]:
+    """Execute a command on a Windows host via WinRM."""
+    if not HAS_WINRM:
+        return False, "WinRM library not installed"
+    
+    try:
+        # Build WinRM session
+        endpoint = f"https://{target}:5986/wsman" if use_ssl else f"http://{target}:5985/wsman"
+        
+        if domain:
+            user = f"{domain}\\{username}"
+        else:
+            user = username
+        
+        session = winrm.Session(
+            endpoint,
+            auth=(user, password),
+            transport='ntlm',
+            server_cert_validation='ignore'
+        )
+        
+        result = session.run_cmd(command)
+        output = result.std_out.decode('utf-8', errors='ignore').strip()
+        error = result.std_err.decode('utf-8', errors='ignore').strip()
+        
+        if result.status_code == 0:
+            return True, output
+        else:
+            return False, error or output
+            
+    except Exception as e:
+        return False, str(e)
+
+
+async def run_ssh_check(target: str, username: str, password: str = None, private_key: str = None, port: int = 22, command: str = "") -> Tuple[bool, str]:
+    """Execute a command on a Linux host via SSH."""
+    if not HAS_PARAMIKO:
+        return False, "Paramiko library not installed"
+    
+    try:
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        if private_key:
+            # Load private key from string
+            import io
+            key_file = io.StringIO(private_key)
+            pkey = paramiko.RSAKey.from_private_key(key_file)
+            client.connect(target, port=port, username=username, pkey=pkey, timeout=10)
+        else:
+            client.connect(target, port=port, username=username, password=password, timeout=10)
+        
+        stdin, stdout, stderr = client.exec_command(command, timeout=30)
+        output = stdout.read().decode('utf-8', errors='ignore').strip()
+        error = stderr.read().decode('utf-8', errors='ignore').strip()
+        
+        client.close()
+        
+        return True, output if output else error
+        
+    except Exception as e:
+        return False, str(e)
+
+
+def check_result_status(actual: str, expected: str) -> str:
+    """Compare actual vs expected value and return status."""
+    if not actual:
+        return "error"
+    
+    actual_lower = actual.lower()
+    expected_lower = expected.lower()
+    
+    # Direct match
+    if expected_lower in actual_lower:
+        return "pass"
+    
+    # Numeric comparison
+    try:
+        actual_num = int(''.join(filter(str.isdigit, actual)))
+        expected_num = int(''.join(filter(str.isdigit, expected)))
+        if actual_num >= expected_num:
+            return "pass"
+    except ValueError:
+        pass
+    
+    return "fail"
+
+
+async def run_agentless_windows_scan(targets: List[str], credentials: List[Dict], framework: str = "cis_windows") -> List[Dict]:
+    """Run CIS Windows compliance checks via WinRM."""
+    results = []
+    
+    for target in targets:
+        log.info(f"Running agentless Windows scan on {target}")
+        
+        # Find matching credential
+        cred = None
+        for c in credentials:
+            if c.get("credential_type") == "winrm":
+                cred = c
+                break
+        
+        if not cred:
+            log.warning(f"No WinRM credential found for {target}")
+            continue
+        
+        # Decrypt credentials (in production, use proper encryption)
+        import base64
+        password = base64.b64decode(cred.get("encrypted_password", "")).decode() if cred.get("encrypted_password") else ""
+        
+        for check in CIS_WINDOWS_CHECKS:
+            success, output = await run_winrm_check(
+                target=target,
+                username=cred.get("username", ""),
+                password=password,
+                domain=cred.get("domain", ""),
+                command=check["command"],
+                use_ssl=cred.get("use_ssl", True)
+            )
+            
+            status = check_result_status(output, check["expected"]) if success else "error"
+            
+            results.append({
+                "target_host": target,
+                "check_id": check["check_id"],
+                "check_name": check["check_name"],
+                "check_description": f"Checks {check['check_name']}",
+                "category": check["category"],
+                "framework_type": framework,
+                "status": status,
+                "severity": check["severity"],
+                "actual_value": output[:500] if output else "Command failed",
+                "expected_value": check["expected"],
+                "remediation_steps": f"Configure system to meet {check['check_name']} requirement",
+                "cis_benchmark_id": check["cis_benchmark_id"],
+                "evidence": {"command": check["command"], "raw_output": output[:1000] if output else None}
+            })
+    
+    return results
+
+
+async def run_agentless_linux_scan(targets: List[str], credentials: List[Dict], framework: str = "cis_linux") -> List[Dict]:
+    """Run CIS Linux compliance checks via SSH."""
+    results = []
+    
+    for target in targets:
+        log.info(f"Running agentless Linux scan on {target}")
+        
+        # Find matching SSH credential
+        cred = None
+        for c in credentials:
+            if c.get("credential_type") in ("ssh_password", "ssh_key"):
+                cred = c
+                break
+        
+        if not cred:
+            log.warning(f"No SSH credential found for {target}")
+            continue
+        
+        # Decrypt credentials
+        import base64
+        password = base64.b64decode(cred.get("encrypted_password", "")).decode() if cred.get("encrypted_password") else None
+        private_key = base64.b64decode(cred.get("encrypted_private_key", "")).decode() if cred.get("encrypted_private_key") else None
+        
+        for check in CIS_LINUX_CHECKS:
+            success, output = await run_ssh_check(
+                target=target,
+                username=cred.get("username", "root"),
+                password=password,
+                private_key=private_key,
+                port=cred.get("port", 22),
+                command=check["command"]
+            )
+            
+            status = check_result_status(output, check["expected"]) if success else "error"
+            
+            results.append({
+                "target_host": target,
+                "check_id": check["check_id"],
+                "check_name": check["check_name"],
+                "check_description": f"Checks {check['check_name']}",
+                "category": check["category"],
+                "framework_type": framework,
+                "status": status,
+                "severity": check["severity"],
+                "actual_value": output[:500] if output else "Command failed",
+                "expected_value": check["expected"],
+                "remediation_steps": f"Configure system to meet {check['check_name']} requirement",
+                "cis_benchmark_id": check["cis_benchmark_id"],
+                "evidence": {"command": check["command"], "raw_output": output[:1000] if output else None}
+            })
+    
+    return results
+
+
+async def agentless_compliance_loop(session: aiohttp.ClientSession) -> None:
+    """Poll for and execute agentless compliance scans."""
+    log.info("Starting agentless compliance scan loop")
+    
+    while running:
+        try:
+            # Poll for pending scans
+            api_cfg = config["api"]
+            headers = {
+                "X-VANGUARD-KEY": api_cfg["secret_key"],
+                "Content-Type": "application/json",
+            }
+            
+            async with session.post(
+                api_cfg["endpoint"].replace("vanguard-agent-api", "vanguard-agentless-scan"),
+                json={
+                    "action": "get_pending_scans",
+                    "device_id": config["agent"]["device_id"]
+                },
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    scans = data.get("scans", [])
+                    credentials = data.get("credentials", [])
+                    
+                    for scan in scans:
+                        log.info(f"Processing agentless scan job: {scan['id']}")
+                        
+                        targets = scan.get("target_hosts", [])
+                        scan_type = scan.get("scan_type", "windows")
+                        framework = scan.get("framework_type", "cis_windows")
+                        
+                        results = []
+                        
+                        if scan_type == "windows":
+                            results = await run_agentless_windows_scan(targets, credentials, framework)
+                        elif scan_type == "linux":
+                            results = await run_agentless_linux_scan(targets, credentials, framework)
+                        elif scan_type == "full":
+                            # Run both
+                            win_results = await run_agentless_windows_scan(targets, credentials, "cis_windows")
+                            linux_results = await run_agentless_linux_scan(targets, credentials, "cis_linux")
+                            results = win_results + linux_results
+                        
+                        # Calculate summary
+                        passed = sum(1 for r in results if r["status"] == "pass")
+                        failed = sum(1 for r in results if r["status"] == "fail")
+                        errors = sum(1 for r in results if r["status"] == "error")
+                        
+                        # Submit results back
+                        for r in results:
+                            r["user_id"] = scan.get("user_id")
+                        
+                        await session.post(
+                            api_cfg["endpoint"].replace("vanguard-agent-api", "vanguard-agentless-scan"),
+                            json={
+                                "action": "submit_results",
+                                "device_id": config["agent"]["device_id"],
+                                "job_id": scan["id"],
+                                "results": {
+                                    "job_id": scan["id"],
+                                    "check_results": results,
+                                    "scanned_hosts": len(targets),
+                                    "scan_status": "completed",
+                                    "compliance_results": {
+                                        "total": len(results),
+                                        "passed": passed,
+                                        "failed": failed,
+                                        "errors": errors,
+                                        "score": round((passed / len(results) * 100) if results else 0, 1)
+                                    }
+                                }
+                            },
+                            headers=headers,
+                            timeout=aiohttp.ClientTimeout(total=60)
+                        )
+                        
+                        log.info(f"Agentless scan {scan['id']} completed: {passed} passed, {failed} failed, {errors} errors")
+        
+        except Exception as e:
+            log.error(f"Agentless compliance loop error: {e}")
+        
+        # Poll every 30 seconds
+        await asyncio.sleep(30)
+
+
 async def main_async(args: argparse.Namespace) -> None:
     """Main async entry point."""
     global config, running
@@ -1896,6 +2351,7 @@ async def main_async(args: argparse.Namespace) -> None:
             asyncio.create_task(meraki_loop(session)),
             asyncio.create_task(snmp_loop(session)),
             asyncio.create_task(discovery_loop(session)),
+            asyncio.create_task(agentless_compliance_loop(session)),  # Agentless compliance scanning
         ]
         
         # Start sub-agent server if enabled

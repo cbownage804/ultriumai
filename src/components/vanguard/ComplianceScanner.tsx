@@ -11,12 +11,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Shield, Play, FileCheck, AlertTriangle, CheckCircle, XCircle,
   Download, RefreshCw, Clock, BarChart3, FileText, Settings,
-  Server, Laptop, ChevronRight, ChevronDown, Wrench
+  Server, Laptop, ChevronRight, ChevronDown, Wrench, Wifi, Network
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
+import { AgentlessScanDialog } from "./AgentlessScanDialog";
 
 interface ComplianceScanJob {
   id: string;
@@ -81,6 +82,7 @@ export function ComplianceScanner() {
   const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [isScanning, setIsScanning] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [showAgentlessDialog, setShowAgentlessDialog] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -302,15 +304,20 @@ export function ComplianceScanner() {
             <Shield className="h-6 w-6" />
             Compliance Scanner
           </h2>
-          <p className="text-muted-foreground">Agent-based compliance scanning against industry frameworks</p>
+          <p className="text-muted-foreground">Compliance scanning against industry frameworks</p>
         </div>
-        <Dialog open={showScanDialog} onOpenChange={setShowScanDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Play className="h-4 w-4 mr-2" />
-              New Scan
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowAgentlessDialog(true)}>
+            <Wifi className="h-4 w-4 mr-2" />
+            Agentless Scan
+          </Button>
+          <Dialog open={showScanDialog} onOpenChange={setShowScanDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Play className="h-4 w-4 mr-2" />
+                Agent Scan
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Start Compliance Scan</DialogTitle>
@@ -383,7 +390,15 @@ export function ComplianceScanner() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      {/* Agentless Scan Dialog */}
+      <AgentlessScanDialog 
+        open={showAgentlessDialog} 
+        onOpenChange={setShowAgentlessDialog}
+        onScanStarted={loadData}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
