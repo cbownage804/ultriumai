@@ -310,11 +310,14 @@ snmpwalk -v2c -c COMMUNITY TARGET_IP system`
 export function CredentialVault() {
   const { user } = useAuth();
   const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [agents, setAgents] = useState<{ id: string; name: string; status: string }[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingCredential, setEditingCredential] = useState<Credential | null>(null);
   const [showPasswords, setShowPasswords] = useState<Set<string>>(new Set());
   const [isTesting, setIsTesting] = useState<string | null>(null);
+  const [testingCommands, setTestingCommands] = useState<Map<string, string>>(new Map()); // credential_id -> command_id
   
   // Form state
   const [formData, setFormData] = useState({
@@ -334,8 +337,32 @@ export function CredentialVault() {
   });
 
   useEffect(() => {
-    if (user) loadCredentials();
+    if (user) {
+      loadCredentials();
+      loadAgents();
+    }
   }, [user]);
+
+  const loadAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vanguard_agents')
+        .select('id, name, status')
+        .eq('user_id', user?.id)
+        .order('last_heartbeat', { ascending: false });
+
+      if (error) throw error;
+      setAgents(data || []);
+      
+      // Auto-select first online agent
+      const onlineAgent = data?.find(a => a.status === 'online');
+      if (onlineAgent && !selectedAgent) {
+        setSelectedAgent(onlineAgent.id);
+      }
+    } catch (err) {
+      console.error('Failed to load agents:', err);
+    }
+  };
 
   const loadCredentials = async () => {
     setIsLoading(true);
@@ -468,34 +495,122 @@ export function CredentialVault() {
   };
 
   const testCredential = async (cred: Credential) => {
+    if (!selectedAgent) {
+      toast.error('Please select an agent to run the test');
+      return;
+    }
+
+    if (!cred.target_scope || cred.target_scope.length === 0) {
+      toast.error('No target hosts specified for this credential');
+      return;
+    }
+
     setIsTesting(cred.id);
     try {
-      // In production, this would call an edge function to test connectivity
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data: session } = await supabase.auth.getSession();
       
-      // Simulate result
-      const success = Math.random() > 0.3;
-      
-      await supabase
-        .from('vanguard_agent_credentials')
-        .update({ 
-          last_test_result: success ? 'success' : 'failed',
-          last_used_at: new Date().toISOString()
-        })
-        .eq('id', cred.id);
+      const response = await fetch(
+        'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-connectivity-test',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            action: 'test_credential',
+            credential_id: cred.id,
+            agent_id: selectedAgent,
+          }),
+        }
+      );
 
-      if (success) {
-        toast.success('Connection successful');
-      } else {
-        toast.error('Connection failed');
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Test failed');
       }
-      
-      loadCredentials();
-    } catch (err) {
-      toast.error('Test failed');
-    } finally {
+
+      // Store command ID for polling
+      if (result.command_id) {
+        setTestingCommands(prev => new Map(prev).set(cred.id, result.command_id));
+        toast.success('Test queued', { description: 'Agent will test connectivity shortly' });
+        
+        // Start polling for result
+        pollTestResult(cred.id, result.command_id);
+      }
+    } catch (err: any) {
+      toast.error('Test failed', { description: err.message });
       setIsTesting(null);
     }
+  };
+
+  const pollTestResult = async (credentialId: string, commandId: string) => {
+    const maxAttempts = 30; // 30 seconds max
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts++;
+      
+      try {
+        const { data: command, error } = await supabase
+          .from('vanguard_agent_commands')
+          .select('status, response, error_message')
+          .eq('id', commandId)
+          .single();
+
+        if (error) throw error;
+
+        if (command.status === 'completed' || command.status === 'failed') {
+          // Update credential with result
+          const responseData = command.response as Record<string, unknown> | null;
+          const testResult = command.status === 'completed' && responseData?.success ? 'success' : 'failed';
+          
+          await supabase
+            .from('vanguard_agent_credentials')
+            .update({ 
+              last_test_result: testResult,
+              last_used_at: new Date().toISOString()
+            })
+            .eq('id', credentialId);
+
+          if (testResult === 'success') {
+            toast.success('Connection verified', { 
+              description: (responseData?.message as string) || 'All targets reachable' 
+            });
+          } else {
+            toast.error('Connection failed', { 
+              description: command.error_message || (responseData?.error as string) || 'Unable to connect to targets' 
+            });
+          }
+
+          setIsTesting(null);
+          setTestingCommands(prev => {
+            const next = new Map(prev);
+            next.delete(credentialId);
+            return next;
+          });
+          loadCredentials();
+          return;
+        }
+
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 1000);
+        } else {
+          toast.error('Test timed out', { description: 'Agent did not respond in time' });
+          setIsTesting(null);
+        }
+      } catch (err) {
+        console.error('Poll error:', err);
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 1000);
+        } else {
+          setIsTesting(null);
+        }
+      }
+    };
+
+    poll();
   };
 
   const getTypeInfo = (type: string) => {
@@ -720,6 +835,40 @@ export function CredentialVault() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Agent Selector for Testing */}
+      <Card className="border-muted">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Server className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <Label className="text-sm font-medium">Test Agent</Label>
+                <p className="text-xs text-muted-foreground">Select the Vanguard agent to run connectivity tests</p>
+              </div>
+            </div>
+            <Select value={selectedAgent || ''} onValueChange={setSelectedAgent}>
+              <SelectTrigger className="w-[250px]">
+                <SelectValue placeholder="Select an agent..." />
+              </SelectTrigger>
+              <SelectContent>
+                {agents.length === 0 ? (
+                  <SelectItem value="none" disabled>No agents available</SelectItem>
+                ) : (
+                  agents.map(agent => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2 w-2 rounded-full ${agent.status === 'online' ? 'bg-green-500' : 'bg-muted'}`} />
+                        {agent.name}
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Protocol Overview Cards */}
       <div className="grid gap-4 md:grid-cols-3">

@@ -1540,6 +1540,162 @@ async def execute_command(session: aiohttp.ClientSession, command: Dict[str, Any
                 "sub_agent_count": len(sub_agent_data),
                 "sub_agents": list(sub_agent_data.values()),
             }
+        
+        elif cmd_type == "test_connectivity":
+            # Test connectivity to targets using WinRM, SSH, or SNMP
+            credential = payload.get("credential", {})
+            targets = payload.get("targets", [])
+            test_type = payload.get("test_type", "ping")
+            
+            test_results = []
+            all_success = True
+            
+            for target in targets:
+                target_result = {
+                    "target": target,
+                    "success": False,
+                    "protocol": test_type,
+                    "message": "",
+                    "response_time_ms": None,
+                }
+                
+                start_time = time.time()
+                
+                try:
+                    if test_type == "winrm":
+                        # Test WinRM connectivity
+                        port = 5986 if credential.get("use_ssl") else 5985
+                        username = credential.get("username", "")
+                        domain = credential.get("domain", "")
+                        password = credential.get("encrypted_password", "")
+                        
+                        # Decode base64 password (simple encoding for now)
+                        if password:
+                            try:
+                                import base64
+                                password = base64.b64decode(password).decode('utf-8')
+                            except:
+                                pass
+                        
+                        # Test port first
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(5)
+                        port_result = sock.connect_ex((target, port))
+                        sock.close()
+                        
+                        if port_result == 0:
+                            target_result["success"] = True
+                            target_result["message"] = f"WinRM port {port} is open"
+                        else:
+                            target_result["message"] = f"WinRM port {port} is closed or blocked"
+                            all_success = False
+                    
+                    elif test_type == "ssh":
+                        # Test SSH connectivity
+                        port = credential.get("port", 22)
+                        
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(5)
+                        port_result = sock.connect_ex((target, port))
+                        sock.close()
+                        
+                        if port_result == 0:
+                            target_result["success"] = True
+                            target_result["message"] = f"SSH port {port} is open"
+                        else:
+                            target_result["message"] = f"SSH port {port} is closed or blocked"
+                            all_success = False
+                    
+                    elif test_type == "snmp":
+                        # Test SNMP connectivity
+                        port = 161
+                        
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        sock.settimeout(3)
+                        
+                        # Send a simple SNMP GET for sysDescr
+                        if HAS_SNMP:
+                            community = credential.get("snmp_community", "public")
+                            try:
+                                iterator = getCmd(
+                                    SnmpEngine(),
+                                    CommunityData(community, mpModel=1),
+                                    UdpTransportTarget((target, port), timeout=3, retries=1),
+                                    ContextData(),
+                                    ObjectType(ObjectIdentity('1.3.6.1.2.1.1.1.0'))
+                                )
+                                errorIndication, errorStatus, errorIndex, varBinds = next(iterator)
+                                
+                                if errorIndication:
+                                    target_result["message"] = f"SNMP error: {errorIndication}"
+                                    all_success = False
+                                elif errorStatus:
+                                    target_result["message"] = f"SNMP error: {errorStatus}"
+                                    all_success = False
+                                else:
+                                    target_result["success"] = True
+                                    target_result["message"] = "SNMP responding"
+                            except Exception as e:
+                                target_result["message"] = f"SNMP test failed: {str(e)}"
+                                all_success = False
+                        else:
+                            # Basic UDP port test
+                            sock.sendto(b'\x30\x26\x02\x01', (target, port))
+                            try:
+                                sock.recv(1024)
+                                target_result["success"] = True
+                                target_result["message"] = "SNMP port responding"
+                            except socket.timeout:
+                                target_result["message"] = "SNMP port 161 not responding"
+                                all_success = False
+                            finally:
+                                sock.close()
+                    
+                    else:
+                        # Basic ping/port test
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.settimeout(5)
+                        port_result = sock.connect_ex((target, 22))
+                        sock.close()
+                        
+                        if port_result == 0:
+                            target_result["success"] = True
+                            target_result["message"] = "Host reachable"
+                        else:
+                            # Try ICMP ping
+                            ping_cmd = ["ping", "-c", "1", "-W", "2", target]
+                            if platform.system() == "Windows":
+                                ping_cmd = ["ping", "-n", "1", "-w", "2000", target]
+                            
+                            try:
+                                ping_result = subprocess.run(ping_cmd, capture_output=True, timeout=5)
+                                if ping_result.returncode == 0:
+                                    target_result["success"] = True
+                                    target_result["message"] = "Host responds to ping"
+                                else:
+                                    target_result["message"] = "Host unreachable"
+                                    all_success = False
+                            except:
+                                target_result["message"] = "Host unreachable"
+                                all_success = False
+                    
+                    target_result["response_time_ms"] = int((time.time() - start_time) * 1000)
+                    
+                except Exception as e:
+                    target_result["message"] = str(e)
+                    all_success = False
+                    log.error(f"Connectivity test failed for {target}: {e}")
+                
+                test_results.append(target_result)
+            
+            result["output"] = {
+                "success": all_success,
+                "tests": test_results,
+                "tested_count": len(test_results),
+                "successful_count": sum(1 for t in test_results if t["success"]),
+                "message": "All targets reachable" if all_success else "Some targets unreachable",
+            }
+            result["status"] = "completed"
                 
         else:
             result["status"] = "unknown"

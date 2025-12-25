@@ -120,3 +120,9 @@ verify_jwt = false
 
 [functions.rmm-agent-ps]
 verify_jwt = false
+
+[functions.vanguard-connectivity-test]
+verify_jwt = true
+
+[functions.vanguard-agentless-scan]
+verify_jwt = false
