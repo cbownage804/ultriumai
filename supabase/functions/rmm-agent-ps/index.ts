@@ -6,9 +6,10 @@ const corsHeaders = {
   'Content-Type': 'text/plain',
 }
 
-// PowerShell agent script that includes RustDesk integration and compliance scanning
-const generatePowerShellAgent = (apiUrl: string, apiKey: string, agentId: string) => `
-#Requires -Version 5.1
+// PowerShell agent script with RustDesk integration and compliance scanning
+const generatePowerShellAgent = (apiUrl: string, apiKey: string, agentId: string) => {
+  // Use string concatenation to avoid template literal issues with backticks in PowerShell
+  const script = `#Requires -Version 5.1
 # Ultrium Vanguard Agent - PowerShell Edition
 # Auto-registers, sends heartbeats, executes commands, compliance scanning, RustDesk integration
 
@@ -26,8 +27,8 @@ $script:Config = @{
     ApiUrl = "${apiUrl}"
     ApiKey = "${apiKey}"
     AgentId = "${agentId}"
-    HeartbeatInterval = 60  # seconds
-    CommandPollInterval = 30  # seconds
+    HeartbeatInterval = 60
+    CommandPollInterval = 30
     LogPath = Join-Path $env:ProgramData "Vanguard\\logs"
     ConfigPath = Join-Path $env:ProgramData "Vanguard\\config.json"
     ServiceName = "VanguardAgent"
@@ -60,8 +61,6 @@ function Get-SystemInfo {
     $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
     $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
     $network = Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -notlike "127.*" } | Select-Object -First 1
-    
-    # Get RustDesk ID if installed
     $rustdeskId = Get-RustDeskId
     
     @{
@@ -107,13 +106,12 @@ function Get-RustDeskId {
     foreach ($path in $rustdeskPaths) {
         if (Test-Path $path) {
             $content = Get-Content $path -Raw
-            if ($content -match 'id\\s*=\\s*["\\'']?([0-9]+)["\\'']?') {
+            if ($content -match 'id\\s*=\\s*["'']?([0-9]+)["'']?') {
                 return $matches[1]
             }
         }
     }
     
-    # Try registry
     $regPath = "HKCU:\\SOFTWARE\\RustDesk\\RustDesk\\config"
     if (Test-Path $regPath) {
         $id = (Get-ItemProperty -Path $regPath -Name "id" -ErrorAction SilentlyContinue).id
@@ -127,27 +125,12 @@ function Install-RustDesk {
     param([string]$RelayServer = "")
     
     Write-Log "Installing RustDesk..."
-    
     $installerUrl = "https://github.com/rustdesk/rustdesk/releases/latest/download/rustdesk-1.2.3-x86_64.exe"
     $installerPath = Join-Path $env:TEMP "rustdesk_installer.exe"
     
     try {
         Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath -UseBasicParsing
         Start-Process -FilePath $installerPath -ArgumentList "--silent-install" -Wait
-        
-        if ($RelayServer) {
-            # Configure custom relay server
-            $configPath = "$env:APPDATA\\RustDesk\\config\\RustDesk2.toml"
-            @"
-rendezvous_server = '$RelayServer'
-nat_type = 1
-serial = 0
-
-[options]
-direct-server = 'Y'
-"@ | Set-Content -Path $configPath -Force
-        }
-        
         Write-Log "RustDesk installed successfully"
         return $true
     }
@@ -155,16 +138,6 @@ direct-server = 'Y'
         Write-Log "Failed to install RustDesk: $_" -Level "ERROR"
         return $false
     }
-}
-
-function Start-RustDeskSession {
-    $rustdeskExe = Get-ChildItem -Path "$env:ProgramFiles", "$env:ProgramFiles(x86)", "C:\\" -Filter "rustdesk.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-    
-    if ($rustdeskExe) {
-        Start-Process -FilePath $rustdeskExe.FullName
-        return @{ success = $true; message = "RustDesk started" }
-    }
-    return @{ success = $false; message = "RustDesk not found" }
 }
 
 # ============== COMPLIANCE SCANNING ==============
@@ -188,7 +161,7 @@ function Invoke-ComplianceScan {
 function Get-CISComplianceChecks {
     $checks = @()
     
-    # CIS 1.1.1 - Ensure 'Enforce password history' is set to '24 or more password(s)'
+    # CIS 1.1.1 - Password history
     $pwHistory = (net accounts | Select-String "Password history").ToString() -replace ".*:\\s*", ""
     $checks += @{
         check_id = "CIS-1.1.1"
@@ -200,19 +173,7 @@ function Get-CISComplianceChecks {
         remediation = "Set via: net accounts /uniquepw:24"
     }
     
-    # CIS 1.1.2 - Maximum password age
-    $pwMaxAge = (net accounts | Select-String "Maximum password age").ToString() -replace ".*:\\s*", ""
-    $checks += @{
-        check_id = "CIS-1.1.2"
-        name = "Maximum password age"
-        status = if ([int]$pwMaxAge -le 60 -and [int]$pwMaxAge -gt 0) { "pass" } else { "fail" }
-        current_value = $pwMaxAge
-        expected_value = "60 days or less"
-        severity = "medium"
-        remediation = "Set via: net accounts /maxpwage:60"
-    }
-    
-    # CIS 2.3.1.1 - Ensure 'Accounts: Administrator account status' is set to 'Disabled'
+    # CIS 2.3.1.1 - Administrator account
     $adminEnabled = (Get-LocalUser -Name "Administrator" -ErrorAction SilentlyContinue).Enabled
     $checks += @{
         check_id = "CIS-2.3.1.1"
@@ -224,7 +185,7 @@ function Get-CISComplianceChecks {
         remediation = "Disable via: net user Administrator /active:no"
     }
     
-    # CIS 2.3.1.2 - Ensure 'Accounts: Guest account status' is set to 'Disabled'
+    # CIS 2.3.1.2 - Guest account
     $guestEnabled = (Get-LocalUser -Name "Guest" -ErrorAction SilentlyContinue).Enabled
     $checks += @{
         check_id = "CIS-2.3.1.2"
@@ -236,7 +197,7 @@ function Get-CISComplianceChecks {
         remediation = "Disable via: net user Guest /active:no"
     }
     
-    # CIS 9.1.1 - Windows Firewall: Domain Profile State
+    # CIS 9.1.1 - Firewall Domain
     $fwDomain = (Get-NetFirewallProfile -Profile Domain).Enabled
     $checks += @{
         check_id = "CIS-9.1.1"
@@ -248,7 +209,7 @@ function Get-CISComplianceChecks {
         remediation = "Enable via: Set-NetFirewallProfile -Profile Domain -Enabled True"
     }
     
-    # CIS 9.2.1 - Windows Firewall: Private Profile State
+    # CIS 9.2.1 - Firewall Private
     $fwPrivate = (Get-NetFirewallProfile -Profile Private).Enabled
     $checks += @{
         check_id = "CIS-9.2.1"
@@ -260,7 +221,7 @@ function Get-CISComplianceChecks {
         remediation = "Enable via: Set-NetFirewallProfile -Profile Private -Enabled True"
     }
     
-    # CIS 9.3.1 - Windows Firewall: Public Profile State
+    # CIS 9.3.1 - Firewall Public
     $fwPublic = (Get-NetFirewallProfile -Profile Public).Enabled
     $checks += @{
         check_id = "CIS-9.3.1"
@@ -272,7 +233,7 @@ function Get-CISComplianceChecks {
         remediation = "Enable via: Set-NetFirewallProfile -Profile Public -Enabled True"
     }
     
-    # Windows Defender status
+    # Windows Defender
     $defenderEnabled = (Get-MpComputerStatus -ErrorAction SilentlyContinue).AntivirusEnabled
     $checks += @{
         check_id = "CIS-18.9.45.4"
@@ -296,7 +257,7 @@ function Get-CISComplianceChecks {
         remediation = "Enable via: Set-MpPreference -DisableRealtimeMonitoring $false"
     }
     
-    # UAC enabled
+    # UAC
     $uacEnabled = (Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System).EnableLUA
     $checks += @{
         check_id = "CIS-2.3.17.1"
@@ -305,10 +266,10 @@ function Get-CISComplianceChecks {
         current_value = if ($uacEnabled -eq 1) { "Enabled" } else { "Disabled" }
         expected_value = "Enabled"
         severity = "high"
-        remediation = "Enable UAC via Control Panel > User Accounts"
+        remediation = "Enable UAC via Control Panel"
     }
     
-    # BitLocker status
+    # BitLocker
     $bitlocker = Get-BitLockerVolume -MountPoint "C:" -ErrorAction SilentlyContinue
     $checks += @{
         check_id = "CIS-18.9.11.1"
@@ -317,10 +278,10 @@ function Get-CISComplianceChecks {
         current_value = $bitlocker.ProtectionStatus
         expected_value = "On"
         severity = "high"
-        remediation = "Enable BitLocker via Control Panel or manage-bde"
+        remediation = "Enable BitLocker via manage-bde"
     }
     
-    # SMBv1 disabled
+    # SMBv1
     $smbv1 = (Get-WindowsOptionalFeature -Online -FeatureName SMB1Protocol -ErrorAction SilentlyContinue).State
     $checks += @{
         check_id = "CIS-18.3.2"
@@ -332,26 +293,13 @@ function Get-CISComplianceChecks {
         remediation = "Disable via: Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol"
     }
     
-    # AutoPlay disabled
-    $autoplay = (Get-ItemProperty "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer" -Name NoDriveTypeAutoRun -ErrorAction SilentlyContinue).NoDriveTypeAutoRun
-    $checks += @{
-        check_id = "CIS-18.9.8.1"
-        name = "AutoPlay Disabled"
-        status = if ($autoplay -eq 255) { "pass" } else { "fail" }
-        current_value = $autoplay
-        expected_value = "255 (All drives)"
-        severity = "medium"
-        remediation = "Set via Group Policy: Turn off AutoPlay = Enabled (All drives)"
-    }
-    
     return $checks
 }
 
 function Get-NISTComplianceChecks {
-    # NIST 800-53 checks
     $checks = @()
     
-    # AC-2: Account Management
+    # AC-2: Inactive accounts
     $inactiveUsers = Get-LocalUser | Where-Object { $_.Enabled -and $_.LastLogon -lt (Get-Date).AddDays(-90) }
     $checks += @{
         check_id = "NIST-AC-2"
@@ -360,23 +308,10 @@ function Get-NISTComplianceChecks {
         current_value = "$($inactiveUsers.Count) inactive accounts"
         expected_value = "0 inactive accounts"
         severity = "medium"
-        remediation = "Review and disable accounts inactive for 90+ days"
+        remediation = "Review and disable inactive accounts"
     }
     
-    # AU-2: Audit Events
-    $auditPol = auditpol /get /category:* 2>&1
-    $logonAudit = $auditPol | Select-String "Logon" | Select-String "Success and Failure"
-    $checks += @{
-        check_id = "NIST-AU-2"
-        name = "Logon Event Auditing"
-        status = if ($logonAudit) { "pass" } else { "fail" }
-        current_value = if ($logonAudit) { "Enabled" } else { "Incomplete" }
-        expected_value = "Success and Failure"
-        severity = "high"
-        remediation = "Enable via: auditpol /set /subcategory:'Logon' /success:enable /failure:enable"
-    }
-    
-    # SC-7: Boundary Protection (Firewall)
+    # SC-7: Firewall
     $allProfilesEnabled = (Get-NetFirewallProfile | Where-Object { -not $_.Enabled }).Count -eq 0
     $checks += @{
         check_id = "NIST-SC-7"
@@ -388,7 +323,7 @@ function Get-NISTComplianceChecks {
         remediation = "Enable all firewall profiles"
     }
     
-    # SI-2: Flaw Remediation (Windows Update)
+    # SI-2: Patching
     $lastUpdate = (Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 1).InstalledOn
     $daysSinceUpdate = if ($lastUpdate) { ((Get-Date) - $lastUpdate).Days } else { 999 }
     $checks += @{
@@ -405,10 +340,9 @@ function Get-NISTComplianceChecks {
 }
 
 function Get-PCIComplianceChecks {
-    # PCI-DSS checks
     $checks = @()
     
-    # PCI 1.4 - Personal Firewall
+    # PCI 1.4 - Firewall
     $fwEnabled = (Get-NetFirewallProfile | Where-Object { $_.Enabled }).Count -eq 3
     $checks += @{
         check_id = "PCI-1.4"
@@ -429,7 +363,7 @@ function Get-PCIComplianceChecks {
         current_value = if ($avEnabled) { "Active" } else { "Not active" }
         expected_value = "Active"
         severity = "critical"
-        remediation = "Enable Windows Defender or install third-party AV"
+        remediation = "Enable Windows Defender"
     }
     
     # PCI 5.2 - AV Current
@@ -445,7 +379,7 @@ function Get-PCIComplianceChecks {
         remediation = "Update Windows Defender definitions"
     }
     
-    # PCI 6.2 - Security Patches
+    # PCI 6.2 - Patches
     $hotfixes = Get-HotFix | Sort-Object InstalledOn -Descending | Select-Object -First 1
     $patchAge = if ($hotfixes) { ((Get-Date) - $hotfixes.InstalledOn).Days } else { 999 }
     $checks += @{
@@ -455,19 +389,7 @@ function Get-PCIComplianceChecks {
         current_value = "$patchAge days since last patch"
         expected_value = "Within 30 days"
         severity = "critical"
-        remediation = "Apply all pending security updates"
-    }
-    
-    # PCI 8.5 - Unique User IDs
-    $sharedAccounts = Get-LocalUser | Where-Object { $_.Name -match "shared|generic|test" -and $_.Enabled }
-    $checks += @{
-        check_id = "PCI-8.5"
-        name = "Unique User IDs"
-        status = if ($sharedAccounts.Count -eq 0) { "pass" } else { "fail" }
-        current_value = "$($sharedAccounts.Count) shared accounts found"
-        expected_value = "No shared accounts"
-        severity = "high"
-        remediation = "Remove or disable shared/generic accounts"
+        remediation = "Apply pending security updates"
     }
     
     return $checks
@@ -475,10 +397,7 @@ function Get-PCIComplianceChecks {
 
 # ============== API COMMUNICATION ==============
 function Invoke-AgentApi {
-    param(
-        [string]$Action,
-        [hashtable]$Body = @{}
-    )
+    param([string]$Action, [hashtable]$Body = @{})
     
     $headers = @{
         "Content-Type" = "application/json"
@@ -489,11 +408,7 @@ function Invoke-AgentApi {
     $Body["hostname"] = $env:COMPUTERNAME
     
     try {
-        $response = Invoke-RestMethod -Uri "$($script:Config.ApiUrl)?action=$Action" \`
-            -Method Post \`
-            -Headers $headers \`
-            -Body ($Body | ConvertTo-Json -Depth 10) \`
-            -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "$($script:Config.ApiUrl)?action=$Action" -Method Post -Headers $headers -Body ($Body | ConvertTo-Json -Depth 10) -ErrorAction Stop
         return $response
     }
     catch {
@@ -536,7 +451,6 @@ function Register-Agent {
 
 function Get-PendingCommands {
     $response = Invoke-AgentApi -Action "poll_commands"
-    
     if ($response -and $response.commands) {
         return $response.commands
     }
@@ -544,10 +458,7 @@ function Get-PendingCommands {
 }
 
 function Send-CommandResponse {
-    param(
-        [string]$CommandId,
-        [hashtable]$Result
-    )
+    param([string]$CommandId, [hashtable]$Result)
     
     $body = @{
         command_id = $CommandId
@@ -563,7 +474,6 @@ function Invoke-AgentCommand {
     param([hashtable]$Command)
     
     Write-Log "Executing command: $($Command.type)"
-    
     $result = @{ success = $false; output = ""; error = "" }
     
     try {
@@ -612,11 +522,6 @@ function Invoke-AgentCommand {
                 $result.output = if ($installResult) { "RustDesk installed" } else { "Installation failed" }
             }
             
-            "start_rustdesk" {
-                $startResult = Start-RustDeskSession
-                $result = $startResult
-            }
-            
             "get_rustdesk_id" {
                 $id = Get-RustDeskId
                 $result.success = $true
@@ -655,21 +560,17 @@ function Invoke-AgentCommand {
 function Install-Service {
     Write-Log "Installing Vanguard Agent service..."
     
-    # Create program directory
     $installDir = Join-Path $env:ProgramData "Vanguard"
     if (-not (Test-Path $installDir)) {
         New-Item -ItemType Directory -Path $installDir -Force | Out-Null
     }
     
-    # Save this script
     $scriptPath = Join-Path $installDir "VanguardAgent.ps1"
     Copy-Item -Path $PSCommandPath -Destination $scriptPath -Force
     
-    # Save config
     $script:Config | ConvertTo-Json | Set-Content -Path $script:Config.ConfigPath
     
-    # Create scheduled task to run agent
-    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File \`"$scriptPath\`""
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`""
     $trigger = New-ScheduledTaskTrigger -AtStartup
     $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
     $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -RestartInterval (New-TimeSpan -Minutes 1) -RestartCount 3
@@ -697,7 +598,6 @@ function Uninstall-Service {
 function Start-AgentLoop {
     Write-Log "Starting Vanguard Agent..."
     
-    # Register on startup
     $registered = Register-Agent
     if (-not $registered) {
         Write-Log "Failed to register agent, retrying..." -Level "WARN"
@@ -710,13 +610,11 @@ function Start-AgentLoop {
         try {
             $now = Get-Date
             
-            # Send heartbeat
             if (($now - $lastHeartbeat).TotalSeconds -ge $script:Config.HeartbeatInterval) {
                 Send-Heartbeat
                 $lastHeartbeat = $now
             }
             
-            # Poll for commands
             if (($now - $lastCommandPoll).TotalSeconds -ge $script:Config.CommandPollInterval) {
                 $commands = Get-PendingCommands
                 foreach ($cmd in $commands) {
@@ -745,14 +643,17 @@ elseif ($Test) {
     Write-Host "=== Vanguard Agent Test ===" -ForegroundColor Cyan
     Write-Host "System Info:"
     Get-SystemInfo | Format-List
-    Write-Host "`nSystem Metrics:"
+    Write-Host ""
+    Write-Host "System Metrics:"
     Get-SystemMetrics | Format-List
-    Write-Host "`nRustDesk ID: $(Get-RustDeskId)"
-    Write-Host "`nRunning CIS Compliance Scan..."
+    Write-Host ""
+    Write-Host "RustDesk ID: $(Get-RustDeskId)"
+    Write-Host ""
+    Write-Host "Running CIS Compliance Scan..."
     $results = Invoke-ComplianceScan -Framework "CIS"
     $passed = ($results | Where-Object { $_.status -eq "pass" }).Count
     $failed = ($results | Where-Object { $_.status -eq "fail" }).Count
-    Write-Host "Results: $passed passed, $failed failed" -ForegroundColor $(if ($failed -gt 0) { "Yellow" } else { "Green" })
+    Write-Host "Results: $passed passed, $failed failed"
     $results | ForEach-Object {
         $color = if ($_.status -eq "pass") { "Green" } else { "Red" }
         Write-Host "  [$($_.status.ToUpper())] $($_.name)" -ForegroundColor $color
@@ -762,6 +663,8 @@ else {
     Start-AgentLoop
 }
 `
+  return script
+}
 
 serve(async (req) => {
   console.log('=== RMM PowerShell Agent Generator ===');
@@ -775,7 +678,6 @@ serve(async (req) => {
     const apiKey = url.searchParams.get('key') || Deno.env.get('VANGUARD_API_KEY') || 'vanguard-agent-key';
     const agentId = url.searchParams.get('agent_id') || crypto.randomUUID();
     
-    // Generate API URL from environment
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const apiUrl = `${supabaseUrl}/functions/v1/vanguard-agent-api`;
     

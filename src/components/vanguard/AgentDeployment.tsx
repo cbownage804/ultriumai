@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Download,
   Copy,
@@ -23,8 +23,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 const SUPABASE_URL = "https://nsyobmjpdpvesjwdphlh.supabase.co";
 
 export const AgentDeployment: React.FC = () => {
-  const session = useSession();
-  const user = session?.user;
+  const { user } = useAuth();
   const [deploymentKey, setDeploymentKey] = useState('');
   const [generating, setGenerating] = useState(false);
 
