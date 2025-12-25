@@ -1,0 +1,275 @@
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { BookOpen, Play, Plus, Edit, Trash2, CheckCircle, AlertTriangle, Clock, Zap, Shield } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface PlaybookStep {
+  id: string;
+  action: string;
+  description: string;
+  automated: boolean;
+  timeout?: number;
+}
+
+interface Playbook {
+  id: string;
+  name: string;
+  description: string;
+  threatType: string;
+  severity: string;
+  steps: PlaybookStep[];
+  lastUsed?: string;
+  usageCount: number;
+}
+
+export const IncidentResponsePlaybooks = () => {
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([
+    {
+      id: '1',
+      name: 'Ransomware Response',
+      description: 'Immediate response procedure for ransomware detection',
+      threatType: 'ransomware',
+      severity: 'critical',
+      steps: [
+        { id: 's1', action: 'Isolate Endpoint', description: 'Immediately isolate affected endpoint from network', automated: true, timeout: 30 },
+        { id: 's2', action: 'Disable User Account', description: 'Disable compromised user account in AD', automated: true, timeout: 60 },
+        { id: 's3', action: 'Collect Forensic Data', description: 'Capture memory dump and process list', automated: true, timeout: 300 },
+        { id: 's4', action: 'Notify SOC Team', description: 'Send alert to SOC team via Teams/Email', automated: true },
+        { id: 's5', action: 'Identify Encryption Scope', description: 'Manual: Determine extent of file encryption', automated: false },
+        { id: 's6', action: 'Restore from Backup', description: 'Initiate restore from last known good backup', automated: false },
+      ],
+      lastUsed: '2024-12-20',
+      usageCount: 12
+    },
+    {
+      id: '2',
+      name: 'Phishing Attack Response',
+      description: 'Handle detected phishing emails and compromised credentials',
+      threatType: 'phishing',
+      severity: 'high',
+      steps: [
+        { id: 's1', action: 'Block Sender Domain', description: 'Add sender domain to email blocklist', automated: true },
+        { id: 's2', action: 'Delete Malicious Emails', description: 'Remove phishing emails from all mailboxes', automated: true },
+        { id: 's3', action: 'Reset User Passwords', description: 'Force password reset for clicked users', automated: true },
+        { id: 's4', action: 'Review Login History', description: 'Check for unauthorized access', automated: false },
+        { id: 's5', action: 'User Notification', description: 'Notify affected users of phishing attempt', automated: true },
+      ],
+      lastUsed: '2024-12-24',
+      usageCount: 28
+    },
+    {
+      id: '3',
+      name: 'Malware Containment',
+      description: 'Standard procedure for malware detection and containment',
+      threatType: 'malware',
+      severity: 'high',
+      steps: [
+        { id: 's1', action: 'Quarantine File', description: 'Move detected file to quarantine', automated: true },
+        { id: 's2', action: 'Kill Process', description: 'Terminate malicious process', automated: true },
+        { id: 's3', action: 'Network Isolation', description: 'Limit network access for affected host', automated: true },
+        { id: 's4', action: 'Full System Scan', description: 'Run comprehensive antivirus scan', automated: true },
+        { id: 's5', action: 'Hash Lookup', description: 'Check file hash against threat intel', automated: true },
+        { id: 's6', action: 'Remediation Report', description: 'Generate incident report', automated: true },
+      ],
+      usageCount: 45
+    },
+    {
+      id: '4',
+      name: 'Data Breach Response',
+      description: 'Procedure for suspected data exfiltration',
+      threatType: 'data_breach',
+      severity: 'critical',
+      steps: [
+        { id: 's1', action: 'Block External IPs', description: 'Block destination IPs at firewall', automated: true },
+        { id: 's2', action: 'Capture Network Traffic', description: 'Start packet capture for forensics', automated: true },
+        { id: 's3', action: 'Identify Data Scope', description: 'Manual: Determine what data was accessed', automated: false },
+        { id: 's4', action: 'Legal Notification', description: 'Notify legal/compliance team', automated: true },
+        { id: 's5', action: 'Evidence Preservation', description: 'Secure all logs and forensic evidence', automated: false },
+      ],
+      usageCount: 3
+    },
+  ]);
+
+  const executePlaybook = (playbookId: string) => {
+    const playbook = playbooks.find(p => p.id === playbookId);
+    if (playbook) {
+      toast.success(`Executing playbook: ${playbook.name}`);
+      // Would trigger actual playbook execution via agent commands
+    }
+  };
+
+  const getSeverityBadge = (severity: string) => {
+    const colors: Record<string, string> = {
+      critical: 'bg-red-500',
+      high: 'bg-orange-500',
+      medium: 'bg-yellow-500',
+      low: 'bg-blue-500'
+    };
+    return <Badge className={colors[severity] || 'bg-muted'}>{severity}</Badge>;
+  };
+
+  const getThreatIcon = (type: string) => {
+    switch (type) {
+      case 'ransomware': return '🔐';
+      case 'phishing': return '🎣';
+      case 'malware': return '🦠';
+      case 'data_breach': return '📤';
+      default: return '⚠️';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Incident Response Playbooks
+              </CardTitle>
+              <CardDescription>
+                Automated and guided response procedures for security incidents
+              </CardDescription>
+            </div>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Playbook
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="space-y-4">
+            {playbooks.map(playbook => (
+              <AccordionItem key={playbook.id} value={playbook.id} className="border rounded-lg px-4">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-4 flex-1">
+                    <span className="text-2xl">{getThreatIcon(playbook.threatType)}</span>
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{playbook.name}</h4>
+                        {getSeverityBadge(playbook.severity)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{playbook.description}</p>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span>{playbook.steps.length} steps</span>
+                      <span>Used {playbook.usageCount}x</span>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4">
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => executePlaybook(playbook.id)}>
+                        <Play className="h-4 w-4 mr-2" />
+                        Execute Playbook
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {playbook.steps.map((step, idx) => (
+                        <div key={step.id} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{step.action}</p>
+                              {step.automated ? (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Zap className="h-3 w-3 mr-1" />
+                                  Auto
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  Manual
+                                </Badge>
+                              )}
+                              {step.timeout && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {step.timeout}s
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-1">{step.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {playbook.lastUsed && (
+                      <p className="text-xs text-muted-foreground">
+                        Last executed: {new Date(playbook.lastUsed).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              Automated Steps
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {playbooks.reduce((sum, p) => sum + p.steps.filter(s => s.automated).length, 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Across all playbooks
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Total Playbooks
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{playbooks.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Ready to execute
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Play className="h-4 w-4" />
+              Total Executions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {playbooks.reduce((sum, p) => sum + p.usageCount, 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              All time
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};

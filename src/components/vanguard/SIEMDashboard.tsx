@@ -57,7 +57,7 @@ export const SIEMDashboard = () => {
       securityEvents.data?.forEach(event => {
         allLogs.push({
           id: event.id,
-          timestamp: event.detected_at || event.created_at,
+          timestamp: event.created_at,
           source: 'security_events',
           level: event.severity || 'info',
           message: event.title || event.description,
