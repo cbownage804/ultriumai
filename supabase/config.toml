@@ -135,3 +135,6 @@ verify_jwt = false
 
 [functions.scheduled-security-scan]
 verify_jwt = false
+
+[functions.firecrawl-scrape]
+verify_jwt = true
