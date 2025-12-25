@@ -40,6 +40,7 @@ export function VanguardNavigation() {
     { title: 'Penetration Testing', path: `${basePath}/pentest`, icon: Shield },
     { title: 'Compliance', path: `${basePath}/compliance`, icon: FileCheck },
     { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
+    { title: 'Alerting', path: `${basePath}/alerting`, icon: Cpu },
     { title: 'Setup', path: `${basePath}/setup`, icon: Settings },
   ];
 

@@ -11,12 +11,15 @@ const VanguardDevices = lazy(() => import('@/pages/VanguardDevices'));
 const VanguardDeviceDetail = lazy(() => import('@/pages/VanguardDeviceDetail'));
 const VanguardSetup = lazy(() => import('@/pages/VanguardSetup'));
 const VanguardAuthPage = lazy(() => import('@/pages/vanguard/VanguardAuthPage'));
+const VanguardReports = lazy(() => import('@/pages/vanguard/VanguardReports'));
 
 // Lazy load dedicated page components
 const ThreatDetection = lazy(() => import('@/components/security/ThreatDetection').then(m => ({ default: m.ThreatDetection })));
 const VanguardSOC = lazy(() => import('@/components/vanguard/VanguardSOC').then(m => ({ default: m.VanguardSOC })));
 const VanguardPentest = lazy(() => import('@/components/vanguard/VanguardPentest').then(m => ({ default: m.VanguardPentest })));
 const ComplianceAuditor = lazy(() => import('@/components/security/ComplianceAuditor').then(m => ({ default: m.ComplianceAuditor })));
+const RemediationAutomation = lazy(() => import('@/components/vanguard/RemediationAutomation').then(m => ({ default: m.RemediationAutomation })));
+const AlertingSettings = lazy(() => import('@/components/vanguard/AlertingSettings').then(m => ({ default: m.AlertingSettings })));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -52,7 +55,9 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-soc" path="soc" element={<LazyProtectedPage component={VanguardSOC} />} />,
   <Route key="vanguard-pentest" path="pentest" element={<LazyProtectedPage component={VanguardPentest} />} />,
   <Route key="vanguard-compliance" path="compliance" element={<LazyProtectedPage component={ComplianceAuditor} />} />,
-  <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardDashboard} />} />,
+  <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardReports} />} />,
+  <Route key="vanguard-remediation" path="remediation" element={<LazyProtectedPage component={RemediationAutomation} />} />,
+  <Route key="vanguard-alerting" path="alerting" element={<LazyProtectedPage component={AlertingSettings} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
