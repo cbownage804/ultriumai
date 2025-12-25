@@ -2116,6 +2116,150 @@ export type Database = {
           },
         ]
       }
+      compliance_benchmarks: {
+        Row: {
+          category: string
+          check_command: string | null
+          check_description: string | null
+          check_id: string
+          check_name: string
+          created_at: string
+          expected_result: string | null
+          framework_type: string
+          id: string
+          is_active: boolean | null
+          is_automated: boolean | null
+          metadata: Json | null
+          os_type: string | null
+          remediation_command: string | null
+          remediation_steps: string | null
+          severity: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          check_command?: string | null
+          check_description?: string | null
+          check_id: string
+          check_name: string
+          created_at?: string
+          expected_result?: string | null
+          framework_type: string
+          id?: string
+          is_active?: boolean | null
+          is_automated?: boolean | null
+          metadata?: Json | null
+          os_type?: string | null
+          remediation_command?: string | null
+          remediation_steps?: string | null
+          severity?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          check_command?: string | null
+          check_description?: string | null
+          check_id?: string
+          check_name?: string
+          created_at?: string
+          expected_result?: string | null
+          framework_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_automated?: boolean | null
+          metadata?: Json | null
+          os_type?: string | null
+          remediation_command?: string | null
+          remediation_steps?: string | null
+          severity?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      compliance_check_results: {
+        Row: {
+          actual_value: string | null
+          agent_id: string | null
+          category: string | null
+          check_description: string | null
+          check_id: string
+          check_name: string
+          created_at: string
+          evidence: Json | null
+          expected_value: string | null
+          framework_type: string
+          id: string
+          is_remediated: boolean | null
+          job_id: string | null
+          notes: string | null
+          remediated_at: string | null
+          remediated_by: string | null
+          remediation_steps: string | null
+          severity: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          actual_value?: string | null
+          agent_id?: string | null
+          category?: string | null
+          check_description?: string | null
+          check_id: string
+          check_name: string
+          created_at?: string
+          evidence?: Json | null
+          expected_value?: string | null
+          framework_type: string
+          id?: string
+          is_remediated?: boolean | null
+          job_id?: string | null
+          notes?: string | null
+          remediated_at?: string | null
+          remediated_by?: string | null
+          remediation_steps?: string | null
+          severity?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          actual_value?: string | null
+          agent_id?: string | null
+          category?: string | null
+          check_description?: string | null
+          check_id?: string
+          check_name?: string
+          created_at?: string
+          evidence?: Json | null
+          expected_value?: string | null
+          framework_type?: string
+          id?: string
+          is_remediated?: boolean | null
+          job_id?: string | null
+          notes?: string | null
+          remediated_at?: string | null
+          remediated_by?: string | null
+          remediation_steps?: string | null
+          severity?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_check_results_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_check_results_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "compliance_scan_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_connectors: {
         Row: {
           configuration: Json
@@ -2316,6 +2460,119 @@ export type Database = {
           requirements?: Json
           updated_at?: string
           version?: string | null
+        }
+        Relationships: []
+      }
+      compliance_scan_jobs: {
+        Row: {
+          agent_id: string | null
+          completed_at: string | null
+          compliance_score: number | null
+          created_at: string
+          error_message: string | null
+          failed_checks: number | null
+          framework_type: string
+          id: string
+          passed_checks: number | null
+          scan_config: Json | null
+          scan_status: string
+          started_at: string | null
+          total_checks: number | null
+          updated_at: string
+          user_id: string
+          warning_checks: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          completed_at?: string | null
+          compliance_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          failed_checks?: number | null
+          framework_type: string
+          id?: string
+          passed_checks?: number | null
+          scan_config?: Json | null
+          scan_status?: string
+          started_at?: string | null
+          total_checks?: number | null
+          updated_at?: string
+          user_id: string
+          warning_checks?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          completed_at?: string | null
+          compliance_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          failed_checks?: number | null
+          framework_type?: string
+          id?: string
+          passed_checks?: number | null
+          scan_config?: Json | null
+          scan_status?: string
+          started_at?: string | null
+          total_checks?: number | null
+          updated_at?: string
+          user_id?: string
+          warning_checks?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_scan_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compliance_scan_schedules: {
+        Row: {
+          agent_ids: string[] | null
+          created_at: string
+          framework_types: string[]
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          next_run_at: string | null
+          notification_emails: string[] | null
+          scan_all_agents: boolean | null
+          schedule_cron: string | null
+          schedule_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_ids?: string[] | null
+          created_at?: string
+          framework_types: string[]
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          notification_emails?: string[] | null
+          scan_all_agents?: boolean | null
+          schedule_cron?: string | null
+          schedule_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_ids?: string[] | null
+          created_at?: string
+          framework_types?: string[]
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          next_run_at?: string | null
+          notification_emails?: string[] | null
+          scan_all_agents?: boolean | null
+          schedule_cron?: string | null
+          schedule_name?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

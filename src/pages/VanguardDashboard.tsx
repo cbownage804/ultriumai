@@ -25,6 +25,7 @@ import { ProcessTimeline } from "@/components/vanguard/ProcessTimeline";
 import { AssetRiskScoring } from "@/components/vanguard/AssetRiskScoring";
 import { IntegrationHub } from "@/components/vanguard/IntegrationHub";
 import { ExecutiveSecurityDashboard } from "@/components/vanguard/ExecutiveSecurityDashboard";
+import { ComplianceScanner } from "@/components/vanguard/ComplianceScanner";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
@@ -364,7 +365,7 @@ const VanguardDashboard = () => {
           </TabsContent>
 
           <TabsContent value="compliance">
-            <ComplianceAuditor onScanComplete={loadRecentScans} />
+            <ComplianceScanner />
           </TabsContent>
 
           <TabsContent value="threats">
