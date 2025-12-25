@@ -126,3 +126,6 @@ verify_jwt = true
 
 [functions.vanguard-agentless-scan]
 verify_jwt = false
+
+[functions.vanguard-alerting]
+verify_jwt = true

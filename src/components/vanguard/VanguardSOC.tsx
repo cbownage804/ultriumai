@@ -321,32 +321,34 @@ export const VanguardSOC = () => {
   const threatLevel = getThreatLevel();
 
   return (
-    <div className="space-y-6">
-      {/* Header with Live Status */}
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      {/* Header with Live Status - responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Eye className="h-6 w-6 text-primary" />
+          <div className="relative shrink-0">
+            <Eye className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
           </div>
           <div>
-            <h2 className="text-2xl font-bold">Security Operations Center</h2>
-            <div className="flex items-center gap-2 text-sm">
+            <h2 className="text-lg md:text-2xl font-bold">Security Operations Center</h2>
+            <div className="flex items-center gap-2 text-xs md:text-sm">
               <Radio className="h-3 w-3 text-green-500 animate-pulse" />
-              <span className="text-muted-foreground">Real-time monitoring active</span>
+              <span className="text-muted-foreground">Real-time monitoring</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className={`px-4 py-2 rounded-lg ${threatLevel.bg} border`}>
-            <div className="flex items-center gap-2">
-              <Shield className={`h-4 w-4 ${threatLevel.color}`} />
-              <span className={`font-bold ${threatLevel.color}`}>THREAT LEVEL: {threatLevel.level}</span>
+        <div className="flex items-center gap-2 md:gap-3 flex-wrap">
+          <div className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg ${threatLevel.bg} border`}>
+            <div className="flex items-center gap-1 md:gap-2">
+              <Shield className={`h-3 w-3 md:h-4 md:w-4 ${threatLevel.color}`} />
+              <span className={`text-xs md:text-sm font-bold ${threatLevel.color}`}>
+                <span className="hidden sm:inline">THREAT LEVEL: </span>{threatLevel.level}
+              </span>
             </div>
           </div>
-          <Button variant="outline" onClick={loadSecurityData} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
+          <Button variant="outline" size="sm" onClick={loadSecurityData} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline ml-2">Refresh</span>
           </Button>
         </div>
       </div>
@@ -355,90 +357,90 @@ export const VanguardSOC = () => {
       {metrics.criticalCount > 0 && (
         <Alert className="border-red-500 bg-red-500/10 animate-pulse">
           <AlertTriangle className="h-4 w-4 text-red-500" />
-          <AlertDescription className="text-red-600 font-medium">
-            {metrics.criticalCount} CRITICAL security issue{metrics.criticalCount > 1 ? 's' : ''} require immediate attention
+          <AlertDescription className="text-red-600 font-medium text-sm">
+            {metrics.criticalCount} CRITICAL issue{metrics.criticalCount > 1 ? 's' : ''} require attention
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Top Metrics Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {/* Top Metrics Row - mobile grid */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-4">
         <Card className="border-l-4 border-l-red-500">
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 md:pt-4 px-3 md:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Critical</p>
-                <p className="text-2xl font-bold text-red-500">{metrics.criticalCount}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase">Critical</p>
+                <p className="text-lg md:text-2xl font-bold text-red-500">{metrics.criticalCount}</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-red-500/30" />
+              <AlertTriangle className="h-5 w-5 md:h-8 md:w-8 text-red-500/30 hidden sm:block" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-orange-500">
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 md:pt-4 px-3 md:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">High</p>
-                <p className="text-2xl font-bold text-orange-500">{metrics.highCount}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase">High</p>
+                <p className="text-lg md:text-2xl font-bold text-orange-500">{metrics.highCount}</p>
               </div>
-              <Zap className="h-8 w-8 text-orange-500/30" />
+              <Zap className="h-5 w-5 md:h-8 md:w-8 text-orange-500/30 hidden sm:block" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-yellow-500">
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 md:pt-4 px-3 md:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Medium</p>
-                <p className="text-2xl font-bold text-yellow-500">{metrics.mediumCount}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase">Medium</p>
+                <p className="text-lg md:text-2xl font-bold text-yellow-500">{metrics.mediumCount}</p>
               </div>
-              <Activity className="h-8 w-8 text-yellow-500/30" />
+              <Activity className="h-5 w-5 md:h-8 md:w-8 text-yellow-500/30 hidden sm:block" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-blue-500">
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 md:pt-4 px-3 md:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Low</p>
-                <p className="text-2xl font-bold text-blue-500">{metrics.lowCount}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase">Low</p>
+                <p className="text-lg md:text-2xl font-bold text-blue-500">{metrics.lowCount}</p>
               </div>
-              <Shield className="h-8 w-8 text-blue-500/30" />
+              <Shield className="h-5 w-5 md:h-8 md:w-8 text-blue-500/30 hidden sm:block" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-green-500">
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 md:pt-4 px-3 md:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Resolved</p>
-                <p className="text-2xl font-bold text-green-500">{metrics.resolvedToday}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase">Resolved</p>
+                <p className="text-lg md:text-2xl font-bold text-green-500">{metrics.resolvedToday}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500/30" />
+              <CheckCircle className="h-5 w-5 md:h-8 md:w-8 text-green-500/30 hidden sm:block" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-primary">
-          <CardContent className="pt-4">
+          <CardContent className="pt-3 md:pt-4 px-3 md:px-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground uppercase">Agents</p>
-                <p className="text-2xl font-bold">{metrics.agentsOnline}/{metrics.totalAgents}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground uppercase">Agents</p>
+                <p className="text-lg md:text-2xl font-bold">{metrics.agentsOnline}/{metrics.totalAgents}</p>
               </div>
-              <Server className="h-8 w-8 text-primary/30" />
+              <Server className="h-5 w-5 md:h-8 md:w-8 text-primary/30 hidden sm:block" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main Alerts Panel */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6 order-2 lg:order-1">
           <Card>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-center">
