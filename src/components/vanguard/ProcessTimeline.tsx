@@ -16,17 +16,18 @@ import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 
 interface ProcessEvent {
   id: string;
-  agent_id: string;
+  agent_id: string | null;
   process_name: string;
   process_id: number;
-  parent_process_id: number;
-  parent_process_name: string;
-  command_line: string;
-  user_name: string;
-  event_type: 'start' | 'stop' | 'network' | 'file_access' | 'registry';
-  timestamp: string;
-  risk_score: number;
-  details: Record<string, any>;
+  parent_process_id: number | null;
+  command_line: string | null;
+  user_name: string | null;
+  event_type: string;
+  created_at: string;
+  is_suspicious: boolean | null;
+  executable_path: string | null;
+  file_hash: string | null;
+  user_sid: string | null;
 }
 
 interface ProcessNode {
@@ -57,21 +58,16 @@ export function ProcessTimeline() {
       const hours = timeRange === '1h' ? 1 : timeRange === '6h' ? 6 : timeRange === '24h' ? 24 : 168;
       const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
-      let query = supabase
+      const { data, error } = await (supabase as any)
         .from('process_events')
         .select('*')
         .eq('user_id', user?.id)
-        .gte('timestamp', since)
-        .order('timestamp', { ascending: false })
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
         .limit(500);
 
-      if (selectedAgentId) {
-        query = query.eq('agent_id', selectedAgentId);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      setEvents(data || []);
+      setEvents((data || []) as ProcessEvent[]);
     } catch (err) {
       console.error('Failed to load process events:', err);
     } finally {
@@ -102,11 +98,8 @@ export function ProcessTimeline() {
     }
   };
 
-  const getRiskColor = (score: number) => {
-    if (score >= 80) return 'bg-red-500/10 text-red-500';
-    if (score >= 60) return 'bg-orange-500/10 text-orange-500';
-    if (score >= 40) return 'bg-yellow-500/10 text-yellow-500';
-    return 'bg-green-500/10 text-green-500';
+  const getRiskColor = (isSuspicious: boolean | null) => {
+    return isSuspicious ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500';
   };
 
   // Build process tree
@@ -151,7 +144,7 @@ export function ProcessTimeline() {
     event.user_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const highRiskEvents = events.filter(e => e.risk_score >= 70).length;
+  const highRiskEvents = events.filter(e => e.is_suspicious).length;
   const processTree = buildProcessTree(filteredEvents.slice(0, 100));
 
   const renderProcessNode = (node: ProcessNode, depth: number = 0) => {
@@ -159,7 +152,7 @@ export function ProcessTimeline() {
     const hasChildren = node.children.length > 0;
 
     return (
-      <div key={`${event.process_id}-${event.timestamp}`}>
+      <div key={`${event.process_id}-${event.created_at}`}>
         <div 
           className={`flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer`}
           style={{ paddingLeft: `${depth * 20 + 8}px` }}
@@ -179,15 +172,15 @@ export function ProcessTimeline() {
             <div className="flex items-center gap-2">
               <span className="font-medium truncate">{event.process_name}</span>
               <Badge variant="outline" className="text-xs">PID: {event.process_id}</Badge>
-              <Badge className={`text-xs ${getRiskColor(event.risk_score)}`}>
-                Risk: {event.risk_score}
+              <Badge className={`text-xs ${getRiskColor(event.is_suspicious)}`}>
+                {event.is_suspicious ? 'Suspicious' : 'Normal'}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground truncate">{event.command_line}</p>
           </div>
           <div className="text-right text-xs text-muted-foreground">
             <p>{event.user_name}</p>
-            <p>{new Date(event.timestamp).toLocaleTimeString()}</p>
+            <p>{new Date(event.created_at).toLocaleTimeString()}</p>
           </div>
         </div>
         {node.expanded && node.children.map(child => renderProcessNode(child, depth + 1))}
@@ -336,8 +329,8 @@ export function ProcessTimeline() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{event.process_name}</span>
                       <Badge variant="outline" className="text-xs">{event.event_type}</Badge>
-                      <Badge className={`text-xs ${getRiskColor(event.risk_score)}`}>
-                        {event.risk_score}
+                      <Badge className={`text-xs ${getRiskColor(event.is_suspicious)}`}>
+                        {event.is_suspicious ? 'Suspicious' : 'Normal'}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground truncate max-w-[600px]">
@@ -345,7 +338,7 @@ export function ProcessTimeline() {
                     </p>
                   </div>
                   <div className="text-right text-xs text-muted-foreground">
-                    {new Date(event.timestamp).toLocaleString()}
+                    {new Date(event.created_at).toLocaleString()}
                   </div>
                 </div>
               ))}

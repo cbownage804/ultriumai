@@ -18,24 +18,34 @@ import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 
 interface FIMBaseline {
   id: string;
-  agent_id: string;
+  agent_id: string | null;
   file_path: string;
   file_hash: string;
-  file_size: number;
-  permissions: string;
-  last_checked: string;
-  status: 'normal' | 'modified' | 'deleted' | 'new';
+  file_size: number | null;
+  permissions: string | null;
+  is_monitored: boolean | null;
+  is_directory: boolean | null;
+  owner: string | null;
+  last_modified: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface FIMEvent {
   id: string;
-  agent_id: string;
+  agent_id: string | null;
+  baseline_id: string | null;
   file_path: string;
-  event_type: 'created' | 'modified' | 'deleted' | 'permission_change';
-  old_hash?: string;
-  new_hash?: string;
-  detected_at: string;
+  change_type: string;
+  old_hash: string | null;
+  new_hash: string | null;
+  old_value: any;
+  new_value: any;
   severity: string;
+  is_acknowledged: boolean | null;
+  acknowledged_by: string | null;
+  acknowledged_at: string | null;
+  created_at: string;
 }
 
 export function FileIntegrityMonitor() {
@@ -57,19 +67,14 @@ export function FileIntegrityMonitor() {
 
   const loadBaselines = async () => {
     try {
-      let query = supabase
+      const { data, error } = await (supabase as any)
         .from('fim_baselines')
         .select('*')
         .eq('user_id', user?.id)
         .order('file_path', { ascending: true });
 
-      if (selectedAgentId) {
-        query = query.eq('agent_id', selectedAgentId);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      setBaselines(data || []);
+      setBaselines((data || []) as FIMBaseline[]);
     } catch (err) {
       console.error('Failed to load FIM baselines:', err);
     } finally {
@@ -79,20 +84,15 @@ export function FileIntegrityMonitor() {
 
   const loadEvents = async () => {
     try {
-      let query = supabase
+      const { data, error } = await (supabase as any)
         .from('fim_events')
         .select('*')
         .eq('user_id', user?.id)
-        .order('detected_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(100);
 
-      if (selectedAgentId) {
-        query = query.eq('agent_id', selectedAgentId);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
-      setEvents(data || []);
+      setEvents((data || []) as FIMEvent[]);
     } catch (err) {
       console.error('Failed to load FIM events:', err);
     }
@@ -128,8 +128,8 @@ export function FileIntegrityMonitor() {
     }
   };
 
-  const getEventIcon = (eventType: string) => {
-    switch (eventType) {
+  const getEventIcon = (changeType: string) => {
+    switch (changeType) {
       case 'created': return <FilePlus className="h-4 w-4 text-green-500" />;
       case 'modified': return <FileEdit className="h-4 w-4 text-orange-500" />;
       case 'deleted': return <FileX className="h-4 w-4 text-red-500" />;
@@ -158,9 +158,9 @@ export function FileIntegrityMonitor() {
     "C:\\Windows\\System32\\drivers\\etc\\hosts"
   ];
 
-  const modifiedCount = events.filter(e => e.event_type === 'modified').length;
-  const deletedCount = events.filter(e => e.event_type === 'deleted').length;
-  const createdCount = events.filter(e => e.event_type === 'created').length;
+  const modifiedCount = events.filter(e => e.change_type === 'modified').length;
+  const deletedCount = events.filter(e => e.change_type === 'deleted').length;
+  const createdCount = events.filter(e => e.change_type === 'created').length;
 
   return (
     <div className="space-y-6">
@@ -314,11 +314,11 @@ export function FileIntegrityMonitor() {
                     {events.map(event => (
                       <div key={event.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
-                          {getEventIcon(event.event_type)}
+                          {getEventIcon(event.change_type)}
                           <div>
                             <p className="font-medium font-mono text-sm">{event.file_path}</p>
                             <p className="text-xs text-muted-foreground capitalize">
-                              {event.event_type.replace('_', ' ')}
+                              {event.change_type.replace('_', ' ')}
                               {event.old_hash && event.new_hash && (
                                 <span> • Hash changed</span>
                               )}
@@ -328,7 +328,7 @@ export function FileIntegrityMonitor() {
                         <div className="text-right">
                           <Badge className={getSeverityColor(event.severity)}>{event.severity}</Badge>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(event.detected_at).toLocaleString()}
+                            {new Date(event.created_at).toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -358,17 +358,17 @@ export function FileIntegrityMonitor() {
                     {baselines.map(baseline => (
                       <div key={baseline.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div className="flex items-center gap-3">
-                          <FileCheck className={`h-4 w-4 ${baseline.status === 'normal' ? 'text-green-500' : 'text-orange-500'}`} />
+                          <FileCheck className={`h-4 w-4 ${baseline.is_monitored ? 'text-green-500' : 'text-orange-500'}`} />
                           <div>
                             <p className="font-medium font-mono text-sm">{baseline.file_path}</p>
                             <p className="text-xs text-muted-foreground">
-                              Hash: {baseline.file_hash.substring(0, 16)}... • Size: {baseline.file_size} bytes
+                              Hash: {baseline.file_hash.substring(0, 16)}... • Size: {baseline.file_size || 0} bytes
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={baseline.status === 'normal' ? 'outline' : 'destructive'}>
-                            {baseline.status}
+                          <Badge variant={baseline.is_monitored ? 'outline' : 'destructive'}>
+                            {baseline.is_monitored ? 'monitored' : 'disabled'}
                           </Badge>
                           <Button variant="ghost" size="sm">
                             <RefreshCw className="h-4 w-4" />
