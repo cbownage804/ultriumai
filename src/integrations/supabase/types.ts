@@ -693,6 +693,71 @@ export type Database = {
           },
         ]
       }
+      asset_risk_scores: {
+        Row: {
+          agent_id: string | null
+          asset_identifier: string
+          asset_type: string
+          behavioral_score: number | null
+          configuration_score: number | null
+          created_at: string | null
+          exposure_score: number | null
+          id: string
+          last_assessed_at: string | null
+          overall_risk_score: number
+          patch_score: number | null
+          recommendations: Json | null
+          risk_factors: Json | null
+          updated_at: string | null
+          user_id: string
+          vulnerability_score: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          asset_identifier: string
+          asset_type: string
+          behavioral_score?: number | null
+          configuration_score?: number | null
+          created_at?: string | null
+          exposure_score?: number | null
+          id?: string
+          last_assessed_at?: string | null
+          overall_risk_score?: number
+          patch_score?: number | null
+          recommendations?: Json | null
+          risk_factors?: Json | null
+          updated_at?: string | null
+          user_id: string
+          vulnerability_score?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          asset_identifier?: string
+          asset_type?: string
+          behavioral_score?: number | null
+          configuration_score?: number | null
+          created_at?: string | null
+          exposure_score?: number | null
+          id?: string
+          last_assessed_at?: string | null
+          overall_risk_score?: number
+          patch_score?: number | null
+          recommendations?: Json | null
+          risk_factors?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          vulnerability_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_risk_scores_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assets: {
         Row: {
           asset_tag: string | null
@@ -2356,6 +2421,78 @@ export type Database = {
         }
         Relationships: []
       }
+      containment_actions: {
+        Row: {
+          action_type: string
+          agent_id: string | null
+          approved_by: string | null
+          case_id: string | null
+          created_at: string | null
+          error_message: string | null
+          executed_at: string | null
+          executed_by: string | null
+          id: string
+          requires_approval: boolean | null
+          result: Json | null
+          rollback_available: boolean | null
+          rolled_back_at: string | null
+          status: string
+          target_details: Json
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          agent_id?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          requires_approval?: boolean | null
+          result?: Json | null
+          rollback_available?: boolean | null
+          rolled_back_at?: string | null
+          status?: string
+          target_details: Json
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          agent_id?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          executed_at?: string | null
+          executed_by?: string | null
+          id?: string
+          requires_approval?: boolean | null
+          result?: Json | null
+          rollback_available?: boolean | null
+          rolled_back_at?: string | null
+          status?: string
+          target_details?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "containment_actions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "containment_actions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "mdr_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_files: {
         Row: {
           conversation_id: string
@@ -3561,6 +3698,128 @@ export type Database = {
           },
         ]
       }
+      fim_baselines: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          file_hash: string
+          file_path: string
+          file_size: number | null
+          id: string
+          is_directory: boolean | null
+          is_monitored: boolean | null
+          last_modified: string | null
+          owner: string | null
+          permissions: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          file_hash: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          is_directory?: boolean | null
+          is_monitored?: boolean | null
+          last_modified?: string | null
+          owner?: string | null
+          permissions?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          file_hash?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          is_directory?: boolean | null
+          is_monitored?: boolean | null
+          last_modified?: string | null
+          owner?: string | null
+          permissions?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fim_baselines_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fim_events: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          agent_id: string
+          baseline_id: string | null
+          change_type: string
+          created_at: string | null
+          file_path: string
+          id: string
+          is_acknowledged: boolean | null
+          new_hash: string | null
+          new_value: Json | null
+          old_hash: string | null
+          old_value: Json | null
+          severity: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          agent_id: string
+          baseline_id?: string | null
+          change_type: string
+          created_at?: string | null
+          file_path: string
+          id?: string
+          is_acknowledged?: boolean | null
+          new_hash?: string | null
+          new_value?: Json | null
+          old_hash?: string | null
+          old_value?: Json | null
+          severity?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          agent_id?: string
+          baseline_id?: string | null
+          change_type?: string
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          is_acknowledged?: boolean | null
+          new_hash?: string | null
+          new_value?: Json | null
+          old_hash?: string | null
+          old_value?: Json | null
+          severity?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fim_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fim_events_baseline_id_fkey"
+            columns: ["baseline_id"]
+            isOneToOne: false
+            referencedRelation: "fim_baselines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gpt_actions: {
         Row: {
           action_type: string
@@ -4623,6 +4882,238 @@ export type Database = {
         }
         Relationships: []
       }
+      live_response_commands: {
+        Row: {
+          command: string
+          duration_ms: number | null
+          executed_at: string | null
+          exit_code: number | null
+          id: string
+          is_dangerous: boolean | null
+          output: string | null
+          session_id: string
+        }
+        Insert: {
+          command: string
+          duration_ms?: number | null
+          executed_at?: string | null
+          exit_code?: number | null
+          id?: string
+          is_dangerous?: boolean | null
+          output?: string | null
+          session_id: string
+        }
+        Update: {
+          command?: string
+          duration_ms?: number | null
+          executed_at?: string | null
+          exit_code?: number | null
+          id?: string
+          is_dangerous?: boolean | null
+          output?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_response_commands_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "live_response_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_response_sessions: {
+        Row: {
+          agent_id: string
+          case_id: string | null
+          commands_executed: number | null
+          ended_at: string | null
+          id: string
+          last_activity_at: string | null
+          recording_enabled: boolean | null
+          session_notes: string | null
+          session_type: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          case_id?: string | null
+          commands_executed?: number | null
+          ended_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          recording_enabled?: boolean | null
+          session_notes?: string | null
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          case_id?: string | null
+          commands_executed?: number | null
+          ended_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          recording_enabled?: boolean | null
+          session_notes?: string | null
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_response_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_response_sessions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "mdr_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mdr_case_activities: {
+        Row: {
+          activity_type: string
+          attachments: Json | null
+          case_id: string
+          created_at: string | null
+          description: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          attachments?: Json | null
+          case_id: string
+          created_at?: string | null
+          description: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          attachments?: Json | null
+          case_id?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mdr_case_activities_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "mdr_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mdr_cases: {
+        Row: {
+          affected_assets: Json | null
+          assigned_analyst: string | null
+          case_number: string
+          closed_at: string | null
+          contained_at: string | null
+          created_at: string | null
+          description: string | null
+          escalation_level: number | null
+          first_response_at: string | null
+          id: string
+          incident_ids: string[] | null
+          lessons_learned: string | null
+          notes: string | null
+          priority: number | null
+          remediation_steps: string[] | null
+          root_cause: string | null
+          severity: string
+          status: string
+          time_to_contain_minutes: number | null
+          time_to_detect_minutes: number | null
+          time_to_remediate_minutes: number | null
+          time_to_respond_minutes: number | null
+          timeline: Json | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          affected_assets?: Json | null
+          assigned_analyst?: string | null
+          case_number: string
+          closed_at?: string | null
+          contained_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          escalation_level?: number | null
+          first_response_at?: string | null
+          id?: string
+          incident_ids?: string[] | null
+          lessons_learned?: string | null
+          notes?: string | null
+          priority?: number | null
+          remediation_steps?: string[] | null
+          root_cause?: string | null
+          severity: string
+          status?: string
+          time_to_contain_minutes?: number | null
+          time_to_detect_minutes?: number | null
+          time_to_remediate_minutes?: number | null
+          time_to_respond_minutes?: number | null
+          timeline?: Json | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          affected_assets?: Json | null
+          assigned_analyst?: string | null
+          case_number?: string
+          closed_at?: string | null
+          contained_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          escalation_level?: number | null
+          first_response_at?: string | null
+          id?: string
+          incident_ids?: string[] | null
+          lessons_learned?: string | null
+          notes?: string | null
+          priority?: number | null
+          remediation_steps?: string[] | null
+          root_cause?: string | null
+          severity?: string
+          status?: string
+          time_to_contain_minutes?: number | null
+          time_to_detect_minutes?: number | null
+          time_to_remediate_minutes?: number | null
+          time_to_respond_minutes?: number | null
+          timeline?: Json | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -4651,6 +5142,59 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mitre_attack_mappings: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          evidence: Json | null
+          finding_id: string | null
+          id: string
+          incident_id: string | null
+          sub_technique_id: string | null
+          sub_technique_name: string | null
+          tactic_id: string
+          tactic_name: string
+          technique_id: string
+          technique_name: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          evidence?: Json | null
+          finding_id?: string | null
+          id?: string
+          incident_id?: string | null
+          sub_technique_id?: string | null
+          sub_technique_name?: string | null
+          tactic_id: string
+          tactic_name: string
+          technique_id: string
+          technique_name: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          evidence?: Json | null
+          finding_id?: string | null
+          id?: string
+          incident_id?: string | null
+          sub_technique_id?: string | null
+          sub_technique_name?: string | null
+          tactic_id?: string
+          tactic_name?: string
+          technique_id?: string
+          technique_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mitre_attack_mappings_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "security_incidents"
             referencedColumns: ["id"]
           },
         ]
@@ -7561,6 +8105,74 @@ export type Database = {
           yearly_price?: number | null
         }
         Relationships: []
+      }
+      process_events: {
+        Row: {
+          agent_id: string
+          command_line: string | null
+          created_at: string | null
+          event_type: string
+          executable_path: string | null
+          file_hash: string | null
+          id: string
+          is_suspicious: boolean | null
+          loaded_modules: Json | null
+          mitre_techniques: string[] | null
+          network_connections: Json | null
+          parent_process_id: number | null
+          process_id: number
+          process_name: string
+          threat_indicators: string[] | null
+          user_name: string | null
+          user_sid: string | null
+        }
+        Insert: {
+          agent_id: string
+          command_line?: string | null
+          created_at?: string | null
+          event_type: string
+          executable_path?: string | null
+          file_hash?: string | null
+          id?: string
+          is_suspicious?: boolean | null
+          loaded_modules?: Json | null
+          mitre_techniques?: string[] | null
+          network_connections?: Json | null
+          parent_process_id?: number | null
+          process_id: number
+          process_name: string
+          threat_indicators?: string[] | null
+          user_name?: string | null
+          user_sid?: string | null
+        }
+        Update: {
+          agent_id?: string
+          command_line?: string | null
+          created_at?: string | null
+          event_type?: string
+          executable_path?: string | null
+          file_hash?: string | null
+          id?: string
+          is_suspicious?: boolean | null
+          loaded_modules?: Json | null
+          mitre_techniques?: string[] | null
+          network_connections?: Json | null
+          parent_process_id?: number | null
+          process_id?: number
+          process_name?: string
+          threat_indicators?: string[] | null
+          user_name?: string | null
+          user_sid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "process_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -11206,6 +11818,48 @@ export type Database = {
           },
         ]
       }
+      security_integrations: {
+        Row: {
+          configuration: Json
+          created_at: string | null
+          id: string
+          integration_type: string
+          is_enabled: boolean | null
+          last_triggered_at: string | null
+          name: string
+          trigger_conditions: Json | null
+          trigger_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          configuration: Json
+          created_at?: string | null
+          id?: string
+          integration_type: string
+          is_enabled?: boolean | null
+          last_triggered_at?: string | null
+          name: string
+          trigger_conditions?: Json | null
+          trigger_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          configuration?: Json
+          created_at?: string | null
+          id?: string
+          integration_type?: string
+          is_enabled?: boolean | null
+          last_triggered_at?: string | null
+          name?: string
+          trigger_conditions?: Json | null
+          trigger_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_scans: {
         Row: {
           completed_at: string | null
@@ -12100,6 +12754,51 @@ export type Database = {
           name?: string
           owner_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      threat_intel_cache: {
+        Row: {
+          categories: string[] | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          indicator_type: string
+          indicator_value: string
+          is_malicious: boolean | null
+          last_checked_at: string | null
+          raw_response: Json | null
+          reputation_score: number | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          categories?: string[] | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          indicator_type: string
+          indicator_value: string
+          is_malicious?: boolean | null
+          last_checked_at?: string | null
+          raw_response?: Json | null
+          reputation_score?: number | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          categories?: string[] | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          indicator_type?: string
+          indicator_value?: string
+          is_malicious?: boolean | null
+          last_checked_at?: string | null
+          raw_response?: Json | null
+          reputation_score?: number | null
+          source?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -13426,6 +14125,105 @@ export type Database = {
           trigger_conditions?: Json
           trigger_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      yara_matches: {
+        Row: {
+          agent_id: string | null
+          created_at: string | null
+          file_hash: string | null
+          file_path: string | null
+          id: string
+          matched_strings: string[] | null
+          rule_id: string
+          scan_type: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string | null
+          file_hash?: string | null
+          file_path?: string | null
+          id?: string
+          matched_strings?: string[] | null
+          rule_id: string
+          scan_type?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string | null
+          file_hash?: string | null
+          file_path?: string | null
+          id?: string
+          matched_strings?: string[] | null
+          rule_id?: string
+          scan_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yara_matches_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "yara_matches_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "yara_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yara_rules: {
+        Row: {
+          author: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          last_match_at: string | null
+          match_count: number | null
+          rule_content: string
+          rule_name: string
+          severity: string | null
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_match_at?: string | null
+          match_count?: number | null
+          rule_content: string
+          rule_name: string
+          severity?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_match_at?: string | null
+          match_count?: number | null
+          rule_content?: string
+          rule_name?: string
+          severity?: string | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

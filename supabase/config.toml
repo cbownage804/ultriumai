@@ -105,3 +105,12 @@ verify_jwt = true
 
 [functions.meraki-networks]
 verify_jwt = true
+
+[functions.threat-intel-lookup]
+verify_jwt = true
+
+[functions.live-response]
+verify_jwt = true
+
+[functions.containment-action]
+verify_jwt = true
