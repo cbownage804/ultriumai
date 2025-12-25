@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface Breach {
@@ -24,14 +25,18 @@ export const DarkWebMonitor = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [monitoredEmails, setMonitoredEmails] = useState<any[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadMonitoredEmails();
-  }, []);
+    if (user) loadMonitoredEmails();
+  }, [user]);
 
   const loadMonitoredEmails = async () => {
-    // Would load from dark_web_monitors table if it exists
-    // For now, use local state
+    const { data } = await supabase
+      .from('dark_web_monitors')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setMonitoredEmails(data);
   };
 
   const checkEmail = async () => {

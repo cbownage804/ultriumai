@@ -37,23 +37,46 @@ export const PatchManagement = () => {
   }, [user]);
 
   const loadPatches = async () => {
-    // Mock patch data - in production would come from agent scan results
-    const mockPatches: PatchInfo[] = [
-      { id: '1', name: 'KB5034441 - Windows Security Update', severity: 'critical', category: 'Security', size: '245 MB', release_date: '2024-12-20', status: 'pending', devices_affected: 15, devices_patched: 5 },
-      { id: '2', name: 'KB5034467 - .NET Framework Update', severity: 'high', category: 'Framework', size: '78 MB', release_date: '2024-12-18', status: 'in_progress', devices_affected: 22, devices_patched: 18 },
-      { id: '3', name: 'Chrome 121.0.6167.85', severity: 'high', category: 'Browser', size: '95 MB', release_date: '2024-12-15', status: 'pending', devices_affected: 30, devices_patched: 12 },
-      { id: '4', name: 'Adobe Reader 2024.001.20604', severity: 'medium', category: 'Application', size: '156 MB', release_date: '2024-12-10', status: 'completed', devices_affected: 18, devices_patched: 18 },
-      { id: '5', name: 'KB5034129 - Office Security Update', severity: 'medium', category: 'Office', size: '312 MB', release_date: '2024-12-08', status: 'pending', devices_affected: 25, devices_patched: 8 },
-    ];
-
-    setPatches(mockPatches);
-    setStats({
-      critical: mockPatches.filter(p => p.severity === 'critical' && p.status !== 'completed').length,
-      high: mockPatches.filter(p => p.severity === 'high' && p.status !== 'completed').length,
-      medium: mockPatches.filter(p => p.severity === 'medium' && p.status !== 'completed').length,
-      low: mockPatches.filter(p => p.severity === 'low' && p.status !== 'completed').length,
-      compliance: Math.round(mockPatches.reduce((sum, p) => sum + (p.devices_patched / p.devices_affected * 100), 0) / mockPatches.length)
-    });
+    const { data } = await supabase
+      .from('patch_management')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (data && data.length > 0) {
+      const mappedPatches = data.map(p => ({
+        id: p.id,
+        name: p.patch_name,
+        severity: p.severity,
+        category: p.vendor,
+        size: 'N/A',
+        release_date: p.release_date || p.created_at,
+        status: p.status,
+        devices_affected: p.affected_devices || 1,
+        devices_patched: p.status === 'completed' ? (p.affected_devices || 1) : 0
+      }));
+      setPatches(mappedPatches);
+      setStats({
+        critical: mappedPatches.filter(p => p.severity === 'critical' && p.status !== 'completed').length,
+        high: mappedPatches.filter(p => p.severity === 'high' && p.status !== 'completed').length,
+        medium: mappedPatches.filter(p => p.severity === 'medium' && p.status !== 'completed').length,
+        low: mappedPatches.filter(p => p.severity === 'low' && p.status !== 'completed').length,
+        compliance: mappedPatches.length > 0 
+          ? Math.round(mappedPatches.filter(p => p.status === 'completed').length / mappedPatches.length * 100)
+          : 100
+      });
+    } else {
+      // Show demo data if no real patches exist
+      const mockPatches: PatchInfo[] = [
+        { id: '1', name: 'KB5034441 - Windows Security Update', severity: 'critical', category: 'Security', size: '245 MB', release_date: '2024-12-20', status: 'pending', devices_affected: 15, devices_patched: 5 },
+        { id: '2', name: 'KB5034467 - .NET Framework Update', severity: 'high', category: 'Framework', size: '78 MB', release_date: '2024-12-18', status: 'in_progress', devices_affected: 22, devices_patched: 18 },
+        { id: '3', name: 'Chrome 121.0.6167.85', severity: 'high', category: 'Browser', size: '95 MB', release_date: '2024-12-15', status: 'pending', devices_affected: 30, devices_patched: 12 },
+      ];
+      setPatches(mockPatches);
+      setStats({
+        critical: 1, high: 2, medium: 0, low: 0,
+        compliance: 45
+      });
+    }
   };
 
   const deployPatch = async (patchId: string) => {
