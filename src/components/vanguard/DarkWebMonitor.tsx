@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users, RefreshCw, Trash2, Phone, CreditCard, MapPin, Key, User } from 'lucide-react';
+import { Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users, RefreshCw, Trash2, Phone, CreditCard, MapPin, Key, User, Database, Lock, EyeOff } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -16,6 +16,18 @@ interface Breach {
   pwn_count: number;
   data_classes: string[];
   is_verified: boolean;
+}
+
+interface LeakedData {
+  database_name: string;
+  email?: string;
+  username?: string;
+  password?: string;
+  hashed_password?: string;
+  name?: string;
+  phone?: string;
+  address?: string;
+  ip_address?: string;
 }
 
 // Map data classes to icons and colors for visual highlighting
@@ -40,6 +52,7 @@ export const DarkWebMonitor = () => {
   const [loadingType, setLoadingType] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
   const [monitoredItems, setMonitoredItems] = useState<any[]>([]);
+  const [showPasswords, setShowPasswords] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -90,7 +103,9 @@ export const DarkWebMonitor = () => {
       
       setResults(data);
       
-      if (data.breaches?.length > 0) {
+      if (data.leakedData?.length > 0) {
+        toast.warning(`Found ${data.leakedData.length} leaked credentials!`);
+      } else if (data.breaches?.length > 0) {
         toast.warning(`Found ${data.breaches.length} breaches for this email`);
       } else {
         toast.success('No breaches found for this email!');
@@ -176,7 +191,7 @@ export const DarkWebMonitor = () => {
               Email Breach Check
             </CardTitle>
             <CardDescription>
-              Check if an email has been exposed in data breaches. Results include any leaked phone numbers, passwords, and other data.
+              Check if an email has been exposed in data breaches. Shows leaked passwords, phone numbers, addresses, and more.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -234,26 +249,131 @@ export const DarkWebMonitor = () => {
               {getRiskBadge(results.risk_level)}
             </div>
             <CardDescription>
-              {results.breaches?.length > 0 
-                ? `Found ${results.breaches.length} breaches`
-                : results.message || 'Scan complete'
+              {results.leakedData?.length > 0 
+                ? `Found ${results.leakedData.length} leaked credentials${results.dehashedTotal > 50 ? ` (showing 50 of ${results.dehashedTotal})` : ''}`
+                : results.breaches?.length > 0 
+                  ? `Found ${results.breaches.length} breaches`
+                  : results.message || 'Scan complete'
               }
               {results.checked_at && ` • Checked: ${new Date(results.checked_at).toLocaleString()}`}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {results.simulated && (
-              <div className="p-4 bg-yellow-500/10 rounded-lg mb-4">
+              <div className="p-4 bg-yellow-500/10 rounded-lg">
                 <p className="text-yellow-600 dark:text-yellow-400 text-sm">
                   ⚠️ {results.message}
                 </p>
               </div>
             )}
 
-            {/* Sensitive Data Summary */}
-            {results.breaches?.length > 0 && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg mb-4">
-                <h4 className="font-semibold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
+            {/* Actual Leaked Data from Dehashed */}
+            {results.leakedData?.length > 0 && (
+              <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-red-600 dark:text-red-400 flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    Leaked Credentials Found
+                  </h4>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPasswords(!showPasswords)}
+                    className="text-xs"
+                  >
+                    {showPasswords ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
+                    {showPasswords ? 'Hide' : 'Show'} Details
+                  </Button>
+                </div>
+                
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {results.leakedData.map((leak: LeakedData, idx: number) => (
+                    <div key={idx} className="p-3 bg-background/50 rounded-lg border border-red-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs bg-red-500/10 border-red-500/30">
+                          {leak.database_name}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                        {leak.email && (
+                          <div className="flex items-center gap-1">
+                            <Mail className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">Email:</span>
+                            <span className="font-mono text-xs">{showPasswords ? leak.email : '***@***'}</span>
+                          </div>
+                        )}
+                        {leak.username && (
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">User:</span>
+                            <span className="font-mono text-xs">{showPasswords ? leak.username : '****'}</span>
+                          </div>
+                        )}
+                        {leak.password && (
+                          <div className="flex items-center gap-1">
+                            <Key className="h-3 w-3 text-red-500" />
+                            <span className="text-red-500">Pass:</span>
+                            <span className="font-mono text-xs text-red-500">{showPasswords ? leak.password : '••••••••'}</span>
+                          </div>
+                        )}
+                        {leak.hashed_password && (
+                          <div className="flex items-center gap-1">
+                            <Lock className="h-3 w-3 text-orange-500" />
+                            <span className="text-orange-500">Hash:</span>
+                            <span className="font-mono text-xs">{showPasswords ? leak.hashed_password : '••••••••'}</span>
+                          </div>
+                        )}
+                        {leak.phone && (
+                          <div className="flex items-center gap-1">
+                            <Phone className="h-3 w-3 text-orange-500" />
+                            <span className="text-orange-500">Phone:</span>
+                            <span className="font-mono text-xs">{showPasswords ? leak.phone : '***-***-****'}</span>
+                          </div>
+                        )}
+                        {leak.address && (
+                          <div className="flex items-center gap-1 col-span-2">
+                            <MapPin className="h-3 w-3 text-yellow-500" />
+                            <span className="text-yellow-500">Address:</span>
+                            <span className="font-mono text-xs truncate">{showPasswords ? leak.address : '****'}</span>
+                          </div>
+                        )}
+                        {leak.name && (
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">Name:</span>
+                            <span className="text-xs">{showPasswords ? leak.name : '****'}</span>
+                          </div>
+                        )}
+                        {leak.ip_address && (
+                          <div className="flex items-center gap-1">
+                            <Globe className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-muted-foreground">IP:</span>
+                            <span className="font-mono text-xs">{showPasswords ? leak.ip_address : '***.***.***.***'}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <p className="text-xs text-red-400 mt-3">
+                  ⚠️ These are actual leaked credentials. Change affected passwords immediately and enable 2FA where possible.
+                </p>
+              </div>
+            )}
+
+            {results.dehashedError && (
+              <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                <p className="text-yellow-600 dark:text-yellow-400 text-sm">
+                  ⚠️ Dehashed: {results.dehashedError}
+                </p>
+              </div>
+            )}
+
+            {/* Sensitive Data Summary from HIBP */}
+            {results.breaches?.length > 0 && !results.leakedData?.length && (
+              <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                <h4 className="font-semibold text-orange-600 dark:text-orange-400 mb-2 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" />
                   Exposed Data Types
                 </h4>
@@ -274,7 +394,7 @@ export const DarkWebMonitor = () => {
               </div>
             )}
 
-            {results.breaches?.length === 0 && !results.simulated && (
+            {results.breaches?.length === 0 && !results.leakedData?.length && !results.simulated && (
               <div className="flex items-center gap-2 p-4 bg-green-500/10 rounded-lg">
                 <Shield className="h-5 w-5 text-green-500" />
                 <span className="text-green-600 dark:text-green-400 font-medium">
@@ -283,8 +403,10 @@ export const DarkWebMonitor = () => {
               </div>
             )}
 
+            {/* Breach list from HIBP */}
             {results.breaches?.length > 0 && (
               <div className="space-y-4">
+                <h4 className="font-medium">Breach History ({results.breaches.length})</h4>
                 {results.breaches.map((breach: Breach, idx: number) => (
                   <div key={idx} className="p-4 border rounded-lg space-y-3">
                     <div className="flex items-start justify-between">

@@ -20,8 +20,10 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const hibpKey = Deno.env.get('HAVEIBEENPWNED_API_KEY');
+    const dehashedKey = Deno.env.get('DEHASHED_API_KEY');
+    const dehashedEmail = Deno.env.get('DEHASHED_EMAIL');
 
-    let results: any = { breaches: [], pastes: [], exposures: [] };
+    let results: any = { breaches: [], pastes: [], exposures: [], leakedData: [] };
 
     // Validate inputs
     if (action === 'check_email' && email) {
@@ -39,6 +41,7 @@ serve(async (req) => {
         });
       }
 
+      // Check HIBP for breach metadata
       if (hibpKey) {
         console.log('[Dark Web Monitor] Checking HIBP for email breaches...');
         
@@ -112,18 +115,90 @@ serve(async (req) => {
         }
       } else {
         console.log('[Dark Web Monitor] No HIBP API key configured - using simulated check');
-        // Simulate a check for demo purposes
         results.message = 'HIBP API key not configured. For real breach detection, add your Have I Been Pwned API key.';
         results.simulated = true;
+      }
+
+      // Check Dehashed for actual leaked data values
+      if (dehashedKey && dehashedEmail) {
+        console.log('[Dark Web Monitor] Checking Dehashed for leaked credentials...');
+        
+        try {
+          const authString = btoa(`${dehashedEmail}:${dehashedKey}`);
+          const dehashedResponse = await fetch(
+            `https://api.dehashed.com/search?query=email:${encodeURIComponent(email)}`,
+            {
+              headers: {
+                'Accept': 'application/json',
+                'Authorization': `Basic ${authString}`
+              }
+            }
+          );
+
+          console.log(`[Dark Web Monitor] Dehashed response status: ${dehashedResponse.status}`);
+
+          if (dehashedResponse.ok) {
+            const dehashedData = await dehashedResponse.json();
+            console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} entries`);
+            
+            if (dehashedData.entries && dehashedData.entries.length > 0) {
+              results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
+                database_name: entry.database_name || 'Unknown',
+                email: entry.email || null,
+                username: entry.username || null,
+                password: entry.password ? maskPassword(entry.password) : null,
+                hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
+                name: entry.name || null,
+                phone: entry.phone || null,
+                address: entry.address || null,
+                ip_address: entry.ip_address || null,
+                vin: entry.vin || null,
+                obtained_from: entry.obtained_from || null
+              }));
+              
+              results.dehashedTotal = dehashedData.total;
+              results.hasActualLeakedData = true;
+            }
+          } else if (dehashedResponse.status === 401) {
+            console.log('[Dark Web Monitor] Dehashed auth failed - check credentials');
+            results.dehashedError = 'Dehashed authentication failed - verify API key and email';
+          } else if (dehashedResponse.status === 400) {
+            const errorData = await dehashedResponse.text();
+            console.log('[Dark Web Monitor] Dehashed bad request:', errorData);
+            results.dehashedError = 'Invalid request to Dehashed API';
+          } else if (dehashedResponse.status === 402) {
+            console.log('[Dark Web Monitor] Dehashed - out of credits');
+            results.dehashedError = 'Dehashed API credits exhausted';
+          }
+        } catch (e) {
+          console.error('[Dark Web Monitor] Dehashed API error:', e);
+          results.dehashedError = e.message;
+        }
+      } else {
+        console.log('[Dark Web Monitor] Dehashed credentials not configured');
       }
 
       // Calculate risk level
       const breachCount = results.breaches?.length || 0;
       const pasteCount = results.pastes?.length || 0;
+      const leakedDataCount = results.leakedData?.length || 0;
       
-      results.risk_level = breachCount > 5 || pasteCount > 3 ? 'critical' :
-                           breachCount > 2 || pasteCount > 1 ? 'high' :
-                           breachCount > 0 || pasteCount > 0 ? 'medium' : 'low';
+      // Having actual leaked credentials increases risk
+      const hasPasswords = results.leakedData?.some((d: any) => d.password || d.hashed_password);
+      const hasPhones = results.leakedData?.some((d: any) => d.phone);
+      const hasAddresses = results.leakedData?.some((d: any) => d.address);
+      
+      if (hasPasswords && (hasPhones || hasAddresses)) {
+        results.risk_level = 'critical';
+      } else if (breachCount > 5 || pasteCount > 3 || leakedDataCount > 10) {
+        results.risk_level = 'critical';
+      } else if (breachCount > 2 || pasteCount > 1 || leakedDataCount > 5 || hasPasswords) {
+        results.risk_level = 'high';
+      } else if (breachCount > 0 || pasteCount > 0 || leakedDataCount > 0) {
+        results.risk_level = 'medium';
+      } else {
+        results.risk_level = 'low';
+      }
 
       // Store monitoring result in database
       if (user_id) {
@@ -173,7 +248,7 @@ serve(async (req) => {
       }
     }
 
-    // Phone number check removed - HIBP email scans already reveal phone data in data_classes
+    // Domain check
     if (action === 'check_domain' && domain && hibpKey) {
       console.log('[Dark Web Monitor] Checking domain breaches...');
       
@@ -213,7 +288,7 @@ serve(async (req) => {
 
     results.checked_at = new Date().toISOString();
 
-    console.log(`[Dark Web Monitor] Returning results with risk_level: ${results.risk_level}, breaches: ${results.breaches?.length || 0}`);
+    console.log(`[Dark Web Monitor] Returning results with risk_level: ${results.risk_level}, breaches: ${results.breaches?.length || 0}, leakedData: ${results.leakedData?.length || 0}`);
 
     return new Response(JSON.stringify(results), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -226,3 +301,11 @@ serve(async (req) => {
     });
   }
 });
+
+// Mask passwords for security - show first 2 and last 2 chars
+function maskPassword(password: string): string {
+  if (!password || password.length <= 4) {
+    return '****';
+  }
+  return `${password.substring(0, 2)}${'*'.repeat(Math.min(password.length - 4, 8))}${password.substring(password.length - 2)}`;
+}
