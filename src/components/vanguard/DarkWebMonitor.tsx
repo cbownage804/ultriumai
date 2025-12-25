@@ -3,8 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users } from 'lucide-react';
+import { Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users, Phone, RefreshCw, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -21,22 +20,35 @@ interface Breach {
 
 export const DarkWebMonitor = () => {
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [domain, setDomain] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
-  const [monitoredEmails, setMonitoredEmails] = useState<any[]>([]);
+  const [monitoredItems, setMonitoredItems] = useState<any[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user) loadMonitoredEmails();
+    if (user) loadMonitoredItems();
   }, [user]);
 
-  const loadMonitoredEmails = async () => {
-    const { data } = await supabase
+  const loadMonitoredItems = async () => {
+    const { data, error } = await supabase
       .from('dark_web_monitors')
       .select('*')
-      .order('created_at', { ascending: false });
-    if (data) setMonitoredEmails(data);
+      .eq('user_id', user?.id)
+      .order('last_checked', { ascending: false });
+    
+    if (error) {
+      console.error('Error loading monitors:', error);
+    } else {
+      setMonitoredItems(data || []);
+    }
+  };
+
+  const validateEmail = (email: string) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
   };
 
   const checkEmail = async () => {
@@ -45,21 +57,71 @@ export const DarkWebMonitor = () => {
       return;
     }
 
+    if (!validateEmail(email)) {
+      toast.error('Please enter a valid email address (e.g., user@example.com)');
+      return;
+    }
+
     setIsLoading(true);
+    setLoadingType('email');
+    setResults(null);
+
     try {
       const { data, error } = await supabase.functions.invoke('dark-web-monitor', {
-        body: { action: 'check_email', email }
+        body: { action: 'check_email', email, user_id: user?.id }
       });
 
       if (error) throw error;
+      
       setResults(data);
-      toast.success('Dark web check complete');
-      loadMonitoredEmails();
+      
+      if (data.breaches?.length > 0) {
+        toast.warning(`Found ${data.breaches.length} breaches for this email`);
+      } else {
+        toast.success('No breaches found for this email!');
+      }
+      
+      loadMonitoredItems();
     } catch (error: any) {
       console.error('Check error:', error);
       toast.error(error.message || 'Check failed');
     } finally {
       setIsLoading(false);
+      setLoadingType(null);
+    }
+  };
+
+  const checkPhone = async () => {
+    if (!phone.trim()) {
+      toast.error('Please enter a phone number');
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length < 10) {
+      toast.error('Phone number must be at least 10 digits');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingType('phone');
+    setResults(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('dark-web-monitor', {
+        body: { action: 'check_phone', phone: cleanPhone, user_id: user?.id }
+      });
+
+      if (error) throw error;
+      setResults(data);
+      toast.info(data.message || 'Phone check complete');
+      loadMonitoredItems();
+    } catch (error: any) {
+      console.error('Check error:', error);
+      toast.error(error.message || 'Check failed');
+    } finally {
+      setIsLoading(false);
+      setLoadingType(null);
     }
   };
 
@@ -70,9 +132,12 @@ export const DarkWebMonitor = () => {
     }
 
     setIsLoading(true);
+    setLoadingType('domain');
+    setResults(null);
+
     try {
       const { data, error } = await supabase.functions.invoke('dark-web-monitor', {
-        body: { action: 'check_domain', domain }
+        body: { action: 'check_domain', domain, user_id: user?.id }
       });
 
       if (error) throw error;
@@ -83,6 +148,21 @@ export const DarkWebMonitor = () => {
       toast.error(error.message || 'Check failed');
     } finally {
       setIsLoading(false);
+      setLoadingType(null);
+    }
+  };
+
+  const deleteMonitor = async (id: string) => {
+    const { error } = await supabase
+      .from('dark_web_monitors')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete monitor');
+    } else {
+      toast.success('Monitor removed');
+      loadMonitoredItems();
     }
   };
 
@@ -91,14 +171,16 @@ export const DarkWebMonitor = () => {
       critical: 'bg-red-500',
       high: 'bg-orange-500',
       medium: 'bg-yellow-500',
-      low: 'bg-green-500'
+      low: 'bg-green-500',
+      unknown: 'bg-muted'
     };
     return <Badge className={colors[level] || 'bg-muted'}>{level?.toUpperCase()}</Badge>;
   };
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Email Check */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -116,14 +198,43 @@ export const DarkWebMonitor = () => {
                 placeholder="user@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && checkEmail()}
               />
               <Button onClick={checkEmail} disabled={isLoading}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                {loadingType === 'email' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </CardContent>
         </Card>
 
+        {/* Phone Check */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Phone Number Check
+            </CardTitle>
+            <CardDescription>
+              Check if a phone number has been exposed
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input
+                type="tel"
+                placeholder="+1 (555) 123-4567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && checkPhone()}
+              />
+              <Button onClick={checkPhone} disabled={isLoading}>
+                {loadingType === 'phone' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Domain Check */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -140,38 +251,67 @@ export const DarkWebMonitor = () => {
                 placeholder="example.com"
                 value={domain}
                 onChange={(e) => setDomain(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && checkDomain()}
               />
               <Button onClick={checkDomain} disabled={isLoading}>
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
+                {loadingType === 'domain' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {results && results.breaches && (
+      {/* Results */}
+      {results && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
-                Breach Results
+                Scan Results
               </CardTitle>
               {getRiskBadge(results.risk_level)}
             </div>
             <CardDescription>
-              Found {results.breaches?.length || 0} breaches • Checked: {new Date(results.checked_at).toLocaleString()}
+              {results.breaches?.length > 0 
+                ? `Found ${results.breaches.length} breaches`
+                : results.message || 'Scan complete'
+              }
+              {results.checked_at && ` • Checked: ${new Date(results.checked_at).toLocaleString()}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {results.breaches?.length === 0 ? (
+            {results.simulated && (
+              <div className="p-4 bg-yellow-500/10 rounded-lg mb-4">
+                <p className="text-yellow-600 dark:text-yellow-400 text-sm">
+                  ⚠️ {results.message}
+                </p>
+              </div>
+            )}
+
+            {results.recommendations && (
+              <div className="p-4 bg-blue-500/10 rounded-lg mb-4">
+                <h4 className="font-medium mb-2">Recommendations:</h4>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {results.recommendations.map((rec: string, i: number) => (
+                    <li key={i}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {results.breaches?.length === 0 && !results.simulated && (
               <div className="flex items-center gap-2 p-4 bg-green-500/10 rounded-lg">
                 <Shield className="h-5 w-5 text-green-500" />
-                <span className="text-green-500 font-medium">No breaches found! This email is not in known data breaches.</span>
+                <span className="text-green-600 dark:text-green-400 font-medium">
+                  No breaches found! This identifier is not in known data breaches.
+                </span>
               </div>
-            ) : (
+            )}
+
+            {results.breaches?.length > 0 && (
               <div className="space-y-4">
-                {results.breaches?.map((breach: Breach, idx: number) => (
+                {results.breaches.map((breach: Breach, idx: number) => (
                   <div key={idx} className="p-4 border rounded-lg space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -187,7 +327,7 @@ export const DarkWebMonitor = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{breach.pwn_count?.toLocaleString()} accounts</span>
+                        <span>{breach.pwn_count?.toLocaleString()} accounts affected</span>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1">
@@ -199,40 +339,81 @@ export const DarkWebMonitor = () => {
                 ))}
               </div>
             )}
+
+            {results.pastes?.length > 0 && (
+              <div className="mt-4">
+                <h4 className="font-medium mb-2">Paste Exposures ({results.pastes.length})</h4>
+                <div className="space-y-2">
+                  {results.pastes.map((paste: any, idx: number) => (
+                    <div key={idx} className="p-3 bg-muted/50 rounded-lg text-sm">
+                      <p className="font-medium">{paste.source}: {paste.title || paste.id}</p>
+                      <p className="text-muted-foreground">
+                        {paste.date && new Date(paste.date).toLocaleDateString()} • {paste.email_count} emails
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
 
+      {/* Monitored Items History */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Monitored Emails
-          </CardTitle>
-          <CardDescription>
-            Previously checked email addresses and their breach status
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Scan History
+              </CardTitle>
+              <CardDescription>
+                Previously checked emails, phones, and domains
+              </CardDescription>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadMonitoredItems}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {monitoredEmails.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">No monitored emails yet</p>
+            {monitoredItems.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">No scan history yet. Run a scan above to get started.</p>
             ) : (
-              monitoredEmails.map((monitor) => (
+              monitoredItems.map((monitor) => (
                 <div key={monitor.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-muted-foreground" />
+                    {monitor.monitor_type === 'phone' ? (
+                      <Phone className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <Mail className="h-5 w-5 text-muted-foreground" />
+                    )}
                     <div>
-                      <p className="font-medium">{monitor.email}</p>
+                      <p className="font-medium">
+                        {monitor.monitor_type === 'phone' ? monitor.phone_number : monitor.email}
+                      </p>
                       <p className="text-xs text-muted-foreground">
-                        Last checked: {new Date(monitor.last_checked).toLocaleDateString()}
+                        Last checked: {monitor.last_checked ? new Date(monitor.last_checked).toLocaleString() : 'Never'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={monitor.breach_count > 0 ? 'destructive' : 'secondary'}>
-                      {monitor.breach_count} breaches
+                      {monitor.breach_count || 0} breaches
                     </Badge>
+                    {monitor.paste_count > 0 && (
+                      <Badge variant="outline">{monitor.paste_count} pastes</Badge>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => deleteMonitor(monitor.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
                   </div>
                 </div>
               ))

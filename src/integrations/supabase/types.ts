@@ -3423,6 +3423,7 @@ export type Database = {
       dark_web_monitors: {
         Row: {
           breach_count: number | null
+          breach_data: Json | null
           created_at: string
           domain: string | null
           email: string
@@ -3430,11 +3431,16 @@ export type Database = {
           is_active: boolean | null
           last_checked: string | null
           latest_breach: string | null
+          monitor_type: string | null
+          paste_count: number | null
+          paste_data: Json | null
+          phone_number: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           breach_count?: number | null
+          breach_data?: Json | null
           created_at?: string
           domain?: string | null
           email: string
@@ -3442,11 +3448,16 @@ export type Database = {
           is_active?: boolean | null
           last_checked?: string | null
           latest_breach?: string | null
+          monitor_type?: string | null
+          paste_count?: number | null
+          paste_data?: Json | null
+          phone_number?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           breach_count?: number | null
+          breach_data?: Json | null
           created_at?: string
           domain?: string | null
           email?: string
@@ -3454,6 +3465,10 @@ export type Database = {
           is_active?: boolean | null
           last_checked?: string | null
           latest_breach?: string | null
+          monitor_type?: string | null
+          paste_count?: number | null
+          paste_data?: Json | null
+          phone_number?: string | null
           updated_at?: string
           user_id?: string
         }
