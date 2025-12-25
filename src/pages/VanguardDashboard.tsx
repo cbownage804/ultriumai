@@ -26,6 +26,8 @@ import { AssetRiskScoring } from "@/components/vanguard/AssetRiskScoring";
 import { IntegrationHub } from "@/components/vanguard/IntegrationHub";
 import { ExecutiveSecurityDashboard } from "@/components/vanguard/ExecutiveSecurityDashboard";
 import { ComplianceScanner } from "@/components/vanguard/ComplianceScanner";
+import { RustDeskIntegration } from "@/components/vanguard/RustDeskIntegration";
+import { AgentDeployment } from "@/components/vanguard/AgentDeployment";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
@@ -207,6 +209,8 @@ const VanguardDashboard = () => {
               <TabsTrigger value="network">Network</TabsTrigger>
               <TabsTrigger value="pentest">Pentest</TabsTrigger>
               <TabsTrigger value="compliance">Compliance</TabsTrigger>
+              <TabsTrigger value="remotedesktop">Remote Desktop</TabsTrigger>
+              <TabsTrigger value="agentdeploy">Agent Deploy</TabsTrigger>
               <TabsTrigger value="threats">Advanced</TabsTrigger>
               <TabsTrigger value="reports">Reports</TabsTrigger>
             </TabsList>
@@ -366,6 +370,14 @@ const VanguardDashboard = () => {
 
           <TabsContent value="compliance">
             <ComplianceScanner />
+          </TabsContent>
+
+          <TabsContent value="remotedesktop">
+            <RustDeskIntegration />
+          </TabsContent>
+
+          <TabsContent value="agentdeploy">
+            <AgentDeployment />
           </TabsContent>
 
           <TabsContent value="threats">

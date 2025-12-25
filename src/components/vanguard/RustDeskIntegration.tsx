@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useSession } from '@supabase/auth-helpers-react';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Monitor,
   Play,
@@ -50,8 +50,7 @@ interface Device {
 }
 
 export const RustDeskIntegration: React.FC = () => {
-  const session = useSession();
-  const user = session?.user;
+  const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [relayServer, setRelayServer] = useState('');
