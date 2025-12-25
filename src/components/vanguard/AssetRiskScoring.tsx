@@ -16,18 +16,18 @@ import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 
 interface AssetRisk {
   id: string;
-  agent_id: string;
+  agent_id: string | null;
   asset_identifier: string;
   asset_type: string;
   overall_risk_score: number;
-  vulnerability_score: number;
-  configuration_score: number;
-  patch_score: number;
-  exposure_score: number;
-  behavioral_score: number;
-  risk_factors: any[];
-  recommendations: any[];
-  last_assessed_at: string;
+  vulnerability_score: number | null;
+  configuration_score: number | null;
+  patch_score: number | null;
+  exposure_score: number | null;
+  behavioral_score: number | null;
+  risk_factors: any;
+  recommendations: any;
+  last_assessed_at: string | null;
 }
 
 export function AssetRiskScoring() {

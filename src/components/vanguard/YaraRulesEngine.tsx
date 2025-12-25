@@ -81,21 +81,22 @@ export function YaraRulesEngine() {
 
   const loadMatches = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('yara_matches')
-        .select(`
-          *,
-          yara_rules (rule_name, severity)
-        `)
+        .select('*')
         .eq('user_id', user?.id)
-        .order('matched_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
       setMatches((data || []).map((m: any) => ({
-        ...m,
-        rule_name: m.yara_rules?.rule_name || 'Unknown',
-        severity: m.yara_rules?.severity || 'medium'
+        id: m.id,
+        rule_id: m.rule_id,
+        file_path: m.file_path,
+        created_at: m.created_at,
+        agent_id: m.agent_id,
+        rule_name: 'Rule Match',
+        severity: 'medium'
       })));
     } catch (err) {
       console.error('Failed to load YARA matches:', err);
@@ -318,7 +319,7 @@ export function YaraRulesEngine() {
 
       <Tabs defaultValue="rules">
         <TabsList>
-          <TabsTrigger value="rules">Active Rules ({rules.filter(r => r.is_active).length})</TabsTrigger>
+          <TabsTrigger value="rules">Active Rules ({rules.filter(r => r.is_enabled).length})</TabsTrigger>
           <TabsTrigger value="matches">Recent Matches ({matches.length})</TabsTrigger>
           <TabsTrigger value="templates">Rule Templates</TabsTrigger>
         </TabsList>
@@ -406,13 +407,13 @@ export function YaraRulesEngine() {
                           <AlertTriangle className={`h-5 w-5 ${match.severity === 'critical' ? 'text-red-500' : 'text-orange-500'}`} />
                           <div>
                             <p className="font-medium">{match.rule_name}</p>
-                            <p className="text-sm text-muted-foreground">{match.matched_file}</p>
+                                <p className="text-sm text-muted-foreground">{match.file_path}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <Badge className={getSeverityColor(match.severity)}>{match.severity}</Badge>
+                          <Badge className={getSeverityColor(match.severity || 'medium')}>{match.severity}</Badge>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {new Date(match.matched_at).toLocaleString()}
+                            {new Date(match.created_at).toLocaleString()}
                           </p>
                         </div>
                       </div>

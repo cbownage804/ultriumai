@@ -17,11 +17,11 @@ import { useAuth } from "@/hooks/useAuth";
 interface Integration {
   id: string;
   integration_type: string;
-  integration_name: string;
-  config: Record<string, any>;
-  is_active: boolean;
-  last_sync_at?: string;
-  status: 'connected' | 'disconnected' | 'error';
+  name: string;
+  configuration: any;
+  is_enabled: boolean;
+  last_triggered_at: string | null;
+  trigger_count: number | null;
   created_at: string;
 }
 
@@ -150,10 +150,9 @@ export function IntegrationHub() {
         .insert({
           user_id: user?.id,
           integration_type: selectedType,
-          integration_name: intConfig.name,
-          config: configValues,
-          is_active: true,
-          status: 'connected'
+          name: intConfig.name,
+          configuration: configValues,
+          is_enabled: true
         });
 
       if (error) throw error;
@@ -170,16 +169,16 @@ export function IntegrationHub() {
     }
   };
 
-  const toggleIntegration = async (id: string, isActive: boolean) => {
+  const toggleIntegration = async (id: string, isEnabled: boolean) => {
     try {
       const { error } = await supabase
         .from('security_integrations')
-        .update({ is_active: !isActive })
+        .update({ is_enabled: !isEnabled })
         .eq('id', id);
 
       if (error) throw error;
       
-      toast.success(isActive ? "Integration disabled" : "Integration enabled");
+      toast.success(isEnabled ? "Integration disabled" : "Integration enabled");
       loadIntegrations();
     } catch (err) {
       toast.error("Failed to update integration");
@@ -209,12 +208,10 @@ export function IntegrationHub() {
     toast.success("Test message sent successfully!");
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'connected': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
-      default: return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
-    }
+  const getStatusIcon = (isEnabled: boolean) => {
+    return isEnabled 
+      ? <CheckCircle className="h-4 w-4 text-green-500" /> 
+      : <AlertCircle className="h-4 w-4 text-muted-foreground" />;
   };
 
   const selectedIntConfig = AVAILABLE_INTEGRATIONS.find(i => i.type === selectedType);
@@ -330,17 +327,17 @@ export function IntegrationHub() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="font-medium">{integration.integration_name}</p>
-                          {getStatusIcon(integration.status)}
-                          {integration.is_active ? (
+                          <p className="font-medium">{integration.name}</p>
+                          {getStatusIcon(integration.is_enabled)}
+                          {integration.is_enabled ? (
                             <Badge className="bg-green-500/10 text-green-500">Active</Badge>
                           ) : (
                             <Badge variant="secondary">Disabled</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {integration.last_sync_at 
-                            ? `Last used: ${new Date(integration.last_sync_at).toLocaleString()}`
+                          {integration.last_triggered_at 
+                            ? `Last used: ${new Date(integration.last_triggered_at).toLocaleString()}`
                             : 'Never used'}
                         </p>
                       </div>
@@ -355,8 +352,8 @@ export function IntegrationHub() {
                         Test
                       </Button>
                       <Switch
-                        checked={integration.is_active}
-                        onCheckedChange={() => toggleIntegration(integration.id, integration.is_active)}
+                        checked={integration.is_enabled}
+                        onCheckedChange={() => toggleIntegration(integration.id, integration.is_enabled)}
                       />
                       <Button 
                         variant="ghost" 
