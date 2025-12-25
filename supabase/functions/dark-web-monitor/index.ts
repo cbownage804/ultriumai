@@ -174,9 +174,6 @@ serve(async (req) => {
     }
 
     // Phone number check removed - HIBP email scans already reveal phone data in data_classes
-    }
-
-    // Domain check
     if (action === 'check_domain' && domain && hibpKey) {
       console.log('[Dark Web Monitor] Checking domain breaches...');
       
