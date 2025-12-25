@@ -40,7 +40,6 @@ export const MultiTenantManager = () => {
       { id: '5', name: 'Retail Solutions', industry: 'Retail', status: 'inactive', agentCount: 12, threatCount: 0, riskScore: 90, lastActivity: '2024-12-20T08:00:00Z' },
     ]);
   };
-  };
 
   const filteredTenants = tenants.filter(tenant => {
     const matchesSearch = tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
