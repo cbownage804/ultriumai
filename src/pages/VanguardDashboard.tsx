@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Eye, Network } from "lucide-react";
+import { Shield, Search, Bug, AlertTriangle, CheckCircle, Clock, Target, TrendingUp, Eye, Network, Terminal, Globe, FileSearch, Activity, BarChart3, Zap } from "lucide-react";
 import { VulnerabilityScanner } from "@/components/security/VulnerabilityScanner";
 import { ThreatDetection } from "@/components/security/ThreatDetection";
 import { SecurityReports } from "@/components/security/SecurityReports";
@@ -15,6 +15,16 @@ import { VanguardSOC } from "@/components/vanguard/VanguardSOC";
 import { VanguardServiceDesk } from "@/components/vanguard/VanguardServiceDesk";
 import { VanguardAICopilot } from "@/components/vanguard/VanguardAICopilot";
 import { VanguardPentest } from "@/components/vanguard/VanguardPentest";
+import { MDRCaseManagement } from "@/components/vanguard/MDRCaseManagement";
+import { ThreatIntelLookup } from "@/components/vanguard/ThreatIntelLookup";
+import { LiveResponseTerminal } from "@/components/vanguard/LiveResponseTerminal";
+import { MitreAttackMatrix } from "@/components/vanguard/MitreAttackMatrix";
+import { YaraRulesEngine } from "@/components/vanguard/YaraRulesEngine";
+import { FileIntegrityMonitor } from "@/components/vanguard/FileIntegrityMonitor";
+import { ProcessTimeline } from "@/components/vanguard/ProcessTimeline";
+import { AssetRiskScoring } from "@/components/vanguard/AssetRiskScoring";
+import { IntegrationHub } from "@/components/vanguard/IntegrationHub";
+import { ExecutiveSecurityDashboard } from "@/components/vanguard/ExecutiveSecurityDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
@@ -182,6 +192,16 @@ const VanguardDashboard = () => {
               <TabsTrigger value="servicedesk">Service Desk</TabsTrigger>
               <TabsTrigger value="copilot">AI Copilot</TabsTrigger>
               <TabsTrigger value="soc">SOC</TabsTrigger>
+              <TabsTrigger value="mdr">MDR Cases</TabsTrigger>
+              <TabsTrigger value="threatintel">Threat Intel</TabsTrigger>
+              <TabsTrigger value="liveresponse">Live Response</TabsTrigger>
+              <TabsTrigger value="mitre">MITRE ATT&CK</TabsTrigger>
+              <TabsTrigger value="yara">YARA Rules</TabsTrigger>
+              <TabsTrigger value="fim">File Integrity</TabsTrigger>
+              <TabsTrigger value="process">Process Timeline</TabsTrigger>
+              <TabsTrigger value="assetrisk">Asset Risk</TabsTrigger>
+              <TabsTrigger value="integrations">Integrations</TabsTrigger>
+              <TabsTrigger value="executive">Executive</TabsTrigger>
               <TabsTrigger value="scanner">Threats</TabsTrigger>
               <TabsTrigger value="network">Network</TabsTrigger>
               <TabsTrigger value="pentest">Pentest</TabsTrigger>
@@ -288,6 +308,46 @@ const VanguardDashboard = () => {
 
           <TabsContent value="soc">
             <VanguardSOC />
+          </TabsContent>
+
+          <TabsContent value="mdr">
+            <MDRCaseManagement />
+          </TabsContent>
+
+          <TabsContent value="threatintel">
+            <ThreatIntelLookup />
+          </TabsContent>
+
+          <TabsContent value="liveresponse">
+            <LiveResponseTerminal />
+          </TabsContent>
+
+          <TabsContent value="mitre">
+            <MitreAttackMatrix />
+          </TabsContent>
+
+          <TabsContent value="yara">
+            <YaraRulesEngine />
+          </TabsContent>
+
+          <TabsContent value="fim">
+            <FileIntegrityMonitor />
+          </TabsContent>
+
+          <TabsContent value="process">
+            <ProcessTimeline />
+          </TabsContent>
+
+          <TabsContent value="assetrisk">
+            <AssetRiskScoring />
+          </TabsContent>
+
+          <TabsContent value="integrations">
+            <IntegrationHub />
+          </TabsContent>
+
+          <TabsContent value="executive">
+            <ExecutiveSecurityDashboard />
           </TabsContent>
 
           <TabsContent value="scanner">
