@@ -119,67 +119,46 @@ serve(async (req) => {
         results.simulated = true;
       }
 
-      // Check Dehashed for actual leaked data values
-      if (dehashedKey && dehashedEmail) {
-        console.log('[Dark Web Monitor] Checking Dehashed for leaked credentials...');
+      // Check Dehashed for actual leaked data values (Dehashed API v2)
+      if (dehashedKey) {
+        console.log('[Dark Web Monitor] Checking Dehashed v2 for leaked credentials...');
         
         try {
-          const authString = btoa(`${dehashedEmail}:${dehashedKey}`);
-          const dehashedResponse = await fetch(
-            `https://api.dehashed.com/search?query=email:${encodeURIComponent(email)}`,
-            {
-              headers: {
-                'Accept': 'application/json',
-                'Authorization': `Basic ${authString}`
-              }
+          results.dehashedChecked = true;
+          results.dehashedApiVersion = 'v2';
+          results.dehashedEndpoint = 'https://api.dehashed.com/v2/search';
+
+          const q = `email:"${email}"`;
+          results.dehashedQueriesTried = [q];
+          results.dehashedQueryUsed = q;
+
+          const { status, data, rawText } = await dehashedV2Search({
+            apiKey: dehashedKey,
+            query: q,
+            size: 1000,
+          });
+
+          console.log(`[Dark Web Monitor] Dehashed v2 response status: ${status}`);
+          results.dehashedStatus = status;
+
+          if (status === 200 && data) {
+            results.dehashedTotal = data.total || 0;
+            results.dehashedBalance = data.balance ?? null;
+
+            if (Array.isArray(data.entries) && data.entries.length > 0) {
+              results.leakedData = data.entries.slice(0, 50).map(mapDehashedEntry);
+              results.hasActualLeakedData = true;
+            } else {
+              results.dehashedMessage = 'No matches found';
             }
-          );
-
-           console.log(`[Dark Web Monitor] Dehashed response status: ${dehashedResponse.status}`);
-           results.dehashedChecked = true;
-           results.dehashedStatus = dehashedResponse.status;
-
-           if (dehashedResponse.ok) {
-             const dehashedData = await dehashedResponse.json();
-             console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} entries`);
-
-             results.dehashedTotal = dehashedData.total || 0;
-
-             if (dehashedData.entries && dehashedData.entries.length > 0) {
-               results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
-                 database_name: entry.database_name || 'Unknown',
-                 email: entry.email || null,
-                 username: entry.username || null,
-                 password: entry.password ? maskPassword(entry.password) : null,
-                 hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
-                 name: entry.name || null,
-                 phone: entry.phone || null,
-                 address: entry.address || null,
-                 ip_address: entry.ip_address || null,
-                 vin: entry.vin || null,
-                 obtained_from: entry.obtained_from || null
-               }));
-
-               results.hasActualLeakedData = true;
-             }
-           } else if (dehashedResponse.status === 404) {
-             // Dehashed returns 404 when there are no matches for the query
-             results.dehashedTotal = 0;
-             results.dehashedMessage = 'No matches found';
-           } else if (dehashedResponse.status === 401) {
-             console.log('[Dark Web Monitor] Dehashed auth failed - check credentials');
-             results.dehashedError = 'Dehashed authentication failed - verify API key and email';
-           } else if (dehashedResponse.status === 400) {
-             const errorData = await dehashedResponse.text();
-             console.log('[Dark Web Monitor] Dehashed bad request:', errorData);
-             results.dehashedError = 'Invalid request to Dehashed API';
-           } else if (dehashedResponse.status === 402) {
-             console.log('[Dark Web Monitor] Dehashed - out of credits');
-             results.dehashedError = 'Dehashed API credits exhausted';
-           }
+          } else {
+            results.dehashedError = getDehashedErrorMessage(data, rawText, status);
+            results.dehashedErrorBody = safeTruncate(rawText, 400);
+          }
         } catch (e) {
           console.error('[Dark Web Monitor] Dehashed API error:', e);
-          results.dehashedError = e.message;
+          results.dehashedChecked = true;
+          results.dehashedError = e?.message || 'Dehashed request failed';
         }
       } else {
         console.log('[Dark Web Monitor] Dehashed credentials not configured');
@@ -292,92 +271,56 @@ serve(async (req) => {
         }
       }
 
-      // Check Dehashed for leaked credentials from this domain
-      if (dehashedKey && dehashedEmail) {
-        console.log('[Dark Web Monitor] Checking Dehashed for domain credentials...');
+      // Check Dehashed for leaked credentials from this domain (Dehashed API v2)
+      if (dehashedKey) {
+        console.log('[Dark Web Monitor] Checking Dehashed v2 for domain credentials...');
 
         try {
-          const authString = btoa(`${dehashedEmail}:${dehashedKey}`);
-
-          // Dehashed "Domain Scan" in the UI effectively surfaces accounts where the domain appears.
-          // We try a couple of query formats used by different clients and fall back to raw domain.
-          const queriesToTry = [`domain:${domain}`, `email:@${domain}`, domain];
-
           results.dehashedChecked = true;
+          results.dehashedApiVersion = 'v2';
+          results.dehashedEndpoint = 'https://api.dehashed.com/v2/search';
+
+          // "Domain Scan" in Dehashed aligns most closely to querying the domain field.
+          // We also try the common "@domain" email search used by third-party tools.
+          const queriesToTry = [`domain:${domain}`, `email:@${domain}`, `@${domain}`];
           results.dehashedQueriesTried = queriesToTry;
 
           for (const q of queriesToTry) {
-            const url = new URL('https://api.dehashed.com/search');
-            url.searchParams.set('query', q);
-            url.searchParams.set('size', '100');
+            console.log(`[Dark Web Monitor] Dehashed v2 domain query: ${q}`);
 
-            console.log(`[Dark Web Monitor] Dehashed domain query: ${q}`);
-
-            const dehashedResponse = await fetch(url.toString(), {
-              headers: {
-                'Accept': 'application/json',
-                'Authorization': `Basic ${authString}`
-              }
+            const { status, data, rawText } = await dehashedV2Search({
+              apiKey: dehashedKey,
+              query: q,
+              size: 1000,
             });
 
-            console.log(`[Dark Web Monitor] Dehashed domain response status: ${dehashedResponse.status}`);
+            console.log(`[Dark Web Monitor] Dehashed v2 domain response status: ${status}`);
 
-            results.dehashedStatus = dehashedResponse.status;
+            results.dehashedStatus = status;
             results.dehashedQueryUsed = q;
 
-            if (dehashedResponse.ok) {
-              const dehashedData = await dehashedResponse.json();
-              console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} domain entries`);
+            if (status === 200 && data) {
+              results.dehashedTotal = data.total || 0;
+              results.dehashedBalance = data.balance ?? null;
 
-              results.dehashedTotal = dehashedData.total || 0;
-
-              if (dehashedData.entries && dehashedData.entries.length > 0) {
-                results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
-                  database_name: entry.database_name || 'Unknown',
-                  email: entry.email || null,
-                  username: entry.username || null,
-                  password: entry.password ? maskPassword(entry.password) : null,
-                  hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
-                  name: entry.name || null,
-                  phone: entry.phone || null,
-                  address: entry.address || null,
-                  ip_address: entry.ip_address || null
-                }));
-
+              if (Array.isArray(data.entries) && data.entries.length > 0) {
+                results.leakedData = data.entries.slice(0, 50).map(mapDehashedEntry);
                 results.hasActualLeakedData = true;
+                break;
               }
 
-              // Success; stop trying alternates
-              break;
-            }
-
-            if (dehashedResponse.status === 404) {
-              // Dehashed uses 404 when the query has no matches
-              results.dehashedTotal = 0;
+              // No matches for this query; try the next one.
               results.dehashedMessage = 'No matches found';
               continue;
             }
 
-            if (dehashedResponse.status === 401) {
-              console.log('[Dark Web Monitor] Dehashed auth failed');
-              results.dehashedError = 'Dehashed authentication failed';
-              break;
-            }
-
-            if (dehashedResponse.status === 402) {
-              console.log('[Dark Web Monitor] Dehashed - out of credits');
-              results.dehashedError = 'Dehashed API credits exhausted';
-              break;
-            }
-
-            const bodyText = await dehashedResponse.text();
-            console.log('[Dark Web Monitor] Dehashed unexpected response body:', bodyText);
-            results.dehashedError = `Dehashed request failed (${dehashedResponse.status})`;
+            results.dehashedError = getDehashedErrorMessage(data, rawText, status);
+            results.dehashedErrorBody = safeTruncate(rawText, 400);
             break;
           }
         } catch (e) {
           console.error('[Dark Web Monitor] Dehashed domain check error:', e);
-          results.dehashedError = e.message;
+          results.dehashedError = e?.message || 'Dehashed domain request failed';
         }
       }
 
@@ -421,4 +364,72 @@ function maskPassword(password: string): string {
     return '****';
   }
   return `${password.substring(0, 2)}${'*'.repeat(Math.min(password.length - 4, 8))}${password.substring(password.length - 2)}`;
+}
+
+function safeTruncate(text: string, maxLen: number): string {
+  if (!text) return '';
+  return text.length > maxLen ? `${text.slice(0, maxLen)}…` : text;
+}
+
+function pickDehashedValue(entry: any, key: string): string | null {
+  const v = entry?.[key];
+  if (Array.isArray(v)) return v[0] ?? null;
+  if (v == null) return null;
+  return typeof v === 'string' ? v : String(v);
+}
+
+function mapDehashedEntry(entry: any) {
+  const password = pickDehashedValue(entry, 'password');
+  const hashed = pickDehashedValue(entry, 'hashed_password');
+
+  return {
+    database_name: pickDehashedValue(entry, 'database_name') || 'Unknown',
+    email: pickDehashedValue(entry, 'email'),
+    username: pickDehashedValue(entry, 'username'),
+    password: password ? maskPassword(password) : null,
+    hashed_password: hashed ? `${hashed.substring(0, 20)}...` : null,
+    name: pickDehashedValue(entry, 'name'),
+    phone: pickDehashedValue(entry, 'phone'),
+    address: pickDehashedValue(entry, 'address'),
+    ip_address: pickDehashedValue(entry, 'ip_address'),
+    vin: pickDehashedValue(entry, 'vin'),
+    obtained_from: pickDehashedValue(entry, 'obtained_from'),
+  };
+}
+
+function getDehashedErrorMessage(data: any, rawText: string, status: number): string {
+  if (data?.error) return String(data.error);
+  if (data?.message) return String(data.message);
+  if (data?.details) return String(data.details);
+  if (rawText) return `Dehashed request failed (${status})`;
+  return `Dehashed request failed (${status})`;
+}
+
+async function dehashedV2Search(opts: { apiKey: string; query: string; size: number }) {
+  const res = await fetch('https://api.dehashed.com/v2/search', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Dehashed-Api-Key': opts.apiKey,
+    },
+    body: JSON.stringify({
+      query: opts.query,
+      size: opts.size,
+      page: 1,
+      de_dupe: true,
+      wildcard: false,
+      regex: false,
+    }),
+  });
+
+  const rawText = await res.text();
+  let data: any = null;
+  try {
+    data = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    data = null;
+  }
+
+  return { status: res.status, data, rawText };
 }
