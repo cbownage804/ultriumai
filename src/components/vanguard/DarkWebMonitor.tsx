@@ -362,13 +362,19 @@ export const DarkWebMonitor = () => {
               </div>
             )}
 
-            {results.dehashedError && (
-              <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <p className="text-yellow-600 dark:text-yellow-400 text-sm">
-                  ⚠️ Dehashed: {results.dehashedError}
-                </p>
-              </div>
-            )}
+             {results.dehashedChecked && results.dehashedStatus === 404 && !results.leakedData?.length && (
+               <div className="p-3 bg-muted/40 border border-border rounded-lg">
+                 <p className="text-sm text-muted-foreground">
+                   Dehashed was checked and returned no matches for this email.
+                 </p>
+               </div>
+             )}
+
+             {results.dehashedError && (
+               <div className="p-3 bg-muted/40 border border-border rounded-lg">
+                 <p className="text-sm text-muted-foreground">Dehashed: {results.dehashedError}</p>
+               </div>
+             )}
 
             {/* Sensitive Data Summary from HIBP */}
             {results.breaches?.length > 0 && !results.leakedData?.length && (

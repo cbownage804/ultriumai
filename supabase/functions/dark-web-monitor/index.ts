@@ -135,41 +135,48 @@ serve(async (req) => {
             }
           );
 
-          console.log(`[Dark Web Monitor] Dehashed response status: ${dehashedResponse.status}`);
+           console.log(`[Dark Web Monitor] Dehashed response status: ${dehashedResponse.status}`);
+           results.dehashedChecked = true;
+           results.dehashedStatus = dehashedResponse.status;
 
-          if (dehashedResponse.ok) {
-            const dehashedData = await dehashedResponse.json();
-            console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} entries`);
-            
-            if (dehashedData.entries && dehashedData.entries.length > 0) {
-              results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
-                database_name: entry.database_name || 'Unknown',
-                email: entry.email || null,
-                username: entry.username || null,
-                password: entry.password ? maskPassword(entry.password) : null,
-                hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
-                name: entry.name || null,
-                phone: entry.phone || null,
-                address: entry.address || null,
-                ip_address: entry.ip_address || null,
-                vin: entry.vin || null,
-                obtained_from: entry.obtained_from || null
-              }));
-              
-              results.dehashedTotal = dehashedData.total;
-              results.hasActualLeakedData = true;
-            }
-          } else if (dehashedResponse.status === 401) {
-            console.log('[Dark Web Monitor] Dehashed auth failed - check credentials');
-            results.dehashedError = 'Dehashed authentication failed - verify API key and email';
-          } else if (dehashedResponse.status === 400) {
-            const errorData = await dehashedResponse.text();
-            console.log('[Dark Web Monitor] Dehashed bad request:', errorData);
-            results.dehashedError = 'Invalid request to Dehashed API';
-          } else if (dehashedResponse.status === 402) {
-            console.log('[Dark Web Monitor] Dehashed - out of credits');
-            results.dehashedError = 'Dehashed API credits exhausted';
-          }
+           if (dehashedResponse.ok) {
+             const dehashedData = await dehashedResponse.json();
+             console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} entries`);
+
+             results.dehashedTotal = dehashedData.total || 0;
+
+             if (dehashedData.entries && dehashedData.entries.length > 0) {
+               results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
+                 database_name: entry.database_name || 'Unknown',
+                 email: entry.email || null,
+                 username: entry.username || null,
+                 password: entry.password ? maskPassword(entry.password) : null,
+                 hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
+                 name: entry.name || null,
+                 phone: entry.phone || null,
+                 address: entry.address || null,
+                 ip_address: entry.ip_address || null,
+                 vin: entry.vin || null,
+                 obtained_from: entry.obtained_from || null
+               }));
+
+               results.hasActualLeakedData = true;
+             }
+           } else if (dehashedResponse.status === 404) {
+             // Dehashed returns 404 when there are no matches for the query
+             results.dehashedTotal = 0;
+             results.dehashedMessage = 'No matches found';
+           } else if (dehashedResponse.status === 401) {
+             console.log('[Dark Web Monitor] Dehashed auth failed - check credentials');
+             results.dehashedError = 'Dehashed authentication failed - verify API key and email';
+           } else if (dehashedResponse.status === 400) {
+             const errorData = await dehashedResponse.text();
+             console.log('[Dark Web Monitor] Dehashed bad request:', errorData);
+             results.dehashedError = 'Invalid request to Dehashed API';
+           } else if (dehashedResponse.status === 402) {
+             console.log('[Dark Web Monitor] Dehashed - out of credits');
+             results.dehashedError = 'Dehashed API credits exhausted';
+           }
         } catch (e) {
           console.error('[Dark Web Monitor] Dehashed API error:', e);
           results.dehashedError = e.message;
