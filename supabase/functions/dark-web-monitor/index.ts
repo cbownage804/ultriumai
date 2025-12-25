@@ -256,41 +256,115 @@ serve(async (req) => {
     }
 
     // Domain check
-    if (action === 'check_domain' && domain && hibpKey) {
+    if (action === 'check_domain' && domain) {
       console.log('[Dark Web Monitor] Checking domain breaches...');
       
-      try {
-        const domainResponse = await fetch(
-          `https://haveibeenpwned.com/api/v3/breaches?domain=${encodeURIComponent(domain)}`,
-          {
-            headers: {
-              'hibp-api-key': hibpKey,
-              'User-Agent': 'Vanguard-Security-Platform'
+      // Check HIBP for breaches where this domain was the source
+      if (hibpKey) {
+        try {
+          const domainResponse = await fetch(
+            `https://haveibeenpwned.com/api/v3/breaches?domain=${encodeURIComponent(domain)}`,
+            {
+              headers: {
+                'hibp-api-key': hibpKey,
+                'User-Agent': 'Vanguard-Security-Platform'
+              }
             }
+          );
+
+          console.log(`[Dark Web Monitor] HIBP Domain breach response status: ${domainResponse.status}`);
+
+          if (domainResponse.ok) {
+            const domainData = await domainResponse.json();
+            results.breaches = domainData.map((breach: any) => ({
+              name: breach.Name,
+              title: breach.Title,
+              domain: breach.Domain,
+              breach_date: breach.BreachDate,
+              pwn_count: breach.PwnCount,
+              data_classes: breach.DataClasses,
+              is_verified: breach.IsVerified
+            }));
+            console.log(`[Dark Web Monitor] HIBP found ${results.breaches.length} domain breaches`);
           }
-        );
-
-        console.log(`[Dark Web Monitor] Domain breach response status: ${domainResponse.status}`);
-
-        if (domainResponse.ok) {
-          const domainData = await domainResponse.json();
-          results.breaches = domainData.map((breach: any) => ({
-            name: breach.Name,
-            title: breach.Title,
-            domain: breach.Domain,
-            breach_date: breach.BreachDate,
-            pwn_count: breach.PwnCount,
-            data_classes: breach.DataClasses,
-            is_verified: breach.IsVerified
-          }));
+        } catch (e) {
+          console.error('[Dark Web Monitor] HIBP Domain breach check error:', e);
         }
-      } catch (e) {
-        console.error('[Dark Web Monitor] Domain breach check error:', e);
       }
 
-      results.risk_level = results.breaches?.length > 3 ? 'critical' :
-                           results.breaches?.length > 1 ? 'high' :
-                           results.breaches?.length > 0 ? 'medium' : 'low';
+      // Check Dehashed for leaked credentials from this domain
+      if (dehashedKey && dehashedEmail) {
+        console.log('[Dark Web Monitor] Checking Dehashed for domain credentials...');
+        
+        try {
+          const authString = btoa(`${dehashedEmail}:${dehashedKey}`);
+          const dehashedResponse = await fetch(
+            `https://api.dehashed.com/search?query=email:@${encodeURIComponent(domain)}`,
+            {
+              headers: {
+                'Accept': 'application/json',
+                'Authorization': `Basic ${authString}`
+              }
+            }
+          );
+
+          console.log(`[Dark Web Monitor] Dehashed domain response status: ${dehashedResponse.status}`);
+          results.dehashedChecked = true;
+          results.dehashedStatus = dehashedResponse.status;
+
+          if (dehashedResponse.ok) {
+            const dehashedData = await dehashedResponse.json();
+            console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} domain entries`);
+
+            results.dehashedTotal = dehashedData.total || 0;
+
+            if (dehashedData.entries && dehashedData.entries.length > 0) {
+              results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
+                database_name: entry.database_name || 'Unknown',
+                email: entry.email || null,
+                username: entry.username || null,
+                password: entry.password ? maskPassword(entry.password) : null,
+                hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
+                name: entry.name || null,
+                phone: entry.phone || null,
+                address: entry.address || null,
+                ip_address: entry.ip_address || null
+              }));
+
+              results.hasActualLeakedData = true;
+            }
+          } else if (dehashedResponse.status === 404) {
+            results.dehashedTotal = 0;
+            results.dehashedMessage = 'No matches found';
+          } else if (dehashedResponse.status === 401) {
+            console.log('[Dark Web Monitor] Dehashed auth failed');
+            results.dehashedError = 'Dehashed authentication failed';
+          } else if (dehashedResponse.status === 402) {
+            console.log('[Dark Web Monitor] Dehashed - out of credits');
+            results.dehashedError = 'Dehashed API credits exhausted';
+          }
+        } catch (e) {
+          console.error('[Dark Web Monitor] Dehashed domain check error:', e);
+          results.dehashedError = e.message;
+        }
+      }
+
+      // Calculate risk level based on both sources
+      const breachCount = results.breaches?.length || 0;
+      const leakedDataCount = results.leakedData?.length || 0;
+      const hasPasswords = results.leakedData?.some((d: any) => d.password || d.hashed_password);
+      
+      if (hasPasswords && leakedDataCount > 10) {
+        results.risk_level = 'critical';
+      } else if (breachCount > 3 || leakedDataCount > 20) {
+        results.risk_level = 'critical';
+      } else if (breachCount > 1 || leakedDataCount > 5 || hasPasswords) {
+        results.risk_level = 'high';
+      } else if (breachCount > 0 || leakedDataCount > 0) {
+        results.risk_level = 'medium';
+      } else {
+        results.risk_level = 'low';
+      }
     }
 
     results.checked_at = new Date().toISOString();
