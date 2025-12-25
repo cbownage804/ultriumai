@@ -13,7 +13,7 @@ import {
   X,
   ExternalLink,
   ChevronLeft,
-  Cpu
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -40,7 +40,7 @@ export function VanguardNavigation() {
     { title: 'Penetration Testing', path: `${basePath}/pentest`, icon: Shield },
     { title: 'Compliance', path: `${basePath}/compliance`, icon: FileCheck },
     { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
-    { title: 'Alerting', path: `${basePath}/alerting`, icon: Cpu },
+    { title: 'Alerting', path: `${basePath}/alerting`, icon: Bell },
     { title: 'Setup', path: `${basePath}/setup`, icon: Settings },
   ];
 

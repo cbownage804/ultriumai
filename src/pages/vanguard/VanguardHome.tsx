@@ -107,29 +107,29 @@ export default function VanguardHome() {
   ];
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
+    <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-border p-8">
+      <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-border p-4 md:p-8">
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <Shield className="h-10 w-10 text-primary" />
+            <Shield className="h-8 w-8 md:h-10 md:w-10 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold">Welcome to Vanguard</h1>
-              <p className="text-muted-foreground">Your unified security operations platform</p>
+              <h1 className="text-xl md:text-3xl font-bold">Welcome to Vanguard</h1>
+              <p className="text-sm md:text-base text-muted-foreground">Your unified security operations platform</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 md:mt-6">
             {quickStats.map((stat, index) => (
               <Card key={index} className="bg-background/50 backdrop-blur-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className={`p-1.5 md:p-2 rounded-lg ${stat.bgColor}`}>
+                      <stat.icon className={`h-4 w-4 md:h-5 md:w-5 ${stat.color}`} />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">{stat.title}</p>
+                      <p className="text-lg md:text-2xl font-bold">{stat.value}</p>
+                      <p className="text-[10px] md:text-xs text-muted-foreground">{stat.title}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -139,8 +139,8 @@ export default function VanguardHome() {
         </div>
         
         {/* Background decoration */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-32 md:w-64 h-32 md:h-64 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-24 md:w-48 h-24 md:h-48 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       {/* Scan Readiness */}
@@ -148,23 +148,23 @@ export default function VanguardHome() {
 
       {/* Modules Grid */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Security Modules</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Security Modules</h2>
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {modules.map((module, index) => (
             <Card 
               key={index} 
               className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               onClick={() => navigate(module.path)}
             >
-              <CardHeader className="pb-3">
-                <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${module.color} w-fit mb-2`}>
-                  <module.icon className="h-6 w-6 text-white" />
+              <CardHeader className="pb-2 md:pb-3 p-3 md:p-6">
+                <div className={`inline-flex p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br ${module.color} w-fit mb-1 md:mb-2`}>
+                  <module.icon className="h-4 w-4 md:h-6 md:w-6 text-white" />
                 </div>
-                <CardTitle className="text-lg flex items-center justify-between">
-                  {module.title}
-                  <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <CardTitle className="text-sm md:text-lg flex items-center justify-between">
+                  <span className="line-clamp-1">{module.title}</span>
+                  <ArrowRight className="h-3 w-3 md:h-4 md:w-4 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
                 </CardTitle>
-                <CardDescription>{module.description}</CardDescription>
+                <CardDescription className="text-xs md:text-sm line-clamp-2">{module.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
@@ -172,12 +172,12 @@ export default function VanguardHome() {
       </div>
 
       {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4">
-        <Button onClick={() => navigate(`${basePath}/setup`)}>
+      <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
+        <Button onClick={() => navigate(`${basePath}/setup`)} className="w-full sm:w-auto">
           <Monitor className="h-4 w-4 mr-2" />
           Add New Device
         </Button>
-        <Button variant="outline" onClick={() => navigate(`${basePath}/dashboard`)}>
+        <Button variant="outline" onClick={() => navigate(`${basePath}/dashboard`)} className="w-full sm:w-auto">
           <BarChart3 className="h-4 w-4 mr-2" />
           View Full Dashboard
         </Button>
