@@ -13,11 +13,27 @@ import {
   X,
   ExternalLink,
   ChevronLeft,
-  Bell
+  ChevronDown,
+  Bell,
+  Brain,
+  Globe,
+  Activity,
+  Database,
+  Wrench,
+  HardDrive,
+  Network,
+  Package,
+  PieChart,
+  CheckSquare,
+  FileText,
+  Building2,
+  Store,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { getVanguardBasePath } from '@/utils/subdomain';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface NavItem {
   title: string;
@@ -26,26 +42,98 @@ interface NavItem {
   badge?: string;
 }
 
+interface NavSection {
+  title: string;
+  icon: React.ElementType;
+  items: NavItem[];
+  defaultOpen?: boolean;
+}
+
 export function VanguardNavigation() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<string[]>(['core', 'security']);
   const location = useLocation();
   const basePath = getVanguardBasePath();
 
-  const navItems: NavItem[] = [
-    { title: 'Dashboard', path: `${basePath}/dashboard`, icon: LayoutDashboard },
-    { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
-    { title: 'Threat Detection', path: `${basePath}/threats`, icon: Target },
-    { title: 'SOC Operations', path: `${basePath}/soc`, icon: Eye },
-    { title: 'Penetration Testing', path: `${basePath}/pentest`, icon: Shield },
-    { title: 'Compliance', path: `${basePath}/compliance`, icon: FileCheck },
-    { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
-    { title: 'Alerting', path: `${basePath}/alerting`, icon: Bell },
-    { title: 'Setup', path: `${basePath}/setup`, icon: Settings },
+  const navSections: NavSection[] = [
+    {
+      title: 'Core',
+      icon: LayoutDashboard,
+      defaultOpen: true,
+      items: [
+        { title: 'Dashboard', path: `${basePath}/dashboard`, icon: LayoutDashboard },
+        { title: 'Executive View', path: `${basePath}/executive`, icon: PieChart },
+        { title: 'Devices', path: `${basePath}/devices`, icon: Monitor },
+        { title: 'Assets (CMDB)', path: `${basePath}/assets`, icon: Package },
+      ]
+    },
+    {
+      title: 'Security',
+      icon: Shield,
+      defaultOpen: true,
+      items: [
+        { title: 'Threat Detection', path: `${basePath}/threats`, icon: Target },
+        { title: 'Threat Intel', path: `${basePath}/threat-intel`, icon: Brain },
+        { title: 'Dark Web Monitor', path: `${basePath}/dark-web`, icon: Globe },
+        { title: 'User Behavior', path: `${basePath}/user-behavior`, icon: Activity },
+        { title: 'SIEM Dashboard', path: `${basePath}/siem`, icon: Database },
+        { title: 'SOC Operations', path: `${basePath}/soc`, icon: Eye },
+        { title: 'Pen Testing', path: `${basePath}/pentest`, icon: Shield },
+        { title: 'Playbooks', path: `${basePath}/playbooks`, icon: BookOpen },
+      ]
+    },
+    {
+      title: 'Operations',
+      icon: Wrench,
+      items: [
+        { title: 'Patch Management', path: `${basePath}/patches`, icon: Wrench },
+        { title: 'Backup Monitoring', path: `${basePath}/backups`, icon: HardDrive },
+        { title: 'Network Topology', path: `${basePath}/network`, icon: Network },
+        { title: 'Alerting', path: `${basePath}/alerting`, icon: Bell },
+      ]
+    },
+    {
+      title: 'Compliance',
+      icon: FileCheck,
+      items: [
+        { title: 'Compliance Auditor', path: `${basePath}/compliance`, icon: FileCheck },
+        { title: 'Scorecard', path: `${basePath}/scorecard`, icon: CheckSquare },
+      ]
+    },
+    {
+      title: 'Reporting',
+      icon: BarChart3,
+      items: [
+        { title: 'Reports', path: `${basePath}/reports`, icon: BarChart3 },
+        { title: 'Report Builder', path: `${basePath}/report-builder`, icon: FileText },
+      ]
+    },
+    {
+      title: 'Admin',
+      icon: Settings,
+      items: [
+        { title: 'Multi-Tenant', path: `${basePath}/tenants`, icon: Building2 },
+        { title: 'API Marketplace', path: `${basePath}/marketplace`, icon: Store },
+        { title: 'Setup', path: `${basePath}/setup`, icon: Settings },
+      ]
+    },
   ];
 
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
+  const isSectionActive = (section: NavSection) => {
+    return section.items.some(item => isActive(item.path));
+  };
+
+  const toggleSection = (title: string) => {
+    setOpenSections(prev => 
+      prev.includes(title) 
+        ? prev.filter(s => s !== title)
+        : [...prev, title]
+    );
   };
 
   return (
@@ -94,33 +182,62 @@ export function VanguardNavigation() {
           </div>
 
           {/* Navigation Items */}
-          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                  "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  isActive(item.path) 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-sidebar-foreground",
-                  isCollapsed && "justify-center px-2"
-                )}
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+            {navSections.map((section) => (
+              <Collapsible
+                key={section.title}
+                open={!isCollapsed && (openSections.includes(section.title.toLowerCase()) || isSectionActive(section))}
+                onOpenChange={() => toggleSection(section.title.toLowerCase())}
               >
-                <item.icon className={cn("h-5 w-5 shrink-0", isCollapsed && "h-6 w-6")} />
-                {!isCollapsed && (
-                  <>
-                    <span className="font-medium">{item.title}</span>
-                    {item.badge && (
-                      <span className="ml-auto text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full">
-                        {item.badge}
-                      </span>
+                <CollapsibleTrigger asChild>
+                  <button
+                    className={cn(
+                      "flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-all duration-200",
+                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      isSectionActive(section) ? "text-primary" : "text-sidebar-foreground",
+                      isCollapsed && "justify-center px-2"
                     )}
-                  </>
+                  >
+                    <section.icon className={cn("h-5 w-5 shrink-0", isCollapsed && "h-6 w-6")} />
+                    {!isCollapsed && (
+                      <>
+                        <span className="font-medium text-sm flex-1 text-left">{section.title}</span>
+                        <ChevronDown className={cn(
+                          "h-4 w-4 transition-transform",
+                          openSections.includes(section.title.toLowerCase()) && "rotate-180"
+                        )} />
+                      </>
+                    )}
+                  </button>
+                </CollapsibleTrigger>
+                
+                {!isCollapsed && (
+                  <CollapsibleContent className="pl-4 space-y-0.5 mt-1">
+                    {section.items.map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setIsMobileOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
+                          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                          isActive(item.path) 
+                            ? "bg-primary text-primary-foreground" 
+                            : "text-sidebar-foreground/80"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span>{item.title}</span>
+                        {item.badge && (
+                          <span className="ml-auto text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full">
+                            {item.badge}
+                          </span>
+                        )}
+                      </NavLink>
+                    ))}
+                  </CollapsibleContent>
                 )}
-              </NavLink>
+              </Collapsible>
             ))}
           </nav>
 
