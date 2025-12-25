@@ -114,3 +114,6 @@ verify_jwt = true
 
 [functions.containment-action]
 verify_jwt = true
+
+[functions.compliance-agent-scan]
+verify_jwt = false
