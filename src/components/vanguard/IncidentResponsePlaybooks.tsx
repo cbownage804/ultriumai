@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { BookOpen, Play, Plus, Edit, Trash2, CheckCircle, AlertTriangle, Clock, Zap, Shield } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 interface PlaybookStep {
@@ -29,72 +31,86 @@ interface Playbook {
 }
 
 export const IncidentResponsePlaybooks = () => {
-  const [playbooks, setPlaybooks] = useState<Playbook[]>([
-    {
-      id: '1',
-      name: 'Ransomware Response',
-      description: 'Immediate response procedure for ransomware detection',
-      threatType: 'ransomware',
-      severity: 'critical',
-      steps: [
-        { id: 's1', action: 'Isolate Endpoint', description: 'Immediately isolate affected endpoint from network', automated: true, timeout: 30 },
-        { id: 's2', action: 'Disable User Account', description: 'Disable compromised user account in AD', automated: true, timeout: 60 },
-        { id: 's3', action: 'Collect Forensic Data', description: 'Capture memory dump and process list', automated: true, timeout: 300 },
-        { id: 's4', action: 'Notify SOC Team', description: 'Send alert to SOC team via Teams/Email', automated: true },
-        { id: 's5', action: 'Identify Encryption Scope', description: 'Manual: Determine extent of file encryption', automated: false },
-        { id: 's6', action: 'Restore from Backup', description: 'Initiate restore from last known good backup', automated: false },
-      ],
-      lastUsed: '2024-12-20',
-      usageCount: 12
-    },
-    {
-      id: '2',
-      name: 'Phishing Attack Response',
-      description: 'Handle detected phishing emails and compromised credentials',
-      threatType: 'phishing',
-      severity: 'high',
-      steps: [
-        { id: 's1', action: 'Block Sender Domain', description: 'Add sender domain to email blocklist', automated: true },
-        { id: 's2', action: 'Delete Malicious Emails', description: 'Remove phishing emails from all mailboxes', automated: true },
-        { id: 's3', action: 'Reset User Passwords', description: 'Force password reset for clicked users', automated: true },
-        { id: 's4', action: 'Review Login History', description: 'Check for unauthorized access', automated: false },
-        { id: 's5', action: 'User Notification', description: 'Notify affected users of phishing attempt', automated: true },
-      ],
-      lastUsed: '2024-12-24',
-      usageCount: 28
-    },
-    {
-      id: '3',
-      name: 'Malware Containment',
-      description: 'Standard procedure for malware detection and containment',
-      threatType: 'malware',
-      severity: 'high',
-      steps: [
-        { id: 's1', action: 'Quarantine File', description: 'Move detected file to quarantine', automated: true },
-        { id: 's2', action: 'Kill Process', description: 'Terminate malicious process', automated: true },
-        { id: 's3', action: 'Network Isolation', description: 'Limit network access for affected host', automated: true },
-        { id: 's4', action: 'Full System Scan', description: 'Run comprehensive antivirus scan', automated: true },
-        { id: 's5', action: 'Hash Lookup', description: 'Check file hash against threat intel', automated: true },
-        { id: 's6', action: 'Remediation Report', description: 'Generate incident report', automated: true },
-      ],
-      usageCount: 45
-    },
-    {
-      id: '4',
-      name: 'Data Breach Response',
-      description: 'Procedure for suspected data exfiltration',
-      threatType: 'data_breach',
-      severity: 'critical',
-      steps: [
-        { id: 's1', action: 'Block External IPs', description: 'Block destination IPs at firewall', automated: true },
-        { id: 's2', action: 'Capture Network Traffic', description: 'Start packet capture for forensics', automated: true },
-        { id: 's3', action: 'Identify Data Scope', description: 'Manual: Determine what data was accessed', automated: false },
-        { id: 's4', action: 'Legal Notification', description: 'Notify legal/compliance team', automated: true },
-        { id: 's5', action: 'Evidence Preservation', description: 'Secure all logs and forensic evidence', automated: false },
-      ],
-      usageCount: 3
-    },
-  ]);
+  const { user } = useAuth();
+  const [playbooks, setPlaybooks] = useState<Playbook[]>([]);
+
+  useEffect(() => {
+    if (user) loadPlaybooks();
+  }, [user]);
+
+  const loadPlaybooks = async () => {
+    const { data } = await supabase
+      .from('incident_playbooks')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (data && data.length > 0) {
+      const mapped = data.map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description || '',
+        threatType: p.threat_type,
+        severity: p.severity,
+        steps: Array.isArray(p.steps) ? (p.steps as any[]).map((s: any, idx: number) => ({
+          id: `s${idx}`,
+          action: s.action || s.title || `Step ${idx + 1}`,
+          description: s.description || '',
+          automated: s.automated || false,
+          timeout: s.timeout
+        })) : [],
+        lastUsed: p.last_executed_at,
+        usageCount: p.times_executed || 0
+      }));
+      setPlaybooks(mapped);
+    } else {
+      // Default demo playbooks
+      setPlaybooks([
+        {
+          id: '1',
+          name: 'Ransomware Response',
+          description: 'Immediate response procedure for ransomware detection',
+          threatType: 'ransomware',
+          severity: 'critical',
+          steps: [
+            { id: 's1', action: 'Isolate Endpoint', description: 'Immediately isolate affected endpoint from network', automated: true, timeout: 30 },
+            { id: 's2', action: 'Disable User Account', description: 'Disable compromised user account in AD', automated: true, timeout: 60 },
+            { id: 's3', action: 'Collect Forensic Data', description: 'Capture memory dump and process list', automated: true, timeout: 300 },
+            { id: 's4', action: 'Notify SOC Team', description: 'Send alert to SOC team via Teams/Email', automated: true },
+          ],
+          lastUsed: '2024-12-20',
+          usageCount: 12
+        },
+        {
+          id: '2',
+          name: 'Phishing Attack Response',
+          description: 'Handle detected phishing emails and compromised credentials',
+          threatType: 'phishing',
+          severity: 'high',
+          steps: [
+            { id: 's1', action: 'Block Sender Domain', description: 'Add sender domain to email blocklist', automated: true },
+            { id: 's2', action: 'Delete Malicious Emails', description: 'Remove phishing emails from all mailboxes', automated: true },
+            { id: 's3', action: 'Reset User Passwords', description: 'Force password reset for clicked users', automated: true },
+          ],
+          lastUsed: '2024-12-24',
+          usageCount: 28
+        },
+        {
+          id: '3',
+          name: 'Malware Containment',
+          description: 'Standard procedure for malware detection and containment',
+          threatType: 'malware',
+          severity: 'high',
+          steps: [
+            { id: 's1', action: 'Quarantine File', description: 'Move detected file to quarantine', automated: true },
+            { id: 's2', action: 'Kill Process', description: 'Terminate malicious process', automated: true },
+            { id: 's3', action: 'Network Isolation', description: 'Limit network access for affected host', automated: true },
+          ],
+          usageCount: 45
+        },
+      ]);
+    }
+  };
+
 
   const executePlaybook = (playbookId: string) => {
     const playbook = playbooks.find(p => p.id === playbookId);

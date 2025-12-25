@@ -46,11 +46,12 @@ export const ThreatIntelligence = () => {
       setResults(data);
       toast.success('Threat intelligence lookup complete');
 
-      // Fetch recent lookups
+
+      // Fetch recent lookups from new table
       const { data: recent } = await supabase
-        .from('threat_intelligence')
+        .from('threat_intel_indicators')
         .select('*')
-        .order('last_checked', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(10);
       if (recent) setRecentLookups(recent);
     } catch (error: any) {
@@ -173,20 +174,22 @@ export const ThreatIntelligence = () => {
               recentLookups.map((lookup) => (
                 <div key={lookup.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                   <div className="flex items-center gap-3">
-                    {lookup.risk_level === 'low' ? (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    ) : (
+                    {(lookup.confidence_score || 50) >= 70 ? (
                       <AlertTriangle className="h-5 w-5 text-orange-500" />
+                    ) : (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
                     )}
                     <div>
-                      <p className="font-medium">{lookup.indicator}</p>
+                      <p className="font-medium">{lookup.indicator_value}</p>
                       <p className="text-xs text-muted-foreground">{lookup.indicator_type}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {getRiskBadge(lookup.risk_level)}
+                    <Badge className={lookup.confidence_score >= 70 ? 'bg-red-500' : lookup.confidence_score >= 40 ? 'bg-yellow-500' : 'bg-green-500'}>
+                      {lookup.confidence_score >= 70 ? 'HIGH' : lookup.confidence_score >= 40 ? 'MEDIUM' : 'LOW'}
+                    </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {new Date(lookup.last_checked).toLocaleDateString()}
+                      {new Date(lookup.created_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>

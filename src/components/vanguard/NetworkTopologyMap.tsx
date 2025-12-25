@@ -36,8 +36,32 @@ export const NetworkTopologyMap = () => {
   }, [nodes, zoom, offset, selectedNode]);
 
   const loadNetworkData = async () => {
-    // Use mock data for topology visualization
-    setNodes(generateMockTopology());
+    const { data } = await supabase
+      .from('network_devices')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (data && data.length > 0) {
+      // Convert database devices to topology nodes
+      const mappedNodes: NetworkNode[] = data.map((device, index) => {
+        const angle = (index / data.length) * 2 * Math.PI;
+        const radius = 150;
+        return {
+          id: device.id,
+          label: device.device_name,
+          type: inferDeviceType(device),
+          ip: String(device.ip_address || 'Unknown'),
+          status: device.status === 'online' ? 'online' : device.status === 'warning' ? 'warning' : 'offline',
+          x: 400 + Math.cos(angle) * radius,
+          y: 250 + Math.sin(angle) * radius,
+          connections: device.parent_device_id ? [device.parent_device_id] : []
+        };
+      });
+      setNodes(mappedNodes);
+    } else {
+      // Use mock data for demo
+      setNodes(generateMockTopology());
+    }
   };
 
   const inferDeviceType = (device: any): NetworkNode['type'] => {

@@ -1093,6 +1093,71 @@ export type Database = {
           },
         ]
       }
+      backup_jobs: {
+        Row: {
+          agent_id: string | null
+          backup_name: string
+          backup_type: string
+          completed_at: string | null
+          created_at: string
+          destination: string | null
+          error_message: string | null
+          id: string
+          last_success: string | null
+          next_scheduled: string | null
+          size_bytes: number | null
+          source_path: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          backup_name: string
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          destination?: string | null
+          error_message?: string | null
+          id?: string
+          last_success?: string | null
+          next_scheduled?: string | null
+          size_bytes?: number | null
+          source_path?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          backup_name?: string
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          destination?: string | null
+          error_message?: string | null
+          id?: string
+          last_success?: string | null
+          next_scheduled?: string | null
+          size_bytes?: number | null
+          source_path?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_jobs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bi_reports: {
         Row: {
           created_at: string
@@ -3355,6 +3420,45 @@ export type Database = {
         }
         Relationships: []
       }
+      dark_web_monitors: {
+        Row: {
+          breach_count: number | null
+          created_at: string
+          domain: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          last_checked: string | null
+          latest_breach: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          breach_count?: number | null
+          created_at?: string
+          domain?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          last_checked?: string | null
+          latest_breach?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          breach_count?: number | null
+          created_at?: string
+          domain?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          last_checked?: string | null
+          latest_breach?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       darkweb_monitors: {
         Row: {
           created_at: string | null
@@ -4571,6 +4675,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      incident_playbooks: {
+        Row: {
+          auto_trigger: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          name: string
+          severity: string
+          steps: Json
+          threat_type: string
+          times_executed: number | null
+          trigger_conditions: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_trigger?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name: string
+          severity?: string
+          steps?: Json
+          threat_type: string
+          times_executed?: number | null
+          trigger_conditions?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_trigger?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name?: string
+          severity?: string
+          steps?: Json
+          threat_type?: string
+          times_executed?: number | null
+          trigger_conditions?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       incidents: {
         Row: {
@@ -7444,6 +7599,77 @@ export type Database = {
         }
         Relationships: []
       }
+      network_devices: {
+        Row: {
+          created_at: string
+          device_name: string
+          device_type: string
+          discovered_at: string | null
+          firmware_version: string | null
+          id: string
+          ip_address: unknown
+          last_seen: string | null
+          location: string | null
+          mac_address: string | null
+          manufacturer: string | null
+          metadata: Json | null
+          model: string | null
+          parent_device_id: string | null
+          port_count: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_name: string
+          device_type?: string
+          discovered_at?: string | null
+          firmware_version?: string | null
+          id?: string
+          ip_address?: unknown
+          last_seen?: string | null
+          location?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          metadata?: Json | null
+          model?: string | null
+          parent_device_id?: string | null
+          port_count?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_name?: string
+          device_type?: string
+          discovered_at?: string | null
+          firmware_version?: string | null
+          id?: string
+          ip_address?: unknown
+          last_seen?: string | null
+          location?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          metadata?: Json | null
+          model?: string | null
+          parent_device_id?: string | null
+          port_count?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "network_devices_parent_device_id_fkey"
+            columns: ["parent_device_id"]
+            isOneToOne: false
+            referencedRelation: "network_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       network_findings: {
         Row: {
           connector_id: string
@@ -8043,6 +8269,65 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patch_management: {
+        Row: {
+          affected_devices: number | null
+          agent_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          installed_at: string | null
+          kb_article: string | null
+          patch_name: string
+          release_date: string | null
+          severity: string
+          status: string
+          updated_at: string
+          user_id: string
+          vendor: string
+        }
+        Insert: {
+          affected_devices?: number | null
+          agent_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          installed_at?: string | null
+          kb_article?: string | null
+          patch_name: string
+          release_date?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          vendor: string
+        }
+        Update: {
+          affected_devices?: number | null
+          agent_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          installed_at?: string | null
+          kb_article?: string | null
+          patch_name?: string
+          release_date?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          vendor?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patch_management_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
             referencedColumns: ["id"]
           },
         ]
@@ -13188,6 +13473,51 @@ export type Database = {
           raw_response?: Json | null
           reputation_score?: number | null
           source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      threat_intel_indicators: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          first_seen: string | null
+          id: string
+          indicator_type: string
+          indicator_value: string
+          is_active: boolean | null
+          last_seen: string | null
+          metadata: Json | null
+          source: string
+          threat_type: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          first_seen?: string | null
+          id?: string
+          indicator_type: string
+          indicator_value: string
+          is_active?: boolean | null
+          last_seen?: string | null
+          metadata?: Json | null
+          source: string
+          threat_type?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          first_seen?: string | null
+          id?: string
+          indicator_type?: string
+          indicator_value?: string
+          is_active?: boolean | null
+          last_seen?: string | null
+          metadata?: Json | null
+          source?: string
+          threat_type?: string | null
           user_id?: string
         }
         Relationships: []
