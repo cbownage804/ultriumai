@@ -365,7 +365,7 @@ export const DarkWebMonitor = () => {
              {results.dehashedChecked && results.dehashedStatus === 404 && !results.leakedData?.length && (
                <div className="p-3 bg-muted/40 border border-border rounded-lg">
                  <p className="text-sm text-muted-foreground">
-                   Dehashed was checked and returned no matches for this email.
+                   Dehashed was checked{results.dehashedQueryUsed ? ` (query: ${results.dehashedQueryUsed})` : ''} and returned no matches.
                  </p>
                </div>
              )}

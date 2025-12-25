@@ -295,54 +295,85 @@ serve(async (req) => {
       // Check Dehashed for leaked credentials from this domain
       if (dehashedKey && dehashedEmail) {
         console.log('[Dark Web Monitor] Checking Dehashed for domain credentials...');
-        
+
         try {
           const authString = btoa(`${dehashedEmail}:${dehashedKey}`);
-          // Use domain: field to search for all entries from this domain
-          const dehashedResponse = await fetch(
-            `https://api.dehashed.com/search?query=domain:${encodeURIComponent(domain)}&size=100`,
-            {
+
+          // Dehashed "Domain Scan" in the UI effectively surfaces accounts where the domain appears.
+          // We try a couple of query formats used by different clients and fall back to raw domain.
+          const queriesToTry = [`domain:${domain}`, `email:@${domain}`, domain];
+
+          results.dehashedChecked = true;
+          results.dehashedQueriesTried = queriesToTry;
+
+          for (const q of queriesToTry) {
+            const url = new URL('https://api.dehashed.com/search');
+            url.searchParams.set('query', q);
+            url.searchParams.set('size', '100');
+
+            console.log(`[Dark Web Monitor] Dehashed domain query: ${q}`);
+
+            const dehashedResponse = await fetch(url.toString(), {
               headers: {
                 'Accept': 'application/json',
                 'Authorization': `Basic ${authString}`
               }
+            });
+
+            console.log(`[Dark Web Monitor] Dehashed domain response status: ${dehashedResponse.status}`);
+
+            results.dehashedStatus = dehashedResponse.status;
+            results.dehashedQueryUsed = q;
+
+            if (dehashedResponse.ok) {
+              const dehashedData = await dehashedResponse.json();
+              console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} domain entries`);
+
+              results.dehashedTotal = dehashedData.total || 0;
+
+              if (dehashedData.entries && dehashedData.entries.length > 0) {
+                results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
+                  database_name: entry.database_name || 'Unknown',
+                  email: entry.email || null,
+                  username: entry.username || null,
+                  password: entry.password ? maskPassword(entry.password) : null,
+                  hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
+                  name: entry.name || null,
+                  phone: entry.phone || null,
+                  address: entry.address || null,
+                  ip_address: entry.ip_address || null
+                }));
+
+                results.hasActualLeakedData = true;
+              }
+
+              // Success; stop trying alternates
+              break;
             }
-          );
 
-          console.log(`[Dark Web Monitor] Dehashed domain response status: ${dehashedResponse.status}`);
-          results.dehashedChecked = true;
-          results.dehashedStatus = dehashedResponse.status;
-
-          if (dehashedResponse.ok) {
-            const dehashedData = await dehashedResponse.json();
-            console.log(`[Dark Web Monitor] Dehashed found ${dehashedData.total || 0} domain entries`);
-
-            results.dehashedTotal = dehashedData.total || 0;
-
-            if (dehashedData.entries && dehashedData.entries.length > 0) {
-              results.leakedData = dehashedData.entries.slice(0, 50).map((entry: any) => ({
-                database_name: entry.database_name || 'Unknown',
-                email: entry.email || null,
-                username: entry.username || null,
-                password: entry.password ? maskPassword(entry.password) : null,
-                hashed_password: entry.hashed_password ? `${entry.hashed_password.substring(0, 20)}...` : null,
-                name: entry.name || null,
-                phone: entry.phone || null,
-                address: entry.address || null,
-                ip_address: entry.ip_address || null
-              }));
-
-              results.hasActualLeakedData = true;
+            if (dehashedResponse.status === 404) {
+              // Dehashed uses 404 when the query has no matches
+              results.dehashedTotal = 0;
+              results.dehashedMessage = 'No matches found';
+              continue;
             }
-          } else if (dehashedResponse.status === 404) {
-            results.dehashedTotal = 0;
-            results.dehashedMessage = 'No matches found';
-          } else if (dehashedResponse.status === 401) {
-            console.log('[Dark Web Monitor] Dehashed auth failed');
-            results.dehashedError = 'Dehashed authentication failed';
-          } else if (dehashedResponse.status === 402) {
-            console.log('[Dark Web Monitor] Dehashed - out of credits');
-            results.dehashedError = 'Dehashed API credits exhausted';
+
+            if (dehashedResponse.status === 401) {
+              console.log('[Dark Web Monitor] Dehashed auth failed');
+              results.dehashedError = 'Dehashed authentication failed';
+              break;
+            }
+
+            if (dehashedResponse.status === 402) {
+              console.log('[Dark Web Monitor] Dehashed - out of credits');
+              results.dehashedError = 'Dehashed API credits exhausted';
+              break;
+            }
+
+            const bodyText = await dehashedResponse.text();
+            console.log('[Dark Web Monitor] Dehashed unexpected response body:', bodyText);
+            results.dehashedError = `Dehashed request failed (${dehashedResponse.status})`;
+            break;
           }
         } catch (e) {
           console.error('[Dark Web Monitor] Dehashed domain check error:', e);
