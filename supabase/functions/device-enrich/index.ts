@@ -273,13 +273,27 @@ Device Information:
 - OS: ${device.os || "Unknown"}
 - Manufacturer: ${device.manufacturer || "Unknown"}
 
-Please provide:
-1. Likely device type (e.g., router, workstation, server, IoT device, printer, phone)
-2. Potential security concerns for this device type
-3. Recommended security actions
-4. Risk level (Low, Medium, High, Critical)
+IMPORTANT RISK ASSESSMENT RULES:
+1. "Unknown" or missing information does NOT equal high risk - it means "Insufficient Data"
+2. Only assign Critical/High risk if there are KNOWN, SPECIFIC security vulnerabilities
+3. A device with unknown info should be marked as "Unknown" risk, not Critical
+4. Risk levels should reflect ACTUAL security concerns, not just lack of data
 
-Respond in JSON format with keys: device_type, security_concerns, recommendations, risk_level, confidence`;
+Risk Level Guidelines:
+- Critical: Known critical vulnerabilities, active exploitation indicators, or confirmed malicious activity
+- High: Known high-severity vulnerabilities, outdated/unsupported OS, or exposed sensitive services
+- Medium: Minor misconfigurations, outdated but supported software, or common security gaps
+- Low: Well-configured devices with no known issues
+- Unknown: Insufficient information to make a risk determination
+
+Please provide:
+1. Likely device type (e.g., router, workstation, server, IoT device, printer, phone) - use "Unknown" if unclear
+2. Potential security concerns ONLY if you have evidence for them
+3. Recommended next steps (like running a scan to gather more info)
+4. Risk level following the guidelines above
+5. Confidence level in your assessment (Low if data is insufficient)
+
+Respond in JSON format with keys: device_type, security_concerns, recommendations, risk_level, confidence, data_quality`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -290,7 +304,7 @@ Respond in JSON format with keys: device_type, security_concerns, recommendation
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "You are a network security analyst. Analyze devices and provide security insights. Always respond with valid JSON." },
+          { role: "system", content: "You are a network security analyst. Analyze devices and provide accurate security insights. NEVER inflate risk levels due to missing information - unknown data means 'Unknown' risk, not 'Critical'. Be honest about data limitations. Always respond with valid JSON." },
           { role: "user", content: prompt },
         ],
       }),
@@ -316,7 +330,8 @@ Respond in JSON format with keys: device_type, security_concerns, recommendation
         return {
           device_type: "Unknown",
           analysis: content,
-          risk_level: "Medium",
+          risk_level: "Unknown",
+          data_quality: "insufficient",
         };
       }
     }
