@@ -209,7 +209,7 @@ export function LiveResponseTerminal() {
                       <SelectItem key={agent.id} value={agent.id}>
                         <div className="flex items-center gap-2">
                           <Monitor className="h-4 w-4" />
-                          {agent.agent_name} ({agent.ip_address})
+                          {agent.name} ({agent.ip_address})
                         </div>
                       </SelectItem>
                     ))
@@ -242,9 +242,9 @@ export function LiveResponseTerminal() {
             <div className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
               <Monitor className="h-5 w-5" />
               <div>
-                <p className="font-medium">{selectedAgent?.agent_name}</p>
+                <p className="font-medium">{selectedAgent?.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {selectedAgent?.ip_address} • {selectedAgent?.os_info || 'Unknown OS'}
+                  {selectedAgent?.ip_address} • {selectedAgent?.agent_version || 'Unknown'}
                 </p>
               </div>
               <div className="ml-auto text-right">
@@ -261,7 +261,7 @@ export function LiveResponseTerminal() {
                 Ultrium Vanguard Live Response v1.0
               </div>
               <div className="text-gray-400 mb-4">
-                Connected to {selectedAgent?.agent_name} at {new Date(session.started_at).toLocaleTimeString()}
+                Connected to {selectedAgent?.name} at {new Date(session.started_at).toLocaleTimeString()}
               </div>
               
               {commandHistory.map((cmd, i) => (
