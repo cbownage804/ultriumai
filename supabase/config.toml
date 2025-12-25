@@ -129,3 +129,9 @@ verify_jwt = false
 
 [functions.vanguard-alerting]
 verify_jwt = true
+
+[functions.siem-log-ingest]
+verify_jwt = false
+
+[functions.scheduled-security-scan]
+verify_jwt = false
