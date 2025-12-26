@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
+import { VanguardAIChat } from './VanguardAIChat';
 
 export function VanguardLayout() {
   const { user } = useAuth();
@@ -74,6 +75,7 @@ export function VanguardLayout() {
       </div>
 
       <Toaster />
+      <VanguardAIChat />
     </div>
   );
 }
