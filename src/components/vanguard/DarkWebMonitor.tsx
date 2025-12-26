@@ -121,6 +121,8 @@ export const DarkWebMonitor = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'database' | 'email' | 'name'>('database');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) loadMonitoredItems();
@@ -407,7 +409,8 @@ export const DarkWebMonitor = () => {
     disabled: isLoading,
   });
 
-  const deleteMonitor = async (id: string) => {
+  const deleteMonitor = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the click on parent
     const { error } = await supabase
       .from('dark_web_monitors')
       .delete()
@@ -417,8 +420,38 @@ export const DarkWebMonitor = () => {
       toast.error('Failed to delete monitor');
     } else {
       toast.success('Monitor removed');
+      if (selectedHistoryId === id) {
+        setSelectedHistoryId(null);
+        setResults(null);
+      }
       loadMonitoredItems();
     }
+  };
+
+  const loadHistoryReport = (monitor: any) => {
+    setSelectedHistoryId(monitor.id);
+    
+    // Reconstruct results from stored breach_data
+    const reconstructedResults = {
+      breaches: monitor.breach_data || [],
+      pastes: monitor.paste_data || [],
+      leakedData: [], // Leaked data is not stored in history currently
+      risk_level: monitor.breach_count > 5 ? 'critical' : monitor.breach_count > 2 ? 'high' : monitor.breach_count > 0 ? 'medium' : 'low',
+      checked_at: monitor.last_checked,
+      fromHistory: true,
+      historyEmail: monitor.email,
+      historyDomain: monitor.domain,
+    };
+    
+    setResults(reconstructedResults);
+    toast.success(`Loaded report for ${monitor.email || monitor.domain}`);
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadMonitoredItems();
+    setIsRefreshing(false);
+    toast.success('Scan history refreshed');
   };
 
   // Export functions
@@ -706,10 +739,12 @@ export const DarkWebMonitor = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {results.simulated && (
-                  <div className="p-4 bg-yellow-500/10 rounded-lg">
-                    <p className="text-yellow-600 dark:text-yellow-400 text-sm">
-                      ⚠️ {results.message}
+                {/* Show if loaded from history */}
+                {results.fromHistory && (
+                  <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                    <p className="text-blue-600 dark:text-blue-400 text-sm flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Loaded from scan history for <span className="font-medium">{results.historyEmail || results.historyDomain}</span>
                     </p>
                   </div>
                 )}
@@ -928,7 +963,7 @@ export const DarkWebMonitor = () => {
                   </div>
                 )}
 
-                {results.breaches?.length === 0 && !results.leakedData?.length && !results.simulated && (
+                {results.breaches?.length === 0 && !results.leakedData?.length && (
                   <div className="flex items-center gap-2 p-4 bg-green-500/10 rounded-lg">
                     <Shield className="h-5 w-5 text-green-500" />
                     <span className="text-green-600 dark:text-green-400 font-medium">
@@ -1011,8 +1046,8 @@ export const DarkWebMonitor = () => {
                     Previously checked emails and domains
                   </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={loadMonitoredItems}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+                  {isRefreshing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                   Refresh
                 </Button>
               </div>
@@ -1023,7 +1058,13 @@ export const DarkWebMonitor = () => {
                   <p className="text-muted-foreground text-center py-4">No scan history yet. Run a scan above to get started.</p>
                 ) : (
                   monitoredItems.map((monitor) => (
-                    <div key={monitor.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div 
+                      key={monitor.id} 
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors hover:bg-muted ${
+                        selectedHistoryId === monitor.id ? 'bg-primary/10 border border-primary/30' : 'bg-muted/50'
+                      }`}
+                      onClick={() => loadHistoryReport(monitor)}
+                    >
                       <div className="flex items-center gap-3">
                         {monitor.monitor_type === 'domain' ? (
                           <Globe className="h-5 w-5 text-muted-foreground" />
@@ -1047,7 +1088,7 @@ export const DarkWebMonitor = () => {
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => deleteMonitor(monitor.id)}
+                          onClick={(e) => deleteMonitor(monitor.id, e)}
                         >
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
@@ -1569,7 +1610,7 @@ export const DarkWebMonitor = () => {
                         <Badge variant={monitor.breach_count > 0 ? 'destructive' : 'secondary'}>
                           {monitor.breach_count || 0} breaches
                         </Badge>
-                        <Button variant="ghost" size="sm" onClick={() => deleteMonitor(monitor.id)}>
+                        <Button variant="ghost" size="sm" onClick={(e) => deleteMonitor(monitor.id, e)}>
                           <Trash2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </div>
