@@ -104,7 +104,7 @@ export function TrafficAnalysis() {
             analyze: true
           },
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
       toast({ title: "Capture Started", description: "Network traffic capture is now active" });
@@ -125,7 +125,7 @@ export function TrafficAnalysis() {
           command_type: 'stop_capture',
           payload: {},
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
       setIsCapturing(false);
@@ -146,7 +146,7 @@ export function TrafficAnalysis() {
           command_type: 'analyze_flows',
           payload: { detect_anomalies: true, detect_exfiltration: true },
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
       toast({ title: "Analysis Started", description: "Analyzing traffic patterns for anomalies" });
@@ -166,7 +166,7 @@ export function TrafficAnalysis() {
           command_type: 'dns_tunnel_detect',
           payload: {},
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
       toast({ title: "DNS Analysis Started", description: "Scanning for DNS tunneling attempts" });

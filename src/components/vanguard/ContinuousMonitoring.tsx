@@ -108,7 +108,7 @@ export function ContinuousMonitoring() {
             config_drift: config.configDrift
           },
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
 
@@ -137,7 +137,7 @@ export function ContinuousMonitoring() {
           command_type: 'baseline_create',
           payload: { capture_all: true },
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
 
@@ -176,7 +176,7 @@ export function ContinuousMonitoring() {
           command_type: 'posture_score',
           payload: {},
           status: 'pending'
-        });
+        } as any);
 
       if (error) throw error;
       toast({ title: "Posture Check Started", description: "Security posture assessment in progress" });

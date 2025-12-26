@@ -101,7 +101,7 @@ export function HoneypotManager() {
         .limit(100);
 
       if (error) throw error;
-      setEvents((data || []).map(e => ({ ...e, attack_type: e.interaction_type })) as any);
+      setEvents(data || []);
     } catch (error) {
       console.error('Error loading honeypot events:', error);
     }
@@ -207,7 +207,7 @@ export function HoneypotManager() {
   const onlineAgents = agents.filter(a => a.status === 'online');
   const totalInteractions = events.length;
   const uniqueAttackers = new Set(events.map(e => e.attacker_ip)).size;
-  const criticalEvents = events.filter(e => e.attack_type?.includes('brute') || e.attack_type?.includes('exploit')).length;
+  const criticalEvents = events.filter(e => e.interaction_type?.includes('brute') || e.interaction_type?.includes('exploit')).length;
 
   return (
     <div className="space-y-6">
@@ -454,8 +454,8 @@ export function HoneypotManager() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="font-medium">{event.attack_type || 'Connection Attempt'}</p>
-                              {getSeverityBadge(event.attack_type || '')}
+                              <p className="font-medium">{event.interaction_type || 'Connection Attempt'}</p>
+                              {getSeverityBadge(event.interaction_type || '')}
                             </div>
                             <p className="text-sm text-muted-foreground">
                               {event.honeypot_type?.toUpperCase()}:{event.honeypot_port} from {event.attacker_ip}
