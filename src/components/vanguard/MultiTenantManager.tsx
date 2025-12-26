@@ -31,14 +31,27 @@ export const MultiTenantManager = () => {
   }, [user]);
 
   const loadTenants = async () => {
-    // Use mock data for multi-tenant view
-    setTenants([
-      { id: '1', name: 'Acme Corporation', industry: 'Manufacturing', status: 'active', agentCount: 45, threatCount: 2, riskScore: 75, lastActivity: '2024-12-25T10:30:00Z' },
-      { id: '2', name: 'TechStart Inc', industry: 'Technology', status: 'active', agentCount: 23, threatCount: 0, riskScore: 85, lastActivity: '2024-12-25T09:15:00Z' },
-      { id: '3', name: 'HealthCare Plus', industry: 'Healthcare', status: 'active', agentCount: 67, threatCount: 5, riskScore: 68, lastActivity: '2024-12-25T11:45:00Z' },
-      { id: '4', name: 'Finance Group', industry: 'Finance', status: 'active', agentCount: 34, threatCount: 1, riskScore: 82, lastActivity: '2024-12-24T16:20:00Z' },
-      { id: '5', name: 'Retail Solutions', industry: 'Retail', status: 'inactive', agentCount: 12, threatCount: 0, riskScore: 90, lastActivity: '2024-12-20T08:00:00Z' },
-    ]);
+    // Load real tenant data from msp_clients if available
+    const { data } = await supabase
+      .from('msp_clients')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (data && data.length > 0) {
+      const mapped = data.map(client => ({
+        id: client.id,
+        name: client.company_name,
+        industry: client.business_size || 'Standard',
+        status: client.is_active ? 'active' : 'inactive',
+        agentCount: 0,
+        threatCount: client.alerts || 0,
+        riskScore: 85,
+        lastActivity: client.updated_at || client.created_at
+      }));
+      setTenants(mapped);
+    } else {
+      setTenants([]);
+    }
   };
 
   const filteredTenants = tenants.filter(tenant => {

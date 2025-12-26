@@ -65,16 +65,11 @@ export const PatchManagement = () => {
           : 100
       });
     } else {
-      // Show demo data if no real patches exist
-      const mockPatches: PatchInfo[] = [
-        { id: '1', name: 'KB5034441 - Windows Security Update', severity: 'critical', category: 'Security', size: '245 MB', release_date: '2024-12-20', status: 'pending', devices_affected: 15, devices_patched: 5 },
-        { id: '2', name: 'KB5034467 - .NET Framework Update', severity: 'high', category: 'Framework', size: '78 MB', release_date: '2024-12-18', status: 'in_progress', devices_affected: 22, devices_patched: 18 },
-        { id: '3', name: 'Chrome 121.0.6167.85', severity: 'high', category: 'Browser', size: '95 MB', release_date: '2024-12-15', status: 'pending', devices_affected: 30, devices_patched: 12 },
-      ];
-      setPatches(mockPatches);
+      // No real patches - show empty state
+      setPatches([]);
       setStats({
-        critical: 1, high: 2, medium: 0, low: 0,
-        compliance: 45
+        critical: 0, high: 0, medium: 0, low: 0,
+        compliance: 100
       });
     }
   };

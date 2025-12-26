@@ -23,51 +23,88 @@ export function ExecutiveSecurityDashboard() {
   const { agents } = useVanguardAgents();
   const [timeRange, setTimeRange] = useState("30d");
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Real data state
+  const [metrics, setMetrics] = useState({
+    riskScore: 0,
+    complianceScore: 0,
+    incidentsResolved: 0,
+    totalIncidents: 0
+  });
+  const [threatDistribution, setThreatDistribution] = useState<{name: string; value: number; color: string}[]>([]);
+  const [incidentTrend, setIncidentTrend] = useState<{date: string; count: number}[]>([]);
 
-  // Simulated executive metrics
-  const riskScore = 42;
-  const complianceScore = 87;
-  const mttr = 4.2; // Mean time to remediate (hours)
-  const incidentsResolved = 156;
+  useEffect(() => {
+    if (user) loadRealData();
+  }, [user, timeRange]);
 
-  const riskTrendData = [
-    { date: 'Week 1', risk: 65, incidents: 12 },
-    { date: 'Week 2', risk: 58, incidents: 8 },
-    { date: 'Week 3', risk: 52, incidents: 15 },
-    { date: 'Week 4', risk: 42, incidents: 6 },
-  ];
+  const loadRealData = async () => {
+    setIsLoading(true);
+    try {
+      // Get incidents from security_incidents table
+      const { data: incidents } = await supabase
+        .from('security_incidents')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const threatDistribution = [
-    { name: 'Malware', value: 35, color: '#ef4444' },
-    { name: 'Phishing', value: 25, color: '#f97316' },
-    { name: 'Vulnerabilities', value: 20, color: '#eab308' },
-    { name: 'Misconfigurations', value: 12, color: '#3b82f6' },
-    { name: 'Other', value: 8, color: '#6b7280' },
-  ];
+      // Get compliance results
+      const { data: complianceResults } = await supabase
+        .from('compliance_check_results')
+        .select('status')
+        .limit(500);
 
-  const complianceData = [
-    { framework: 'SOC 2', score: 92, target: 95 },
-    { framework: 'HIPAA', score: 88, target: 90 },
-    { framework: 'PCI DSS', score: 85, target: 90 },
-    { framework: 'NIST', score: 78, target: 85 },
-    { framework: 'ISO 27001', score: 82, target: 90 },
-  ];
+      // Calculate metrics from real data
+      const totalIncidents = incidents?.length || 0;
+      const resolvedIncidents = incidents?.filter(i => i.status === 'resolved' || i.status === 'closed').length || 0;
+      
+      // Calculate compliance score
+      const passedChecks = complianceResults?.filter(c => c.status === 'pass').length || 0;
+      const totalChecks = complianceResults?.length || 1;
+      const complianceScore = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 0;
 
-  const assetCoverage = [
-    { category: 'Endpoints', covered: 245, total: 260 },
-    { category: 'Servers', covered: 48, total: 52 },
-    { category: 'Network Devices', covered: 32, total: 35 },
-    { category: 'Cloud Assets', covered: 89, total: 95 },
-  ];
+      // Calculate risk score based on open critical/high incidents
+      const criticalOpen = incidents?.filter(i => i.severity === 'critical' && i.status !== 'resolved').length || 0;
+      const highOpen = incidents?.filter(i => i.severity === 'high' && i.status !== 'resolved').length || 0;
+      const riskScore = Math.min(100, criticalOpen * 20 + highOpen * 10);
 
-  const monthlyIncidents = [
-    { month: 'Jul', critical: 2, high: 8, medium: 15, low: 25 },
-    { month: 'Aug', critical: 1, high: 12, medium: 18, low: 22 },
-    { month: 'Sep', critical: 3, high: 6, medium: 12, low: 28 },
-    { month: 'Oct', critical: 0, high: 5, medium: 10, low: 20 },
-    { month: 'Nov', critical: 1, high: 4, medium: 8, low: 18 },
-    { month: 'Dec', critical: 0, high: 3, medium: 6, low: 15 },
-  ];
+      setMetrics({
+        riskScore,
+        complianceScore,
+        incidentsResolved: resolvedIncidents,
+        totalIncidents
+      });
+
+      // Build threat distribution from incident types
+      const typeCounts: Record<string, number> = {};
+      incidents?.forEach(inc => {
+        const type = inc.incident_type || 'Other';
+        typeCounts[type] = (typeCounts[type] || 0) + 1;
+      });
+
+      const colors = ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#6b7280', '#10b981'];
+      const distribution = Object.entries(typeCounts)
+        .map(([name, value], i) => ({ name, value, color: colors[i % colors.length] }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6);
+      setThreatDistribution(distribution);
+
+      // Build incident trend (group by date)
+      const dateCounts: Record<string, number> = {};
+      incidents?.forEach(inc => {
+        const date = new Date(inc.created_at).toLocaleDateString();
+        dateCounts[date] = (dateCounts[date] || 0) + 1;
+      });
+      const trend = Object.entries(dateCounts)
+        .map(([date, count]) => ({ date, count }))
+        .slice(-7);
+      setIncidentTrend(trend);
+
+    } catch (error) {
+      console.error('Error loading executive data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getRiskLevel = (score: number) => {
     if (score >= 70) return { label: 'Critical', color: 'text-red-500', bg: 'bg-red-500' };
@@ -76,7 +113,7 @@ export function ExecutiveSecurityDashboard() {
     return { label: 'Low', color: 'text-green-500', bg: 'bg-green-500' };
   };
 
-  const risk = getRiskLevel(riskScore);
+  const risk = getRiskLevel(metrics.riskScore);
 
   return (
     <div className="space-y-6">
@@ -116,7 +153,7 @@ export function ExecutiveSecurityDashboard() {
               <Shield className={`h-5 w-5 ${risk.color}`} />
             </div>
             <div className="flex items-end gap-2">
-              <span className={`text-4xl font-bold ${risk.color}`}>{riskScore}</span>
+              <span className={`text-4xl font-bold ${risk.color}`}>{metrics.riskScore}</span>
               <span className="text-sm text-muted-foreground mb-1">/100</span>
             </div>
             <Badge className={`${risk.bg} text-white mt-2`}>{risk.label} Risk</Badge>
@@ -134,9 +171,9 @@ export function ExecutiveSecurityDashboard() {
               <CheckCircle className="h-5 w-5 text-green-500" />
             </div>
             <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold text-green-500">{complianceScore}%</span>
+              <span className="text-4xl font-bold text-green-500">{metrics.complianceScore}%</span>
             </div>
-            <Progress value={complianceScore} className="h-2 mt-3" />
+            <Progress value={metrics.complianceScore} className="h-2 mt-3" />
             <div className="flex items-center gap-1 mt-2 text-sm text-green-500">
               <TrendingUp className="h-4 w-4" />
               <span>+5% from last month</span>
@@ -147,35 +184,27 @@ export function ExecutiveSecurityDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-muted-foreground">Mean Time to Remediate</p>
-              <Clock className="h-5 w-5 text-blue-500" />
+              <p className="text-sm text-muted-foreground">Total Incidents</p>
+              <AlertTriangle className="h-5 w-5 text-orange-500" />
             </div>
             <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold">{mttr}</span>
-              <span className="text-sm text-muted-foreground mb-1">hours</span>
+              <span className="text-4xl font-bold">{metrics.totalIncidents}</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">Target: 4 hours</p>
-            <div className="flex items-center gap-1 mt-1 text-sm text-orange-500">
-              <TrendingUp className="h-4 w-4" />
-              <span>+0.2h from target</span>
-            </div>
+            <p className="text-sm text-muted-foreground mt-2">{metrics.incidentsResolved} resolved</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm text-muted-foreground">Incidents Resolved</p>
-              <Target className="h-5 w-5 text-primary" />
+              <p className="text-sm text-muted-foreground">Active Agents</p>
+              <Activity className="h-5 w-5 text-blue-500" />
             </div>
             <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold">{incidentsResolved}</span>
+              <span className="text-4xl font-bold">{agents.filter(a => a.status === 'online').length}</span>
+              <span className="text-sm text-muted-foreground mb-1">/ {agents.length}</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">This month</p>
-            <div className="flex items-center gap-1 mt-1 text-sm text-green-500">
-              <TrendingUp className="h-4 w-4" />
-              <span>+12% vs last month</span>
-            </div>
+            <Progress value={agents.length > 0 ? (agents.filter(a => a.status === 'online').length / agents.length) * 100 : 0} className="h-2 mt-3" />
           </CardContent>
         </Card>
       </div>
@@ -185,39 +214,37 @@ export function ExecutiveSecurityDashboard() {
         {/* Risk Trend */}
         <Card>
           <CardHeader>
-            <CardTitle>Risk Score Trend</CardTitle>
-            <CardDescription>Weekly risk score and incident correlation</CardDescription>
+            <CardTitle>Incident Trend</CardTitle>
+            <CardDescription>Recent incidents by date</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <AreaChart data={riskTrendData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="date" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    border: '1px solid hsl(var(--border))' 
-                  }} 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="risk" 
-                  stroke="hsl(var(--primary))" 
-                  fill="hsl(var(--primary))" 
-                  fillOpacity={0.2}
-                  name="Risk Score"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="incidents" 
-                  stroke="#ef4444" 
-                  strokeWidth={2}
-                  dot={false}
-                  name="Incidents"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {incidentTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={incidentTrend}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="date" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))', 
+                      border: '1px solid hsl(var(--border))' 
+                    }} 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="count" 
+                    stroke="hsl(var(--primary))" 
+                    fill="hsl(var(--primary))" 
+                    fillOpacity={0.2}
+                    name="Incidents"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                No incident data available
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -251,107 +278,98 @@ export function ExecutiveSecurityDashboard() {
         </Card>
       </div>
 
-      {/* Compliance & Coverage */}
+      {/* Agent Coverage */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Compliance by Framework */}
         <Card>
           <CardHeader>
-            <CardTitle>Compliance by Framework</CardTitle>
-            <CardDescription>Current scores vs targets</CardDescription>
+            <CardTitle>Agent Overview</CardTitle>
+            <CardDescription>Vanguard agent deployment status</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {complianceData.map((item) => (
-                <div key={item.framework}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">{item.framework}</span>
-                    <span className="text-sm">
-                      <span className={item.score >= item.target ? 'text-green-500' : 'text-orange-500'}>
-                        {item.score}%
-                      </span>
-                      <span className="text-muted-foreground"> / {item.target}%</span>
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <Progress value={item.score} className="h-2" />
-                    <div 
-                      className="absolute top-0 h-2 w-0.5 bg-foreground"
-                      style={{ left: `${item.target}%` }}
-                    />
-                  </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium">Online Agents</span>
+                  <span className="text-sm text-green-500">{agents.filter(a => a.status === 'online').length}</span>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Asset Coverage */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Security Coverage</CardTitle>
-            <CardDescription>Assets protected by Vanguard</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {assetCoverage.map((item) => {
-                const percentage = Math.round((item.covered / item.total) * 100);
-                return (
-                  <div key={item.category}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">{item.category}</span>
-                      <span className="text-sm">
-                        <span className="text-foreground">{item.covered}</span>
-                        <span className="text-muted-foreground"> / {item.total}</span>
-                        <span className={`ml-2 ${percentage >= 90 ? 'text-green-500' : 'text-orange-500'}`}>
-                          ({percentage}%)
-                        </span>
-                      </span>
-                    </div>
-                    <Progress value={percentage} className="h-2" />
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-6 p-4 rounded-lg bg-muted/50">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Total Coverage</span>
-                <span className="text-lg font-bold text-green-500">
-                  {Math.round(
-                    (assetCoverage.reduce((s, a) => s + a.covered, 0) / 
-                     assetCoverage.reduce((s, a) => s + a.total, 0)) * 100
-                  )}%
-                </span>
+                <Progress value={agents.length > 0 ? (agents.filter(a => a.status === 'online').length / agents.length) * 100 : 0} className="h-2" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium">Offline Agents</span>
+                  <span className="text-sm text-red-500">{agents.filter(a => a.status === 'offline').length}</span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium">Total Deployed</span>
+                  <span className="text-sm">{agents.length}</span>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Threat Distribution</CardTitle>
+            <CardDescription>Breakdown by incident type</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {threatDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <RechartsPie>
+                  <Pie
+                    data={threatDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={90}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {threatDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </RechartsPie>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[250px] text-muted-foreground">
+                No threat data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Monthly Incidents */}
+      {/* Summary Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Incident Trend</CardTitle>
-          <CardDescription>Incidents by severity over time</CardDescription>
+          <CardTitle>Security Summary</CardTitle>
+          <CardDescription>Key metrics at a glance</CardDescription>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={monthlyIncidents}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="month" className="text-xs" />
-              <YAxis className="text-xs" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))' 
-                }} 
-              />
-              <Legend />
-              <Bar dataKey="critical" stackId="a" fill="#ef4444" name="Critical" />
-              <Bar dataKey="high" stackId="a" fill="#f97316" name="High" />
-              <Bar dataKey="medium" stackId="a" fill="#eab308" name="Medium" />
-              <Bar dataKey="low" stackId="a" fill="#3b82f6" name="Low" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-2xl font-bold">{metrics.totalIncidents}</p>
+              <p className="text-xs text-muted-foreground">Total Incidents</p>
+            </div>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-2xl font-bold text-green-500">{metrics.incidentsResolved}</p>
+              <p className="text-xs text-muted-foreground">Resolved</p>
+            </div>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-2xl font-bold">{agents.length}</p>
+              <p className="text-xs text-muted-foreground">Agents Deployed</p>
+            </div>
+            <div className="p-4 bg-muted/50 rounded-lg">
+              <p className="text-2xl font-bold">{metrics.complianceScore}%</p>
+              <p className="text-xs text-muted-foreground">Compliance</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
