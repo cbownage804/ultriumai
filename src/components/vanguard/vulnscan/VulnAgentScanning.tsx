@@ -39,37 +39,43 @@ interface VulnAgentScanningProps {
   onScanComplete?: () => void;
 }
 
-// Internal scan types that run on Pi agents
+// Internal scan types that run on Pi agents - mapped to new agent commands
 const INTERNAL_SCAN_TYPES = [
   { 
-    value: 'scan_network_vulns', 
+    value: 'vuln_scan_internal', 
     label: 'Internal Network Scan',
-    description: 'Scan entire local subnet for vulnerabilities',
+    description: 'Scan entire local subnet for vulnerabilities with CVE detection',
     icon: Wifi
   },
   { 
-    value: 'scan_host_vulns', 
-    label: 'Host Vulnerability Scan',
-    description: 'Deep scan of a specific internal host',
+    value: 'host_audit', 
+    label: 'Host Security Audit',
+    description: 'Comprehensive security audit of the agent host',
     icon: Server
   },
   { 
-    value: 'scan_service_vulns', 
+    value: 'service_scan', 
     label: 'Service Enumeration',
-    description: 'Enumerate services and check for known CVEs',
+    description: 'Enumerate running services and check security status',
     icon: Bug
   },
   { 
-    value: 'scan_config_audit', 
-    label: 'Configuration Audit',
-    description: 'Check for security misconfigurations',
+    value: 'compliance_scan', 
+    label: 'Compliance Scan',
+    description: 'Check against CIS/NIST security benchmarks',
     icon: Shield
   },
   { 
-    value: 'scan_credential_test', 
+    value: 'credential_test', 
     label: 'Credential Testing',
     description: 'Test for default/weak credentials on services',
     icon: AlertTriangle
+  },
+  { 
+    value: 'config_audit', 
+    label: 'Configuration Audit',
+    description: 'Audit system configuration for security issues',
+    icon: Target
   },
 ];
 
