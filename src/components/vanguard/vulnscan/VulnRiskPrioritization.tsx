@@ -1,11 +1,14 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   AlertTriangle, TrendingUp, ShieldAlert, Zap, 
-  Target, Users, Clock, ExternalLink 
+  Target, Users, Clock, ExternalLink, Skull, RefreshCw, Loader2
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Vulnerability {
   id: string;
@@ -31,6 +34,7 @@ interface RiskScore {
   impactScore: number;
   ageScore: number;
   factors: string[];
+  isKnownExploited: boolean;
 }
 
 interface VulnRiskPrioritizationProps {
@@ -38,22 +42,38 @@ interface VulnRiskPrioritizationProps {
   onSelectVuln: (vuln: Vulnerability) => void;
 }
 
-// Known exploited CVEs (simplified - in production, this would come from CISA KEV catalog)
-const KNOWN_EXPLOITED_CVES = [
+// CISA Known Exploited Vulnerabilities (KEV) - expanded list
+// In production, this would be fetched from CISA API: https://www.cisa.gov/known-exploited-vulnerabilities-catalog
+const CISA_KEV_CVES = new Set([
+  // 2024 Critical Exploits
+  'CVE-2024-1709', 'CVE-2024-1708', 'CVE-2024-21887', 'CVE-2024-21893',
+  'CVE-2024-3400', 'CVE-2024-4577', 'CVE-2024-23897', 'CVE-2024-27198',
+  // 2023 Critical Exploits
+  'CVE-2023-27997', 'CVE-2023-3519', 'CVE-2023-4966', 'CVE-2023-22515',
+  'CVE-2023-46805', 'CVE-2023-46747', 'CVE-2023-20198', 'CVE-2023-42793',
+  // Historical High-Impact
   'CVE-2017-0144', // EternalBlue
+  'CVE-2017-0145', // EternalBlue
   'CVE-2019-0708', // BlueKeep
   'CVE-2020-1472', // Zerologon
   'CVE-2021-44228', // Log4Shell
+  'CVE-2021-45046', // Log4Shell
   'CVE-2021-26855', // ProxyLogon
-  'CVE-2023-27997', // FortiOS
-  'CVE-2023-3519', // Citrix
-  'CVE-2024-1709', // ConnectWise
-];
+  'CVE-2021-26857', // ProxyLogon
+  'CVE-2021-27065', // ProxyLogon
+  'CVE-2021-34473', // ProxyShell
+  'CVE-2021-34523', // ProxyShell
+  'CVE-2021-31207', // ProxyShell
+  'CVE-2022-26134', // Confluence
+  'CVE-2022-41082', // ProxyNotShell
+  'CVE-2022-41040', // ProxyNotShell
+]);
 
 // Critical services that increase risk
 const CRITICAL_SERVICES = [
   'smb', 'rdp', 'ssh', 'http', 'https', 'ldap', 'kerberos', 
-  'dns', 'ftp', 'sql', 'mysql', 'postgres', 'mongodb'
+  'dns', 'ftp', 'sql', 'mysql', 'postgres', 'mongodb', 'exchange',
+  'citrix', 'vpn', 'fortinet', 'paloalto', 'cisco'
 ];
 
 export function VulnRiskPrioritization({ vulnerabilities, onSelectVuln }: VulnRiskPrioritizationProps) {
@@ -75,15 +95,16 @@ export function VulnRiskPrioritization({ vulnerabilities, onSelectVuln }: VulnRi
 
   function calculateRiskScore(vuln: Vulnerability): RiskScore {
     const factors: string[] = [];
+    const isKnownExploited = vuln.cve_id ? CISA_KEV_CVES.has(vuln.cve_id) : false;
     
     // Base CVSS score (0-10)
     let baseScore = vuln.cvss_score || 5;
     
     // Exploitability multiplier
     let exploitabilityScore = 0.5;
-    if (vuln.cve_id && KNOWN_EXPLOITED_CVES.includes(vuln.cve_id)) {
+    if (isKnownExploited) {
       exploitabilityScore = 1.0;
-      factors.push('Known exploited vulnerability (CISA KEV)');
+      factors.push('🔴 CISA KEV: Known Exploited Vulnerability');
     } else if (vuln.severity === 'critical') {
       exploitabilityScore = 0.8;
       factors.push('Critical severity - likely exploit available');
@@ -115,12 +136,16 @@ export function VulnRiskPrioritization({ vulnerabilities, onSelectVuln }: VulnRi
       factors.push(`Open for ${ageInDays} days`);
     }
     
+    // KEV bonus - significantly boost score for known exploited
+    const kevBonus = isKnownExploited ? 2 : 0;
+    
     // Calculate final risk score
     const riskScore = Math.min(
       baseScore * 0.4 + 
       exploitabilityScore * 10 * 0.25 + 
       impactScore * 10 * 0.25 + 
-      ageScore * 10 * 0.1,
+      ageScore * 10 * 0.1 +
+      kevBonus,
       10
     );
     
@@ -130,7 +155,8 @@ export function VulnRiskPrioritization({ vulnerabilities, onSelectVuln }: VulnRi
       exploitabilityScore: Math.round(exploitabilityScore * 100),
       impactScore: Math.round(impactScore * 100),
       ageScore: Math.round(ageScore * 100),
-      factors
+      factors,
+      isKnownExploited
     };
   }
 
@@ -224,7 +250,9 @@ export function VulnRiskPrioritization({ vulnerabilities, onSelectVuln }: VulnRi
           {rankedVulnerabilities.map((ranked, index) => (
             <div 
               key={ranked.vulnerability.id}
-              className="flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+              className={`flex items-start gap-4 p-4 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors ${
+                ranked.isKnownExploited ? 'border-red-500/50 bg-red-500/5' : ''
+              }`}
               onClick={() => onSelectVuln(ranked.vulnerability)}
             >
               {/* Rank Number */}
@@ -235,6 +263,24 @@ export function VulnRiskPrioritization({ vulnerabilities, onSelectVuln }: VulnRi
               {/* Vulnerability Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
+                  {ranked.isKnownExploited && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge className="bg-red-600 text-white border-0 flex items-center gap-1">
+                            <Skull className="h-3 w-3" />
+                            CISA KEV
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            This CVE is in CISA's Known Exploited Vulnerabilities catalog. 
+                            Active exploitation has been observed in the wild.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                   <span className="font-medium truncate">{ranked.vulnerability.title}</span>
                   {ranked.vulnerability.cve_id && (
                     <a 
@@ -253,7 +299,11 @@ export function VulnRiskPrioritization({ vulnerabilities, onSelectVuln }: VulnRi
                 {/* Risk Factors */}
                 <div className="flex flex-wrap gap-1 mt-2">
                   {ranked.factors.map((factor, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
+                    <Badge 
+                      key={i} 
+                      variant="outline" 
+                      className={`text-xs ${factor.includes('CISA KEV') ? 'border-red-500 text-red-500' : ''}`}
+                    >
                       {factor}
                     </Badge>
                   ))}
