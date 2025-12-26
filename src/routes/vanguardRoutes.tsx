@@ -20,6 +20,9 @@ const VanguardPentest = lazy(() => import('@/components/vanguard/VanguardPentest
 const ComplianceAuditor = lazy(() => import('@/components/security/ComplianceAuditor').then(m => ({ default: m.ComplianceAuditor })));
 const RemediationAutomation = lazy(() => import('@/components/vanguard/RemediationAutomation').then(m => ({ default: m.RemediationAutomation })));
 const AlertingSettings = lazy(() => import('@/components/vanguard/AlertingSettings').then(m => ({ default: m.AlertingSettings })));
+const AdvancedAlertingPanel = lazy(() => import('@/components/vanguard/AdvancedAlertingPanel').then(m => ({ default: m.AdvancedAlertingPanel })));
+const AgentFleetAnalytics = lazy(() => import('@/components/vanguard/AgentFleetAnalytics').then(m => ({ default: m.AgentFleetAnalytics })));
+const AgentReportGenerator = lazy(() => import('@/components/vanguard/AgentReportGenerator').then(m => ({ default: m.AgentReportGenerator })));
 
 // New feature components
 const ThreatIntelligence = lazy(() => import('@/components/vanguard/ThreatIntelligence').then(m => ({ default: m.ThreatIntelligence })));
@@ -76,6 +79,9 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardReports} />} />,
   <Route key="vanguard-remediation" path="remediation" element={<LazyProtectedPage component={RemediationAutomation} />} />,
   <Route key="vanguard-alerting" path="alerting" element={<LazyProtectedPage component={AlertingSettings} />} />,
+  <Route key="vanguard-advanced-alerting" path="advanced-alerting" element={<LazyProtectedPage component={AdvancedAlertingPanel} />} />,
+  <Route key="vanguard-agent-analytics" path="agent-analytics" element={<LazyProtectedPage component={AgentFleetAnalytics} />} />,
+  <Route key="vanguard-scheduled-reports" path="scheduled-reports" element={<LazyProtectedPage component={AgentReportGenerator} />} />,
   // New feature routes
   <Route key="vanguard-threat-intel" path="threat-intel" element={<LazyProtectedPage component={ThreatIntelligence} />} />,
   <Route key="vanguard-dark-web" path="dark-web" element={<LazyProtectedPage component={DarkWebMonitor} />} />,

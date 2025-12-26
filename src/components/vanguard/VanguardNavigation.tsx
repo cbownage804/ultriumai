@@ -93,6 +93,9 @@ export function VanguardNavigation() {
         { title: 'Backup Monitoring', path: `${basePath}/backups`, icon: HardDrive },
         { title: 'Network Topology', path: `${basePath}/network`, icon: Network },
         { title: 'Alerting', path: `${basePath}/alerting`, icon: Bell },
+        { title: 'Advanced Alerting', path: `${basePath}/advanced-alerting`, icon: Bell },
+        { title: 'Agent Analytics', path: `${basePath}/agent-analytics`, icon: Activity },
+        { title: 'Scheduled Reports', path: `${basePath}/scheduled-reports`, icon: FileText },
       ]
     },
     {
