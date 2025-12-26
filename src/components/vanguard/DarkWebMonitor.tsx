@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { 
   Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users, RefreshCw, 
   Trash2, Phone, CreditCard, MapPin, Key, User, Database, Lock, EyeOff, 
-  Search, ChevronLeft, ChevronRight, Link2, FileText, Upload, ArrowUpDown 
+  Search, ChevronLeft, ChevronRight, Link2, FileText, Upload, ArrowUpDown,
+  Download, Clock, Wifi, Server, CheckCircle, XCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useDropzone } from 'react-dropzone';
+import jsPDF from 'jspdf';
 
 interface Breach {
   name: string;
@@ -36,6 +39,32 @@ interface LeakedData {
   ip_address?: string;
 }
 
+interface DocumentFinding {
+  type: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  count: number;
+  samples: string[];
+  description: string;
+}
+
+interface IPReputationResult {
+  ip: string;
+  is_malicious: boolean;
+  risk_score: number;
+  risk_level: string;
+  categories: string[];
+  abuse_reports: number;
+  country: string | null;
+  isp: string | null;
+  is_vpn: boolean;
+  is_proxy: boolean;
+  is_tor: boolean;
+  is_datacenter: boolean;
+  last_reported: string | null;
+  blocklists: string[];
+  recommendations: string[];
+}
+
 // Map data classes to icons and colors for visual highlighting
 const dataClassConfig: Record<string, { icon: React.ReactNode; color: string; sensitive: boolean }> = {
   'Phone numbers': { icon: <Phone className="h-3 w-3" />, color: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-500/30', sensitive: true },
@@ -57,12 +86,15 @@ export const DarkWebMonitor = () => {
   const [email, setEmail] = useState('');
   const [domain, setDomain] = useState('');
   const [urlToScan, setUrlToScan] = useState('');
+  const [ipToCheck, setIpToCheck] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingType, setLoadingType] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
   const [monitoredItems, setMonitoredItems] = useState<any[]>([]);
   const [showPasswords, setShowPasswords] = useState(false);
   const [urlScanResults, setUrlScanResults] = useState<any>(null);
+  const [documentResults, setDocumentResults] = useState<any>(null);
+  const [ipResults, setIpResults] = useState<IPReputationResult | null>(null);
   const { user } = useAuth();
 
   // Pagination, sorting, and search state for leaked data
@@ -209,6 +241,94 @@ export const DarkWebMonitor = () => {
     }
   };
 
+  const checkIP = async () => {
+    if (!ipToCheck.trim()) {
+      toast.error('Please enter an IP address');
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingType('ip');
+    setIpResults(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('ip-reputation', {
+        body: { ip: ipToCheck }
+      });
+
+      if (error) throw error;
+      
+      if (data.success) {
+        setIpResults(data.data);
+        if (data.data.is_malicious) {
+          toast.warning(`IP ${ipToCheck} has a poor reputation!`);
+        } else {
+          toast.success('IP reputation check complete');
+        }
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      console.error('IP check error:', error);
+      toast.error(error.message || 'IP check failed');
+    } finally {
+      setIsLoading(false);
+      setLoadingType(null);
+    }
+  };
+
+  const onDocumentDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    
+    const file = acceptedFiles[0];
+    setIsLoading(true);
+    setLoadingType('document');
+    setDocumentResults(null);
+
+    try {
+      // Read file content
+      const content = await file.text();
+      
+      const { data, error } = await supabase.functions.invoke('document-scanner', {
+        body: { 
+          content, 
+          filename: file.name,
+          contentType: file.type 
+        }
+      });
+
+      if (error) throw error;
+      
+      setDocumentResults(data);
+      
+      if (data.risk_level === 'critical' || data.risk_level === 'high') {
+        toast.warning(`Found ${data.total_findings} sensitive data occurrences!`);
+      } else if (data.findings?.length > 0) {
+        toast.info(`Scan complete: ${data.summary}`);
+      } else {
+        toast.success('No sensitive data detected');
+      }
+    } catch (error: any) {
+      console.error('Document scan error:', error);
+      toast.error(error.message || 'Document scan failed');
+    } finally {
+      setIsLoading(false);
+      setLoadingType(null);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: onDocumentDrop,
+    accept: {
+      'text/plain': ['.txt', '.log', '.csv', '.json', '.xml', '.yaml', '.yml', '.md'],
+      'application/json': ['.json'],
+      'text/csv': ['.csv'],
+    },
+    maxFiles: 1,
+    maxSize: 5 * 1024 * 1024, // 5MB
+    disabled: isLoading,
+  });
+
   const deleteMonitor = async (id: string) => {
     const { error } = await supabase
       .from('dark_web_monitors')
@@ -223,12 +343,103 @@ export const DarkWebMonitor = () => {
     }
   };
 
+  // Export functions
+  const exportToCSV = () => {
+    if (!results?.leakedData?.length) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const headers = ['Database', 'Email', 'Username', 'Name', 'Phone', 'Has Password', 'Has Hash'];
+    const rows = results.leakedData.map((leak: LeakedData) => [
+      leak.database_name || '',
+      leak.email || '',
+      leak.username || '',
+      leak.name || '',
+      leak.phone || '',
+      leak.password ? 'Yes' : 'No',
+      leak.hashed_password ? 'Yes' : 'No',
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r: string[]) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `breach-report-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported');
+  };
+
+  const exportToPDF = () => {
+    if (!results) {
+      toast.error('No data to export');
+      return;
+    }
+
+    const doc = new jsPDF();
+    let yPos = 20;
+
+    doc.setFontSize(20);
+    doc.text('Dark Web Breach Report', 20, yPos);
+    yPos += 15;
+
+    doc.setFontSize(12);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 20, yPos);
+    yPos += 10;
+    doc.text(`Risk Level: ${results.risk_level?.toUpperCase() || 'Unknown'}`, 20, yPos);
+    yPos += 15;
+
+    if (results.leakedData?.length > 0) {
+      doc.setFontSize(14);
+      doc.text(`Leaked Credentials Found: ${results.dehashedTotal || results.leakedData.length}`, 20, yPos);
+      yPos += 10;
+
+      doc.setFontSize(10);
+      results.leakedData.slice(0, 20).forEach((leak: LeakedData) => {
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text(`• ${leak.database_name}: ${leak.email || leak.username || 'N/A'}`, 25, yPos);
+        yPos += 6;
+      });
+
+      if (results.leakedData.length > 20) {
+        yPos += 5;
+        doc.text(`... and ${results.leakedData.length - 20} more entries`, 25, yPos);
+      }
+    }
+
+    if (results.breaches?.length > 0) {
+      yPos += 15;
+      doc.setFontSize(14);
+      doc.text(`Breach History: ${results.breaches.length} breaches`, 20, yPos);
+      yPos += 10;
+
+      doc.setFontSize(10);
+      results.breaches.slice(0, 10).forEach((breach: Breach) => {
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text(`• ${breach.title || breach.name} (${new Date(breach.breach_date).toLocaleDateString()})`, 25, yPos);
+        yPos += 6;
+      });
+    }
+
+    doc.save(`breach-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success('PDF exported');
+  };
+
   const getRiskBadge = (level: string) => {
     const colors: Record<string, string> = {
       critical: 'bg-red-500',
       high: 'bg-orange-500',
       medium: 'bg-yellow-500',
       low: 'bg-green-500',
+      clean: 'bg-green-500',
       unknown: 'bg-muted'
     };
     return <Badge className={colors[level] || 'bg-muted'}>{level?.toUpperCase()}</Badge>;
@@ -301,21 +512,30 @@ export const DarkWebMonitor = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="breach" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="breach" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
-            Breach Check
+            <span className="hidden sm:inline">Breach Check</span>
           </TabsTrigger>
           <TabsTrigger value="link" className="flex items-center gap-2">
             <Link2 className="h-4 w-4" />
-            Link Scanner
+            <span className="hidden sm:inline">Link Scanner</span>
           </TabsTrigger>
           <TabsTrigger value="document" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Document Scanner
+            <span className="hidden sm:inline">Document</span>
+          </TabsTrigger>
+          <TabsTrigger value="ip" className="flex items-center gap-2">
+            <Server className="h-4 w-4" />
+            <span className="hidden sm:inline">IP Reputation</span>
+          </TabsTrigger>
+          <TabsTrigger value="scheduled" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            <span className="hidden sm:inline">Scheduled</span>
           </TabsTrigger>
         </TabsList>
 
+        {/* Breach Check Tab */}
         <TabsContent value="breach" className="space-y-6 mt-4">
           <div className="grid gap-4 md:grid-cols-2">
             {/* Email Check */}
@@ -326,7 +546,7 @@ export const DarkWebMonitor = () => {
                   Email Breach Check
                 </CardTitle>
                 <CardDescription>
-                  Check if an email has been exposed in data breaches. Shows leaked passwords, phone numbers, addresses, and more.
+                  Check if an email has been exposed in data breaches
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -381,7 +601,17 @@ export const DarkWebMonitor = () => {
                     <AlertTriangle className="h-5 w-5" />
                     Scan Results
                   </CardTitle>
-                  {getRiskBadge(results.risk_level)}
+                  <div className="flex items-center gap-2">
+                    {getRiskBadge(results.risk_level)}
+                    <Button variant="outline" size="sm" onClick={exportToCSV}>
+                      <Download className="h-4 w-4 mr-1" />
+                      CSV
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={exportToPDF}>
+                      <Download className="h-4 w-4 mr-1" />
+                      PDF
+                    </Button>
+                  </div>
                 </div>
                 <CardDescription>
                   {results.leakedData?.length > 0 
@@ -537,7 +767,6 @@ export const DarkWebMonitor = () => {
                           >
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
-                          {/* Page number buttons */}
                           {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                             let pageNum;
                             if (totalPages <= 5) {
@@ -579,19 +808,19 @@ export const DarkWebMonitor = () => {
                   </div>
                 )}
 
-                 {results.dehashedChecked && results.dehashedStatus === 404 && !results.leakedData?.length && (
-                   <div className="p-3 bg-muted/40 border border-border rounded-lg">
-                     <p className="text-sm text-muted-foreground">
-                       Dehashed was checked{results.dehashedQueryUsed ? ` (query: ${results.dehashedQueryUsed})` : ''} and returned no matches.
-                     </p>
-                   </div>
-                 )}
+                {results.dehashedChecked && results.dehashedStatus === 404 && !results.leakedData?.length && (
+                  <div className="p-3 bg-muted/40 border border-border rounded-lg">
+                    <p className="text-sm text-muted-foreground">
+                      Dehashed was checked{results.dehashedQueryUsed ? ` (query: ${results.dehashedQueryUsed})` : ''} and returned no matches.
+                    </p>
+                  </div>
+                )}
 
-                 {results.dehashedError && (
-                   <div className="p-3 bg-muted/40 border border-border rounded-lg">
-                     <p className="text-sm text-muted-foreground">Dehashed: {results.dehashedError}</p>
-                   </div>
-                 )}
+                {results.dehashedError && (
+                  <div className="p-3 bg-muted/40 border border-border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Dehashed: {results.dehashedError}</p>
+                  </div>
+                )}
 
                 {/* Sensitive Data Summary from HIBP */}
                 {results.breaches?.length > 0 && !results.leakedData?.length && (
@@ -745,6 +974,7 @@ export const DarkWebMonitor = () => {
           </Card>
         </TabsContent>
 
+        {/* Link Scanner Tab */}
         <TabsContent value="link" className="space-y-6 mt-4">
           <Card>
             <CardHeader>
@@ -753,7 +983,7 @@ export const DarkWebMonitor = () => {
                 URL / Link Scanner
               </CardTitle>
               <CardDescription>
-                Scan any URL to extract content, analyze structure, and discover linked resources. Useful for threat intelligence and phishing analysis.
+                Scan any URL to extract content, analyze structure, and discover linked resources
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -778,9 +1008,6 @@ export const DarkWebMonitor = () => {
                   <Globe className="h-5 w-5" />
                   Scan Results
                 </CardTitle>
-                <CardDescription>
-                  Content and links extracted from the scanned URL
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {urlScanResults.data?.metadata && (
@@ -832,6 +1059,7 @@ export const DarkWebMonitor = () => {
           )}
         </TabsContent>
 
+        {/* Document Scanner Tab */}
         <TabsContent value="document" className="space-y-6 mt-4">
           <Card>
             <CardHeader>
@@ -840,19 +1068,306 @@ export const DarkWebMonitor = () => {
                 Document Scanner
               </CardTitle>
               <CardDescription>
-                Upload documents (PDF, DOCX, etc.) to scan for sensitive information, PII, credentials, or security risks.
+                Upload documents to scan for sensitive information like SSNs, credit cards, API keys, and passwords
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors">
-                <Upload className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground text-center mb-4">
-                  Document scanning coming soon. Upload PDF, DOCX, or other document formats to scan for sensitive data.
-                </p>
-                <Badge variant="outline">Coming Soon</Badge>
+              <div
+                {...getRootProps()}
+                className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg transition-colors cursor-pointer ${
+                  isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <input {...getInputProps()} />
+                {loadingType === 'document' ? (
+                  <>
+                    <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                    <p className="text-muted-foreground">Scanning document...</p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground text-center mb-2">
+                      {isDragActive ? 'Drop the file here' : 'Drag & drop a file here, or click to select'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Supports: TXT, LOG, CSV, JSON, XML, YAML, MD (max 5MB)
+                    </p>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
+
+          {documentResults && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5" />
+                    Scan Results: {documentResults.filename}
+                  </CardTitle>
+                  {getRiskBadge(documentResults.risk_level)}
+                </div>
+                <CardDescription>
+                  Risk Score: {documentResults.risk_score}/100 • {documentResults.summary}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {documentResults.findings?.length > 0 ? (
+                  <>
+                    <div className="space-y-3">
+                      {documentResults.findings.map((finding: DocumentFinding, idx: number) => (
+                        <div 
+                          key={idx} 
+                          className={`p-4 rounded-lg border ${
+                            finding.severity === 'critical' ? 'bg-red-500/10 border-red-500/30' :
+                            finding.severity === 'high' ? 'bg-orange-500/10 border-orange-500/30' :
+                            finding.severity === 'medium' ? 'bg-yellow-500/10 border-yellow-500/30' :
+                            'bg-muted/50 border-border'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold">{finding.type}</h4>
+                            <div className="flex items-center gap-2">
+                              {getRiskBadge(finding.severity)}
+                              <Badge variant="outline">{finding.count} found</Badge>
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{finding.description}</p>
+                          {finding.samples.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {finding.samples.map((sample, sIdx) => (
+                                <code key={sIdx} className="text-xs bg-background/50 px-2 py-1 rounded">
+                                  {sample}
+                                </code>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {documentResults.recommendations?.length > 0 && (
+                      <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Recommendations
+                        </h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {documentResults.recommendations.map((rec: string, idx: number) => (
+                            <li key={idx}>{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 p-4 bg-green-500/10 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      No sensitive data detected in this document
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* IP Reputation Tab */}
+        <TabsContent value="ip" className="space-y-6 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Server className="h-5 w-5" />
+                IP Reputation Check
+              </CardTitle>
+              <CardDescription>
+                Check if an IP address is on blocklists or associated with malicious activity
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="8.8.8.8"
+                  value={ipToCheck}
+                  onChange={(e) => setIpToCheck(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && checkIP()}
+                />
+                <Button onClick={checkIP} disabled={isLoading}>
+                  {loadingType === 'ip' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {ipResults && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Wifi className="h-5 w-5" />
+                    IP: {ipResults.ip}
+                  </CardTitle>
+                  {getRiskBadge(ipResults.risk_level)}
+                </div>
+                <CardDescription>
+                  Risk Score: {ipResults.risk_score}/100 • {ipResults.abuse_reports} abuse reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">Country</p>
+                    <p className="font-semibold">{ipResults.country || 'Unknown'}</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">ISP</p>
+                    <p className="font-semibold text-sm truncate">{ipResults.isp || 'Unknown'}</p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">Last Reported</p>
+                    <p className="font-semibold text-sm">
+                      {ipResults.last_reported ? new Date(ipResults.last_reported).toLocaleDateString() : 'Never'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted/50 rounded-lg text-center">
+                    <p className="text-xs text-muted-foreground">Abuse Reports</p>
+                    <p className="font-semibold">{ipResults.abuse_reports}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {ipResults.is_tor && (
+                    <Badge variant="destructive">Tor Exit Node</Badge>
+                  )}
+                  {ipResults.is_vpn && (
+                    <Badge variant="outline" className="bg-orange-500/10 border-orange-500/30">VPN/Proxy</Badge>
+                  )}
+                  {ipResults.is_datacenter && (
+                    <Badge variant="outline">Datacenter</Badge>
+                  )}
+                  {ipResults.categories.map((cat, idx) => (
+                    <Badge key={idx} variant="secondary">{cat}</Badge>
+                  ))}
+                </div>
+
+                {ipResults.blocklists.length > 0 && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <h4 className="font-semibold text-red-600 dark:text-red-400 mb-2 flex items-center gap-2">
+                      <XCircle className="h-4 w-4" />
+                      Blocklist Matches
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {ipResults.blocklists.map((bl, idx) => (
+                        <Badge key={idx} variant="destructive">{bl}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {ipResults.recommendations.length > 0 && (
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                    <h4 className="font-semibold mb-2 flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Recommendations
+                    </h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm">
+                      {ipResults.recommendations.map((rec, idx) => (
+                        <li key={idx}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!ipResults.is_malicious && ipResults.risk_score < 20 && (
+                  <div className="flex items-center gap-2 p-4 bg-green-500/10 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="text-green-600 dark:text-green-400 font-medium">
+                      This IP has a clean reputation
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Scheduled Monitoring Tab */}
+        <TabsContent value="scheduled" className="space-y-6 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Scheduled Monitoring
+              </CardTitle>
+              <CardDescription>
+                Set up automated monitoring for emails and domains with alerts when new breaches are detected
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-muted/20">
+                <Clock className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground text-center mb-2">
+                  Configure automatic scans to run daily, weekly, or monthly
+                </p>
+                <p className="text-sm text-muted-foreground text-center mb-4">
+                  Get notified via email when new breaches are detected for your monitored assets
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" disabled>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Add Email Monitor
+                  </Button>
+                  <Button variant="outline" disabled>
+                    <Globe className="h-4 w-4 mr-2" />
+                    Add Domain Monitor
+                  </Button>
+                </div>
+                <Badge variant="outline" className="mt-4">Coming Soon</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {monitoredItems.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Active Monitors
+                </CardTitle>
+                <CardDescription>
+                  Items currently being monitored for new breaches
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {monitoredItems.map((monitor) => (
+                    <div key={monitor.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium">{monitor.email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Last checked: {monitor.last_checked ? new Date(monitor.last_checked).toLocaleString() : 'Never'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={monitor.breach_count > 0 ? 'destructive' : 'secondary'}>
+                          {monitor.breach_count || 0} breaches
+                        </Badge>
+                        <Button variant="ghost" size="sm" onClick={() => deleteMonitor(monitor.id)}>
+                          <Trash2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
