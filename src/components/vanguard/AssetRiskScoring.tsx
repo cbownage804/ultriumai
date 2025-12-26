@@ -98,30 +98,8 @@ export function AssetRiskScoring() {
   const criticalAssets = assetRisks.filter(a => a.overall_risk_score >= 80).length;
   const highAssets = assetRisks.filter(a => a.overall_risk_score >= 60 && a.overall_risk_score < 80).length;
 
-  // Simulated data for demo when no real data exists
-  const demoAssets: AssetRisk[] = agents.map((agent, i) => ({
-    id: agent.id,
-    agent_id: agent.id,
-    asset_identifier: agent.name,
-    asset_type: i % 3 === 0 ? 'server' : i % 2 === 0 ? 'workstation' : 'laptop',
-    overall_risk_score: Math.floor(Math.random() * 60) + 20,
-    vulnerability_score: Math.floor(Math.random() * 100),
-    configuration_score: Math.floor(Math.random() * 100),
-    patch_score: Math.floor(Math.random() * 100),
-    exposure_score: Math.floor(Math.random() * 100),
-    behavioral_score: Math.floor(Math.random() * 100),
-    risk_factors: [
-      { factor: 'Outdated software', impact: 'high' },
-      { factor: 'Open ports', impact: 'medium' }
-    ],
-    recommendations: [
-      { action: 'Update operating system', priority: 'high' },
-      { action: 'Enable firewall', priority: 'medium' }
-    ],
-    last_assessed_at: new Date().toISOString()
-  }));
-
-  const displayAssets = assetRisks.length > 0 ? assetRisks : demoAssets;
+  // Only show real data - no mock data
+  const displayAssets = assetRisks;
 
   return (
     <div className="space-y-6">

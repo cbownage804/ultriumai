@@ -63,51 +63,8 @@ export const IncidentResponsePlaybooks = () => {
       }));
       setPlaybooks(mapped);
     } else {
-      // Default demo playbooks
-      setPlaybooks([
-        {
-          id: '1',
-          name: 'Ransomware Response',
-          description: 'Immediate response procedure for ransomware detection',
-          threatType: 'ransomware',
-          severity: 'critical',
-          steps: [
-            { id: 's1', action: 'Isolate Endpoint', description: 'Immediately isolate affected endpoint from network', automated: true, timeout: 30 },
-            { id: 's2', action: 'Disable User Account', description: 'Disable compromised user account in AD', automated: true, timeout: 60 },
-            { id: 's3', action: 'Collect Forensic Data', description: 'Capture memory dump and process list', automated: true, timeout: 300 },
-            { id: 's4', action: 'Notify SOC Team', description: 'Send alert to SOC team via Teams/Email', automated: true },
-          ],
-          lastUsed: '2024-12-20',
-          usageCount: 12
-        },
-        {
-          id: '2',
-          name: 'Phishing Attack Response',
-          description: 'Handle detected phishing emails and compromised credentials',
-          threatType: 'phishing',
-          severity: 'high',
-          steps: [
-            { id: 's1', action: 'Block Sender Domain', description: 'Add sender domain to email blocklist', automated: true },
-            { id: 's2', action: 'Delete Malicious Emails', description: 'Remove phishing emails from all mailboxes', automated: true },
-            { id: 's3', action: 'Reset User Passwords', description: 'Force password reset for clicked users', automated: true },
-          ],
-          lastUsed: '2024-12-24',
-          usageCount: 28
-        },
-        {
-          id: '3',
-          name: 'Malware Containment',
-          description: 'Standard procedure for malware detection and containment',
-          threatType: 'malware',
-          severity: 'high',
-          steps: [
-            { id: 's1', action: 'Quarantine File', description: 'Move detected file to quarantine', automated: true },
-            { id: 's2', action: 'Kill Process', description: 'Terminate malicious process', automated: true },
-            { id: 's3', action: 'Network Isolation', description: 'Limit network access for affected host', automated: true },
-          ],
-          usageCount: 45
-        },
-      ]);
+      // No playbooks configured - show empty state
+      setPlaybooks([]);
     }
   };
 

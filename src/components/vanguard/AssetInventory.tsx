@@ -72,22 +72,11 @@ export const AssetInventory = () => {
       setAssets(assetList);
       calculateStats(assetList);
     } else {
-      // Mock data for demo
-      const mockAssets = generateMockAssets();
-      setAssets(mockAssets);
-      calculateStats(mockAssets);
+      // No real assets - show empty state
+      setAssets([]);
+      calculateStats([]);
     }
   };
-
-  const generateMockAssets = (): Asset[] => [
-    { id: '1', name: 'Dell OptiPlex 7090', type: 'workstation', category: 'Hardware', serial_number: 'DELL-7090-001', manufacturer: 'Dell', model: 'OptiPlex 7090', status: 'active', assigned_to: 'John Smith', location: 'Office A', purchase_date: '2023-01-15', warranty_expiry: '2026-01-15', purchase_price: 1200, current_value: 900 },
-    { id: '2', name: 'HP ProBook 450', type: 'laptop', category: 'Hardware', serial_number: 'HP-450-002', manufacturer: 'HP', model: 'ProBook 450 G8', status: 'active', assigned_to: 'Jane Doe', location: 'Remote', purchase_date: '2023-03-20', warranty_expiry: '2026-03-20', purchase_price: 1100, current_value: 850 },
-    { id: '3', name: 'Dell PowerEdge R740', type: 'server', category: 'Hardware', serial_number: 'DELL-R740-003', manufacturer: 'Dell', model: 'PowerEdge R740', status: 'active', assigned_to: 'IT Department', location: 'Server Room', purchase_date: '2022-06-10', warranty_expiry: '2025-06-10', purchase_price: 8500, current_value: 6000 },
-    { id: '4', name: 'iPhone 14 Pro', type: 'mobile', category: 'Hardware', serial_number: 'APPLE-14P-004', manufacturer: 'Apple', model: 'iPhone 14 Pro', status: 'active', assigned_to: 'Mike Johnson', location: 'Field', purchase_date: '2023-09-01', warranty_expiry: '2024-09-01', purchase_price: 999, current_value: 750 },
-    { id: '5', name: 'Cisco Catalyst 9300', type: 'network', category: 'Hardware', serial_number: 'CISCO-9300-005', manufacturer: 'Cisco', model: 'Catalyst 9300-48P', status: 'active', assigned_to: 'Network Team', location: 'MDF', purchase_date: '2022-11-15', warranty_expiry: '2025-11-15', purchase_price: 5500, current_value: 4000 },
-    { id: '6', name: 'Dell OptiPlex 5090', type: 'workstation', category: 'Hardware', serial_number: 'DELL-5090-006', manufacturer: 'Dell', model: 'OptiPlex 5090', status: 'maintenance', assigned_to: 'Sarah Wilson', location: 'Office B', purchase_date: '2022-08-20', warranty_expiry: '2025-08-20', purchase_price: 950, current_value: 600 },
-    { id: '7', name: 'Lenovo ThinkPad X1', type: 'laptop', category: 'Hardware', serial_number: 'LEN-X1-007', manufacturer: 'Lenovo', model: 'ThinkPad X1 Carbon', status: 'retired', assigned_to: 'Unassigned', location: 'Storage', purchase_date: '2020-04-10', warranty_expiry: '2023-04-10', purchase_price: 1500, current_value: 200 },
-  ];
 
   const calculateStats = (assetList: Asset[]) => {
     setStats({
