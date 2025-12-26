@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useVanguardData } from '@/hooks/useVanguardData';
 import { useVanguardAgents } from '@/hooks/useVanguardAgents';
 import { getVanguardBasePath } from '@/utils/subdomain';
-import { ScanReadinessPanel } from '@/components/vanguard/ScanReadinessPanel';
+
 
 export default function VanguardHome() {
   const navigate = useNavigate();
@@ -142,9 +142,6 @@ export default function VanguardHome() {
         <div className="absolute top-0 right-0 w-32 md:w-64 h-32 md:h-64 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-24 md:w-48 h-24 md:h-48 bg-primary/5 rounded-full blur-3xl" />
       </div>
-
-      {/* Scan Readiness */}
-      <ScanReadinessPanel />
 
       {/* Modules Grid */}
       <div>
