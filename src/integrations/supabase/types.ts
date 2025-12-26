@@ -14325,6 +14325,44 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_agent_analytics: {
+        Row: {
+          agent_id: string | null
+          id: string
+          metadata: Json | null
+          metric_type: string
+          metric_value: number
+          recorded_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type: string
+          metric_value: number
+          recorded_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          metric_value?: number
+          recorded_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_agent_analytics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_agent_commands: {
         Row: {
           agent_id: string
@@ -14603,6 +14641,162 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_alert_escalations: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          delay_minutes: number
+          id: string
+          level: number
+          notify_users: string[] | null
+          rule_id: string | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          delay_minutes?: number
+          id?: string
+          level?: number
+          notify_users?: string[] | null
+          rule_id?: string | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          delay_minutes?: number
+          id?: string
+          level?: number
+          notify_users?: string[] | null
+          rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_alert_escalations_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_notification_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_alert_escalations_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_alert_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_alert_history: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          channel_id: string | null
+          error_message: string | null
+          id: string
+          message: string | null
+          metadata: Json | null
+          rule_id: string | null
+          sent_at: string | null
+          severity: string | null
+          status: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          channel_id?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          rule_id?: string | null
+          sent_at?: string | null
+          severity?: string | null
+          status?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          channel_id?: string | null
+          error_message?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json | null
+          rule_id?: string | null
+          sent_at?: string | null
+          severity?: string | null
+          status?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_alert_history_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_notification_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_alert_history_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_alert_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_alert_rules: {
+        Row: {
+          channel_ids: string[] | null
+          conditions: Json
+          cooldown_minutes: number | null
+          correlation_window_minutes: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          name: string
+          severity_filter: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_ids?: string[] | null
+          conditions?: Json
+          cooldown_minutes?: number | null
+          correlation_window_minutes?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name: string
+          severity_filter?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_ids?: string[] | null
+          conditions?: Json
+          cooldown_minutes?: number | null
+          correlation_window_minutes?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name?: string
+          severity_filter?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_baseline_drifts: {
         Row: {
@@ -14928,6 +15122,170 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vanguard_notification_channels: {
+        Row: {
+          channel_type: string
+          config: Json
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          is_verified: boolean | null
+          last_used_at: string | null
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_type: string
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          is_verified?: boolean | null
+          last_used_at?: string | null
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_type?: string
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          is_verified?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_on_call_schedules: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          rotations: Json
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          rotations?: Json
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          rotations?: Json
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vanguard_report_history: {
+        Row: {
+          error_message: string | null
+          file_size_bytes: number | null
+          file_url: string | null
+          generated_at: string | null
+          generation_time_ms: number | null
+          id: string
+          report_id: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          error_message?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          generated_at?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          report_id?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          error_message?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          generated_at?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          report_id?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_report_history_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_scheduled_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_scheduled_reports: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          format: string | null
+          id: string
+          is_enabled: boolean | null
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          recipients: string[] | null
+          report_type: string
+          schedule_cron: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          format?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          recipients?: string[] | null
+          report_type: string
+          schedule_cron?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          format?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          recipients?: string[] | null
+          report_type?: string
+          schedule_cron?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       vanguard_service_tickets: {
         Row: {
