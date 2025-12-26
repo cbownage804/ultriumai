@@ -14604,6 +14604,331 @@ export type Database = {
           },
         ]
       }
+      vanguard_baseline_drifts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          agent_id: string
+          baseline_id: string | null
+          detected_at: string | null
+          drift_category: string | null
+          drift_details: Json
+          drift_type: string
+          id: string
+          is_acknowledged: boolean | null
+          severity: string | null
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          agent_id: string
+          baseline_id?: string | null
+          detected_at?: string | null
+          drift_category?: string | null
+          drift_details?: Json
+          drift_type: string
+          id?: string
+          is_acknowledged?: boolean | null
+          severity?: string | null
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          agent_id?: string
+          baseline_id?: string | null
+          detected_at?: string | null
+          drift_category?: string | null
+          drift_details?: Json
+          drift_type?: string
+          id?: string
+          is_acknowledged?: boolean | null
+          severity?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_baseline_drifts_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vanguard_baseline_drifts_baseline_id_fkey"
+            columns: ["baseline_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_baselines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_baselines: {
+        Row: {
+          agent_id: string
+          baseline_data: Json
+          baseline_name: string
+          baseline_type: string
+          checksum: string | null
+          created_at: string | null
+          id: string
+          is_current: boolean | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          baseline_data?: Json
+          baseline_name: string
+          baseline_type: string
+          checksum?: string | null
+          created_at?: string | null
+          id?: string
+          is_current?: boolean | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          baseline_data?: Json
+          baseline_name?: string
+          baseline_type?: string
+          checksum?: string | null
+          created_at?: string | null
+          id?: string
+          is_current?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_baselines_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_honeypot_events: {
+        Row: {
+          agent_id: string
+          attacker_ip: string | null
+          attacker_port: number | null
+          commands_executed: Json | null
+          created_at: string | null
+          geo_location: Json | null
+          honeypot_port: number | null
+          honeypot_type: string
+          id: string
+          interaction_data: Json | null
+          interaction_type: string | null
+          password_attempted: string | null
+          severity: string | null
+          threat_intel_match: boolean | null
+          user_id: string
+          username_attempted: string | null
+        }
+        Insert: {
+          agent_id: string
+          attacker_ip?: string | null
+          attacker_port?: number | null
+          commands_executed?: Json | null
+          created_at?: string | null
+          geo_location?: Json | null
+          honeypot_port?: number | null
+          honeypot_type: string
+          id?: string
+          interaction_data?: Json | null
+          interaction_type?: string | null
+          password_attempted?: string | null
+          severity?: string | null
+          threat_intel_match?: boolean | null
+          user_id: string
+          username_attempted?: string | null
+        }
+        Update: {
+          agent_id?: string
+          attacker_ip?: string | null
+          attacker_port?: number | null
+          commands_executed?: Json | null
+          created_at?: string | null
+          geo_location?: Json | null
+          honeypot_port?: number | null
+          honeypot_type?: string
+          id?: string
+          interaction_data?: Json | null
+          interaction_type?: string | null
+          password_attempted?: string | null
+          severity?: string | null
+          threat_intel_match?: boolean | null
+          user_id?: string
+          username_attempted?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_honeypot_events_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_integration_logs: {
+        Row: {
+          agent_id: string | null
+          error_message: string | null
+          event_data: Json | null
+          event_type: string | null
+          id: string
+          integration_target: string | null
+          integration_type: string
+          response_data: Json | null
+          response_status: number | null
+          sent_at: string | null
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type?: string | null
+          id?: string
+          integration_target?: string | null
+          integration_type: string
+          response_data?: Json | null
+          response_status?: number | null
+          sent_at?: string | null
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          error_message?: string | null
+          event_data?: Json | null
+          event_type?: string | null
+          id?: string
+          integration_target?: string | null
+          integration_type?: string
+          response_data?: Json | null
+          response_status?: number | null
+          sent_at?: string | null
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_integration_logs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_mesh_agents: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          discovered_agents: Json | null
+          failover_priority: number | null
+          id: string
+          last_mesh_sync: string | null
+          mesh_role: string | null
+          mesh_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          discovered_agents?: Json | null
+          failover_priority?: number | null
+          id?: string
+          last_mesh_sync?: string | null
+          mesh_role?: string | null
+          mesh_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          discovered_agents?: Json | null
+          failover_priority?: number | null
+          id?: string
+          last_mesh_sync?: string | null
+          mesh_role?: string | null
+          mesh_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_mesh_agents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vanguard_mesh_intel: {
+        Row: {
+          confidence_score: number | null
+          context: Json | null
+          created_at: string | null
+          first_seen: string | null
+          id: string
+          indicator_type: string | null
+          indicator_value: string
+          intel_type: string
+          is_active: boolean | null
+          last_seen: string | null
+          severity: string | null
+          shared_with_agents: Json | null
+          source_agent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          context?: Json | null
+          created_at?: string | null
+          first_seen?: string | null
+          id?: string
+          indicator_type?: string | null
+          indicator_value: string
+          intel_type: string
+          is_active?: boolean | null
+          last_seen?: string | null
+          severity?: string | null
+          shared_with_agents?: Json | null
+          source_agent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          context?: Json | null
+          created_at?: string | null
+          first_seen?: string | null
+          id?: string
+          indicator_type?: string | null
+          indicator_value?: string
+          intel_type?: string
+          is_active?: boolean | null
+          last_seen?: string | null
+          severity?: string | null
+          shared_with_agents?: Json | null
+          source_agent_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_mesh_intel_source_agent_id_fkey"
+            columns: ["source_agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vanguard_service_tickets: {
         Row: {
           ai_auto_responded: boolean | null
@@ -14690,6 +15015,71 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vanguard_traffic_captures: {
+        Row: {
+          agent_id: string
+          bpf_filter: string | null
+          bytes_captured: number | null
+          c2_indicators: Json | null
+          capture_name: string
+          completed_at: string | null
+          dns_tunneling_detected: boolean | null
+          duration_seconds: number | null
+          exfiltration_detected: boolean | null
+          id: string
+          interface: string | null
+          packet_count: number | null
+          started_at: string | null
+          status: string | null
+          suspicious_flows: Json | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          bpf_filter?: string | null
+          bytes_captured?: number | null
+          c2_indicators?: Json | null
+          capture_name: string
+          completed_at?: string | null
+          dns_tunneling_detected?: boolean | null
+          duration_seconds?: number | null
+          exfiltration_detected?: boolean | null
+          id?: string
+          interface?: string | null
+          packet_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          suspicious_flows?: Json | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          bpf_filter?: string | null
+          bytes_captured?: number | null
+          c2_indicators?: Json | null
+          capture_name?: string
+          completed_at?: string | null
+          dns_tunneling_detected?: boolean | null
+          duration_seconds?: number | null
+          exfiltration_detected?: boolean | null
+          id?: string
+          interface?: string | null
+          packet_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          suspicious_flows?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_traffic_captures_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       voice_assistant_interactions: {
         Row: {
