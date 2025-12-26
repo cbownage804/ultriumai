@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
-  Shield, 
+  Shield,
+  Bug,
   LayoutDashboard, 
   Monitor, 
   Target, 
@@ -80,6 +81,7 @@ export function VanguardNavigation() {
         { title: 'SIEM Dashboard', path: `${basePath}/siem`, icon: Database },
         { title: 'SOC Operations', path: `${basePath}/soc`, icon: Eye },
         { title: 'Pen Testing', path: `${basePath}/pentest`, icon: Shield },
+        { title: 'Vulnerability Scanner', path: `${basePath}/vulnscan`, icon: Bug },
         { title: 'Playbooks', path: `${basePath}/playbooks`, icon: BookOpen },
       ]
     },
