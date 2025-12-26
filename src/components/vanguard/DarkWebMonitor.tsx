@@ -9,7 +9,7 @@ import {
   Eye, Mail, Globe, AlertTriangle, Shield, Loader2, Calendar, Users, RefreshCw, 
   Trash2, Phone, CreditCard, MapPin, Key, User, Database, Lock, EyeOff, 
   Search, ChevronLeft, ChevronRight, Link2, FileText, Upload, ArrowUpDown,
-  Download, Clock, Wifi, Server, CheckCircle, XCircle
+  Download, Clock, Wifi, Server, CheckCircle, XCircle, ShieldAlert, Bug
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -65,6 +65,24 @@ interface IPReputationResult {
   recommendations: string[];
 }
 
+interface MalwareResult {
+  is_malicious: boolean;
+  threat_score: number;
+  threat_level: string;
+  detections: {
+    type: string;
+    severity: string;
+    description: string;
+    matches: string[];
+  }[];
+  file_info: {
+    name: string;
+    size: number;
+    type: string;
+  };
+  recommendations: string[];
+}
+
 // Map data classes to icons and colors for visual highlighting
 const dataClassConfig: Record<string, { icon: React.ReactNode; color: string; sensitive: boolean }> = {
   'Phone numbers': { icon: <Phone className="h-3 w-3" />, color: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-500/30', sensitive: true },
@@ -95,6 +113,7 @@ export const DarkWebMonitor = () => {
   const [urlScanResults, setUrlScanResults] = useState<any>(null);
   const [documentResults, setDocumentResults] = useState<any>(null);
   const [ipResults, setIpResults] = useState<IPReputationResult | null>(null);
+  const [malwareResults, setMalwareResults] = useState<MalwareResult | null>(null);
   const { user } = useAuth();
 
   // Pagination, sorting, and search state for leaked data
@@ -329,6 +348,63 @@ export const DarkWebMonitor = () => {
     disabled: isLoading,
   });
 
+  // Malware scan callback
+  const onMalwareDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    
+    const file = acceptedFiles[0];
+    setIsLoading(true);
+    setLoadingType('malware');
+    setMalwareResults(null);
+
+    try {
+      const content = await file.text();
+      
+      const { data, error } = await supabase.functions.invoke('malware-scanner', {
+        body: { 
+          content, 
+          filename: file.name,
+          contentType: file.type 
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data.success) {
+        setMalwareResults(data.data);
+        
+        if (data.data.is_malicious) {
+          toast.error(`Malicious content detected! Threat level: ${data.data.threat_level.toUpperCase()}`);
+        } else {
+          toast.success('No malicious content detected');
+        }
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      console.error('Malware scan error:', error);
+      toast.error(error.message || 'Malware scan failed');
+    } finally {
+      setIsLoading(false);
+      setLoadingType(null);
+    }
+  }, []);
+
+  const { getRootProps: getMalwareRootProps, getInputProps: getMalwareInputProps, isDragActive: isMalwareDragActive } = useDropzone({
+    onDrop: onMalwareDrop,
+    accept: {
+      'text/plain': ['.txt', '.log', '.bat', '.sh', '.ps1', '.cmd', '.vbs', '.js'],
+      'text/html': ['.html', '.htm'],
+      'application/javascript': ['.js'],
+      'text/x-python': ['.py'],
+      'application/x-httpd-php': ['.php'],
+      'application/octet-stream': ['.exe', '.dll', '.bin'],
+    },
+    maxFiles: 1,
+    maxSize: 10 * 1024 * 1024, // 10MB
+    disabled: isLoading,
+  });
+
   const deleteMonitor = async (id: string) => {
     const { error } = await supabase
       .from('dark_web_monitors')
@@ -512,22 +588,26 @@ export const DarkWebMonitor = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="breach" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="breach" className="flex items-center gap-2">
             <Database className="h-4 w-4" />
-            <span className="hidden sm:inline">Breach Check</span>
+            <span className="hidden sm:inline">Breach</span>
           </TabsTrigger>
           <TabsTrigger value="link" className="flex items-center gap-2">
             <Link2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Link Scanner</span>
+            <span className="hidden sm:inline">Links</span>
           </TabsTrigger>
           <TabsTrigger value="document" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Document</span>
+            <span className="hidden sm:inline">Docs</span>
+          </TabsTrigger>
+          <TabsTrigger value="malware" className="flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            <span className="hidden sm:inline">Malware</span>
           </TabsTrigger>
           <TabsTrigger value="ip" className="flex items-center gap-2">
             <Server className="h-4 w-4" />
-            <span className="hidden sm:inline">IP Reputation</span>
+            <span className="hidden sm:inline">IP</span>
           </TabsTrigger>
           <TabsTrigger value="scheduled" className="flex items-center gap-2">
             <Clock className="h-4 w-4" />
@@ -1173,6 +1253,131 @@ export const DarkWebMonitor = () => {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Malware Scanner Tab */}
+        <TabsContent value="malware" className="space-y-6 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bug className="h-5 w-5" />
+                Malware Scanner
+              </CardTitle>
+              <CardDescription>
+                Upload files to scan for malicious content, scripts, and potential threats
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div
+                {...getMalwareRootProps()}
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                  isMalwareDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+                }`}
+              >
+                <input {...getMalwareInputProps()} />
+                {loadingType === 'malware' ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Scanning for malware...</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <ShieldAlert className="h-10 w-10 text-muted-foreground" />
+                    <p className="text-muted-foreground">
+                      {isMalwareDragActive
+                        ? 'Drop the file here...'
+                        : 'Drag & drop a file here, or click to select'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Scripts, executables, HTML, batch files (Max 10MB)
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {malwareResults && (
+                <div className="mt-6 space-y-4">
+                  <div className={`p-4 rounded-lg border ${
+                    malwareResults.is_malicious 
+                      ? 'bg-red-500/10 border-red-500/30' 
+                      : 'bg-green-500/10 border-green-500/30'
+                  }`}>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        {malwareResults.is_malicious ? (
+                          <XCircle className="h-6 w-6 text-red-500" />
+                        ) : (
+                          <CheckCircle className="h-6 w-6 text-green-500" />
+                        )}
+                        <h4 className="font-semibold">
+                          {malwareResults.is_malicious ? 'Threats Detected!' : 'File Appears Safe'}
+                        </h4>
+                      </div>
+                      {getRiskBadge(malwareResults.threat_level)}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">File:</span>
+                        <span className="ml-2 font-mono">{malwareResults.file_info.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Threat Score:</span>
+                        <span className="ml-2 font-bold">{malwareResults.threat_score}/100</span>
+                      </div>
+                    </div>
+
+                    {malwareResults.detections.length > 0 && (
+                      <div className="space-y-2">
+                        <h5 className="font-semibold text-sm">Detections:</h5>
+                        {malwareResults.detections.map((detection, idx) => (
+                          <div key={idx} className="p-3 bg-background/50 rounded-lg border border-red-500/20">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className={
+                                detection.severity === 'critical' ? 'bg-red-500' :
+                                detection.severity === 'high' ? 'bg-orange-500' :
+                                detection.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                              }>
+                                {detection.severity.toUpperCase()}
+                              </Badge>
+                              <span className="font-medium">{detection.type}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{detection.description}</p>
+                            {detection.matches.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-xs text-muted-foreground">Matches:</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {detection.matches.slice(0, 5).map((match, i) => (
+                                    <code key={i} className="text-xs px-1 py-0.5 bg-red-500/20 rounded">
+                                      {match.length > 30 ? match.substring(0, 30) + '...' : match}
+                                    </code>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {malwareResults.recommendations.length > 0 && (
+                      <div className="mt-4 p-3 bg-background/50 rounded-lg">
+                        <h5 className="font-semibold text-sm mb-2">Recommendations:</h5>
+                        <ul className="space-y-1">
+                          {malwareResults.recommendations.map((rec, idx) => (
+                            <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* IP Reputation Tab */}

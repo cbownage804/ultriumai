@@ -93,10 +93,12 @@ export const VanguardAIChat = () => {
   };
 
   const suggestedQuestions = [
-    "Check if my email has been breached",
-    "Scan a suspicious URL for threats",
-    "Check if an IP address is malicious",
-    "What security risks should I look for?",
+    "Check if test@example.com has been breached",
+    "Scan https://example.com for phishing threats",
+    "Is IP 8.8.8.8 malicious?",
+    "Analyze this document for sensitive data",
+    "Scan my company domain for breaches",
+    "What are the latest security threats?",
   ];
 
   if (!isOpen) {
