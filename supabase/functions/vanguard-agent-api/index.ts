@@ -3312,7 +3312,7 @@ function Invoke-ApiRequest {
         "User-Agent" = "VanguardWindowsAgent/$VERSION"
     }
     
-    $uri = "$API_ENDPOINT`?action=$Action"
+    $uri = "$API_ENDPOINT" + "?action=$Action"
     $json = $Body | ConvertTo-Json -Depth 10
     
     try {
