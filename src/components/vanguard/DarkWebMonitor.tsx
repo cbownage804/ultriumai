@@ -137,7 +137,7 @@ export const DarkWebMonitor = () => {
       .from('dark_web_monitors')
       .select('*')
       .eq('user_id', user?.id)
-      .eq('monitor_type', 'email')
+      .in('monitor_type', ['email', 'domain'])
       .order('last_checked', { ascending: false });
     
     if (error) {
@@ -217,6 +217,8 @@ export const DarkWebMonitor = () => {
       } else {
         toast.success('Domain breach check complete');
       }
+      
+      loadMonitoredItems();
     } catch (error: any) {
       console.error('Check error:', error);
       toast.error(error.message || 'Check failed');
@@ -1023,11 +1025,15 @@ export const DarkWebMonitor = () => {
                   monitoredItems.map((monitor) => (
                     <div key={monitor.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <Mail className="h-5 w-5 text-muted-foreground" />
+                        {monitor.monitor_type === 'domain' ? (
+                          <Globe className="h-5 w-5 text-muted-foreground" />
+                        ) : (
+                          <Mail className="h-5 w-5 text-muted-foreground" />
+                        )}
                         <div>
-                          <p className="font-medium">{monitor.email}</p>
+                          <p className="font-medium">{monitor.email || monitor.domain}</p>
                           <p className="text-xs text-muted-foreground">
-                            Last checked: {monitor.last_checked ? new Date(monitor.last_checked).toLocaleString() : 'Never'}
+                            {monitor.monitor_type === 'domain' ? 'Domain' : 'Email'} • Last checked: {monitor.last_checked ? new Date(monitor.last_checked).toLocaleString() : 'Never'}
                           </p>
                         </div>
                       </div>

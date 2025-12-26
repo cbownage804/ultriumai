@@ -340,6 +340,55 @@ serve(async (req) => {
       } else {
         results.risk_level = 'low';
       }
+
+      // Save domain scan to database
+      if (user_id) {
+        const breachCount = results.breaches?.length || 0;
+        const leakedCount = results.leakedData?.length || 0;
+        
+        const { error: upsertError } = await supabase.from('dark_web_monitors').upsert({
+          user_id,
+          domain,
+          email: null,
+          monitor_type: 'domain',
+          breach_count: breachCount + leakedCount,
+          latest_breach: results.breaches?.[0]?.name || null,
+          breach_data: results.breaches,
+          paste_count: 0,
+          paste_data: [],
+          last_checked: new Date().toISOString(),
+          is_active: true,
+          updated_at: new Date().toISOString()
+        }, { 
+          onConflict: 'user_id,domain',
+          ignoreDuplicates: false 
+        });
+
+        if (upsertError) {
+          console.error('[Dark Web Monitor] Domain database upsert error:', upsertError);
+          // Try insert instead
+          const { error: insertError } = await supabase.from('dark_web_monitors').insert({
+            user_id,
+            domain,
+            monitor_type: 'domain',
+            breach_count: breachCount + leakedCount,
+            latest_breach: results.breaches?.[0]?.name || null,
+            breach_data: results.breaches,
+            paste_count: 0,
+            paste_data: [],
+            last_checked: new Date().toISOString(),
+            is_active: true
+          });
+          
+          if (insertError) {
+            console.error('[Dark Web Monitor] Domain database insert error:', insertError);
+          } else {
+            console.log('[Dark Web Monitor] Inserted new domain monitor record');
+          }
+        } else {
+          console.log('[Dark Web Monitor] Upserted domain monitor record successfully');
+        }
+      }
     }
 
     results.checked_at = new Date().toISOString();
