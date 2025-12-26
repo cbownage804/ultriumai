@@ -787,7 +787,7 @@ echo "Run with: python3 vanguard_agent_pentest.py --config config.yaml"
 }
 
 // Current agent version - update this when you update the agent script
-const AGENT_VERSION = "2.2.0-vulnscan";
+const AGENT_VERSION = "3.0.0-enterprise";
 
 async function getAgentVersion() {
   return new Response(
@@ -817,7 +817,7 @@ import threading
 import subprocess
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 from logging.handlers import RotatingFileHandler
 
@@ -942,6 +942,7 @@ class VanguardAgent:
     """Main Vanguard Agent with auto-update capability."""
     
     SUPPORTED_COMMANDS = [
+        # Core scanning commands
         "scan_network", "scan_vulnerabilities", "pentest_full",
         "scan_ports", "scan_ports_deep", "scan_ssl", "scan_web",
         "scan_smb", "scan_ssh", "scan_ftp", "scan_dns", "scan_rdp",
@@ -949,7 +950,15 @@ class VanguardAgent:
         "exec", "reboot", "update_agent",
         # VulScan enhanced commands
         "vuln_scan_internal", "compliance_scan", "host_audit",
-        "credential_test", "remediate", "config_audit", "service_scan"
+        "credential_test", "remediate", "config_audit", "service_scan",
+        # Real-time Monitoring
+        "monitor_files", "monitor_processes", "monitor_network", "detect_anomalies",
+        # Threat Detection
+        "scan_malware", "detect_rootkits", "analyze_behavior", "check_iocs",
+        # Log Collection & SIEM
+        "collect_logs", "parse_logs", "correlate_events", "configure_syslog",
+        # Remote Management
+        "remote_shell", "file_transfer", "manage_packages", "system_control"
     ]
     
     def __init__(self, config: dict):
@@ -1136,6 +1145,42 @@ class VanguardAgent:
                 result = self._config_audit(params)
             elif cmd_type == "service_scan":
                 result = self._service_scan(params)
+            # Real-time Monitoring
+            elif cmd_type == "monitor_files":
+                result = self._monitor_files(params)
+            elif cmd_type == "monitor_processes":
+                result = self._monitor_processes(params)
+            elif cmd_type == "monitor_network":
+                result = self._monitor_network(params)
+            elif cmd_type == "detect_anomalies":
+                result = self._detect_anomalies(params)
+            # Threat Detection
+            elif cmd_type == "scan_malware":
+                result = self._scan_malware(params)
+            elif cmd_type == "detect_rootkits":
+                result = self._detect_rootkits(params)
+            elif cmd_type == "analyze_behavior":
+                result = self._analyze_behavior(params)
+            elif cmd_type == "check_iocs":
+                result = self._check_iocs(params)
+            # Log Collection & SIEM
+            elif cmd_type == "collect_logs":
+                result = self._collect_logs(params)
+            elif cmd_type == "parse_logs":
+                result = self._parse_logs(params)
+            elif cmd_type == "correlate_events":
+                result = self._correlate_events(params)
+            elif cmd_type == "configure_syslog":
+                result = self._configure_syslog(params)
+            # Remote Management
+            elif cmd_type == "remote_shell":
+                result = self._remote_shell(params)
+            elif cmd_type == "file_transfer":
+                result = self._file_transfer(params)
+            elif cmd_type == "manage_packages":
+                result = self._manage_packages(params)
+            elif cmd_type == "system_control":
+                result = self._system_control(params)
             else:
                 raise ValueError(f"Unknown command: {cmd_type}")
             
@@ -1801,6 +1846,967 @@ class VanguardAgent:
             pass
         
         return {"services": services, "total": len(services)}
+    
+    # ============ REAL-TIME MONITORING ============
+    
+    def _monitor_files(self, params: dict) -> dict:
+        """File integrity monitoring - detect changes to critical files."""
+        paths = params.get("paths", ["/etc/passwd", "/etc/shadow", "/etc/sudoers", "/etc/ssh/sshd_config"])
+        baseline = params.get("baseline", {})
+        
+        results = {"changes": [], "files_checked": 0, "scan_time": datetime.utcnow().isoformat()}
+        
+        for filepath in paths:
+            try:
+                if os.path.exists(filepath):
+                    results["files_checked"] += 1
+                    stat_info = os.stat(filepath)
+                    
+                    with open(filepath, 'rb') as f:
+                        content = f.read()
+                    file_hash = hashlib.sha256(content).hexdigest()
+                    
+                    file_info = {
+                        "path": filepath,
+                        "size": stat_info.st_size,
+                        "mtime": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                        "permissions": oct(stat_info.st_mode)[-3:],
+                        "hash": file_hash,
+                    }
+                    
+                    # Compare with baseline if provided
+                    if filepath in baseline:
+                        old_hash = baseline[filepath].get("hash")
+                        if old_hash and old_hash != file_hash:
+                            results["changes"].append({
+                                "path": filepath,
+                                "change_type": "modified",
+                                "old_hash": old_hash,
+                                "new_hash": file_hash,
+                                "severity": "critical" if "shadow" in filepath or "sudoers" in filepath else "high",
+                            })
+            except PermissionError:
+                pass
+            except Exception as e:
+                logger.warning(f"Error checking {filepath}: {e}")
+        
+        return results
+    
+    def _monitor_processes(self, params: dict) -> dict:
+        """Monitor running processes for suspicious activity."""
+        if not HAS_PSUTIL:
+            return {"error": "psutil not available"}
+        
+        results = {
+            "processes": [],
+            "suspicious": [],
+            "total": 0,
+            "scan_time": datetime.utcnow().isoformat()
+        }
+        
+        suspicious_names = params.get("suspicious", ["nc", "ncat", "netcat", "socat", "bash -i", "python -c", "perl -e", "ruby -e", "miner", "xmrig"])
+        
+        try:
+            for proc in psutil.process_iter(['pid', 'name', 'username', 'cmdline', 'cpu_percent', 'memory_percent', 'create_time', 'connections']):
+                try:
+                    info = proc.info
+                    cmdline = ' '.join(info.get('cmdline') or [])
+                    
+                    proc_data = {
+                        "pid": info['pid'],
+                        "name": info['name'],
+                        "user": info['username'],
+                        "cmdline": cmdline[:200],
+                        "cpu": info['cpu_percent'],
+                        "memory": info['memory_percent'],
+                        "started": datetime.fromtimestamp(info['create_time']).isoformat() if info['create_time'] else None,
+                    }
+                    
+                    # Check for suspicious patterns
+                    is_suspicious = False
+                    reason = ""
+                    
+                    for pattern in suspicious_names:
+                        if pattern.lower() in cmdline.lower() or pattern.lower() in (info['name'] or '').lower():
+                            is_suspicious = True
+                            reason = f"Matches suspicious pattern: {pattern}"
+                            break
+                    
+                    # Check for high resource usage
+                    if info['cpu_percent'] and info['cpu_percent'] > 90:
+                        is_suspicious = True
+                        reason = "High CPU usage (>90%)"
+                    
+                    # Check for network connections
+                    try:
+                        connections = info.get('connections', [])
+                        if connections:
+                            proc_data["connections"] = len(connections)
+                            # Flag processes with many connections
+                            if len(connections) > 50:
+                                is_suspicious = True
+                                reason = f"High number of connections: {len(connections)}"
+                    except:
+                        pass
+                    
+                    results["processes"].append(proc_data)
+                    
+                    if is_suspicious:
+                        proc_data["reason"] = reason
+                        results["suspicious"].append(proc_data)
+                
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+            
+            results["total"] = len(results["processes"])
+        
+        except Exception as e:
+            results["error"] = str(e)
+        
+        return results
+    
+    def _monitor_network(self, params: dict) -> dict:
+        """Monitor network connections and traffic."""
+        if not HAS_PSUTIL:
+            return {"error": "psutil not available"}
+        
+        results = {
+            "connections": [],
+            "listening_ports": [],
+            "suspicious": [],
+            "traffic": {},
+            "scan_time": datetime.utcnow().isoformat()
+        }
+        
+        suspicious_ports = params.get("suspicious_ports", [4444, 5555, 6666, 31337, 12345, 65535])
+        
+        try:
+            # Get all connections
+            for conn in psutil.net_connections(kind='inet'):
+                try:
+                    conn_info = {
+                        "local_addr": f"{conn.laddr.ip}:{conn.laddr.port}" if conn.laddr else None,
+                        "remote_addr": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else None,
+                        "status": conn.status,
+                        "pid": conn.pid,
+                    }
+                    
+                    if conn.status == 'LISTEN':
+                        results["listening_ports"].append(conn_info)
+                    else:
+                        results["connections"].append(conn_info)
+                    
+                    # Check for suspicious ports
+                    port = conn.laddr.port if conn.laddr else 0
+                    remote_port = conn.raddr.port if conn.raddr else 0
+                    
+                    if port in suspicious_ports or remote_port in suspicious_ports:
+                        conn_info["reason"] = "Suspicious port detected"
+                        results["suspicious"].append(conn_info)
+                
+                except:
+                    pass
+            
+            # Get network I/O stats
+            net_io = psutil.net_io_counters(pernic=True)
+            for iface, stats in net_io.items():
+                results["traffic"][iface] = {
+                    "bytes_sent": stats.bytes_sent,
+                    "bytes_recv": stats.bytes_recv,
+                    "packets_sent": stats.packets_sent,
+                    "packets_recv": stats.packets_recv,
+                }
+        
+        except Exception as e:
+            results["error"] = str(e)
+        
+        return results
+    
+    def _detect_anomalies(self, params: dict) -> dict:
+        """Detect behavioral anomalies based on baselines."""
+        if not HAS_PSUTIL:
+            return {"error": "psutil not available"}
+        
+        baseline = params.get("baseline", {})
+        thresholds = params.get("thresholds", {
+            "cpu_spike": 50,  # % above baseline
+            "memory_spike": 30,
+            "connection_spike": 100,
+            "process_spawn_rate": 20,  # new processes per minute
+        })
+        
+        anomalies = []
+        current_metrics = get_metrics()
+        
+        # CPU anomaly
+        if baseline.get("avg_cpu"):
+            if current_metrics.get("cpu_percent", 0) > baseline["avg_cpu"] + thresholds["cpu_spike"]:
+                anomalies.append({
+                    "type": "cpu_spike",
+                    "severity": "medium",
+                    "current": current_metrics["cpu_percent"],
+                    "baseline": baseline["avg_cpu"],
+                    "threshold": thresholds["cpu_spike"],
+                })
+        
+        # Memory anomaly
+        if baseline.get("avg_memory"):
+            if current_metrics.get("memory_percent", 0) > baseline["avg_memory"] + thresholds["memory_spike"]:
+                anomalies.append({
+                    "type": "memory_spike",
+                    "severity": "medium",
+                    "current": current_metrics["memory_percent"],
+                    "baseline": baseline["avg_memory"],
+                })
+        
+        # Connection count anomaly
+        try:
+            conn_count = len(psutil.net_connections())
+            if baseline.get("avg_connections"):
+                if conn_count > baseline["avg_connections"] + thresholds["connection_spike"]:
+                    anomalies.append({
+                        "type": "connection_spike",
+                        "severity": "high",
+                        "current": conn_count,
+                        "baseline": baseline["avg_connections"],
+                    })
+        except:
+            pass
+        
+        return {
+            "anomalies": anomalies,
+            "total": len(anomalies),
+            "current_metrics": current_metrics,
+            "scan_time": datetime.utcnow().isoformat()
+        }
+    
+    # ============ THREAT DETECTION ============
+    
+    def _scan_malware(self, params: dict) -> dict:
+        """Scan for malware signatures and suspicious files."""
+        paths = params.get("paths", ["/tmp", "/var/tmp", "/dev/shm", os.path.expanduser("~")])
+        max_file_size = params.get("max_file_size_mb", 50) * 1024 * 1024
+        
+        # Common malware signatures (partial hashes or patterns)
+        suspicious_patterns = [
+            b"#!/bin/bash\\nwget ",
+            b"#!/bin/bash\\ncurl ",
+            b"/bin/sh -i",
+            b"bash -i >& /dev/tcp/",
+            b"import socket,subprocess,os",
+            b"exec(base64.b64decode",
+            b"PRIVMSG",  # IRC bot indicator
+            b"stratum+tcp://",  # Crypto miner
+        ]
+        
+        results = {
+            "scanned_files": 0,
+            "suspicious_files": [],
+            "scan_time": datetime.utcnow().isoformat()
+        }
+        
+        for base_path in paths:
+            try:
+                for root, dirs, files in os.walk(base_path):
+                    # Skip hidden and system directories
+                    dirs[:] = [d for d in dirs if not d.startswith('.')]
+                    
+                    for filename in files:
+                        filepath = os.path.join(root, filename)
+                        try:
+                            stat_info = os.stat(filepath)
+                            
+                            # Skip large files
+                            if stat_info.st_size > max_file_size:
+                                continue
+                            
+                            results["scanned_files"] += 1
+                            
+                            # Check for suspicious file characteristics
+                            suspicious = False
+                            reasons = []
+                            
+                            # Check permissions (world-writable executables)
+                            mode = stat_info.st_mode
+                            if mode & 0o002 and mode & 0o111:  # World-writable and executable
+                                suspicious = True
+                                reasons.append("World-writable executable")
+                            
+                            # Check for hidden executables
+                            if filename.startswith('.') and mode & 0o111:
+                                suspicious = True
+                                reasons.append("Hidden executable")
+                            
+                            # Read file content for signature matching
+                            try:
+                                with open(filepath, 'rb') as f:
+                                    content = f.read(8192)  # First 8KB
+                                
+                                for pattern in suspicious_patterns:
+                                    if pattern in content:
+                                        suspicious = True
+                                        reasons.append(f"Suspicious pattern detected")
+                                        break
+                            except:
+                                pass
+                            
+                            if suspicious:
+                                results["suspicious_files"].append({
+                                    "path": filepath,
+                                    "reasons": reasons,
+                                    "size": stat_info.st_size,
+                                    "permissions": oct(mode)[-3:],
+                                    "modified": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                                })
+                        
+                        except (PermissionError, OSError):
+                            pass
+                        
+                        # Limit scan depth
+                        if results["scanned_files"] >= 10000:
+                            break
+                    
+                    if results["scanned_files"] >= 10000:
+                        break
+            except:
+                pass
+        
+        return results
+    
+    def _detect_rootkits(self, params: dict) -> dict:
+        """Detect common rootkit indicators."""
+        findings = []
+        
+        # Check for hidden processes (ps vs /proc)
+        try:
+            ps_output = subprocess.run(['ps', '-ef'], capture_output=True, text=True, timeout=30)
+            ps_pids = set()
+            for line in ps_output.stdout.strip().split('\\n')[1:]:
+                parts = line.split()
+                if len(parts) >= 2:
+                    try:
+                        ps_pids.add(int(parts[1]))
+                    except:
+                        pass
+            
+            proc_pids = set()
+            for entry in os.listdir('/proc'):
+                try:
+                    proc_pids.add(int(entry))
+                except:
+                    pass
+            
+            hidden_pids = proc_pids - ps_pids
+            if hidden_pids:
+                findings.append({
+                    "type": "hidden_processes",
+                    "severity": "critical",
+                    "details": f"Found {len(hidden_pids)} potentially hidden processes",
+                    "pids": list(hidden_pids)[:10],
+                })
+        except:
+            pass
+        
+        # Check for suspicious kernel modules
+        try:
+            lsmod = subprocess.run(['lsmod'], capture_output=True, text=True, timeout=10)
+            suspicious_modules = ["hide", "rootkit", "keylog", "stealth"]
+            for line in lsmod.stdout.lower().split('\\n'):
+                for susp in suspicious_modules:
+                    if susp in line:
+                        findings.append({
+                            "type": "suspicious_module",
+                            "severity": "critical",
+                            "details": f"Suspicious kernel module: {line.split()[0]}",
+                        })
+        except:
+            pass
+        
+        # Check for LD_PRELOAD hijacking
+        try:
+            env_preload = os.environ.get('LD_PRELOAD', '')
+            if env_preload:
+                findings.append({
+                    "type": "ld_preload",
+                    "severity": "high",
+                    "details": f"LD_PRELOAD set: {env_preload}",
+                })
+            
+            if os.path.exists('/etc/ld.so.preload'):
+                with open('/etc/ld.so.preload', 'r') as f:
+                    content = f.read().strip()
+                if content:
+                    findings.append({
+                        "type": "ld_so_preload",
+                        "severity": "high",
+                        "details": f"/etc/ld.so.preload contains: {content}",
+                    })
+        except:
+            pass
+        
+        # Check for modified system binaries
+        critical_binaries = ['/bin/ls', '/bin/ps', '/bin/netstat', '/bin/ss', '/usr/bin/top']
+        for binary in critical_binaries:
+            try:
+                if os.path.exists(binary):
+                    stat_info = os.stat(binary)
+                    # Check if recently modified (within last 7 days)
+                    if time.time() - stat_info.st_mtime < 7 * 24 * 3600:
+                        findings.append({
+                            "type": "modified_binary",
+                            "severity": "high",
+                            "details": f"Recently modified: {binary}",
+                            "mtime": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                        })
+            except:
+                pass
+        
+        return {
+            "findings": findings,
+            "total": len(findings),
+            "scan_time": datetime.utcnow().isoformat()
+        }
+    
+    def _analyze_behavior(self, params: dict) -> dict:
+        """Analyze process and system behavior for threats."""
+        if not HAS_PSUTIL:
+            return {"error": "psutil not available"}
+        
+        duration = params.get("duration_seconds", 30)
+        
+        results = {
+            "new_processes": [],
+            "network_changes": [],
+            "file_changes": [],
+            "alerts": [],
+            "duration": duration,
+        }
+        
+        # Capture initial state
+        initial_processes = {p.pid: p.info for p in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time'])}
+        initial_connections = set()
+        for conn in psutil.net_connections():
+            if conn.raddr:
+                initial_connections.add((conn.raddr.ip, conn.raddr.port))
+        
+        # Wait and observe
+        time.sleep(min(duration, 30))  # Cap at 30 seconds
+        
+        # Check for new processes
+        for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
+            try:
+                if proc.pid not in initial_processes:
+                    info = proc.info
+                    results["new_processes"].append({
+                        "pid": info['pid'],
+                        "name": info['name'],
+                        "cmdline": ' '.join(info.get('cmdline') or [])[:200],
+                    })
+            except:
+                pass
+        
+        # Check for new network connections
+        for conn in psutil.net_connections():
+            if conn.raddr:
+                key = (conn.raddr.ip, conn.raddr.port)
+                if key not in initial_connections:
+                    results["network_changes"].append({
+                        "remote_ip": conn.raddr.ip,
+                        "remote_port": conn.raddr.port,
+                        "type": "new_connection",
+                    })
+        
+        # Generate alerts for suspicious activity
+        if len(results["new_processes"]) > 10:
+            results["alerts"].append({
+                "type": "rapid_process_spawn",
+                "severity": "medium",
+                "count": len(results["new_processes"]),
+            })
+        
+        if len(results["network_changes"]) > 20:
+            results["alerts"].append({
+                "type": "rapid_network_activity",
+                "severity": "high",
+                "count": len(results["network_changes"]),
+            })
+        
+        return results
+    
+    def _check_iocs(self, params: dict) -> dict:
+        """Check for Indicators of Compromise (IOCs)."""
+        iocs = params.get("iocs", {
+            "ips": [],
+            "domains": [],
+            "file_hashes": [],
+            "file_paths": [],
+        })
+        
+        matches = []
+        
+        # Check IP connections
+        if iocs.get("ips") and HAS_PSUTIL:
+            try:
+                for conn in psutil.net_connections():
+                    if conn.raddr and conn.raddr.ip in iocs["ips"]:
+                        matches.append({
+                            "type": "ip_match",
+                            "severity": "critical",
+                            "ioc": conn.raddr.ip,
+                            "context": f"Active connection to malicious IP:{conn.raddr.port}",
+                        })
+            except:
+                pass
+        
+        # Check file paths
+        for path in iocs.get("file_paths", []):
+            if os.path.exists(path):
+                matches.append({
+                    "type": "file_path_match",
+                    "severity": "critical",
+                    "ioc": path,
+                    "context": "Malicious file path exists",
+                })
+        
+        # Check file hashes
+        for hash_entry in iocs.get("file_hashes", []):
+            filepath = hash_entry.get("path")
+            expected_hash = hash_entry.get("hash")
+            if filepath and expected_hash and os.path.exists(filepath):
+                try:
+                    with open(filepath, 'rb') as f:
+                        actual_hash = hashlib.sha256(f.read()).hexdigest()
+                    if actual_hash == expected_hash:
+                        matches.append({
+                            "type": "hash_match",
+                            "severity": "critical",
+                            "ioc": expected_hash,
+                            "context": f"Malicious file found: {filepath}",
+                        })
+                except:
+                    pass
+        
+        # Check DNS resolution for malicious domains
+        for domain in iocs.get("domains", []):
+            try:
+                socket.gethostbyname(domain)
+                # If resolution succeeds, check /etc/hosts or dns cache
+                matches.append({
+                    "type": "domain_resolved",
+                    "severity": "high",
+                    "ioc": domain,
+                    "context": "Malicious domain is resolvable",
+                })
+            except:
+                pass
+        
+        return {
+            "matches": matches,
+            "total": len(matches),
+            "iocs_checked": sum(len(v) if isinstance(v, list) else 0 for v in iocs.values()),
+            "scan_time": datetime.utcnow().isoformat()
+        }
+    
+    # ============ LOG COLLECTION & SIEM ============
+    
+    def _collect_logs(self, params: dict) -> dict:
+        """Collect system and security logs."""
+        log_sources = params.get("sources", ["auth", "syslog", "messages", "secure"])
+        max_lines = params.get("max_lines", 1000)
+        since = params.get("since_hours", 24)
+        
+        logs = {}
+        
+        log_paths = {
+            "auth": ["/var/log/auth.log", "/var/log/secure"],
+            "syslog": ["/var/log/syslog", "/var/log/messages"],
+            "messages": ["/var/log/messages"],
+            "secure": ["/var/log/secure", "/var/log/auth.log"],
+            "kernel": ["/var/log/kern.log", "/var/log/dmesg"],
+            "cron": ["/var/log/cron"],
+            "apache": ["/var/log/apache2/access.log", "/var/log/httpd/access_log"],
+            "nginx": ["/var/log/nginx/access.log"],
+        }
+        
+        cutoff_time = datetime.now() - timedelta(hours=since)
+        
+        for source in log_sources:
+            for path in log_paths.get(source, []):
+                if os.path.exists(path):
+                    try:
+                        with open(path, 'r') as f:
+                            lines = f.readlines()[-max_lines:]
+                        logs[source] = {
+                            "path": path,
+                            "lines": len(lines),
+                            "entries": lines,
+                        }
+                        break
+                    except PermissionError:
+                        logs[source] = {"error": "Permission denied", "path": path}
+                    except Exception as e:
+                        logs[source] = {"error": str(e), "path": path}
+        
+        # Also try journalctl for systemd systems
+        try:
+            result = subprocess.run(
+                ['journalctl', '--since', f'{since} hours ago', '-n', str(max_lines), '--no-pager'],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
+                logs["journal"] = {
+                    "lines": len(result.stdout.split('\\n')),
+                    "entries": result.stdout.split('\\n')[-max_lines:],
+                }
+        except:
+            pass
+        
+        return {
+            "logs": logs,
+            "sources_collected": len(logs),
+            "collection_time": datetime.utcnow().isoformat()
+        }
+    
+    def _parse_logs(self, params: dict) -> dict:
+        """Parse logs and extract security events."""
+        log_content = params.get("content", "")
+        log_type = params.get("type", "auth")
+        
+        events = []
+        
+        # Patterns for different log types
+        patterns = {
+            "failed_login": [
+                r"Failed password for .* from (\\S+)",
+                r"authentication failure.*rhost=(\\S+)",
+                r"Invalid user .* from (\\S+)",
+            ],
+            "successful_login": [
+                r"Accepted password for (\\S+) from",
+                r"session opened for user (\\S+)",
+            ],
+            "sudo": [
+                r"sudo:.*COMMAND=(.*)",
+            ],
+            "ssh": [
+                r"sshd\\[\\d+\\]: (.*)",
+            ],
+        }
+        
+        import re
+        for line in log_content.split('\\n'):
+            for event_type, pattern_list in patterns.items():
+                for pattern in pattern_list:
+                    match = re.search(pattern, line)
+                    if match:
+                        events.append({
+                            "type": event_type,
+                            "match": match.group(1) if match.groups() else match.group(0),
+                            "raw": line[:500],
+                        })
+                        break
+        
+        return {
+            "events": events,
+            "total": len(events),
+            "log_type": log_type,
+        }
+    
+    def _correlate_events(self, params: dict) -> dict:
+        """Correlate security events to detect attack patterns."""
+        events = params.get("events", [])
+        
+        correlations = []
+        
+        # Group events by source IP
+        ip_events = {}
+        for event in events:
+            ip = event.get("source_ip") or event.get("match")
+            if ip:
+                if ip not in ip_events:
+                    ip_events[ip] = []
+                ip_events[ip].append(event)
+        
+        # Detect brute force attempts
+        for ip, ip_event_list in ip_events.items():
+            failed_logins = [e for e in ip_event_list if e.get("type") == "failed_login"]
+            if len(failed_logins) >= 5:
+                correlations.append({
+                    "pattern": "brute_force_attempt",
+                    "severity": "high",
+                    "source_ip": ip,
+                    "failed_attempts": len(failed_logins),
+                    "description": f"Multiple failed login attempts from {ip}",
+                })
+        
+        return {
+            "correlations": correlations,
+            "total": len(correlations),
+            "events_analyzed": len(events),
+        }
+    
+    def _configure_syslog(self, params: dict) -> dict:
+        """Configure syslog forwarding."""
+        action = params.get("action", "status")
+        server = params.get("server", "")
+        port = params.get("port", 514)
+        protocol = params.get("protocol", "udp")
+        
+        result = {"action": action, "success": False}
+        
+        if action == "status":
+            # Check current rsyslog config
+            try:
+                config_path = "/etc/rsyslog.d/50-vanguard.conf"
+                if os.path.exists(config_path):
+                    with open(config_path, 'r') as f:
+                        result["config"] = f.read()
+                    result["configured"] = True
+                else:
+                    result["configured"] = False
+                result["success"] = True
+            except Exception as e:
+                result["error"] = str(e)
+        
+        elif action == "configure" and server:
+            # Write rsyslog config for forwarding
+            try:
+                config = f"# Vanguard syslog forwarding\\n*.* @{server}:{port}\\n"
+                if protocol == "tcp":
+                    config = f"# Vanguard syslog forwarding\\n*.* @@{server}:{port}\\n"
+                
+                config_path = "/etc/rsyslog.d/50-vanguard.conf"
+                with open(config_path, 'w') as f:
+                    f.write(config)
+                
+                # Restart rsyslog
+                subprocess.run(['systemctl', 'restart', 'rsyslog'], timeout=30)
+                result["success"] = True
+                result["config_path"] = config_path
+            except Exception as e:
+                result["error"] = str(e)
+        
+        return result
+    
+    # ============ REMOTE MANAGEMENT ============
+    
+    def _remote_shell(self, params: dict) -> dict:
+        """Execute remote shell commands securely."""
+        command = params.get("command", "")
+        timeout = params.get("timeout", 60)
+        working_dir = params.get("cwd", None)
+        
+        if not command:
+            return {"error": "No command provided"}
+        
+        # Block dangerous commands
+        blocked_patterns = ["rm -rf /", "mkfs", "dd if=", "> /dev/sd", ":(){ :|:& };:"]
+        for pattern in blocked_patterns:
+            if pattern in command:
+                return {"error": f"Blocked dangerous command pattern: {pattern}"}
+        
+        try:
+            result = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=working_dir
+            )
+            return {
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "returncode": result.returncode,
+                "success": result.returncode == 0,
+            }
+        except subprocess.TimeoutExpired:
+            return {"error": f"Command timed out after {timeout}s"}
+        except Exception as e:
+            return {"error": str(e)}
+    
+    def _file_transfer(self, params: dict) -> dict:
+        """Handle file transfers (upload/download metadata)."""
+        action = params.get("action", "list")
+        path = params.get("path", "/tmp")
+        
+        result = {"action": action, "path": path}
+        
+        if action == "list":
+            try:
+                files = []
+                for entry in os.listdir(path):
+                    full_path = os.path.join(path, entry)
+                    stat_info = os.stat(full_path)
+                    files.append({
+                        "name": entry,
+                        "type": "dir" if os.path.isdir(full_path) else "file",
+                        "size": stat_info.st_size,
+                        "modified": datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                        "permissions": oct(stat_info.st_mode)[-3:],
+                    })
+                result["files"] = files
+                result["success"] = True
+            except Exception as e:
+                result["error"] = str(e)
+        
+        elif action == "read":
+            filepath = params.get("filepath", "")
+            max_size = params.get("max_size_mb", 10) * 1024 * 1024
+            try:
+                stat_info = os.stat(filepath)
+                if stat_info.st_size > max_size:
+                    result["error"] = f"File too large ({stat_info.st_size} bytes)"
+                else:
+                    with open(filepath, 'rb') as f:
+                        content = f.read()
+                    import base64
+                    result["content"] = base64.b64encode(content).decode('utf-8')
+                    result["size"] = len(content)
+                    result["success"] = True
+            except Exception as e:
+                result["error"] = str(e)
+        
+        elif action == "write":
+            filepath = params.get("filepath", "")
+            content_b64 = params.get("content", "")
+            try:
+                import base64
+                content = base64.b64decode(content_b64)
+                with open(filepath, 'wb') as f:
+                    f.write(content)
+                result["success"] = True
+                result["bytes_written"] = len(content)
+            except Exception as e:
+                result["error"] = str(e)
+        
+        elif action == "delete":
+            filepath = params.get("filepath", "")
+            try:
+                if os.path.isdir(filepath):
+                    import shutil
+                    shutil.rmtree(filepath)
+                else:
+                    os.remove(filepath)
+                result["success"] = True
+            except Exception as e:
+                result["error"] = str(e)
+        
+        return result
+    
+    def _manage_packages(self, params: dict) -> dict:
+        """Manage system packages (install, update, remove)."""
+        action = params.get("action", "list")
+        packages = params.get("packages", [])
+        
+        result = {"action": action, "packages": packages}
+        
+        # Detect package manager
+        pkg_manager = None
+        if os.path.exists('/usr/bin/apt'):
+            pkg_manager = 'apt'
+        elif os.path.exists('/usr/bin/yum'):
+            pkg_manager = 'yum'
+        elif os.path.exists('/usr/bin/dnf'):
+            pkg_manager = 'dnf'
+        
+        if not pkg_manager:
+            return {"error": "No supported package manager found"}
+        
+        result["package_manager"] = pkg_manager
+        
+        try:
+            if action == "list":
+                if pkg_manager == 'apt':
+                    cmd = ['dpkg', '-l']
+                else:
+                    cmd = ['rpm', '-qa']
+                output = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+                result["installed"] = output.stdout.split('\\n')[:100]  # Limit output
+                result["success"] = True
+            
+            elif action == "install" and packages:
+                if pkg_manager == 'apt':
+                    cmd = ['sudo', 'apt', 'install', '-y'] + packages
+                else:
+                    cmd = ['sudo', pkg_manager, 'install', '-y'] + packages
+                output = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+                result["output"] = output.stdout
+                result["success"] = output.returncode == 0
+            
+            elif action == "update":
+                if pkg_manager == 'apt':
+                    subprocess.run(['sudo', 'apt', 'update'], timeout=300)
+                    cmd = ['sudo', 'apt', 'upgrade', '-y']
+                else:
+                    cmd = ['sudo', pkg_manager, 'update', '-y']
+                output = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+                result["output"] = output.stdout
+                result["success"] = output.returncode == 0
+            
+            elif action == "remove" and packages:
+                if pkg_manager == 'apt':
+                    cmd = ['sudo', 'apt', 'remove', '-y'] + packages
+                else:
+                    cmd = ['sudo', pkg_manager, 'remove', '-y'] + packages
+                output = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                result["output"] = output.stdout
+                result["success"] = output.returncode == 0
+        
+        except Exception as e:
+            result["error"] = str(e)
+        
+        return result
+    
+    def _system_control(self, params: dict) -> dict:
+        """System control operations (reboot, shutdown, services)."""
+        action = params.get("action", "status")
+        target = params.get("target", "")
+        
+        result = {"action": action, "target": target}
+        
+        try:
+            if action == "reboot":
+                result["message"] = "System reboot initiated"
+                subprocess.Popen(['sudo', 'reboot'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                result["success"] = True
+            
+            elif action == "shutdown":
+                delay = params.get("delay_minutes", 1)
+                result["message"] = f"System shutdown scheduled in {delay} minutes"
+                subprocess.Popen(['sudo', 'shutdown', '-h', f'+{delay}'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                result["success"] = True
+            
+            elif action == "service_start" and target:
+                output = subprocess.run(['sudo', 'systemctl', 'start', target], capture_output=True, text=True, timeout=60)
+                result["success"] = output.returncode == 0
+            
+            elif action == "service_stop" and target:
+                output = subprocess.run(['sudo', 'systemctl', 'stop', target], capture_output=True, text=True, timeout=60)
+                result["success"] = output.returncode == 0
+            
+            elif action == "service_restart" and target:
+                output = subprocess.run(['sudo', 'systemctl', 'restart', target], capture_output=True, text=True, timeout=60)
+                result["success"] = output.returncode == 0
+            
+            elif action == "service_status" and target:
+                output = subprocess.run(['systemctl', 'status', target], capture_output=True, text=True, timeout=30)
+                result["status"] = output.stdout
+                result["success"] = True
+            
+            elif action == "status":
+                # Get general system status
+                if HAS_PSUTIL:
+                    result["uptime"] = int(time.time() - psutil.boot_time())
+                    result["cpu_percent"] = psutil.cpu_percent()
+                    result["memory_percent"] = psutil.virtual_memory().percent
+                    result["disk_percent"] = psutil.disk_usage('/').percent
+                result["success"] = True
+        
+        except Exception as e:
+            result["error"] = str(e)
+        
+        return result
     
     def _discover_hosts(self, params: dict) -> dict:
         return self._scan_network(params)
