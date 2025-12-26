@@ -36,6 +36,7 @@ const CustomReportBuilder = lazy(() => import('@/components/vanguard/CustomRepor
 const MultiTenantManager = lazy(() => import('@/components/vanguard/MultiTenantManager').then(m => ({ default: m.MultiTenantManager })));
 const APIMarketplace = lazy(() => import('@/components/vanguard/APIMarketplace').then(m => ({ default: m.APIMarketplace })));
 const IncidentResponsePlaybooks = lazy(() => import('@/components/vanguard/IncidentResponsePlaybooks').then(m => ({ default: m.IncidentResponsePlaybooks })));
+const VulnerabilityScanner = lazy(() => import('@/components/vanguard/VulnerabilityScanner').then(m => ({ default: m.VulnerabilityScanner })));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -70,6 +71,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-threats" path="threats" element={<LazyProtectedPage component={ThreatDetection} />} />,
   <Route key="vanguard-soc" path="soc" element={<LazyProtectedPage component={VanguardSOC} />} />,
   <Route key="vanguard-pentest" path="pentest" element={<LazyProtectedPage component={VanguardPentest} />} />,
+  <Route key="vanguard-vulnscan" path="vulnscan" element={<LazyProtectedPage component={VulnerabilityScanner} />} />,
   <Route key="vanguard-compliance" path="compliance" element={<LazyProtectedPage component={ComplianceAuditor} />} />,
   <Route key="vanguard-reports" path="reports" element={<LazyProtectedPage component={VanguardReports} />} />,
   <Route key="vanguard-remediation" path="remediation" element={<LazyProtectedPage component={RemediationAutomation} />} />,
