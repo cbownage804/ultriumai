@@ -96,8 +96,16 @@ serve(async (req) => {
       return await downloadAgent();
     }
     
+    if (action === 'download_agent_windows') {
+      return await downloadAgentWindows();
+    }
+    
     if (action === 'get_agent_script') {
       return await getAgentScript();
+    }
+    
+    if (action === 'get_agent_script_windows') {
+      return await getAgentScriptWindows();
     }
     
     if (action === 'get_agent_version') {
@@ -3160,6 +3168,605 @@ if __name__ == "__main__":
       ...corsHeaders, 
       'Content-Type': 'text/x-python',
       'Content-Disposition': 'attachment; filename="vanguard_agent_pentest.py"'
+    } 
+  });
+}
+
+async function downloadAgentWindows() {
+  const installerScript = `# Vanguard Agent Windows Installer
+# Run in PowerShell as Administrator:
+# iwr -useb "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api?action=download_agent_windows" | iex
+
+Write-Host "Downloading Vanguard Windows Agent..." -ForegroundColor Cyan
+$agentPath = "$env:TEMP\\vanguard_agent.ps1"
+
+try {
+    Invoke-WebRequest -Uri "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api?action=get_agent_script_windows" -OutFile $agentPath
+    Write-Host "Agent downloaded to: $agentPath" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "To run the agent:" -ForegroundColor Yellow
+    Write-Host "  .\\vanguard_agent.ps1 -UserId 'YOUR_USER_ID' -DeviceId 'YOUR_DEVICE_ID'" -ForegroundColor White
+    Write-Host ""
+    Write-Host "To install as a service:" -ForegroundColor Yellow
+    Write-Host "  .\\vanguard_agent.ps1 -Install" -ForegroundColor White
+} catch {
+    Write-Host "Failed to download agent: $_" -ForegroundColor Red
+}
+`;
+
+  return new Response(installerScript, { 
+    headers: { 
+      ...corsHeaders, 
+      'Content-Type': 'text/plain',
+      'Content-Disposition': 'attachment; filename="install_vanguard_windows.ps1"'
+    } 
+  });
+}
+
+async function getAgentScriptWindows() {
+  const powershellAgent = `#Requires -RunAsAdministrator
+<#
+.SYNOPSIS
+    Ultrium Vanguard Windows Agent - Enterprise Security Edition
+.DESCRIPTION
+    Full-featured Windows security agent with EDR, compliance scanning, and remote management
+.PARAMETER UserId
+    Your Vanguard user ID
+.PARAMETER DeviceId
+    Unique device identifier (auto-generated if not provided)
+.PARAMETER Install
+    Install as Windows service
+.PARAMETER Uninstall
+    Remove Windows service
+#>
+
+param(
+    [string]$UserId = "",
+    [string]$DeviceId = "",
+    [string]$ConfigPath = "$PSScriptRoot\\config.json",
+    [switch]$Install,
+    [switch]$Uninstall,
+    [switch]$Test
+)
+
+$VERSION = "4.0.0-enterprise-plus"
+$API_ENDPOINT = "https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/vanguard-agent-api"
+$API_SECRET = "vgd_sk_7Kx9mPqR3nTwYz2JfL8sHcN6bVdXaE4uGtM1oWpQ5iA"
+$HEARTBEAT_INTERVAL = 30
+$COMMAND_POLL_INTERVAL = 5
+
+# Supported commands
+$SUPPORTED_COMMANDS = @(
+    # Core
+    "get_system_info", "get_metrics", "scan_network", "scan_ports", "scan_vulnerabilities",
+    # Windows-specific
+    "scan_eventlog", "scan_registry", "scan_ad", "scan_defender", "scan_firewall_win",
+    "scan_services", "scan_tasks", "scan_shares", "scan_gpo", "scan_installed_software",
+    # RMM
+    "run_command", "install_software", "restart_service", "collect_logs"
+)
+
+function Get-DeviceId {
+    if ($DeviceId) { return $DeviceId }
+    
+    # Try to get from config
+    if (Test-Path $ConfigPath) {
+        $config = Get-Content $ConfigPath | ConvertFrom-Json
+        if ($config.device_id) { return $config.device_id }
+    }
+    
+    # Generate from hardware
+    $serial = (Get-WmiObject win32_bios).SerialNumber
+    $mac = (Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object -First 1).MacAddress
+    $hash = [System.BitConverter]::ToString(
+        [System.Security.Cryptography.SHA256]::Create().ComputeHash(
+            [System.Text.Encoding]::UTF8.GetBytes("$serial-$mac")
+        )
+    ).Replace("-", "").Substring(0, 32)
+    
+    return "win-$hash"
+}
+
+function Get-SystemInfo {
+    $os = Get-WmiObject Win32_OperatingSystem
+    $cpu = Get-WmiObject Win32_Processor | Select-Object -First 1
+    $disk = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='C:'"
+    
+    @{
+        hostname = $env:COMPUTERNAME
+        platform = "windows"
+        os_version = $os.Caption + " " + $os.Version
+        architecture = $os.OSArchitecture
+        cpu_model = $cpu.Name
+        cpu_cores = $cpu.NumberOfCores
+        total_memory_gb = [math]::Round($os.TotalVisibleMemorySize / 1MB, 2)
+        disk_total_gb = [math]::Round($disk.Size / 1GB, 2)
+        disk_free_gb = [math]::Round($disk.FreeSpace / 1GB, 2)
+        domain = $env:USERDOMAIN
+        ip_address = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.InterfaceAlias -notlike "*Loopback*" } | Select-Object -First 1).IPAddress
+        uptime_hours = [math]::Round(((Get-Date) - $os.ConvertToDateTime($os.LastBootUpTime)).TotalHours, 2)
+    }
+}
+
+function Get-Metrics {
+    $cpu = (Get-Counter '\\Processor(_Total)\\% Processor Time' -ErrorAction SilentlyContinue).CounterSamples[0].CookedValue
+    $os = Get-WmiObject Win32_OperatingSystem
+    $memUsed = ($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize * 100
+    $disk = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='C:'"
+    $diskUsed = (($disk.Size - $disk.FreeSpace) / $disk.Size) * 100
+    
+    @{
+        cpu_percent = [math]::Round($cpu, 2)
+        memory_percent = [math]::Round($memUsed, 2)
+        disk_percent = [math]::Round($diskUsed, 2)
+        timestamp = (Get-Date).ToUniversalTime().ToString("o")
+    }
+}
+
+function Invoke-ApiRequest {
+    param([string]$Action, [hashtable]$Body = @{})
+    
+    $headers = @{
+        "X-VANGUARD-KEY" = $API_SECRET
+        "Content-Type" = "application/json"
+        "User-Agent" = "VanguardWindowsAgent/$VERSION"
+    }
+    
+    $uri = "$API_ENDPOINT`?action=$Action"
+    $json = $Body | ConvertTo-Json -Depth 10
+    
+    try {
+        $response = Invoke-RestMethod -Uri $uri -Method Post -Headers $headers -Body $json -TimeoutSec 30
+        return $response
+    } catch {
+        Write-Warning "API request failed: $_"
+        return @{ error = $_.Exception.Message }
+    }
+}
+
+function Register-Agent {
+    $body = @{
+        device_id = $script:CurrentDeviceId
+        user_id = $UserId
+        name = $env:COMPUTERNAME
+        agent_version = $VERSION
+        platform = "windows"
+        system_info = Get-SystemInfo
+    }
+    
+    $result = Invoke-ApiRequest -Action "register" -Body $body
+    Write-Host "Registration: $($result | ConvertTo-Json)" -ForegroundColor Green
+    return $result
+}
+
+function Send-Heartbeat {
+    $body = @{
+        device_id = $script:CurrentDeviceId
+        metrics = Get-Metrics
+        timestamp = (Get-Date).ToUniversalTime().ToString("o")
+    }
+    
+    return Invoke-ApiRequest -Action "heartbeat" -Body $body
+}
+
+function Get-PendingCommands {
+    $body = @{ device_id = $script:CurrentDeviceId }
+    return Invoke-ApiRequest -Action "get_commands" -Body $body
+}
+
+function Send-CommandResponse {
+    param([string]$CommandId, [hashtable]$Response, [bool]$Success = $true, [string]$ErrorMessage = "")
+    
+    $body = @{
+        device_id = $script:CurrentDeviceId
+        command_id = $CommandId
+        response = $Response
+        success = $Success
+        error_message = $ErrorMessage
+        completed_at = (Get-Date).ToUniversalTime().ToString("o")
+    }
+    
+    return Invoke-ApiRequest -Action "command_response" -Body $body
+}
+
+# ============ WINDOWS-SPECIFIC COMMANDS ============
+
+function Invoke-ScanEventLog {
+    param([hashtable]$Params)
+    
+    $logName = $Params.log_name ?? "Security"
+    $hours = $Params.hours ?? 24
+    $startTime = (Get-Date).AddHours(-$hours)
+    
+    $events = Get-WinEvent -LogName $logName -MaxEvents 100 -ErrorAction SilentlyContinue | 
+        Where-Object { $_.TimeCreated -gt $startTime } |
+        Select-Object TimeCreated, Id, LevelDisplayName, Message -First 50
+    
+    $securityEvents = @()
+    if ($logName -eq "Security") {
+        # Look for suspicious events
+        $suspiciousIds = @(4625, 4648, 4672, 4688, 4697, 4698, 4719, 4720, 4732, 4756, 1102)
+        $securityEvents = Get-WinEvent -LogName "Security" -MaxEvents 500 -ErrorAction SilentlyContinue |
+            Where-Object { $_.Id -in $suspiciousIds -and $_.TimeCreated -gt $startTime } |
+            Select-Object TimeCreated, Id, Message -First 20
+    }
+    
+    @{
+        log_name = $logName
+        events_found = $events.Count
+        events = $events | ForEach-Object { @{ time = $_.TimeCreated.ToString("o"); id = $_.Id; level = $_.LevelDisplayName; message = $_.Message.Substring(0, [Math]::Min(200, $_.Message.Length)) } }
+        security_events = $securityEvents | ForEach-Object { @{ time = $_.TimeCreated.ToString("o"); id = $_.Id; message = $_.Message.Substring(0, [Math]::Min(200, $_.Message.Length)) } }
+        success = $true
+    }
+}
+
+function Invoke-ScanRegistry {
+    param([hashtable]$Params)
+    
+    $runKeys = @(
+        "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+        "HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+    )
+    
+    $persistenceEntries = @()
+    foreach ($key in $runKeys) {
+        if (Test-Path $key) {
+            Get-ItemProperty $key | Get-Member -MemberType NoteProperty | 
+                Where-Object { $_.Name -notin @("PSPath", "PSParentPath", "PSChildName", "PSProvider") } |
+                ForEach-Object {
+                    $persistenceEntries += @{
+                        key = $key
+                        name = $_.Name
+                        value = (Get-ItemProperty $key).$($_.Name)
+                    }
+                }
+        }
+    }
+    
+    @{
+        persistence_entries = $persistenceEntries
+        total_entries = $persistenceEntries.Count
+        success = $true
+    }
+}
+
+function Invoke-ScanAD {
+    param([hashtable]$Params)
+    
+    $result = @{ success = $true; domain_joined = $false }
+    
+    try {
+        $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+        $result.domain_joined = $true
+        $result.domain_name = $domain.Name
+        $result.forest = $domain.Forest.Name
+        $result.domain_controllers = $domain.DomainControllers | ForEach-Object { $_.Name }
+        
+        # Get some AD info if available
+        $searcher = New-Object DirectoryServices.DirectorySearcher
+        $searcher.Filter = "(objectClass=user)"
+        $searcher.PageSize = 100
+        $result.user_count = $searcher.FindAll().Count
+        
+        $searcher.Filter = "(objectClass=computer)"
+        $result.computer_count = $searcher.FindAll().Count
+    } catch {
+        $result.error = "Not domain joined or AD query failed"
+    }
+    
+    $result
+}
+
+function Invoke-ScanDefender {
+    param([hashtable]$Params)
+    
+    $status = Get-MpComputerStatus -ErrorAction SilentlyContinue
+    
+    if ($status) {
+        @{
+            enabled = $status.AntivirusEnabled
+            real_time_protection = $status.RealTimeProtectionEnabled
+            behavior_monitor = $status.BehaviorMonitorEnabled
+            ioav_protection = $status.IoavProtectionEnabled
+            antispyware_enabled = $status.AntispywareEnabled
+            tamper_protection = $status.IsTamperProtected
+            signature_version = $status.AntivirusSignatureVersion
+            signature_age_days = $status.AntivirusSignatureAge
+            last_scan = $status.AntivirusSignatureLastUpdated.ToString("o")
+            quick_scan_age_days = $status.QuickScanAge
+            full_scan_age_days = $status.FullScanAge
+            threats_detected = (Get-MpThreatDetection -ErrorAction SilentlyContinue | Measure-Object).Count
+            success = $true
+        }
+    } else {
+        @{ error = "Windows Defender not available"; success = $false }
+    }
+}
+
+function Invoke-ScanFirewall {
+    param([hashtable]$Params)
+    
+    $profiles = Get-NetFirewallProfile
+    $rules = Get-NetFirewallRule -Enabled True | Select-Object -First 50
+    
+    @{
+        profiles = $profiles | ForEach-Object { 
+            @{ name = $_.Name; enabled = $_.Enabled; default_inbound = $_.DefaultInboundAction.ToString(); default_outbound = $_.DefaultOutboundAction.ToString() }
+        }
+        enabled_rules_count = (Get-NetFirewallRule -Enabled True | Measure-Object).Count
+        sample_rules = $rules | ForEach-Object {
+            @{ name = $_.DisplayName; direction = $_.Direction.ToString(); action = $_.Action.ToString(); profile = $_.Profile.ToString() }
+        }
+        success = $true
+    }
+}
+
+function Invoke-ScanServices {
+    param([hashtable]$Params)
+    
+    $services = Get-Service | Where-Object { $_.StartType -eq 'Automatic' -or $_.Status -eq 'Running' }
+    
+    $suspicious = @("nc.exe", "mimikatz", "psexec", "cobalt")
+    $suspiciousServices = $services | Where-Object { 
+        $name = $_.Name.ToLower()
+        $suspicious | Where-Object { $name -like "*$_*" }
+    }
+    
+    @{
+        running_count = ($services | Where-Object { $_.Status -eq 'Running' }).Count
+        stopped_auto_count = ($services | Where-Object { $_.Status -eq 'Stopped' -and $_.StartType -eq 'Automatic' }).Count
+        services = $services | Select-Object -First 50 | ForEach-Object {
+            @{ name = $_.Name; display_name = $_.DisplayName; status = $_.Status.ToString(); start_type = $_.StartType.ToString() }
+        }
+        suspicious_services = $suspiciousServices | ForEach-Object { @{ name = $_.Name; status = $_.Status.ToString() } }
+        success = $true
+    }
+}
+
+function Invoke-ScanTasks {
+    param([hashtable]$Params)
+    
+    $tasks = Get-ScheduledTask | Where-Object { $_.State -eq 'Ready' -or $_.State -eq 'Running' }
+    
+    @{
+        total_active = $tasks.Count
+        tasks = $tasks | Select-Object -First 30 | ForEach-Object {
+            $info = Get-ScheduledTaskInfo $_ -ErrorAction SilentlyContinue
+            @{
+                name = $_.TaskName
+                path = $_.TaskPath
+                state = $_.State.ToString()
+                last_run = if ($info.LastRunTime) { $info.LastRunTime.ToString("o") } else { $null }
+                next_run = if ($info.NextRunTime) { $info.NextRunTime.ToString("o") } else { $null }
+                author = $_.Author
+            }
+        }
+        success = $true
+    }
+}
+
+function Invoke-ScanShares {
+    param([hashtable]$Params)
+    
+    $shares = Get-SmbShare -ErrorAction SilentlyContinue
+    
+    @{
+        shares = $shares | ForEach-Object {
+            @{
+                name = $_.Name
+                path = $_.Path
+                description = $_.Description
+                share_type = $_.ShareType.ToString()
+                current_users = $_.CurrentUsers
+            }
+        }
+        total_shares = $shares.Count
+        success = $true
+    }
+}
+
+function Invoke-ScanGPO {
+    param([hashtable]$Params)
+    
+    $result = @{ success = $true }
+    
+    try {
+        $rsop = Get-WmiObject -Namespace "root\\rsop\\computer" -Class RSOP_GPO -ErrorAction Stop
+        $result.applied_gpos = $rsop | ForEach-Object { 
+            @{ name = $_.name; guid = $_.guidName; enabled = $_.enabled }
+        }
+        $result.gpo_count = $rsop.Count
+    } catch {
+        $result.error = "GPO query failed - may not be domain joined"
+        $result.gpo_count = 0
+    }
+    
+    # Get security policy
+    $secpol = secedit /export /cfg "$env:TEMP\\secpol.cfg" /quiet 2>$null
+    if (Test-Path "$env:TEMP\\secpol.cfg") {
+        $result.password_policy = @{
+            min_length = (Select-String -Path "$env:TEMP\\secpol.cfg" -Pattern "MinimumPasswordLength").ToString().Split("=")[-1].Trim()
+        }
+        Remove-Item "$env:TEMP\\secpol.cfg" -Force -ErrorAction SilentlyContinue
+    }
+    
+    $result
+}
+
+function Invoke-ScanInstalledSoftware {
+    param([hashtable]$Params)
+    
+    $software = Get-ItemProperty "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*" -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName } |
+        Select-Object DisplayName, DisplayVersion, Publisher, InstallDate |
+        Sort-Object DisplayName
+    
+    @{
+        software = $software | ForEach-Object {
+            @{
+                name = $_.DisplayName
+                version = $_.DisplayVersion
+                publisher = $_.Publisher
+                install_date = $_.InstallDate
+            }
+        }
+        total_count = $software.Count
+        success = $true
+    }
+}
+
+function Invoke-CollectLogs {
+    param([hashtable]$Params)
+    
+    $logType = $Params.type ?? "all"
+    $lines = $Params.lines ?? 100
+    $logs = @{}
+    
+    if ($logType -in @("all", "system")) {
+        $logs.system = Get-WinEvent -LogName System -MaxEvents $lines -ErrorAction SilentlyContinue |
+            Select-Object TimeCreated, Id, Message | ForEach-Object {
+                @{ time = $_.TimeCreated.ToString("o"); id = $_.Id; message = $_.Message.Substring(0, [Math]::Min(200, $_.Message.Length)) }
+            }
+    }
+    
+    if ($logType -in @("all", "application")) {
+        $logs.application = Get-WinEvent -LogName Application -MaxEvents $lines -ErrorAction SilentlyContinue |
+            Select-Object TimeCreated, Id, Message | ForEach-Object {
+                @{ time = $_.TimeCreated.ToString("o"); id = $_.Id; message = $_.Message.Substring(0, [Math]::Min(200, $_.Message.Length)) }
+            }
+    }
+    
+    @{
+        logs = $logs
+        collected_at = (Get-Date).ToUniversalTime().ToString("o")
+        success = $true
+    }
+}
+
+function Invoke-RunCommand {
+    param([hashtable]$Params)
+    
+    $cmd = $Params.command
+    if (-not $cmd) { return @{ error = "Command required"; success = $false } }
+    
+    try {
+        $output = Invoke-Expression $cmd 2>&1 | Out-String
+        @{ output = $output; exit_code = $LASTEXITCODE; success = $true }
+    } catch {
+        @{ error = $_.Exception.Message; success = $false }
+    }
+}
+
+# ============ COMMAND HANDLER ============
+
+function Invoke-Command {
+    param([hashtable]$Command)
+    
+    $cmdType = $Command.command_type
+    $params = $Command.parameters ?? @{}
+    
+    Write-Host "Executing: $cmdType" -ForegroundColor Cyan
+    
+    $response = switch ($cmdType) {
+        "get_system_info" { Get-SystemInfo }
+        "get_metrics" { Get-Metrics }
+        "scan_eventlog" { Invoke-ScanEventLog -Params $params }
+        "scan_registry" { Invoke-ScanRegistry -Params $params }
+        "scan_ad" { Invoke-ScanAD -Params $params }
+        "scan_defender" { Invoke-ScanDefender -Params $params }
+        "scan_firewall_win" { Invoke-ScanFirewall -Params $params }
+        "scan_services" { Invoke-ScanServices -Params $params }
+        "scan_tasks" { Invoke-ScanTasks -Params $params }
+        "scan_shares" { Invoke-ScanShares -Params $params }
+        "scan_gpo" { Invoke-ScanGPO -Params $params }
+        "scan_installed_software" { Invoke-ScanInstalledSoftware -Params $params }
+        "collect_logs" { Invoke-CollectLogs -Params $params }
+        "run_command" { Invoke-RunCommand -Params $params }
+        default { @{ error = "Unknown command: $cmdType"; success = $false } }
+    }
+    
+    if (-not $response.success) { $response.success = $true }
+    
+    Send-CommandResponse -CommandId $Command.id -Response $response -Success $response.success
+}
+
+# ============ MAIN ============
+
+$script:CurrentDeviceId = Get-DeviceId
+
+if ($Test) {
+    Write-Host "Testing connection..." -ForegroundColor Cyan
+    $result = Send-Heartbeat
+    Write-Host ($result | ConvertTo-Json -Depth 5) -ForegroundColor Green
+    exit
+}
+
+if ($Install) {
+    Write-Host "Installing as Windows Service..." -ForegroundColor Yellow
+    # Create scheduled task to run at startup
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -File `"$PSCommandPath`" -UserId `"$UserId`""
+    $trigger = New-ScheduledTaskTrigger -AtStartup
+    $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+    
+    Register-ScheduledTask -TaskName "VanguardAgent" -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force
+    Write-Host "Vanguard Agent installed as scheduled task" -ForegroundColor Green
+    exit
+}
+
+if ($Uninstall) {
+    Unregister-ScheduledTask -TaskName "VanguardAgent" -Confirm:$false -ErrorAction SilentlyContinue
+    Write-Host "Vanguard Agent uninstalled" -ForegroundColor Yellow
+    exit
+}
+
+if (-not $UserId) {
+    Write-Host "Error: -UserId is required" -ForegroundColor Red
+    Write-Host "Usage: .\\vanguard_agent.ps1 -UserId 'your-user-id'" -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "Starting Vanguard Windows Agent v$VERSION" -ForegroundColor Cyan
+Write-Host "Device ID: $script:CurrentDeviceId" -ForegroundColor Gray
+
+# Register
+Register-Agent
+
+# Main loop
+$lastHeartbeat = [DateTime]::MinValue
+$lastCommandPoll = [DateTime]::MinValue
+
+while ($true) {
+    $now = Get-Date
+    
+    # Heartbeat
+    if (($now - $lastHeartbeat).TotalSeconds -ge $HEARTBEAT_INTERVAL) {
+        $hb = Send-Heartbeat
+        if (-not $hb.error) { Write-Host "Heartbeat sent" -ForegroundColor DarkGray }
+        $lastHeartbeat = $now
+    }
+    
+    # Command polling
+    if (($now - $lastCommandPoll).TotalSeconds -ge $COMMAND_POLL_INTERVAL) {
+        $result = Get-PendingCommands
+        if ($result.commands -and $result.commands.Count -gt 0) {
+            foreach ($cmd in $result.commands) {
+                Invoke-Command -Command $cmd
+            }
+        }
+        $lastCommandPoll = $now
+    }
+    
+    Start-Sleep -Seconds 1
+}
+`;
+
+  return new Response(powershellAgent, { 
+    headers: { 
+      ...corsHeaders, 
+      'Content-Type': 'text/plain',
+      'Content-Disposition': 'attachment; filename="vanguard_agent.ps1"'
     } 
   });
 }
