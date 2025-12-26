@@ -29,7 +29,9 @@ import {
   FileText,
   Building2,
   Store,
-  BookOpen
+  BookOpen,
+  Crosshair,
+  Wifi
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -41,6 +43,7 @@ interface NavItem {
   path: string;
   icon: React.ElementType;
   badge?: string;
+  isNew?: boolean;
 }
 
 interface NavSection {
@@ -83,6 +86,15 @@ export function VanguardNavigation() {
         { title: 'Pen Testing', path: `${basePath}/pentest`, icon: Shield },
         { title: 'Vulnerability Scanner', path: `${basePath}/vulnscan`, icon: Bug },
         { title: 'Playbooks', path: `${basePath}/playbooks`, icon: BookOpen },
+      ]
+    },
+    {
+      title: 'v4.0 Features',
+      icon: Crosshair,
+      items: [
+        { title: 'Honeypots', path: `${basePath}/honeypots`, icon: Crosshair, isNew: true },
+        { title: 'Continuous Monitor', path: `${basePath}/continuous-monitoring`, icon: Activity, isNew: true },
+        { title: 'Traffic Analysis', path: `${basePath}/traffic-analysis`, icon: Wifi, isNew: true },
       ]
     },
     {
@@ -147,7 +159,7 @@ export function VanguardNavigation() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed top-4 left-4 z-50 md:hidden"
+        className="fixed top-4 left-4 z-50 md:hidden text-white hover:bg-white/10"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -156,7 +168,7 @@ export function VanguardNavigation() {
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -164,7 +176,7 @@ export function VanguardNavigation() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full bg-sidebar-background border-r border-sidebar-border z-40 transition-all duration-300",
+          "fixed left-0 top-0 h-full bg-[#0d0d12] border-r border-white/10 z-40 transition-all duration-300",
           isCollapsed ? "w-16" : "w-64",
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
@@ -172,16 +184,16 @@ export function VanguardNavigation() {
         <div className="flex flex-col h-full">
           {/* Logo Section */}
           <div className={cn(
-            "flex items-center gap-3 p-4 border-b border-sidebar-border",
+            "flex items-center gap-3 p-4 border-b border-white/10",
             isCollapsed && "justify-center"
           )}>
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-              <Shield className="h-6 w-6 text-primary" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-600/20">
+              <Shield className="h-6 w-6 text-cyan-400" />
             </div>
             {!isCollapsed && (
               <div>
-                <h1 className="font-bold text-lg text-sidebar-foreground">Vanguard</h1>
-                <p className="text-xs text-muted-foreground">Security Platform</p>
+                <h1 className="font-bold text-lg bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vanguard</h1>
+                <p className="text-xs text-white/40">Security Platform</p>
               </div>
             )}
           </div>
@@ -198,8 +210,8 @@ export function VanguardNavigation() {
                   <button
                     className={cn(
                       "flex items-center gap-3 w-full px-3 py-2 rounded-lg transition-all duration-200",
-                      "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      isSectionActive(section) ? "text-primary" : "text-sidebar-foreground",
+                      "hover:bg-white/5",
+                      isSectionActive(section) ? "text-cyan-400" : "text-white/70",
                       isCollapsed && "justify-center px-2"
                     )}
                   >
@@ -208,7 +220,7 @@ export function VanguardNavigation() {
                       <>
                         <span className="font-medium text-sm flex-1 text-left">{section.title}</span>
                         <ChevronDown className={cn(
-                          "h-4 w-4 transition-transform",
+                          "h-4 w-4 transition-transform text-white/40",
                           openSections.includes(section.title.toLowerCase()) && "rotate-180"
                         )} />
                       </>
@@ -225,16 +237,21 @@ export function VanguardNavigation() {
                         onClick={() => setIsMobileOpen(false)}
                         className={cn(
                           "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm",
-                          "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                          "hover:bg-white/5",
                           isActive(item.path) 
-                            ? "bg-primary text-primary-foreground" 
-                            : "text-sidebar-foreground/80"
+                            ? "bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border border-cyan-500/30" 
+                            : "text-white/60"
                         )}
                       >
                         <item.icon className="h-4 w-4 shrink-0" />
                         <span>{item.title}</span>
+                        {item.isNew && (
+                          <span className="ml-auto text-[10px] bg-gradient-to-r from-cyan-500 to-purple-600 text-white px-1.5 py-0.5 rounded-full font-medium">
+                            NEW
+                          </span>
+                        )}
                         {item.badge && (
-                          <span className="ml-auto text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full">
+                          <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
                             {item.badge}
                           </span>
                         )}
@@ -247,13 +264,13 @@ export function VanguardNavigation() {
           </nav>
 
           {/* Bottom Section */}
-          <div className="p-3 border-t border-sidebar-border space-y-2">
+          <div className="p-3 border-t border-white/10 space-y-2">
             {/* Back to UltriumAI */}
             <a
               href="/"
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                "text-white/40 hover:bg-white/5 hover:text-white/70",
                 isCollapsed && "justify-center px-2"
               )}
             >
@@ -267,7 +284,7 @@ export function VanguardNavigation() {
               size="sm"
               onClick={() => setIsCollapsed(!isCollapsed)}
               className={cn(
-                "w-full justify-start gap-3",
+                "w-full justify-start gap-3 text-white/40 hover:text-white/70 hover:bg-white/5",
                 isCollapsed && "justify-center px-2"
               )}
             >

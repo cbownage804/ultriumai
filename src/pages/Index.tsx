@@ -155,39 +155,42 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Vanguard Card */}
-            <Card className="border-2 border-destructive/20 bg-gradient-to-br from-destructive/5 to-destructive/10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            {/* Vanguard Card - Featured */}
+            <Card className="border-2 border-cyan-500/30 bg-gradient-to-br from-[#0a0a0f] to-purple-900/20 hover:shadow-xl hover:shadow-cyan-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-cyan-500 to-purple-600 text-white text-xs px-3 py-1 rounded-bl-lg font-medium">
+                v4.0 Enterprise Plus
+              </div>
               <CardHeader className="pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-destructive to-destructive/60 rounded-xl flex items-center justify-center mb-4">
-                  <Shield className="h-8 w-8 text-destructive-foreground" />
+                <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
+                  <Shield className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle className="text-2xl">Ultrium Vanguard™</CardTitle>
+                <CardTitle className="text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Ultrium Vanguard™</CardTitle>
                 <CardDescription className="text-base">All-in-One Security AI Platform</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <p className="text-muted-foreground">
-                  Complete security operations with AI copilot. Threat detection, network scanning, pentesting, and AI-powered service desk.
+                  Complete security operations with AI copilot. Now with honeypots, traffic analysis, continuous monitoring & agent mesh.
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                    <span className="text-sm">XDR/EDR capabilities</span>
+                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-sm">XDR/EDR & Threat Detection</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                    <span className="text-sm">Network & vulnerability scanning</span>
+                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-sm">Honeypots & Deception Technology</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                    <span className="text-sm">Penetration testing tools</span>
+                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-sm">Traffic Analysis & DNS Tunneling Detection</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-destructive flex-shrink-0" />
-                    <span className="text-sm">AI Service Desk</span>
+                    <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
+                    <span className="text-sm">AI Security Copilot & Playbooks</span>
                   </div>
                 </div>
                 <Button 
-                  className="w-full bg-destructive hover:bg-destructive/90" 
+                  className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0" 
                   size="lg"
                   onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
                 >

@@ -7,7 +7,6 @@ import { LogOut, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import ThemeToggle from '@/components/ThemeToggle';
 import { VanguardAIChat } from './VanguardAIChat';
 
 export function VanguardLayout() {
@@ -33,25 +32,23 @@ export function VanguardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0f]">
       {/* Navigation Sidebar */}
       <VanguardNavigation />
 
       {/* Main Content Area - responsive margin for sidebar */}
       <div className="md:ml-64 transition-all duration-300">
         {/* Top Header Bar - mobile optimized */}
-        <header className="sticky top-0 z-30 h-14 md:h-16 bg-background/80 backdrop-blur-md border-b border-border flex items-center justify-between px-4 md:px-6">
+        <header className="sticky top-0 z-30 h-14 md:h-16 bg-[#0a0a0f]/80 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2 ml-10 md:ml-0">
-            <span className="text-xs md:text-sm text-muted-foreground">Ultrium</span>
-            <span className="text-primary font-semibold text-sm md:text-base">Vanguard</span>
+            <span className="text-xs md:text-sm text-white/50">Ultrium</span>
+            <span className="bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent font-semibold text-sm md:text-base">Vanguard</span>
           </div>
           
           <div className="flex items-center gap-2 md:gap-3">
-            <ThemeToggle />
-            
             {user && (
               <div className="flex items-center gap-1 md:gap-2">
-                <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="hidden md:flex items-center gap-2 text-sm text-white/60">
                   <User className="h-4 w-4" />
                   <span className="hidden lg:inline max-w-[150px] truncate">{user.email}</span>
                 </div>
@@ -59,7 +56,7 @@ export function VanguardLayout() {
                   variant="ghost" 
                   size="icon" 
                   onClick={handleSignOut}
-                  className="hover:text-destructive h-8 w-8 md:h-9 md:w-9"
+                  className="hover:text-red-400 hover:bg-red-500/10 h-8 w-8 md:h-9 md:w-9 text-white/60"
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
