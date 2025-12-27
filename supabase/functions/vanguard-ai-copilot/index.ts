@@ -198,13 +198,67 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { messages, context, stream = false, agentId, useTools = true } = await req.json();
-    console.log('Vanguard AI Copilot - Processing request', { agentId, hasContext: !!context, useTools });
+    const { messages, context, stream = false, agentId, userId, useTools = true, isFirstMessage = false } = await req.json();
+    console.log('Vanguard AI Copilot - Processing request', { agentId, userId, hasContext: !!context, useTools, isFirstMessage });
 
-    // If agentId is provided, fetch agent data and recent metrics
+    // Fetch real security data for context
+    let securitySummary = '';
     let agentContext = '';
     let agentCommands: any[] = [];
     
+    // Get user's actual security data
+    if (userId) {
+      // Recent threats
+      const { data: recentThreats } = await supabase
+        .from('security_incidents')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      // Active alerts
+      const { data: activeAlerts } = await supabase
+        .from('security_alerts')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Vulnerabilities
+      const { data: vulnerabilities } = await supabase
+        .from('safenet_vulnerabilities')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Compliance alerts
+      const { data: complianceAlerts } = await supabase
+        .from('compliance_alerts')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'open')
+        .limit(5);
+
+      securitySummary = `
+## LIVE SECURITY DATA FROM YOUR ENVIRONMENT
+
+### Recent Security Incidents (${recentThreats?.length || 0} total)
+${recentThreats?.length ? recentThreats.map(t => `- **${t.severity?.toUpperCase() || 'MEDIUM'}**: ${t.title || t.incident_type} - ${t.status} (${new Date(t.created_at).toLocaleDateString()})`).join('\n') : '✅ No recent incidents - looking good!'}
+
+### Active Security Alerts (${activeAlerts?.length || 0} requiring attention)
+${activeAlerts?.length ? activeAlerts.map(a => `- [${a.severity?.toUpperCase() || 'INFO'}] ${a.title || a.alert_type}: ${a.description?.substring(0, 100) || 'No details'}`).join('\n') : '✅ No active alerts'}
+
+### Known Vulnerabilities (${vulnerabilities?.length || 0} detected)
+${vulnerabilities?.length ? vulnerabilities.map(v => `- **${v.severity?.toUpperCase() || 'MEDIUM'}** (CVSS: ${v.cvss_score || 'N/A'}): ${v.title || v.cve_id || 'Unnamed'} - ${v.status || 'open'}`).join('\n') : '✅ No known vulnerabilities'}
+
+### Compliance Status
+${complianceAlerts?.length ? `⚠️ ${complianceAlerts.length} compliance issues need attention:\n${complianceAlerts.map(c => `- ${c.title}: ${c.description?.substring(0, 80) || 'Review required'}`).join('\n')}` : '✅ Compliance checks passing'}
+`;
+    }
+
+    // If agentId is provided, fetch agent data and recent metrics
     if (agentId) {
       const { data: agent } = await supabase
         .from('vanguard_agents')
@@ -218,77 +272,76 @@ serve(async (req) => {
           .select('*')
           .eq('agent_id', agentId)
           .order('recorded_at', { ascending: false })
-          .limit(10);
+          .limit(5);
         
         const { data: networkAssets } = await supabase
           .from('network_assets')
           .select('*')
           .eq('user_id', agent.user_id)
           .order('last_seen', { ascending: false })
-          .limit(50);
-        
-        const { data: commands } = await supabase
-          .from('vanguard_agent_commands')
-          .select('*')
-          .eq('agent_id', agentId)
-          .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(20);
+
+        const latestMetric = metrics?.[0];
+        const onlineAssets = networkAssets?.filter(a => {
+          const lastSeen = new Date(a.last_seen);
+          return (Date.now() - lastSeen.getTime()) < 300000; // 5 min
+        });
 
         agentContext = `
-## Current Agent Status
-- Name: ${agent.name}
-- Device ID: ${agent.device_id}
-- Status: ${agent.status}
-- IP Address: ${agent.ip_address}
-- Location: ${agent.location || 'Not set'}
-- Agent Version: ${agent.agent_version}
-- Last Heartbeat: ${agent.last_heartbeat}
+## YOUR VANGUARD AGENT STATUS
+- **Agent Name**: ${agent.name}
+- **Status**: ${agent.status === 'online' ? '🟢 ONLINE' : '🔴 OFFLINE'}
+- **IP Address**: ${agent.ip_address}
+- **Version**: ${agent.agent_version}
+- **Last Heartbeat**: ${agent.last_heartbeat ? new Date(agent.last_heartbeat).toLocaleString() : 'Never'}
 
-## Recent Metrics (Last 10 readings)
-${metrics?.map(m => `- CPU: ${m.cpu_percent}%, Memory: ${m.memory_percent}%, Disk: ${m.disk_percent}% @ ${m.recorded_at}`).join('\n') || 'No metrics available'}
+### Current System Health
+${latestMetric ? `- CPU: ${latestMetric.cpu_percent?.toFixed(1)}% | Memory: ${latestMetric.memory_percent?.toFixed(1)}% | Disk: ${latestMetric.disk_percent?.toFixed(1)}%` : '- No metrics available yet'}
 
-## Network Assets Discovered (${networkAssets?.length || 0} devices)
-${networkAssets?.slice(0, 10).map(a => `- ${a.ip_address} (${a.hostname || 'unknown'}) - ${a.device_type || 'unknown'} - Ports: ${a.open_ports?.join(', ') || 'none'}`).join('\n') || 'No assets discovered'}
-
-## Recent Commands
-${commands?.map(c => `- ${c.command_type}: ${c.status} @ ${c.created_at}`).join('\n') || 'No recent commands'}
+### Network Discovery (${networkAssets?.length || 0} devices found)
+${networkAssets?.slice(0, 5).map(a => `- ${a.ip_address} (${a.hostname || 'unknown'}) - ${a.device_type || 'device'}`).join('\n') || 'No devices discovered yet'}
+${networkAssets && networkAssets.length > 5 ? `... and ${networkAssets.length - 5} more devices` : ''}
 `;
 
         agentCommands = [
           { name: 'scan_network', description: 'Scan the local network for hosts and services' },
-          { name: 'scan_host', description: 'Scan a specific host for open ports' },
+          { name: 'scan_host', description: 'Scan a specific host for open ports and vulnerabilities' },
           { name: 'assess_vulnerabilities', description: 'Run vulnerability assessment with CVE lookup' },
-          { name: 'run_exploits', description: 'Run safe exploitation tests on a host' },
-          { name: 'get_system_info', description: 'Get agent system information' },
-          { name: 'get_metrics', description: 'Get current system metrics' },
+          { name: 'get_system_info', description: 'Get detailed agent system information' },
         ];
       }
     }
 
-    const systemPrompt = `You are Vanguard AI, an advanced security operations copilot for the Ultrium Vanguard platform. You are THE differentiating feature - a conversational AI that can perform real security operations.
+    const systemPrompt = `You are Vanguard AI, the user's personal security advisor and operations copilot. You're friendly, conversational, and genuinely helpful - like talking to a knowledgeable security expert who's also a good friend.
 
-## Your Security Tool Capabilities
-You have access to powerful security tools that you can invoke automatically:
+## YOUR PERSONALITY
+- Be warm and conversational - talk like a helpful colleague, not a robot
+- Be proactive - notice issues in their data and bring them up naturally
+- Ask clarifying questions when needed, like "Would you like me to dig deeper into that?"
+- Use casual language: "Hey, I noticed...", "That's interesting, let me check...", "Good news!", "Heads up..."
+- When you find issues, explain them clearly but don't be alarmist
+- Celebrate wins: "Looking good!" when things are secure
 
-1. **check_email_breach** - Check if any email has been exposed in data breaches. Shows leaked passwords, credentials.
-2. **check_domain_breach** - Scan an entire domain for leaked credentials across all employees.
-3. **scan_url** - Analyze any URL for phishing indicators, malicious content, and extract intelligence.
-4. **check_ip_reputation** - Check if an IP is malicious, on blocklists, or associated with threats.
-5. **scan_document_for_sensitive_data** - Find SSNs, credit cards, API keys, passwords in documents.
-6. **scan_for_malware** - Detect malicious scripts, phishing, ransomware patterns in files.
+## YOUR SECURITY TOOLS
+You can perform REAL security operations:
+1. **check_email_breach** - Check if an email has been exposed in data breaches
+2. **check_domain_breach** - Scan a domain for leaked credentials
+3. **scan_url** - Analyze URLs for phishing/malicious content
+4. **check_ip_reputation** - Check if an IP is on blocklists or malicious
+5. **scan_document_for_sensitive_data** - Find SSNs, credit cards, API keys in text
+6. **scan_for_malware** - Detect malicious patterns in content
 
-## How You Work
-When a user asks about security topics or requests scans:
-- Use the appropriate tool to get REAL data
-- Explain findings clearly with actionable recommendations
-- Be proactive - if you find issues, emphasize their severity
-- Provide specific remediation steps
+When using tools, explain what you're doing conversationally: "Let me check that email for you..." then share findings naturally.
 
-${agentId ? `
-## Agent Commands (for network operations)
+${agentContext}
+
+${securitySummary}
+
+${agentId && agentCommands.length ? `
+## AGENT COMMANDS YOU CAN RUN
 ${agentCommands.map(c => `- **${c.name}**: ${c.description}`).join('\n')}
 
-When the user asks for network operations, respond with:
+When the user wants network operations, output:
 \`\`\`vanguard-command
 {
   "command_type": "command_name",
@@ -297,17 +350,20 @@ When the user asks for network operations, respond with:
 \`\`\`
 ` : ''}
 
-${agentContext}
+${context ? `## ADDITIONAL CONTEXT\n${JSON.stringify(context)}` : ''}
 
-## Additional Context
-${context ? JSON.stringify(context) : 'No additional context provided.'}
+## HOW TO RESPOND
+${isFirstMessage ? `
+This is the START of a new conversation. Greet the user warmly and:
+1. If they have agents online, mention it positively
+2. If there are any critical issues in their security data, mention the most important one
+3. Ask what they'd like to focus on today
+4. Keep it brief and friendly - 2-3 sentences max
+` : `
+Continue the conversation naturally. Be helpful, answer their question, and when appropriate ask follow-up questions to better help them.
+`}
 
-## Guidelines
-- Be conversational but professional
-- When you use a tool, explain what you're doing and what you found
-- Prioritize critical security issues
-- Give specific, actionable advice
-- You are the user's trusted security advisor`;
+Remember: You're their trusted security partner. Be helpful, be real, be conversational.`;
 
     // If useTools is enabled, use tool calling for security operations
     if (useTools) {

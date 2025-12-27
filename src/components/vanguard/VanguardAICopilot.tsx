@@ -15,55 +15,66 @@ import {
   FileText,
   Trash2,
   Copy,
-  Check
+  Check,
+  Search,
+  Mail
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  toolsUsed?: string[];
+}
+
+interface VanguardAICopilotProps {
+  agentId?: string;
 }
 
 const QUICK_PROMPTS = [
-  { icon: Shield, label: "Security Assessment", prompt: "Perform a security assessment of my current environment. What should I check?" },
-  { icon: AlertTriangle, label: "Incident Response", prompt: "I think we have a security incident. What steps should I take immediately?" },
-  { icon: Network, label: "Network Analysis", prompt: "How can I analyze my network for potential vulnerabilities?" },
-  { icon: FileText, label: "Compliance Check", prompt: "What compliance requirements should I be aware of for my industry?" },
+  { icon: Shield, label: "Security Overview", prompt: "Give me a quick overview of my security posture. Any issues I should know about?" },
+  { icon: AlertTriangle, label: "Check for Threats", prompt: "Are there any active threats or alerts I need to address right now?" },
+  { icon: Network, label: "Scan Network", prompt: "Can you run a network scan and tell me what devices you find?" },
+  { icon: Mail, label: "Check Email Breach", prompt: "Can you check if my email has been in any data breaches?" },
+  { icon: Search, label: "Check a URL", prompt: "I want to check if a website is safe before I visit it" },
+  { icon: FileText, label: "Compliance Status", prompt: "How are we doing on compliance? Any gaps I should know about?" },
 ];
 
-export function VanguardAICopilot() {
+export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
   const { toast } = useToast();
+  const { agents } = useVanguardAgents();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasInitialized = useRef(false);
 
+  // Get current user
   useEffect(() => {
-    // Add welcome message
-    if (messages.length === 0) {
-      setMessages([{
-        id: 'welcome',
-        role: 'assistant',
-        content: `Welcome to Vanguard AI Copilot! I'm your security operations assistant.
-
-I can help you with:
-• **Ticket Analysis** - Analyze support tickets and suggest solutions
-• **Security Assessment** - Evaluate risks and recommend mitigations
-• **Incident Response** - Guide you through security incident handling
-• **Compliance Guidance** - Answer compliance and audit questions
-• **Network Security** - Help troubleshoot network security issues
-• **Threat Intelligence** - Share insights on current threats
-
-How can I assist you today?`,
-        timestamp: new Date()
-      }]);
-    }
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id || null);
+    });
   }, []);
+
+  // Get the first online agent if no specific agent provided
+  const activeAgentId = agentId || agents.find(a => a.status === 'online')?.id;
+  const onlineAgentCount = agents.filter(a => a.status === 'online').length;
+
+  // Initialize with a proactive greeting from the AI
+  useEffect(() => {
+    if (hasInitialized.current || !userId) return;
+    hasInitialized.current = true;
+
+    // Start a conversation with the AI to get a personalized greeting
+    initializeChat();
+  }, [userId, activeAgentId]);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -71,6 +82,58 @@ How can I assist you today?`,
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Initialize chat with AI-generated personalized greeting
+  const initializeChat = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vanguard-ai-copilot`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ 
+            messages: [{ role: 'user', content: 'Hello' }],
+            agentId: activeAgentId,
+            userId,
+            isFirstMessage: true,
+            useTools: false,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages([{
+          id: 'welcome',
+          role: 'assistant',
+          content: data.response || "Hey! I'm your Vanguard AI security copilot. How can I help you today?",
+          timestamp: new Date()
+        }]);
+      } else {
+        // Fallback greeting
+        setMessages([{
+          id: 'welcome',
+          role: 'assistant',
+          content: `Hey there! 👋 I'm your Vanguard AI security copilot.${onlineAgentCount > 0 ? ` I can see you have ${onlineAgentCount} agent${onlineAgentCount > 1 ? 's' : ''} online - nice!` : ''} What would you like to look into today?`,
+          timestamp: new Date()
+        }]);
+      }
+    } catch (error) {
+      // Fallback greeting on error
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: "Hey! I'm your Vanguard AI security copilot. What can I help you with today?",
+        timestamp: new Date()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const sendMessage = async (messageText?: string) => {
     const text = messageText || input.trim();
@@ -88,13 +151,13 @@ How can I assist you today?`,
     setIsLoading(true);
 
     try {
-      // Build messages for API
+      // Build messages for API (exclude welcome message)
       const apiMessages = messages
         .filter(m => m.id !== 'welcome')
         .map(m => ({ role: m.role, content: m.content }));
       apiMessages.push({ role: 'user', content: text });
 
-      // Use streaming for better UX
+      // Use non-streaming with tools for better responses
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vanguard-ai-copilot`,
         {
@@ -105,7 +168,9 @@ How can I assist you today?`,
           },
           body: JSON.stringify({ 
             messages: apiMessages,
-            stream: true 
+            agentId: activeAgentId,
+            userId,
+            useTools: true,
           }),
         }
       );
@@ -120,76 +185,16 @@ How can I assist you today?`,
         throw new Error('Failed to get response');
       }
 
-      // Handle streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistantContent = '';
+      const data = await response.json();
       const assistantId = (Date.now() + 1).toString();
-
-      // Add empty assistant message
+      
       setMessages(prev => [...prev, {
         id: assistantId,
         role: 'assistant',
-        content: '',
-        timestamp: new Date()
+        content: data.response || "I'm sorry, I couldn't process that request.",
+        timestamp: new Date(),
+        toolsUsed: data.tools_used,
       }]);
-
-      let textBuffer = '';
-
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        // Process line-by-line
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages(prev => prev.map(m => 
-                m.id === assistantId ? { ...m, content: assistantContent } : m
-              ));
-            }
-          } catch {
-            // Incomplete JSON, put back
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
-
-      // Final flush
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split('\n')) {
-          if (!raw || !raw.startsWith('data: ')) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-            }
-          } catch {}
-        }
-        setMessages(prev => prev.map(m => 
-          m.id === assistantId ? { ...m, content: assistantContent } : m
-        ));
-      }
 
     } catch (error: any) {
       console.error('Error:', error);
@@ -197,15 +202,6 @@ How can I assist you today?`,
         title: "Error",
         description: error.message || "Failed to get response from AI",
         variant: "destructive",
-      });
-      
-      // Remove the loading message if there was an error
-      setMessages(prev => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage.role === 'assistant' && !lastMessage.content) {
-          return prev.slice(0, -1);
-        }
-        return prev;
       });
     } finally {
       setIsLoading(false);
@@ -220,12 +216,9 @@ How can I assist you today?`,
   };
 
   const clearChat = () => {
-    setMessages([{
-      id: 'welcome',
-      role: 'assistant',
-      content: `Chat cleared. How can I assist you today?`,
-      timestamp: new Date()
-    }]);
+    hasInitialized.current = false;
+    setMessages([]);
+    initializeChat();
   };
 
   return (
@@ -238,8 +231,16 @@ How can I assist you today?`,
                 <Bot className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg">Vanguard AI Copilot</CardTitle>
-                <CardDescription>Your security operations assistant</CardDescription>
+                <CardTitle className="text-lg">Vanguard AI</CardTitle>
+                <CardDescription className="flex items-center gap-2">
+                  Security Operations Copilot
+                  {onlineAgentCount > 0 && (
+                    <Badge variant="outline" className="text-xs text-green-500 border-green-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1" />
+                      {onlineAgentCount} agent{onlineAgentCount > 1 ? 's' : ''} online
+                    </Badge>
+                  )}
+                </CardDescription>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={clearChat}>
@@ -249,19 +250,20 @@ How can I assist you today?`,
           </div>
         </CardHeader>
 
-        {/* Quick Prompts */}
-        {messages.length <= 1 && (
+        {/* Quick Prompts - show when only welcome message */}
+        {messages.length <= 1 && !isLoading && (
           <div className="px-6 pb-4">
             <p className="text-sm text-muted-foreground mb-3">Quick actions:</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {QUICK_PROMPTS.map((prompt, i) => (
                 <Button
                   key={i}
                   variant="outline"
-                  className="justify-start h-auto py-3"
+                  className="justify-start h-auto py-3 text-left"
                   onClick={() => sendMessage(prompt.prompt)}
+                  disabled={isLoading}
                 >
-                  <prompt.icon className="h-4 w-4 mr-2 text-primary" />
+                  <prompt.icon className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
                   <span className="text-sm">{prompt.label}</span>
                 </Button>
               ))}
