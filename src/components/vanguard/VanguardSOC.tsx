@@ -25,11 +25,13 @@ import {
   Wifi,
   WifiOff,
   ChevronRight,
-  Brain
+  Brain,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { useToast } from "@/hooks/use-toast";
+import { VanguardEmptyState, VanguardDataStatus } from "./VanguardEmptyState";
 
 interface SecurityAlert {
   id: string;
@@ -319,6 +321,18 @@ export const VanguardSOC = () => {
   };
 
   const threatLevel = getThreatLevel();
+
+  // Show empty state when no agents are connected
+  if (!isLoading && agents.length === 0) {
+    return (
+      <div className="p-4 md:p-6">
+        <VanguardEmptyState 
+          feature="Security Operations Center" 
+          description="The SOC requires Vanguard agents to monitor your infrastructure for threats, incidents, and security events in real-time."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 space-y-4 md:space-y-6">

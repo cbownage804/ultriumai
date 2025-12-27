@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useVanguardData } from '@/hooks/useVanguardData';
 import { useVanguardAgents } from '@/hooks/useVanguardAgents';
 import { getVanguardBasePath } from '@/utils/subdomain';
+import { VanguardDataStatus, VanguardEmptyState } from '@/components/vanguard/VanguardEmptyState';
 
 
 export default function VanguardHome() {
@@ -111,12 +112,19 @@ export default function VanguardHome() {
       {/* Hero Section */}
       <div className="relative overflow-hidden rounded-xl md:rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-background border border-border p-4 md:p-8">
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-4">
-            <Shield className="h-8 w-8 md:h-10 md:w-10 text-primary" />
-            <div>
-              <h1 className="text-xl md:text-3xl font-bold">Welcome to Vanguard</h1>
-              <p className="text-sm md:text-base text-muted-foreground">Your unified security operations platform</p>
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <Shield className="h-8 w-8 md:h-10 md:w-10 text-primary" />
+              <div>
+                <h1 className="text-xl md:text-3xl font-bold">Welcome to Vanguard</h1>
+                <p className="text-sm md:text-base text-muted-foreground">Your unified security operations platform</p>
+              </div>
             </div>
+            <VanguardDataStatus 
+              hasAgents={agents.length > 0}
+              onlineAgents={agents.filter(a => a.status === 'online').length}
+              totalAgents={agents.length}
+            />
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 md:mt-6">

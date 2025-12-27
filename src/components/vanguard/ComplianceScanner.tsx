@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { AgentlessScanDialog } from "./AgentlessScanDialog";
+import { VanguardEmptyState } from "./VanguardEmptyState";
 
 interface ComplianceScanJob {
   id: string;
@@ -295,6 +296,18 @@ export function ComplianceScanner() {
     ? Math.round(scanJobs.reduce((sum, j) => sum + (j.compliance_score || 0), 0) / scanJobs.length)
     : 0;
   const totalFailed = scanJobs.reduce((sum, j) => sum + (j.failed_checks || 0), 0);
+
+  // Show empty state when no agents are connected
+  if (!isLoading && agents.length === 0) {
+    return (
+      <div className="space-y-6">
+        <VanguardEmptyState 
+          feature="Compliance Scanner" 
+          description="Compliance scanning requires Vanguard agents to assess your infrastructure against CIS, NIST, PCI DSS, HIPAA, and SOC 2 frameworks."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
