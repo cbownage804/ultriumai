@@ -5,13 +5,12 @@ import {
   Trash2, 
   Maximize2, 
   Minimize2, 
-  X,
-  AlertTriangle,
-  Shield,
   Volume2,
   VolumeX,
   Bell,
-  BellOff
+  BellOff,
+  History,
+  Plus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,10 +20,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
 import { useCopilotVoice } from "@/hooks/useCopilotVoice";
+import { useCopilotConversations } from "@/hooks/useCopilotConversations";
+import { useCopilotAlerts } from "@/hooks/useCopilotAlerts";
 import { CopilotMessage } from "./copilot/CopilotMessage";
 import { CopilotInput } from "./copilot/CopilotInput";
 import { CopilotQuickActions } from "./copilot/CopilotQuickActions";
 import { CopilotThreatMap } from "./copilot/CopilotThreatMap";
+import { CopilotAlertPopup } from "./copilot/CopilotAlertPopup";
+import { CopilotConversationList } from "./copilot/CopilotConversationList";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -49,8 +52,9 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
   const { toast } = useToast();
   const { agents } = useVanguardAgents();
   const voice = useCopilotVoice();
+  const conversations = useCopilotConversations();
   
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -59,6 +63,9 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [activeThreats, setActiveThreats] = useState<any[]>([]);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [showConversations, setShowConversations] = useState(false);
+  
+  const copilotAlerts = useCopilotAlerts(userId, alertsEnabled);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
@@ -93,12 +100,19 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
     fetchThreats();
   }, [userId]);
 
-  // Initialize with proactive greeting
+  // Initialize with proactive greeting or load existing conversation
   useEffect(() => {
     if (hasInitialized.current || !userId) return;
     hasInitialized.current = true;
-    initializeChat();
-  }, [userId, activeAgentId]);
+    
+    // Check for existing conversations
+    if (conversations.conversations.length > 0 && !conversations.currentConversation) {
+      // Start a new conversation
+      startNewConversation();
+    } else {
+      initializeChat();
+    }
+  }, [userId, activeAgentId, conversations.conversations.length]);
 
   // Handle voice transcript
   useEffect(() => {
@@ -115,7 +129,14 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
         scrollElement.scrollTop = scrollElement.scrollHeight;
       }
     }
-  }, [messages]);
+  }, [localMessages]);
+
+  const startNewConversation = async () => {
+    const conversationId = await conversations.createConversation();
+    if (conversationId) {
+      initializeChat();
+    }
+  };
 
   const initializeChat = async () => {
     setIsLoading(true);
@@ -141,14 +162,14 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
       if (response.ok) {
         const data = await response.json();
         const welcomeMessage = data.response || getDefaultGreeting();
-        setMessages([{
+        setLocalMessages([{
           id: 'welcome',
           role: 'assistant',
           content: welcomeMessage,
           timestamp: new Date()
         }]);
       } else {
-        setMessages([{
+        setLocalMessages([{
           id: 'welcome',
           role: 'assistant',
           content: getDefaultGreeting(),
@@ -156,7 +177,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
         }]);
       }
     } catch (error) {
-      setMessages([{
+      setLocalMessages([{
         id: 'welcome',
         role: 'assistant',
         content: getDefaultGreeting(),
@@ -183,13 +204,18 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setLocalMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
+    // Persist user message
+    if (conversations.currentConversation) {
+      await conversations.addMessage('user', text);
+    }
+
     // Add streaming placeholder
     const assistantId = (Date.now() + 1).toString();
-    setMessages(prev => [...prev, {
+    setLocalMessages(prev => [...prev, {
       id: assistantId,
       role: 'assistant',
       content: '',
@@ -198,7 +224,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
     }]);
 
     try {
-      const apiMessages = messages
+      const apiMessages = localMessages
         .filter(m => m.id !== 'welcome')
         .map(m => ({ role: m.role, content: m.content }));
       apiMessages.push({ role: 'user', content: text });
@@ -262,7 +288,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 fullContent += content;
-                setMessages(prev => prev.map(m => 
+                setLocalMessages(prev => prev.map(m => 
                   m.id === assistantId 
                     ? { ...m, content: fullContent }
                     : m
@@ -276,12 +302,14 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
       }
 
       // If no streaming content, try to get JSON response
+      let toolsUsed: string[] | undefined;
       if (!fullContent) {
         try {
           const data = await response.json();
           fullContent = data.response || "I processed your request.";
+          toolsUsed = data.tools_used;
           
-          setMessages(prev => prev.map(m => 
+          setLocalMessages(prev => prev.map(m => 
             m.id === assistantId 
               ? { 
                   ...m, 
@@ -293,23 +321,28 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
           ));
         } catch {
           // Response was streamed, finalize
-          setMessages(prev => prev.map(m => 
+          setLocalMessages(prev => prev.map(m => 
             m.id === assistantId 
               ? { ...m, isStreaming: false }
               : m
           ));
         }
       } else {
-        setMessages(prev => prev.map(m => 
+        setLocalMessages(prev => prev.map(m => 
           m.id === assistantId 
             ? { ...m, isStreaming: false }
             : m
         ));
       }
 
+      // Persist assistant message
+      if (conversations.currentConversation && fullContent) {
+        await conversations.addMessage('assistant', fullContent, toolsUsed);
+      }
+
     } catch (error: any) {
       console.error('Error:', error);
-      setMessages(prev => prev.filter(m => m.id !== assistantId));
+      setLocalMessages(prev => prev.filter(m => m.id !== assistantId));
       toast({
         title: "Error",
         description: error.message || "Failed to get response from AI",
@@ -340,10 +373,26 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
     }
   };
 
-  const clearChat = () => {
+  const clearChat = async () => {
     hasInitialized.current = false;
-    setMessages([]);
-    initializeChat();
+    setLocalMessages([]);
+    await startNewConversation();
+  };
+
+  const handleSelectConversation = async (conversationId: string | null) => {
+    if (conversationId) {
+      await conversations.loadConversation(conversationId);
+      // Convert persisted messages to local format
+      const loadedMessages: Message[] = conversations.messages.map(m => ({
+        id: m.id,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: new Date(m.created_at),
+        toolsUsed: m.tools_used || undefined,
+      }));
+      setLocalMessages(loadedMessages);
+    }
+    setShowConversations(false);
   };
 
   return (
@@ -376,7 +425,16 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
           "shadow-2xl shadow-[hsl(var(--copilot-accent)/0.1)]"
         )}>
           {/* Header */}
-          <CardHeader className="pb-3 border-b border-[hsl(var(--copilot-border))]">
+          <CardHeader className="pb-3 border-b border-[hsl(var(--copilot-border))] relative">
+            {/* Proactive Alert Popup */}
+            {copilotAlerts.alerts.length > 0 && (
+              <CopilotAlertPopup
+                alerts={copilotAlerts.alerts}
+                onDismiss={copilotAlerts.dismissAlert}
+                onDismissAll={copilotAlerts.dismissAllAlerts}
+              />
+            )}
+            
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* Animated Logo */}
@@ -422,6 +480,18 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
                 <Button
                   variant="ghost"
                   size="icon"
+                  onClick={() => setShowConversations(!showConversations)}
+                  className={cn(
+                    "h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]",
+                    showConversations && "bg-[hsl(var(--copilot-accent)/0.2)] text-[hsl(var(--copilot-accent))]"
+                  )}
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setVoiceEnabled(!voiceEnabled)}
                   className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
                 >
@@ -432,9 +502,15 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
                   variant="ghost"
                   size="icon"
                   onClick={() => setAlertsEnabled(!alertsEnabled)}
-                  className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
+                  className={cn(
+                    "h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]",
+                    copilotAlerts.alerts.length > 0 && alertsEnabled && "text-[hsl(var(--threat-high))]"
+                  )}
                 >
                   {alertsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                  {copilotAlerts.alerts.length > 0 && alertsEnabled && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[hsl(var(--threat-critical))] animate-pulse" />
+                  )}
                 </Button>
                 
                 <Button
@@ -443,7 +519,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
                   onClick={clearChat}
                   className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Plus className="h-4 w-4" />
                 </Button>
                 
                 <Button
@@ -459,7 +535,18 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
           </CardHeader>
 
           {/* Main Content Area */}
-          <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
+          <CardContent className="flex-1 flex flex-col overflow-hidden p-0 relative">
+            {/* Conversation List Sidebar */}
+            <CopilotConversationList
+              conversations={conversations.conversations}
+              currentConversationId={conversations.currentConversation?.id || null}
+              onSelectConversation={handleSelectConversation}
+              onNewConversation={clearChat}
+              onDeleteConversation={conversations.deleteConversation}
+              isOpen={showConversations}
+              onClose={() => setShowConversations(false)}
+            />
+            
             {/* Threat Map - Only show when expanded and has threats */}
             {isExpanded && (
               <div className="p-4 border-b border-[hsl(var(--copilot-border))]">
@@ -468,7 +555,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
             )}
 
             {/* Quick Actions - Show when only welcome message */}
-            {messages.length <= 1 && !isLoading && (
+            {localMessages.length <= 1 && !isLoading && (
               <div className="p-4 border-b border-[hsl(var(--copilot-border))]">
                 <CopilotQuickActions 
                   onSelectAction={sendMessage}
@@ -480,7 +567,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
             {/* Messages */}
             <ScrollArea className="flex-1 px-4" ref={scrollRef}>
               <div className="space-y-4 py-4">
-                {messages.map((message) => (
+                {localMessages.map((message) => (
                   <CopilotMessage
                     key={message.id}
                     {...message}
@@ -491,7 +578,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
                 ))}
                 
                 {/* Loading indicator */}
-                {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                {isLoading && localMessages[localMessages.length - 1]?.role === 'user' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
