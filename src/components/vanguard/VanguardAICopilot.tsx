@@ -10,7 +10,9 @@ import {
   Bell,
   BellOff,
   History,
-  Plus
+  Plus,
+  Minus,
+  Square
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,7 +60,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'normal' | 'fullscreen' | 'minimized'>('normal');
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [activeThreats, setActiveThreats] = useState<any[]>([]);
@@ -406,6 +408,29 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
     setShowConversations(false);
   };
 
+  // Minimized floating button
+  if (displayMode === 'minimized') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="fixed bottom-6 right-6 z-50"
+      >
+        <Button
+          onClick={() => setDisplayMode('normal')}
+          className="h-14 w-14 rounded-full bg-gradient-to-br from-[hsl(var(--copilot-accent))] to-[hsl(var(--cyber-purple))] shadow-lg shadow-[hsl(var(--copilot-accent)/0.4)] hover:scale-110 transition-transform"
+        >
+          <Bot className="h-6 w-6 text-black" />
+        </Button>
+        {copilotAlerts.alerts.length > 0 && alertsEnabled && (
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[hsl(var(--threat-critical))] text-white text-xs flex items-center justify-center animate-pulse">
+            {copilotAlerts.alerts.length}
+          </span>
+        )}
+      </motion.div>
+    );
+  }
+
   return (
     <AnimatePresence>
       <motion.div
@@ -414,19 +439,18 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
         exit={{ opacity: 0, scale: 0.95 }}
         className={cn(
           "flex flex-col transition-all duration-300",
-          isExpanded 
-            ? "fixed inset-4 z-50" 
+          displayMode === 'fullscreen' 
+            ? "fixed inset-0 z-50" 
             : "h-[calc(100vh-12rem)]"
         )}
       >
-        {/* Backdrop for expanded mode */}
-        {isExpanded && (
+        {/* Backdrop for fullscreen mode */}
+        {displayMode === 'fullscreen' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm -z-10"
-            onClick={() => setIsExpanded(false)}
+            className="fixed inset-0 bg-black/90 -z-10"
           />
         )}
 
@@ -536,10 +560,21 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setIsExpanded(!isExpanded)}
+                  onClick={() => setDisplayMode('minimized')}
                   className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
+                  title="Minimize"
                 >
-                  {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  <Minus className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDisplayMode(displayMode === 'fullscreen' ? 'normal' : 'fullscreen')}
+                  className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
+                  title={displayMode === 'fullscreen' ? 'Exit fullscreen' : 'Fullscreen'}
+                >
+                  {displayMode === 'fullscreen' ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
@@ -558,8 +593,8 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
               onClose={() => setShowConversations(false)}
             />
             
-            {/* Threat Map - Only show when expanded and has threats */}
-            {isExpanded && (
+            {/* Threat Map - Only show when fullscreen and has threats */}
+            {displayMode === 'fullscreen' && (
               <div className="p-4 border-b border-[hsl(var(--copilot-border))]">
                 <CopilotThreatMap threats={activeThreats} />
               </div>
