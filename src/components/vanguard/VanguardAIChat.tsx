@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  MessageCircle, X, Send, Loader2, Bot, User, Minimize2, Maximize2,
-  Shield, AlertTriangle, CheckCircle, Sparkles
+  MessageCircle, X, Send, Loader2, Bot, User, Minus, Maximize2, Minimize2,
+  Shield, AlertTriangle, CheckCircle, Sparkles, Square
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,7 +20,7 @@ interface Message {
 
 export const VanguardAIChat = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'normal' | 'minimized' | 'fullscreen'>('normal');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,10 +34,10 @@ export const VanguardAIChat = () => {
   }, [messages]);
 
   useEffect(() => {
-    if (isOpen && !isMinimized && inputRef.current) {
+    if (isOpen && displayMode !== 'minimized' && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isOpen, isMinimized]);
+  }, [isOpen, displayMode]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -116,7 +116,7 @@ export const VanguardAIChat = () => {
     );
   }
 
-  if (isMinimized) {
+  if (displayMode === 'minimized') {
     return (
       <div className="fixed bottom-6 right-6 z-50">
         <Card className="w-72 shadow-xl border-primary/20">
@@ -126,8 +126,8 @@ export const VanguardAIChat = () => {
               <span className="font-semibold text-sm">Vanguard AI</span>
             </div>
             <div className="flex gap-1">
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsMinimized(false)}>
-                <Maximize2 className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDisplayMode('normal')}>
+                <Square className="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
                 <X className="h-4 w-4" />
@@ -140,28 +140,70 @@ export const VanguardAIChat = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
-      <Card className="w-96 h-[600px] shadow-xl border-primary/20 flex flex-col">
-        <CardHeader className="p-3 flex flex-row items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5 border-b">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Bot className="h-6 w-6 text-primary" />
-              <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1" />
+    <>
+      {/* Fullscreen backdrop */}
+      {displayMode === 'fullscreen' && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40" onClick={() => setDisplayMode('normal')} />
+      )}
+      
+      <div className={cn(
+        "fixed z-50 transition-all duration-300",
+        displayMode === 'fullscreen' 
+          ? "inset-4" 
+          : "bottom-6 right-6"
+      )}>
+        <Card className={cn(
+          "shadow-xl border-primary/20 flex flex-col",
+          displayMode === 'fullscreen' 
+            ? "w-full h-full" 
+            : "w-96 h-[600px]"
+        )}>
+          <CardHeader className="p-3 flex flex-row items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5 border-b shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Bot className="h-6 w-6 text-primary" />
+                <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-semibold">Vanguard AI</CardTitle>
+                <p className="text-xs text-muted-foreground">Security Operations Copilot</p>
+              </div>
             </div>
-            <div>
-              <CardTitle className="text-sm font-semibold">Vanguard AI</CardTitle>
-              <p className="text-xs text-muted-foreground">Security Operations Copilot</p>
+            <div className="flex gap-1">
+              {/* Minimize button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
+                onClick={() => setDisplayMode('minimized')}
+                title="Minimize"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              
+              {/* Fullscreen toggle */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
+                onClick={() => setDisplayMode(displayMode === 'fullscreen' ? 'normal' : 'fullscreen')}
+                title={displayMode === 'fullscreen' ? 'Exit fullscreen' : 'Fullscreen'}
+              >
+                {displayMode === 'fullscreen' ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+              
+              {/* Close button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7" 
+                onClick={() => setIsOpen(false)}
+                title="Close"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-          </div>
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsMinimized(true)}>
-              <Minimize2 className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
           {messages.length === 0 ? (
@@ -276,6 +318,7 @@ export const VanguardAIChat = () => {
           </p>
         </div>
       </Card>
-    </div>
+      </div>
+    </>
   );
 };
