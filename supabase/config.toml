@@ -147,3 +147,9 @@ verify_jwt = true
 
 [functions.malware-scanner]
 verify_jwt = true
+
+[functions.elevenlabs-tts]
+verify_jwt = false
+
+[functions.vanguard-ai-copilot]
+verify_jwt = false
