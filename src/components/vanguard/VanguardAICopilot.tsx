@@ -1,27 +1,31 @@
-import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bot, 
-  Send, 
-  User, 
-  Sparkles, 
-  Shield, 
-  Network, 
+  Trash2, 
+  Maximize2, 
+  Minimize2, 
+  X,
   AlertTriangle,
-  FileText,
-  Trash2,
-  Copy,
-  Check,
-  Search,
-  Mail
+  Shield,
+  Volume2,
+  VolumeX,
+  Bell,
+  BellOff
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useVanguardAgents } from "@/hooks/useVanguardAgents";
+import { useCopilotVoice } from "@/hooks/useCopilotVoice";
+import { CopilotMessage } from "./copilot/CopilotMessage";
+import { CopilotInput } from "./copilot/CopilotInput";
+import { CopilotQuickActions } from "./copilot/CopilotQuickActions";
+import { CopilotThreatMap } from "./copilot/CopilotThreatMap";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: string;
@@ -29,31 +33,34 @@ interface Message {
   content: string;
   timestamp: Date;
   toolsUsed?: string[];
+  isStreaming?: boolean;
+  actions?: Array<{
+    label: string;
+    action: string;
+    variant?: 'default' | 'destructive' | 'outline';
+  }>;
 }
 
 interface VanguardAICopilotProps {
   agentId?: string;
 }
 
-const QUICK_PROMPTS = [
-  { icon: Shield, label: "Security Overview", prompt: "Give me a quick overview of my security posture. Any issues I should know about?" },
-  { icon: AlertTriangle, label: "Check for Threats", prompt: "Are there any active threats or alerts I need to address right now?" },
-  { icon: Network, label: "Scan Network", prompt: "Can you run a network scan and tell me what devices you find?" },
-  { icon: Mail, label: "Check Email Breach", prompt: "Can you check if my email has been in any data breaches?" },
-  { icon: Search, label: "Check a URL", prompt: "I want to check if a website is safe before I visit it" },
-  { icon: FileText, label: "Compliance Status", prompt: "How are we doing on compliance? Any gaps I should know about?" },
-];
-
 export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
   const { toast } = useToast();
   const { agents } = useVanguardAgents();
+  const voice = useCopilotVoice();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [activeThreats, setActiveThreats] = useState<any[]>([]);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const hasInitialized = useRef(false);
 
   // Get current user
@@ -67,23 +74,49 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
   const activeAgentId = agentId || agents.find(a => a.status === 'online')?.id;
   const onlineAgentCount = agents.filter(a => a.status === 'online').length;
 
-  // Initialize with a proactive greeting from the AI
+  // Fetch active threats for threat map
+  useEffect(() => {
+    if (!userId) return;
+    
+    const fetchThreats = async () => {
+      const { data } = await supabase
+        .from('security_incidents')
+        .select('*')
+        .eq('user_id', userId)
+        .in('status', ['active', 'investigating'])
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      setActiveThreats(data || []);
+    };
+    
+    fetchThreats();
+  }, [userId]);
+
+  // Initialize with proactive greeting
   useEffect(() => {
     if (hasInitialized.current || !userId) return;
     hasInitialized.current = true;
-
-    // Start a conversation with the AI to get a personalized greeting
     initializeChat();
   }, [userId, activeAgentId]);
 
+  // Handle voice transcript
   useEffect(() => {
-    // Scroll to bottom when new messages arrive
+    if (voice.transcript && !voice.isListening) {
+      setInput(voice.transcript);
+    }
+  }, [voice.transcript, voice.isListening]);
+
+  // Auto-scroll on new messages
+  useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
     }
   }, [messages]);
 
-  // Initialize chat with AI-generated personalized greeting
   const initializeChat = async () => {
     setIsLoading(true);
     try {
@@ -107,32 +140,36 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
 
       if (response.ok) {
         const data = await response.json();
+        const welcomeMessage = data.response || getDefaultGreeting();
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: data.response || "Hey! I'm your Vanguard AI security copilot. How can I help you today?",
+          content: welcomeMessage,
           timestamp: new Date()
         }]);
       } else {
-        // Fallback greeting
         setMessages([{
           id: 'welcome',
           role: 'assistant',
-          content: `Hey there! 👋 I'm your Vanguard AI security copilot.${onlineAgentCount > 0 ? ` I can see you have ${onlineAgentCount} agent${onlineAgentCount > 1 ? 's' : ''} online - nice!` : ''} What would you like to look into today?`,
+          content: getDefaultGreeting(),
           timestamp: new Date()
         }]);
       }
     } catch (error) {
-      // Fallback greeting on error
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: "Hey! I'm your Vanguard AI security copilot. What can I help you with today?",
+        content: getDefaultGreeting(),
         timestamp: new Date()
       }]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getDefaultGreeting = () => {
+    const timeOfDay = new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening';
+    return `Good ${timeOfDay}! I'm your Vanguard AI security copilot.${onlineAgentCount > 0 ? ` You have ${onlineAgentCount} agent${onlineAgentCount > 1 ? 's' : ''} online and monitoring your environment.` : ''} What would you like to look into today?`;
   };
 
   const sendMessage = async (messageText?: string) => {
@@ -150,14 +187,22 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
     setInput('');
     setIsLoading(true);
 
+    // Add streaming placeholder
+    const assistantId = (Date.now() + 1).toString();
+    setMessages(prev => [...prev, {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true
+    }]);
+
     try {
-      // Build messages for API (exclude welcome message)
       const apiMessages = messages
         .filter(m => m.id !== 'welcome')
         .map(m => ({ role: m.role, content: m.content }));
       apiMessages.push({ role: 'user', content: text });
 
-      // Use non-streaming with tools for better responses
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vanguard-ai-copilot`,
         {
@@ -171,6 +216,7 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
             agentId: activeAgentId,
             userId,
             useTools: true,
+            stream: true,
           }),
         }
       );
@@ -185,19 +231,85 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
         throw new Error('Failed to get response');
       }
 
-      const data = await response.json();
-      const assistantId = (Date.now() + 1).toString();
-      
-      setMessages(prev => [...prev, {
-        id: assistantId,
-        role: 'assistant',
-        content: data.response || "I'm sorry, I couldn't process that request.",
-        timestamp: new Date(),
-        toolsUsed: data.tools_used,
-      }]);
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      let textBuffer = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          textBuffer += decoder.decode(value, { stream: true });
+          
+          // Process SSE lines
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+            
+            if (line.endsWith('\r')) line = line.slice(0, -1);
+            if (line.startsWith(':') || line.trim() === '') continue;
+            if (!line.startsWith('data: ')) continue;
+            
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') break;
+            
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                fullContent += content;
+                setMessages(prev => prev.map(m => 
+                  m.id === assistantId 
+                    ? { ...m, content: fullContent }
+                    : m
+                ));
+              }
+            } catch {
+              // Incomplete JSON, continue
+            }
+          }
+        }
+      }
+
+      // If no streaming content, try to get JSON response
+      if (!fullContent) {
+        try {
+          const data = await response.json();
+          fullContent = data.response || "I processed your request.";
+          
+          setMessages(prev => prev.map(m => 
+            m.id === assistantId 
+              ? { 
+                  ...m, 
+                  content: fullContent,
+                  isStreaming: false,
+                  toolsUsed: data.tools_used 
+                }
+              : m
+          ));
+        } catch {
+          // Response was streamed, finalize
+          setMessages(prev => prev.map(m => 
+            m.id === assistantId 
+              ? { ...m, isStreaming: false }
+              : m
+          ));
+        }
+      } else {
+        setMessages(prev => prev.map(m => 
+          m.id === assistantId 
+            ? { ...m, isStreaming: false }
+            : m
+        ));
+      }
 
     } catch (error: any) {
       console.error('Error:', error);
+      setMessages(prev => prev.filter(m => m.id !== assistantId));
       toast({
         title: "Error",
         description: error.message || "Failed to get response from AI",
@@ -205,14 +317,27 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
       });
     } finally {
       setIsLoading(false);
-      inputRef.current?.focus();
     }
   };
 
-  const copyMessage = async (content: string, id: string) => {
-    await navigator.clipboard.writeText(content);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const handleSpeak = async (text: string, messageId: string) => {
+    if (!voiceEnabled) return;
+    setSpeakingMessageId(messageId);
+    await voice.speak(text);
+    setSpeakingMessageId(null);
+  };
+
+  const handleStopSpeaking = () => {
+    voice.stopSpeaking();
+    setSpeakingMessageId(null);
+  };
+
+  const toggleVoiceInput = () => {
+    if (voice.isListening) {
+      voice.stopListening();
+    } else {
+      voice.startListening();
+    }
   };
 
   const clearChat = () => {
@@ -222,162 +347,201 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
   };
 
   return (
-    <div className="h-[calc(100vh-20rem)] flex flex-col">
-      <Card className="flex-1 flex flex-col">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Bot className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Vanguard AI</CardTitle>
-                <CardDescription className="flex items-center gap-2">
-                  Security Operations Copilot
-                  {onlineAgentCount > 0 && (
-                    <Badge variant="outline" className="text-xs text-green-500 border-green-500/30">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1" />
-                      {onlineAgentCount} agent{onlineAgentCount > 1 ? 's' : ''} online
-                    </Badge>
-                  )}
-                </CardDescription>
-              </div>
-            </div>
-            <Button variant="ghost" size="sm" onClick={clearChat}>
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
-          </div>
-        </CardHeader>
-
-        {/* Quick Prompts - show when only welcome message */}
-        {messages.length <= 1 && !isLoading && (
-          <div className="px-6 pb-4">
-            <p className="text-sm text-muted-foreground mb-3">Quick actions:</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {QUICK_PROMPTS.map((prompt, i) => (
-                <Button
-                  key={i}
-                  variant="outline"
-                  className="justify-start h-auto py-3 text-left"
-                  onClick={() => sendMessage(prompt.prompt)}
-                  disabled={isLoading}
-                >
-                  <prompt.icon className="h-4 w-4 mr-2 text-primary flex-shrink-0" />
-                  <span className="text-sm">{prompt.label}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className={cn(
+          "flex flex-col transition-all duration-300",
+          isExpanded 
+            ? "fixed inset-4 z-50" 
+            : "h-[calc(100vh-12rem)]"
+        )}
+      >
+        {/* Backdrop for expanded mode */}
+        {isExpanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm -z-10"
+            onClick={() => setIsExpanded(false)}
+          />
         )}
 
-        {/* Messages */}
-        <CardContent className="flex-1 overflow-hidden p-0">
-          <ScrollArea className="h-full px-6" ref={scrollRef}>
-            <div className="space-y-4 pb-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : ''}`}
+        <Card className={cn(
+          "flex-1 flex flex-col overflow-hidden border-0",
+          "bg-[hsl(var(--copilot-bg))] text-[hsl(var(--copilot-text))]",
+          "shadow-2xl shadow-[hsl(var(--copilot-accent)/0.1)]"
+        )}>
+          {/* Header */}
+          <CardHeader className="pb-3 border-b border-[hsl(var(--copilot-border))]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {/* Animated Logo */}
+                <motion.div 
+                  className="relative"
+                  animate={{ rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  {message.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
-                  
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      {message.content.split('\n').map((line, i) => {
-                        // Handle markdown-style bold
-                        const parts = line.split(/(\*\*[^*]+\*\*)/g);
-                        return (
-                          <p key={i} className="mb-1 last:mb-0">
-                            {parts.map((part, j) => {
-                              if (part.startsWith('**') && part.endsWith('**')) {
-                                return <strong key={j}>{part.slice(2, -2)}</strong>;
-                              }
-                              return <span key={j}>{part}</span>;
-                            })}
-                          </p>
-                        );
-                      })}
-                    </div>
-                    
-                    {message.role === 'assistant' && message.id !== 'welcome' && (
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/50">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => copyMessage(message.content, message.id)}
-                        >
-                          {copiedId === message.id ? (
-                            <Check className="h-3 w-3 mr-1" />
-                          ) : (
-                            <Copy className="h-3 w-3 mr-1" />
-                          )}
-                          {copiedId === message.id ? 'Copied' : 'Copy'}
-                        </Button>
-                      </div>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--copilot-accent))] to-[hsl(var(--cyber-purple))] flex items-center justify-center shadow-lg shadow-[hsl(var(--copilot-accent)/0.4)]">
+                    <Bot className="h-5 w-5 text-black" />
+                  </div>
+                  <motion.div
+                    className="absolute inset-0 rounded-xl bg-gradient-to-br from-[hsl(var(--copilot-accent))] to-[hsl(var(--cyber-purple))] blur-md"
+                    animate={{ opacity: [0.3, 0.6, 0.3] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </motion.div>
+                
+                <div>
+                  <CardTitle className="text-lg font-semibold text-[hsl(var(--copilot-text))] flex items-center gap-2">
+                    Vanguard AI
+                    <Badge 
+                      variant="outline" 
+                      className="text-[10px] bg-[hsl(var(--copilot-accent)/0.1)] border-[hsl(var(--copilot-accent)/0.3)] text-[hsl(var(--copilot-accent))]"
+                    >
+                      COPILOT
+                    </Badge>
+                  </CardTitle>
+                  <p className="text-xs text-[hsl(var(--copilot-text-muted))] flex items-center gap-2">
+                    Security Operations Assistant
+                    {onlineAgentCount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[hsl(var(--copilot-accent))]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--copilot-accent))] animate-pulse" />
+                        {onlineAgentCount} online
+                      </span>
                     )}
-                  </div>
-                  
-                  {message.role === 'user' && (
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                  )}
+                  </p>
                 </div>
-              ))}
+              </div>
               
-              {isLoading && messages[messages.length - 1]?.role === 'user' && (
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                  </div>
-                  <div className="bg-muted rounded-lg px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Header Actions */}
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setVoiceEnabled(!voiceEnabled)}
+                  className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
+                >
+                  {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setAlertsEnabled(!alertsEnabled)}
+                  className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
+                >
+                  {alertsEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearChat}
+                  className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="h-8 w-8 text-[hsl(var(--copilot-text-muted))] hover:text-[hsl(var(--copilot-text))] hover:bg-[hsl(var(--copilot-surface))]"
+                >
+                  {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
-          </ScrollArea>
-        </CardContent>
+          </CardHeader>
 
-        {/* Input */}
-        <div className="p-4 border-t">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage();
-            }}
-            className="flex gap-2"
-          >
-            <Input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask Vanguard AI anything about security..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={isLoading || !input.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-      </Card>
-    </div>
+          {/* Main Content Area */}
+          <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
+            {/* Threat Map - Only show when expanded and has threats */}
+            {isExpanded && (
+              <div className="p-4 border-b border-[hsl(var(--copilot-border))]">
+                <CopilotThreatMap threats={activeThreats} />
+              </div>
+            )}
+
+            {/* Quick Actions - Show when only welcome message */}
+            {messages.length <= 1 && !isLoading && (
+              <div className="p-4 border-b border-[hsl(var(--copilot-border))]">
+                <CopilotQuickActions 
+                  onSelectAction={sendMessage}
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+
+            {/* Messages */}
+            <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+              <div className="space-y-4 py-4">
+                {messages.map((message) => (
+                  <CopilotMessage
+                    key={message.id}
+                    {...message}
+                    onSpeak={voiceEnabled ? (text) => handleSpeak(text, message.id) : undefined}
+                    isSpeaking={speakingMessageId === message.id}
+                    onStopSpeaking={handleStopSpeaking}
+                  />
+                ))}
+                
+                {/* Loading indicator */}
+                {isLoading && messages[messages.length - 1]?.role === 'user' && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex gap-3"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[hsl(var(--copilot-accent))] to-[hsl(var(--cyber-purple))] flex items-center justify-center">
+                      <Bot className="h-4 w-4 text-black animate-pulse" />
+                    </div>
+                    <div className="bg-[hsl(var(--copilot-surface))] border border-[hsl(var(--copilot-border))] rounded-xl px-4 py-3">
+                      <div className="flex items-center gap-1.5">
+                        {[0, 1, 2].map(i => (
+                          <motion.div
+                            key={i}
+                            className="w-2 h-2 rounded-full bg-[hsl(var(--copilot-accent))]"
+                            animate={{ 
+                              scale: [1, 1.3, 1],
+                              opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{ 
+                              duration: 0.6, 
+                              repeat: Infinity,
+                              delay: i * 0.15
+                            }}
+                          />
+                        ))}
+                        <span className="ml-2 text-xs text-[hsl(var(--copilot-text-muted))]">
+                          Analyzing...
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Input Area */}
+            <div className="p-4 border-t border-[hsl(var(--copilot-border))] bg-[hsl(var(--copilot-bg))]">
+              <CopilotInput
+                value={voice.isListening ? voice.transcript : input}
+                onChange={setInput}
+                onSend={() => sendMessage()}
+                isLoading={isLoading}
+                isListening={voice.isListening}
+                onToggleVoice={toggleVoiceInput}
+                disabled={false}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </AnimatePresence>
   );
 }

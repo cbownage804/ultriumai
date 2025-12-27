@@ -153,6 +153,36 @@
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 15%;
     --sidebar-ring: 217 91% 60%;
+
+    /* Cyber Security Aesthetic */
+    --cyber-neon: 162 95% 50%;
+    --cyber-neon-glow: 162 95% 60%;
+    --cyber-purple: 262 83% 58%;
+    --cyber-red: 0 84% 60%;
+    --cyber-orange: 25 95% 55%;
+    --cyber-blue: 200 100% 50%;
+    
+    /* AI Copilot Specific */
+    --copilot-bg: 0 0% 4%;
+    --copilot-surface: 0 0% 8%;
+    --copilot-surface-hover: 0 0% 12%;
+    --copilot-border: 0 0% 18%;
+    --copilot-accent: 162 95% 50%;
+    --copilot-text: 0 0% 95%;
+    --copilot-text-muted: 0 0% 60%;
+    
+    /* Threat Level Colors */
+    --threat-critical: 0 84% 55%;
+    --threat-high: 25 95% 55%;
+    --threat-medium: 38 92% 50%;
+    --threat-low: 162 95% 45%;
+    --threat-info: 200 100% 50%;
+    
+    /* Matrix/Terminal Effect */
+    --matrix-green: 120 100% 45%;
+    --terminal-bg: 0 0% 2%;
+    --terminal-text: 162 95% 60%;
+    --terminal-cursor: 162 95% 50%;
   }
 }
 
