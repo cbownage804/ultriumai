@@ -121,15 +121,24 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
     }
   }, [voice.transcript, voice.isListening]);
 
-  // Auto-scroll on new messages
-  useEffect(() => {
-    if (scrollRef.current) {
-      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollElement) {
-        scrollElement.scrollTop = scrollElement.scrollHeight;
+  // Auto-scroll on new messages - improved with smooth behavior
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      if (scrollRef.current) {
+        const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+        if (scrollElement) {
+          scrollElement.scrollTo({
+            top: scrollElement.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
       }
-    }
-  }, [localMessages]);
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [localMessages, scrollToBottom]);
 
   const startNewConversation = async () => {
     const conversationId = await conversations.createConversation();
@@ -293,6 +302,8 @@ export function VanguardAICopilot({ agentId }: VanguardAICopilotProps) {
                     ? { ...m, content: fullContent }
                     : m
                 ));
+                // Auto-scroll during streaming
+                scrollToBottom();
               }
             } catch {
               // Incomplete JSON, continue
