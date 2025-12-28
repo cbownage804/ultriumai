@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import { CopilotQuickActions } from './copilot/CopilotQuickActions';
 
 interface Message {
   id: string;
@@ -251,12 +252,10 @@ export const VanguardAIChat = () => {
     c.messages.some(m => m.content.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const suggestedQuestions = [
-    "Check if test@example.com has been breached",
-    "Scan https://example.com for phishing threats",
-    "Is IP 8.8.8.8 malicious?",
-    "What are the latest security threats?",
-  ];
+  const handleQuickAction = (prompt: string) => {
+    setInput(prompt);
+    inputRef.current?.focus();
+  };
 
   if (!isOpen) {
     return (
@@ -509,29 +508,10 @@ export const VanguardAIChat = () => {
                     I can check breaches, scan URLs, analyze IPs, and more.
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground font-medium">Try asking:</p>
-                  {suggestedQuestions.map((q, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full justify-start text-left h-auto py-2 text-xs hover:bg-primary/5 hover:border-primary/30 transition-all"
-                        onClick={() => {
-                          setInput(q);
-                          inputRef.current?.focus();
-                        }}
-                      >
-                        {q}
-                      </Button>
-                    </motion.div>
-                  ))}
-                </div>
+                <CopilotQuickActions 
+                  onSelectAction={handleQuickAction}
+                  compact={true}
+                />
               </motion.div>
             ) : (
               <div className="space-y-4">
