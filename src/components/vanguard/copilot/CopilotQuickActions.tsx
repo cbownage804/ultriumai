@@ -12,7 +12,20 @@ import {
   Scan,
   Activity,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Server,
+  HardDrive,
+  Users,
+  Key,
+  Bug,
+  Radio,
+  Wifi,
+  Database,
+  Eye,
+  Zap,
+  Clock,
+  BarChart3,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +44,13 @@ interface Category {
   actions: QuickAction[];
 }
 
+const SUGGESTED_QUESTIONS = [
+  { icon: Mail, prompt: "Check if test@example.com has been breached" },
+  { icon: Globe, prompt: "Scan https://example.com for phishing threats" },
+  { icon: Network, prompt: "Is IP 8.8.8.8 malicious?" },
+  { icon: AlertTriangle, prompt: "What are the latest security threats?" },
+];
+
 const CATEGORIES: Category[] = [
   {
     id: 'security',
@@ -42,6 +62,7 @@ const CATEGORIES: Category[] = [
       { icon: AlertTriangle, label: "Active Threats", prompt: "Are there any active threats or alerts I need to address right now?" },
       { icon: FileText, label: "Compliance Status", prompt: "How are we doing on compliance? Any gaps I should know about?" },
       { icon: Activity, label: "System Health", prompt: "How are my agents performing? Any issues with system health?" },
+      { icon: Eye, label: "Recent Events", prompt: "Show me the most recent security events and alerts" },
     ]
   },
   {
@@ -54,6 +75,7 @@ const CATEGORIES: Category[] = [
       { icon: Scan, label: "Vulnerability Scan", prompt: "Run a vulnerability assessment on my systems" },
       { icon: Activity, label: "Port Scan", prompt: "Scan for open ports on my network and identify any risks" },
       { icon: Shield, label: "Malware Scan", prompt: "Check my endpoints for any malware or suspicious files" },
+      { icon: Wifi, label: "Wireless Scan", prompt: "Scan for rogue wireless access points on my network" },
     ]
   },
   {
@@ -66,6 +88,43 @@ const CATEGORIES: Category[] = [
       { icon: Search, label: "Check URL Safety", prompt: "I want to check if a website is safe before I visit it" },
       { icon: Globe, label: "Domain Intel", prompt: "Check my domain for any leaked credentials or security issues" },
       { icon: Lock, label: "IP Reputation", prompt: "I need to check if an IP address is malicious or on any blocklists" },
+      { icon: Bug, label: "CVE Lookup", prompt: "Look up the latest CVE vulnerabilities affecting common software" },
+    ]
+  },
+  {
+    id: 'assets',
+    label: 'Assets & Inventory',
+    icon: Server,
+    color: 'hsl(var(--cyber-green))',
+    actions: [
+      { icon: Server, label: "List Devices", prompt: "Show me all devices and endpoints in my network" },
+      { icon: HardDrive, label: "Storage Status", prompt: "What's the status of my storage and backup systems?" },
+      { icon: Database, label: "Database Security", prompt: "Check my database configurations for security issues" },
+      { icon: Radio, label: "Agent Status", prompt: "Show me which agents are online and their health status" },
+    ]
+  },
+  {
+    id: 'users',
+    label: 'Users & Access',
+    icon: Users,
+    color: 'hsl(var(--cyber-orange))',
+    actions: [
+      { icon: Users, label: "User Activity", prompt: "Show me recent user login activity and any suspicious patterns" },
+      { icon: Key, label: "Password Audit", prompt: "Run a password policy compliance check across users" },
+      { icon: Lock, label: "Access Review", prompt: "Review privileged access and admin accounts" },
+      { icon: AlertTriangle, label: "Failed Logins", prompt: "Show me failed login attempts in the last 24 hours" },
+    ]
+  },
+  {
+    id: 'reports',
+    label: 'Reports & Analytics',
+    icon: BarChart3,
+    color: 'hsl(var(--cyber-cyan))',
+    actions: [
+      { icon: BarChart3, label: "Security Report", prompt: "Generate a security summary report for the past week" },
+      { icon: Clock, label: "Trend Analysis", prompt: "Show me security trends over the last 30 days" },
+      { icon: Zap, label: "Performance Metrics", prompt: "What are my key security performance metrics?" },
+      { icon: FileText, label: "Audit Report", prompt: "Generate a compliance audit report" },
     ]
   },
 ];
@@ -85,10 +144,37 @@ export function CopilotQuickActions({ onSelectAction, disabled, compact = false 
 
   if (compact) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-3">
+        {/* Suggested Questions */}
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground font-medium">Try asking:</p>
+          <div className="space-y-1.5">
+            {SUGGESTED_QUESTIONS.map((q, i) => (
+              <motion.button
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => onSelectAction(q.prompt)}
+                disabled={disabled}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left",
+                  "bg-[hsl(var(--copilot-surface))] hover:bg-[hsl(var(--copilot-surface-hover))]",
+                  "border border-[hsl(var(--copilot-border))] hover:border-primary/30",
+                  "transition-all duration-200 text-xs"
+                )}
+              >
+                <q.icon className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-[hsl(var(--copilot-text))] truncate">{q.prompt}</span>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+
+        {/* Category Dropdowns */}
         <div className="flex items-center gap-2">
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[hsl(var(--copilot-border))] to-transparent" />
-          <span className="text-[10px] text-[hsl(var(--copilot-text-muted))] uppercase tracking-wider">Quick Actions</span>
+          <span className="text-[10px] text-[hsl(var(--copilot-text-muted))] uppercase tracking-wider">More Actions</span>
           <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[hsl(var(--copilot-border))] to-transparent" />
         </div>
 
