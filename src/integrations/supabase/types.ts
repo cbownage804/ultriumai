@@ -8554,6 +8554,272 @@ export type Database = {
           },
         ]
       }
+      pentest_assessments: {
+        Row: {
+          agent_id: string | null
+          assessment_type: string
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          ips_scanned: number | null
+          organization_id: string | null
+          runtime_seconds: number | null
+          scan_options: Json | null
+          scheduled_by: string | null
+          scheduled_date: string | null
+          started_at: string | null
+          status: string
+          target_hosts: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          assessment_type: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          ips_scanned?: number | null
+          organization_id?: string | null
+          runtime_seconds?: number | null
+          scan_options?: Json | null
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: string
+          target_hosts?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          assessment_type?: string
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          ips_scanned?: number | null
+          organization_id?: string | null
+          runtime_seconds?: number | null
+          scan_options?: Json | null
+          scheduled_by?: string | null
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: string
+          target_hosts?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pentest_assessments_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pentest_assessments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "pentest_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pentest_findings: {
+        Row: {
+          affected_hosts: Json | null
+          affected_ports: string[] | null
+          assessment_id: string | null
+          business_impact: string | null
+          created_at: string | null
+          cve_ids: string[] | null
+          cvss_score: number | null
+          cvss_vector: string | null
+          cwe_id: string | null
+          description: string | null
+          evidence: string | null
+          first_found_at: string | null
+          id: string
+          is_false_positive: boolean | null
+          is_verified: boolean | null
+          last_seen_at: string | null
+          organization_id: string | null
+          proof_of_concept: string | null
+          remediated_at: string | null
+          remediation: string | null
+          remediation_difficulty: string | null
+          severity: string
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          affected_hosts?: Json | null
+          affected_ports?: string[] | null
+          assessment_id?: string | null
+          business_impact?: string | null
+          created_at?: string | null
+          cve_ids?: string[] | null
+          cvss_score?: number | null
+          cvss_vector?: string | null
+          cwe_id?: string | null
+          description?: string | null
+          evidence?: string | null
+          first_found_at?: string | null
+          id?: string
+          is_false_positive?: boolean | null
+          is_verified?: boolean | null
+          last_seen_at?: string | null
+          organization_id?: string | null
+          proof_of_concept?: string | null
+          remediated_at?: string | null
+          remediation?: string | null
+          remediation_difficulty?: string | null
+          severity: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          affected_hosts?: Json | null
+          affected_ports?: string[] | null
+          assessment_id?: string | null
+          business_impact?: string | null
+          created_at?: string | null
+          cve_ids?: string[] | null
+          cvss_score?: number | null
+          cvss_vector?: string | null
+          cwe_id?: string | null
+          description?: string | null
+          evidence?: string | null
+          first_found_at?: string | null
+          id?: string
+          is_false_positive?: boolean | null
+          is_verified?: boolean | null
+          last_seen_at?: string | null
+          organization_id?: string | null
+          proof_of_concept?: string | null
+          remediated_at?: string | null
+          remediation?: string | null
+          remediation_difficulty?: string | null
+          severity?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pentest_findings_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "pentest_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pentest_findings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "pentest_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pentest_ip_ranges: {
+        Row: {
+          cidr_range: string
+          created_at: string | null
+          description: string | null
+          id: string
+          ip_type: string
+          is_active: boolean | null
+          location: string | null
+          organization_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cidr_range: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ip_type: string
+          is_active?: boolean | null
+          location?: string | null
+          organization_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cidr_range?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          ip_type?: string
+          is_active?: boolean | null
+          location?: string | null
+          organization_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pentest_ip_ranges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "pentest_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pentest_organizations: {
+        Row: {
+          created_at: string | null
+          domain: string | null
+          external_ips_allocated: number | null
+          external_ips_used: number | null
+          id: string
+          industry: string | null
+          internal_ips_allocated: number | null
+          internal_ips_used: number | null
+          is_active: boolean | null
+          name: string
+          short_name: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          domain?: string | null
+          external_ips_allocated?: number | null
+          external_ips_used?: number | null
+          id?: string
+          industry?: string | null
+          internal_ips_allocated?: number | null
+          internal_ips_used?: number | null
+          is_active?: boolean | null
+          name: string
+          short_name?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string | null
+          external_ips_allocated?: number | null
+          external_ips_used?: number | null
+          id?: string
+          industry?: string | null
+          internal_ips_allocated?: number | null
+          internal_ips_used?: number | null
+          is_active?: boolean | null
+          name?: string
+          short_name?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pentest_remediation_playbooks: {
         Row: {
           compliance_frameworks: Json | null
