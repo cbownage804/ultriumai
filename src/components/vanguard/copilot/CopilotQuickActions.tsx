@@ -10,21 +10,11 @@ import {
   Globe,
   Lock,
   Scan,
-  Activity,
   ChevronDown,
   ChevronRight,
-  Server,
-  HardDrive,
   Users,
   Key,
   Bug,
-  Radio,
-  Wifi,
-  Database,
-  Eye,
-  Zap,
-  Clock,
-  BarChart3,
   MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,83 +38,56 @@ const SUGGESTED_QUESTIONS = [
   { icon: Mail, prompt: "Check if test@example.com has been breached" },
   { icon: Globe, prompt: "Scan https://example.com for phishing threats" },
   { icon: Network, prompt: "Is IP 8.8.8.8 malicious?" },
-  { icon: AlertTriangle, prompt: "What are the latest security threats?" },
+  { icon: Search, prompt: "Check my domain company.com for leaked credentials" },
 ];
 
 const CATEGORIES: Category[] = [
   {
-    id: 'security',
-    label: 'Security',
-    icon: Shield,
+    id: 'breach',
+    label: 'Breach Detection',
+    icon: AlertTriangle,
     color: 'hsl(var(--copilot-accent))',
     actions: [
-      { icon: Shield, label: "Security Overview", prompt: "Give me a quick overview of my security posture. Any issues I should know about?" },
-      { icon: AlertTriangle, label: "Active Threats", prompt: "Are there any active threats or alerts I need to address right now?" },
-      { icon: FileText, label: "Compliance Status", prompt: "How are we doing on compliance? Any gaps I should know about?" },
-      { icon: Activity, label: "System Health", prompt: "How are my agents performing? Any issues with system health?" },
-      { icon: Eye, label: "Recent Events", prompt: "Show me the most recent security events and alerts" },
+      { icon: Mail, label: "Check Email Breach", prompt: "Check if my email address has been exposed in any data breaches" },
+      { icon: Globe, label: "Check Domain Breach", prompt: "Scan my domain for any leaked credentials or compromised accounts" },
+      { icon: Users, label: "Bulk Email Check", prompt: "I have a list of email addresses to check for breaches" },
+      { icon: AlertTriangle, label: "Recent Breaches", prompt: "What are the most recent major data breaches I should know about?" },
     ]
   },
   {
     id: 'scanning',
-    label: 'Scanning',
+    label: 'URL & Content Scanning',
     icon: Scan,
     color: 'hsl(var(--cyber-purple))',
     actions: [
-      { icon: Network, label: "Scan Network", prompt: "Can you run a network scan and tell me what devices you find?" },
-      { icon: Scan, label: "Vulnerability Scan", prompt: "Run a vulnerability assessment on my systems" },
-      { icon: Activity, label: "Port Scan", prompt: "Scan for open ports on my network and identify any risks" },
-      { icon: Shield, label: "Malware Scan", prompt: "Check my endpoints for any malware or suspicious files" },
-      { icon: Wifi, label: "Wireless Scan", prompt: "Scan for rogue wireless access points on my network" },
+      { icon: Globe, label: "Scan URL", prompt: "Scan this URL for phishing or malicious content: https://example.com" },
+      { icon: Search, label: "Check Link Safety", prompt: "Is this link safe to click? Check it for me" },
+      { icon: FileText, label: "Scan Document", prompt: "I have some text I need to scan for sensitive data like SSNs or credit cards" },
+      { icon: Bug, label: "Malware Check", prompt: "Check this content for malware or suspicious patterns" },
     ]
   },
   {
     id: 'intel',
-    label: 'Threat Intel',
-    icon: Globe,
+    label: 'Threat Intelligence',
+    icon: Shield,
     color: 'hsl(var(--cyber-blue))',
     actions: [
-      { icon: Mail, label: "Email Breach Check", prompt: "Can you check if my email has been in any data breaches?" },
-      { icon: Search, label: "Check URL Safety", prompt: "I want to check if a website is safe before I visit it" },
-      { icon: Globe, label: "Domain Intel", prompt: "Check my domain for any leaked credentials or security issues" },
-      { icon: Lock, label: "IP Reputation", prompt: "I need to check if an IP address is malicious or on any blocklists" },
-      { icon: Bug, label: "CVE Lookup", prompt: "Look up the latest CVE vulnerabilities affecting common software" },
+      { icon: Network, label: "IP Reputation", prompt: "Check if this IP address is malicious or on any blocklists" },
+      { icon: Globe, label: "Domain Analysis", prompt: "Analyze this domain for security issues and reputation" },
+      { icon: AlertTriangle, label: "Latest Threats", prompt: "What are the latest security threats I should be aware of?" },
+      { icon: Shield, label: "Security News", prompt: "Give me a quick security news update" },
     ]
   },
   {
-    id: 'assets',
-    label: 'Assets & Inventory',
-    icon: Server,
+    id: 'help',
+    label: 'Security Guidance',
+    icon: MessageSquare,
     color: 'hsl(var(--cyber-green))',
     actions: [
-      { icon: Server, label: "List Devices", prompt: "Show me all devices and endpoints in my network" },
-      { icon: HardDrive, label: "Storage Status", prompt: "What's the status of my storage and backup systems?" },
-      { icon: Database, label: "Database Security", prompt: "Check my database configurations for security issues" },
-      { icon: Radio, label: "Agent Status", prompt: "Show me which agents are online and their health status" },
-    ]
-  },
-  {
-    id: 'users',
-    label: 'Users & Access',
-    icon: Users,
-    color: 'hsl(var(--cyber-orange))',
-    actions: [
-      { icon: Users, label: "User Activity", prompt: "Show me recent user login activity and any suspicious patterns" },
-      { icon: Key, label: "Password Audit", prompt: "Run a password policy compliance check across users" },
-      { icon: Lock, label: "Access Review", prompt: "Review privileged access and admin accounts" },
-      { icon: AlertTriangle, label: "Failed Logins", prompt: "Show me failed login attempts in the last 24 hours" },
-    ]
-  },
-  {
-    id: 'reports',
-    label: 'Reports & Analytics',
-    icon: BarChart3,
-    color: 'hsl(var(--cyber-cyan))',
-    actions: [
-      { icon: BarChart3, label: "Security Report", prompt: "Generate a security summary report for the past week" },
-      { icon: Clock, label: "Trend Analysis", prompt: "Show me security trends over the last 30 days" },
-      { icon: Zap, label: "Performance Metrics", prompt: "What are my key security performance metrics?" },
-      { icon: FileText, label: "Audit Report", prompt: "Generate a compliance audit report" },
+      { icon: Key, label: "Password Tips", prompt: "What are the best practices for creating strong passwords?" },
+      { icon: Shield, label: "Security Basics", prompt: "Give me a quick overview of essential security practices" },
+      { icon: Lock, label: "2FA Setup", prompt: "How do I set up two-factor authentication properly?" },
+      { icon: Mail, label: "Phishing Prevention", prompt: "How can I identify and avoid phishing emails?" },
     ]
   },
 ];
