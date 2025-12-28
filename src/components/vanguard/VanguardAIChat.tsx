@@ -7,14 +7,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   MessageCircle, X, Send, Loader2, Bot, User, Minus, Maximize2, Minimize2,
   Shield, AlertTriangle, CheckCircle, Sparkles, Square, History, Trash2,
-  Copy, Check, Download, Search, Clock, RotateCcw
+  Copy, Check, Download, Search, Clock, RotateCcw, MessageSquare
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { CopilotQuickActions } from './copilot/CopilotQuickActions';
+import { CopilotQuickActions, ChatMode } from './copilot/CopilotQuickActions';
 
 interface Message {
   id: string;
@@ -30,11 +30,16 @@ interface Conversation {
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
+  mode: ChatMode;
 }
 
 export const VanguardAIChat = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [displayMode, setDisplayMode] = useState<'normal' | 'minimized' | 'fullscreen'>('normal');
+  const [chatMode, setChatMode] = useState<ChatMode>(() => {
+    const saved = localStorage.getItem('vanguard-chat-mode');
+    return (saved as ChatMode) || 'security';
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -56,6 +61,7 @@ export const VanguardAIChat = () => {
           ...c,
           createdAt: new Date(c.createdAt),
           updatedAt: new Date(c.updatedAt),
+          mode: c.mode || 'security', // Default to security for old conversations
           messages: c.messages.map((m: any) => ({
             ...m,
             timestamp: new Date(m.timestamp)
@@ -66,6 +72,11 @@ export const VanguardAIChat = () => {
       }
     }
   }, []);
+
+  // Save mode preference
+  useEffect(() => {
+    localStorage.setItem('vanguard-chat-mode', chatMode);
+  }, [chatMode]);
 
   // Save conversations to localStorage
   useEffect(() => {
@@ -99,6 +110,15 @@ export const VanguardAIChat = () => {
     setShowHistory(false);
   }, []);
 
+  // Handle mode switching - must be after createNewConversation
+  const handleModeSwitch = useCallback((newMode: ChatMode) => {
+    if (newMode !== chatMode) {
+      setChatMode(newMode);
+      setMessages([]);
+      setCurrentConversationId(generateId());
+    }
+  }, [chatMode]);
+
   const saveCurrentConversation = useCallback(() => {
     if (messages.length === 0) return;
     
@@ -117,12 +137,13 @@ export const VanguardAIChat = () => {
           title,
           messages,
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          mode: chatMode
         }, ...prev];
       }
       return prev;
     });
-  }, [messages, currentConversationId]);
+  }, [messages, currentConversationId, chatMode]);
 
   // Auto-save conversation when messages change
   useEffect(() => {
@@ -134,6 +155,7 @@ export const VanguardAIChat = () => {
   const loadConversation = useCallback((conv: Conversation) => {
     setCurrentConversationId(conv.id);
     setMessages(conv.messages);
+    setChatMode(conv.mode);
     setShowHistory(false);
   }, []);
 
@@ -197,13 +219,16 @@ export const VanguardAIChat = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('vanguard-ai-copilot', {
+      // Use appropriate edge function based on mode
+      const functionName = chatMode === 'security' ? 'vanguard-ai-copilot' : 'vanguard-general-chat';
+      
+      const { data, error } = await supabase.functions.invoke(functionName, {
         body: {
           messages: [...messages, { role: 'user', content: userMessage.content }].map(m => ({
             role: m.role,
             content: m.content
           })),
-          useTools: true,
+          ...(chatMode === 'security' ? { useTools: true } : {})
         }
       });
 
@@ -340,18 +365,19 @@ export const VanguardAIChat = () => {
             ? "w-full h-full" 
             : "w-96 h-[600px]"
         )}>
-          <CardHeader className="p-3 flex flex-row items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5 border-b shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Bot className="h-6 w-6 text-primary" />
-                <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1" />
+          <CardHeader className="p-3 flex flex-col gap-2 bg-gradient-to-r from-primary/10 to-primary/5 border-b shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  {chatMode === 'security' ? <Shield className="h-6 w-6 text-primary" /> : <MessageSquare className="h-6 w-6 text-primary" />}
+                  <Sparkles className="h-3 w-3 text-yellow-500 absolute -top-1 -right-1" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm font-semibold">Vanguard AI</CardTitle>
+                  <p className="text-xs text-muted-foreground">{chatMode === 'security' ? 'Security Mode' : 'General Assistant'}</p>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-sm font-semibold">Vanguard AI</CardTitle>
-                <p className="text-xs text-muted-foreground">Security Operations Copilot</p>
-              </div>
-            </div>
-            <div className="flex gap-1">
+              <div className="flex gap-1">
               {/* New conversation */}
               <Button 
                 variant="ghost" 
@@ -417,6 +443,37 @@ export const VanguardAIChat = () => {
               >
                 <X className="h-4 w-4" />
               </Button>
+              </div>
+            </div>
+            
+            {/* Mode Toggle */}
+            <div className="flex items-center justify-center">
+              <div className="flex bg-muted rounded-lg p-0.5">
+                <button
+                  onClick={() => handleModeSwitch('security')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all",
+                    chatMode === 'security' 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Shield className="h-3 w-3" />
+                  Security
+                </button>
+                <button
+                  onClick={() => handleModeSwitch('general')}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all",
+                    chatMode === 'general' 
+                      ? "bg-primary text-primary-foreground shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  General
+                </button>
+              </div>
             </div>
           </CardHeader>
 
@@ -511,6 +568,7 @@ export const VanguardAIChat = () => {
                 <CopilotQuickActions 
                   onSelectAction={handleQuickAction}
                   compact={true}
+                  mode={chatMode}
                 />
               </motion.div>
             ) : (
