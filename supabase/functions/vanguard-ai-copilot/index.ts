@@ -205,6 +205,7 @@ serve(async (req) => {
     let securitySummary = '';
     let agentContext = '';
     let agentCommands: any[] = [];
+    let pentestSummary = '';
     
     // Get user's actual security data
     if (userId) {
@@ -241,6 +242,55 @@ serve(async (req) => {
         .eq('status', 'open')
         .limit(5);
 
+      // PENTEST DATA
+      const { data: pentestOrgs } = await supabase
+        .from('pentest_organizations')
+        .select('*')
+        .eq('user_id', userId);
+
+      const { data: pentestAssessments } = await supabase
+        .from('pentest_assessments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const { data: pentestFindings } = await supabase
+        .from('pentest_findings')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      // Build pentest summary
+      if (pentestOrgs?.length || pentestAssessments?.length || pentestFindings?.length) {
+        const criticalFindings = pentestFindings?.filter(f => f.severity === 'critical').length || 0;
+        const highFindings = pentestFindings?.filter(f => f.severity === 'high').length || 0;
+        const mediumFindings = pentestFindings?.filter(f => f.severity === 'medium').length || 0;
+        const lowFindings = pentestFindings?.filter(f => f.severity === 'low').length || 0;
+        const scheduledAssessments = pentestAssessments?.filter(a => a.status === 'scheduled').length || 0;
+        const completedAssessments = pentestAssessments?.filter(a => a.status === 'completed').length || 0;
+
+        pentestSummary = `
+## PENETRATION TESTING DATA
+
+### Organizations Under Test (${pentestOrgs?.length || 0})
+${pentestOrgs?.length ? pentestOrgs.map(o => `- **${o.name}** (${o.industry || 'N/A'}) - Domain: ${o.domain || 'N/A'}`).join('\n') : '- No organizations configured yet'}
+
+### Assessments
+- **Scheduled**: ${scheduledAssessments} pending
+- **Completed**: ${completedAssessments} total
+${pentestAssessments?.length ? pentestAssessments.slice(0, 5).map(a => `- ${a.assessment_type}: ${a.status} (${new Date(a.scheduled_date || a.created_at).toLocaleDateString()})`).join('\n') : ''}
+
+### Findings Summary (${pentestFindings?.length || 0} total)
+- 🔴 **Critical**: ${criticalFindings}
+- 🟠 **High**: ${highFindings}
+- 🟡 **Medium**: ${mediumFindings}
+- 🔵 **Low**: ${lowFindings}
+${pentestFindings?.length ? '\n**Recent Findings:**\n' + pentestFindings.slice(0, 5).map(f => `- [${f.severity?.toUpperCase()}] ${f.title} - ${f.status}`).join('\n') : ''}
+`;
+      }
+
       securitySummary = `
 ## LIVE SECURITY DATA FROM YOUR ENVIRONMENT
 
@@ -255,6 +305,8 @@ ${vulnerabilities?.length ? vulnerabilities.map(v => `- **${v.severity?.toUpperC
 
 ### Compliance Status
 ${complianceAlerts?.length ? `⚠️ ${complianceAlerts.length} compliance issues need attention:\n${complianceAlerts.map(c => `- ${c.title}: ${c.description?.substring(0, 80) || 'Review required'}`).join('\n')}` : '✅ Compliance checks passing'}
+
+${pentestSummary}
 `;
     }
 
@@ -312,7 +364,7 @@ ${networkAssets && networkAssets.length > 5 ? `... and ${networkAssets.length - 
       }
     }
 
-    const systemPrompt = `You are Vanguard AI, a powerful AI assistant that can help with ANYTHING - from coding and writing to brainstorming and analysis - while also being an expert in cybersecurity.
+    const systemPrompt = `You are Vanguard AI, a powerful AI assistant that can help with ANYTHING - from coding and writing to brainstorming and analysis - while also being an expert in cybersecurity and penetration testing.
 
 ## YOUR PERSONALITY
 - Be warm, conversational, and genuinely helpful - like a brilliant friend who knows everything
@@ -342,6 +394,20 @@ You also have REAL security tools you can use:
 
 Use these tools when security-related questions come up. Explain what you're doing: "Let me check that for you..."
 
+## PENTEST CAPABILITIES
+You have full visibility into the user's penetration testing data:
+- Organizations being tested
+- Scheduled and completed assessments  
+- Findings by severity (Critical, High, Medium, Low, Info)
+- IP allocations and usage
+
+When users ask about pentests, assessments, or findings, reference their actual data. You can help them:
+- Review findings and prioritize remediation
+- Understand assessment schedules
+- Analyze security posture across organizations
+- Generate report summaries
+- Explain vulnerabilities and suggest fixes
+
 ${agentContext}
 
 ${securitySummary}
@@ -368,7 +434,7 @@ Start fresh and friendly. You can mention you're ready to help with anything, an
 Continue naturally. Answer their question directly and helpfully. For security topics, use your tools. For everything else, just be an amazing AI assistant.
 `}
 
-Remember: You're their AI that can do it all - ChatGPT-level intelligence PLUS real security capabilities.`;
+Remember: You're their AI that can do it all - ChatGPT-level intelligence PLUS real security capabilities AND pentest expertise.`;
 
     // If useTools is enabled, use tool calling for security operations
     if (useTools) {
