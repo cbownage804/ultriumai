@@ -156,3 +156,6 @@ verify_jwt = false
 
 [functions.vanguard-general-chat]
 verify_jwt = false
+
+[functions.pentest-ai-analysis]
+verify_jwt = true
