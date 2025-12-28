@@ -15,7 +15,15 @@ import {
   Users,
   Key,
   Bug,
-  MessageSquare
+  MessageSquare,
+  Code,
+  Lightbulb,
+  Calculator,
+  PenTool,
+  BookOpen,
+  Zap,
+  Brain,
+  Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -35,59 +43,92 @@ interface Category {
 }
 
 const SUGGESTED_QUESTIONS = [
-  { icon: Mail, prompt: "Check if test@example.com has been breached" },
-  { icon: Globe, prompt: "Scan https://example.com for phishing threats" },
-  { icon: Network, prompt: "Is IP 8.8.8.8 malicious?" },
-  { icon: Search, prompt: "Check my domain company.com for leaked credentials" },
+  { icon: Sparkles, prompt: "What can you help me with?" },
+  { icon: Shield, prompt: "Give me a quick security status check" },
+  { icon: Code, prompt: "Help me write some code" },
+  { icon: PenTool, prompt: "Help me draft an email or document" },
+  { icon: Brain, prompt: "Help me think through a problem" },
 ];
 
 const CATEGORIES: Category[] = [
   {
-    id: 'breach',
-    label: 'Breach Detection',
-    icon: AlertTriangle,
+    id: 'security',
+    label: 'Security Tools',
+    icon: Shield,
     color: 'hsl(var(--copilot-accent))',
     actions: [
       { icon: Mail, label: "Check Email Breach", prompt: "Check if my email address has been exposed in any data breaches" },
-      { icon: Globe, label: "Check Domain Breach", prompt: "Scan my domain for any leaked credentials or compromised accounts" },
-      { icon: Users, label: "Bulk Email Check", prompt: "I have a list of email addresses to check for breaches" },
-      { icon: AlertTriangle, label: "Recent Breaches", prompt: "What are the most recent major data breaches I should know about?" },
+      { icon: Globe, label: "Scan a URL", prompt: "Scan this URL for phishing or malicious content: " },
+      { icon: Network, label: "Check IP Reputation", prompt: "Check if this IP address is malicious: " },
+      { icon: Search, label: "Domain Security", prompt: "Check my domain for leaked credentials" },
+      { icon: FileText, label: "Scan for Sensitive Data", prompt: "Scan this text for sensitive data like SSNs, credit cards, or API keys" },
+      { icon: Bug, label: "Malware Check", prompt: "Check this content for malware patterns" },
     ]
   },
   {
-    id: 'scanning',
-    label: 'URL & Content Scanning',
-    icon: Scan,
+    id: 'coding',
+    label: 'Coding Help',
+    icon: Code,
     color: 'hsl(var(--cyber-purple))',
     actions: [
-      { icon: Globe, label: "Scan URL", prompt: "Scan this URL for phishing or malicious content: https://example.com" },
-      { icon: Search, label: "Check Link Safety", prompt: "Is this link safe to click? Check it for me" },
-      { icon: FileText, label: "Scan Document", prompt: "I have some text I need to scan for sensitive data like SSNs or credit cards" },
-      { icon: Bug, label: "Malware Check", prompt: "Check this content for malware or suspicious patterns" },
+      { icon: Bug, label: "Debug Code", prompt: "Help me debug this code:" },
+      { icon: Code, label: "Write a Function", prompt: "Write a function that" },
+      { icon: BookOpen, label: "Explain Code", prompt: "Explain what this code does:" },
+      { icon: Search, label: "Code Review", prompt: "Review this code and suggest improvements:" },
+      { icon: Zap, label: "Optimize Code", prompt: "Help me optimize this code for performance:" },
+      { icon: FileText, label: "Convert Code", prompt: "Convert this code from X to Y:" },
     ]
   },
   {
-    id: 'intel',
-    label: 'Threat Intelligence',
-    icon: Shield,
+    id: 'writing',
+    label: 'Writing & Content',
+    icon: PenTool,
     color: 'hsl(var(--cyber-blue))',
     actions: [
-      { icon: Network, label: "IP Reputation", prompt: "Check if this IP address is malicious or on any blocklists" },
-      { icon: Globe, label: "Domain Analysis", prompt: "Analyze this domain for security issues and reputation" },
-      { icon: AlertTriangle, label: "Latest Threats", prompt: "What are the latest security threats I should be aware of?" },
-      { icon: Shield, label: "Security News", prompt: "Give me a quick security news update" },
+      { icon: Mail, label: "Draft Email", prompt: "Help me write a professional email about" },
+      { icon: FileText, label: "Summarize", prompt: "Summarize this text for me:" },
+      { icon: PenTool, label: "Improve Writing", prompt: "Help improve this text, make it clearer and more professional:" },
+      { icon: BookOpen, label: "Create Outline", prompt: "Create an outline for a document about" },
+      { icon: Search, label: "Proofread", prompt: "Proofread this and fix any errors:" },
+      { icon: Sparkles, label: "Make it Better", prompt: "Rewrite this to be more engaging:" },
     ]
   },
   {
-    id: 'help',
-    label: 'Security Guidance',
-    icon: MessageSquare,
+    id: 'ideas',
+    label: 'Brainstorm & Ideas',
+    icon: Lightbulb,
     color: 'hsl(var(--cyber-green))',
     actions: [
-      { icon: Key, label: "Password Tips", prompt: "What are the best practices for creating strong passwords?" },
-      { icon: Shield, label: "Security Basics", prompt: "Give me a quick overview of essential security practices" },
-      { icon: Lock, label: "2FA Setup", prompt: "How do I set up two-factor authentication properly?" },
-      { icon: Mail, label: "Phishing Prevention", prompt: "How can I identify and avoid phishing emails?" },
+      { icon: Lightbulb, label: "Generate Ideas", prompt: "I need ideas for" },
+      { icon: Calculator, label: "Pros and Cons", prompt: "Give me the pros and cons of" },
+      { icon: Brain, label: "Compare Options", prompt: "Help me compare these options:" },
+      { icon: Zap, label: "Solve Problem", prompt: "Help me solve this problem:" },
+      { icon: MessageSquare, label: "Think It Through", prompt: "Help me think through this decision:" },
+    ]
+  },
+  {
+    id: 'learn',
+    label: 'Learn & Explain',
+    icon: BookOpen,
+    color: 'hsl(220 80% 60%)',
+    actions: [
+      { icon: Sparkles, label: "Explain Simply", prompt: "Explain this to me like I'm 5:" },
+      { icon: BookOpen, label: "Deep Dive", prompt: "Give me a comprehensive explanation of" },
+      { icon: Brain, label: "How It Works", prompt: "How does this work?" },
+      { icon: Search, label: "What's the Difference", prompt: "What's the difference between" },
+      { icon: MessageSquare, label: "Teach Me", prompt: "Teach me about" },
+    ]
+  },
+  {
+    id: 'analyze',
+    label: 'Math & Analysis',
+    icon: Calculator,
+    color: 'hsl(280 70% 60%)',
+    actions: [
+      { icon: Calculator, label: "Solve Math", prompt: "Solve this math problem:" },
+      { icon: Search, label: "Analyze Data", prompt: "Analyze this data and give me insights:" },
+      { icon: Brain, label: "Calculate", prompt: "Calculate" },
+      { icon: BookOpen, label: "Explain Formula", prompt: "Explain this formula to me:" },
     ]
   },
 ];
