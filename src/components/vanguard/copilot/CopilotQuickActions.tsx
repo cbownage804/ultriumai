@@ -8,14 +8,7 @@ import {
   Search, 
   FileText,
   Globe,
-  Lock,
-  Scan,
-  ChevronDown,
-  ChevronRight,
-  Users,
-  Key,
   Bug,
-  MessageSquare,
   Code,
   Lightbulb,
   Calculator,
@@ -23,10 +16,14 @@ import {
   BookOpen,
   Zap,
   Brain,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+
+export type ChatMode = 'security' | 'general';
 
 interface QuickAction {
   icon: React.ElementType;
@@ -42,81 +39,102 @@ interface Category {
   actions: QuickAction[];
 }
 
-const SUGGESTED_QUESTIONS = [
-  { icon: Sparkles, prompt: "What can you help me with?" },
+// Security mode suggested questions
+const SECURITY_SUGGESTED_QUESTIONS = [
   { icon: Shield, prompt: "Give me a quick security status check" },
+  { icon: Mail, prompt: "Check if my email has been in any breaches" },
+  { icon: Globe, prompt: "Scan a URL for phishing or malware" },
+  { icon: Network, prompt: "Check if this IP address is malicious" },
+];
+
+// General mode suggested questions
+const GENERAL_SUGGESTED_QUESTIONS = [
+  { icon: Sparkles, prompt: "What can you help me with?" },
   { icon: Code, prompt: "Help me write some code" },
   { icon: PenTool, prompt: "Help me draft an email or document" },
   { icon: Brain, prompt: "Help me think through a problem" },
 ];
 
-const CATEGORIES: Category[] = [
+// Security mode categories
+const SECURITY_CATEGORIES: Category[] = [
   {
-    id: 'security',
-    label: 'Security Tools',
+    id: 'breach',
+    label: 'Breach Detection',
     icon: Shield,
     color: 'hsl(var(--copilot-accent))',
     actions: [
-      { icon: Mail, label: "Check Email Breach", prompt: "Check if my email address has been exposed in any data breaches" },
-      { icon: Globe, label: "Scan a URL", prompt: "Scan this URL for phishing or malicious content: " },
-      { icon: Network, label: "Check IP Reputation", prompt: "Check if this IP address is malicious: " },
-      { icon: Search, label: "Domain Security", prompt: "Check my domain for leaked credentials" },
-      { icon: FileText, label: "Scan for Sensitive Data", prompt: "Scan this text for sensitive data like SSNs, credit cards, or API keys" },
-      { icon: Bug, label: "Malware Check", prompt: "Check this content for malware patterns" },
+      { icon: Mail, label: "Check Email Breach", prompt: "Check if this email address has been exposed in data breaches: " },
+      { icon: Search, label: "Check Domain Breaches", prompt: "Check this domain for leaked credentials: " },
     ]
   },
+  {
+    id: 'scanning',
+    label: 'URL & Content Scanning',
+    icon: AlertTriangle,
+    color: 'hsl(var(--cyber-orange, 30 100% 50%))',
+    actions: [
+      { icon: Globe, label: "Scan URL", prompt: "Scan this URL for phishing or malicious content: " },
+      { icon: FileText, label: "Scan for Sensitive Data", prompt: "Scan this document for sensitive data like SSNs, credit cards, or API keys: " },
+      { icon: Bug, label: "Malware Check", prompt: "Check this content for malware patterns: " },
+    ]
+  },
+  {
+    id: 'intel',
+    label: 'Threat Intelligence',
+    icon: Search,
+    color: 'hsl(var(--cyber-red, 0 100% 50%))',
+    actions: [
+      { icon: Network, label: "Check IP Reputation", prompt: "Check the reputation of this IP address: " },
+      { icon: AlertTriangle, label: "Analyze Threat", prompt: "Analyze this potential security threat: " },
+    ]
+  },
+];
+
+// General mode categories
+const GENERAL_CATEGORIES: Category[] = [
   {
     id: 'coding',
     label: 'Coding Help',
     icon: Code,
-    color: 'hsl(var(--cyber-purple))',
+    color: 'hsl(var(--cyber-green))',
     actions: [
-      { icon: Bug, label: "Debug Code", prompt: "Help me debug this code:" },
-      { icon: Code, label: "Write a Function", prompt: "Write a function that" },
-      { icon: BookOpen, label: "Explain Code", prompt: "Explain what this code does:" },
-      { icon: Search, label: "Code Review", prompt: "Review this code and suggest improvements:" },
-      { icon: Zap, label: "Optimize Code", prompt: "Help me optimize this code for performance:" },
-      { icon: FileText, label: "Convert Code", prompt: "Convert this code from X to Y:" },
+      { icon: Code, label: "Write Code", prompt: "Write a function that " },
+      { icon: Bug, label: "Debug Code", prompt: "Help me debug this code: " },
+      { icon: BookOpen, label: "Explain Code", prompt: "Explain what this code does: " },
+      { icon: Zap, label: "Optimize Code", prompt: "Help me optimize this code: " },
     ]
   },
   {
     id: 'writing',
     label: 'Writing & Content',
     icon: PenTool,
-    color: 'hsl(var(--cyber-blue))',
+    color: 'hsl(var(--cyber-purple))',
     actions: [
-      { icon: Mail, label: "Draft Email", prompt: "Help me write a professional email about" },
-      { icon: FileText, label: "Summarize", prompt: "Summarize this text for me:" },
-      { icon: PenTool, label: "Improve Writing", prompt: "Help improve this text, make it clearer and more professional:" },
-      { icon: BookOpen, label: "Create Outline", prompt: "Create an outline for a document about" },
-      { icon: Search, label: "Proofread", prompt: "Proofread this and fix any errors:" },
-      { icon: Sparkles, label: "Make it Better", prompt: "Rewrite this to be more engaging:" },
+      { icon: Mail, label: "Draft Email", prompt: "Help me write a professional email about " },
+      { icon: FileText, label: "Summarize", prompt: "Summarize this text: " },
+      { icon: PenTool, label: "Improve Writing", prompt: "Improve this writing for clarity: " },
     ]
   },
   {
     id: 'ideas',
     label: 'Brainstorm & Ideas',
     icon: Lightbulb,
-    color: 'hsl(var(--cyber-green))',
+    color: 'hsl(var(--cyber-yellow, 45 100% 50%))',
     actions: [
-      { icon: Lightbulb, label: "Generate Ideas", prompt: "I need ideas for" },
-      { icon: Calculator, label: "Pros and Cons", prompt: "Give me the pros and cons of" },
-      { icon: Brain, label: "Compare Options", prompt: "Help me compare these options:" },
-      { icon: Zap, label: "Solve Problem", prompt: "Help me solve this problem:" },
-      { icon: MessageSquare, label: "Think It Through", prompt: "Help me think through this decision:" },
+      { icon: Lightbulb, label: "Generate Ideas", prompt: "Give me 5 creative ideas for " },
+      { icon: Brain, label: "Problem Solve", prompt: "Help me solve this problem: " },
+      { icon: Sparkles, label: "Name Generator", prompt: "Generate creative names for " },
     ]
   },
   {
     id: 'learn',
     label: 'Learn & Explain',
     icon: BookOpen,
-    color: 'hsl(220 80% 60%)',
+    color: 'hsl(var(--cyber-blue))',
     actions: [
-      { icon: Sparkles, label: "Explain Simply", prompt: "Explain this to me like I'm 5:" },
-      { icon: BookOpen, label: "Deep Dive", prompt: "Give me a comprehensive explanation of" },
-      { icon: Brain, label: "How It Works", prompt: "How does this work?" },
-      { icon: Search, label: "What's the Difference", prompt: "What's the difference between" },
-      { icon: MessageSquare, label: "Teach Me", prompt: "Teach me about" },
+      { icon: BookOpen, label: "Explain Simply", prompt: "Explain in simple terms: " },
+      { icon: Brain, label: "Teach Me", prompt: "Teach me about " },
+      { icon: Search, label: "Compare", prompt: "Compare and contrast: " },
     ]
   },
   {
@@ -125,10 +143,9 @@ const CATEGORIES: Category[] = [
     icon: Calculator,
     color: 'hsl(280 70% 60%)',
     actions: [
-      { icon: Calculator, label: "Solve Math", prompt: "Solve this math problem:" },
-      { icon: Search, label: "Analyze Data", prompt: "Analyze this data and give me insights:" },
-      { icon: Brain, label: "Calculate", prompt: "Calculate" },
-      { icon: BookOpen, label: "Explain Formula", prompt: "Explain this formula to me:" },
+      { icon: Calculator, label: "Solve Math", prompt: "Solve this math problem: " },
+      { icon: Search, label: "Analyze Data", prompt: "Analyze this data: " },
+      { icon: Brain, label: "Logic Puzzle", prompt: "Help me solve this logic puzzle: " },
     ]
   },
 ];
@@ -137,10 +154,19 @@ interface CopilotQuickActionsProps {
   onSelectAction: (prompt: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  mode?: ChatMode;
 }
 
-export function CopilotQuickActions({ onSelectAction, disabled, compact = false }: CopilotQuickActionsProps) {
+export function CopilotQuickActions({ 
+  onSelectAction, 
+  disabled, 
+  compact = false,
+  mode = 'security'
+}: CopilotQuickActionsProps) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+  const suggestedQuestions = mode === 'security' ? SECURITY_SUGGESTED_QUESTIONS : GENERAL_SUGGESTED_QUESTIONS;
+  const categories = mode === 'security' ? SECURITY_CATEGORIES : GENERAL_CATEGORIES;
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategory(prev => prev === categoryId ? null : categoryId);
@@ -153,7 +179,7 @@ export function CopilotQuickActions({ onSelectAction, disabled, compact = false 
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground font-medium">Try asking:</p>
           <div className="space-y-1.5">
-            {SUGGESTED_QUESTIONS.map((q, i) => (
+            {suggestedQuestions.map((q, i) => (
               <motion.button
                 key={i}
                 initial={{ opacity: 0, x: -10 }}
@@ -183,7 +209,7 @@ export function CopilotQuickActions({ onSelectAction, disabled, compact = false 
         </div>
 
         <div className="space-y-1">
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <div key={category.id} className="rounded-lg overflow-hidden">
               <button
                 onClick={() => toggleCategory(category.id)}
@@ -263,7 +289,7 @@ export function CopilotQuickActions({ onSelectAction, disabled, compact = false 
   }
 
   // Original grid layout for non-compact mode
-  const allActions = CATEGORIES.flatMap(cat => 
+  const allActions = categories.flatMap(cat => 
     cat.actions.map(action => ({ ...action, category: cat.id, color: cat.color }))
   );
 
