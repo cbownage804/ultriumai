@@ -8774,6 +8774,7 @@ export type Database = {
       }
       pentest_organizations: {
         Row: {
+          assigned_agent_id: string | null
           created_at: string | null
           domain: string | null
           external_ips_allocated: number | null
@@ -8789,6 +8790,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_agent_id?: string | null
           created_at?: string | null
           domain?: string | null
           external_ips_allocated?: number | null
@@ -8804,6 +8806,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_agent_id?: string | null
           created_at?: string | null
           domain?: string | null
           external_ips_allocated?: number | null
@@ -8818,7 +8821,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pentest_organizations_assigned_agent_id_fkey"
+            columns: ["assigned_agent_id"]
+            isOneToOne: false
+            referencedRelation: "vanguard_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pentest_remediation_playbooks: {
         Row: {
