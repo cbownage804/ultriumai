@@ -511,6 +511,14 @@ async function handleCommandResponse(supabase: any, body: any) {
   
   console.log(`[vanguard-agent-api] Command ${command_id} result: status=${finalStatus}, hasResponse=${!!finalResponse}, error=${finalError}`);
   
+  // Fetch the command to get its payload (contains assessment_id for pentest commands)
+  const { data: command } = await supabase
+    .from('vanguard_agent_commands')
+    .select('id, command_type, payload, agent_id')
+    .eq('id', command_id)
+    .single();
+  
+  // Update command with response
   const { error: updateError } = await supabase
     .from('vanguard_agent_commands')
     .update({
@@ -525,10 +533,120 @@ async function handleCommandResponse(supabase: any, body: any) {
     console.error(`[vanguard-agent-api] Failed to update command ${command_id}:`, updateError);
   }
   
+  // Process pentest commands - update assessment and create findings
+  if (command && ['pentest_full', 'scan_network', 'vulnerability_scan', 'port_scan'].includes(command.command_type)) {
+    const payload = command.payload || {};
+    const assessmentId = payload.assessment_id;
+    const organizationId = payload.organization_id;
+    
+    if (assessmentId) {
+      console.log(`[vanguard-agent-api] Processing pentest results for assessment ${assessmentId}`);
+      
+      // Get agent's user_id
+      const { data: agent } = await supabase
+        .from('vanguard_agents')
+        .select('user_id')
+        .eq('id', command.agent_id)
+        .single();
+      
+      const userId = agent?.user_id;
+      
+      // Update assessment status
+      const assessmentUpdate: any = {
+        status: finalStatus === 'completed' ? 'completed' : 'failed',
+        completed_at: new Date().toISOString(),
+      };
+      
+      // Calculate runtime if we have started_at
+      const { data: assessment } = await supabase
+        .from('pentest_assessments')
+        .select('started_at')
+        .eq('id', assessmentId)
+        .single();
+      
+      if (assessment?.started_at) {
+        const startedAt = new Date(assessment.started_at);
+        const completedAt = new Date();
+        assessmentUpdate.runtime_seconds = Math.round((completedAt.getTime() - startedAt.getTime()) / 1000);
+      }
+      
+      await supabase
+        .from('pentest_assessments')
+        .update(assessmentUpdate)
+        .eq('id', assessmentId);
+      
+      // Process findings from the response
+      if (finalResponse && userId) {
+        const findings = finalResponse.findings || finalResponse.vulnerabilities || [];
+        const ipsScanned = finalResponse.hosts_scanned || finalResponse.ips_scanned || 0;
+        
+        // Update IPs scanned count
+        if (ipsScanned > 0) {
+          await supabase
+            .from('pentest_assessments')
+            .update({ ips_scanned: ipsScanned })
+            .eq('id', assessmentId);
+        }
+        
+        // Insert each finding
+        if (Array.isArray(findings) && findings.length > 0) {
+          console.log(`[vanguard-agent-api] Inserting ${findings.length} findings for assessment ${assessmentId}`);
+          
+          for (const finding of findings) {
+            const findingRecord = {
+              user_id: userId,
+              assessment_id: assessmentId,
+              organization_id: organizationId || null,
+              title: finding.title || finding.name || 'Unnamed Finding',
+              description: finding.description || finding.details || '',
+              severity: normalizeSeverity(finding.severity),
+              cvss_score: finding.cvss_score || finding.cvss || null,
+              cvss_vector: finding.cvss_vector || null,
+              cve_ids: finding.cve_ids || (finding.cve_id ? [finding.cve_id] : []),
+              cwe_id: finding.cwe_id || null,
+              affected_hosts: finding.affected_hosts || (finding.host ? [finding.host] : (finding.ip ? [finding.ip] : [])),
+              affected_ports: finding.affected_ports || (finding.port ? [finding.port] : []),
+              evidence: finding.evidence || finding.proof || null,
+              proof_of_concept: finding.poc || finding.proof_of_concept || null,
+              remediation: finding.remediation || finding.fix || finding.recommendation || null,
+              remediation_difficulty: finding.remediation_difficulty || 'medium',
+              business_impact: finding.business_impact || null,
+              is_verified: finding.is_verified || false,
+              is_false_positive: false,
+              status: 'open',
+              first_found_at: new Date().toISOString(),
+              last_seen_at: new Date().toISOString(),
+            };
+            
+            const { error: findingError } = await supabase
+              .from('pentest_findings')
+              .insert(findingRecord);
+            
+            if (findingError) {
+              console.error(`[vanguard-agent-api] Failed to insert finding:`, findingError);
+            }
+          }
+        }
+      }
+    }
+  }
+  
   return new Response(
     JSON.stringify({ status: 'ok' }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
+}
+
+// Helper to normalize severity values
+function normalizeSeverity(severity: string | undefined): string {
+  if (!severity) return 'medium';
+  const s = severity.toLowerCase();
+  if (s === 'critical' || s === 'crit') return 'critical';
+  if (s === 'high' || s === 'hi') return 'high';
+  if (s === 'medium' || s === 'med' || s === 'moderate') return 'medium';
+  if (s === 'low' || s === 'lo') return 'low';
+  if (s === 'info' || s === 'informational' || s === 'none') return 'info';
+  return 'medium';
 }
 
 // ============ DASHBOARD-SIDE HANDLERS ============
