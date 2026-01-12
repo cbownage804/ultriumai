@@ -78,6 +78,15 @@ import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SafeLinkPage from '@/pages/products/SafeLinkPage';
 import SafeDocPage from '@/pages/products/SafeDocPage';
 import SafePassPage from '@/pages/products/SafePassPage';
+
+// SafePass Standalone App
+import SafePassLayout from '@/layouts/SafePassLayout';
+import SafePassLanding from '@/pages/safepass/SafePassLanding';
+import SafePassAuth from '@/pages/safepass/SafePassAuth';
+import SafePassAppDashboard from '@/pages/safepass/SafePassDashboard';
+import SafePassImport from '@/pages/safepass/SafePassImport';
+import SafePassSecurity from '@/pages/safepass/SafePassSecurity';
+import SafePassBreachMonitor from '@/pages/safepass/SafePassBreachMonitor';
 import SafeWebPage from '@/pages/products/SafeWebPage';
 import SafeScorePage from '@/pages/products/SafeScorePage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
@@ -522,6 +531,16 @@ function AppRouter() {
         {/* Customer Portal Routes */}
         <Route path="/client-login" element={<ClientLogin />} />
         <Route path="/portal/client/:clientId" element={<CustomerPortal />} />
+        
+        {/* SafePass Standalone App Routes */}
+        <Route path="/safepass-app" element={<SafePassLanding />} />
+        <Route path="/safepass-app/auth" element={<SafePassAuth />} />
+        <Route path="/safepass-app/portal" element={<SafePassLayout />}>
+          <Route index element={<SafePassAppDashboard />} />
+          <Route path="import" element={<SafePassImport />} />
+          <Route path="security" element={<SafePassSecurity />} />
+          <Route path="breach-monitor" element={<SafePassBreachMonitor />} />
+        </Route>
         
         <Route path="*" element={<NotFound />} />
       </Routes>
