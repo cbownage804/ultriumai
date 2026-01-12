@@ -1,0 +1,293 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  min-height: 400px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.logo svg {
+  width: 24px;
+  height: 24px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.primary-btn:hover {
+  opacity: 0.9;
+}
+
+.secondary-btn {
+  flex: 1;
+  padding: 10px 16px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.secondary-btn:hover {
+  background: #334155;
+}
+
+.link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  color: #60a5fa;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.search-bar {
+  padding: 12px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+}
+
+.search-bar input {
+  margin-bottom: 0;
+}
+
+.site-section,
+.all-section {
+  margin-bottom: 16px;
+}
+
+.site-section h3,
+.all-section h3 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.password-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: #1e293b;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.password-item:hover {
+  background: #334155;
+}
+
+.password-item .favicon {
+  width: 32px;
+  height: 32px;
+  background: #334155;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+.password-item .details {
+  flex: 1;
+}
+
+.password-item .site-name {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.password-item .username {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.password-item .actions {
+  display: flex;
+  gap: 4px;
+}
+
+.password-item .action-btn {
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.password-item .action-btn:hover {
+  background: #475569;
+  color: #e2e8f0;
+}
+
+.footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #334155;
+}
+
+.generated-password {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.generated-password input {
+  flex: 1;
+  margin-bottom: 0;
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.options input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.options input[type="range"] {
+  flex: 1;
+  margin-left: 8px;
+}
+
+.breach-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  color: #fca5a5;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.breach-warning svg {
+  width: 16px;
+  height: 16px;
+  color: #ef4444;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #64748b;
+}
+
+.empty-state svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
