@@ -15848,6 +15848,57 @@ export type Database = {
         }
         Relationships: []
       }
+      vanguard_subscriptions: {
+        Row: {
+          admin_override: boolean | null
+          admin_override_by: string | null
+          admin_override_reason: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          seat_count: number
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_override?: boolean | null
+          admin_override_by?: string | null
+          admin_override_reason?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          seat_count?: number
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_override?: boolean | null
+          admin_override_by?: string | null
+          admin_override_reason?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          seat_count?: number
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vanguard_traffic_captures: {
         Row: {
           agent_id: string

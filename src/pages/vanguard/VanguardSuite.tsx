@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { 
-  Shield, Lock, Search, Bot, Network, Wrench, MessageSquare, Eye, 
+  Shield, Lock, Search, Bot, Network, Wrench, MessageSquare, 
   Check, ArrowRight, Zap, Building2, Users, Crown, Package,
-  Mail, FileText, Link, Target, Globe, Database, Activity, Key
+  Globe, Database, Key, Loader2
 } from "lucide-react";
 import { Link as RouterLink } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProductModule {
   id: string;
@@ -175,10 +177,13 @@ const pricingTiers: PricingTier[] = [
 ];
 
 const VanguardSuite = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedTier, setSelectedTier] = useState<'starter' | 'professional' | 'enterprise'>('professional');
   const [userCount, setUserCount] = useState(50);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const currentTier = pricingTiers.find(t => t.id === selectedTier)!;
   const discount = billingCycle === 'annual' ? 0.8 : 1; // 20% off annual
@@ -201,6 +206,37 @@ const VanguardSuite = () => {
   };
 
   const availableAddons = products.filter(p => !p.includedIn.includes(selectedTier));
+
+  const handleCheckout = async () => {
+    if (!user) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to subscribe to Vanguard Suite",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCheckingOut(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('vanguard-checkout', {
+        body: { tier: selectedTier, seats: userCount },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Checkout failed",
+        description: error.message || "Unable to start checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
@@ -404,11 +440,17 @@ const VanguardSuite = () => {
                     <div>Users ({userCount}): ${Math.round(userMonthly)}/mo</div>
                     {addonsMonthly > 0 && <div>Add-ons: ${Math.round(addonsMonthly)}/mo</div>}
                   </div>
-                  <RouterLink to="/contact" className="block mt-4">
-                    <Button className="w-full bg-gradient-to-r from-cyan-500 to-purple-600">
-                      Get Custom Quote
-                    </Button>
-                  </RouterLink>
+                  <Button 
+                    onClick={handleCheckout}
+                    disabled={isCheckingOut}
+                    className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-purple-600"
+                  >
+                    {isCheckingOut ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+                    ) : (
+                      'Subscribe Now'
+                    )}
+                  </Button>
                 </div>
               </div>
             </CardContent>
