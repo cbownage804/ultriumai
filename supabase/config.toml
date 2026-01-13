@@ -168,3 +168,6 @@ verify_jwt = false
 
 [functions.ai-ticket-agent]
 verify_jwt = false
+
+[functions.helpdesk-ai-features]
+verify_jwt = false
