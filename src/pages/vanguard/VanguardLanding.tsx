@@ -353,9 +353,13 @@ export default function VanguardLanding() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Simple, Per-Seat Pricing</h2>
-            <p className="text-lg text-white/60">
+            <p className="text-lg text-white/60 mb-4">
               Choose the plan that fits your organization. All pricing is per user per month.
             </p>
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-purple-600/20 border border-cyan-500/30 rounded-full px-4 py-2">
+              <span className="text-cyan-400 font-semibold">$999</span>
+              <span className="text-white/60 text-sm">one-time onboarding fee (includes Pi agent hardware & setup)</span>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">

@@ -435,6 +435,13 @@ const VanguardSuite = () => {
                     {addonsMonthly > 0 && <div>Add-ons: ${Math.round(addonsMonthly)}/mo</div>}
                     {billingCycle === 'annual' && <div className="text-green-400">20% annual discount applied</div>}
                   </div>
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">One-time onboarding fee:</span>
+                      <span className="text-white font-semibold">$999</span>
+                    </div>
+                    <p className="text-xs text-white/40 mt-1">Includes Pi agent hardware, setup & deployment</p>
+                  </div>
                   <Button 
                     onClick={handleCheckout}
                     disabled={isCheckingOut}
