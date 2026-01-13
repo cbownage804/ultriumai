@@ -26,18 +26,18 @@ const PRODUCTS: Record<string, { priceId: string; name: string; unit: string }> 
   },
   helpdesk: {
     priceId: "price_1SpENcH1u6E0bsJT5xuOIwvt",
-    name: "Helpdesk™",
+    name: "Ultrium AI Helpdesk™",
     unit: "agent",
-  },
-  safenet: {
-    priceId: "price_1SpENeH1u6E0bsJTpgoWENVc",
-    name: "SafeNet™",
-    unit: "device",
   },
   safeweb: {
     priceId: "price_1SpENfH1u6E0bsJTfR422qT4",
     name: "SafeWeb™",
     unit: "user",
+  },
+  ultriumgpt: {
+    priceId: "price_1SpEWFH1u6E0bsJTVUBvBqlX",
+    name: "UltriumGPT",
+    unit: "org",
   },
 };
 
