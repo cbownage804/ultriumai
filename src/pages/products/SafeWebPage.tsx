@@ -1,15 +1,14 @@
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Check, Star, Zap, Users, Shield, ArrowRight, Play, ArrowLeft, Home } from "lucide-react";
-import Footer from "@/components/Footer";
-import { useNavigate } from "react-router-dom";
+import { VanguardUpsell } from "@/components/products/VanguardUpsell";
+import { Search, Check, Star, Zap, Users, ArrowRight, Play, AlertTriangle, Eye, Globe, Shield } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const SafeWebPage = () => {
-  const navigate = useNavigate();
-  
   const features = [
     "Credential monitoring",
     "Data breach detection",
@@ -23,9 +22,9 @@ const SafeWebPage = () => {
 
   const pricingTiers = [
     {
-      name: 'Free Trial',
-      price: '$0',
-      duration: '14 days',
+      name: 'SafeWeb Starter',
+      price: '$3',
+      duration: '/user/mo',
       icon: Star,
       features: [
         'Basic credential monitoring',
@@ -37,12 +36,12 @@ const SafeWebPage = () => {
       cta: 'Start Free Trial'
     },
     {
-      name: 'Premium',
-      price: '$20',
-      duration: 'per user/month',
+      name: 'SafeWeb Pro',
+      price: '$5',
+      duration: '/user/mo',
       icon: Zap,
       features: [
-        'Advanced threat monitoring',
+        'Everything in Starter',
         'Real-time alerts',
         'Brand protection',
         'API access',
@@ -50,21 +49,20 @@ const SafeWebPage = () => {
         'Custom reports'
       ],
       popular: true,
-      cta: 'Start Premium'
+      cta: 'Start Pro Trial'
     },
     {
-      name: 'Enterprise',
-      price: '$35',
-      duration: 'per user/month',
+      name: 'SafeWeb Enterprise',
+      price: 'Custom',
+      duration: 'Contact sales',
       icon: Users,
       features: [
-        'Everything in Premium',
+        'Everything in Pro',
         'Executive protection',
         'Threat intelligence feeds',
         'White-label customization',
         'SSO & SAML integration',
-        'Dedicated account manager',
-        'Custom integrations'
+        'Dedicated account manager'
       ],
       popular: false,
       cta: 'Contact Sales'
@@ -76,52 +74,30 @@ const SafeWebPage = () => {
       <Navigation />
       
       <main className="pt-20">
-        {/* Navigation Header */}
-        <div className="bg-muted/30 border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(-1)}
-                className="shrink-0"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate('/dashboard')}
-              >
-                <Home className="h-4 w-4 mr-2" />
-                Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
-
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">
+        <section className="py-20 bg-gradient-to-br from-background via-background/95 to-violet-500/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Search className="h-8 w-8 text-primary" />
-                </div>
-                <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  Ultrium SafeWeb™
-                </h1>
-              </div>
+            <div className="text-center">
+              <Badge className="mb-4 bg-violet-500/10 text-violet-500 border-violet-500/20">
+                <Eye className="h-3 w-3 mr-1" />
+                Dark Web Intelligence
+              </Badge>
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                Ultrium SafeWeb™
+              </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Dark web monitoring and threat intelligence platform. Protect your organization from credential theft, data breaches, and cyber threats with continuous monitoring.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="btn-glow">
+                <Link to="/vanguard/auth">
+                  <Button size="lg" className="bg-violet-500 hover:bg-violet-600">
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button variant="outline" size="lg" onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
                   <Play className="mr-2 h-5 w-5" />
-                  Try Live Demo Below
-                </Button>
-                <Button variant="outline" size="lg">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Start Free Trial
+                  Try Live Demo
                 </Button>
               </div>
             </div>
@@ -142,7 +118,7 @@ const SafeWebPage = () => {
                 <Card key={index} className="hover:shadow-lg transition-all duration-300">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3">
-                      <Check className="h-5 w-5 text-success" />
+                      <Check className="h-5 w-5 text-violet-500" />
                       <span className="font-medium">{feature}</span>
                     </div>
                   </CardContent>
@@ -153,7 +129,7 @@ const SafeWebPage = () => {
         </section>
 
         {/* Live Demo Section */}
-        <section className="py-16">
+        <section id="demo" className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Try SafeWeb Live</h2>
@@ -165,13 +141,20 @@ const SafeWebPage = () => {
           </div>
         </section>
 
+        {/* Vanguard Upsell */}
+        <VanguardUpsell 
+          currentProduct="SafeWeb™" 
+          currentProductPrice="$3/user/mo"
+          competitorComparison="Best value vs. ID Agent when bundled in Vanguard Suite"
+        />
+
         {/* Pricing Section */}
         <section className="py-20 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Choose Your SafeWeb Plan</h2>
+              <h2 className="text-3xl font-bold mb-4">Standalone SafeWeb Pricing</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Start with a free trial, then choose the plan that fits your organization's needs
+                Or get SafeWeb included in Vanguard Suite for even more value
               </p>
             </div>
             
@@ -181,39 +164,41 @@ const SafeWebPage = () => {
                 return (
                   <Card 
                     key={index} 
-                    className={`relative ${tier.popular ? 'border-primary border-2' : ''} hover:shadow-lg transition-all duration-300`}
+                    className={`relative ${tier.popular ? 'border-violet-500 border-2 shadow-lg' : ''} hover:shadow-lg transition-all duration-300`}
                   >
                     {tier.popular && (
                       <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-primary text-primary-foreground">Most Popular</Badge>
+                        <Badge className="bg-violet-500">Most Popular</Badge>
                       </div>
                     )}
                     <CardHeader className="text-center">
-                      <div className="mx-auto mb-4 w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                        <Icon className="h-6 w-6 text-primary" />
+                      <div className="mx-auto mb-4 w-12 h-12 bg-violet-500/10 rounded-full flex items-center justify-center">
+                        <Icon className="h-6 w-6 text-violet-500" />
                       </div>
                       <CardTitle className="text-xl">{tier.name}</CardTitle>
                       <div className="text-3xl font-bold text-primary">
                         {tier.price}
-                        <span className="text-sm font-normal text-muted-foreground">/{tier.duration}</span>
+                        <span className="text-sm font-normal text-muted-foreground">{tier.duration}</span>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-3 mb-6">
                         {tier.features.map((feature, featureIndex) => (
                           <li key={featureIndex} className="flex items-center gap-2 text-sm">
-                            <Check className="h-4 w-4 text-success flex-shrink-0" />
+                            <Check className="h-4 w-4 text-violet-500 flex-shrink-0" />
                             <span>{feature}</span>
                           </li>
                         ))}
                       </ul>
-                      <Button 
-                        className="w-full" 
-                        variant={tier.popular ? "default" : "outline"}
-                      >
-                        {tier.cta}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
+                      <Link to={tier.cta === 'Contact Sales' ? '/contact' : '/vanguard/auth'}>
+                        <Button 
+                          className={`w-full ${tier.popular ? 'bg-violet-500 hover:bg-violet-600' : ''}`}
+                          variant={tier.popular ? "default" : "outline"}
+                        >
+                          {tier.cta}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      </Link>
                     </CardContent>
                   </Card>
                 );
@@ -225,19 +210,24 @@ const SafeWebPage = () => {
         {/* CTA Section */}
         <section className="py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <Card className="p-8 bg-gradient-to-br from-primary/5 to-secondary/5">
-              <CardContent>
-                <h3 className="text-2xl font-bold mb-4">Ready to Monitor the Dark Web?</h3>
+            <Card className="p-8 bg-gradient-to-br from-violet-500/5 to-purple-500/5 border-violet-500/20">
+              <CardContent className="pt-0">
+                <AlertTriangle className="h-12 w-12 text-violet-500 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold mb-4">Your Data Could Be on the Dark Web</h3>
                 <p className="text-muted-foreground mb-6">
-                  Join thousands of organizations protecting themselves with SafeWeb threat intelligence
+                  80% of breaches involve compromised credentials. Monitor and protect your organization today.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" className="btn-glow">
-                    Start Free Trial
-                  </Button>
-                  <Button variant="outline" size="lg" onClick={() => window.location.href = '/contact'}>
-                    Schedule Demo Call
-                  </Button>
+                  <Link to="/vanguard/auth">
+                    <Button size="lg" className="bg-violet-500 hover:bg-violet-600">
+                      Start Free Scan
+                    </Button>
+                  </Link>
+                  <Link to="/contact">
+                    <Button variant="outline" size="lg">
+                      Talk to Expert
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { VanguardUpsell } from '@/components/products/VanguardUpsell';
 import { 
   Monitor, Wrench, Shield, Clock, Zap, 
   ArrowRight, Check, Terminal, HardDrive, Cpu,
@@ -217,6 +218,13 @@ export default function RMMPage() {
             </div>
           </div>
         </section>
+
+        {/* Vanguard Upsell */}
+        <VanguardUpsell 
+          currentProduct="RMM™" 
+          currentProductPrice="$3/endpoint/mo"
+          competitorComparison="Compete with Atera & NinjaOne at a fraction of the cost in Vanguard Enterprise"
+        />
 
         {/* CTA */}
         <section className="py-20">
