@@ -4571,6 +4571,185 @@ export type Database = {
           },
         ]
       }
+      helpdesk_canned_responses: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          keywords: string[] | null
+          shortcut: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          keywords?: string[] | null
+          shortcut?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          keywords?: string[] | null
+          shortcut?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      helpdesk_chat_conversations: {
+        Row: {
+          ai_resolved: boolean | null
+          client_id: string | null
+          created_at: string | null
+          created_ticket_id: string | null
+          ended_at: string | null
+          id: string
+          language_detected: string | null
+          messages_count: number | null
+          resolution_type: string | null
+          satisfaction_rating: number | null
+          session_id: string
+          started_at: string | null
+          status: string | null
+          user_email: string | null
+          user_name: string | null
+        }
+        Insert: {
+          ai_resolved?: boolean | null
+          client_id?: string | null
+          created_at?: string | null
+          created_ticket_id?: string | null
+          ended_at?: string | null
+          id?: string
+          language_detected?: string | null
+          messages_count?: number | null
+          resolution_type?: string | null
+          satisfaction_rating?: number | null
+          session_id: string
+          started_at?: string | null
+          status?: string | null
+          user_email?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          ai_resolved?: boolean | null
+          client_id?: string | null
+          created_at?: string | null
+          created_ticket_id?: string | null
+          ended_at?: string | null
+          id?: string
+          language_detected?: string | null
+          messages_count?: number | null
+          resolution_type?: string | null
+          satisfaction_rating?: number | null
+          session_id?: string
+          started_at?: string | null
+          status?: string | null
+          user_email?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      helpdesk_chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helpdesk_chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "helpdesk_chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      helpdesk_issue_patterns: {
+        Row: {
+          affected_category: string | null
+          alert_threshold: number | null
+          auto_alert: boolean | null
+          created_at: string | null
+          detection_criteria: Json
+          id: string
+          is_active: boolean | null
+          last_occurrence: string | null
+          occurrence_count: number | null
+          pattern_description: string | null
+          pattern_name: string
+          severity: string | null
+        }
+        Insert: {
+          affected_category?: string | null
+          alert_threshold?: number | null
+          auto_alert?: boolean | null
+          created_at?: string | null
+          detection_criteria: Json
+          id?: string
+          is_active?: boolean | null
+          last_occurrence?: string | null
+          occurrence_count?: number | null
+          pattern_description?: string | null
+          pattern_name: string
+          severity?: string | null
+        }
+        Update: {
+          affected_category?: string | null
+          alert_threshold?: number | null
+          auto_alert?: boolean | null
+          created_at?: string | null
+          detection_criteria?: Json
+          id?: string
+          is_active?: boolean | null
+          last_occurrence?: string | null
+          occurrence_count?: number | null
+          pattern_description?: string | null
+          pattern_name?: string
+          severity?: string | null
+        }
+        Relationships: []
+      }
       helpdesk_kb_articles: {
         Row: {
           author_id: string | null
@@ -4631,6 +4810,39 @@ export type Database = {
           title?: string
           updated_at?: string | null
           view_count?: number | null
+        }
+        Relationships: []
+      }
+      helpdesk_sentiment_logs: {
+        Row: {
+          client_id: string | null
+          conversation_id: string | null
+          frustration_level: number | null
+          id: string
+          recorded_at: string | null
+          sentiment: string
+          source: string | null
+          ticket_id: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          conversation_id?: string | null
+          frustration_level?: number | null
+          id?: string
+          recorded_at?: string | null
+          sentiment: string
+          source?: string | null
+          ticket_id?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          conversation_id?: string | null
+          frustration_level?: number | null
+          id?: string
+          recorded_at?: string | null
+          sentiment?: string
+          source?: string | null
+          ticket_id?: string | null
         }
         Relationships: []
       }
@@ -4703,6 +4915,39 @@ export type Database = {
           timezone?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      helpdesk_ticket_handoffs: {
+        Row: {
+          ai_generated_summary: string | null
+          context_notes: string | null
+          from_technician_id: string | null
+          handoff_at: string | null
+          handoff_reason: string | null
+          id: string
+          ticket_id: string
+          to_technician_id: string | null
+        }
+        Insert: {
+          ai_generated_summary?: string | null
+          context_notes?: string | null
+          from_technician_id?: string | null
+          handoff_at?: string | null
+          handoff_reason?: string | null
+          id?: string
+          ticket_id: string
+          to_technician_id?: string | null
+        }
+        Update: {
+          ai_generated_summary?: string | null
+          context_notes?: string | null
+          from_technician_id?: string | null
+          handoff_at?: string | null
+          handoff_reason?: string | null
+          id?: string
+          ticket_id?: string
+          to_technician_id?: string | null
         }
         Relationships: []
       }
@@ -15906,9 +16151,14 @@ export type Database = {
           ai_confidence_score: number | null
           ai_detected_category: string | null
           ai_detected_priority: string | null
+          ai_duplicate_confidence: number | null
+          ai_duplicate_of: string | null
+          ai_escalation_factors: string[] | null
+          ai_escalation_probability: number | null
           ai_escalation_reason: string | null
           ai_estimated_resolution_time: string | null
           ai_frustration_level: number | null
+          ai_handoff_summary: string | null
           ai_kb_article_relevance: Json | null
           ai_keywords: string[] | null
           ai_predicted_sla_hours: number | null
@@ -15936,6 +16186,7 @@ export type Database = {
           created_at: string | null
           description: string
           id: string
+          original_language: string | null
           priority: string
           related_scan_id: string | null
           related_security_event_id: string | null
@@ -15947,6 +16198,8 @@ export type Database = {
           status: string
           tech_action: string | null
           title: string
+          translated_description: string | null
+          translated_title: string | null
           updated_at: string | null
           user_feedback: string | null
           user_id: string
@@ -15960,9 +16213,14 @@ export type Database = {
           ai_confidence_score?: number | null
           ai_detected_category?: string | null
           ai_detected_priority?: string | null
+          ai_duplicate_confidence?: number | null
+          ai_duplicate_of?: string | null
+          ai_escalation_factors?: string[] | null
+          ai_escalation_probability?: number | null
           ai_escalation_reason?: string | null
           ai_estimated_resolution_time?: string | null
           ai_frustration_level?: number | null
+          ai_handoff_summary?: string | null
           ai_kb_article_relevance?: Json | null
           ai_keywords?: string[] | null
           ai_predicted_sla_hours?: number | null
@@ -15990,6 +16248,7 @@ export type Database = {
           created_at?: string | null
           description: string
           id?: string
+          original_language?: string | null
           priority?: string
           related_scan_id?: string | null
           related_security_event_id?: string | null
@@ -16001,6 +16260,8 @@ export type Database = {
           status?: string
           tech_action?: string | null
           title: string
+          translated_description?: string | null
+          translated_title?: string | null
           updated_at?: string | null
           user_feedback?: string | null
           user_id: string
@@ -16014,9 +16275,14 @@ export type Database = {
           ai_confidence_score?: number | null
           ai_detected_category?: string | null
           ai_detected_priority?: string | null
+          ai_duplicate_confidence?: number | null
+          ai_duplicate_of?: string | null
+          ai_escalation_factors?: string[] | null
+          ai_escalation_probability?: number | null
           ai_escalation_reason?: string | null
           ai_estimated_resolution_time?: string | null
           ai_frustration_level?: number | null
+          ai_handoff_summary?: string | null
           ai_kb_article_relevance?: Json | null
           ai_keywords?: string[] | null
           ai_predicted_sla_hours?: number | null
@@ -16044,6 +16310,7 @@ export type Database = {
           created_at?: string | null
           description?: string
           id?: string
+          original_language?: string | null
           priority?: string
           related_scan_id?: string | null
           related_security_event_id?: string | null
@@ -16055,6 +16322,8 @@ export type Database = {
           status?: string
           tech_action?: string | null
           title?: string
+          translated_description?: string | null
+          translated_title?: string | null
           updated_at?: string | null
           user_feedback?: string | null
           user_id?: string
