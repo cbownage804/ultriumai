@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
-  Shield, Lock, Search, Network, Wrench, MessageSquare,
-  CheckCircle, Play, ShoppingCart, Loader2, Minus, Plus, TrendingDown
+  Shield, Lock, Search, Network, Wrench, MessageSquare, Bot,
+  CheckCircle, Play, ShoppingCart, Loader2, Minus, Plus, TrendingDown, Sparkles
 } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +26,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   helpdesk: MessageSquare,
   safenet: Network,
   safeweb: Search,
+  ultriumgpt: Bot,
 };
 
 const ProductPurchaseCard = ({ product, features, tags }: ProductPurchaseCardProps) => {
@@ -74,12 +75,17 @@ const ProductPurchaseCard = ({ product, features, tags }: ProductPurchaseCardPro
             <Icon className="h-6 w-6 text-primary" />
           </div>
           <div className="flex flex-col items-end gap-1">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs capitalize">
               {product.category}
             </Badge>
-            {product.inVanguard && (
+            {product.inVanguard ? (
               <Badge variant="outline" className="text-xs text-cyan-500 border-cyan-500/30">
                 In Vanguard
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs text-purple-500 border-purple-500/30">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Standalone
               </Badge>
             )}
           </div>

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ProductPurchaseCard from "@/components/ProductPurchaseCard";
 import { 
-  Brain, Package, Shield, Bot, ArrowRight
+  Brain, Package, Shield, ArrowRight
 } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { STANDALONE_PRODUCTS } from '@/config/productPricing';
@@ -26,23 +26,28 @@ const productFeatures: Record<string, { features: string[]; tags: string[] }> = 
     tags: ["RMM", "Remote Management"]
   },
   helpdesk: {
-    features: ["Smart routing", "Auto-responses", "SLA tracking", "Multi-channel"],
-    tags: ["Helpdesk", "Automation"]
-  },
-  safenet: {
-    features: ["Topology mapping", "Device discovery", "Vulnerability scanning", "Performance monitoring"],
-    tags: ["Network Security", "Monitoring"]
+    features: [
+      "Tier 1 AI Auto-Resolution (85%+ confidence)",
+      "Smart Escalation to right technician",
+      "Multi-Channel: Email, Chat, Phone",
+      "Self-Service Portal with AI deflection"
+    ],
+    tags: ["AI Agent", "Helpdesk", "Automation"]
   },
   safeweb: {
     features: ["Credential monitoring", "Breach detection", "Brand protection", "Executive protection"],
     tags: ["Dark Web", "Threat Intelligence"]
+  },
+  ultriumgpt: {
+    features: ["Custom AI training", "Document analysis", "Multi-language support", "API integrations"],
+    tags: ["AI Assistant", "Custom GPT", "Unlimited Users"]
   },
 };
 
 const Portfolio = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  const categories = ["all", "security", "operations"];
+  const categories = ["all", "security", "operations", "ai"];
   
   const filteredProducts = selectedCategory === "all" 
     ? Object.values(STANDALONE_PRODUCTS)
@@ -64,11 +69,11 @@ const Portfolio = () => {
               Product Portfolio
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
-              Enterprise-grade tools at startup prices. Purchase individually or bundle everything in Vanguard Suite.
+              Enterprise-grade tools at startup prices. Purchase individually or bundle in Vanguard Suite.
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Shield className="h-4 w-4 text-primary" />
-              <span>All products also available in</span>
+              <span>Security & Operations products also available in</span>
               <Link to="/vanguard/suite" className="text-primary font-medium hover:underline">
                 Ultrium Vanguard Suite →
               </Link>
@@ -80,10 +85,11 @@ const Portfolio = () => {
         <section className="py-8 border-b border-border/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-              <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
-                <TabsTrigger value="all">All Products</TabsTrigger>
+              <TabsList className="grid w-full max-w-lg mx-auto grid-cols-4">
+                <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="security">Security</TabsTrigger>
                 <TabsTrigger value="operations">Operations</TabsTrigger>
+                <TabsTrigger value="ai">AI</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -105,6 +111,78 @@ const Portfolio = () => {
           </div>
         </section>
 
+        {/* AI Helpdesk Feature Highlight */}
+        <section className="py-12 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-y border-primary/20">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center mb-8">
+              <Badge variant="secondary" className="mb-4">
+                <Brain className="h-4 w-4 mr-2" />
+                AI-Powered Support
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Ultrium AI Helpdesk™
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Let AI handle Tier 1 support—automatically resolve routine tickets while escalating complex issues intelligently.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-background/60 rounded-lg p-4 border border-border/50">
+                <div className="text-3xl font-bold text-primary mb-1">85%+</div>
+                <div className="text-sm text-muted-foreground">Auto-resolution for routine tickets</div>
+              </div>
+              <div className="bg-background/60 rounded-lg p-4 border border-border/50">
+                <div className="text-3xl font-bold text-primary mb-1">24/7</div>
+                <div className="text-sm text-muted-foreground">AI agent always available</div>
+              </div>
+              <div className="bg-background/60 rounded-lg p-4 border border-border/50">
+                <div className="text-3xl font-bold text-primary mb-1">3 min</div>
+                <div className="text-sm text-muted-foreground">Avg. first response time</div>
+              </div>
+              <div className="bg-background/60 rounded-lg p-4 border border-border/50">
+                <div className="text-3xl font-bold text-primary mb-1">47%</div>
+                <div className="text-sm text-muted-foreground">Cheaper than Zendesk</div>
+              </div>
+            </div>
+
+            <div className="mt-8 grid md:grid-cols-2 gap-6">
+              <div className="bg-background/80 rounded-lg p-6 border border-border/50">
+                <h3 className="font-semibold text-lg mb-3">🤖 Tier 1 Auto-Resolution</h3>
+                <p className="text-muted-foreground text-sm">
+                  AI analyzes incoming tickets and automatically resolves routine issues—password resets, 
+                  how-to questions, common troubleshooting. Users receive instant AI-generated solutions 
+                  via email with feedback buttons.
+                </p>
+              </div>
+              <div className="bg-background/80 rounded-lg p-6 border border-border/50">
+                <h3 className="font-semibold text-lg mb-3">📊 Smart Escalation</h3>
+                <p className="text-muted-foreground text-sm">
+                  For complex issues, AI triages the ticket with full context, suggests solutions to 
+                  technicians, and routes to the right specialist. Techs can Accept, Edit, or Reject 
+                  AI suggestions before responding.
+                </p>
+              </div>
+              <div className="bg-background/80 rounded-lg p-6 border border-border/50">
+                <h3 className="font-semibold text-lg mb-3">📱 Multi-Channel AI</h3>
+                <p className="text-muted-foreground text-sm">
+                  AI handles tickets from email, live chat, and even phone call transcripts. 
+                  Same intelligent routing and resolution across all channels with unified 
+                  conversation history.
+                </p>
+              </div>
+              <div className="bg-background/80 rounded-lg p-6 border border-border/50">
+                <h3 className="font-semibold text-lg mb-3">🔍 Self-Service Portal</h3>
+                <p className="text-muted-foreground text-sm">
+                  AI-powered knowledge base deflects tickets before they're created. Users search 
+                  and get instant answers, reducing ticket volume by up to 40%. Portal customizable 
+                  per client.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Vanguard Suite CTA */}
         <section className="py-12 bg-gradient-to-r from-cyan-500/10 to-purple-600/10 border-y border-primary/20">
           <div className="max-w-4xl mx-auto px-4 text-center">
@@ -115,9 +193,11 @@ const Portfolio = () => {
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Get Everything in Vanguard Suite
             </h2>
-            <p className="text-xl text-muted-foreground mb-6">
-              All 6 products + AI SOC + 24/7 monitoring + unified dashboard. 
-              <span className="text-primary font-semibold"> Save up to 40%</span> vs. individual purchases.
+            <p className="text-xl text-muted-foreground mb-2">
+              SafeScan + SafePass + RMM + AI Helpdesk + SafeWeb + Network Monitoring + AI SOC
+            </p>
+            <p className="text-muted-foreground mb-6">
+              <span className="text-primary font-semibold">Save up to 40%</span> vs. individual purchases
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-2xl mx-auto mb-8 text-sm">
               <div className="bg-background/50 rounded-lg p-3 border border-border/50">
@@ -140,34 +220,9 @@ const Portfolio = () => {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-          </div>
-        </section>
-
-        {/* UltriumGPT / AI Studio CTA */}
-        <section className="py-20 bg-gradient-to-br from-primary/10 to-secondary/10">
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <Badge variant="secondary" className="mb-4">
-              <Bot className="h-4 w-4 mr-2" />
-              Custom AI Solutions
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Need Custom AI?</h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              Build your own AI assistants and custom GPTs with UltriumAI Studio. 
-              Or schedule a consultation for enterprise solutions.
+            <p className="text-xs text-muted-foreground mt-4">
+              Note: UltriumGPT is a separate AI platform and not included in Vanguard Suite
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/ai-studio">
-                <Button size="lg" className="text-lg px-8">
-                  <Brain className="mr-2 h-5 w-5" />
-                  Try AI Studio
-                </Button>
-              </Link>
-              <Link to="/contact">
-                <Button variant="outline" size="lg" className="text-lg px-8">
-                  Schedule Consultation
-                </Button>
-              </Link>
-            </div>
           </div>
         </section>
       </main>

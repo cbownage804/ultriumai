@@ -1,5 +1,5 @@
 // Standalone Product Pricing Configuration
-// All products available individually or bundled in Vanguard Suite
+// Products available individually - some also bundled in Vanguard Suite
 
 export interface ProductPricing {
   id: string;
@@ -14,6 +14,7 @@ export interface ProductPricing {
   inVanguard: boolean;
   demoUrl: string;
   category: 'security' | 'operations' | 'ai';
+  highlights?: string[];
 }
 
 export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
@@ -61,8 +62,8 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
   },
   helpdesk: {
     id: 'helpdesk',
-    name: 'Helpdesk™',
-    description: 'AI-powered ticketing, SLA management, and client portal',
+    name: 'Ultrium AI Helpdesk™',
+    description: 'AI-powered service desk with autonomous ticket resolution and smart escalation',
     price: 2900, // $29/agent/mo
     unit: 'agent',
     stripePriceId: 'price_1SpENcH1u6E0bsJT5xuOIwvt',
@@ -72,20 +73,12 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
     inVanguard: true,
     demoUrl: '/demos/ticketing',
     category: 'operations',
-  },
-  safenet: {
-    id: 'safenet',
-    name: 'SafeNet™',
-    description: 'Real-time network monitoring, traffic analysis, and alerting',
-    price: 200, // $2/device/mo
-    unit: 'device',
-    stripePriceId: 'price_1SpENeH1u6E0bsJTpgoWENVc',
-    stripeProductId: 'prod_TmnzdkoV7SrrYD',
-    competitorComparison: 'vs PRTG at $1,750/yr',
-    savings: '60% cheaper',
-    inVanguard: true,
-    demoUrl: '/demos/safenet',
-    category: 'security',
+    highlights: [
+      'Tier 1 AI Auto-Resolution',
+      'Smart Escalation Engine',
+      'Multi-Channel Support',
+      'Self-Service Portal',
+    ],
   },
   safeweb: {
     id: 'safeweb',
@@ -100,6 +93,20 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
     inVanguard: true,
     demoUrl: '/demos/safeintel',
     category: 'security',
+  },
+  ultriumgpt: {
+    id: 'ultriumgpt',
+    name: 'UltriumGPT',
+    description: 'Custom AI assistant builder with trained business knowledge and integrations',
+    price: 4900, // $49/mo flat
+    unit: 'org',
+    stripePriceId: 'price_1SpEWFH1u6E0bsJTVUBvBqlX',
+    stripeProductId: 'prod_Tmo8w3qmvYfp0f',
+    competitorComparison: 'vs ChatGPT Team at $25/user',
+    savings: 'Unlimited users',
+    inVanguard: false, // NOT in Vanguard - separate product
+    demoUrl: '/ai-studio',
+    category: 'ai',
   },
 };
 
