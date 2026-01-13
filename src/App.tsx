@@ -98,6 +98,7 @@ import VanguardSubscriptionAdmin from '@/pages/admin/VanguardSubscriptionAdmin';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
+import HelpdeskFeedback from '@/pages/helpdesk/HelpdeskFeedback';
 import MSPControlCenter from '@/pages/MSPDashboard';
 import MSPSecurityDashboard from '@/pages/MSPSecurityDashboard';
 import MSPDashboardPage from '@/pages/MSPDashboardPage';
@@ -293,6 +294,10 @@ function AppRouter() {
         <Route path="/client" element={<ClientPortalDashboard />} />
         <Route path="/client/tickets" element={<ClientTicketsPage />} />
         <Route path="/client/billing" element={<ClientBillingPage />} />
+        
+        {/* Helpdesk Feedback Route (Public - for email links) */}
+        <Route path="/helpdesk/feedback" element={<HelpdeskFeedback />} />
+        
         <Route path="/mssps" element={<MSSPs />} />
         <Route path="/solutions" element={<Solutions />} />
         <Route path="/demos" element={<LiveDemos />} />

@@ -165,3 +165,6 @@ verify_jwt = false
 
 [functions.product-checkout]
 verify_jwt = false
+
+[functions.ai-ticket-agent]
+verify_jwt = false
