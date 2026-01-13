@@ -29,6 +29,19 @@ const TIERS = {
   },
 };
 
+// One-time onboarding fee (includes Pi agent setup)
+const ONBOARDING_FEE = {
+  price_id: "price_1SpE8dH1u6E0bsJTYxsepk7j",
+  product_id: "prod_TmnkZrDfs3mQ4T",
+  name: "Onboarding & Pi Agent Setup",
+  amount_cents: 99900,
+};
+
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[VANGUARD-CHECKOUT] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -45,8 +58,9 @@ serve(async (req) => {
     const { data } = await supabaseClient.auth.getUser(token);
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated or email not available");
+    logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { tier, seats } = await req.json();
+    const { tier, seats, includeOnboarding = true } = await req.json();
     
     if (!tier || !TIERS[tier as keyof typeof TIERS]) {
       throw new Error("Invalid tier specified");
@@ -54,6 +68,7 @@ serve(async (req) => {
     
     const tierConfig = TIERS[tier as keyof typeof TIERS];
     const seatCount = Math.max(1, parseInt(seats) || 1);
+    logStep("Checkout request", { tier, seats: seatCount, includeOnboarding });
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { 
       apiVersion: "2025-08-27.basil" 
@@ -64,18 +79,31 @@ serve(async (req) => {
     let customerId;
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
+      logStep("Found existing customer", { customerId });
     }
 
-    // Create checkout session with per-seat pricing
+    // Build line items
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      {
+        price: tierConfig.price_id,
+        quantity: seatCount,
+      },
+    ];
+
+    // Add one-time onboarding fee if included
+    if (includeOnboarding) {
+      lineItems.push({
+        price: ONBOARDING_FEE.price_id,
+        quantity: 1,
+      });
+      logStep("Including onboarding fee", { amount: ONBOARDING_FEE.amount_cents });
+    }
+
+    // Create checkout session with subscription + one-time fee
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: [
-        {
-          price: tierConfig.price_id,
-          quantity: seatCount,
-        },
-      ],
+      line_items: lineItems,
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/vanguard/app/dashboard?subscription=success`,
       cancel_url: `${req.headers.get("origin")}/vanguard/suite?subscription=canceled`,
@@ -83,6 +111,7 @@ serve(async (req) => {
         user_id: user.id,
         tier: tier,
         seats: seatCount.toString(),
+        include_onboarding: includeOnboarding.toString(),
       },
       subscription_data: {
         metadata: {
@@ -93,13 +122,16 @@ serve(async (req) => {
       },
     });
 
+    logStep("Checkout session created", { sessionId: session.id, url: session.url });
+
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Checkout error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });
