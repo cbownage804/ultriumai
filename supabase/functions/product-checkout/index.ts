@@ -34,6 +34,11 @@ const PRODUCTS: Record<string, { priceId: string; name: string; unit: string }> 
     name: "SafeWeb™",
     unit: "user",
   },
+  safetrack: {
+    priceId: "price_safetrack_monthly",
+    name: "SafeTrack™",
+    unit: "asset",
+  },
   ultriumgpt: {
     priceId: "price_1SpEWFH1u6E0bsJTVUBvBqlX",
     name: "UltriumGPT",

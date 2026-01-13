@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   MessageSquare, Bot, Users, Clock, Zap, 
-  ArrowRight, Check, Brain, BarChart3, Mail,
-  Globe, Sparkles, Target
+  ArrowRight, Check, Brain, BarChart3,
+  Target
 } from 'lucide-react';
 
 const features = [
@@ -82,9 +84,12 @@ const pricing = [
 export default function HelpdeskPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent" />
+      <Navigation />
+      
+      <main className="pt-20">
+        {/* Hero */}
+        <section className="relative overflow-hidden border-b">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 py-20 relative">
           <Badge className="mb-4 bg-purple-500/10 text-purple-500 border-purple-500/20">
             <MessageSquare className="h-3 w-3 mr-1" />
@@ -233,7 +238,10 @@ export default function HelpdeskPage() {
             </Link>
           </div>
         </div>
-      </section>
+        </section>
+      </main>
+      
+      <Footer />
     </div>
   );
 }

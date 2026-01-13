@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Phone, Brain, Shield, Briefcase, X } from "lucide-react";
+import { Menu, LogOut, Phone, Brain, Shield, Briefcase, X, ChevronDown, Package } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,14 @@ import { useAccountType } from "@/hooks/useAccountType";
 import { useToast } from "@/hooks/use-toast";
 import { createNavigationHandler } from "@/hooks/useScrollToTop";
 import ThemeToggle from "./ThemeToggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import UserProfileDropdown from "./UserProfileDropdown";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 import { safeWindowOpen } from "@/utils/security";
@@ -76,12 +84,48 @@ const Navigation = () => {
               Vanguard™
             </button>
             
-            <button 
-              onClick={() => handleNavigation('/portfolio')}
-              className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
-            >
-              Portfolio
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 flex items-center gap-1">
+                  <Package className="h-4 w-4" />
+                  Products
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel>Product Portfolio</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleNavigation('/portfolio')}>
+                  All Products
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Security</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safescan')}>
+                  SafeScan™ - Email & URL Security
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safepass')}>
+                  SafePass™ - Password Manager
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safeweb')}>
+                  SafeWeb™ - Dark Web Monitoring
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Operations</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/rmm')}>
+                  RMM™ - Remote Monitoring
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/helpdesk')}>
+                  AI Helpdesk™ - IT Service Desk
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safetrack')}>
+                  SafeTrack™ - Asset Management
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">AI Platform</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleNavigation('/ai-studio')}>
+                  UltriumGPT™ - Custom AI
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             <button 
               onClick={() => handleNavigation('/pricing')}
@@ -175,8 +219,9 @@ const Navigation = () => {
                 Vanguard™
               </button>
               
-              <button onClick={() => handleNavigationWithMenuClose('/portfolio')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
-                Portfolio
+              <button onClick={() => handleNavigationWithMenuClose('/portfolio')} className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
+                <Package className="h-4 w-4" />
+                Products
               </button>
               
               <button onClick={() => handleNavigationWithMenuClose('/pricing')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
