@@ -440,7 +440,7 @@ const VanguardSuite = () => {
                       <span className="text-white/60">One-time onboarding fee:</span>
                       <span className="text-white font-semibold">$999</span>
                     </div>
-                    <p className="text-xs text-white/40 mt-1">Includes Pi agent hardware, setup & deployment</p>
+                    <p className="text-xs text-white/40 mt-1">Includes Vanguard agent hardware, setup & deployment</p>
                   </div>
                   <Button 
                     onClick={handleCheckout}

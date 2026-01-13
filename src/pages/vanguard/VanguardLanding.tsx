@@ -358,7 +358,7 @@ export default function VanguardLanding() {
             </p>
             <div className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500/20 to-purple-600/20 border border-cyan-500/30 rounded-full px-4 py-2">
               <span className="text-cyan-400 font-semibold">$999</span>
-              <span className="text-white/60 text-sm">one-time onboarding fee (includes Pi agent hardware & setup)</span>
+              <span className="text-white/60 text-sm">one-time onboarding fee (includes Vanguard agent hardware & setup)</span>
             </div>
           </div>
           
