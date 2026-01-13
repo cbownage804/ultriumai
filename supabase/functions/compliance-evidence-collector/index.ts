@@ -1,10 +1,14 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.0';
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+const logStep = (step: string, details?: Record<string, unknown>) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[COMPLIANCE-EVIDENCE] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -13,45 +17,57 @@ serve(async (req) => {
   }
 
   try {
+    logStep("Function started");
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
-      req.headers.get('Authorization')?.replace('Bearer ', '') ?? ''
-    );
-
-    if (userError || !user) {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (userError || !user) {
+      logStep("Auth error", { error: userError?.message });
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    logStep("User authenticated", { userId: user.id });
+
     const { action, framework, controlId, evidenceType, data, title, description } = await req.json();
+    logStep("Request parsed", { action, framework, controlId });
 
     if (action === 'collect_evidence') {
-      console.log(`Collecting evidence for ${framework} control ${controlId}`);
+      logStep(`Collecting evidence for ${framework} control ${controlId}`);
       
-      // Process different types of evidence
       let evidenceData;
-      let filePath = null;
-      let fileUrl = null;
+      let filePath = '';
 
       switch (evidenceType) {
         case 'screenshot':
-          evidenceData = await processScreenshotEvidence(data);
+          evidenceData = processScreenshotEvidence(data);
           filePath = await saveEvidenceFile(supabaseClient, user.id, evidenceData, 'screenshot.png');
           break;
         
         case 'configuration':
-          evidenceData = await processConfigurationEvidence(data);
+          evidenceData = processConfigurationEvidence(data);
           filePath = await saveEvidenceFile(supabaseClient, user.id, evidenceData, 'config.json');
           break;
         
         case 'log':
-          evidenceData = await processLogEvidence(data);
+          evidenceData = processLogEvidence(data);
           filePath = await saveEvidenceFile(supabaseClient, user.id, evidenceData, 'audit.log');
           break;
         
@@ -64,7 +80,6 @@ serve(async (req) => {
           evidenceData = data;
       }
 
-      // Store evidence record
       const { data: evidence, error: evidenceError } = await supabaseClient
         .from('compliance_evidence')
         .insert({
@@ -74,11 +89,11 @@ serve(async (req) => {
           evidence_type: evidenceType,
           title: title || `${framework} ${controlId} Evidence`,
           description: description || `Automatically collected evidence for ${framework} control ${controlId}`,
-          file_path: filePath,
-          file_url: fileUrl,
+          file_path: filePath || null,
+          file_url: null,
           metadata: {
             collectionMethod: 'automatic',
-            sourceSystem: data.sourceSystem || 'unknown',
+            sourceSystem: data?.sourceSystem || 'unknown',
             timestamp: new Date().toISOString(),
             evidenceHash: await generateEvidenceHash(evidenceData)
           },
@@ -88,14 +103,14 @@ serve(async (req) => {
         .single();
 
       if (evidenceError) {
-        console.error('Error storing evidence:', evidenceError);
+        logStep("Error storing evidence", { error: evidenceError.message });
         return new Response(
           JSON.stringify({ error: 'Failed to store evidence', details: evidenceError.message }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      console.log(`Evidence collected successfully: ${evidence.id}`);
+      logStep("Evidence collected successfully", { evidenceId: evidence.id });
 
       return new Response(
         JSON.stringify({ 
@@ -108,19 +123,17 @@ serve(async (req) => {
     }
 
     if (action === 'auto_collect_framework_evidence') {
-      console.log(`Auto-collecting evidence for framework: ${framework}`);
+      logStep(`Auto-collecting evidence for framework: ${framework}`);
       
-      const evidenceCollected = [];
+      const evidenceCollected: unknown[] = [];
       const frameworkControls = getFrameworkControls(framework);
       
       for (const control of frameworkControls) {
         try {
-          // Automatically collect evidence based on available compliance data
           const { data: complianceData } = await supabaseClient
             .from('compliance_data')
             .select('*')
             .eq('user_id', user.id)
-            .contains('framework_mappings', { [framework.toLowerCase()]: [control.id] })
             .limit(5);
 
           if (complianceData && complianceData.length > 0) {
@@ -132,7 +145,7 @@ serve(async (req) => {
             }
           }
         } catch (error) {
-          console.error(`Error collecting evidence for control ${control.id}:`, error);
+          logStep(`Error collecting evidence for control ${control.id}`, { error: String(error) });
         }
       }
 
@@ -148,9 +161,8 @@ serve(async (req) => {
     }
 
     if (action === 'generate_evidence_package') {
-      console.log(`Generating evidence package for framework: ${framework}`);
+      logStep(`Generating evidence package for framework: ${framework}`);
       
-      // Get all evidence for the framework
       const { data: evidence, error: evidenceError } = await supabaseClient
         .from('compliance_evidence')
         .select('*')
@@ -165,8 +177,7 @@ serve(async (req) => {
         );
       }
 
-      // Generate evidence package
-      const evidencePackage = await generateEvidencePackage(framework, evidence || []);
+      const evidencePackage = generateEvidencePackage(framework, evidence || []);
       const packageFilePath = await saveEvidenceFile(
         supabaseClient, 
         user.id, 
@@ -191,52 +202,49 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Evidence collector error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("Error", { message: errorMessage });
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
 
-async function processScreenshotEvidence(data: any) {
-  // Process base64 screenshot data
+function processScreenshotEvidence(data: Record<string, unknown>) {
   return {
     type: 'screenshot',
     timestamp: new Date().toISOString(),
-    metadata: data.metadata || {},
-    imageData: data.imageData // Base64 encoded image
+    metadata: data?.metadata || {},
+    imageData: data?.imageData
   };
 }
 
-async function processConfigurationEvidence(data: any) {
-  // Process configuration data
+function processConfigurationEvidence(data: Record<string, unknown>) {
   return {
     type: 'configuration',
     timestamp: new Date().toISOString(),
-    source: data.source || 'unknown',
-    configuration: data.configuration || data,
-    metadata: data.metadata || {}
+    source: data?.source || 'unknown',
+    configuration: data?.configuration || data,
+    metadata: data?.metadata || {}
   };
 }
 
-async function processLogEvidence(data: any) {
-  // Process log data
+function processLogEvidence(data: Record<string, unknown>) {
   return {
     type: 'log',
     timestamp: new Date().toISOString(),
-    source: data.source || 'unknown',
-    logEntries: data.logEntries || [data],
-    metadata: data.metadata || {}
+    source: data?.source || 'unknown',
+    logEntries: data?.logEntries || [data],
+    metadata: data?.metadata || {}
   };
 }
 
-async function saveEvidenceFile(supabaseClient: any, userId: string, evidenceData: any, fileName: string): Promise<string> {
+async function saveEvidenceFile(supabaseClient: ReturnType<typeof createClient>, userId: string, evidenceData: unknown, fileName: string): Promise<string> {
   try {
     const filePath = `evidence/${userId}/${Date.now()}_${fileName}`;
     const fileContent = typeof evidenceData === 'string' ? evidenceData : JSON.stringify(evidenceData, null, 2);
     
-    // Convert string to Uint8Array for file upload
     const encoder = new TextEncoder();
     const fileBuffer = encoder.encode(fileContent);
 
@@ -260,7 +268,7 @@ async function saveEvidenceFile(supabaseClient: any, userId: string, evidenceDat
   }
 }
 
-async function generateEvidenceHash(evidenceData: any): Promise<string> {
+async function generateEvidenceHash(evidenceData: unknown): Promise<string> {
   const dataString = JSON.stringify(evidenceData);
   const encoder = new TextEncoder();
   const data = encoder.encode(dataString);
@@ -270,7 +278,7 @@ async function generateEvidenceHash(evidenceData: any): Promise<string> {
 }
 
 function getFrameworkControls(framework: string) {
-  const frameworks: Record<string, any[]> = {
+  const frameworks: Record<string, Array<{ id: string; name: string }>> = {
     'soc2': [
       { id: 'CC1.1', name: 'Control Environment' },
       { id: 'CC6.1', name: 'Logical and Physical Access Controls' },
@@ -304,7 +312,13 @@ function getFrameworkControls(framework: string) {
   return frameworks[framework.toLowerCase()] || [];
 }
 
-async function createEvidenceFromComplianceData(supabaseClient: any, userId: string, framework: string, controlId: string, dataPoint: any) {
+async function createEvidenceFromComplianceData(
+  supabaseClient: ReturnType<typeof createClient>, 
+  userId: string, 
+  framework: string, 
+  controlId: string, 
+  dataPoint: Record<string, unknown>
+) {
   try {
     const { data: evidence, error } = await supabaseClient
       .from('compliance_evidence')
@@ -313,8 +327,8 @@ async function createEvidenceFromComplianceData(supabaseClient: any, userId: str
         framework: framework.toLowerCase(),
         control_id: controlId,
         evidence_type: 'configuration',
-        title: `${framework} ${controlId} - ${dataPoint.data_source}`,
-        description: `Compliance evidence from ${dataPoint.data_type}`,
+        title: `${framework} ${controlId} - ${dataPoint.data_source || 'Unknown'}`,
+        description: `Compliance evidence from ${dataPoint.data_type || 'system'}`,
         metadata: {
           sourceDataId: dataPoint.id,
           complianceStatus: dataPoint.compliance_status,
@@ -340,8 +354,8 @@ async function createEvidenceFromComplianceData(supabaseClient: any, userId: str
   }
 }
 
-async function generateEvidencePackage(framework: string, evidence: any[]) {
-  const packageData = {
+function generateEvidencePackage(framework: string, evidence: Array<Record<string, unknown>>) {
+  return {
     framework: framework,
     generatedAt: new Date().toISOString(),
     evidenceCount: evidence.length,
@@ -368,6 +382,4 @@ async function generateEvidencePackage(framework: string, evidence: any[]) {
       metadata: e.metadata
     }))
   };
-
-  return packageData;
 }
