@@ -30,6 +30,7 @@ import UltriumGPT from '@/pages/UltriumGPT';
 import Solutions from '@/pages/Solutions';
 import LiveDemos from '@/pages/LiveDemos';
 import Portfolio from '@/pages/Portfolio';
+import ProductsPage from '@/pages/ProductsPage';
 import Docs from '@/pages/Docs';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
@@ -78,6 +79,9 @@ import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SafeLinkPage from '@/pages/products/SafeLinkPage';
 import SafeDocPage from '@/pages/products/SafeDocPage';
 import SafePassPage from '@/pages/products/SafePassPage';
+import SecuritySuitePage from '@/pages/products/SecuritySuitePage';
+import OperationsSuitePage from '@/pages/products/OperationsSuitePage';
+import HelpdeskPage from '@/pages/products/HelpdeskPage';
 
 // SafePass Standalone App
 import SafePassLayout from '@/layouts/SafePassLayout';
@@ -302,6 +306,7 @@ function AppRouter() {
         <Route path="/solutions" element={<Solutions />} />
         <Route path="/demos" element={<LiveDemos />} />
         <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/products" element={<ProductsPage />} />
         <Route path="/msp-demos" element={<MSPDemos />} />
           <Route path="/msp-control-center" element={
             <SubscriptionProtectedRoute requiresPremium>
@@ -329,6 +334,9 @@ function AppRouter() {
         <Route path="/demos/custom-gpt-builder" element={<CustomGPTBuilderDemoPage />} />
         <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
         <Route path="/products/safescore" element={<SafeScorePage />} />
+        <Route path="/products/security" element={<SecuritySuitePage />} />
+        <Route path="/products/operations" element={<OperationsSuitePage />} />
+        <Route path="/products/helpdesk" element={<HelpdeskPage />} />
         <Route path="/demos/vanguard" element={<VanguardDemoPage />} />
         <Route path="/safepass" element={<SafePassPage />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
