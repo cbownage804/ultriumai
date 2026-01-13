@@ -42,6 +42,8 @@ const IncidentResponsePlaybooks = lazy(() => import('@/components/vanguard/Incid
 const VulnerabilityScanner = lazy(() => import('@/components/vanguard/VulnerabilityScanner').then(m => ({ default: m.VulnerabilityScanner })));
 const VanguardSafePass = lazy(() => import('@/pages/vanguard/VanguardSafePass'));
 const MSPSafePassProvisioning = lazy(() => import('@/components/safepass/MSPSafePassProvisioning'));
+const VanguardSafeScan = lazy(() => import('@/pages/vanguard/VanguardSafeScan'));
+const VanguardSuite = lazy(() => import('@/pages/vanguard/VanguardSuite'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -101,6 +103,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-playbooks" path="playbooks" element={<LazyProtectedPage component={IncidentResponsePlaybooks} />} />,
   <Route key="vanguard-safepass" path="safepass" element={<LazyProtectedPage component={VanguardSafePass} />} />,
   <Route key="vanguard-safepass-admin" path="safepass-admin" element={<LazyProtectedPage component={MSPSafePassProvisioning} />} />,
+  <Route key="vanguard-safescan" path="safescan" element={<LazyProtectedPage component={VanguardSafeScan} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
@@ -108,6 +111,7 @@ export const getVanguardProtectedRoutes = () => [
 export const getVanguardPublicRoutes = () => [
   <Route key="vanguard-landing" index element={<LazyPage component={VanguardLanding} />} />,
   <Route key="vanguard-auth" path="auth" element={<LazyPage component={VanguardAuthPage} />} />,
+  <Route key="vanguard-suite" path="suite" element={<LazyPage component={VanguardSuite} />} />,
 ];
 
 // Legacy export for backwards compatibility

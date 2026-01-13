@@ -6,7 +6,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { 
   Shield, Lock, Search, Bot, Network, Wrench, MessageSquare, Eye, 
-  Play, ArrowRight, Brain, CheckCircle
+  Play, ArrowRight, Brain, CheckCircle, Package
 } from "lucide-react";
 import { Link } from 'react-router-dom';
 
@@ -202,6 +202,30 @@ const Portfolio = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Vanguard Suite CTA */}
+        <section className="py-12 bg-gradient-to-r from-cyan-500/10 to-purple-600/10 border-y border-primary/20">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <Badge variant="secondary" className="mb-4">
+              <Shield className="h-4 w-4 mr-2" />
+              Complete Solution
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Get Everything in One Platform
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              Bundle all security tools with Ultrium Vanguard—AI-powered SOC, unified dashboard, and 24/7 protection.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/vanguard/suite">
+                <Button size="lg" className="text-lg px-8">
+                  <Package className="mr-2 h-5 w-5" />
+                  View Vanguard Suite Pricing
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
