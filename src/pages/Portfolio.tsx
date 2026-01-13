@@ -21,21 +21,9 @@ const productFeatures: Record<string, { features: string[]; tags: string[] }> = 
     features: ["Secure generation", "Breach monitoring", "Team sharing", "MFA support"],
     tags: ["Password Security", "Enterprise"]
   },
-  safenet: {
-    features: ["Network discovery", "Topology mapping", "Vulnerability scanning", "Asset inventory"],
-    tags: ["Network Security", "Discovery"]
-  },
   safeweb: {
     features: ["Credential monitoring", "Breach detection", "Brand protection", "Executive alerts"],
     tags: ["Dark Web", "Threat Intel"]
-  },
-  safemdr: {
-    features: ["24/7 monitoring", "AI SOC analysis", "Incident response", "Threat hunting"],
-    tags: ["MDR", "SOC", "24/7"]
-  },
-  safeshield: {
-    features: ["Real-time protection", "AI threat prevention", "Quarantine", "Rollback"],
-    tags: ["Antivirus", "EDR"]
   },
   rmm: {
     features: ["Remote desktop", "Device monitoring", "Script execution", "Multi-client"],
