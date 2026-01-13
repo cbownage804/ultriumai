@@ -107,6 +107,93 @@ export default function VanguardHome() {
     }
   ];
 
+  const advancedModules = [
+    {
+      title: 'Threat Intelligence',
+      description: 'Real-time threat feeds and IOC lookups',
+      path: `${basePath}/threat-intel`,
+      color: 'from-red-600 to-orange-500'
+    },
+    {
+      title: 'User Behavior Analytics',
+      description: 'Detect anomalous user activities',
+      path: `${basePath}/user-behavior`,
+      color: 'from-violet-500 to-purple-600'
+    },
+    {
+      title: 'Dark Web Monitoring',
+      description: 'Monitor for leaked credentials and data',
+      path: `${basePath}/dark-web`,
+      color: 'from-gray-800 to-gray-900'
+    },
+    {
+      title: 'SIEM Dashboard',
+      description: 'Security event log aggregation',
+      path: `${basePath}/siem`,
+      color: 'from-cyan-500 to-blue-600'
+    },
+    {
+      title: 'Patch Management',
+      description: 'Track and deploy security patches',
+      path: `${basePath}/patches`,
+      color: 'from-emerald-500 to-green-600'
+    },
+    {
+      title: 'Backup Monitoring',
+      description: 'Ensure backup integrity and compliance',
+      path: `${basePath}/backups`,
+      color: 'from-amber-500 to-yellow-600'
+    },
+    {
+      title: 'Network Topology',
+      description: 'Visualize your network infrastructure',
+      path: `${basePath}/network`,
+      color: 'from-indigo-500 to-blue-600'
+    },
+    {
+      title: 'Asset Inventory',
+      description: 'Complete asset management and tracking',
+      path: `${basePath}/assets`,
+      color: 'from-teal-500 to-cyan-600'
+    },
+    {
+      title: 'Executive Dashboard',
+      description: 'High-level security metrics for leadership',
+      path: `${basePath}/executive`,
+      color: 'from-slate-600 to-slate-800'
+    },
+    {
+      title: 'Compliance Scorecards',
+      description: 'Track compliance across frameworks',
+      path: `${basePath}/scorecard`,
+      color: 'from-lime-500 to-green-600'
+    },
+    {
+      title: 'Report Builder',
+      description: 'Create custom security reports',
+      path: `${basePath}/report-builder`,
+      color: 'from-pink-500 to-rose-600'
+    },
+    {
+      title: 'Multi-Tenant Management',
+      description: 'Manage multiple client environments',
+      path: `${basePath}/tenants`,
+      color: 'from-sky-500 to-blue-600'
+    },
+    {
+      title: 'API Marketplace',
+      description: 'Integrate with security tools and APIs',
+      path: `${basePath}/marketplace`,
+      color: 'from-fuchsia-500 to-purple-600'
+    },
+    {
+      title: 'Incident Playbooks',
+      description: 'Automated incident response workflows',
+      path: `${basePath}/playbooks`,
+      color: 'from-rose-500 to-red-600'
+    }
+  ];
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
       {/* Hero Section */}
@@ -170,6 +257,29 @@ export default function VanguardHome() {
                   <ArrowRight className="h-3 w-3 md:h-4 md:w-4 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
                 </CardTitle>
                 <CardDescription className="text-xs md:text-sm line-clamp-2">{module.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Advanced Modules Grid */}
+      <div>
+        <h2 className="text-lg md:text-xl font-semibold mb-3 md:mb-4">Advanced Features</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          {advancedModules.map((module, index) => (
+            <Card 
+              key={index} 
+              className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              onClick={() => navigate(module.path)}
+            >
+              <CardHeader className="pb-2 md:pb-3 p-3 md:p-4">
+                <div className={`h-2 rounded-full bg-gradient-to-r ${module.color} mb-2`} />
+                <CardTitle className="text-sm md:text-base flex items-center justify-between">
+                  <span className="line-clamp-1">{module.title}</span>
+                  <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </CardTitle>
+                <CardDescription className="text-xs line-clamp-2">{module.description}</CardDescription>
               </CardHeader>
             </Card>
           ))}
