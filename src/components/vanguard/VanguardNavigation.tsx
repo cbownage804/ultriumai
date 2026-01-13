@@ -33,6 +33,7 @@ import {
   Crosshair,
   Wifi,
   Key,
+  Search,
   Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,7 @@ export function VanguardNavigation() {
         { title: 'Pen Testing', path: `${basePath}/pentest`, icon: Shield },
         { title: 'Vulnerability Scanner', path: `${basePath}/vulnscan`, icon: Bug },
         { title: 'Playbooks', path: `${basePath}/playbooks`, icon: BookOpen },
+        { title: 'SafeScan', path: `${basePath}/safescan`, icon: Search, isNew: true },
         { title: 'SafePass', path: `${basePath}/safepass`, icon: Key, isNew: true },
       ]
     },
