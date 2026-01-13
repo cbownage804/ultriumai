@@ -4,10 +4,11 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { VanguardUpsell } from '@/components/products/VanguardUpsell';
 import { 
   Package, QrCode, Calendar, DollarSign, 
   ArrowRight, Check, Laptop, History, FileText,
-  BarChart3, MapPin, AlertTriangle
+  BarChart3
 } from 'lucide-react';
 
 const features = [
@@ -217,6 +218,13 @@ export default function SafeTrackPage() {
             </div>
           </div>
         </section>
+
+        {/* Vanguard Upsell */}
+        <VanguardUpsell 
+          currentProduct="SafeTrack™" 
+          currentProductPrice="$2/asset/mo"
+          competitorComparison="33% cheaper than Asset Panda, included in Vanguard Professional+"
+        />
 
         {/* CTA */}
         <section className="py-20">

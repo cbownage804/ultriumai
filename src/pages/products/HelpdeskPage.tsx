@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { VanguardUpsell } from '@/components/products/VanguardUpsell';
 import { 
   MessageSquare, Bot, Users, Clock, Zap, 
   ArrowRight, Check, Brain, BarChart3,
@@ -218,8 +219,15 @@ export default function HelpdeskPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20">
+        {/* Vanguard Upsell */}
+        <VanguardUpsell 
+          currentProduct="AI Helpdesk™" 
+          currentProductPrice="$29/agent/mo"
+          competitorComparison="47% cheaper than Zendesk, plus get full RMM in Vanguard Enterprise"
+        />
+
+        {/* CTA */}
+        <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Transform Your IT Support</h2>
           <p className="text-muted-foreground mb-8">
