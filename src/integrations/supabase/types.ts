@@ -4571,6 +4571,141 @@ export type Database = {
           },
         ]
       }
+      helpdesk_kb_articles: {
+        Row: {
+          author_id: string | null
+          category: string
+          content: string
+          created_at: string | null
+          excerpt: string | null
+          helpful_count: number | null
+          id: string
+          is_internal: boolean | null
+          is_published: boolean | null
+          keywords: string[] | null
+          last_reviewed_at: string | null
+          not_helpful_count: number | null
+          subcategory: string | null
+          tags: string[] | null
+          times_linked_to_tickets: number | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id?: string | null
+          category: string
+          content: string
+          created_at?: string | null
+          excerpt?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_internal?: boolean | null
+          is_published?: boolean | null
+          keywords?: string[] | null
+          last_reviewed_at?: string | null
+          not_helpful_count?: number | null
+          subcategory?: string | null
+          tags?: string[] | null
+          times_linked_to_tickets?: number | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string | null
+          category?: string
+          content?: string
+          created_at?: string | null
+          excerpt?: string | null
+          helpful_count?: number | null
+          id?: string
+          is_internal?: boolean | null
+          is_published?: boolean | null
+          keywords?: string[] | null
+          last_reviewed_at?: string | null
+          not_helpful_count?: number | null
+          subcategory?: string | null
+          tags?: string[] | null
+          times_linked_to_tickets?: number | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      helpdesk_technicians: {
+        Row: {
+          availability_status: string | null
+          avg_resolution_time_minutes: number | null
+          avg_satisfaction_rating: number | null
+          certifications: string[] | null
+          created_at: string | null
+          current_ticket_count: number | null
+          display_name: string
+          email: string | null
+          first_response_avg_minutes: number | null
+          id: string
+          is_active: boolean | null
+          max_concurrent_tickets: number | null
+          shift_end: string | null
+          shift_start: string | null
+          skill_levels: Json | null
+          specializations: string[] | null
+          tickets_resolved_this_month: number | null
+          tickets_resolved_total: number | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          availability_status?: string | null
+          avg_resolution_time_minutes?: number | null
+          avg_satisfaction_rating?: number | null
+          certifications?: string[] | null
+          created_at?: string | null
+          current_ticket_count?: number | null
+          display_name: string
+          email?: string | null
+          first_response_avg_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_tickets?: number | null
+          shift_end?: string | null
+          shift_start?: string | null
+          skill_levels?: Json | null
+          specializations?: string[] | null
+          tickets_resolved_this_month?: number | null
+          tickets_resolved_total?: number | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          availability_status?: string | null
+          avg_resolution_time_minutes?: number | null
+          avg_satisfaction_rating?: number | null
+          certifications?: string[] | null
+          created_at?: string | null
+          current_ticket_count?: number | null
+          display_name?: string
+          email?: string | null
+          first_response_avg_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          max_concurrent_tickets?: number | null
+          shift_end?: string | null
+          shift_start?: string | null
+          skill_levels?: Json | null
+          specializations?: string[] | null
+          tickets_resolved_this_month?: number | null
+          tickets_resolved_total?: number | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       helpdesk_tickets: {
         Row: {
           actual_hours: number | null
@@ -15763,23 +15898,33 @@ export type Database = {
       }
       vanguard_service_tickets: {
         Row: {
+          actual_resolution_hours: number | null
           ai_auto_responded: boolean | null
           ai_business_impact: string | null
           ai_category_confidence: number | null
+          ai_complexity_score: number | null
           ai_confidence_score: number | null
           ai_detected_category: string | null
           ai_detected_priority: string | null
           ai_escalation_reason: string | null
           ai_estimated_resolution_time: string | null
           ai_frustration_level: number | null
+          ai_kb_article_relevance: Json | null
           ai_keywords: string[] | null
+          ai_predicted_sla_hours: number | null
           ai_priority_factors: string[] | null
           ai_processing_status: string | null
+          ai_recommended_technician_id: string | null
           ai_requires_escalation: boolean | null
           ai_response_sent_at: string | null
+          ai_routing_confidence: number | null
+          ai_routing_reason: string | null
           ai_sentiment_indicators: string[] | null
           ai_similar_issues_hint: string | null
+          ai_sla_confidence: number | null
+          ai_sla_factors: string[] | null
           ai_sub_category: string | null
+          ai_suggested_kb_articles: string[] | null
           ai_suggested_solution: string | null
           ai_summary: string | null
           ai_tech_notes: string | null
@@ -15807,23 +15952,33 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          actual_resolution_hours?: number | null
           ai_auto_responded?: boolean | null
           ai_business_impact?: string | null
           ai_category_confidence?: number | null
+          ai_complexity_score?: number | null
           ai_confidence_score?: number | null
           ai_detected_category?: string | null
           ai_detected_priority?: string | null
           ai_escalation_reason?: string | null
           ai_estimated_resolution_time?: string | null
           ai_frustration_level?: number | null
+          ai_kb_article_relevance?: Json | null
           ai_keywords?: string[] | null
+          ai_predicted_sla_hours?: number | null
           ai_priority_factors?: string[] | null
           ai_processing_status?: string | null
+          ai_recommended_technician_id?: string | null
           ai_requires_escalation?: boolean | null
           ai_response_sent_at?: string | null
+          ai_routing_confidence?: number | null
+          ai_routing_reason?: string | null
           ai_sentiment_indicators?: string[] | null
           ai_similar_issues_hint?: string | null
+          ai_sla_confidence?: number | null
+          ai_sla_factors?: string[] | null
           ai_sub_category?: string | null
+          ai_suggested_kb_articles?: string[] | null
           ai_suggested_solution?: string | null
           ai_summary?: string | null
           ai_tech_notes?: string | null
@@ -15851,23 +16006,33 @@ export type Database = {
           user_id: string
         }
         Update: {
+          actual_resolution_hours?: number | null
           ai_auto_responded?: boolean | null
           ai_business_impact?: string | null
           ai_category_confidence?: number | null
+          ai_complexity_score?: number | null
           ai_confidence_score?: number | null
           ai_detected_category?: string | null
           ai_detected_priority?: string | null
           ai_escalation_reason?: string | null
           ai_estimated_resolution_time?: string | null
           ai_frustration_level?: number | null
+          ai_kb_article_relevance?: Json | null
           ai_keywords?: string[] | null
+          ai_predicted_sla_hours?: number | null
           ai_priority_factors?: string[] | null
           ai_processing_status?: string | null
+          ai_recommended_technician_id?: string | null
           ai_requires_escalation?: boolean | null
           ai_response_sent_at?: string | null
+          ai_routing_confidence?: number | null
+          ai_routing_reason?: string | null
           ai_sentiment_indicators?: string[] | null
           ai_similar_issues_hint?: string | null
+          ai_sla_confidence?: number | null
+          ai_sla_factors?: string[] | null
           ai_sub_category?: string | null
+          ai_suggested_kb_articles?: string[] | null
           ai_suggested_solution?: string | null
           ai_summary?: string | null
           ai_tech_notes?: string | null
@@ -15894,7 +16059,15 @@ export type Database = {
           user_feedback?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vanguard_service_tickets_ai_recommended_technician_id_fkey"
+            columns: ["ai_recommended_technician_id"]
+            isOneToOne: false
+            referencedRelation: "helpdesk_technicians"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vanguard_subscriptions: {
         Row: {
