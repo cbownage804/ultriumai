@@ -76,14 +76,25 @@ async function processNewTicket(
     .update({ ai_processing_status: 'processing' })
     .eq('id', ticketId);
 
-  // Generate AI analysis
-  const analysis = await analyzeTicket(ticketData, apiKey);
+  // Fetch technicians and KB articles for smart routing
+  const [techResult, kbResult] = await Promise.all([
+    supabase.from('helpdesk_technicians').select('*').eq('is_active', true),
+    supabase.from('helpdesk_kb_articles').select('*').eq('is_published', true)
+  ]);
+
+  const technicians = techResult.data || [];
+  const kbArticles = kbResult.data || [];
+
+  // Generate comprehensive AI analysis with routing
+  const analysis = await analyzeTicketWithRouting(ticketData, technicians, kbArticles, apiKey);
   logStep("AI analysis complete", { 
     confidence: analysis.confidence_score, 
-    autoResolvable: analysis.auto_resolvable 
+    autoResolvable: analysis.auto_resolvable,
+    recommendedTech: analysis.recommended_technician_id,
+    suggestedArticles: analysis.suggested_kb_articles?.length || 0
   });
 
-  // Update ticket with comprehensive AI analysis
+  // Update ticket with comprehensive AI analysis including routing
   await supabase
     .from('vanguard_service_tickets')
     .update({
@@ -91,7 +102,7 @@ async function processNewTicket(
       ai_confidence_score: analysis.confidence_score,
       ai_summary: analysis.summary,
       ai_processing_status: 'completed',
-      // New classification fields
+      // Classification fields
       ai_detected_category: analysis.detected_category,
       ai_category_confidence: analysis.category_confidence,
       ai_sub_category: analysis.sub_category,
@@ -111,6 +122,18 @@ async function processNewTicket(
       ai_estimated_resolution_time: analysis.estimated_resolution_time,
       ai_tech_notes: analysis.tech_notes,
       ai_similar_issues_hint: analysis.similar_issues_hint,
+      // Smart routing
+      ai_recommended_technician_id: analysis.recommended_technician_id,
+      ai_routing_reason: analysis.routing_reason,
+      ai_routing_confidence: analysis.routing_confidence,
+      // KB article suggestions
+      ai_suggested_kb_articles: analysis.suggested_kb_articles,
+      ai_kb_article_relevance: analysis.kb_article_relevance,
+      // SLA prediction
+      ai_predicted_sla_hours: analysis.predicted_sla_hours,
+      ai_sla_confidence: analysis.sla_confidence,
+      ai_sla_factors: analysis.sla_factors,
+      ai_complexity_score: analysis.complexity_score,
       updated_at: new Date().toISOString()
     })
     .eq('id', ticketId);
@@ -366,6 +389,217 @@ Provide your complete analysis using the analyze_ticket function. Include classi
   if (!response.ok) {
     const errorText = await response.text();
     logStep("AI API error", { status: response.status, error: errorText });
+    throw new Error(`AI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+
+  if (toolCall?.function?.arguments) {
+    return JSON.parse(toolCall.function.arguments);
+  }
+
+  // Fallback
+  return {
+    summary: 'Unable to analyze ticket automatically',
+    solution: 'This ticket requires manual review by a technician.',
+    confidence_score: 30,
+    auto_resolvable: false,
+    detected_category: 'other',
+    user_sentiment: 'neutral',
+    detected_priority: 'medium',
+    tech_notes: 'AI analysis failed - please review manually'
+  };
+}
+
+async function analyzeTicketWithRouting(
+  ticketData: Record<string, unknown>,
+  technicians: Array<Record<string, unknown>>,
+  kbArticles: Array<Record<string, unknown>>,
+  apiKey: string
+) {
+  // Format technician info for AI
+  const techInfo = technicians.map(t => ({
+    id: t.id,
+    name: t.display_name,
+    specializations: t.specializations,
+    skill_levels: t.skill_levels,
+    current_load: t.current_ticket_count,
+    max_load: t.max_concurrent_tickets,
+    availability: t.availability_status,
+    avg_resolution_time: t.avg_resolution_time_minutes
+  }));
+
+  // Format KB articles for AI
+  const kbInfo = kbArticles.map(a => ({
+    id: a.id,
+    title: a.title,
+    category: a.category,
+    subcategory: a.subcategory,
+    tags: a.tags,
+    keywords: a.keywords,
+    excerpt: a.excerpt
+  }));
+
+  const systemPrompt = `You are Ultrium AI Helpdesk, an expert IT support AI agent with smart routing capabilities.
+
+Your tasks:
+1. Analyze the ticket and provide a solution
+2. Recommend the BEST technician based on their skills and current workload
+3. Suggest relevant knowledge base articles
+4. Predict SLA/resolution time
+
+TECHNICIAN ROUTING RULES:
+- Match ticket category to technician specializations
+- Consider skill levels (1-5 scale)
+- Prefer technicians with lower current workload
+- Only route to "available" technicians
+- High frustration tickets need senior techs (higher skill levels)
+
+SLA PREDICTION FACTORS:
+- Ticket complexity (1-10)
+- Required expertise level
+- Similar historical patterns
+- Current workload of assigned tech
+
+Available Technicians:
+${JSON.stringify(techInfo, null, 2)}
+
+Available KB Articles:
+${JSON.stringify(kbInfo, null, 2)}`;
+
+  const prompt = `Analyze this support ticket and provide routing recommendations:
+
+**Title:** ${ticketData.title}
+**Description:** ${ticketData.description}
+**Category:** ${ticketData.category || 'General'}
+**Priority:** ${ticketData.priority || 'medium'}
+**Requester:** ${ticketData.requester_name || 'Not specified'}
+**Requester Email:** ${ticketData.requester_email || 'Not specified'}
+
+Provide complete analysis with technician routing and KB article suggestions.`;
+
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'analyze_ticket_with_routing',
+          description: 'Analyze ticket with smart routing, KB suggestions, and SLA prediction',
+          parameters: {
+            type: 'object',
+            properties: {
+              // Core analysis
+              summary: { type: 'string', description: 'Brief 2-3 sentence summary' },
+              solution: { type: 'string', description: 'Step-by-step solution for the user' },
+              confidence_score: { type: 'integer', description: 'Confidence 0-100' },
+              auto_resolvable: { type: 'boolean', description: 'Can be auto-resolved' },
+              
+              // Classification
+              detected_category: {
+                type: 'string',
+                enum: ['hardware', 'software', 'network', 'security', 'email', 'printer', 'mobile', 'account', 'data', 'other']
+              },
+              category_confidence: { type: 'integer' },
+              sub_category: { type: 'string' },
+              
+              // Sentiment
+              user_sentiment: {
+                type: 'string',
+                enum: ['frustrated', 'urgent', 'confused', 'neutral', 'appreciative']
+              },
+              sentiment_indicators: { type: 'array', items: { type: 'string' } },
+              frustration_level: { type: 'integer', description: '0-10' },
+              
+              // Priority
+              detected_priority: {
+                type: 'string',
+                enum: ['low', 'medium', 'high', 'critical']
+              },
+              priority_factors: { type: 'array', items: { type: 'string' } },
+              business_impact: {
+                type: 'string',
+                enum: ['minimal', 'moderate', 'significant', 'severe']
+              },
+              users_affected: {
+                type: 'string',
+                enum: ['single', 'team', 'department', 'organization']
+              },
+              
+              // Insights
+              keywords: { type: 'array', items: { type: 'string' } },
+              requires_escalation: { type: 'boolean' },
+              escalation_reason: { type: 'string' },
+              estimated_resolution_time: { type: 'string' },
+              tech_notes: { type: 'string' },
+              similar_issues_hint: { type: 'string' },
+              
+              // SMART ROUTING
+              recommended_technician_id: {
+                type: 'string',
+                description: 'UUID of the best technician to handle this ticket'
+              },
+              routing_reason: {
+                type: 'string',
+                description: 'Why this technician was selected'
+              },
+              routing_confidence: {
+                type: 'integer',
+                description: 'Confidence in routing decision 0-100'
+              },
+              
+              // KB ARTICLE SUGGESTIONS
+              suggested_kb_articles: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Array of KB article UUIDs that may help'
+              },
+              kb_article_relevance: {
+                type: 'object',
+                description: 'Map of article_id to relevance score (0-100)'
+              },
+              
+              // SLA PREDICTION
+              predicted_sla_hours: {
+                type: 'number',
+                description: 'Predicted hours to resolution'
+              },
+              sla_confidence: {
+                type: 'integer',
+                description: 'Confidence in SLA prediction 0-100'
+              },
+              sla_factors: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Factors affecting SLA prediction'
+              },
+              complexity_score: {
+                type: 'integer',
+                description: 'Ticket complexity 1-10'
+              }
+            },
+            required: ['summary', 'solution', 'confidence_score', 'auto_resolvable', 'detected_category', 'user_sentiment', 'detected_priority'],
+            additionalProperties: false
+          }
+        }
+      }],
+      tool_choice: { type: 'function', function: { name: 'analyze_ticket_with_routing' } }
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    logStep("AI API error in routing", { status: response.status, error: errorText });
     throw new Error(`AI API error: ${response.status}`);
   }
 
