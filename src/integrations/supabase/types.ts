@@ -11500,6 +11500,60 @@ export type Database = {
           },
         ]
       }
+      safepass_accounts: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          linked_at: string | null
+          linked_by: string | null
+          linked_vanguard_client_id: string | null
+          msp_client_id: string | null
+          provisioned_at: string | null
+          provisioned_by_msp: string | null
+          subscription_expires_at: string | null
+          subscription_started_at: string | null
+          subscription_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          linked_at?: string | null
+          linked_by?: string | null
+          linked_vanguard_client_id?: string | null
+          msp_client_id?: string | null
+          provisioned_at?: string | null
+          provisioned_by_msp?: string | null
+          subscription_expires_at?: string | null
+          subscription_started_at?: string | null
+          subscription_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          linked_at?: string | null
+          linked_by?: string | null
+          linked_vanguard_client_id?: string | null
+          msp_client_id?: string | null
+          provisioned_at?: string | null
+          provisioned_by_msp?: string | null
+          subscription_expires_at?: string | null
+          subscription_started_at?: string | null
+          subscription_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       safepass_breach_database: {
         Row: {
           breach_count: number | null
@@ -11662,6 +11716,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safepass_msp_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by_user_id: string | null
+          client_id: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          invite_expires_at: string
+          invite_token: string
+          msp_user_id: string
+          status: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          invite_expires_at?: string
+          invite_token?: string
+          msp_user_id: string
+          status?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by_user_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          invite_expires_at?: string
+          invite_token?: string
+          msp_user_id?: string
+          status?: string
+        }
+        Relationships: []
       }
       safepass_msp_policies: {
         Row: {
@@ -11930,6 +12026,45 @@ export type Database = {
           password_id?: string | null
           success?: boolean | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      safepass_vanguard_link_requests: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          request_type: string
+          requested_vanguard_client_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          safepass_user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          request_type?: string
+          requested_vanguard_client_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          safepass_user_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          request_type?: string
+          requested_vanguard_client_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          safepass_user_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -3,6 +3,7 @@ import { useSafePass } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
+import VanguardLinkingCard from '@/components/safepass/VanguardLinkingCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -202,6 +203,9 @@ export default function SafePassDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Vanguard Upgrade Card */}
+      <VanguardLinkingCard />
 
       {/* Main Content - Password Vault */}
       <PasswordVault />

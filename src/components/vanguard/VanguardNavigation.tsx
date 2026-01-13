@@ -32,7 +32,8 @@ import {
   BookOpen,
   Crosshair,
   Wifi,
-  Key
+  Key,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -133,6 +134,7 @@ export function VanguardNavigation() {
       icon: Settings,
       items: [
         { title: 'Multi-Tenant', path: `${basePath}/tenants`, icon: Building2 },
+        { title: 'SafePass Admin', path: `${basePath}/safepass-admin`, icon: Users },
         { title: 'API Marketplace', path: `${basePath}/marketplace`, icon: Store },
         { title: 'Setup', path: `${basePath}/setup`, icon: Settings },
       ]

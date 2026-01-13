@@ -41,6 +41,7 @@ const APIMarketplace = lazy(() => import('@/components/vanguard/APIMarketplace')
 const IncidentResponsePlaybooks = lazy(() => import('@/components/vanguard/IncidentResponsePlaybooks').then(m => ({ default: m.IncidentResponsePlaybooks })));
 const VulnerabilityScanner = lazy(() => import('@/components/vanguard/VulnerabilityScanner').then(m => ({ default: m.VulnerabilityScanner })));
 const VanguardSafePass = lazy(() => import('@/pages/vanguard/VanguardSafePass'));
+const MSPSafePassProvisioning = lazy(() => import('@/components/safepass/MSPSafePassProvisioning'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -99,6 +100,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-marketplace" path="marketplace" element={<LazyProtectedPage component={APIMarketplace} />} />,
   <Route key="vanguard-playbooks" path="playbooks" element={<LazyProtectedPage component={IncidentResponsePlaybooks} />} />,
   <Route key="vanguard-safepass" path="safepass" element={<LazyProtectedPage component={VanguardSafePass} />} />,
+  <Route key="vanguard-safepass-admin" path="safepass-admin" element={<LazyProtectedPage component={MSPSafePassProvisioning} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
