@@ -29,7 +29,7 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
     competitorComparison: 'vs Proofpoint at $3,000/yr',
     savings: '60% cheaper',
     inVanguard: true,
-    demoUrl: '/demos/safescan',
+    demoUrl: '/products/safescan',
     category: 'security',
   },
   safepass: {
@@ -43,7 +43,7 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
     competitorComparison: 'vs 1Password at $7.99/user',
     savings: '50% cheaper',
     inVanguard: true,
-    demoUrl: '/safepass',
+    demoUrl: '/products/safepass',
     category: 'security',
   },
   safeweb: {
@@ -57,7 +57,7 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
     competitorComparison: 'vs ID Agent at $3-5/user',
     savings: 'Best value',
     inVanguard: true,
-    demoUrl: '/demos/safeintel',
+    demoUrl: '/products/safeweb',
     category: 'security',
   },
   rmm: {
@@ -71,7 +71,7 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
     competitorComparison: 'vs NinjaOne at $3-4/endpoint',
     savings: 'Best value',
     inVanguard: true,
-    demoUrl: '/demos/rmm',
+    demoUrl: '/products/rmm',
     category: 'operations',
   },
   helpdesk: {
@@ -105,7 +105,7 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
     competitorComparison: 'vs Asset Panda at $3/asset',
     savings: '33% cheaper',
     inVanguard: true,
-    demoUrl: '/vanguard/assets',
+    demoUrl: '/products/safetrack',
     category: 'operations',
   },
   ultriumgpt: {

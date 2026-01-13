@@ -82,6 +82,8 @@ import SafePassPage from '@/pages/products/SafePassPage';
 import SecuritySuitePage from '@/pages/products/SecuritySuitePage';
 import OperationsSuitePage from '@/pages/products/OperationsSuitePage';
 import HelpdeskPage from '@/pages/products/HelpdeskPage';
+import RMMPage from '@/pages/products/RMMPage';
+import SafeTrackProductPage from '@/pages/products/SafeTrackPage';
 
 // SafePass Standalone App
 import SafePassLayout from '@/layouts/SafePassLayout';
@@ -337,8 +339,11 @@ function AppRouter() {
         <Route path="/products/security" element={<SecuritySuitePage />} />
         <Route path="/products/operations" element={<OperationsSuitePage />} />
         <Route path="/products/helpdesk" element={<HelpdeskPage />} />
-        <Route path="/demos/vanguard" element={<VanguardDemoPage />} />
-        <Route path="/safepass" element={<SafePassPage />} />
+        <Route path="/products/rmm" element={<RMMPage />} />
+        <Route path="/products/safetrack" element={<SafeTrackProductPage />} />
+        <Route path="/products/safepass" element={<SafePassPage />} />
+        <Route path="/products/safeweb" element={<SafeWebPage />} />
+        <Route path="/products/safescan" element={<SafeScanPage />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
         <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
         <Route path="/demos/rmm" element={<RMMDemoPage />} />
