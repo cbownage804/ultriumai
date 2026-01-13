@@ -29,11 +29,11 @@ const TIERS = {
   },
 };
 
-// One-time onboarding fee (includes Pi agent setup)
+// One-time onboarding fee (includes agent hardware setup)
 const ONBOARDING_FEE = {
   price_id: "price_1SpE8dH1u6E0bsJTYxsepk7j",
   product_id: "prod_TmnkZrDfs3mQ4T",
-  name: "Onboarding & Pi Agent Setup",
+  name: "Onboarding & Agent Hardware Setup",
   amount_cents: 99900,
 };
 
