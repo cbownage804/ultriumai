@@ -162,3 +162,6 @@ verify_jwt = true
 
 [functions.safepass-breach-check]
 verify_jwt = false
+
+[functions.product-checkout]
+verify_jwt = false
