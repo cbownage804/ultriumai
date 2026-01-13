@@ -83,7 +83,7 @@ async function processNewTicket(
     autoResolvable: analysis.auto_resolvable 
   });
 
-  // Update ticket with AI analysis
+  // Update ticket with comprehensive AI analysis
   await supabase
     .from('vanguard_service_tickets')
     .update({
@@ -91,6 +91,26 @@ async function processNewTicket(
       ai_confidence_score: analysis.confidence_score,
       ai_summary: analysis.summary,
       ai_processing_status: 'completed',
+      // New classification fields
+      ai_detected_category: analysis.detected_category,
+      ai_category_confidence: analysis.category_confidence,
+      ai_sub_category: analysis.sub_category,
+      // Sentiment analysis
+      ai_user_sentiment: analysis.user_sentiment,
+      ai_sentiment_indicators: analysis.sentiment_indicators,
+      ai_frustration_level: analysis.frustration_level,
+      // Priority detection
+      ai_detected_priority: analysis.detected_priority,
+      ai_priority_factors: analysis.priority_factors,
+      ai_business_impact: analysis.business_impact,
+      ai_users_affected: analysis.users_affected,
+      // Additional insights
+      ai_keywords: analysis.keywords,
+      ai_requires_escalation: analysis.requires_escalation,
+      ai_escalation_reason: analysis.escalation_reason,
+      ai_estimated_resolution_time: analysis.estimated_resolution_time,
+      ai_tech_notes: analysis.tech_notes,
+      ai_similar_issues_hint: analysis.similar_issues_hint,
       updated_at: new Date().toISOString()
     })
     .eq('id', ticketId);
@@ -183,17 +203,43 @@ Tickets requiring technician review (Tier 2):
 - Issues requiring physical access
 - Anything involving sensitive data or systems
 
-Be conservative - only mark as auto_resolvable if you're highly confident the solution will work.`;
+Be conservative - only mark as auto_resolvable if you're highly confident the solution will work.
 
-  const prompt = `Analyze this support ticket:
+CLASSIFICATION: Categorize tickets accurately into one of these types:
+- hardware: Physical equipment issues
+- software: Application problems, installation, updates
+- network: Connectivity, VPN, internet issues
+- security: Password resets, access control, threats
+- email: Outlook, email delivery, calendar
+- printer: Print jobs, drivers, connectivity
+- mobile: Phones, tablets, mobile apps
+- account: User accounts, permissions, AD
+- data: File recovery, backup, storage
+- other: Miscellaneous issues
+
+SENTIMENT ANALYSIS: Detect the user's emotional state:
+- frustrated: Angry tone, multiple attempts mentioned, urgency
+- urgent: Business impact, deadline pressure
+- confused: Unclear descriptions, asking basic questions
+- neutral: Straightforward requests
+- appreciative: Positive tone, thank you messages
+
+PRIORITY DETECTION: Assess true priority based on:
+- Business impact (affects many users = higher)
+- Security implications (security issue = higher)
+- Time sensitivity (deadline mentioned = higher)
+- User role (executive = consider higher)`;
+
+  const prompt = `Analyze this support ticket comprehensively:
 
 **Title:** ${ticketData.title}
 **Description:** ${ticketData.description}
 **Category:** ${ticketData.category || 'General'}
 **Priority:** ${ticketData.priority || 'medium'}
 **Requester:** ${ticketData.requester_name || 'Not specified'}
+**Requester Email:** ${ticketData.requester_email || 'Not specified'}
 
-Provide your analysis using the analyze_ticket function.`;
+Provide your complete analysis using the analyze_ticket function. Include classification, sentiment, and priority assessment.`;
 
   const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
@@ -211,7 +257,7 @@ Provide your analysis using the analyze_ticket function.`;
         type: 'function',
         function: {
           name: 'analyze_ticket',
-          description: 'Provide structured analysis of the support ticket',
+          description: 'Provide structured analysis of the support ticket including classification, sentiment, and priority',
           parameters: {
             type: 'object',
             properties: {
@@ -231,21 +277,84 @@ Provide your analysis using the analyze_ticket function.`;
                 type: 'boolean',
                 description: 'True ONLY if this is a routine issue with a clear solution that can be sent directly to the user'
               },
-              category_suggestion: {
+              // Classification fields
+              detected_category: {
                 type: 'string',
-                description: 'Suggested category for this ticket'
+                enum: ['hardware', 'software', 'network', 'security', 'email', 'printer', 'mobile', 'account', 'data', 'other'],
+                description: 'AI-detected category for the ticket'
               },
-              priority_suggestion: {
+              category_confidence: {
+                type: 'integer',
+                description: 'Confidence in category detection 0-100'
+              },
+              sub_category: {
+                type: 'string',
+                description: 'More specific sub-category (e.g., "password_reset" within "security")'
+              },
+              // Sentiment analysis
+              user_sentiment: {
+                type: 'string',
+                enum: ['frustrated', 'urgent', 'confused', 'neutral', 'appreciative'],
+                description: 'Detected emotional state of the user'
+              },
+              sentiment_indicators: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Key phrases that indicate the sentiment'
+              },
+              frustration_level: {
+                type: 'integer',
+                description: 'Frustration level 0-10 (10 = extremely frustrated)'
+              },
+              // Priority detection
+              detected_priority: {
                 type: 'string',
                 enum: ['low', 'medium', 'high', 'critical'],
-                description: 'Recommended priority based on impact and urgency'
+                description: 'AI-recommended priority based on impact and urgency'
+              },
+              priority_factors: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Reasons for the priority recommendation'
+              },
+              business_impact: {
+                type: 'string',
+                enum: ['minimal', 'moderate', 'significant', 'severe'],
+                description: 'Estimated business impact'
+              },
+              users_affected: {
+                type: 'string',
+                enum: ['single', 'team', 'department', 'organization'],
+                description: 'Scope of affected users'
+              },
+              // Additional insights
+              keywords: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Key technical terms extracted from the ticket'
+              },
+              requires_escalation: {
+                type: 'boolean',
+                description: 'Whether this needs immediate escalation regardless of AI confidence'
+              },
+              escalation_reason: {
+                type: 'string',
+                description: 'Reason for immediate escalation if applicable'
+              },
+              estimated_resolution_time: {
+                type: 'string',
+                description: 'Estimated time to resolve (e.g., "15 minutes", "1 hour", "4 hours")'
               },
               tech_notes: {
                 type: 'string',
                 description: 'Notes for the technician if escalated (not shown to user)'
+              },
+              similar_issues_hint: {
+                type: 'string',
+                description: 'Hint about similar past issues or known problems'
               }
             },
-            required: ['summary', 'solution', 'confidence_score', 'auto_resolvable'],
+            required: ['summary', 'solution', 'confidence_score', 'auto_resolvable', 'detected_category', 'user_sentiment', 'detected_priority'],
             additionalProperties: false
           }
         }
@@ -273,6 +382,9 @@ Provide your analysis using the analyze_ticket function.`;
     solution: 'This ticket requires manual review by a technician.',
     confidence_score: 30,
     auto_resolvable: false,
+    detected_category: 'other',
+    user_sentiment: 'neutral',
+    detected_priority: 'medium',
     tech_notes: 'AI analysis failed - please review manually'
   };
 }

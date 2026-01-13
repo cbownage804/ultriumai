@@ -15764,11 +15764,27 @@ export type Database = {
       vanguard_service_tickets: {
         Row: {
           ai_auto_responded: boolean | null
+          ai_business_impact: string | null
+          ai_category_confidence: number | null
           ai_confidence_score: number | null
+          ai_detected_category: string | null
+          ai_detected_priority: string | null
+          ai_escalation_reason: string | null
+          ai_estimated_resolution_time: string | null
+          ai_frustration_level: number | null
+          ai_keywords: string[] | null
+          ai_priority_factors: string[] | null
           ai_processing_status: string | null
+          ai_requires_escalation: boolean | null
           ai_response_sent_at: string | null
+          ai_sentiment_indicators: string[] | null
+          ai_similar_issues_hint: string | null
+          ai_sub_category: string | null
           ai_suggested_solution: string | null
           ai_summary: string | null
+          ai_tech_notes: string | null
+          ai_user_sentiment: string | null
+          ai_users_affected: string | null
           assigned_to: string | null
           auto_resolved: boolean | null
           category: string
@@ -15792,11 +15808,27 @@ export type Database = {
         }
         Insert: {
           ai_auto_responded?: boolean | null
+          ai_business_impact?: string | null
+          ai_category_confidence?: number | null
           ai_confidence_score?: number | null
+          ai_detected_category?: string | null
+          ai_detected_priority?: string | null
+          ai_escalation_reason?: string | null
+          ai_estimated_resolution_time?: string | null
+          ai_frustration_level?: number | null
+          ai_keywords?: string[] | null
+          ai_priority_factors?: string[] | null
           ai_processing_status?: string | null
+          ai_requires_escalation?: boolean | null
           ai_response_sent_at?: string | null
+          ai_sentiment_indicators?: string[] | null
+          ai_similar_issues_hint?: string | null
+          ai_sub_category?: string | null
           ai_suggested_solution?: string | null
           ai_summary?: string | null
+          ai_tech_notes?: string | null
+          ai_user_sentiment?: string | null
+          ai_users_affected?: string | null
           assigned_to?: string | null
           auto_resolved?: boolean | null
           category?: string
@@ -15820,11 +15852,27 @@ export type Database = {
         }
         Update: {
           ai_auto_responded?: boolean | null
+          ai_business_impact?: string | null
+          ai_category_confidence?: number | null
           ai_confidence_score?: number | null
+          ai_detected_category?: string | null
+          ai_detected_priority?: string | null
+          ai_escalation_reason?: string | null
+          ai_estimated_resolution_time?: string | null
+          ai_frustration_level?: number | null
+          ai_keywords?: string[] | null
+          ai_priority_factors?: string[] | null
           ai_processing_status?: string | null
+          ai_requires_escalation?: boolean | null
           ai_response_sent_at?: string | null
+          ai_sentiment_indicators?: string[] | null
+          ai_similar_issues_hint?: string | null
+          ai_sub_category?: string | null
           ai_suggested_solution?: string | null
           ai_summary?: string | null
+          ai_tech_notes?: string | null
+          ai_user_sentiment?: string | null
+          ai_users_affected?: string | null
           assigned_to?: string | null
           auto_resolved?: boolean | null
           category?: string
