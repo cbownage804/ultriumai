@@ -21,25 +21,41 @@ const productFeatures: Record<string, { features: string[]; tags: string[] }> = 
     features: ["Secure generation", "Breach monitoring", "Team sharing", "MFA support"],
     tags: ["Password Security", "Enterprise"]
   },
+  safenet: {
+    features: ["Network discovery", "Topology mapping", "Vulnerability scanning", "Asset inventory"],
+    tags: ["Network Security", "Discovery"]
+  },
+  safeweb: {
+    features: ["Credential monitoring", "Breach detection", "Brand protection", "Executive alerts"],
+    tags: ["Dark Web", "Threat Intel"]
+  },
+  safemdr: {
+    features: ["24/7 monitoring", "AI SOC analysis", "Incident response", "Threat hunting"],
+    tags: ["MDR", "SOC", "24/7"]
+  },
+  safeshield: {
+    features: ["Real-time protection", "AI threat prevention", "Quarantine", "Rollback"],
+    tags: ["Antivirus", "EDR"]
+  },
   rmm: {
     features: ["Remote desktop", "Device monitoring", "Script execution", "Multi-client"],
     tags: ["RMM", "Remote Management"]
   },
   helpdesk: {
     features: [
-      "Tier 1 AI Auto-Resolution (85%+ confidence)",
-      "Smart Escalation to right technician",
-      "Multi-Channel: Email, Chat, Phone",
-      "Self-Service Portal with AI deflection"
+      "Tier 1 AI Auto-Resolution",
+      "Smart Escalation Engine",
+      "Multi-Channel Support",
+      "Self-Service Portal"
     ],
     tags: ["AI Agent", "Helpdesk", "Automation"]
   },
-  safeweb: {
-    features: ["Credential monitoring", "Breach detection", "Brand protection", "Executive protection"],
-    tags: ["Dark Web", "Threat Intelligence"]
+  safetrack: {
+    features: ["Asset lifecycle", "Depreciation tracking", "QR codes", "Maintenance schedules"],
+    tags: ["ITAM", "Asset Management"]
   },
   ultriumgpt: {
-    features: ["Custom AI training", "Document analysis", "Multi-language support", "API integrations"],
+    features: ["Custom AI training", "Document analysis", "Multi-language", "API integrations"],
     tags: ["AI Assistant", "Custom GPT", "Unlimited Users"]
   },
 };
