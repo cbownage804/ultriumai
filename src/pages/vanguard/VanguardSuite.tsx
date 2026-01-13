@@ -115,7 +115,6 @@ interface PricingTier {
   id: 'starter' | 'professional' | 'enterprise';
   name: string;
   description: string;
-  basePrice: number;
   userPrice: number;
   icon: React.ComponentType<any>;
   popular?: boolean;
@@ -127,7 +126,6 @@ const pricingTiers: PricingTier[] = [
     id: 'starter',
     name: 'Starter',
     description: 'Essential security for small teams',
-    basePrice: 99,
     userPrice: 5,
     icon: Shield,
     features: [
@@ -142,7 +140,6 @@ const pricingTiers: PricingTier[] = [
     id: 'professional',
     name: 'Professional',
     description: 'Complete security & operations suite',
-    basePrice: 299,
     userPrice: 12,
     icon: Zap,
     popular: true,
@@ -160,7 +157,6 @@ const pricingTiers: PricingTier[] = [
     id: 'enterprise',
     name: 'Enterprise',
     description: 'Full platform with AI capabilities',
-    basePrice: 799,
     userPrice: 20,
     icon: Crown,
     features: [
@@ -188,14 +184,13 @@ const VanguardSuite = () => {
   const currentTier = pricingTiers.find(t => t.id === selectedTier)!;
   const discount = billingCycle === 'annual' ? 0.8 : 1; // 20% off annual
   
-  const baseMonthly = currentTier.basePrice * discount;
   const userMonthly = currentTier.userPrice * userCount * discount;
   const addonsMonthly = selectedAddons.reduce((sum, addonId) => {
     const addon = products.find(p => p.id === addonId);
     return sum + (addon?.monthlyPrice || 0) * userCount * discount;
   }, 0);
   
-  const totalMonthly = baseMonthly + userMonthly + addonsMonthly;
+  const totalMonthly = userMonthly + addonsMonthly;
 
   const toggleAddon = (productId: string) => {
     setSelectedAddons(prev => 
@@ -361,10 +356,10 @@ const VanguardSuite = () => {
                     </div>
                   </div>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-white">${Math.round(tier.basePrice * discount)}</span>
-                    <span className="text-white/60">/mo base</span>
+                    <span className="text-4xl font-bold text-white">${Math.round(tier.userPrice * discount)}</span>
+                    <span className="text-white/60">/user/mo</span>
                     <div className="text-sm text-white/50">
-                      + ${Math.round(tier.userPrice * discount)}/user/mo
+                      Billed per seat {billingCycle === 'annual' ? '(20% annual discount)' : ''}
                     </div>
                   </div>
                 </CardHeader>
@@ -436,9 +431,9 @@ const VanguardSuite = () => {
                     ${Math.round(totalMonthly).toLocaleString()}
                   </div>
                   <div className="text-xs text-white/50 space-y-1">
-                    <div>Base: ${Math.round(baseMonthly)}/mo</div>
-                    <div>Users ({userCount}): ${Math.round(userMonthly)}/mo</div>
+                    <div>{userCount} users × ${Math.round(currentTier.userPrice * discount)}/user = ${Math.round(userMonthly)}/mo</div>
                     {addonsMonthly > 0 && <div>Add-ons: ${Math.round(addonsMonthly)}/mo</div>}
+                    {billingCycle === 'annual' && <div className="text-green-400">20% annual discount applied</div>}
                   </div>
                   <Button 
                     onClick={handleCheckout}
