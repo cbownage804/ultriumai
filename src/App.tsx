@@ -56,7 +56,7 @@ import Blog from '@/pages/Blog';
 import Documentation from '@/pages/Documentation';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
-import SafeScanPage from '@/pages/SafeScanPage';
+import SafeScanProductPage from '@/pages/products/SafeScanPage';
 import { SafeShieldApp } from '@/components/apps/SafeShieldApp';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
 import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
@@ -343,7 +343,7 @@ function AppRouter() {
         <Route path="/products/safetrack" element={<SafeTrackProductPage />} />
         <Route path="/products/safepass" element={<SafePassPage />} />
         <Route path="/products/safeweb" element={<SafeWebPage />} />
-        <Route path="/products/safescan" element={<SafeScanPage />} />
+        <Route path="/products/safescan" element={<SafeScanProductPage />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
         <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
         <Route path="/demos/rmm" element={<RMMDemoPage />} />
@@ -474,7 +474,7 @@ function AppRouter() {
         } />
         <Route path="/dashboard/safescan" element={
           <ProtectedRoute>
-            <SafeScanPage />
+            <SafeScanProductPage />
           </ProtectedRoute>
         } />
         <Route path="/dashboard/safenet" element={
