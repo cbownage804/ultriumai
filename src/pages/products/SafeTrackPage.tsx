@@ -8,68 +8,113 @@ import { VanguardUpsell } from '@/components/products/VanguardUpsell';
 import { 
   Package, QrCode, Calendar, DollarSign, 
   ArrowRight, Check, Laptop, History, FileText,
-  BarChart3
+  BarChart3, Warehouse, Users, Clock, AlertTriangle,
+  Truck, MapPin, Wrench, Shield, Smartphone, Cloud,
+  RefreshCw, Search, Download
 } from 'lucide-react';
 
 const features = [
   {
     icon: Laptop,
-    title: 'Asset Inventory',
-    description: 'Complete hardware and software tracking across your organization',
-    capabilities: ['Auto-discovery', 'Manual entry', 'Bulk import', 'Custom fields']
+    title: 'Hardware Inventory',
+    description: 'Track all physical IT assets including computers, monitors, peripherals, and network equipment',
+    capabilities: ['Auto-discovery via agent', 'Serial number tracking', 'Warranty management', 'Specification details']
+  },
+  {
+    icon: Cloud,
+    title: 'Software Licensing',
+    description: 'Manage software licenses, subscriptions, and compliance across your organization',
+    capabilities: ['License compliance', 'Renewal tracking', 'Usage monitoring', 'Cost optimization']
   },
   {
     icon: QrCode,
-    title: 'QR Code Tracking',
-    description: 'Generate and scan QR codes for quick asset identification',
-    capabilities: ['Auto-generation', 'Mobile scanning', 'Print labels', 'Quick lookup']
+    title: 'QR Code & Barcode',
+    description: 'Generate and scan codes for instant asset identification in the field',
+    capabilities: ['Auto-generation', 'Mobile app scanning', 'Print-ready labels', 'Bulk operations']
   },
   {
     icon: History,
-    title: 'Lifecycle Management',
-    description: 'Track assets from procurement to retirement',
-    capabilities: ['Purchase tracking', 'Assignment history', 'Maintenance logs', 'Retirement workflow']
+    title: 'Full Audit Trail',
+    description: 'Complete history of every asset change, assignment, and maintenance event',
+    capabilities: ['Change tracking', 'User attribution', 'Date/time stamps', 'Export to PDF']
   },
   {
     icon: DollarSign,
-    title: 'Depreciation Tracking',
-    description: 'Automatic depreciation calculations for financial reporting',
-    capabilities: ['Multiple methods', 'Schedule updates', 'Financial reports', 'Tax compliance']
+    title: 'Depreciation & Finance',
+    description: 'Automatic depreciation calculations with multiple accounting methods',
+    capabilities: ['Straight-line', 'Declining balance', 'Sum-of-years', 'Custom schedules']
   },
   {
-    icon: Calendar,
-    title: 'Maintenance Scheduling',
-    description: 'Schedule and track preventive maintenance activities',
-    capabilities: ['Recurring tasks', 'Reminders', 'Vendor tracking', 'Cost tracking']
-  },
-  {
-    icon: BarChart3,
-    title: 'Reporting & Analytics',
-    description: 'Comprehensive reports on asset utilization and costs',
-    capabilities: ['Asset utilization', 'Cost analysis', 'Warranty status', 'Custom reports']
+    icon: Wrench,
+    title: 'Maintenance Management',
+    description: 'Schedule and track preventive maintenance to extend asset life',
+    capabilities: ['Recurring schedules', 'Vendor integration', 'Cost tracking', 'Downtime logging']
   }
+];
+
+const useCases = [
+  {
+    icon: Warehouse,
+    title: 'IT Departments',
+    description: 'Track all hardware, software, and equipment assignments. Know what you have, where it is, and who has it.',
+  },
+  {
+    icon: Users,
+    title: 'MSPs & IT Providers',
+    description: 'Manage assets across multiple client sites. Bill accurately for equipment and track deployments.',
+  },
+  {
+    icon: Truck,
+    title: 'Field Service Teams',
+    description: 'Mobile access to asset info. Scan QR codes on-site to pull up specs, history, and documentation.',
+  },
+  {
+    icon: Shield,
+    title: 'Compliance & Audits',
+    description: 'Generate reports for ITAM audits. Track software licensing compliance and hardware lifecycles.',
+  },
+];
+
+const integrations = [
+  { name: 'Vanguard RMM', description: 'Auto-sync assets from managed endpoints' },
+  { name: 'Helpdesk', description: 'Link tickets to assets automatically' },
+  { name: 'Active Directory', description: 'Import users and computer objects' },
+  { name: 'CSV/Excel', description: 'Bulk import and export capabilities' },
+  { name: 'REST API', description: 'Custom integrations via API' },
+  { name: 'Webhooks', description: 'Real-time event notifications' },
 ];
 
 const stats = [
   { label: 'Asset Types', value: '50+', icon: Package },
   { label: 'Depreciation Methods', value: '5', icon: DollarSign },
-  { label: 'Time Saved', value: '10hrs/wk', icon: Calendar },
-  { label: 'Cost Visibility', value: '100%', icon: BarChart3 }
+  { label: 'Time Saved', value: '10hrs/wk', icon: Clock },
+  { label: 'Audit Ready', value: '100%', icon: FileText }
+];
+
+const comparisonTable = [
+  { feature: 'Asset Tracking', safetrack: true, assetpanda: true, snipeit: true },
+  { feature: 'QR/Barcode Scanning', safetrack: true, assetpanda: true, snipeit: true },
+  { feature: 'Depreciation Tracking', safetrack: true, assetpanda: true, snipeit: false },
+  { feature: 'Maintenance Scheduling', safetrack: true, assetpanda: true, snipeit: false },
+  { feature: 'RMM Integration', safetrack: true, assetpanda: false, snipeit: false },
+  { feature: 'Helpdesk Integration', safetrack: true, assetpanda: false, snipeit: false },
+  { feature: 'Multi-tenant/MSP', safetrack: true, assetpanda: true, snipeit: false },
+  { feature: 'Pricing', safetrack: '$2/asset', assetpanda: '$3/asset', snipeit: 'Self-hosted' },
 ];
 
 const pricing = [
   {
     name: 'SafeTrack Starter',
     price: 2,
-    description: 'Essential asset tracking',
-    features: ['Up to 500 assets', 'QR code generation', 'Basic reports', 'Email support'],
+    description: 'Essential asset tracking for small teams',
+    features: ['Up to 500 assets', 'QR code generation', 'Basic reporting', 'Mobile app access', 'Email support'],
     cta: 'Start Free Trial'
   },
   {
     name: 'SafeTrack Pro',
     price: 3,
     description: 'Full lifecycle management',
-    features: ['Unlimited assets', 'Depreciation tracking', 'Maintenance scheduling', 'API access', 'Priority support'],
+    features: ['Unlimited assets', 'Depreciation tracking', 'Maintenance scheduling', 'API access', 'Custom fields', 'Priority support'],
     cta: 'Start Free Trial',
     popular: true
   },
@@ -77,7 +122,7 @@ const pricing = [
     name: 'SafeTrack Enterprise',
     price: null,
     description: 'Multi-location with integrations',
-    features: ['Everything in Pro', 'Multi-location', 'Custom integrations', 'SSO/SAML', 'Dedicated success manager'],
+    features: ['Everything in Pro', 'Multi-tenant/MSP', 'RMM & Helpdesk sync', 'SSO/SAML', 'Custom integrations', 'Dedicated success manager'],
     cta: 'Contact Sales'
   }
 ];
@@ -97,11 +142,11 @@ export default function SafeTrackPage() {
               IT Asset Management
             </Badge>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl">
-              SafeTrack™
+              Ultrium SafeTrack™
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mb-8">
               Complete IT asset lifecycle management. Track hardware, software, and 
-              licenses from procurement to retirement with automatic depreciation.
+              licenses from procurement to retirement with automatic depreciation and full audit trails.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/vanguard/auth">
@@ -112,6 +157,7 @@ export default function SafeTrackPage() {
               </Link>
               <Link to="/vanguard/assets">
                 <Button size="lg" variant="outline">
+                  <Smartphone className="mr-2 h-4 w-4" />
                   Try Live Demo
                 </Button>
               </Link>
@@ -138,7 +184,7 @@ export default function SafeTrackPage() {
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Complete Asset Lifecycle</h2>
+              <h2 className="text-3xl font-bold mb-4">Complete Asset Lifecycle Management</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Everything you need to manage IT assets from purchase to retirement
               </p>
@@ -169,11 +215,119 @@ export default function SafeTrackPage() {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section className="py-20 bg-muted/30 border-y">
+        {/* Use Cases */}
+        <section className="py-16 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Per-Asset Pricing</h2>
+              <h2 className="text-3xl font-bold mb-4">Built for Every Team</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Whether you're an IT department, MSP, or field service team, SafeTrack adapts to your workflow
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {useCases.map((useCase, i) => (
+                <Card key={i} className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center mx-auto mb-4">
+                      <useCase.icon className="h-7 w-7 text-orange-500" />
+                    </div>
+                    <h3 className="font-semibold mb-2">{useCase.title}</h3>
+                    <p className="text-sm text-muted-foreground">{useCase.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Integrations */}
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <Badge className="mb-4" variant="secondary">
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Integrations
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Connects to Your Stack</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Seamlessly integrates with Vanguard RMM, Helpdesk, and your existing tools
+              </p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {integrations.map((int, i) => (
+                <Card key={i} className="text-center hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <h4 className="font-semibold text-sm mb-1">{int.name}</h4>
+                    <p className="text-xs text-muted-foreground">{int.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Comparison Table */}
+        <section className="py-16 bg-muted/30">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">How We Compare</h2>
+              <p className="text-muted-foreground">
+                See how SafeTrack stacks up against other IT asset management solutions
+              </p>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-4 font-semibold">Feature</th>
+                        <th className="text-center p-4 font-semibold text-orange-500">SafeTrack</th>
+                        <th className="text-center p-4 font-semibold text-muted-foreground">Asset Panda</th>
+                        <th className="text-center p-4 font-semibold text-muted-foreground">Snipe-IT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparisonTable.map((row, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="p-4">{row.feature}</td>
+                          <td className="text-center p-4">
+                            {typeof row.safetrack === 'boolean' ? (
+                              row.safetrack ? <Check className="h-5 w-5 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <span className="font-semibold text-orange-500">{row.safetrack}</span>
+                            )}
+                          </td>
+                          <td className="text-center p-4">
+                            {typeof row.assetpanda === 'boolean' ? (
+                              row.assetpanda ? <Check className="h-5 w-5 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <span className="text-muted-foreground">{row.assetpanda}</span>
+                            )}
+                          </td>
+                          <td className="text-center p-4">
+                            {typeof row.snipeit === 'boolean' ? (
+                              row.snipeit ? <Check className="h-5 w-5 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <span className="text-muted-foreground">{row.snipeit}</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section className="py-20">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Simple Per-Asset Pricing</h2>
               <p className="text-muted-foreground">Pay only for what you track. No hidden fees.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -229,22 +383,27 @@ export default function SafeTrackPage() {
         {/* CTA */}
         <section className="py-20">
           <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Take Control of Your Assets</h2>
-            <p className="text-muted-foreground mb-8">
-              Start tracking assets in minutes. Import from spreadsheets or discover automatically.
-            </p>
-            <div className="flex justify-center gap-4">
-              <Link to="/vanguard/auth">
-                <Button size="lg" className="bg-gradient-to-r from-orange-500 to-amber-500">
-                  Start Free Trial
-                </Button>
-              </Link>
-              <Link to="/vanguard/suite">
-                <Button size="lg" variant="outline">
-                  View Vanguard Suite
-                </Button>
-              </Link>
-            </div>
+            <Card className="p-8 bg-gradient-to-br from-orange-500/5 to-amber-500/5 border-orange-500/20">
+              <CardContent className="pt-0">
+                <Search className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+                <h2 className="text-3xl font-bold mb-4">Know What You Own</h2>
+                <p className="text-muted-foreground mb-8">
+                  Stop losing track of IT assets. Start your free trial and import your first 100 assets in minutes.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Link to="/vanguard/auth">
+                    <Button size="lg" className="bg-gradient-to-r from-orange-500 to-amber-500">
+                      Start Free Trial
+                    </Button>
+                  </Link>
+                  <Link to="/vanguard/suite">
+                    <Button size="lg" variant="outline">
+                      View Vanguard Suite
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>

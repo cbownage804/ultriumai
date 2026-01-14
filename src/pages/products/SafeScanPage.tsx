@@ -1,18 +1,22 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { SafeScanDemo } from "@/components/demos/SafeScanDemo";
+import { SafeScanApp } from "@/components/apps/SafeScanApp";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { VanguardUpsell } from "@/components/products/VanguardUpsell";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Shield, Check, Star, Zap, Users, ArrowRight, Play, 
   Mail, FileText, Link as LinkIcon, AlertTriangle, Brain, 
-  Eye, Globe, Lock, Fingerprint, Scan
+  Eye, Globe, Lock, Fingerprint, Scan, FileSearch, MessageSquare,
+  Server, Code, Webhook, Calendar, BarChart3
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const SafeScanPage = () => {
+  const [showFullApp, setShowFullApp] = useState(false);
   
   const scanningCapabilities = [
     {
@@ -26,7 +30,8 @@ const SafeScanPage = () => {
         'Embedded link extraction',
         'Attachment threat scanning',
       ],
-      color: 'blue',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
     },
     {
       icon: FileText,
@@ -39,7 +44,8 @@ const SafeScanPage = () => {
         'Office document inspection',
         'Archive file extraction',
       ],
-      color: 'green',
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
     },
     {
       icon: LinkIcon,
@@ -52,7 +58,8 @@ const SafeScanPage = () => {
         'Reputation database lookup',
         'Real-time threat feeds',
       ],
-      color: 'purple',
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500/10',
     },
   ];
 
@@ -76,6 +83,39 @@ const SafeScanPage = () => {
       icon: Globe,
       title: 'Global Threat Intelligence',
       description: 'Real-time feeds from security researchers and honeypot networks worldwide',
+    },
+  ];
+
+  const enterpriseFeatures = [
+    {
+      icon: Server,
+      title: 'Bulk Scanning',
+      description: 'Process thousands of files and emails simultaneously with queue management',
+    },
+    {
+      icon: Code,
+      title: 'REST API',
+      description: 'Full API access to integrate scanning into your existing workflows',
+    },
+    {
+      icon: Webhook,
+      title: 'Webhooks & Alerts',
+      description: 'Real-time notifications via webhooks, email, Slack, and Teams',
+    },
+    {
+      icon: Calendar,
+      title: 'Scheduled Scans',
+      description: 'Automate recurring security scans on your documents and URLs',
+    },
+    {
+      icon: BarChart3,
+      title: 'Reporting Dashboard',
+      description: 'Comprehensive analytics with exportable reports and trend analysis',
+    },
+    {
+      icon: Lock,
+      title: 'White-Label Ready',
+      description: 'Deploy with your branding for MSP and enterprise customers',
     },
   ];
 
@@ -110,9 +150,9 @@ const SafeScanPage = () => {
       icon: Zap,
       features: [
         'Everything in Starter',
-        'API access',
-        'Advanced threat intelligence',
-        'Custom detection rules',
+        'API access (10K calls/mo)',
+        'Bulk document scanning',
+        'Scheduled scans',
         'Webhook integrations',
         'Priority support',
       ],
@@ -126,16 +166,48 @@ const SafeScanPage = () => {
       icon: Users,
       features: [
         'Everything in Pro',
-        'White-label options',
-        'On-premise deployment',
+        'Unlimited API calls',
+        'White-label deployment',
+        'On-premise option',
         'SSO & SAML',
         'Dedicated account manager',
-        'SLA guarantees',
       ],
       popular: false,
       cta: 'Contact Sales',
     },
   ];
+
+  const comparisonTable = [
+    { feature: 'Email Threat Scanning', safescan: true, proofpoint: true, mimecast: true },
+    { feature: 'Document Analysis', safescan: true, proofpoint: true, mimecast: true },
+    { feature: 'URL Reputation', safescan: true, proofpoint: true, mimecast: true },
+    { feature: 'AI-Powered Detection', safescan: true, proofpoint: true, mimecast: false },
+    { feature: 'Real-time API Access', safescan: true, proofpoint: false, mimecast: false },
+    { feature: 'White-Label Option', safescan: true, proofpoint: false, mimecast: false },
+    { feature: 'No Per-User Pricing', safescan: true, proofpoint: false, mimecast: false },
+    { feature: 'Starting Price', safescan: '$99/mo', proofpoint: '$6/user/mo', mimecast: '$4/user/mo' },
+  ];
+
+  if (showFullApp) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="pt-20">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFullApp(false)}
+              className="mb-6"
+            >
+              ← Back to Overview
+            </Button>
+            <SafeScanApp brandName="Ultrium SafeScan" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,19 +227,19 @@ const SafeScanPage = () => {
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Enterprise-grade email, document, and URL security scanning. 
-                AI-powered threat detection that catches what others miss.
+                Same AI engine that powers Ultrium Vanguard's threat detection.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button size="lg" className="bg-red-500 hover:bg-red-600" onClick={() => setShowFullApp(true)}>
+                  <Scan className="mr-2 h-5 w-5" />
+                  Launch Full Scanner
+                </Button>
                 <Link to="/vanguard/auth">
-                  <Button size="lg" className="bg-red-500 hover:bg-red-600">
+                  <Button variant="outline" size="lg">
                     Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
-                  <Play className="mr-2 h-5 w-5" />
-                  Try Live Demo
-                </Button>
               </div>
             </div>
 
@@ -188,9 +260,9 @@ const SafeScanPage = () => {
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Complete Threat Scanning</h2>
+              <h2 className="text-3xl font-bold mb-4">Complete Threat Scanning Suite</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Same enterprise-grade scanning engine that powers Ultrium Vanguard's security suite
+                The same enterprise-grade scanning engine that powers Ultrium Vanguard's security operations
               </p>
             </div>
 
@@ -198,8 +270,8 @@ const SafeScanPage = () => {
               {scanningCapabilities.map((cap, i) => (
                 <Card key={i} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <div className={`w-14 h-14 rounded-lg bg-${cap.color}-500/10 flex items-center justify-center mb-4`}>
-                      <cap.icon className={`h-7 w-7 text-${cap.color}-500`} />
+                    <div className={`w-14 h-14 rounded-lg ${cap.bgColor} flex items-center justify-center mb-4`}>
+                      <cap.icon className={`h-7 w-7 ${cap.color}`} />
                     </div>
                     <CardTitle>{cap.title}</CardTitle>
                     <CardDescription>{cap.description}</CardDescription>
@@ -250,16 +322,94 @@ const SafeScanPage = () => {
           </div>
         </section>
 
-        {/* Live Demo Section */}
-        <section id="demo" className="py-20">
+        {/* Enterprise Features */}
+        <section className="py-20">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Try SafeScan Live</h2>
-              <p className="text-muted-foreground">
-                Test our scanning engine with sample emails, documents, and URLs
+              <Badge className="mb-4" variant="secondary">
+                <Server className="h-3 w-3 mr-1" />
+                Enterprise Ready
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Built for Scale</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Enterprise features that integrate seamlessly with your existing infrastructure
               </p>
             </div>
-            <SafeScanDemo />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {enterpriseFeatures.map((feature, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                        <feature.icon className="h-5 w-5 text-red-500" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-1">{feature.title}</h3>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Comparison Table */}
+        <section className="py-16 bg-muted/30">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">How We Compare</h2>
+              <p className="text-muted-foreground">
+                See how SafeScan stacks up against enterprise email security solutions
+              </p>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-4 font-semibold">Feature</th>
+                        <th className="text-center p-4 font-semibold text-red-500">SafeScan</th>
+                        <th className="text-center p-4 font-semibold text-muted-foreground">Proofpoint</th>
+                        <th className="text-center p-4 font-semibold text-muted-foreground">Mimecast</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparisonTable.map((row, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="p-4">{row.feature}</td>
+                          <td className="text-center p-4">
+                            {typeof row.safescan === 'boolean' ? (
+                              row.safescan ? <Check className="h-5 w-5 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <span className="font-semibold text-red-500">{row.safescan}</span>
+                            )}
+                          </td>
+                          <td className="text-center p-4">
+                            {typeof row.proofpoint === 'boolean' ? (
+                              row.proofpoint ? <Check className="h-5 w-5 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <span className="text-muted-foreground">{row.proofpoint}</span>
+                            )}
+                          </td>
+                          <td className="text-center p-4">
+                            {typeof row.mimecast === 'boolean' ? (
+                              row.mimecast ? <Check className="h-5 w-5 text-green-500 mx-auto" /> : <span className="text-muted-foreground">—</span>
+                            ) : (
+                              <span className="text-muted-foreground">{row.mimecast}</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
@@ -276,7 +426,7 @@ const SafeScanPage = () => {
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold mb-4">Standalone SafeScan Pricing</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Or get SafeScan included in Vanguard Suite for even more value
+                Flat monthly pricing. No per-user fees. Unlimited scans.
               </p>
             </div>
             
@@ -340,11 +490,10 @@ const SafeScanPage = () => {
                   Email remains the #1 attack vector. Protect your organization with AI-powered scanning today.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link to="/vanguard/auth">
-                    <Button size="lg" className="bg-red-500 hover:bg-red-600">
-                      Start Free Trial
-                    </Button>
-                  </Link>
+                  <Button size="lg" className="bg-red-500 hover:bg-red-600" onClick={() => setShowFullApp(true)}>
+                    <Scan className="mr-2 h-5 w-5" />
+                    Try Live Scanner
+                  </Button>
                   <Link to="/contact">
                     <Button variant="outline" size="lg">
                       Talk to Security Expert
