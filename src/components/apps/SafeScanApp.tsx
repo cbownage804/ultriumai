@@ -66,6 +66,11 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   // Check if this is MSP context (could be enhanced with proper MSP detection)
   const isMSPContext = location.pathname.includes('/msp/') || window.location.hostname.includes('msp');
   
+  // Guest mode - allow basic scanning without authentication
+  const isGuestMode = !user;
+  const [guestScanCount, setGuestScanCount] = useState(0);
+  const GUEST_SCAN_LIMIT = 3;
+  
   const [activeTab, setActiveTab] = useState('email');
   const [emailContent, setEmailContent] = useState('');
   const [urlInput, setUrlInput] = useState('');
@@ -80,7 +85,7 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
     riskScore: 0
   });
 
-  // Load scan history and stats
+  // Load scan history and stats (only for authenticated users)
   useEffect(() => {
     if (user) {
       loadScanHistory();
@@ -191,12 +196,22 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   };
 
   const performScan = async (type: 'email' | 'document' | 'url', content: string | File) => {
+    // Check guest mode limits
+    if (isGuestMode && guestScanCount >= GUEST_SCAN_LIMIT) {
+      toast({
+        title: "Guest Limit Reached",
+        description: "Sign in to unlock unlimited scans and save your history",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsScanning(true);
     console.log('Starting scan:', { type, content: typeof content === 'string' ? content.substring(0, 50) + '...' : (content as File).name });
     
     try {
       let functionName = '';
-      let body: any = { user_id: user?.id };
+      let body: any = { user_id: user?.id || 'guest' };
 
       switch (type) {
         case 'email':
@@ -276,8 +291,16 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
         }
       }
       
-      await loadScanHistory();
-      await loadStats();
+      // Only update history/stats for authenticated users
+      if (user) {
+        await loadScanHistory();
+        await loadStats();
+      } else {
+        // Increment guest scan count
+        setGuestScanCount(prev => prev + 1);
+        // Add to local scan history for guests
+        setScanHistory(prev => [result, ...prev.slice(0, 4)]);
+      }
       
       toast({
         title: "Scan Complete",
@@ -390,23 +413,46 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
 
   return (
     <div className="space-y-6 p-6">
+      {/* Guest Mode Banner */}
+      {isGuestMode && (
+        <Alert className="bg-primary/10 border-primary">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              <strong>Guest Mode:</strong> {GUEST_SCAN_LIMIT - guestScanCount} free scans remaining. 
+              Sign in to unlock unlimited scans, save history, and access all features.
+            </span>
+            <Button 
+              size="sm" 
+              onClick={() => navigate('/vanguard/auth')}
+              className="ml-4"
+            >
+              Sign In
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {isMSPContext ? "Back to MSP Dashboard" : "Back to Dashboard"}
-          </Button>
+          {user && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {isMSPContext ? "Back to MSP Dashboard" : "Back to Dashboard"}
+            </Button>
+          )}
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Shield className="h-8 w-8" style={{ color: brandColor }} />
               {isWhiteLabeled ? brandName : 'Ultrium'} SafeScan
               {isMSPContext && <Badge variant="secondary">MSP Edition</Badge>}
+              {isGuestMode && <Badge variant="outline">Demo</Badge>}
             </h1>
             <p className="text-muted-foreground">
               {isMSPContext 
@@ -417,13 +463,15 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
           </div>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="secondary"
-            onClick={() => window.open('/safescan-embed-demo', '_blank')}
-          >
-            <Globe className="h-4 w-4 mr-2" />
-            Widget Demo
-          </Button>
+          {!isGuestMode && (
+            <Button 
+              variant="secondary"
+              onClick={() => window.open('/safescan-embed-demo', '_blank')}
+            >
+              <Globe className="h-4 w-4 mr-2" />
+              Widget Demo
+            </Button>
+          )}
           {isMSPContext && (
             <Button 
               variant="outline"
@@ -433,74 +481,115 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               Client Deployment
             </Button>
           )}
+          {isGuestMode && (
+            <Button onClick={() => navigate('/vanguard/auth')}>
+              Sign In for Full Access
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Items Scanned</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalScans}</div>
-            <p className="text-xs text-muted-foreground">
-              Security checks performed
-            </p>
-          </CardContent>
-        </Card>
+      {isGuestMode ? (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Demo Scans</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{guestScanCount}/{GUEST_SCAN_LIMIT}</div>
+              <p className="text-xs text-muted-foreground">
+                Free scans used
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Threats Blocked</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stats.threatsBlocked}</div>
-            <p className="text-xs text-muted-foreground">
-              Malicious items detected
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="md:col-span-3 bg-muted/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Unlock Full Features</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-3">
+                Sign in to access unlimited scans, scan history, bulk scanning, API access, scheduled scans, and more.
+              </p>
+              <Button size="sm" onClick={() => navigate('/vanguard/auth')}>
+                Get Started Free
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Items Scanned</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalScans}</div>
+              <p className="text-xs text-muted-foreground">
+                Security checks performed
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Safe Items</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-500">{stats.safeItems}</div>
-            <p className="text-xs text-muted-foreground">
-              Verified legitimate content
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Threats Blocked</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-500">{stats.threatsBlocked}</div>
+              <p className="text-xs text-muted-foreground">
+                Malicious items detected
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Risk Score</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-500">{stats.riskScore}%</div>
-            <Progress value={stats.riskScore} className="mt-2" />
-          </CardContent>
-        </Card>
-      </div>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Safe Items</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-500">{stats.safeItems}</div>
+              <p className="text-xs text-muted-foreground">
+                Verified legitimate content
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Risk Score</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-yellow-500">{stats.riskScore}%</div>
+              <Progress value={stats.riskScore} className="mt-2" />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className={`grid w-full ${isMSPContext ? 'grid-cols-10' : 'grid-cols-9'}`}>
+        <TabsList className={`grid w-full ${isGuestMode ? 'grid-cols-4' : (isMSPContext ? 'grid-cols-10' : 'grid-cols-9')}`}>
           <TabsTrigger value="email">Email Security</TabsTrigger>
           <TabsTrigger value="document">Document Scanning</TabsTrigger>
-          <TabsTrigger value="bulk">Bulk Scanner</TabsTrigger>
           <TabsTrigger value="url">URL Analysis</TabsTrigger>
-          <TabsTrigger value="api">API Access</TabsTrigger>
-          <TabsTrigger value="scheduled">Scheduling</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="history">Scan History</TabsTrigger>
-          {isMSPContext && <TabsTrigger value="deployment">Client Deployment</TabsTrigger>}
+          {!isGuestMode && (
+            <>
+              <TabsTrigger value="bulk">Bulk Scanner</TabsTrigger>
+              <TabsTrigger value="api">API Access</TabsTrigger>
+              <TabsTrigger value="scheduled">Scheduling</TabsTrigger>
+              <TabsTrigger value="branding">Branding</TabsTrigger>
+              <TabsTrigger value="bookmarklet">Bookmarklet</TabsTrigger>
+            </>
+          )}
+          {isMSPContext && !isGuestMode && <TabsTrigger value="deployment">Client Deployment</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="email" className="space-y-4">
