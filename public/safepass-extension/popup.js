@@ -5,6 +5,11 @@ const PORTAL_URL = 'https://ultriumai.lovable.app/safepass-app/portal';
 const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
 
+// Security: Auto-lock timeout (5 minutes of inactivity)
+const AUTO_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+let autoLockTimer = null;
+let lastActivityTime = Date.now();
+
 // State
 let isUnlocked = false;
 let passwords = [];
@@ -16,15 +21,52 @@ const loginView = document.getElementById('login-view');
 const vaultView = document.getElementById('vault-view');
 const generatorView = document.getElementById('generator-view');
 
+// Reset auto-lock timer on any user activity
+function resetAutoLockTimer() {
+  lastActivityTime = Date.now();
+  if (autoLockTimer) {
+    clearTimeout(autoLockTimer);
+  }
+  if (isUnlocked) {
+    autoLockTimer = setTimeout(autoLockVault, AUTO_LOCK_TIMEOUT_MS);
+  }
+}
+
+// Auto-lock the vault after inactivity
+async function autoLockVault() {
+  if (isUnlocked) {
+    console.log('[SafePass] Auto-locking vault due to inactivity');
+    await handleLock();
+  }
+}
+
+// Check if session has expired on popup open
+async function checkSessionExpiry() {
+  const session = await chrome.storage.session.get(['lastActivity']);
+  if (session.lastActivity) {
+    const elapsed = Date.now() - session.lastActivity;
+    if (elapsed > AUTO_LOCK_TIMEOUT_MS) {
+      // Session expired, force lock
+      await chrome.storage.session.clear();
+      return false;
+    }
+  }
+  return true;
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+  // Check session expiry first
+  const sessionValid = await checkSessionExpiry();
+  
   // Check if already unlocked
   const session = await chrome.storage.session.get(['unlocked', 'masterKey', 'authToken']);
-  if (session.unlocked && session.masterKey && session.authToken) {
+  if (sessionValid && session.unlocked && session.masterKey && session.authToken) {
     isUnlocked = true;
     masterKey = session.masterKey;
     await loadPasswords();
     showView('vault');
+    resetAutoLockTimer();
   } else {
     showView('login');
   }
@@ -41,6 +83,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   setupEventListeners();
+  
+  // Track activity for auto-lock
+  document.addEventListener('click', resetAutoLockTimer);
+  document.addEventListener('keydown', resetAutoLockTimer);
+  document.addEventListener('mousemove', resetAutoLockTimer);
+  
+  // Update last activity time in session storage periodically
+  setInterval(async () => {
+    if (isUnlocked) {
+      await chrome.storage.session.set({ lastActivity: lastActivityTime });
+    }
+  }, 10000); // Every 10 seconds
 });
 
 function showView(view) {
@@ -137,20 +191,28 @@ async function handleLogin() {
       unlocked: true,
       masterKey: masterKey,
       email: email,
-      authToken: authToken
+      authToken: authToken,
+      lastActivity: Date.now()
     });
 
     isUnlocked = true;
     await loadPasswords();
     showView('vault');
+    resetAutoLockTimer(); // Start auto-lock timer
     showToast('Vault unlocked!', 'success');
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error');
     showToast('Failed to unlock vault', 'error');
   }
 }
 
 async function handleLock() {
+  // Clear auto-lock timer
+  if (autoLockTimer) {
+    clearTimeout(autoLockTimer);
+    autoLockTimer = null;
+  }
+  
   // Clear sensitive data
   masterKey = null;
   await chrome.storage.session.clear();
