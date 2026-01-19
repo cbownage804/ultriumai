@@ -23,15 +23,46 @@ serve(async (req) => {
   }
 
   try {
-    const { action, user_id, password_hashes, entry_ids } = await req.json();
-    console.log(`[SafePass Breach Check] action: ${action}, user_id: ${user_id}`);
+    // JWT Authentication - Extract user from token
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized - missing token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Create client with user's token to verify auth
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify the JWT and get user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.error('[SafePass Breach Check] Invalid JWT:', claimsError);
+      return new Response(JSON.stringify({ error: 'Unauthorized - invalid token' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const userId = claimsData.claims.sub as string;
+    console.log(`[SafePass Breach Check] Authenticated user: ${userId}`);
+
+    // Use service role client for database operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const { action, password_hashes, entry_ids } = await req.json();
+    console.log(`[SafePass Breach Check] action: ${action}, user_id: ${userId}`);
 
     const dehashedKey = Deno.env.get('DEHASHED_API_KEY');
-    const dehashedEmail = Deno.env.get('DEHASHED_EMAIL');
 
     // Action: Check specific passwords against breach databases
     if (action === 'check_passwords' && password_hashes && entry_ids) {
@@ -103,7 +134,7 @@ serve(async (req) => {
           // Rate limit protection
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (e) {
-          console.error(`[SafePass Breach Check] Error checking hash: ${e}`);
+          console.error(`[SafePass Breach Check] Error checking hash`);
         }
       }
 
@@ -118,14 +149,14 @@ serve(async (req) => {
     }
 
     // Action: Daily automated scan for a user
-    if (action === 'daily_scan' && user_id) {
-      console.log(`[SafePass Breach Check] Running daily scan for user: ${user_id}`);
+    if (action === 'daily_scan') {
+      console.log(`[SafePass Breach Check] Running daily scan for user: ${userId}`);
       
       // Fetch all password entries for this user
       const { data: entries, error: fetchError } = await supabase
         .from('safepass_entries')
         .select('id, website, username, password_hash, email')
-        .eq('user_id', user_id);
+        .eq('user_id', userId);
 
       if (fetchError) {
         console.error('[SafePass Breach Check] Error fetching entries:', fetchError);
@@ -206,7 +237,7 @@ serve(async (req) => {
               await new Promise(resolve => setTimeout(resolve, 300));
             }
           } catch (e) {
-            console.error(`[SafePass Breach Check] Error checking entry ${entry.id}:`, e);
+            console.error(`[SafePass Breach Check] Error checking entry`);
           }
         }
       }
@@ -214,7 +245,7 @@ serve(async (req) => {
       // Store breach monitoring results
       for (const result of breachResults) {
         await supabase.from('safepass_security_monitoring').upsert({
-          user_id,
+          user_id: userId,
           entry_id: result.entry_id,
           threat_type: 'breach',
           threat_details: {
@@ -231,7 +262,7 @@ serve(async (req) => {
 
       // Update last scan timestamp
       await supabase.from('safepass_user_settings').upsert({
-        user_id,
+        user_id: userId,
         last_breach_scan: new Date().toISOString(),
         breach_monitoring_enabled: true,
       }, {
@@ -252,11 +283,11 @@ serve(async (req) => {
     }
 
     // Action: Get breach status for all user entries
-    if (action === 'get_breach_status' && user_id) {
+    if (action === 'get_breach_status') {
       const { data: monitoring, error } = await supabase
         .from('safepass_security_monitoring')
         .select('*')
-        .eq('user_id', user_id)
+        .eq('user_id', userId)
         .eq('threat_type', 'breach')
         .eq('status', 'active');
 
@@ -278,7 +309,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('[SafePass Breach Check] Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

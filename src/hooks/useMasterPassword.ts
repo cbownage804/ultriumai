@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './useAuth';
-import { hashData } from '@/utils/crypto';
+import { hashData, generateSecureRandom, validateMasterPassword } from '@/utils/crypto';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MasterPasswordState {
   isUnlocked: boolean;
@@ -9,10 +10,14 @@ interface MasterPasswordState {
   unlockAttempts: number;
   isLocked: boolean;
   lockoutUntil: number | null;
+  hasServerPassword: boolean;
+  isLoading: boolean;
 }
 
 const MAX_UNLOCK_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes of inactivity
+const INCREASED_ITERATIONS = 600000; // OWASP 2023 recommendation
 
 export const useMasterPassword = () => {
   const { user } = useAuth();
@@ -22,28 +27,130 @@ export const useMasterPassword = () => {
     passwordHash: null,
     unlockAttempts: 0,
     isLocked: false,
-    lockoutUntil: null
+    lockoutUntil: null,
+    hasServerPassword: false,
+    isLoading: true
   });
+  
+  const autoLockTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastActivityRef = useRef<number>(Date.now());
 
-  // Load stored password hash from localStorage
+  // Generate cryptographically secure salt
+  const generateSalt = (): string => {
+    const saltBytes = generateSecureRandom(32);
+    return btoa(String.fromCharCode(...saltBytes));
+  };
+
+  // Hash password with salt for server storage
+  const hashPasswordWithSalt = async (password: string, salt: string): Promise<string> => {
+    const combined = salt + password;
+    return hashData(combined);
+  };
+
+  // Load server-side password state
   useEffect(() => {
-    if (user) {
-      const stored = localStorage.getItem(`safepass_master_hash_${user.id}`);
-      const attempts = parseInt(localStorage.getItem(`safepass_unlock_attempts_${user.id}`) || '0');
-      const lockoutUntil = parseInt(localStorage.getItem(`safepass_lockout_until_${user.id}`) || '0');
-      
-      const now = Date.now();
-      const isLocked = lockoutUntil > now;
-      
-      setState(prev => ({
-        ...prev,
-        passwordHash: stored,
-        unlockAttempts: isLocked ? attempts : 0,
-        isLocked,
-        lockoutUntil: isLocked ? lockoutUntil : null
-      }));
-    }
+    const loadServerState = async () => {
+      if (!user) {
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+
+      try {
+        // Check if user has master password set on server
+        const { data: masterPasswordData, error: mpError } = await supabase
+          .from('safepass_master_passwords')
+          .select('password_hash, salt')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (mpError && mpError.code !== 'PGRST116') {
+          console.error('Error loading master password state:', mpError);
+        }
+
+        // Load lockout state from server
+        const { data: lockoutData, error: lockoutError } = await supabase
+          .from('safepass_unlock_attempts')
+          .select('attempt_count, locked_until')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (lockoutError && lockoutError.code !== 'PGRST116') {
+          console.error('Error loading lockout state:', lockoutError);
+        }
+
+        const now = Date.now();
+        const lockedUntil = lockoutData?.locked_until ? new Date(lockoutData.locked_until).getTime() : null;
+        const isLocked = lockedUntil ? lockedUntil > now : false;
+
+        setState(prev => ({
+          ...prev,
+          hasServerPassword: !!masterPasswordData,
+          passwordHash: masterPasswordData?.password_hash || null,
+          unlockAttempts: isLocked ? (lockoutData?.attempt_count || 0) : 0,
+          isLocked,
+          lockoutUntil: isLocked ? lockedUntil : null,
+          isLoading: false
+        }));
+      } catch (error) {
+        console.error('Error loading master password state:', error);
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
+    };
+
+    loadServerState();
   }, [user]);
+
+  // Auto-lock on inactivity
+  useEffect(() => {
+    if (!state.isUnlocked) return;
+
+    const resetTimer = () => {
+      lastActivityRef.current = Date.now();
+      if (autoLockTimerRef.current) {
+        clearTimeout(autoLockTimerRef.current);
+      }
+      autoLockTimerRef.current = setTimeout(() => {
+        lock();
+      }, AUTO_LOCK_TIMEOUT);
+    };
+
+    const handleActivity = () => {
+      resetTimer();
+    };
+
+    // Listen for user activity
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('click', handleActivity);
+    window.addEventListener('scroll', handleActivity);
+
+    // Lock when tab becomes hidden
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Lock after 30 seconds of tab being hidden
+        autoLockTimerRef.current = setTimeout(() => {
+          lock();
+        }, 30000);
+      } else {
+        resetTimer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    resetTimer();
+
+    return () => {
+      if (autoLockTimerRef.current) {
+        clearTimeout(autoLockTimerRef.current);
+      }
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('click', handleActivity);
+      window.removeEventListener('scroll', handleActivity);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [state.isUnlocked]);
 
   // Check if lockout period has expired
   useEffect(() => {
@@ -51,71 +158,93 @@ export const useMasterPassword = () => {
       const now = Date.now();
       if (now >= state.lockoutUntil) {
         // Lockout expired
-        setState(prev => ({
-          ...prev,
-          isLocked: false,
-          lockoutUntil: null,
-          unlockAttempts: 0
-        }));
-        
-        if (user) {
-          localStorage.removeItem(`safepass_unlock_attempts_${user.id}`);
-          localStorage.removeItem(`safepass_lockout_until_${user.id}`);
-        }
+        clearLockout();
       } else {
         // Set timer to unlock when lockout expires
         const timeout = setTimeout(() => {
-          setState(prev => ({
-            ...prev,
-            isLocked: false,
-            lockoutUntil: null,
-            unlockAttempts: 0
-          }));
-          
-          if (user) {
-            localStorage.removeItem(`safepass_unlock_attempts_${user.id}`);
-            localStorage.removeItem(`safepass_lockout_until_${user.id}`);
-          }
+          clearLockout();
         }, state.lockoutUntil - now);
         
         return () => clearTimeout(timeout);
       }
     }
-  }, [state.isLocked, state.lockoutUntil, user]);
+  }, [state.isLocked, state.lockoutUntil]);
 
-  const setMasterPassword = async (password: string): Promise<boolean> => {
-    if (!user) return false;
+  const clearLockout = async () => {
+    setState(prev => ({
+      ...prev,
+      isLocked: false,
+      lockoutUntil: null,
+      unlockAttempts: 0
+    }));
+    
+    if (user) {
+      // Clear server-side lockout
+      await supabase
+        .from('safepass_unlock_attempts')
+        .delete()
+        .eq('user_id', user.id);
+    }
+  };
+
+  const setMasterPassword = async (password: string): Promise<{ success: boolean; errors?: string[] }> => {
+    if (!user) return { success: false, errors: ['Not authenticated'] };
+    
+    // Validate password strength
+    const validation = validateMasterPassword(password);
+    if (!validation.isValid) {
+      return { success: false, errors: validation.errors };
+    }
     
     try {
-      const hash = await hashData(password);
+      const salt = generateSalt();
+      const hash = await hashPasswordWithSalt(password, salt);
       
-      // Store hash in localStorage
-      localStorage.setItem(`safepass_master_hash_${user.id}`, hash);
+      // Store hash on server (not in localStorage!)
+      const { error } = await supabase
+        .from('safepass_master_passwords')
+        .upsert({
+          user_id: user.id,
+          password_hash: hash,
+          salt: salt,
+          iterations: INCREASED_ITERATIONS,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
+      
+      if (error) {
+        console.error('Error storing master password:', error);
+        return { success: false, errors: ['Failed to save master password'] };
+      }
       
       setState(prev => ({
         ...prev,
         isUnlocked: true,
         masterPassword: password,
         passwordHash: hash,
+        hasServerPassword: true,
         unlockAttempts: 0,
         isLocked: false,
         lockoutUntil: null
       }));
       
-      // Clear any stored attempts or lockout
-      localStorage.removeItem(`safepass_unlock_attempts_${user.id}`);
-      localStorage.removeItem(`safepass_lockout_until_${user.id}`);
+      // Clear any lockout state
+      await supabase
+        .from('safepass_unlock_attempts')
+        .delete()
+        .eq('user_id', user.id);
       
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('Error setting master password:', error);
-      return false;
+      return { success: false, errors: ['An error occurred while setting master password'] };
     }
   };
 
   const unlockWithPassword = async (password: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user || !state.passwordHash) {
-      return { success: false, error: 'No master password set' };
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
     }
     
     if (state.isLocked) {
@@ -127,22 +256,36 @@ export const useMasterPassword = () => {
     }
     
     try {
-      const hash = await hashData(password);
+      // Fetch stored hash and salt from server
+      const { data: masterPasswordData, error: fetchError } = await supabase
+        .from('safepass_master_passwords')
+        .select('password_hash, salt')
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError || !masterPasswordData) {
+        return { success: false, error: 'No master password set' };
+      }
+
+      const hash = await hashPasswordWithSalt(password, masterPasswordData.salt);
       
-      if (hash === state.passwordHash) {
+      if (hash === masterPasswordData.password_hash) {
         // Successful unlock
         setState(prev => ({
           ...prev,
           isUnlocked: true,
           masterPassword: password,
+          passwordHash: hash,
           unlockAttempts: 0,
           isLocked: false,
           lockoutUntil: null
         }));
         
-        // Clear stored attempts
-        localStorage.removeItem(`safepass_unlock_attempts_${user.id}`);
-        localStorage.removeItem(`safepass_lockout_until_${user.id}`);
+        // Clear lockout state on server
+        await supabase
+          .from('safepass_unlock_attempts')
+          .delete()
+          .eq('user_id', user.id);
         
         return { success: true };
       } else {
@@ -151,17 +294,26 @@ export const useMasterPassword = () => {
         
         if (newAttempts >= MAX_UNLOCK_ATTEMPTS) {
           // Lock account
-          const lockoutUntil = Date.now() + LOCKOUT_DURATION;
+          const lockoutUntil = new Date(Date.now() + LOCKOUT_DURATION);
           
           setState(prev => ({
             ...prev,
             unlockAttempts: newAttempts,
             isLocked: true,
-            lockoutUntil
+            lockoutUntil: lockoutUntil.getTime()
           }));
           
-          localStorage.setItem(`safepass_unlock_attempts_${user.id}`, newAttempts.toString());
-          localStorage.setItem(`safepass_lockout_until_${user.id}`, lockoutUntil.toString());
+          // Store lockout on server
+          await supabase
+            .from('safepass_unlock_attempts')
+            .upsert({
+              user_id: user.id,
+              attempt_count: newAttempts,
+              last_attempt_at: new Date().toISOString(),
+              locked_until: lockoutUntil.toISOString()
+            }, {
+              onConflict: 'user_id'
+            });
           
           return { 
             success: false, 
@@ -174,7 +326,16 @@ export const useMasterPassword = () => {
             unlockAttempts: newAttempts
           }));
           
-          localStorage.setItem(`safepass_unlock_attempts_${user.id}`, newAttempts.toString());
+          // Track attempts on server
+          await supabase
+            .from('safepass_unlock_attempts')
+            .upsert({
+              user_id: user.id,
+              attempt_count: newAttempts,
+              last_attempt_at: new Date().toISOString()
+            }, {
+              onConflict: 'user_id'
+            });
           
           const remaining = MAX_UNLOCK_ATTEMPTS - newAttempts;
           return { 
@@ -184,22 +345,33 @@ export const useMasterPassword = () => {
         }
       }
     } catch (error) {
-      console.error('Error unlocking vault:', error);
+      console.error('Error unlocking vault');
       return { success: false, error: 'An error occurred while unlocking the vault' };
     }
   };
 
-  const lock = () => {
+  const lock = useCallback(() => {
+    // Clear sensitive data from memory
     setState(prev => ({
       ...prev,
       isUnlocked: false,
       masterPassword: null
     }));
-  };
+    
+    if (autoLockTimerRef.current) {
+      clearTimeout(autoLockTimerRef.current);
+    }
+  }, []);
 
   const changeMasterPassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
-    if (!user || !state.passwordHash) {
-      return { success: false, error: 'No master password set' };
+    if (!user) {
+      return { success: false, error: 'Not authenticated' };
+    }
+    
+    // Validate new password strength
+    const validation = validateMasterPassword(newPassword);
+    if (!validation.isValid) {
+      return { success: false, error: validation.errors.join('. ') };
     }
     
     // Verify current password
@@ -209,17 +381,23 @@ export const useMasterPassword = () => {
     }
     
     // Set new password
-    const success = await setMasterPassword(newPassword);
-    return { success, error: success ? undefined : 'Failed to update master password' };
+    const result = await setMasterPassword(newPassword);
+    return { success: result.success, error: result.errors?.join('. ') };
   };
 
-  const resetMasterPassword = () => {
+  const resetMasterPassword = async () => {
     if (!user) return;
     
-    // Clear all stored data
-    localStorage.removeItem(`safepass_master_hash_${user.id}`);
-    localStorage.removeItem(`safepass_unlock_attempts_${user.id}`);
-    localStorage.removeItem(`safepass_lockout_until_${user.id}`);
+    // Clear server-side data
+    await supabase
+      .from('safepass_master_passwords')
+      .delete()
+      .eq('user_id', user.id);
+    
+    await supabase
+      .from('safepass_unlock_attempts')
+      .delete()
+      .eq('user_id', user.id);
     
     setState({
       isUnlocked: false,
@@ -227,12 +405,14 @@ export const useMasterPassword = () => {
       passwordHash: null,
       unlockAttempts: 0,
       isLocked: false,
-      lockoutUntil: null
+      lockoutUntil: null,
+      hasServerPassword: false,
+      isLoading: false
     });
   };
 
   const hasUserSetMasterPassword = (): boolean => {
-    return !!state.passwordHash;
+    return state.hasServerPassword;
   };
 
   const getRemainingLockoutTime = (): number => {
@@ -244,6 +424,7 @@ export const useMasterPassword = () => {
     // State
     isUnlocked: state.isUnlocked,
     isLocked: state.isLocked,
+    isLoading: state.isLoading,
     unlockAttempts: state.unlockAttempts,
     maxAttempts: MAX_UNLOCK_ATTEMPTS,
     masterPassword: state.masterPassword,
@@ -260,6 +441,7 @@ export const useMasterPassword = () => {
     getRemainingLockoutTime,
     
     // Security info
-    lockoutDuration: LOCKOUT_DURATION
+    lockoutDuration: LOCKOUT_DURATION,
+    autoLockTimeout: AUTO_LOCK_TIMEOUT
   };
 };

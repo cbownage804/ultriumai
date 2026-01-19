@@ -292,8 +292,10 @@ export function generatePassphrase(options: {
   let passphrase = words.join(separator);
   
   if (includeNumbers) {
-    const randomNumber = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
-    passphrase += separator + randomNumber;
+    // Use crypto.getRandomValues instead of Math.random()
+    const randomBytes = generateSecureRandom(2);
+    const randomNumber = ((randomBytes[0] << 8) | randomBytes[1]) % 10000;
+    passphrase += separator + randomNumber.toString().padStart(4, '0');
   }
   
   return passphrase;
