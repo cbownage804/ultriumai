@@ -167,11 +167,13 @@ export const PasswordVault = () => {
     return Math.min(score, 100);
   };
 
+  // Use cryptographically secure password generation
   const generatePassword = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    const randomBytes = crypto.getRandomValues(new Uint8Array(16));
     let password = '';
     for (let i = 0; i < 16; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+      password += chars.charAt(randomBytes[i] % chars.length);
     }
     return password;
   };

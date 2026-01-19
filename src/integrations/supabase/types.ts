@@ -12097,6 +12097,36 @@ export type Database = {
           },
         ]
       }
+      safepass_master_passwords: {
+        Row: {
+          created_at: string | null
+          id: string
+          iterations: number | null
+          password_hash: string
+          salt: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          iterations?: number | null
+          password_hash: string
+          salt: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          iterations?: number | null
+          password_hash?: string
+          salt?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       safepass_msp_invites: {
         Row: {
           accepted_at: string | null
@@ -12367,6 +12397,33 @@ export type Database = {
           name?: string
           owner_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      safepass_unlock_attempts: {
+        Row: {
+          attempt_count: number | null
+          created_at: string | null
+          id: string
+          last_attempt_at: string | null
+          locked_until: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number | null
+          created_at?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          locked_until?: string | null
+          user_id?: string
         }
         Relationships: []
       }
