@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import heroSecurity from "@/assets/hero-security.jpg";
 
 const About = () => {
   const stats = [
@@ -98,8 +99,18 @@ const About = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
-        <div className="container mx-auto text-center max-w-4xl">
+      <section className="relative py-20 px-4 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroSecurity} 
+            alt="Digital security shield"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+        </div>
+        <div className="relative z-10 container mx-auto text-center max-w-4xl">
           <Badge className="mb-6" variant="secondary">
             About UltriumAI
           </Badge>

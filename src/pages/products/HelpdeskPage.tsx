@@ -10,6 +10,7 @@ import {
   ArrowRight, Check, Brain, BarChart3,
   Target
 } from 'lucide-react';
+import heroAi from '@/assets/hero-ai.jpg';
 
 const features = [
   {
@@ -90,8 +91,16 @@ export default function HelpdeskPage() {
       <main className="pt-20">
         {/* Hero */}
         <section className="relative overflow-hidden border-b">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 py-20 relative">
+          <div className="absolute inset-0">
+            <img 
+              src={heroAi} 
+              alt="AI neural network"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          </div>
+        <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
           <Badge className="mb-4 bg-purple-500/10 text-purple-500 border-purple-500/20">
             <MessageSquare className="h-3 w-3 mr-1" />
             AI Helpdesk

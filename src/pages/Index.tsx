@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 import { FAQSection } from '@/components/FAQSection';
 import { FAQSchema, OrganizationSchema, ServiceSchema } from '@/components/SEOSchemas';
 import { safeWindowOpen } from '@/utils/security';
+import heroMain from '@/assets/hero-main.jpg';
 
 const Index = () => {
   const mainFAQs = [
@@ -64,9 +65,15 @@ const Index = () => {
       
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background/95 to-primary/5"></div>
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent"></div>
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroMain} 
+            alt="Cybersecurity command center"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/70" />
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
