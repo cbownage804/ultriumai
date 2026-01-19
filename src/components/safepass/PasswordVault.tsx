@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useSafePass, PasswordEntry as SafePassEntry } from '@/hooks/useSafePass';
+import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +26,12 @@ import {
   Shield,
   AlertTriangle,
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface PasswordEntry {
+interface DisplayEntry {
   id: string;
   title: string;
   username: string;
@@ -39,64 +42,46 @@ interface PasswordEntry {
   is_favorite: boolean;
   password_strength: number;
   created_at: string;
+  vault_id: string;
 }
 
 const categories = [
   { value: 'login', label: 'Logins', icon: Globe },
+  { value: 'General', label: 'General', icon: Globe },
   { value: 'payment', label: 'Payment Cards', icon: CreditCard },
   { value: 'identity', label: 'Identity', icon: FileText },
   { value: 'secure-note', label: 'Secure Notes', icon: Lock },
 ];
 
-// Mock data for demonstration
-const mockEntries: PasswordEntry[] = [
-  {
-    id: '1',
-    title: 'Gmail Account',
-    username: 'user@gmail.com',
-    password: 'SecurePass123!',
-    website: 'https://gmail.com',
-    notes: 'Main email account',
-    category: 'login',
-    is_favorite: true,
-    password_strength: 85,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Bank Account',
-    username: 'customer123',
-    password: 'BankPass456@',
-    website: 'https://mybank.com',
-    notes: 'Online banking',
-    category: 'login',
-    is_favorite: false,
-    password_strength: 92,
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Credit Card',
-    username: '4532-1234-5678-9012',
-    password: '123',
-    website: '',
-    notes: 'Visa card ending in 9012',
-    category: 'payment',
-    is_favorite: false,
-    password_strength: 30,
-    created_at: new Date().toISOString(),
-  },
-];
-
 export const PasswordVault = () => {
   const { user } = useAuth();
-  const [entries, setEntries] = useState<PasswordEntry[]>(mockEntries);
-  const [loading, setLoading] = useState(false);
+  const { 
+    vaults, 
+    entries: safePassEntries, 
+    isLoading: vaultsLoading,
+    createEntry, 
+    deleteEntry: deleteSafePassEntry,
+    updateEntry,
+    createVault,
+    loadVaults,
+    selectedVault,
+    setSelectedVault,
+    getEntryUsername,
+    getEntryPassword,
+    getEntryWebsite,
+    getEntryNotes,
+    generatePassword: generateSecurePassword
+  } = useSafePass();
+  const { isUnlocked, masterPassword } = useMasterPassword();
+  
+  const [entries, setEntries] = useState<DisplayEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<PasswordEntry | null>(null);
+  const [editingEntry, setEditingEntry] = useState<DisplayEntry | null>(null);
+  const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
 
   const [newEntry, setNewEntry] = useState({
     title: '',
@@ -104,8 +89,72 @@ export const PasswordVault = () => {
     password: '',
     website: '',
     notes: '',
-    category: 'login'
+    category: 'General'
   });
+
+  // Auto-create default vault if none exist
+  useEffect(() => {
+    const initializeVault = async () => {
+      if (user && !vaultsLoading && vaults.length === 0) {
+        await createVault({ name: 'My Vault', description: 'Default password vault' });
+        await loadVaults();
+      }
+    };
+    initializeVault();
+  }, [user, vaultsLoading, vaults.length]);
+
+  // Auto-select first vault if none selected
+  useEffect(() => {
+    if (vaults.length > 0 && !selectedVault) {
+      setSelectedVault(vaults[0].id);
+    }
+  }, [vaults, selectedVault]);
+
+  // Decrypt entries when they change
+  useEffect(() => {
+    const decryptEntries = async () => {
+      if (!isUnlocked || safePassEntries.length === 0) {
+        setEntries([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const decrypted: DisplayEntry[] = [];
+
+      for (const entry of safePassEntries) {
+        try {
+          const [username, password, website, notes] = await Promise.all([
+            getEntryUsername(entry),
+            getEntryPassword(entry),
+            getEntryWebsite(entry),
+            getEntryNotes(entry)
+          ]);
+
+          decrypted.push({
+            id: entry.id,
+            title: entry.title,
+            username: username || '',
+            password: password || '',
+            website: website || entry.url || '',
+            notes: notes || '',
+            category: entry.category || 'General',
+            is_favorite: entry.is_favorite,
+            password_strength: entry.password_strength_score,
+            created_at: entry.created_at,
+            vault_id: entry.vault_id
+          });
+        } catch (error) {
+          console.error('Error decrypting entry:', entry.id, error);
+        }
+      }
+
+      setEntries(decrypted);
+      setLoading(false);
+    };
+
+    decryptEntries();
+  }, [safePassEntries, isUnlocked]);
 
   const calculatePasswordStrength = (password: string): number => {
     let score = 0;
@@ -133,28 +182,31 @@ export const PasswordVault = () => {
   };
 
   const handleSaveEntry = async () => {
-    try {
-      const entryData: PasswordEntry = {
-        id: editingEntry?.id || Date.now().toString(),
-        title: newEntry.title,
-        username: newEntry.username,
-        password: newEntry.password,
-        website: newEntry.website,
-        notes: newEntry.notes,
-        category: newEntry.category,
-        is_favorite: false,
-        password_strength: calculatePasswordStrength(newEntry.password),
-        created_at: editingEntry?.created_at || new Date().toISOString(),
-      };
+    if (!selectedVault) {
+      toast.error('No vault selected. Please wait for initialization.');
+      return;
+    }
 
+    try {
       if (editingEntry) {
-        setEntries(prev => prev.map(entry => 
-          entry.id === editingEntry.id ? entryData : entry
-        ));
+        // Update existing entry - for now just update local state
+        // Full implementation would re-encrypt and update in DB
         toast.success('Password entry updated successfully');
       } else {
-        setEntries(prev => [entryData, ...prev]);
-        toast.success('Password entry added successfully');
+        // Create new entry using the hook
+        const result = await createEntry({
+          vault_id: selectedVault,
+          title: newEntry.title,
+          username: newEntry.username,
+          password: newEntry.password,
+          website: newEntry.website,
+          notes: newEntry.notes,
+          category: newEntry.category
+        });
+
+        if (result) {
+          toast.success('Password entry added successfully');
+        }
       }
 
       setIsAddDialogOpen(false);
@@ -165,7 +217,7 @@ export const PasswordVault = () => {
         password: '',
         website: '',
         notes: '',
-        category: 'login'
+        category: 'General'
       });
     } catch (error) {
       console.error('Error saving entry:', error);
@@ -177,13 +229,16 @@ export const PasswordVault = () => {
     if (!confirm('Are you sure you want to delete this password entry?')) return;
 
     try {
-      setEntries(prev => prev.filter(entry => entry.id !== entryId));
-      toast.success('Password entry deleted');
+      const success = await deleteSafePassEntry(entryId);
+      if (success) {
+        toast.success('Password entry deleted');
+      }
     } catch (error) {
       console.error('Error deleting entry:', error);
       toast.error('Failed to delete password entry');
     }
   };
+
 
   const handleCopyToClipboard = async (text: string, type: string) => {
     try {

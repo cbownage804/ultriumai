@@ -123,22 +123,56 @@ async function scanEmail(payload: any) {
 
   const finalScore = Math.min(riskScore, 100)
   const action = finalScore > 80 ? 'block' : finalScore > 50 ? 'quarantine' : finalScore > 20 ? 'flag' : 'allow'
+  
+  // Map riskScore to risk_level for frontend compatibility
+  let risk_level: 'safe' | 'low' | 'medium' | 'high' | 'critical' = 'safe';
+  if (finalScore >= 80) {
+    risk_level = 'critical';
+  } else if (finalScore >= 60) {
+    risk_level = 'high';
+  } else if (finalScore >= 40) {
+    risk_level = 'medium';
+  } else if (finalScore >= 20) {
+    risk_level = 'low';
+  }
+
+  // Build response compatible with SafeScan frontend
+  const response = {
+    // Frontend expected fields
+    safe: finalScore < 20,
+    risk_level,
+    reputation_score: Math.max(0, 100 - finalScore),
+    threats_detected: threats.map(t => t.description || `${t.type}: ${t.severity}`),
+    recommendations: [
+      action === 'block' ? 'DO NOT INTERACT with this email - it appears to be malicious' :
+      action === 'quarantine' ? 'Exercise extreme caution - this email has suspicious characteristics' :
+      action === 'flag' ? 'Be cautious - some potential phishing indicators detected' :
+      'Email appears safe, but always verify sender identity for sensitive requests'
+    ],
+    scan_details: {
+      scan_date: new Date().toISOString(),
+      sender_analysis: threats.find(t => t.type === 'sender_reputation')?.details || null,
+      link_analysis: threats.find(t => t.type === 'malicious_links') || null,
+      phishing_indicators: threats.find(t => t.type === 'phishing')?.indicators || [],
+      attachment_risks: threats.filter(t => ['malicious_attachment', 'suspicious_attachment'].includes(t.type))
+    },
+    // Original fields for backward compatibility
+    riskScore: finalScore,
+    action,
+    threats,
+    summary: {
+      threatCount: threats.length,
+      highestSeverity: threats.length > 0 ? 
+        threats.reduce((max, t) => t.severity === 'critical' ? 'critical' : 
+          t.severity === 'high' && max !== 'critical' ? 'high' : 
+          t.severity === 'medium' && !['critical', 'high'].includes(max) ? 'medium' : 
+          max, 'low') : 'none'
+    },
+    scanTimestamp: new Date().toISOString()
+  };
 
   return new Response(
-    JSON.stringify({
-      riskScore: finalScore,
-      action,
-      threats,
-      summary: {
-        threatCount: threats.length,
-        highestSeverity: threats.length > 0 ? 
-          threats.reduce((max, t) => t.severity === 'critical' ? 'critical' : 
-            t.severity === 'high' && max !== 'critical' ? 'high' : 
-            t.severity === 'medium' && !['critical', 'high'].includes(max) ? 'medium' : 
-            max, 'low') : 'none'
-      },
-      scanTimestamp: new Date().toISOString()
-    }),
+    JSON.stringify(response),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   )
 }
