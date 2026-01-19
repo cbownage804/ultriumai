@@ -281,36 +281,144 @@ export const useSafePassSecurity = () => {
     }
   };
 
-  // Request emergency access
+  // Request emergency access - sets status to 'pending' and enforces wait period
+  // The vault owner must approve, and access is only granted after wait_period_hours
   const requestEmergencyAccess = async (emergencyAccessId: string, reason: string) => {
+    if (!user) return false;
+
+    try {
+      // First, get the current access record to check wait period
+      const { data: accessRecord, error: fetchError } = await supabase
+        .from('safepass_emergency_access')
+        .select('wait_period_hours, status')
+        .eq('id', emergencyAccessId)
+        .eq('emergency_contact_id', user.id)
+        .single();
+
+      if (fetchError || !accessRecord) {
+        throw new Error('Emergency access record not found');
+      }
+
+      if (accessRecord.status !== 'active') {
+        toast({
+          title: "Error",
+          description: "This emergency access is not in an active state",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      // Set status to 'pending' - NOT 'granted'
+      // The vault owner must approve, and access is only granted after wait period
+      const { error } = await supabase
+        .from('safepass_emergency_access')
+        .update({
+          status: 'pending', // Request only - owner must approve
+          requested_at: new Date().toISOString(),
+          reason: reason,
+          // Do NOT set expires_at or approved_at - those are set by the owner
+        })
+        .eq('id', emergencyAccessId)
+        .eq('emergency_contact_id', user.id)
+        .eq('status', 'active'); // Can only request if currently active
+
+      if (error) throw error;
+
+      await loadEmergencyAccess();
+      toast({
+        title: "Access Requested",
+        description: `The vault owner will be notified. Wait period: ${accessRecord.wait_period_hours} hours.`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error requesting emergency access');
+      toast({
+        title: "Error",
+        description: "Failed to request emergency access",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  // Approve emergency access request (vault owner only)
+  const approveEmergencyAccess = async (emergencyAccessId: string) => {
+    if (!user) return false;
+
+    try {
+      // Get the access record to calculate expiry based on wait period
+      const { data: accessRecord, error: fetchError } = await supabase
+        .from('safepass_emergency_access')
+        .select('wait_period_hours')
+        .eq('id', emergencyAccessId)
+        .eq('vault_owner_id', user.id)
+        .single();
+
+      if (fetchError || !accessRecord) {
+        throw new Error('Emergency access record not found');
+      }
+
+      const waitPeriodMs = (accessRecord.wait_period_hours || 48) * 60 * 60 * 1000;
+      const expiresAt = new Date(Date.now() + waitPeriodMs + 7 * 24 * 60 * 60 * 1000); // Wait period + 7 days access
+
+      const { error } = await supabase
+        .from('safepass_emergency_access')
+        .update({
+          status: 'granted',
+          approved_at: new Date().toISOString(),
+          expires_at: expiresAt.toISOString(),
+        })
+        .eq('id', emergencyAccessId)
+        .eq('vault_owner_id', user.id); // Only owner can approve
+
+      if (error) throw error;
+
+      await loadEmergencyAccess();
+      toast({
+        title: "Access Approved",
+        description: `Emergency access granted. Expires: ${expiresAt.toLocaleDateString()}`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error approving emergency access');
+      toast({
+        title: "Error",
+        description: "Failed to approve emergency access",
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  // Deny emergency access request (vault owner only)
+  const denyEmergencyAccess = async (emergencyAccessId: string) => {
     if (!user) return false;
 
     try {
       const { error } = await supabase
         .from('safepass_emergency_access')
         .update({
-          status: 'granted',
-          requested_at: new Date().toISOString(),
-          reason: reason,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+          status: 'denied',
         })
         .eq('id', emergencyAccessId)
-        .eq('emergency_contact_id', user.id);
+        .eq('vault_owner_id', user.id); // Only owner can deny
 
       if (error) throw error;
 
       await loadEmergencyAccess();
       toast({
-        title: "Success",
-        description: "Emergency access requested. The owner will be notified.",
+        title: "Access Denied",
+        description: "Emergency access request has been denied.",
       });
 
       return true;
     } catch (error) {
-      console.error('Error requesting emergency access:', error);
+      console.error('Error denying emergency access');
       toast({
         title: "Error",
-        description: "Failed to request emergency access",
+        description: "Failed to deny emergency access",
         variant: "destructive",
       });
       return false;
@@ -376,6 +484,8 @@ export const useSafePassSecurity = () => {
     runSecurityScan,
     setupEmergencyAccess,
     requestEmergencyAccess,
+    approveEmergencyAccess,
+    denyEmergencyAccess,
     resolveAlert,
     loadSecurityAlerts,
     loadEmergencyAccess,
