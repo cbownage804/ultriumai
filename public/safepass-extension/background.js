@@ -3,6 +3,27 @@
 const SAFEPASS_API_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1';
 const PORTAL_URL = 'https://ultriumai.lovable.app/safepass-app';
 
+// Security: Auto-lock timeout (5 minutes)
+const AUTO_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+
+// Check and auto-lock expired sessions periodically
+async function checkAutoLock() {
+  const session = await chrome.storage.session.get(['unlocked', 'lastActivity']);
+  if (session.unlocked && session.lastActivity) {
+    const elapsed = Date.now() - session.lastActivity;
+    if (elapsed > AUTO_LOCK_TIMEOUT_MS) {
+      console.log('[SafePass] Auto-locking vault due to inactivity');
+      await chrome.storage.session.clear();
+    }
+  }
+}
+
+// Run auto-lock check every minute
+setInterval(checkAutoLock, 60000);
+
+// Also check on startup
+checkAutoLock();
+
 // Handle extension installation
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
