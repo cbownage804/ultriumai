@@ -4,12 +4,10 @@
   "version": "1.0.0",
   "description": "Secure password autofill and management powered by SafePass",
   "permissions": [
-    "storage",
-    "activeTab",
-    "tabs"
+    "storage"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "https://*.supabase.co/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -37,6 +35,9 @@
   "background": {
     "service_worker": "background.js",
     "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';"
   },
   "web_accessible_resources": [
     {
