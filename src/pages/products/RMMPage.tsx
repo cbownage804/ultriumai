@@ -10,6 +10,7 @@ import {
   ArrowRight, Check, Terminal, HardDrive, Cpu,
   Download, RefreshCw, Settings, Activity
 } from 'lucide-react';
+import heroMonitoring from '@/assets/hero-monitoring.jpg';
 
 const features = [
   {
@@ -90,8 +91,16 @@ export default function RMMPage() {
       <main className="pt-20">
         {/* Hero */}
         <section className="relative overflow-hidden border-b">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-emerald-500/5 to-transparent" />
-          <div className="max-w-7xl mx-auto px-4 py-20 relative">
+          <div className="absolute inset-0">
+            <img 
+              src={heroMonitoring} 
+              alt="Remote monitoring dashboard"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          </div>
+          <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
             <Badge className="mb-4 bg-green-500/10 text-green-500 border-green-500/20">
               <Monitor className="h-3 w-3 mr-1" />
               Remote Monitoring & Management

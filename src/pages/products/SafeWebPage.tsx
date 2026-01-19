@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { VanguardUpsell } from "@/components/products/VanguardUpsell";
 import { Search, Check, Star, Zap, Users, ArrowRight, Play, AlertTriangle, Eye, Globe, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import heroWeb from "@/assets/hero-web.jpg";
 
 const SafeWebPage = () => {
   const features = [
@@ -75,8 +76,18 @@ const SafeWebPage = () => {
       
       <main className="pt-20">
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-br from-background via-background/95 to-violet-500/5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative py-20 overflow-hidden">
+          {/* Background Image */}
+          <div className="absolute inset-0">
+            <img 
+              src={heroWeb} 
+              alt="Global network security"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          </div>
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <Badge className="mb-4 bg-violet-500/10 text-violet-500 border-violet-500/20">
                 <Eye className="h-3 w-3 mr-1" />

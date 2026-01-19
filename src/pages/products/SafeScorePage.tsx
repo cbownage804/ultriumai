@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import heroCompliance from "@/assets/hero-compliance.jpg";
 
 const SafeScorePage = () => {
   const features = [
@@ -48,8 +49,18 @@ const SafeScorePage = () => {
       
       <main>
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-          <div className="container mx-auto px-4">
+        <section className="relative py-20 overflow-hidden">
+          {/* Background Image */}
+          <div className="absolute inset-0">
+            <img 
+              src={heroCompliance} 
+              alt="Compliance dashboard"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          </div>
+          <div className="relative z-10 container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center space-y-8">
               <div className="flex items-center justify-center gap-2 mb-6">
                 <Shield className="h-12 w-12 text-primary" />

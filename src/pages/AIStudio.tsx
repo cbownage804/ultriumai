@@ -28,6 +28,7 @@ import {
   Crown,
   Check
 } from "lucide-react";
+import heroAi from "@/assets/hero-ai.jpg";
 
 const AIStudio = () => {
   const creationPaths = [
@@ -158,8 +159,18 @@ const AIStudio = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-background via-background/95 to-primary/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-20 pb-16 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroAi} 
+            alt="AI neural network"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             <div className="space-y-6">
               <Badge variant="secondary" className="mb-4">
