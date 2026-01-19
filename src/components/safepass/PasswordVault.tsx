@@ -30,6 +30,12 @@ import {
   Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import DOMPurify from 'dompurify';
+
+// Input sanitization helper
+const sanitizeInput = (input: string): string => {
+  return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }).trim();
+};
 
 interface DisplayEntry {
   id: string;
@@ -145,7 +151,8 @@ export const PasswordVault = () => {
             vault_id: entry.vault_id
           });
         } catch (error) {
-          console.error('Error decrypting entry:', entry.id, error);
+          // Log generic error without sensitive entry IDs
+          console.error('Error decrypting password entry');
         }
       }
 
@@ -195,16 +202,19 @@ export const PasswordVault = () => {
         // Full implementation would re-encrypt and update in DB
         toast.success('Password entry updated successfully');
       } else {
-        // Create new entry using the hook
-        const result = await createEntry({
+        // Sanitize all inputs before saving
+        const sanitizedEntry = {
           vault_id: selectedVault,
-          title: newEntry.title,
-          username: newEntry.username,
-          password: newEntry.password,
-          website: newEntry.website,
-          notes: newEntry.notes,
-          category: newEntry.category
-        });
+          title: sanitizeInput(newEntry.title),
+          username: sanitizeInput(newEntry.username),
+          password: newEntry.password, // Don't sanitize password - may contain special chars
+          website: sanitizeInput(newEntry.website),
+          notes: sanitizeInput(newEntry.notes),
+          category: sanitizeInput(newEntry.category)
+        };
+
+        // Create new entry using the hook
+        const result = await createEntry(sanitizedEntry);
 
         if (result) {
           toast.success('Password entry added successfully');
@@ -222,7 +232,8 @@ export const PasswordVault = () => {
         category: 'General'
       });
     } catch (error) {
-      console.error('Error saving entry:', error);
+      // Log generic error without sensitive data
+      console.error('Error saving password entry');
       toast.error('Failed to save password entry');
     }
   };
@@ -236,7 +247,8 @@ export const PasswordVault = () => {
         toast.success('Password entry deleted');
       }
     } catch (error) {
-      console.error('Error deleting entry:', error);
+      // Log generic error without sensitive data
+      console.error('Error deleting password entry');
       toast.error('Failed to delete password entry');
     }
   };
