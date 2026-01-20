@@ -28,9 +28,12 @@ import {
   CheckCircle,
   RefreshCw,
   Loader2,
-  Upload
+  Upload,
+  Download,
+  Key
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { TOTPManager } from './TOTPManager';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 
@@ -322,6 +325,10 @@ export const PasswordVault = () => {
           <Button variant="outline" onClick={() => navigate('/safesuite/pass/import')}>
             <Upload className="w-4 h-4 mr-2" />
             Import
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/safesuite/pass/export')}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
           </Button>
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -670,6 +677,11 @@ export const PasswordVault = () => {
             </Card>
           ))
         )}
+      </div>
+
+      {/* TOTP / 2FA Authenticator Section */}
+      <div className="mt-8 pt-6 border-t">
+        <TOTPManager />
       </div>
     </div>
   );
