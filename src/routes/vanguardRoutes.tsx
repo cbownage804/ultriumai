@@ -44,6 +44,7 @@ const VanguardSafePass = lazy(() => import('@/pages/vanguard/VanguardSafePass'))
 const MSPSafePassProvisioning = lazy(() => import('@/components/safepass/MSPSafePassProvisioning'));
 const VanguardSafeScan = lazy(() => import('@/pages/vanguard/VanguardSafeScan'));
 const VanguardSuite = lazy(() => import('@/pages/vanguard/VanguardSuite'));
+const VanguardSafeSuiteAdmin = lazy(() => import('@/pages/vanguard/VanguardSafeSuiteAdmin'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -104,6 +105,7 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-safepass" path="safepass" element={<LazyProtectedPage component={VanguardSafePass} />} />,
   <Route key="vanguard-safepass-admin" path="safepass-admin" element={<LazyProtectedPage component={MSPSafePassProvisioning} />} />,
   <Route key="vanguard-safescan" path="safescan" element={<LazyProtectedPage component={VanguardSafeScan} />} />,
+  <Route key="vanguard-safesuite-admin" path="safesuite-admin" element={<LazyProtectedPage component={VanguardSafeSuiteAdmin} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
