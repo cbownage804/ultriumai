@@ -28,6 +28,8 @@ import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
 import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
 import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
 import SafePassSettings from '@/pages/safesuite/SafePassSettings';
+import SafePassReminders from '@/pages/safesuite/SafePassReminders';
+import SafePassBreach from '@/pages/safesuite/SafePassBreach';
 import SafeScanSettings from '@/pages/safesuite/SafeScanSettings';
 import SafeWebSettings from '@/pages/safesuite/SafeWebSettings';
 import SafeTrackSettings from '@/pages/safesuite/SafeTrackSettings';
@@ -607,6 +609,8 @@ function AppRouter() {
           <Route path="/safesuite/pass" element={<SafeSuitePass />} />
           <Route path="/safesuite/pass/import" element={<SafePassImport />} />
           <Route path="/safesuite/pass/export" element={<SafePassExport />} />
+          <Route path="/safesuite/pass/reminders" element={<SafePassReminders />} />
+          <Route path="/safesuite/pass/breach" element={<SafePassBreach />} />
           <Route path="/safesuite/pass/settings" element={<SafePassSettings />} />
           <Route path="/safesuite/scan" element={<SafeSuiteScan />} />
           <Route path="/safesuite/scan/settings" element={<SafeScanSettings />} />
