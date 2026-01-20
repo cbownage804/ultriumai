@@ -326,7 +326,7 @@ async function checkForMatchingPasswords() {
   }
 }
 
-// Detect new password forms (for password save prompt)
+// Detect new password forms (for auto-save)
 function detectNewPasswordForm() {
   const forms = document.querySelectorAll('form');
   
@@ -336,14 +336,12 @@ function detectNewPasswordForm() {
     
     form.addEventListener('submit', async (e) => {
       const passwordField = form.querySelector('input[type="password"]');
-      const usernameField = form.querySelector('input[type="email"], input[type="text"][name*="user"], input[type="text"][name*="email"]');
+      const usernameField = form.querySelector('input[type="email"], input[type="text"][name*="user"], input[type="text"][name*="email"], input[autocomplete="username"]');
       
       if (passwordField && usernameField && passwordField.value && usernameField.value) {
-        // Ask if user wants to save
-        const shouldSave = confirm('Would you like SafePass to save this password?');
-        
-        if (shouldSave) {
-          await chrome.runtime.sendMessage({
+        // Automatically save password to vault
+        try {
+          const response = await chrome.runtime.sendMessage({
             action: 'savePassword',
             data: {
               website: window.location.hostname,
@@ -352,7 +350,56 @@ function detectNewPasswordForm() {
               title: document.title || window.location.hostname
             }
           });
-          showNotification('Password saved to SafePass!');
+          
+          if (response.success) {
+            showNotification('🔐 Password saved to SafePass!');
+          } else if (response.error === 'Not authenticated') {
+            showNotification('Unlock SafePass to save passwords', 'warning');
+          }
+        } catch (error) {
+          console.error('[SafePass] Auto-save error:', error);
+        }
+      }
+    });
+  });
+  
+  // Also watch for password fields with change events (for single-page apps)
+  const passwordFields = document.querySelectorAll('input[type="password"]');
+  passwordFields.forEach(field => {
+    if (field.dataset.safepassAutoSave) return;
+    field.dataset.safepassAutoSave = 'true';
+    
+    // Track the current value to detect actual password entry
+    let lastValue = '';
+    
+    field.addEventListener('blur', async () => {
+      if (field.value && field.value !== lastValue && field.value.length >= 6) {
+        lastValue = field.value;
+        
+        // Find associated username field
+        const form = field.closest('form');
+        const container = form || field.parentElement?.parentElement?.parentElement;
+        const usernameField = container?.querySelector('input[type="email"], input[type="text"][name*="user"], input[type="text"][name*="email"], input[autocomplete="username"]');
+        
+        if (usernameField && usernameField.value) {
+          // Attempt auto-save on blur
+          try {
+            const response = await chrome.runtime.sendMessage({
+              action: 'savePassword',
+              data: {
+                website: window.location.hostname,
+                username: usernameField.value,
+                password: field.value,
+                title: document.title || window.location.hostname
+              }
+            });
+            
+            if (response.success) {
+              showNotification('🔐 Password saved to SafePass!');
+            }
+          } catch (error) {
+            console.error('[SafePass] Blur auto-save error:', error);
+          }
         }
       }
     });
