@@ -7,15 +7,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// SafeSuite tier price IDs (to be updated with real Stripe price IDs)
+// SafeSuite tier price IDs
 const TIER_PRICES = {
   pro: {
-    monthly: "price_safesuite_pro_monthly",
-    yearly: "price_safesuite_pro_yearly"
+    monthly: "price_1SrTegH1u6E0bsJTKpGm5qxr",
+    yearly: "price_1SrTeiH1u6E0bsJTarTH7ajs"
   },
   business: {
-    monthly: "price_safesuite_business_monthly", 
-    yearly: "price_safesuite_business_yearly"
+    monthly: "price_1SrTejH1u6E0bsJTwd4K8st5", 
+    yearly: "price_1SrTelH1u6E0bsJTmep4lSIP"
   }
 };
 
