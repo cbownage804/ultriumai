@@ -11,6 +11,9 @@ import { FAQSection } from '@/components/FAQSection';
 import { FAQSchema, OrganizationSchema, ServiceSchema } from '@/components/SEOSchemas';
 import { safeWindowOpen } from '@/utils/security';
 import heroMain from '@/assets/hero-main.jpg';
+import ultriumGPTLogo from '@/assets/ultrium-gpt-logo.png';
+import vanguardLogo from '@/assets/vanguard-logo.png';
+import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const Index = () => {
   const mainFAQs = [
@@ -94,7 +97,7 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in flex-wrap">
               <Link to="/ai-studio">
                 <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  <Brain className="mr-2 h-5 w-5" />
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="mr-2 h-6 w-6 object-contain" />
                   Explore AI Studio
                 </Button>
               </Link>
@@ -104,7 +107,7 @@ const Index = () => {
                 className="text-lg px-8 py-6 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105"
                 onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
               >
-                <Shield className="mr-2 h-5 w-5" />
+                <img src={vanguardLogo} alt="Vanguard" className="mr-2 h-6 w-6 object-contain" />
                 Explore Vanguard
               </Button>
               <Button 
@@ -113,7 +116,7 @@ const Index = () => {
                 className="text-lg px-8 py-6 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105"
                 onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
               >
-                <Lock className="mr-2 h-5 w-5" />
+                <img src={safesuiteLogo} alt="SafeSuite" className="mr-2 h-6 w-6 object-contain" />
                 Try SafeSuite
               </Button>
             </div>
