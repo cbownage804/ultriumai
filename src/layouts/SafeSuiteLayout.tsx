@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
 import { getSafeSuiteBasePath, isSafeSuiteDomain } from '@/utils/subdomain';
+import { safeSuiteProducts, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,10 +26,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import {
-  KeyRound,
-  ScanSearch,
-  Globe,
-  Package,
   LayoutDashboard,
   Settings,
   SlidersHorizontal,
@@ -63,13 +60,15 @@ const getNavItems = () => [
     label: 'Dashboard',
     path: getSafeSuitePath('/dashboard'),
     icon: LayoutDashboard,
+    productLogo: null as string | null,
     feature: null
   },
   {
     id: 'safepass',
     label: 'SafePass',
     path: getSafeSuitePath('/pass'),
-    icon: KeyRound,
+    icon: null,
+    productLogo: safeSuiteProducts.safepass.logo,
     feature: 'safepass' as const,
     subItems: [
       { label: 'Vault', path: getSafeSuitePath('/pass') },
@@ -85,6 +84,7 @@ const getNavItems = () => [
       { label: 'Browser Extension', path: getSafeSuitePath('/pass/extension') },
       { label: 'Import', path: getSafeSuitePath('/pass/import') },
       { label: 'Export', path: getSafeSuitePath('/pass/export') },
+      { label: 'Team', path: getSafeSuitePath('/pass/team') },
       { label: 'Settings', path: getSafeSuitePath('/pass/settings') }
     ]
   },
@@ -92,7 +92,8 @@ const getNavItems = () => [
     id: 'safescan',
     label: 'SafeScan',
     path: getSafeSuitePath('/scan'),
-    icon: ScanSearch,
+    icon: null,
+    productLogo: safeSuiteProducts.safescan.logo,
     feature: 'safescan' as const,
     subItems: [
       { label: 'Scanner', path: getSafeSuitePath('/scan') },
@@ -103,7 +104,8 @@ const getNavItems = () => [
     id: 'safeweb',
     label: 'SafeWeb',
     path: getSafeSuitePath('/web'),
-    icon: Globe,
+    icon: null,
+    productLogo: safeSuiteProducts.safeweb.logo,
     feature: 'safeweb' as const,
     subItems: [
       { label: 'Monitor', path: getSafeSuitePath('/web') },
@@ -114,7 +116,8 @@ const getNavItems = () => [
     id: 'safetrack',
     label: 'SafeTrack',
     path: getSafeSuitePath('/track'),
-    icon: Package,
+    icon: null,
+    productLogo: safeSuiteProducts.safetrack.logo,
     feature: 'safetrack' as const,
     subItems: [
       { label: 'Assets', path: getSafeSuitePath('/track') },
@@ -155,7 +158,8 @@ type NavItem = {
   id: string;
   label: string;
   path: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string }> | null;
+  productLogo: string | null;
   feature: 'safepass' | 'safescan' | 'safeweb' | 'safetrack' | null;
   subItems?: NavSubItem[];
 };
@@ -188,7 +192,11 @@ function NavLink({
           isLocked && 'opacity-60'
         )}
       >
-        <Icon className="h-5 w-5" />
+        {item.productLogo ? (
+          <img src={item.productLogo} alt={item.label} className="h-6 w-6 rounded object-contain" />
+        ) : Icon ? (
+          <Icon className="h-5 w-5" />
+        ) : null}
         <span className="flex-1">{item.label}</span>
         {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
         {isActive && (hasSubItems ? (
