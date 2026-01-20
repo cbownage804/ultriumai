@@ -25,7 +25,9 @@
         <input type="password" id="master-password" placeholder="Master password" autocomplete="current-password" />
         <button id="login-btn" class="primary-btn">Unlock Vault</button>
         <a href="#" id="open-portal" class="link">Open SafePass Portal →</a>
-        <p class="browser-note">Works on Chrome & Edge</p>
+        <div class="shortcuts-hint">
+          <span>⌨️ Shortcuts: <kbd>Ctrl+Shift+L</kbd> Autofill</span>
+        </div>
       </div>
     </div>
 
@@ -48,7 +50,7 @@
               <path d="M16 16h5v5"/>
             </svg>
           </button>
-          <button id="lock-btn" class="icon-btn" title="Lock vault">
+          <button id="lock-btn" class="icon-btn" title="Lock vault (Ctrl+Shift+K)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -57,19 +59,69 @@
         </div>
       </div>
       
-      <div class="search-bar">
-        <input type="text" id="search" placeholder="Search passwords..." />
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="passwords">🔐 Passwords</button>
+        <button class="tab-btn" data-tab="totp">🔑 2FA</button>
+        <button class="tab-btn" data-tab="notes">📝 Notes</button>
+        <button class="tab-btn" data-tab="cards">💳 Cards</button>
       </div>
-
-      <div class="content">
-        <div id="current-site" class="site-section hidden">
-          <h3>📍 For this site</h3>
-          <div id="current-site-passwords"></div>
+      
+      <!-- Passwords Tab -->
+      <div id="passwords-tab" class="tab-content active">
+        <div class="search-bar">
+          <input type="text" id="search" placeholder="Quick search... (Ctrl+F)" />
         </div>
-        
-        <div class="all-section">
-          <h3>🔐 All Passwords</h3>
-          <div id="all-passwords"></div>
+
+        <div class="content">
+          <div id="current-site" class="site-section hidden">
+            <h3>📍 For this site</h3>
+            <div id="current-site-passwords"></div>
+          </div>
+          
+          <div class="all-section">
+            <h3>🔐 All Passwords</h3>
+            <div id="all-passwords"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TOTP Tab -->
+      <div id="totp-tab" class="tab-content hidden">
+        <div class="content">
+          <div id="totp-list" class="totp-container">
+            <div class="empty-state">
+              <div style="font-size:32px;margin-bottom:8px">🔑</div>
+              <div>No 2FA codes yet</div>
+              <div style="font-size:12px;opacity:0.7;margin-top:4px">Add TOTP entries from the portal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Secure Notes Tab -->
+      <div id="notes-tab" class="tab-content hidden">
+        <div class="content">
+          <div id="notes-list" class="notes-container">
+            <div class="empty-state">
+              <div style="font-size:32px;margin-bottom:8px">📝</div>
+              <div>No secure notes</div>
+              <div style="font-size:12px;opacity:0.7;margin-top:4px">Store encrypted notes securely</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Credit Cards Tab -->
+      <div id="cards-tab" class="tab-content hidden">
+        <div class="content">
+          <div id="cards-list" class="cards-container">
+            <div class="empty-state">
+              <div style="font-size:32px;margin-bottom:8px">💳</div>
+              <div>No cards saved</div>
+              <div style="font-size:12px;opacity:0.7;margin-top:4px">Securely store credit cards</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -90,6 +142,15 @@
           <input type="text" id="generated-pw" readonly />
           <button id="copy-btn" class="icon-btn" title="Copy">📋</button>
         </div>
+        
+        <!-- Strength Indicator -->
+        <div class="strength-indicator">
+          <div class="strength-bar">
+            <div id="strength-fill" class="strength-fill"></div>
+          </div>
+          <span id="strength-label" class="strength-label">Strong</span>
+        </div>
+        
         <div class="options">
           <label>
             <span>Length: <span id="length-value">16</span></span>
@@ -111,9 +172,61 @@
             <input type="checkbox" id="pw-symbols" checked />
             <span>Symbols (!@#$)</span>
           </label>
+          <label>
+            <input type="checkbox" id="pw-pronounceable" />
+            <span>Pronounceable</span>
+          </label>
         </div>
         <button id="regenerate-btn" class="primary-btn">🔄 Regenerate</button>
         <button id="use-password-btn" class="secondary-btn" style="margin-top:8px">Use Password</button>
+        <button id="check-breach-btn" class="secondary-btn breach-btn" style="margin-top:8px">🔍 Check Breach</button>
+      </div>
+    </div>
+    
+    <!-- Add Entry View -->
+    <div id="add-view" class="view hidden">
+      <div class="header">
+        <button id="add-back-btn" class="icon-btn">←</button>
+        <span>Add New Entry</span>
+      </div>
+      <div class="content">
+        <div class="entry-type-selector">
+          <button class="entry-type-btn active" data-type="password">🔐 Password</button>
+          <button class="entry-type-btn" data-type="note">📝 Note</button>
+          <button class="entry-type-btn" data-type="card">💳 Card</button>
+        </div>
+        
+        <!-- Password Form -->
+        <div id="password-form" class="entry-form">
+          <input type="text" id="add-title" placeholder="Title (e.g., Gmail)" />
+          <input type="text" id="add-website" placeholder="Website URL" />
+          <input type="text" id="add-username" placeholder="Username / Email" />
+          <div class="password-input-group">
+            <input type="password" id="add-password" placeholder="Password" />
+            <button id="toggle-password-btn" class="icon-btn small">👁️</button>
+            <button id="gen-password-btn" class="icon-btn small">⚡</button>
+          </div>
+          <button id="save-password-btn" class="primary-btn">Save Password</button>
+        </div>
+        
+        <!-- Note Form -->
+        <div id="note-form" class="entry-form hidden">
+          <input type="text" id="add-note-title" placeholder="Note Title" />
+          <textarea id="add-note-content" placeholder="Secure note content..." rows="6"></textarea>
+          <button id="save-note-btn" class="primary-btn">Save Note</button>
+        </div>
+        
+        <!-- Card Form -->
+        <div id="card-form" class="entry-form hidden">
+          <input type="text" id="add-card-name" placeholder="Cardholder Name" />
+          <input type="text" id="add-card-number" placeholder="Card Number" maxlength="19" />
+          <div class="card-row">
+            <input type="text" id="add-card-expiry" placeholder="MM/YY" maxlength="5" />
+            <input type="text" id="add-card-cvv" placeholder="CVV" maxlength="4" />
+          </div>
+          <input type="text" id="add-card-zip" placeholder="Billing ZIP (optional)" />
+          <button id="save-card-btn" class="primary-btn">Save Card</button>
+        </div>
       </div>
     </div>
   </div>
