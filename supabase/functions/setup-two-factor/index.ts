@@ -103,12 +103,18 @@ const handler = async (req: Request): Promise<Response> => {
     // Store the secret temporarily (will be activated when user verifies)
     const { error: updateError } = await supabase
       .from('security_settings')
-      .upsert({
-        user_id: user.id,
-        two_factor_secret: secret,
-        backup_codes: backupCodes,
-        two_factor_enabled: false // Not enabled until verified
-      });
+      .upsert(
+        {
+          user_id: user.id,
+          two_factor_secret: secret,
+          backup_codes: backupCodes,
+          two_factor_enabled: false // Not enabled until verified
+        },
+        { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        }
+      );
 
     if (updateError) {
       throw updateError;
