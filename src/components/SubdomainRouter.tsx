@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { isSafeSuiteDomain } from '@/utils/subdomain';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import LegacySafeSuitePathRedirect from '@/components/LegacySafeSuitePathRedirect';
 
 // SafeSuite imports
 import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
@@ -79,7 +80,8 @@ export const SafeSuiteSubdomainRoutes = () => {
         <Route path="/settings" element={<SafeSuiteSettings />} />
       </Route>
       
-      {/* Redirect old /safesuite/* paths to clean URLs */}
+      {/* Redirect old /safesuite/* paths to clean URLs (including nested routes) */}
+      <Route path="/safesuite/*" element={<LegacySafeSuitePathRedirect />} />
       <Route path="/safesuite" element={<Navigate to="/" replace />} />
       <Route path="/safesuite/auth" element={<Navigate to="/auth" replace />} />
       <Route path="/safesuite/dashboard" element={<Navigate to="/dashboard" replace />} />
