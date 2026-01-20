@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadSettings();
   await checkBiometricAvailability();
+  await loadGeneratorSettings();
   
   const sessionValid = await checkSessionExpiry();
   const session = await chrome.storage.session.get(['unlocked', 'masterKey', 'authToken']);
@@ -42,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadAllData();
     showView('vault');
     resetAutoLockTimer();
+    updateSyncIndicator();
   } else {
     showView('login');
   }
@@ -56,9 +58,44 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   setupEventListeners();
+  setupSyncListener();
   document.addEventListener('click', resetAutoLockTimer);
   document.addEventListener('keydown', handleKeyboardShortcuts);
 });
+
+async function loadGeneratorSettings() {
+  // Stub - actual implementation in generator section
+}
+
+function setupSyncListener() {
+  // Listen for sync complete messages from background
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.action === 'syncComplete') {
+      console.log('[SafePass] Sync complete notification received');
+      loadAllData().then(() => {
+        renderPasswords();
+        updateSyncIndicator();
+      });
+    }
+  });
+}
+
+async function updateSyncIndicator() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: 'getLastSyncTime' });
+    const syncBtn = document.getElementById('sync-btn');
+    if (syncBtn && response.lastSyncTime) {
+      const ago = Math.floor((Date.now() - response.lastSyncTime) / 1000);
+      const label = ago < 60 ? 'Just synced' : ago < 3600 ? `${Math.floor(ago/60)}m ago` : `${Math.floor(ago/3600)}h ago`;
+      syncBtn.title = `Last sync: ${label}`;
+      if (response.syncInProgress) {
+        syncBtn.classList.add('syncing');
+      } else {
+        syncBtn.classList.remove('syncing');
+      }
+    }
+  } catch {}
+}
 
 async function loadSettings() {
   const settings = await chrome.storage.local.get(['autoLockTimeout', 'biometricEnabled', 'clipboardClearTime']);
@@ -501,6 +538,52 @@ async function copyPassword(id) {
 }
 
 // ===== PASSWORD GENERATOR =====
+let generatorSettings = {
+  length: 16,
+  uppercase: true,
+  lowercase: true,
+  numbers: true,
+  symbols: true,
+  pronounceable: false
+};
+
+async function loadGeneratorSettings() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: 'getGeneratorSettings' });
+    if (response && !response.error) {
+      generatorSettings = { ...generatorSettings, ...response };
+      // Apply settings to UI
+      document.getElementById('pw-length').value = generatorSettings.length;
+      document.getElementById('length-value').textContent = generatorSettings.length;
+      document.getElementById('pw-uppercase').checked = generatorSettings.uppercase;
+      document.getElementById('pw-lowercase').checked = generatorSettings.lowercase;
+      document.getElementById('pw-numbers').checked = generatorSettings.numbers;
+      document.getElementById('pw-symbols').checked = generatorSettings.symbols;
+      document.getElementById('pw-pronounceable').checked = generatorSettings.pronounceable;
+    }
+  } catch (e) {
+    console.error('[SafePass] Failed to load generator settings:', e);
+  }
+}
+
+async function saveGeneratorSettings() {
+  const settings = {
+    length: parseInt(document.getElementById('pw-length').value),
+    uppercase: document.getElementById('pw-uppercase').checked,
+    lowercase: document.getElementById('pw-lowercase').checked,
+    numbers: document.getElementById('pw-numbers').checked,
+    symbols: document.getElementById('pw-symbols').checked,
+    pronounceable: document.getElementById('pw-pronounceable').checked
+  };
+  
+  try {
+    await chrome.runtime.sendMessage({ action: 'saveGeneratorSettings', settings });
+    generatorSettings = settings;
+  } catch (e) {
+    console.error('[SafePass] Failed to save generator settings:', e);
+  }
+}
+
 function generatePassword() {
   const length = parseInt(document.getElementById('pw-length').value);
   const useUppercase = document.getElementById('pw-uppercase').checked;
@@ -521,6 +604,9 @@ function generatePassword() {
 
   document.getElementById('generated-pw').value = password;
   updateStrengthIndicator(password);
+  
+  // Save settings when generating
+  saveGeneratorSettings();
 }
 
 function handlePronounceable() {
