@@ -86,36 +86,36 @@ const Index = () => {
               From intelligent GPTs to enterprise security platforms—UltriumAI creates AI tools that work the way your business works. Built for Business. Secure by Design.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in flex-wrap">
               <Link to="/ai-studio">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  <div className="mr-3 h-10 w-10 rounded-lg bg-black p-1.5 flex items-center justify-center">
-                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-7 w-7 object-contain" />
+                <Button size="lg" className="text-lg px-8 py-8 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3">
+                  <div className="h-14 w-14 rounded-xl bg-black p-2 flex items-center justify-center overflow-hidden">
+                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
                   </div>
-                  Explore AI Studio
+                  <span>Explore AI Studio</span>
                 </Button>
               </Link>
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="text-lg px-8 py-6 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105"
+                className="text-lg px-8 py-8 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3"
                 onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
               >
-                <div className="mr-3 h-10 w-10 rounded-lg bg-black p-1.5 flex items-center justify-center">
-                  <img src={vanguardLogo} alt="Vanguard" className="h-7 w-7 object-contain" />
+                <div className="h-14 w-14 rounded-xl bg-black p-2 flex items-center justify-center overflow-hidden">
+                  <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
                 </div>
-                Explore Vanguard
+                <span>Explore Vanguard</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="text-lg px-8 py-6 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105"
+                className="text-lg px-8 py-8 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3"
                 onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
               >
-                <div className="mr-3 h-10 w-10 rounded-lg bg-black p-1.5 flex items-center justify-center">
-                  <img src={safesuiteLogo} alt="SafeSuite" className="h-7 w-7 object-contain" />
+                <div className="h-14 w-14 rounded-xl bg-black p-2 flex items-center justify-center overflow-hidden">
+                  <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
                 </div>
-                Try SafeSuite
+                <span>Try SafeSuite</span>
               </Button>
             </div>
           </div>
