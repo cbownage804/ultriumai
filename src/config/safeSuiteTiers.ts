@@ -29,6 +29,8 @@ export interface TierConfig {
   stripeYearlyPriceId?: string;
   badge?: string;
   popular?: boolean;
+  perUser?: boolean; // true if price is per-user
+  priceLabel?: string; // custom price label like "/user/mo"
 }
 
 export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
@@ -67,16 +69,18 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
     id: 'business',
     name: 'Business',
     description: 'Complete security suite for teams',
-    price: 2999,  // $29.99/mo
-    yearlyPrice: 28790, // $287.90/year (~$23.99/mo)
+    price: 1500,  // $15/user/mo
+    yearlyPrice: 14400, // $144/year per user (~$12/user/mo)
     stripePriceId: 'price_1SrTejH1u6E0bsJTwd4K8st5',
     stripeYearlyPriceId: 'price_1SrTelH1u6E0bsJTmep4lSIP',
-    badge: 'Best Value',
+    badge: 'For Teams',
+    perUser: true,
+    priceLabel: '/user/mo',
     features: {
       safepass: { enabled: true, limit: -1, team: true },  // Unlimited + Team sharing
       safescan: { enabled: true, limit: -1 },              // Unlimited scans
       safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
-      safetrack: { enabled: true, limit: 100 }             // 100 tracked assets
+      safetrack: { enabled: true, limit: -1 }              // Unlimited tracked assets
     }
   }
 };
@@ -158,8 +162,12 @@ export function formatPrice(cents: number): string {
 
 export function formatMonthlyPrice(tier: TierConfig, yearly: boolean = false): string {
   if (tier.price === 0) return 'Free';
+  
+  const priceLabel = tier.priceLabel || '/mo';
+  
   if (yearly) {
-    return `$${(tier.yearlyPrice / 12 / 100).toFixed(2)}/mo`;
+    const monthlyFromYearly = tier.yearlyPrice / 12 / 100;
+    return `$${monthlyFromYearly.toFixed(0)}${priceLabel}`;
   }
-  return `$${(tier.price / 100).toFixed(2)}/mo`;
+  return `$${(tier.price / 100).toFixed(0)}${priceLabel}`;
 }
