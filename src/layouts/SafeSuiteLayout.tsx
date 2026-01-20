@@ -7,6 +7,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
+import { getSafeSuiteBasePath, isSafeSuiteDomain } from '@/utils/subdomain';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -41,39 +42,52 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navItems = [
+/**
+ * Get the correct path for SafeSuite routes based on subdomain
+ * On safesuite.ultriumai.com: /dashboard
+ * On main domain: /safesuite/dashboard
+ */
+function getSafeSuitePath(path: string): string {
+  const isSubdomain = isSafeSuiteDomain();
+  if (isSubdomain) {
+    return path; // Clean path like /dashboard
+  }
+  return `/safesuite${path}`; // Prefixed path like /safesuite/dashboard
+}
+
+const getNavItems = () => [
   {
     id: 'dashboard',
     label: 'Dashboard',
-    path: '/safesuite/dashboard',
+    path: getSafeSuitePath('/dashboard'),
     icon: LayoutDashboard,
     feature: null
   },
   {
     id: 'safepass',
     label: 'SafePass',
-    path: '/safesuite/pass',
+    path: getSafeSuitePath('/pass'),
     icon: KeyRound,
     feature: 'safepass' as const
   },
   {
     id: 'safescan',
     label: 'SafeScan',
-    path: '/safesuite/scan',
+    path: getSafeSuitePath('/scan'),
     icon: ScanSearch,
     feature: 'safescan' as const
   },
   {
     id: 'safeweb',
     label: 'SafeWeb',
-    path: '/safesuite/web',
+    path: getSafeSuitePath('/web'),
     icon: Globe,
     feature: 'safeweb' as const
   },
   {
     id: 'safetrack',
     label: 'SafeTrack',
-    path: '/safesuite/track',
+    path: getSafeSuitePath('/track'),
     icon: Package,
     feature: 'safetrack' as const
   }
@@ -102,13 +116,21 @@ function TierBadge({ tier }: { tier: string }) {
   );
 }
 
+type NavItem = {
+  id: string;
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ className?: string }>;
+  feature: 'safepass' | 'safescan' | 'safeweb' | 'safetrack' | null;
+};
+
 function NavLink({ 
   item, 
   isActive, 
   isLocked,
   onClick 
 }: { 
-  item: typeof navItems[0];
+  item: NavItem;
   isActive: boolean;
   isLocked: boolean;
   onClick?: () => void;
@@ -137,12 +159,15 @@ function NavLink({
 function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
   const { tier, tierConfig } = useSafeSuiteSubscription();
+  const navItems = getNavItems();
+  const basePath = getSafeSuitePath('');
+  const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
 
   return (
     <aside className="flex flex-col h-full bg-card border-r border-border">
       {/* Logo */}
       <div className="p-4 border-b border-border">
-        <Link to="/safesuite" className="flex items-center gap-2">
+        <Link to={landingPath} className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
             <Shield className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -157,7 +182,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
           <TierBadge tier={tier} />
         </div>
         {tier === 'free' && (
-          <Link to="/safesuite/billing">
+          <Link to={getSafeSuitePath('/billing')}>
             <Button variant="outline" size="sm" className="w-full mt-2 gap-2">
               <Sparkles className="h-4 w-4" />
               Upgrade
@@ -170,7 +195,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
-            (item.path !== '/safesuite/dashboard' && location.pathname.startsWith(item.path));
+            (item.path !== getSafeSuitePath('/dashboard') && location.pathname.startsWith(item.path));
           const isLocked = item.feature && !tierConfig.features[item.feature].enabled;
 
           return (
@@ -188,14 +213,14 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
       {/* Footer links */}
       <div className="p-4 border-t border-border space-y-1">
         <Link
-          to="/safesuite/settings"
+          to={getSafeSuitePath('/settings')}
           className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
         >
           <Settings className="h-5 w-5" />
           <span>Settings</span>
         </Link>
         <Link
-          to="/safesuite/billing"
+          to={getSafeSuitePath('/billing')}
           className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
         >
           <CreditCard className="h-5 w-5" />
@@ -210,10 +235,11 @@ export default function SafeSuiteLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/safesuite');
+    navigate(landingPath);
   };
 
   const userInitials = user?.email
@@ -266,11 +292,11 @@ export default function SafeSuiteLayout() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/safesuite/settings')}>
+                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/settings'))}>
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/safesuite/billing')}>
+                <DropdownMenuItem onClick={() => navigate(getSafeSuitePath('/billing'))}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   Billing
                 </DropdownMenuItem>

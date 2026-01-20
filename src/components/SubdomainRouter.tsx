@@ -1,0 +1,66 @@
+import { ReactNode } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { isSafeSuiteDomain } from '@/utils/subdomain';
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+// SafeSuite imports
+import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
+import SafeSuiteLanding from '@/pages/safesuite/SafeSuiteLanding';
+import SafeSuiteAuth from '@/pages/safesuite/SafeSuiteAuth';
+import SafeSuiteDashboard from '@/pages/safesuite/SafeSuiteDashboard';
+import SafeSuiteBilling from '@/pages/safesuite/SafeSuiteBilling';
+import SafeSuiteSettings from '@/pages/safesuite/SafeSuiteSettings';
+import SafeSuitePass from '@/pages/safesuite/SafeSuitePass';
+import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
+import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
+import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
+
+/**
+ * SafeSuite routes for the dedicated subdomain (safesuite.ultriumai.com)
+ * Uses clean URLs at root level (/, /dashboard, /pass, etc.)
+ */
+export const SafeSuiteSubdomainRoutes = () => {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<SafeSuiteLanding />} />
+      <Route path="/auth" element={<SafeSuiteAuth />} />
+      
+      {/* Protected routes with layout */}
+      <Route element={
+        <ProtectedRoute>
+          <SafeSuiteLayout />
+        </ProtectedRoute>
+      }>
+        <Route path="/dashboard" element={<SafeSuiteDashboard />} />
+        <Route path="/pass" element={<SafeSuitePass />} />
+        <Route path="/scan" element={<SafeSuiteScan />} />
+        <Route path="/web" element={<SafeSuiteWeb />} />
+        <Route path="/track" element={<SafeSuiteTrack />} />
+        <Route path="/billing" element={<SafeSuiteBilling />} />
+        <Route path="/settings" element={<SafeSuiteSettings />} />
+      </Route>
+      
+      {/* Redirect old /safesuite/* paths to clean URLs */}
+      <Route path="/safesuite" element={<Navigate to="/" replace />} />
+      <Route path="/safesuite/auth" element={<Navigate to="/auth" replace />} />
+      <Route path="/safesuite/dashboard" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/safesuite/pass" element={<Navigate to="/pass" replace />} />
+      <Route path="/safesuite/scan" element={<Navigate to="/scan" replace />} />
+      <Route path="/safesuite/web" element={<Navigate to="/web" replace />} />
+      <Route path="/safesuite/track" element={<Navigate to="/track" replace />} />
+      <Route path="/safesuite/billing" element={<Navigate to="/billing" replace />} />
+      <Route path="/safesuite/settings" element={<Navigate to="/settings" replace />} />
+      
+      {/* Catch-all for 404 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
+/**
+ * Check if we should use SafeSuite subdomain routing
+ */
+export const useSafeSuiteSubdomain = (): boolean => {
+  return isSafeSuiteDomain();
+};

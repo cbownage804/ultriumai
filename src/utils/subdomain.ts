@@ -36,6 +36,10 @@ export function getSubdomain(): AppSubdomain {
     if (subdomain === 'safesuite') return 'safesuite';
   }
   
+  // Check if hostname starts with subdomain (e.g., safesuite.ultriumai.com)
+  if (hostname.startsWith('safesuite.')) return 'safesuite';
+  if (hostname.startsWith('vanguard.')) return 'vanguard';
+  
   return null;
 }
 
@@ -61,5 +65,18 @@ export function getSafeSuiteBasePath(): string {
     return '/';
   }
   return '/safesuite';
+}
+
+/**
+ * Get the correct path for SafeSuite routes based on subdomain
+ * On safesuite.ultriumai.com: /dashboard
+ * On main domain: /safesuite/dashboard
+ */
+export function getSafeSuiteRoutePath(path: string): string {
+  const basePath = getSafeSuiteBasePath();
+  if (basePath === '/') {
+    return path.startsWith('/') ? path : `/${path}`;
+  }
+  return `${basePath}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
