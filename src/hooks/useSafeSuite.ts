@@ -147,10 +147,8 @@ export function useSafeSuiteUsage() {
     }
 
     try {
-      // Fetch usage from edge function
-      const { data, error } = await supabase.functions.invoke('safesuite-usage', {
-        body: { userId: user.id }
-      });
+      // Fetch usage from edge function (no body needed for get all)
+      const { data, error } = await supabase.functions.invoke('safesuite-usage');
 
       if (error) throw error;
 
