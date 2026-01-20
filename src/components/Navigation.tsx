@@ -77,7 +77,7 @@ const Navigation = () => {
               title="AI Studio™"
             >
               <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
-                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
+                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-125" />
               </div>
             </button>
             
@@ -97,7 +97,7 @@ const Navigation = () => {
               title="SafeSuite™"
             >
               <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
-                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
+                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-125" />
               </div>
             </button>
             
