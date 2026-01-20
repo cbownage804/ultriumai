@@ -11934,6 +11934,60 @@ export type Database = {
         }
         Relationships: []
       }
+      safepass_attachments: {
+        Row: {
+          created_at: string
+          encrypted_content: string | null
+          entry_id: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          storage_path: string | null
+          user_id: string
+          vault_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          encrypted_content?: string | null
+          entry_id?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path?: string | null
+          user_id: string
+          vault_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          encrypted_content?: string | null
+          entry_id?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path?: string | null
+          user_id?: string
+          vault_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_attachments_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safepass_attachments_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safepass_breach_database: {
         Row: {
           breach_count: number | null
@@ -12031,12 +12085,15 @@ export type Database = {
           created_at: string
           encrypted_data: Json
           entry_type: string
+          folder_id: string | null
           id: string
           is_compromised: boolean | null
           is_favorite: boolean | null
+          last_password_change: string | null
           last_used_at: string | null
           msp_id: string | null
           notes: string | null
+          password_expires_at: string | null
           password_strength_score: number | null
           tags: string[] | null
           title: string
@@ -12052,12 +12109,15 @@ export type Database = {
           created_at?: string
           encrypted_data: Json
           entry_type?: string
+          folder_id?: string | null
           id?: string
           is_compromised?: boolean | null
           is_favorite?: boolean | null
+          last_password_change?: string | null
           last_used_at?: string | null
           msp_id?: string | null
           notes?: string | null
+          password_expires_at?: string | null
           password_strength_score?: number | null
           tags?: string[] | null
           title: string
@@ -12073,12 +12133,15 @@ export type Database = {
           created_at?: string
           encrypted_data?: Json
           entry_type?: string
+          folder_id?: string | null
           id?: string
           is_compromised?: boolean | null
           is_favorite?: boolean | null
+          last_password_change?: string | null
           last_used_at?: string | null
           msp_id?: string | null
           notes?: string | null
+          password_expires_at?: string | null
           password_strength_score?: number | null
           tags?: string[] | null
           title?: string
@@ -12089,7 +12152,68 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "safepass_entries_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_folders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "safepass_entries_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          parent_folder_id: string | null
+          sort_order: number | null
+          updated_at: string
+          user_id: string
+          vault_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          parent_folder_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          user_id: string
+          vault_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          parent_folder_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          user_id?: string
+          vault_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_folders_parent_folder_id_fkey"
+            columns: ["parent_folder_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safepass_folders_vault_id_fkey"
             columns: ["vault_id"]
             isOneToOne: false
             referencedRelation: "safepass_vaults"
@@ -12212,6 +12336,44 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_password_history: {
+        Row: {
+          changed_at: string
+          created_at: string
+          encrypted_password: Json
+          entry_id: string
+          id: string
+          password_strength_score: number | null
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          created_at?: string
+          encrypted_password: Json
+          entry_id: string
+          id?: string
+          password_strength_score?: number | null
+          user_id: string
+        }
+        Update: {
+          changed_at?: string
+          created_at?: string
+          encrypted_password?: Json
+          entry_id?: string
+          id?: string
+          password_strength_score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_password_history_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -12399,6 +12561,72 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      safepass_totp_codes: {
+        Row: {
+          account_label: string | null
+          algorithm: string | null
+          created_at: string
+          digits: number | null
+          encrypted_secret: Json
+          entry_id: string | null
+          icon_url: string | null
+          id: string
+          issuer: string | null
+          name: string
+          period: number | null
+          updated_at: string
+          user_id: string
+          vault_id: string | null
+        }
+        Insert: {
+          account_label?: string | null
+          algorithm?: string | null
+          created_at?: string
+          digits?: number | null
+          encrypted_secret: Json
+          entry_id?: string | null
+          icon_url?: string | null
+          id?: string
+          issuer?: string | null
+          name: string
+          period?: number | null
+          updated_at?: string
+          user_id: string
+          vault_id?: string | null
+        }
+        Update: {
+          account_label?: string | null
+          algorithm?: string | null
+          created_at?: string
+          digits?: number | null
+          encrypted_secret?: Json
+          entry_id?: string | null
+          icon_url?: string | null
+          id?: string
+          issuer?: string | null
+          name?: string
+          period?: number | null
+          updated_at?: string
+          user_id?: string
+          vault_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_totp_codes_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safepass_totp_codes_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safepass_unlock_attempts: {
         Row: {

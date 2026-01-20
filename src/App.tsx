@@ -104,6 +104,7 @@ import SafePassLanding from '@/pages/safepass/SafePassLanding';
 import SafePassAuth from '@/pages/safepass/SafePassAuth';
 import SafePassAppDashboard from '@/pages/safepass/SafePassDashboard';
 import SafePassImport from '@/pages/safepass/SafePassImport';
+import SafePassExport from '@/pages/safepass/SafePassExport';
 import SafePassSecurity from '@/pages/safepass/SafePassSecurity';
 import SafePassBreachMonitor from '@/pages/safepass/SafePassBreachMonitor';
 import SafeWebPage from '@/pages/products/SafeWebPage';
@@ -601,6 +602,7 @@ function AppRouter() {
           <Route path="/safesuite/dashboard" element={<SafeSuiteDashboard />} />
           <Route path="/safesuite/pass" element={<SafeSuitePass />} />
           <Route path="/safesuite/pass/import" element={<SafePassImport />} />
+          <Route path="/safesuite/pass/export" element={<SafePassExport />} />
           <Route path="/safesuite/scan" element={<SafeSuiteScan />} />
           <Route path="/safesuite/web" element={<SafeSuiteWeb />} />
           <Route path="/safesuite/track" element={<SafeSuiteTrack />} />
