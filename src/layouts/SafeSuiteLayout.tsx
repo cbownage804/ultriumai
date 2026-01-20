@@ -68,7 +68,12 @@ const getNavItems = () => [
     label: 'SafePass',
     path: getSafeSuitePath('/pass'),
     icon: KeyRound,
-    feature: 'safepass' as const
+    feature: 'safepass' as const,
+    subItems: [
+      { label: 'Vault', path: getSafeSuitePath('/pass') },
+      { label: 'Import', path: getSafeSuitePath('/pass/import') },
+      { label: 'Export', path: getSafeSuitePath('/pass/export') }
+    ]
   },
   {
     id: 'safescan',
