@@ -182,6 +182,15 @@ const AuthPage = () => {
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Signing In...' : 'Sign In'}
                   </Button>
+                  
+                  <div className="flex flex-col items-center gap-2 pt-2">
+                    <a href="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+                      Forgot your password?
+                    </a>
+                    <a href="/safesuite/auth/mfa-recovery" className="text-sm text-muted-foreground hover:text-primary">
+                      Lost access to your authenticator?
+                    </a>
+                  </div>
                 </form>
               </TabsContent>
 

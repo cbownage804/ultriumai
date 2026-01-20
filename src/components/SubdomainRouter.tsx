@@ -22,6 +22,9 @@ import SafePassUsers from '@/pages/safesuite/SafePassUsers';
 import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
 import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
 import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
+import ForgotPasswordPage from '@/pages/safesuite/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/safesuite/ResetPasswordPage';
+import MFARecoveryPage from '@/pages/safesuite/MFARecoveryPage';
 
 /**
  * SafeSuite routes for the dedicated subdomain (safesuite.ultriumai.com)
@@ -33,6 +36,9 @@ export const SafeSuiteSubdomainRoutes = () => {
       {/* Public routes */}
       <Route path="/" element={<SafeSuiteLanding />} />
       <Route path="/auth" element={<SafeSuiteAuth />} />
+      <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/auth/mfa-recovery" element={<MFARecoveryPage />} />
       
       {/* Protected routes with layout */}
       <Route element={

@@ -180,9 +180,14 @@ export default function SafeSuiteAuth() {
                         'Sign In'
                       )}
                     </Button>
-                    <Link to="/auth/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
-                      Forgot your password?
-                    </Link>
+                    <div className="flex flex-col items-center gap-2">
+                      <Link to="/auth/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
+                        Forgot your password?
+                      </Link>
+                      <Link to="/auth/mfa-recovery" className="text-sm text-muted-foreground hover:text-foreground">
+                        Lost access to your authenticator?
+                      </Link>
+                    </div>
                   </CardFooter>
                 </form>
               </TabsContent>
