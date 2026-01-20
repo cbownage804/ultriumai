@@ -72,7 +72,8 @@ const getNavItems = () => [
     subItems: [
       { label: 'Vault', path: getSafeSuitePath('/pass') },
       { label: 'Import', path: getSafeSuitePath('/pass/import') },
-      { label: 'Export', path: getSafeSuitePath('/pass/export') }
+      { label: 'Export', path: getSafeSuitePath('/pass/export') },
+      { label: 'Settings', path: getSafeSuitePath('/pass/settings') }
     ]
   },
   {
@@ -80,21 +81,33 @@ const getNavItems = () => [
     label: 'SafeScan',
     path: getSafeSuitePath('/scan'),
     icon: ScanSearch,
-    feature: 'safescan' as const
+    feature: 'safescan' as const,
+    subItems: [
+      { label: 'Scanner', path: getSafeSuitePath('/scan') },
+      { label: 'Settings', path: getSafeSuitePath('/scan/settings') }
+    ]
   },
   {
     id: 'safeweb',
     label: 'SafeWeb',
     path: getSafeSuitePath('/web'),
     icon: Globe,
-    feature: 'safeweb' as const
+    feature: 'safeweb' as const,
+    subItems: [
+      { label: 'Monitor', path: getSafeSuitePath('/web') },
+      { label: 'Settings', path: getSafeSuitePath('/web/settings') }
+    ]
   },
   {
     id: 'safetrack',
     label: 'SafeTrack',
     path: getSafeSuitePath('/track'),
     icon: Package,
-    feature: 'safetrack' as const
+    feature: 'safetrack' as const,
+    subItems: [
+      { label: 'Assets', path: getSafeSuitePath('/track') },
+      { label: 'Settings', path: getSafeSuitePath('/track/settings') }
+    ]
   }
 ];
 
