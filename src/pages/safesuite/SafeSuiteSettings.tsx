@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { useSecurity } from '@/hooks/useSecurity';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,21 +13,30 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   User,
   Shield,
   Bell,
-  Palette,
   Download,
   Trash2,
-  Loader2
+  Loader2,
+  CheckCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SafeSuiteSettings() {
   const { user } = useAuth();
   const { tier } = useSafeSuiteSubscription();
+  const { securitySettings, setupTwoFactor, enableTwoFactor, disableTwoFactor, loading: securityLoading } = useSecurity();
   const [loading, setLoading] = useState(false);
+  
+  // 2FA Setup state
+  const [twoFactorDialog, setTwoFactorDialog] = useState(false);
+  const [twoFactorSetup, setTwoFactorSetup] = useState<{ qrCode?: string; secret?: string } | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [setupStep, setSetupStep] = useState<'setup' | 'verify'>('setup');
 
   // Settings state
   const [notifications, setNotifications] = useState({
@@ -52,6 +62,45 @@ export default function SafeSuiteSettings() {
     toast.info('Preparing data export...');
     // TODO: Implement data export
   };
+
+  const handleSetup2FA = async () => {
+    setTwoFactorDialog(true);
+    setSetupStep('setup');
+    setVerificationCode('');
+    
+    const result = await setupTwoFactor();
+    if (result) {
+      setTwoFactorSetup(result);
+      setSetupStep('verify');
+    } else {
+      setTwoFactorDialog(false);
+    }
+  };
+
+  const handleVerify2FA = async () => {
+    if (verificationCode.length !== 6) {
+      toast.error('Please enter a 6-digit code');
+      return;
+    }
+    
+    const success = await enableTwoFactor(verificationCode);
+    if (success) {
+      setTwoFactorDialog(false);
+      setTwoFactorSetup(null);
+      setVerificationCode('');
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    // For disabling, we'd normally require the current TOTP code
+    // For simplicity, showing a confirmation
+    const code = prompt('Enter your current 2FA code to disable:');
+    if (code) {
+      await disableTwoFactor(code);
+    }
+  };
+
+  const is2FAEnabled = securitySettings?.two_factor_enabled;
 
   return (
     <div className="space-y-8 max-w-3xl mx-auto">
@@ -115,13 +164,26 @@ export default function SafeSuiteSettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Two-Factor Authentication</p>
-              <p className="text-sm text-muted-foreground">
-                Add an extra layer of security to your account
-              </p>
+            <div className="flex items-center gap-3">
+              {is2FAEnabled && <ShieldCheck className="h-5 w-5 text-green-500" />}
+              <div>
+                <p className="font-medium">Two-Factor Authentication</p>
+                <p className="text-sm text-muted-foreground">
+                  {is2FAEnabled 
+                    ? 'Your account is protected with 2FA' 
+                    : 'Add an extra layer of security to your account'}
+                </p>
+              </div>
             </div>
-            <Button variant="outline">Enable 2FA</Button>
+            {is2FAEnabled ? (
+              <Button variant="outline" onClick={handleDisable2FA} disabled={securityLoading}>
+                {securityLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Disable 2FA'}
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={handleSetup2FA} disabled={securityLoading}>
+                {securityLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enable 2FA'}
+              </Button>
+            )}
           </div>
           <Separator />
           <div className="flex items-center justify-between">
@@ -248,6 +310,90 @@ export default function SafeSuiteSettings() {
           )}
         </Button>
       </div>
+
+      {/* 2FA Setup Dialog */}
+      <Dialog open={twoFactorDialog} onOpenChange={setTwoFactorDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Set Up Two-Factor Authentication
+            </DialogTitle>
+            <DialogDescription>
+              Scan the QR code with your authenticator app
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {setupStep === 'setup' && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            
+            {setupStep === 'verify' && twoFactorSetup && (
+              <>
+                {twoFactorSetup.qrCode && (
+                  <div className="flex justify-center p-4 bg-white rounded-lg">
+                    <img 
+                      src={twoFactorSetup.qrCode} 
+                      alt="2FA QR Code" 
+                      className="w-48 h-48"
+                    />
+                  </div>
+                )}
+                
+                {twoFactorSetup.secret && (
+                  <div className="space-y-2">
+                    <Label className="text-sm text-muted-foreground">
+                      Or enter this code manually:
+                    </Label>
+                    <code className="block p-2 bg-muted rounded text-center font-mono text-sm break-all">
+                      {twoFactorSetup.secret}
+                    </code>
+                  </div>
+                )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="verify-code">Verification Code</Label>
+                  <Input
+                    id="verify-code"
+                    placeholder="Enter 6-digit code"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="text-center text-lg tracking-widest"
+                    maxLength={6}
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleVerify2FA} 
+                    disabled={verificationCode.length !== 6 || securityLoading}
+                    className="flex-1"
+                  >
+                    {securityLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                    )}
+                    Verify & Enable
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setTwoFactorDialog(false);
+                      setTwoFactorSetup(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
