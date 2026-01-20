@@ -1,5 +1,5 @@
-// SafePass Content Script v2.0
-// Enhanced with keyboard shortcuts, card autofill, and improved detection
+// SafePass Content Script v2.1
+// Enhanced with keyboard shortcuts, card autofill, identity autofill, and improved detection
 
 let dropdownVisible = false;
 let currentDropdown = null;
@@ -19,6 +19,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     case 'fillCard':
       fillCreditCard(message.card);
+      sendResponse({ success: true });
+      break;
+    case 'fillIdentity':
+      fillIdentity(message.identity);
       sendResponse({ success: true });
       break;
     case 'showDropdown':
@@ -122,6 +126,128 @@ function fillCreditCard(card) {
   if (zipField && card.zip) fillField(zipField, card.zip);
   
   showNotification('💳 Card details filled!');
+}
+
+function fillIdentity(identity) {
+  // First name
+  const firstNameField = document.querySelector(
+    'input[autocomplete="given-name"], input[name*="first"][name*="name"], input[id*="first"][id*="name"], input[name="firstName"], input[name="fname"]'
+  );
+  
+  // Last name
+  const lastNameField = document.querySelector(
+    'input[autocomplete="family-name"], input[name*="last"][name*="name"], input[id*="last"][id*="name"], input[name="lastName"], input[name="lname"]'
+  );
+  
+  // Full name
+  const fullNameField = document.querySelector(
+    'input[autocomplete="name"], input[name="name"], input[name*="fullname"], input[id*="fullname"]'
+  );
+  
+  // Email
+  const emailField = document.querySelector(
+    'input[type="email"], input[autocomplete="email"], input[name*="email"], input[id*="email"]'
+  );
+  
+  // Phone
+  const phoneField = document.querySelector(
+    'input[type="tel"], input[autocomplete="tel"], input[name*="phone"], input[id*="phone"], input[name*="mobile"]'
+  );
+  
+  // Address
+  const addressField = document.querySelector(
+    'input[autocomplete="street-address"], input[autocomplete="address-line1"], input[name*="address"], input[id*="address"], input[name*="street"]'
+  );
+  
+  // City
+  const cityField = document.querySelector(
+    'input[autocomplete="address-level2"], input[name*="city"], input[id*="city"]'
+  );
+  
+  // State/Province
+  const stateField = document.querySelector(
+    'input[autocomplete="address-level1"], input[name*="state"], input[id*="state"], input[name*="province"], select[name*="state"], select[name*="province"]'
+  );
+  
+  // Zip/Postal code
+  const zipField = document.querySelector(
+    'input[autocomplete="postal-code"], input[name*="zip"], input[id*="zip"], input[name*="postal"]'
+  );
+  
+  // Country
+  const countryField = document.querySelector(
+    'input[autocomplete="country"], input[name*="country"], input[id*="country"], select[name*="country"]'
+  );
+  
+  let filledCount = 0;
+  
+  // Fill individual name fields
+  if (firstNameField && identity.firstName) {
+    fillField(firstNameField, identity.firstName);
+    filledCount++;
+  }
+  if (lastNameField && identity.lastName) {
+    fillField(lastNameField, identity.lastName);
+    filledCount++;
+  }
+  
+  // Fill full name if no individual fields
+  if (fullNameField && (identity.firstName || identity.lastName) && !firstNameField && !lastNameField) {
+    fillField(fullNameField, `${identity.firstName || ''} ${identity.lastName || ''}`.trim());
+    filledCount++;
+  }
+  
+  if (emailField && identity.email) {
+    fillField(emailField, identity.email);
+    filledCount++;
+  }
+  if (phoneField && identity.phone) {
+    fillField(phoneField, identity.phone);
+    filledCount++;
+  }
+  if (addressField && identity.address) {
+    fillField(addressField, identity.address);
+    filledCount++;
+  }
+  if (cityField && identity.city) {
+    fillField(cityField, identity.city);
+    filledCount++;
+  }
+  if (stateField && identity.state) {
+    fillFieldOrSelect(stateField, identity.state);
+    filledCount++;
+  }
+  if (zipField && identity.zip) {
+    fillField(zipField, identity.zip);
+    filledCount++;
+  }
+  if (countryField && identity.country) {
+    fillFieldOrSelect(countryField, identity.country);
+    filledCount++;
+  }
+  
+  if (filledCount > 0) {
+    showNotification(`📋 Identity filled! (${filledCount} fields)`);
+  } else {
+    showNotification('No matching form fields found', 'warning');
+  }
+}
+
+function fillFieldOrSelect(element, value) {
+  if (element.tagName === 'SELECT') {
+    // Try to find matching option
+    const options = element.querySelectorAll('option');
+    for (const option of options) {
+      if (option.value.toLowerCase() === value.toLowerCase() ||
+          option.textContent.toLowerCase().includes(value.toLowerCase())) {
+        element.value = option.value;
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+    }
+  } else {
+    fillField(element, value);
+  }
 }
 
 // ===== FIELD DETECTION =====
@@ -584,4 +710,4 @@ function init() {
 
 init();
 
-console.log('[SafePass] Content script v2.0 loaded');
+console.log('[SafePass] Content script v2.1 loaded');

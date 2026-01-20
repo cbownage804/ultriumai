@@ -12310,6 +12310,33 @@ export type Database = {
           },
         ]
       }
+      safepass_identities: {
+        Row: {
+          created_at: string
+          encrypted_data: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_data: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_data?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       safepass_master_passwords: {
         Row: {
           created_at: string | null
