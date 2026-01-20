@@ -2,10 +2,11 @@
  * SafeSuite Settings Page
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { useSecurity } from '@/hooks/useSecurity';
+import QRCode from 'qrcode';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ export default function SafeSuiteSettings() {
   // 2FA Setup state
   const [twoFactorDialog, setTwoFactorDialog] = useState(false);
   const [twoFactorSetup, setTwoFactorSetup] = useState<{ qrCode?: string; secret?: string } | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [setupStep, setSetupStep] = useState<'setup' | 'verify'>('setup');
 
@@ -67,10 +69,27 @@ export default function SafeSuiteSettings() {
     setTwoFactorDialog(true);
     setSetupStep('setup');
     setVerificationCode('');
+    setQrCodeDataUrl(null);
     
     const result = await setupTwoFactor();
     if (result) {
       setTwoFactorSetup(result);
+      // Generate QR code image from the otpauth URL
+      if (result.qrCode) {
+        try {
+          const dataUrl = await QRCode.toDataURL(result.qrCode, {
+            width: 200,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#ffffff'
+            }
+          });
+          setQrCodeDataUrl(dataUrl);
+        } catch (err) {
+          console.error('Failed to generate QR code:', err);
+        }
+      }
       setSetupStep('verify');
     } else {
       setTwoFactorDialog(false);
@@ -333,10 +352,10 @@ export default function SafeSuiteSettings() {
             
             {setupStep === 'verify' && twoFactorSetup && (
               <>
-                {twoFactorSetup.qrCode && (
+                {qrCodeDataUrl && (
                   <div className="flex justify-center p-4 bg-white rounded-lg">
                     <img 
-                      src={twoFactorSetup.qrCode} 
+                      src={qrCodeDataUrl} 
                       alt="2FA QR Code" 
                       className="w-48 h-48"
                     />
