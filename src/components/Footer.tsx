@@ -1,6 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Shield, Mail, Phone, MapPin, Brain } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
+import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
+import vanguardLogo from "@/assets/vanguard-logo.png";
+import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
 import { safeWindowOpen } from "@/utils/security";
 
 const Footer = () => {
@@ -44,13 +47,13 @@ const Footer = () => {
           {/* Flagship Products */}
           <div className="space-y-4">
             <h4 className="font-semibold text-foreground">Flagship Products</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li>
                 <button 
                   onClick={() => handleNavigation('/ai-studio')} 
                   className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2"
                 >
-                  <Brain className="h-4 w-4" />
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-5 w-5 rounded object-contain bg-black" />
                   UltriumAI Studio™
                 </button>
               </li>
@@ -59,8 +62,17 @@ const Footer = () => {
                   onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')} 
                   className="text-sm text-muted-foreground hover:text-destructive flex items-center gap-2"
                 >
-                  <Shield className="h-4 w-4" />
+                  <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
                   Ultrium Vanguard™
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')} 
+                  className="text-sm text-muted-foreground hover:text-emerald-500 flex items-center gap-2"
+                >
+                  <img src={safesuiteLogo} alt="SafeSuite" className="h-5 w-5 rounded object-contain bg-black" />
+                  SafeSuite™
                 </button>
               </li>
             </ul>

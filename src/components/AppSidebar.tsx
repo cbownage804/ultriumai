@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
+import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
+import vanguardLogo from "@/assets/vanguard-logo.png";
 
 import {
   Sidebar,
@@ -104,7 +106,9 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <div className="flex items-center space-x-3">
           <NavLink to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-12 w-auto" />
+            <div className="h-10 w-10 rounded-lg overflow-hidden bg-black p-1">
+              <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
+            </div>
             {!isCollapsed && (
               <span className="text-lg font-bold text-foreground">AI Studio</span>
             )}
@@ -255,7 +259,7 @@ export function AppSidebar() {
               <Card className="mx-2 mb-2 border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
                 <CardHeader className="p-3">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-primary" />
+                    <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
                     Ultrium Vanguard
                   </CardTitle>
                   <CardDescription className="text-xs">
