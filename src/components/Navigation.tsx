@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Phone, Brain, Shield, Briefcase, X, ChevronDown, Package, Lock } from "lucide-react";
+import { Menu, LogOut, Phone, X, ChevronDown, Package } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UserProfileDropdown from "./UserProfileDropdown";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
+import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
+import vanguardLogo from "@/assets/vanguard-logo.png";
+import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
 import { safeWindowOpen } from "@/utils/security";
 
 const Navigation = () => {
@@ -72,7 +75,7 @@ const Navigation = () => {
               onClick={() => handleNavigation('/ai-studio')}
               className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors duration-200 flex items-center gap-1.5"
             >
-              <Brain className="h-4 w-4" />
+              <img src={ultriumGPTLogo} alt="AI Studio" className="h-5 w-5 rounded object-contain bg-black" />
               AI Studio™
             </button>
             
@@ -80,7 +83,7 @@ const Navigation = () => {
               onClick={() => handleExternalLink('https://vanguard.ultriumai.com')}
               className="text-sm font-medium text-foreground/70 hover:text-destructive transition-colors duration-200 flex items-center gap-1.5"
             >
-              <Shield className="h-4 w-4" />
+              <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
               Vanguard™
             </button>
             
@@ -88,7 +91,7 @@ const Navigation = () => {
               onClick={() => handleExternalLink('https://safesuite.ultriumai.com')}
               className="text-sm font-medium text-foreground/70 hover:text-emerald-500 transition-colors duration-200 flex items-center gap-1.5"
             >
-              <Lock className="h-4 w-4" />
+              <img src={safesuiteLogo} alt="SafeSuite" className="h-5 w-5 rounded object-contain bg-black" />
               SafeSuite™
             </button>
             
@@ -215,7 +218,7 @@ const Navigation = () => {
                 onClick={() => handleNavigationWithMenuClose('/ai-studio')} 
                 className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
               >
-                <Brain className="h-4 w-4" />
+                <img src={ultriumGPTLogo} alt="AI Studio" className="h-5 w-5 rounded object-contain bg-black" />
                 AI Studio™
               </button>
               
@@ -223,7 +226,7 @@ const Navigation = () => {
                 onClick={() => handleExternalLink('https://vanguard.ultriumai.com')} 
                 className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-destructive hover:bg-muted/50 rounded-md"
               >
-                <Shield className="h-4 w-4" />
+                <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
                 Vanguard™
               </button>
               
@@ -231,7 +234,7 @@ const Navigation = () => {
                 onClick={() => handleExternalLink('https://safesuite.ultriumai.com')} 
                 className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
               >
-                <Lock className="h-4 w-4" />
+                <img src={safesuiteLogo} alt="SafeSuite" className="h-5 w-5 rounded object-contain bg-black" />
                 SafeSuite™
               </button>
               
