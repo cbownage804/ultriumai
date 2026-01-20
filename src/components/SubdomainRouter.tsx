@@ -11,6 +11,8 @@ import SafeSuiteDashboard from '@/pages/safesuite/SafeSuiteDashboard';
 import SafeSuiteBilling from '@/pages/safesuite/SafeSuiteBilling';
 import SafeSuiteSettings from '@/pages/safesuite/SafeSuiteSettings';
 import SafeSuitePass from '@/pages/safesuite/SafeSuitePass';
+import SafePassShared from '@/pages/safesuite/SafePassShared';
+import SafePassEmergency from '@/pages/safesuite/SafePassEmergency';
 import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
 import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
 import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
@@ -34,6 +36,8 @@ export const SafeSuiteSubdomainRoutes = () => {
       }>
         <Route path="/dashboard" element={<SafeSuiteDashboard />} />
         <Route path="/pass" element={<SafeSuitePass />} />
+        <Route path="/pass/shared" element={<SafePassShared />} />
+        <Route path="/pass/emergency" element={<SafePassEmergency />} />
         <Route path="/scan" element={<SafeSuiteScan />} />
         <Route path="/web" element={<SafeSuiteWeb />} />
         <Route path="/track" element={<SafeSuiteTrack />} />

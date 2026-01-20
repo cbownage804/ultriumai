@@ -36,8 +36,10 @@ import { useNavigate } from 'react-router-dom';
 import { TOTPManager } from './TOTPManager';
 import { EntryAttachments } from './EntryAttachments';
 import { ShareEntry } from './ShareEntry';
+import { PasswordCard } from './PasswordCard';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
+import { AnimatePresence } from 'framer-motion';
 
 // Input sanitization helper
 const sanitizeInput = (input: string): string => {
@@ -552,9 +554,9 @@ export const PasswordVault = () => {
       </div>
 
       {/* Password Entries */}
-      <div className="grid gap-4">
+      <div className="space-y-4">
         {filteredEntries.length === 0 ? (
-          <Card className="p-8 text-center">
+          <Card className="p-8 text-center border-dashed">
             <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No passwords found</h3>
             <p className="text-muted-foreground mb-4">
@@ -571,132 +573,28 @@ export const PasswordVault = () => {
             )}
           </Card>
         ) : (
-          filteredEntries.map((entry) => (
-            <Card key={entry.id} className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{entry.title}</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleFavorite(entry.id)}
-                    >
-                      <Star className={`w-4 h-4 ${entry.is_favorite ? 'text-yellow-500 fill-current' : 'text-muted-foreground'}`} />
-                    </Button>
-                    <Badge variant="outline" className="text-xs">
-                      {categories.find(c => c.value === entry.category)?.label || entry.category}
-                    </Badge>
-                    <div className="flex items-center gap-1">
-                      <div className={`w-2 h-2 rounded-full ${
-                        entry.password_strength >= 80 ? 'bg-green-500' :
-                        entry.password_strength >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`} />
-                      <span className={`text-xs ${getStrengthColor(entry.password_strength)}`}>
-                        {getStrengthLabel(entry.password_strength)}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Username</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm">{entry.username}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyToClipboard(entry.username, 'Username')}
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Password</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm">
-                          {showPasswords[entry.id] ? entry.password : '••••••••'}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => togglePasswordVisibility(entry.id)}
-                        >
-                          {showPasswords[entry.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopyToClipboard(entry.password, 'Password')}
-                        >
-                          <Copy className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {entry.website && (
-                      <div className="md:col-span-2">
-                        <Label className="text-xs text-muted-foreground">Website</Label>
-                        <div className="flex items-center gap-2">
-                          <a 
-                            href={entry.website.startsWith('http') ? entry.website : `https://${entry.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline text-sm"
-                          >
-                            {entry.website}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {entry.notes && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Notes</Label>
-                      <p className="text-sm text-muted-foreground">{entry.notes}</p>
-                    </div>
-                  )}
-                  
-                  {/* Attachments and Sharing */}
-                  <div className="flex items-center gap-2 pt-2 border-t mt-2">
-                    <EntryAttachments entryId={entry.id} entryTitle={entry.title} />
-                    <ShareEntry entryId={entry.id} entryTitle={entry.title} vaultId={entry.vault_id} />
-                  </div>
-                </div>
-                
-                <div className="flex gap-1 ml-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingEntry(entry);
-                      setNewEntry({
-                        title: entry.title,
-                        username: entry.username,
-                        password: entry.password,
-                        website: entry.website,
-                        notes: entry.notes,
-                        category: entry.category
-                      });
-                      setIsAddDialogOpen(true);
-                    }}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteEntry(entry.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))
+          <AnimatePresence mode="popLayout">
+            {filteredEntries.map((entry) => (
+              <PasswordCard
+                key={entry.id}
+                entry={entry}
+                onEdit={() => {
+                  setEditingEntry(entry);
+                  setNewEntry({
+                    title: entry.title,
+                    username: entry.username,
+                    password: entry.password,
+                    website: entry.website,
+                    notes: entry.notes,
+                    category: entry.category
+                  });
+                  setIsAddDialogOpen(true);
+                }}
+                onDelete={() => handleDeleteEntry(entry.id)}
+                onToggleFavorite={() => toggleFavorite(entry.id)}
+              />
+            ))}
+          </AnimatePresence>
         )}
       </div>
 

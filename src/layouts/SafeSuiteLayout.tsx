@@ -73,6 +73,8 @@ const getNavItems = () => [
     feature: 'safepass' as const,
     subItems: [
       { label: 'Vault', path: getSafeSuitePath('/pass') },
+      { label: 'Shared With Me', path: getSafeSuitePath('/pass/shared') },
+      { label: 'Emergency Access', path: getSafeSuitePath('/pass/emergency') },
       { label: 'Breach Monitor', path: getSafeSuitePath('/pass/breach') },
       { label: 'Reminders', path: getSafeSuitePath('/pass/reminders') },
       { label: 'Import', path: getSafeSuitePath('/pass/import') },
