@@ -1,11 +1,11 @@
 // SafePass Extension Popup Script
+// Compatible with Chrome and Microsoft Edge
 
-const SAFEPASS_API_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1';
-const PORTAL_URL = 'https://ultriumai.lovable.app/safepass-app/portal';
 const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
+const PORTAL_URL = 'https://ultriumai.lovable.app/safesuite/pass';
 
-// Security: Auto-lock timeout (5 minutes of inactivity)
+// Security: Auto-lock timeout (5 minutes)
 const AUTO_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
 let autoLockTimer = null;
 let lastActivityTime = Date.now();
@@ -17,36 +17,29 @@ let currentSite = '';
 let masterKey = null;
 
 // DOM Elements
-const loginView = document.getElementById('login-view');
-const vaultView = document.getElementById('vault-view');
-const generatorView = document.getElementById('generator-view');
+let loginView, vaultView, generatorView;
 
-// Reset auto-lock timer on any user activity
+// Reset auto-lock timer
 function resetAutoLockTimer() {
   lastActivityTime = Date.now();
-  if (autoLockTimer) {
-    clearTimeout(autoLockTimer);
-  }
+  if (autoLockTimer) clearTimeout(autoLockTimer);
   if (isUnlocked) {
     autoLockTimer = setTimeout(autoLockVault, AUTO_LOCK_TIMEOUT_MS);
   }
 }
 
-// Auto-lock the vault after inactivity
 async function autoLockVault() {
   if (isUnlocked) {
-    console.log('[SafePass] Auto-locking vault due to inactivity');
+    console.log('[SafePass] Auto-locking vault');
     await handleLock();
   }
 }
 
-// Check if session has expired on popup open
 async function checkSessionExpiry() {
   const session = await chrome.storage.session.get(['lastActivity']);
   if (session.lastActivity) {
     const elapsed = Date.now() - session.lastActivity;
     if (elapsed > AUTO_LOCK_TIMEOUT_MS) {
-      // Session expired, force lock
       await chrome.storage.session.clear();
       return false;
     }
@@ -56,11 +49,13 @@ async function checkSessionExpiry() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check session expiry first
+  loginView = document.getElementById('login-view');
+  vaultView = document.getElementById('vault-view');
+  generatorView = document.getElementById('generator-view');
+
   const sessionValid = await checkSessionExpiry();
-  
-  // Check if already unlocked
   const session = await chrome.storage.session.get(['unlocked', 'masterKey', 'authToken']);
+  
   if (sessionValid && session.unlocked && session.masterKey && session.authToken) {
     isUnlocked = true;
     masterKey = session.masterKey;
@@ -75,8 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.url) {
     try {
-      const url = new URL(tab.url);
-      currentSite = url.hostname;
+      currentSite = new URL(tab.url).hostname.replace(/^www\./, '');
     } catch (e) {
       currentSite = '';
     }
@@ -84,17 +78,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setupEventListeners();
   
-  // Track activity for auto-lock
+  // Track activity
   document.addEventListener('click', resetAutoLockTimer);
   document.addEventListener('keydown', resetAutoLockTimer);
-  document.addEventListener('mousemove', resetAutoLockTimer);
   
-  // Update last activity time in session storage periodically
   setInterval(async () => {
     if (isUnlocked) {
       await chrome.storage.session.set({ lastActivity: lastActivityTime });
     }
-  }, 10000); // Every 10 seconds
+  }, 10000);
 });
 
 function showView(view) {
@@ -118,21 +110,19 @@ function showView(view) {
 }
 
 function setupEventListeners() {
-  // Login
   document.getElementById('login-btn').addEventListener('click', handleLogin);
   document.getElementById('open-portal').addEventListener('click', () => {
     chrome.tabs.create({ url: PORTAL_URL });
   });
 
-  // Vault
   document.getElementById('lock-btn').addEventListener('click', handleLock);
   document.getElementById('search').addEventListener('input', handleSearch);
   document.getElementById('generate-btn').addEventListener('click', () => showView('generator'));
   document.getElementById('add-btn').addEventListener('click', () => {
     chrome.tabs.create({ url: `${PORTAL_URL}?add=true` });
   });
+  document.getElementById('sync-btn').addEventListener('click', handleSync);
 
-  // Generator
   document.getElementById('back-btn').addEventListener('click', () => showView('vault'));
   document.getElementById('pw-length').addEventListener('input', (e) => {
     document.getElementById('length-value').textContent = e.target.value;
@@ -156,6 +146,10 @@ async function handleLogin() {
     return;
   }
 
+  const loginBtn = document.getElementById('login-btn');
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Unlocking...';
+
   try {
     // Authenticate with Supabase
     const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
@@ -164,22 +158,17 @@ async function handleLogin() {
         'Content-Type': 'application/json',
         'apikey': SUPABASE_ANON_KEY,
       },
-      body: JSON.stringify({
-        email,
-        password: masterPassword
-      })
+      body: JSON.stringify({ email, password: masterPassword })
     });
 
     if (!authResponse.ok) {
       const error = await authResponse.json();
-      showToast(error.error_description || 'Login failed', 'error');
-      return;
+      throw new Error(error.error_description || 'Login failed');
     }
 
     const authData = await authResponse.json();
-    const authToken = authData.access_token;
-
-    // Hash the master password for local vault operations
+    
+    // Hash master password for encryption operations
     const encoder = new TextEncoder();
     const data = encoder.encode(masterPassword);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -191,29 +180,59 @@ async function handleLogin() {
       unlocked: true,
       masterKey: masterKey,
       email: email,
-      authToken: authToken,
+      authToken: authData.access_token,
       lastActivity: Date.now()
     });
 
     isUnlocked = true;
-    await loadPasswords();
+    
+    // Sync vault from Supabase
+    await handleSync(true);
+    
     showView('vault');
-    resetAutoLockTimer(); // Start auto-lock timer
+    resetAutoLockTimer();
     showToast('Vault unlocked!', 'success');
   } catch (error) {
-    console.error('Login error');
-    showToast('Failed to unlock vault', 'error');
+    console.error('Login error:', error);
+    showToast(error.message || 'Failed to unlock vault', 'error');
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Unlock Vault';
+  }
+}
+
+async function handleSync(silent = false) {
+  try {
+    if (!silent) {
+      showToast('Syncing...', 'info');
+    }
+    
+    const response = await chrome.runtime.sendMessage({ action: 'syncVault' });
+    
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    
+    await loadPasswords();
+    renderPasswords();
+    
+    if (!silent) {
+      showToast(`Synced ${response.entries?.length || 0} passwords`, 'success');
+    }
+  } catch (error) {
+    console.error('Sync error:', error);
+    if (!silent) {
+      showToast('Sync failed', 'error');
+    }
   }
 }
 
 async function handleLock() {
-  // Clear auto-lock timer
   if (autoLockTimer) {
     clearTimeout(autoLockTimer);
     autoLockTimer = null;
   }
   
-  // Clear sensitive data
   masterKey = null;
   await chrome.storage.session.clear();
   isUnlocked = false;
@@ -223,12 +242,17 @@ async function handleLock() {
 }
 
 async function loadPasswords() {
-  // Load from local storage
-  const stored = await chrome.storage.local.get(['passwords']);
-  passwords = stored.passwords || [];
-  
-  // If no local passwords, show empty state
-  if (passwords.length === 0) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'getPasswordsForSite',
+      hostname: '' // Get all passwords
+    });
+    
+    if (response.entries) {
+      passwords = response.entries;
+    }
+  } catch (error) {
+    console.error('Load passwords error:', error);
     passwords = [];
   }
 }
@@ -238,9 +262,10 @@ function renderPasswords() {
   const allPasswordsContainer = document.getElementById('all-passwords');
 
   // Filter for current site
-  const sitePasswords = passwords.filter(p => 
-    currentSite.includes(p.website) || p.website.includes(currentSite)
-  );
+  const sitePasswords = passwords.filter(p => {
+    const entryHost = extractHostname(p.website);
+    return currentSite && (currentSite.includes(entryHost) || entryHost.includes(currentSite));
+  });
 
   // Render current site passwords
   if (sitePasswords.length > 0) {
@@ -252,7 +277,13 @@ function renderPasswords() {
 
   // Render all passwords
   if (passwords.length === 0) {
-    allPasswordsContainer.innerHTML = '<div class="empty-state">No passwords saved yet</div>';
+    allPasswordsContainer.innerHTML = `
+      <div class="empty-state">
+        <div style="font-size:32px;margin-bottom:8px">🔐</div>
+        <div>No passwords synced yet</div>
+        <div style="font-size:12px;opacity:0.7;margin-top:4px">Click sync to fetch from SafePass</div>
+      </div>
+    `;
   } else {
     allPasswordsContainer.innerHTML = passwords.map(renderPasswordItem).join('');
   }
@@ -277,13 +308,23 @@ function renderPasswords() {
   });
 }
 
+function extractHostname(url) {
+  if (!url) return '';
+  try {
+    if (!url.startsWith('http')) url = 'https://' + url;
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url.replace(/^www\./, '');
+  }
+}
+
 function renderPasswordItem(password) {
   return `
     <div class="password-item" data-id="${password.id}">
-      <div class="favicon">${password.favicon || '🔐'}</div>
+      <div class="favicon">${password.is_favorite ? '⭐' : '🔐'}</div>
       <div class="details">
-        <div class="site-name">${escapeHtml(password.website)}</div>
-        <div class="username">${escapeHtml(password.username)}</div>
+        <div class="site-name">${escapeHtml(password.title)}</div>
+        <div class="username">${escapeHtml(password.username || 'No username')}</div>
       </div>
       <div class="actions">
         <button class="action-btn copy-user-btn" data-id="${password.id}" title="Copy username">👤</button>
@@ -293,8 +334,8 @@ function renderPasswordItem(password) {
   `;
 }
 
-// Escape HTML to prevent XSS
 function escapeHtml(text) {
+  if (!text) return '';
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
@@ -303,133 +344,90 @@ function escapeHtml(text) {
 function handleSearch(e) {
   const query = e.target.value.toLowerCase();
   const filtered = passwords.filter(p => 
-    p.website.toLowerCase().includes(query) || 
-    p.username.toLowerCase().includes(query)
+    (p.title || '').toLowerCase().includes(query) || 
+    (p.username || '').toLowerCase().includes(query) ||
+    (p.website || '').toLowerCase().includes(query)
   );
 
   const container = document.getElementById('all-passwords');
-  container.innerHTML = filtered.map(renderPasswordItem).join('');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state">No matches found</div>';
+  } else {
+    container.innerHTML = filtered.map(renderPasswordItem).join('');
+  }
+  
+  // Re-attach handlers
+  container.querySelectorAll('.password-item').forEach(item => {
+    item.addEventListener('click', () => handleFill(item.dataset.id));
+  });
 }
 
 async function handleFill(id) {
   const password = passwords.find(p => p.id === id);
-  if (!password || !masterKey) return;
+  if (!password) return;
 
   try {
-    // Decrypt the password
-    let decryptedPassword;
-    if (password.salt && password.iv) {
-      // New format with individual salt
-      decryptedPassword = await decryptPassword(password, masterKey);
-    } else {
-      // Legacy format - should not happen with new entries
-      decryptedPassword = '';
+    // Get decrypted password from background
+    const response = await chrome.runtime.sendMessage({
+      action: 'getDecryptedPassword',
+      entryId: id
+    });
+
+    if (response.error) {
+      showToast('Failed to decrypt', 'error');
+      return;
     }
 
-    // Send message to content script to fill the form
+    // Send to content script
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab?.id) {
-      chrome.tabs.sendMessage(tab.id, {
+      await chrome.tabs.sendMessage(tab.id, {
         action: 'fill',
         username: password.username,
-        password: decryptedPassword
+        password: response.password
       });
       window.close();
     }
   } catch (error) {
-    console.error('Error decrypting password:', error);
-    showToast('Failed to decrypt password', 'error');
+    console.error('Fill error:', error);
+    showToast('Failed to autofill', 'error');
   }
-}
-
-async function decryptPassword(encryptedData, masterKeyHex) {
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  
-  const ciphertext = base64ToArray(encryptedData.encryptedPassword || encryptedData.ciphertext);
-  const salt = base64ToArray(encryptedData.salt);
-  const iv = base64ToArray(encryptedData.iv);
-  
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(masterKeyHex),
-    { name: 'PBKDF2' },
-    false,
-    ['deriveBits', 'deriveKey']
-  );
-
-  const key = await crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: 600000,
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['decrypt']
-  );
-
-  const decrypted = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    ciphertext
-  );
-
-  return decoder.decode(decrypted);
-}
-
-function base64ToArray(base64) {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
 }
 
 async function copyUsername(id) {
   const password = passwords.find(p => p.id === id);
-  if (password) {
+  if (password?.username) {
     await navigator.clipboard.writeText(password.username);
     showToast('Username copied!', 'success');
   }
 }
 
 async function copyPassword(id) {
-  const password = passwords.find(p => p.id === id);
-  if (!password || !masterKey) {
-    showToast('Unable to copy password', 'error');
-    return;
-  }
-
   try {
-    let decryptedPassword;
-    if (password.salt && password.iv) {
-      decryptedPassword = await decryptPassword(password, masterKey);
-    } else {
-      showToast('Password format not supported', 'error');
+    const response = await chrome.runtime.sendMessage({
+      action: 'getDecryptedPassword',
+      entryId: id
+    });
+
+    if (response.error) {
+      showToast('Failed to decrypt', 'error');
       return;
     }
     
-    await navigator.clipboard.writeText(decryptedPassword);
+    await navigator.clipboard.writeText(response.password);
     showToast('Password copied!', 'success');
     
-    // Clear clipboard after 30 seconds for security
+    // Clear clipboard after 30 seconds
     setTimeout(async () => {
       try {
-        const currentClipboard = await navigator.clipboard.readText();
-        if (currentClipboard === decryptedPassword) {
+        const current = await navigator.clipboard.readText();
+        if (current === response.password) {
           await navigator.clipboard.writeText('');
         }
-      } catch (e) {
-        // Clipboard access denied, ignore
-      }
+      } catch {}
     }, 30000);
   } catch (error) {
-    console.error('Error copying password:', error);
-    showToast('Failed to copy password', 'error');
+    showToast('Failed to copy', 'error');
   }
 }
 
@@ -448,7 +446,6 @@ function generatePassword() {
 
   if (!chars) chars = 'abcdefghijklmnopqrstuvwxyz';
 
-  // Use cryptographically secure random generation
   const array = new Uint32Array(length);
   crypto.getRandomValues(array);
   
@@ -471,7 +468,7 @@ async function usePassword() {
   
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id) {
-    chrome.tabs.sendMessage(tab.id, {
+    await chrome.tabs.sendMessage(tab.id, {
       action: 'fillPassword',
       password: password
     });
@@ -480,24 +477,33 @@ async function usePassword() {
 }
 
 function showToast(message, type = 'success') {
-  // Remove existing toasts
   document.querySelectorAll('.toast').forEach(t => t.remove());
   
   const toast = document.createElement('div');
   toast.className = 'toast';
+  
+  const colors = {
+    success: '#22c55e',
+    error: '#ef4444',
+    info: '#3b82f6',
+    warning: '#f59e0b'
+  };
+  
   toast.style.cssText = `
     position: fixed;
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: ${type === 'success' ? '#22c55e' : '#ef4444'};
+    background: ${colors[type] || colors.success};
     color: white;
     padding: 8px 16px;
     border-radius: 6px;
     font-size: 13px;
     z-index: 1000;
+    animation: fadeIn 0.2s ease;
   `;
   toast.textContent = message;
+  
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2000);
+  setTimeout(() => toast.remove(), 2500);
 }

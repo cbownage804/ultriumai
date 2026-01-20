@@ -5,8 +5,8 @@
 }
 
 body {
-  width: 320px;
-  min-height: 400px;
+  width: 340px;
+  min-height: 420px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #0f172a;
   color: #e2e8f0;
@@ -19,49 +19,72 @@ body {
 .view {
   display: flex;
   flex-direction: column;
-  min-height: 400px;
+  min-height: 420px;
 }
 
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
+  padding: 14px 16px;
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   color: white;
+}
+
+.header-actions {
+  display: flex;
+  gap: 4px;
 }
 
 .logo {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
 }
 
 .logo svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
 }
 
 .icon-btn {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: white;
   cursor: pointer;
   padding: 8px;
-  border-radius: 6px;
-  transition: background 0.2s;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
 }
 
 .content {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
+}
+
+.login-description {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.browser-note {
+  text-align: center;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 16px;
 }
 
 input[type="email"],
@@ -72,15 +95,20 @@ input[type="text"] {
   margin-bottom: 12px;
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #e2e8f0;
   font-size: 14px;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
 input:focus {
   outline: none;
   border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+input::placeholder {
+  color: #64748b;
 }
 
 .primary-btn {
@@ -88,32 +116,41 @@ input:focus {
   padding: 12px 16px;
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
 
 .primary-btn:hover {
-  opacity: 0.9;
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .secondary-btn {
   flex: 1;
-  padding: 10px 16px;
+  padding: 10px 14px;
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #e2e8f0;
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .secondary-btn:hover {
   background: #334155;
+  border-color: #475569;
 }
 
 .link {
@@ -123,20 +160,22 @@ input:focus {
   color: #60a5fa;
   text-decoration: none;
   font-size: 13px;
+  transition: color 0.2s;
 }
 
 .link:hover {
-  text-decoration: underline;
+  color: #93c5fd;
 }
 
 .search-bar {
-  padding: 12px 16px;
+  padding: 10px 16px;
   background: #1e293b;
   border-bottom: 1px solid #334155;
 }
 
 .search-bar input {
   margin-bottom: 0;
+  background: #0f172a;
 }
 
 .site-section,
@@ -146,73 +185,91 @@ input:focus {
 
 .site-section h3,
 .all-section h3 {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
   color: #64748b;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .password-item {
   display: flex;
   align-items: center;
-  padding: 12px;
+  padding: 12px 14px;
   background: #1e293b;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  border: 1px solid transparent;
 }
 
 .password-item:hover {
   background: #334155;
+  border-color: #3b82f6;
+  transform: translateX(2px);
 }
 
 .password-item .favicon {
-  width: 32px;
-  height: 32px;
-  background: #334155;
-  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .password-item .details {
   flex: 1;
+  min-width: 0;
 }
 
 .password-item .site-name {
   font-weight: 500;
   font-size: 14px;
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .password-item .username {
   font-size: 12px;
   color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .password-item .actions {
   display: flex;
   gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.password-item:hover .actions {
+  opacity: 1;
 }
 
 .password-item .action-btn {
-  padding: 6px;
-  background: transparent;
+  padding: 6px 8px;
+  background: rgba(59, 130, 246, 0.2);
   border: none;
-  color: #64748b;
+  color: #60a5fa;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 14px;
+  transition: all 0.2s;
 }
 
 .password-item .action-btn:hover {
-  background: #475569;
-  color: #e2e8f0;
+  background: rgba(59, 130, 246, 0.4);
+  transform: scale(1.1);
 }
 
 .footer {
@@ -220,6 +277,7 @@ input:focus {
   gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid #334155;
+  background: #0f172a;
 }
 
 .generated-password {
@@ -231,8 +289,9 @@ input:focus {
 .generated-password input {
   flex: 1;
   margin-bottom: 0;
-  font-family: monospace;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
   letter-spacing: 1px;
+  font-size: 13px;
 }
 
 .options {
@@ -240,43 +299,37 @@ input:focus {
   flex-direction: column;
   gap: 12px;
   margin-bottom: 16px;
+  padding: 14px;
+  background: #1e293b;
+  border-radius: 10px;
 }
 
 .options label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 13px;
   cursor: pointer;
+  color: #cbd5e1;
+}
+
+.options label:first-child {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #334155;
 }
 
 .options input[type="checkbox"] {
-  width: auto;
+  width: 18px;
+  height: 18px;
   margin: 0;
+  accent-color: #3b82f6;
+  cursor: pointer;
 }
 
 .options input[type="range"] {
   flex: 1;
   margin-left: 8px;
-}
-
-.breach-warning {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid #ef4444;
-  border-radius: 6px;
-  color: #fca5a5;
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-
-.breach-warning svg {
-  width: 16px;
-  height: 16px;
-  color: #ef4444;
+  accent-color: #3b82f6;
 }
 
 .empty-state {
@@ -290,4 +343,32 @@ input:focus {
   height: 48px;
   margin-bottom: 12px;
   opacity: 0.5;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast {
+  animation: fadeIn 0.2s ease;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }

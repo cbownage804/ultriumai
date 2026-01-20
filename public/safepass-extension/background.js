@@ -1,10 +1,18 @@
 // SafePass Background Service Worker
+// Compatible with Chrome and Microsoft Edge (Manifest V3)
 
-const SAFEPASS_API_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1';
-const PORTAL_URL = 'https://ultriumai.lovable.app/safepass-app';
+const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
+const SAFEPASS_API_URL = `${SUPABASE_URL}/functions/v1`;
+const PORTAL_URL = 'https://ultriumai.lovable.app/safesuite/pass';
 
 // Security: Auto-lock timeout (5 minutes)
 const AUTO_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+
+// Cached vault entries (encrypted in memory)
+let cachedEntries = [];
+let lastSyncTime = 0;
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // Sync every 5 minutes
 
 // Check and auto-lock expired sessions periodically
 async function checkAutoLock() {
@@ -14,21 +22,19 @@ async function checkAutoLock() {
     if (elapsed > AUTO_LOCK_TIMEOUT_MS) {
       console.log('[SafePass] Auto-locking vault due to inactivity');
       await chrome.storage.session.clear();
+      cachedEntries = [];
     }
   }
 }
 
 // Run auto-lock check every minute
 setInterval(checkAutoLock, 60000);
-
-// Also check on startup
 checkAutoLock();
 
 // Handle extension installation
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     console.log('[SafePass] Extension installed');
-    // Open welcome page or setup
     chrome.tabs.create({
       url: `${PORTAL_URL}?extension=installed`
     });
@@ -37,142 +43,259 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'openPopup') {
-    // Chrome doesn't allow programmatically opening popup
-    // This is handled by the browser action click
-    return;
-  }
-
-  if (message.action === 'checkBreach') {
-    handleBreachCheck(message.passwordHash)
-      .then(result => sendResponse(result))
-      .catch(error => sendResponse({ error: error.message }));
-    return true; // Keep message channel open for async response
-  }
-
-  if (message.action === 'savePassword') {
-    handleSavePassword(message.data)
-      .then(result => sendResponse(result))
-      .catch(error => sendResponse({ error: error.message }));
-    return true;
-  }
+  handleMessage(message, sender)
+    .then(sendResponse)
+    .catch(error => sendResponse({ error: error.message }));
+  return true; // Keep message channel open for async response
 });
 
-// Check password against breach database
-async function handleBreachCheck(passwordHash) {
+async function handleMessage(message, sender) {
+  switch (message.action) {
+    case 'getPasswordsForSite':
+      return await getPasswordsForSite(message.hostname);
+    
+    case 'syncVault':
+      return await syncVaultFromSupabase();
+    
+    case 'checkBreach':
+      return await handleBreachCheck(message.passwordHash);
+    
+    case 'savePassword':
+      return await handleSavePassword(message.data);
+    
+    case 'fillCredentials':
+      // Forward to content script
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        await chrome.tabs.sendMessage(tab.id, {
+          action: 'fill',
+          username: message.username,
+          password: message.password
+        });
+      }
+      return { success: true };
+    
+    case 'getCachedEntries':
+      return { entries: cachedEntries };
+    
+    default:
+      return { error: 'Unknown action' };
+  }
+}
+
+// Sync vault entries from Supabase
+async function syncVaultFromSupabase() {
+  try {
+    const session = await chrome.storage.session.get(['authToken', 'masterKey']);
+    if (!session.authToken) {
+      return { error: 'Not authenticated' };
+    }
+
+    // Fetch user's vaults first
+    const vaultsResponse = await fetch(`${SUPABASE_URL}/rest/v1/safepass_vaults?select=id,name`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${session.authToken}`,
+      }
+    });
+
+    if (!vaultsResponse.ok) {
+      throw new Error('Failed to fetch vaults');
+    }
+
+    const vaults = await vaultsResponse.json();
+    if (vaults.length === 0) {
+      cachedEntries = [];
+      return { success: true, entries: [] };
+    }
+
+    // Fetch entries from all vaults
+    const vaultIds = vaults.map(v => v.id);
+    const entriesResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/safepass_entries?vault_id=in.(${vaultIds.join(',')})&select=id,title,encrypted_username,encrypted_password,encrypted_url,category,is_favorite,url`, 
+      {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${session.authToken}`,
+        }
+      }
+    );
+
+    if (!entriesResponse.ok) {
+      throw new Error('Failed to fetch entries');
+    }
+
+    const entries = await entriesResponse.json();
+    
+    // Store encrypted entries in memory (will decrypt on-demand)
+    cachedEntries = entries.map(entry => ({
+      id: entry.id,
+      title: entry.title,
+      encrypted_username: entry.encrypted_username,
+      encrypted_password: entry.encrypted_password,
+      encrypted_url: entry.encrypted_url,
+      url: entry.url,
+      category: entry.category,
+      is_favorite: entry.is_favorite
+    }));
+
+    lastSyncTime = Date.now();
+    
+    // Also store in local storage for offline access
+    await chrome.storage.local.set({ 
+      cachedEntries,
+      lastSyncTime 
+    });
+
+    console.log(`[SafePass] Synced ${cachedEntries.length} entries from Supabase`);
+    return { success: true, entries: cachedEntries };
+  } catch (error) {
+    console.error('[SafePass] Sync error:', error);
+    return { error: error.message };
+  }
+}
+
+// Get passwords matching a hostname
+async function getPasswordsForSite(hostname) {
   try {
     const session = await chrome.storage.session.get(['masterKey', 'authToken']);
     if (!session.masterKey || !session.authToken) {
-      return { error: 'Not authenticated' };
+      return { entries: [], needsAuth: true };
     }
 
-    const response = await fetch(`${SAFEPASS_API_URL}/safepass-breach-check`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.authToken}`,
-      },
-      body: JSON.stringify({
-        action: 'check_passwords',
-        password_hashes: [passwordHash],
-        entry_ids: ['temp']
-      })
-    });
+    // Check if we need to sync
+    if (Date.now() - lastSyncTime > SYNC_INTERVAL_MS || cachedEntries.length === 0) {
+      // Load from local storage first
+      const stored = await chrome.storage.local.get(['cachedEntries', 'lastSyncTime']);
+      if (stored.cachedEntries) {
+        cachedEntries = stored.cachedEntries;
+        lastSyncTime = stored.lastSyncTime || 0;
+      }
+      
+      // Sync in background if stale
+      if (Date.now() - lastSyncTime > SYNC_INTERVAL_MS) {
+        syncVaultFromSupabase(); // Don't await, let it run in background
+      }
+    }
 
-    const data = await response.json();
-    return data;
+    // Filter and decrypt entries matching the hostname
+    const matchingEntries = [];
+    
+    for (const entry of cachedEntries) {
+      try {
+        // Decrypt URL to check for match
+        let entryUrl = entry.url || '';
+        if (entry.encrypted_url) {
+          try {
+            entryUrl = await decryptField(entry.encrypted_url, session.masterKey);
+          } catch {
+            // Use plaintext URL if decryption fails
+          }
+        }
+        
+        // Check if URL matches
+        const matches = entryUrl && (
+          hostname.includes(extractHostname(entryUrl)) || 
+          extractHostname(entryUrl).includes(hostname)
+        );
+        
+        if (matches || !hostname) {
+          // Decrypt username for display
+          let username = '';
+          if (entry.encrypted_username) {
+            try {
+              username = await decryptField(entry.encrypted_username, session.masterKey);
+            } catch {
+              username = '[encrypted]';
+            }
+          }
+          
+          matchingEntries.push({
+            id: entry.id,
+            title: entry.title,
+            username,
+            website: entryUrl,
+            is_favorite: entry.is_favorite,
+            // Password will be decrypted on-demand when filling
+            hasPassword: !!entry.encrypted_password
+          });
+        }
+      } catch (error) {
+        console.error('[SafePass] Error processing entry:', error);
+      }
+    }
+
+    return { entries: matchingEntries };
   } catch (error) {
-    console.error('[SafePass] Breach check error:', error);
-    return { error: error.message };
+    console.error('[SafePass] getPasswordsForSite error:', error);
+    return { entries: [], error: error.message };
   }
 }
 
-// Save new password to vault
-async function handleSavePassword(data) {
+// Get decrypted password for an entry
+async function getDecryptedPassword(entryId) {
+  const session = await chrome.storage.session.get(['masterKey']);
+  if (!session.masterKey) {
+    throw new Error('Vault is locked');
+  }
+
+  const entry = cachedEntries.find(e => e.id === entryId);
+  if (!entry || !entry.encrypted_password) {
+    throw new Error('Entry not found');
+  }
+
+  return await decryptField(entry.encrypted_password, session.masterKey);
+}
+
+// Export for popup access
+self.getDecryptedPassword = getDecryptedPassword;
+
+function extractHostname(url) {
   try {
-    const session = await chrome.storage.session.get(['masterKey', 'email', 'authToken']);
-    if (!session.masterKey || !session.authToken) {
-      return { error: 'Not authenticated' };
+    if (!url.startsWith('http')) {
+      url = 'https://' + url;
     }
-
-    // Encrypt the password with user-specific salt
-    const encrypted = await encryptPassword(data.password, session.masterKey);
-    
-    // For now, store locally
-    const stored = await chrome.storage.local.get(['passwords']);
-    const passwords = stored.passwords || [];
-    
-    passwords.push({
-      id: crypto.randomUUID(),
-      website: data.website,
-      username: data.username,
-      encryptedPassword: encrypted.ciphertext,
-      salt: encrypted.salt,
-      iv: encrypted.iv,
-      createdAt: new Date().toISOString()
-    });
-
-    await chrome.storage.local.set({ passwords });
-    
-    return { success: true };
-  } catch (error) {
-    console.error('[SafePass] Save password error:', error);
-    return { error: error.message };
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url.replace(/^www\./, '');
   }
 }
 
-// Secure encryption with random salt
-async function encryptPassword(password, masterKey) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
+// Decrypt a single encrypted field
+async function decryptField(encryptedData, masterKey) {
+  if (!encryptedData) return '';
   
-  // Generate cryptographically random salt for each encryption
-  const salt = crypto.getRandomValues(new Uint8Array(32));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  // Parse the encrypted data (format: iv:salt:ciphertext in base64)
+  let iv, salt, ciphertext;
   
-  // Derive key from master key with unique salt
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(masterKey),
-    { name: 'PBKDF2' },
-    false,
-    ['deriveBits', 'deriveKey']
-  );
+  if (typeof encryptedData === 'string') {
+    // Try JSON format first
+    try {
+      const parsed = JSON.parse(encryptedData);
+      iv = base64ToArray(parsed.iv);
+      salt = base64ToArray(parsed.salt);
+      ciphertext = base64ToArray(parsed.ciphertext);
+    } catch {
+      // Try colon-separated format
+      const parts = encryptedData.split(':');
+      if (parts.length === 3) {
+        iv = base64ToArray(parts[0]);
+        salt = base64ToArray(parts[1]);
+        ciphertext = base64ToArray(parts[2]);
+      } else {
+        throw new Error('Invalid encrypted data format');
+      }
+    }
+  } else if (encryptedData.iv && encryptedData.salt && encryptedData.ciphertext) {
+    iv = base64ToArray(encryptedData.iv);
+    salt = base64ToArray(encryptedData.salt);
+    ciphertext = base64ToArray(encryptedData.ciphertext);
+  } else {
+    throw new Error('Invalid encrypted data format');
+  }
 
-  const key = await crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: 600000, // OWASP 2023 recommendation
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt']
-  );
-
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    data
-  );
-
-  return {
-    ciphertext: arrayToBase64(new Uint8Array(encrypted)),
-    salt: arrayToBase64(salt),
-    iv: arrayToBase64(iv)
-  };
-}
-
-// Decrypt password
-async function decryptPassword(encryptedData, masterKey) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
-  
-  const ciphertext = base64ToArray(encryptedData.ciphertext);
-  const salt = base64ToArray(encryptedData.salt);
-  const iv = base64ToArray(encryptedData.iv);
   
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -204,6 +327,138 @@ async function decryptPassword(encryptedData, masterKey) {
   return decoder.decode(decrypted);
 }
 
+// Check password against breach database
+async function handleBreachCheck(passwordHash) {
+  try {
+    const session = await chrome.storage.session.get(['authToken']);
+    if (!session.authToken) {
+      return { error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${SAFEPASS_API_URL}/safepass-breach-check`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.authToken}`,
+      },
+      body: JSON.stringify({
+        action: 'check_passwords',
+        password_hashes: [passwordHash],
+        entry_ids: ['temp']
+      })
+    });
+
+    return await response.json();
+  } catch (error) {
+    console.error('[SafePass] Breach check error:', error);
+    return { error: error.message };
+  }
+}
+
+// Save new password to vault
+async function handleSavePassword(data) {
+  try {
+    const session = await chrome.storage.session.get(['masterKey', 'authToken']);
+    if (!session.masterKey || !session.authToken) {
+      return { error: 'Not authenticated' };
+    }
+
+    // Encrypt credentials
+    const encryptedUsername = await encryptField(data.username, session.masterKey);
+    const encryptedPassword = await encryptField(data.password, session.masterKey);
+    const encryptedUrl = await encryptField(data.website, session.masterKey);
+
+    // Get user's default vault
+    const vaultsResponse = await fetch(`${SUPABASE_URL}/rest/v1/safepass_vaults?select=id&limit=1`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${session.authToken}`,
+      }
+    });
+
+    const vaults = await vaultsResponse.json();
+    if (!vaults.length) {
+      return { error: 'No vault found' };
+    }
+
+    // Save to Supabase
+    const saveResponse = await fetch(`${SUPABASE_URL}/rest/v1/safepass_entries`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${session.authToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        vault_id: vaults[0].id,
+        title: data.title || extractHostname(data.website),
+        encrypted_username: encryptedUsername,
+        encrypted_password: encryptedPassword,
+        encrypted_url: encryptedUrl,
+        url: data.website,
+        category: 'login'
+      })
+    });
+
+    if (!saveResponse.ok) {
+      throw new Error('Failed to save entry');
+    }
+
+    // Refresh cache
+    await syncVaultFromSupabase();
+    
+    return { success: true };
+  } catch (error) {
+    console.error('[SafePass] Save password error:', error);
+    return { error: error.message };
+  }
+}
+
+// Encrypt a field
+async function encryptField(value, masterKey) {
+  if (!value) return null;
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value);
+  
+  const salt = crypto.getRandomValues(new Uint8Array(32));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(masterKey),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits', 'deriveKey']
+  );
+
+  const key = await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 600000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt']
+  );
+
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    data
+  );
+
+  return JSON.stringify({
+    iv: arrayToBase64(iv),
+    salt: arrayToBase64(salt),
+    ciphertext: arrayToBase64(new Uint8Array(encrypted))
+  });
+}
+
 // Helper functions
 function arrayToBase64(array) {
   return btoa(String.fromCharCode(...array));
@@ -218,12 +473,9 @@ function base64ToArray(base64) {
   return bytes;
 }
 
-// Store decryption function for popup access
-self.decryptPassword = decryptPassword;
-
 // Alarm for daily breach check
 chrome.alarms.create('dailyBreachCheck', {
-  periodInMinutes: 24 * 60 // Once per day
+  periodInMinutes: 24 * 60
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
@@ -232,11 +484,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     
     const session = await chrome.storage.session.get(['authToken']);
     if (!session.authToken) {
-      console.log('[SafePass] No auth token, skipping breach check');
       return;
     }
     
-    // Trigger daily scan via API
     try {
       const response = await fetch(`${SAFEPASS_API_URL}/safepass-breach-check`, {
         method: 'POST',
@@ -244,9 +494,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.authToken}`,
         },
-        body: JSON.stringify({
-          action: 'daily_scan'
-        })
+        body: JSON.stringify({ action: 'daily_scan' })
       });
 
       const result = await response.json();
@@ -256,7 +504,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
           type: 'basic',
           iconUrl: 'icons/icon128.png',
           title: 'Security Alert',
-          message: `${result.breached_entries} of your passwords may have been compromised in data breaches.`,
+          message: `${result.breached_entries} of your passwords may have been compromised.`,
           priority: 2
         });
       }
@@ -266,4 +514,4 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-console.log('[SafePass] Background service worker initialized');
+console.log('[SafePass] Background service worker initialized (Chrome/Edge compatible)');
