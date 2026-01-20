@@ -12,6 +12,15 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   Check,
   Crown,
@@ -20,7 +29,8 @@ import {
   CreditCard,
   Calendar,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -29,9 +39,27 @@ export default function SafeSuiteBilling() {
   const { subscription, tier, tierConfig, loading: subLoading } = useSafeSuiteSubscription();
   const { createCheckout, openCustomerPortal, loading: checkoutLoading } = useSafeSuiteCheckout();
   const [yearlyBilling, setYearlyBilling] = useState(false);
+  const [seatSelectorOpen, setSeatSelectorOpen] = useState(false);
+  const [seats, setSeats] = useState(5);
 
   const handleUpgrade = async (targetTier: SafeSuiteTier) => {
+    // Business tier requires seat selection
+    if (targetTier === 'business') {
+      setSeatSelectorOpen(true);
+      return;
+    }
+
     const url = await createCheckout(targetTier, yearlyBilling ? 'yearly' : 'monthly');
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      toast.error('Failed to create checkout session');
+    }
+  };
+
+  const handleBusinessCheckout = async () => {
+    setSeatSelectorOpen(false);
+    const url = await createCheckout('business', yearlyBilling ? 'yearly' : 'monthly', seats);
     if (url) {
       window.open(url, '_blank');
     } else {
@@ -47,6 +75,9 @@ export default function SafeSuiteBilling() {
       toast.error('Failed to open customer portal');
     }
   };
+
+  const pricePerSeat = yearlyBilling ? 12 : 15;
+  const totalPrice = pricePerSeat * seats;
 
   const tiers = Object.values(SAFESUITE_TIERS);
 
@@ -251,6 +282,93 @@ export default function SafeSuiteBilling() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Business Tier Seat Selector Dialog */}
+      <Dialog open={seatSelectorOpen} onOpenChange={setSeatSelectorOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-amber-500" />
+              Upgrade to Business
+            </DialogTitle>
+            <DialogDescription>
+              Choose how many team seats you need. You can add more seats later.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="seats">Number of Team Seats</Label>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSeats(Math.max(1, seats - 1))}
+                  disabled={seats <= 1}
+                >
+                  -
+                </Button>
+                <Input
+                  id="seats"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={seats}
+                  onChange={(e) => setSeats(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                  className="w-20 text-center"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSeats(Math.min(100, seats + 1))}
+                  disabled={seats >= 100}
+                >
+                  +
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Minimum 1 seat, you can invite team members after checkout.
+              </p>
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  {seats} seat{seats > 1 ? 's' : ''}
+                </span>
+                <span>${pricePerSeat}/seat/mo</span>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between font-semibold text-lg">
+                <span>Total</span>
+                <span>${totalPrice}/mo</span>
+              </div>
+              {yearlyBilling && (
+                <p className="text-xs text-muted-foreground text-right">
+                  Billed annually as ${totalPrice * 12}/year
+                </p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSeatSelectorOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleBusinessCheckout} disabled={checkoutLoading} className="gap-2">
+              {checkoutLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Crown className="h-4 w-4" />
+                  Continue to Checkout
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
