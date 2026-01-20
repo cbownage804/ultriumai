@@ -122,22 +122,22 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Two Flagship Products Section */}
+      {/* Flagship Products Section */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Flagship Products</h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Two powerful platforms designed for different needs—both built with security at the core
+              Three powerful platforms designed for different needs—all built with security at the core
             </p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {/* AI Studio Card */}
             <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary/60 rounded-xl flex items-center justify-center mb-4">
-                  <Brain className="h-8 w-8 text-primary-foreground" />
+                <div className="w-16 h-16 rounded-xl overflow-hidden mb-4 bg-primary/10 p-2">
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-2xl">UltriumAI Studio™</CardTitle>
                 <CardDescription className="text-base">Custom GPT Builder Platform</CardDescription>
@@ -178,8 +178,8 @@ const Index = () => {
                 v4.0 Enterprise Plus
               </div>
               <CardHeader className="pb-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-purple-600 rounded-xl flex items-center justify-center mb-4">
-                  <Shield className="h-8 w-8 text-white" />
+                <div className="w-16 h-16 rounded-xl overflow-hidden mb-4 bg-white/5 p-2">
+                  <img src={vanguardLogo} alt="Vanguard" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Ultrium Vanguard™</CardTitle>
                 <CardDescription className="text-base">All-in-One Security AI Platform</CardDescription>
@@ -199,7 +199,7 @@ const Index = () => {
                   </div>
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
-                    <span className="text-sm">Traffic Analysis & DNS Tunneling Detection</span>
+                    <span className="text-sm">Traffic Analysis & DNS Tunneling</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-5 w-5 text-cyan-500 flex-shrink-0" />
@@ -212,6 +212,50 @@ const Index = () => {
                   onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
                 >
                   Explore Vanguard <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* SafeSuite Card */}
+            <Card className="border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-emerald-900/10 hover:shadow-xl hover:shadow-emerald-500/20 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs px-3 py-1 rounded-bl-lg font-medium">
+                Consumer & SMB
+              </div>
+              <CardHeader className="pb-4">
+                <div className="w-16 h-16 rounded-xl overflow-hidden mb-4 bg-emerald-500/10 p-2">
+                  <img src={safesuiteLogo} alt="SafeSuite" className="w-full h-full object-contain" />
+                </div>
+                <CardTitle className="text-2xl bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">SafeSuite™</CardTitle>
+                <CardDescription className="text-base">Complete Personal Security</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <p className="text-muted-foreground">
+                  All-in-one security for individuals and small teams. Password manager, threat scanning, dark web monitoring & more.
+                </p>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-sm">SafePass Password Manager</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-sm">SafeScan Threat Detection</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-sm">SafeWeb Dark Web Monitoring</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                    <span className="text-sm">SafeTrack Asset Management</span>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white border-0" 
+                  size="lg"
+                  onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
+                >
+                  Try SafeSuite <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
