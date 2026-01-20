@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Chrome, Monitor, CheckCircle2, ExternalLink } from "lucide-react";
+import { Download, Globe, Monitor, CheckCircle2 } from "lucide-react";
 import JSZip from "jszip";
 import { toast } from "sonner";
 
@@ -91,7 +91,7 @@ const SafePassExtension = () => {
           <CardContent className="space-y-4">
             <div className="flex gap-3">
               <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
-                <Chrome className="h-5 w-5" />
+                <Globe className="h-5 w-5" />
                 <span className="text-sm font-medium">Chrome</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
