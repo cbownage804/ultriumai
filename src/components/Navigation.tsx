@@ -75,7 +75,7 @@ const Navigation = () => {
               onClick={() => handleNavigation('/ai-studio')}
               className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors duration-200 flex items-center gap-1.5"
             >
-              <img src={ultriumGPTLogo} alt="AI Studio" className="h-5 w-5 rounded object-contain bg-black" />
+              <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 rounded object-contain bg-black" />
               AI Studio™
             </button>
             
@@ -83,7 +83,7 @@ const Navigation = () => {
               onClick={() => handleExternalLink('https://vanguard.ultriumai.com')}
               className="text-sm font-medium text-foreground/70 hover:text-destructive transition-colors duration-200 flex items-center gap-1.5"
             >
-              <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
+              <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />
               Vanguard™
             </button>
             
@@ -91,7 +91,7 @@ const Navigation = () => {
               onClick={() => handleExternalLink('https://safesuite.ultriumai.com')}
               className="text-sm font-medium text-foreground/70 hover:text-emerald-500 transition-colors duration-200 flex items-center gap-1.5"
             >
-              <img src={safesuiteLogo} alt="SafeSuite" className="h-5 w-5 rounded object-contain bg-black" />
+              <img src={safesuiteLogo} alt="SafeSuite" className="h-6 w-6 rounded object-contain bg-black" />
               SafeSuite™
             </button>
             
@@ -218,7 +218,7 @@ const Navigation = () => {
                 onClick={() => handleNavigationWithMenuClose('/ai-studio')} 
                 className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
               >
-                <img src={ultriumGPTLogo} alt="AI Studio" className="h-5 w-5 rounded object-contain bg-black" />
+                <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 rounded object-contain bg-black" />
                 AI Studio™
               </button>
               
@@ -226,7 +226,7 @@ const Navigation = () => {
                 onClick={() => handleExternalLink('https://vanguard.ultriumai.com')} 
                 className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-destructive hover:bg-muted/50 rounded-md"
               >
-                <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
+                <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />
                 Vanguard™
               </button>
               
@@ -234,7 +234,7 @@ const Navigation = () => {
                 onClick={() => handleExternalLink('https://safesuite.ultriumai.com')} 
                 className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
               >
-                <img src={safesuiteLogo} alt="SafeSuite" className="h-5 w-5 rounded object-contain bg-black" />
+                <img src={safesuiteLogo} alt="SafeSuite" className="h-6 w-6 rounded object-contain bg-black" />
                 SafeSuite™
               </button>
               

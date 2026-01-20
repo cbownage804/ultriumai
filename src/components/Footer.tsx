@@ -53,7 +53,7 @@ const Footer = () => {
                   onClick={() => handleNavigation('/ai-studio')} 
                   className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2"
                 >
-                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-5 w-5 rounded object-contain bg-black" />
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 rounded object-contain bg-black" />
                   UltriumAI Studio™
                 </button>
               </li>
@@ -62,8 +62,8 @@ const Footer = () => {
                   onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')} 
                   className="text-sm text-muted-foreground hover:text-destructive flex items-center gap-2"
                 >
-                  <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
-                  Ultrium Vanguard™
+                  <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />
+                  Vanguard™
                 </button>
               </li>
               <li>
@@ -71,7 +71,7 @@ const Footer = () => {
                   onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')} 
                   className="text-sm text-muted-foreground hover:text-emerald-500 flex items-center gap-2"
                 >
-                  <img src={safesuiteLogo} alt="SafeSuite" className="h-5 w-5 rounded object-contain bg-black" />
+                  <img src={safesuiteLogo} alt="SafeSuite" className="h-6 w-6 rounded object-contain bg-black" />
                   SafeSuite™
                 </button>
               </li>
