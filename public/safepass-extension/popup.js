@@ -3,7 +3,7 @@
 
 const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
-const PORTAL_URL = 'https://ultriumai.lovable.app/safesuite/pass';
+const PORTAL_URL = 'https://safesuite.ultriumai.com/pass';
 
 // Security: Auto-lock timeout (5 minutes)
 const AUTO_LOCK_TIMEOUT_MS = 5 * 60 * 1000;
