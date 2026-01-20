@@ -598,6 +598,119 @@ async function checkForMatchingPasswords(showAll = false) {
 }
 
 // ===== AUTO-SAVE =====
+let pendingSave = null;
+let savePromptVisible = false;
+
+function showSavePrompt(data) {
+  // Don't show if already visible or same credentials
+  if (savePromptVisible) return;
+  if (pendingSave && pendingSave.username === data.username && pendingSave.website === data.website) return;
+  
+  pendingSave = data;
+  savePromptVisible = true;
+  
+  // Remove any existing prompts
+  document.querySelectorAll('.safepass-save-prompt').forEach(p => p.remove());
+  
+  const prompt = document.createElement('div');
+  prompt.className = 'safepass-save-prompt';
+  prompt.innerHTML = `
+    <div class="safepass-save-prompt-content">
+      <div class="safepass-save-prompt-header">
+        <span class="safepass-save-prompt-icon">🔐</span>
+        <span class="safepass-save-prompt-title">Save to SafePass?</span>
+        <button class="safepass-save-prompt-close" id="safepass-prompt-close">×</button>
+      </div>
+      <div class="safepass-save-prompt-body">
+        <div class="safepass-save-prompt-site">${escapeHtml(data.title || data.website)}</div>
+        <div class="safepass-save-prompt-username">${escapeHtml(data.username)}</div>
+      </div>
+      <div class="safepass-save-prompt-actions">
+        <button class="safepass-save-prompt-btn safepass-save-prompt-btn-secondary" id="safepass-prompt-never">Never</button>
+        <button class="safepass-save-prompt-btn safepass-save-prompt-btn-primary" id="safepass-prompt-save">Save Password</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(prompt);
+  
+  // Add event listeners
+  document.getElementById('safepass-prompt-save')?.addEventListener('click', async () => {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'savePassword',
+        data: pendingSave
+      });
+      
+      if (response.success) {
+        showNotification('🔐 Password saved to SafePass!');
+      } else if (response.error === 'Not authenticated') {
+        showNotification('Unlock SafePass to save passwords', 'warning');
+      } else {
+        showNotification('Failed to save password', 'error');
+      }
+    } catch (error) {
+      console.error('[SafePass] Save error:', error);
+      showNotification('Failed to save password', 'error');
+    }
+    hideSavePrompt();
+  });
+  
+  document.getElementById('safepass-prompt-never')?.addEventListener('click', () => {
+    // Store in ignored list
+    chrome.runtime.sendMessage({
+      action: 'ignoreCredential',
+      data: { website: data.website, username: data.username }
+    });
+    hideSavePrompt();
+  });
+  
+  document.getElementById('safepass-prompt-close')?.addEventListener('click', hideSavePrompt);
+  
+  // Auto-hide after 30 seconds
+  setTimeout(() => {
+    if (savePromptVisible) hideSavePrompt();
+  }, 30000);
+}
+
+function hideSavePrompt() {
+  document.querySelectorAll('.safepass-save-prompt').forEach(p => p.remove());
+  savePromptVisible = false;
+  pendingSave = null;
+}
+
+function captureCredentials(form) {
+  const passwordField = form.querySelector('input[type="password"]');
+  const usernameSelectors = [
+    'input[type="email"]',
+    'input[autocomplete="username"]',
+    'input[autocomplete="email"]',
+    'input[type="text"][name*="user"]',
+    'input[type="text"][name*="email"]',
+    'input[type="text"][name*="login"]',
+    'input[type="text"][id*="user"]',
+    'input[type="text"][id*="email"]',
+    'input[type="text"][id*="login"]',
+    'input[type="text"]' // Fallback to any text input
+  ];
+  
+  let usernameField = null;
+  for (const selector of usernameSelectors) {
+    usernameField = form.querySelector(selector);
+    if (usernameField && usernameField.value) break;
+  }
+  
+  if (passwordField?.value && usernameField?.value && passwordField.value.length >= 4) {
+    return {
+      website: window.location.hostname,
+      username: usernameField.value,
+      password: passwordField.value,
+      title: document.title || window.location.hostname
+    };
+  }
+  return null;
+}
+
 function detectNewPasswordForm() {
   const forms = document.querySelectorAll('form');
   
@@ -605,72 +718,111 @@ function detectNewPasswordForm() {
     if (form.dataset.safepassWatched) return;
     form.dataset.safepassWatched = 'true';
     
-    form.addEventListener('submit', async (e) => {
-      const passwordField = form.querySelector('input[type="password"]');
-      const usernameField = form.querySelector('input[type="email"], input[type="text"][name*="user"], input[type="text"][name*="email"], input[autocomplete="username"]');
-      
-      if (passwordField && usernameField && passwordField.value && usernameField.value) {
-        try {
-          const response = await chrome.runtime.sendMessage({
-            action: 'savePassword',
-            data: {
-              website: window.location.hostname,
-              username: usernameField.value,
-              password: passwordField.value,
-              title: document.title || window.location.hostname
-            }
-          });
-          
-          if (response.success) {
-            showNotification('🔐 Password saved to SafePass!');
-          } else if (response.error === 'Not authenticated') {
-            showNotification('Unlock SafePass to save passwords', 'warning');
-          }
-        } catch (error) {
-          console.error('[SafePass] Auto-save error:', error);
-        }
+    // Listen for form submit
+    form.addEventListener('submit', (e) => {
+      const credentials = captureCredentials(form);
+      if (credentials) {
+        showSavePrompt(credentials);
       }
+    });
+    
+    // Also watch for button clicks inside the form (for JS-based submissions)
+    const buttons = form.querySelectorAll('button[type="submit"], button:not([type]), input[type="submit"]');
+    buttons.forEach(button => {
+      if (button.dataset.safepassWatched) return;
+      button.dataset.safepassWatched = 'true';
+      
+      button.addEventListener('click', () => {
+        // Delay to allow form validation
+        setTimeout(() => {
+          const credentials = captureCredentials(form);
+          if (credentials) {
+            showSavePrompt(credentials);
+          }
+        }, 100);
+      });
     });
   });
   
-  // Watch password fields for SPA support
+  // Watch password fields for SPA support (blur + enter key)
   const passwordFields = document.querySelectorAll('input[type="password"]');
   passwordFields.forEach(field => {
     if (field.dataset.safepassAutoSave) return;
     field.dataset.safepassAutoSave = 'true';
     
-    let lastValue = '';
-    
-    field.addEventListener('blur', async () => {
-      if (field.value && field.value !== lastValue && field.value.length >= 6) {
-        lastValue = field.value;
-        
+    // Detect Enter key press in password field
+    field.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && field.value && field.value.length >= 4) {
         const form = field.closest('form');
-        const container = form || field.parentElement?.parentElement?.parentElement;
-        const usernameField = container?.querySelector('input[type="email"], input[type="text"][name*="user"], input[type="text"][name*="email"], input[autocomplete="username"]');
+        const container = form || field.parentElement?.parentElement?.parentElement?.parentElement;
         
-        if (usernameField && usernameField.value) {
-          try {
-            const response = await chrome.runtime.sendMessage({
-              action: 'savePassword',
-              data: {
-                website: window.location.hostname,
-                username: usernameField.value,
-                password: field.value,
-                title: document.title || window.location.hostname
-              }
-            });
-            
-            if (response.success) {
-              showNotification('🔐 Password saved to SafePass!');
-            }
-          } catch (error) {
-            console.error('[SafePass] Blur auto-save error:', error);
+        if (container) {
+          const credentials = captureCredentials(container) || captureCredentialsFromContainer(container, field);
+          if (credentials) {
+            // Delay to allow form submission to complete
+            setTimeout(() => showSavePrompt(credentials), 500);
           }
         }
       }
     });
   });
+  
+  // Watch for login buttons outside of forms (common in SPAs)
+  const loginButtons = document.querySelectorAll('button');
+  loginButtons.forEach(button => {
+    const text = (button.textContent || '').toLowerCase();
+    if ((text.includes('log in') || text.includes('login') || text.includes('sign in') || text.includes('signin')) &&
+        !button.dataset.safepassLoginWatch) {
+      button.dataset.safepassLoginWatch = 'true';
+      
+      button.addEventListener('click', () => {
+        setTimeout(() => {
+          // Find nearby password field
+          const passwordFields = document.querySelectorAll('input[type="password"]');
+          passwordFields.forEach(pwField => {
+            if (pwField.value && pwField.value.length >= 4) {
+              const container = pwField.closest('form') || pwField.closest('div[class*="form"]') || 
+                               pwField.parentElement?.parentElement?.parentElement?.parentElement;
+              if (container) {
+                const credentials = captureCredentialsFromContainer(container, pwField);
+                if (credentials) {
+                  showSavePrompt(credentials);
+                }
+              }
+            }
+          });
+        }, 200);
+      });
+    }
+  });
+}
+
+function captureCredentialsFromContainer(container, passwordField) {
+  const usernameSelectors = [
+    'input[type="email"]',
+    'input[autocomplete="username"]',
+    'input[autocomplete="email"]',
+    'input[type="text"][name*="user"]',
+    'input[type="text"][name*="email"]',
+    'input[type="text"][name*="login"]',
+    'input[type="text"]'
+  ];
+  
+  let usernameField = null;
+  for (const selector of usernameSelectors) {
+    usernameField = container.querySelector(selector);
+    if (usernameField && usernameField.value && usernameField !== passwordField) break;
+  }
+  
+  if (passwordField?.value && usernameField?.value) {
+    return {
+      website: window.location.hostname,
+      username: usernameField.value,
+      password: passwordField.value,
+      title: document.title || window.location.hostname
+    };
+  }
+  return null;
 }
 
 // ===== INITIALIZATION =====
