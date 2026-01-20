@@ -125,7 +125,12 @@ serve(async (req) => {
 
     const priceId = safeSuiteSubscription.items.data[0]?.price?.id;
     const tier = safeSuiteSubscription.metadata?.tier || PRICE_TO_TIER[priceId || ''] || 'pro';
-    const subscriptionEnd = new Date(safeSuiteSubscription.current_period_end * 1000).toISOString();
+    
+    // Safely parse dates with fallback
+    const periodEnd = safeSuiteSubscription.current_period_end;
+    const periodStart = safeSuiteSubscription.current_period_start;
+    const subscriptionEnd = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+    const subscriptionStart = periodStart ? new Date(periodStart * 1000).toISOString() : null;
     
     logStep("Active SafeSuite subscription found", { 
       subscriptionId: safeSuiteSubscription.id, 
@@ -134,19 +139,22 @@ serve(async (req) => {
     });
 
     // Update database subscription record
+    const updateData: Record<string, any> = {
+      user_id: user.id,
+      tier: tier,
+      stripe_subscription_id: safeSuiteSubscription.id,
+      stripe_customer_id: customerId,
+      stripe_price_id: priceId,
+      cancel_at_period_end: safeSuiteSubscription.cancel_at_period_end,
+      status: safeSuiteSubscription.status
+    };
+    
+    if (subscriptionStart) updateData.current_period_start = subscriptionStart;
+    if (subscriptionEnd) updateData.current_period_end = subscriptionEnd;
+    
     await supabaseClient
       .from('safesuite_subscriptions')
-      .upsert({
-        user_id: user.id,
-        tier: tier,
-        stripe_subscription_id: safeSuiteSubscription.id,
-        stripe_customer_id: customerId,
-        stripe_price_id: priceId,
-        current_period_start: new Date(safeSuiteSubscription.current_period_start * 1000).toISOString(),
-        current_period_end: subscriptionEnd,
-        cancel_at_period_end: safeSuiteSubscription.cancel_at_period_end,
-        status: safeSuiteSubscription.status
-      }, { onConflict: 'user_id' });
+      .upsert(updateData, { onConflict: 'user_id' });
 
     return new Response(JSON.stringify({
       subscribed: true,
