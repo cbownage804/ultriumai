@@ -44,20 +44,38 @@ export function useSafeSuiteSubscription() {
     try {
       setLoading(true);
       
-      // Call edge function to check subscription status
-      const { data, error: fnError } = await supabase.functions.invoke('safesuite-check-access', {
-        body: { userId: user.id }
-      });
+      // First try to get subscription from database directly (faster)
+      const { data: dbSub, error: dbError } = await supabase
+        .from('safesuite_subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (dbSub && dbSub.status === 'active' && dbSub.tier !== 'free') {
+        // We have an active paid subscription in the database
+        setSubscription({
+          tier: dbSub.tier as SafeSuiteTier,
+          status: dbSub.status as 'active' | 'canceled' | 'past_due' | 'trialing',
+          currentPeriodEnd: dbSub.current_period_end,
+          stripeSubscriptionId: dbSub.stripe_subscription_id,
+          stripeCustomerId: dbSub.stripe_customer_id
+        });
+        setLoading(false);
+        return;
+      }
+
+      // If no active paid sub in DB, verify with Stripe via edge function
+      const { data, error: fnError } = await supabase.functions.invoke('safesuite-check-subscription');
 
       if (fnError) throw fnError;
 
-      if (data?.subscription) {
+      if (data?.subscribed && data?.tier) {
         setSubscription({
-          tier: data.subscription.tier || 'free',
-          status: data.subscription.status || 'active',
-          currentPeriodEnd: data.subscription.current_period_end,
-          stripeSubscriptionId: data.subscription.stripe_subscription_id,
-          stripeCustomerId: data.subscription.stripe_customer_id
+          tier: data.tier || 'free',
+          status: 'active',
+          currentPeriodEnd: data.subscription_end,
+          stripeSubscriptionId: null,
+          stripeCustomerId: null
         });
       } else {
         // Default to free tier
@@ -130,8 +148,8 @@ export function useSafeSuiteUsage() {
 
     try {
       // Fetch usage from edge function
-      const { data, error } = await supabase.functions.invoke('safesuite-check-access', {
-        body: { userId: user.id, includeUsage: true }
+      const { data, error } = await supabase.functions.invoke('safesuite-usage', {
+        body: { userId: user.id }
       });
 
       if (error) throw error;
