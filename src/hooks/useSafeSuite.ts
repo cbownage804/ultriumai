@@ -251,12 +251,29 @@ export function useSafeSuiteCheckout() {
 
   const createCheckout = useCallback(async (
     tier: SafeSuiteTier,
-    interval: 'monthly' | 'yearly' = 'monthly'
+    interval: 'monthly' | 'yearly' = 'monthly',
+    seats?: number
   ): Promise<string | null> => {
     setLoading(true);
     setError(null);
 
     try {
+      // Business tier uses dedicated team checkout function with seats
+      if (tier === 'business') {
+        const { data, error: fnError } = await supabase.functions.invoke('safesuite-team-checkout', {
+          body: { seats: seats || 5, yearly: interval === 'yearly' }
+        });
+
+        if (fnError) throw fnError;
+
+        if (data?.url) {
+          return data.url;
+        }
+
+        throw new Error('No checkout URL returned');
+      }
+
+      // Pro tier uses standard checkout
       const { data, error: fnError } = await supabase.functions.invoke('safesuite-checkout', {
         body: { tier, interval }
       });
