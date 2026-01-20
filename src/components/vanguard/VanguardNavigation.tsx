@@ -136,6 +136,7 @@ export function VanguardNavigation() {
       icon: Settings,
       items: [
         { title: 'Multi-Tenant', path: `${basePath}/tenants`, icon: Building2 },
+        { title: 'SafeSuite Admin', path: `${basePath}/safesuite-admin`, icon: Shield, isNew: true },
         { title: 'SafePass Admin', path: `${basePath}/safepass-admin`, icon: Users },
         { title: 'API Marketplace', path: `${basePath}/marketplace`, icon: Store },
         { title: 'Setup', path: `${basePath}/setup`, icon: Settings },
