@@ -34,6 +34,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TOTPManager } from './TOTPManager';
+import { EntryAttachments } from './EntryAttachments';
+import { ShareEntry } from './ShareEntry';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 
@@ -657,6 +659,12 @@ export const PasswordVault = () => {
                       <p className="text-sm text-muted-foreground">{entry.notes}</p>
                     </div>
                   )}
+                  
+                  {/* Attachments and Sharing */}
+                  <div className="flex items-center gap-2 pt-2 border-t mt-2">
+                    <EntryAttachments entryId={entry.id} entryTitle={entry.title} />
+                    <ShareEntry entryId={entry.id} entryTitle={entry.title} vaultId={entry.vault_id} />
+                  </div>
                 </div>
                 
                 <div className="flex gap-1 ml-4">

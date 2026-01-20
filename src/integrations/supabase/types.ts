@@ -12021,6 +12021,48 @@ export type Database = {
         }
         Relationships: []
       }
+      safepass_breach_scans: {
+        Row: {
+          completed_at: string | null
+          compromised_count: number | null
+          created_at: string
+          id: string
+          overall_score: number | null
+          reused_count: number | null
+          scan_results: Json | null
+          scan_type: string
+          total_entries_scanned: number | null
+          user_id: string
+          weak_count: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          compromised_count?: number | null
+          created_at?: string
+          id?: string
+          overall_score?: number | null
+          reused_count?: number | null
+          scan_results?: Json | null
+          scan_type?: string
+          total_entries_scanned?: number | null
+          user_id: string
+          weak_count?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          compromised_count?: number | null
+          created_at?: string
+          id?: string
+          overall_score?: number | null
+          reused_count?: number | null
+          scan_results?: Json | null
+          scan_type?: string
+          total_entries_scanned?: number | null
+          user_id?: string
+          weak_count?: number | null
+        }
+        Relationships: []
+      }
       safepass_emergency_access: {
         Row: {
           access_type: string
@@ -12085,6 +12127,7 @@ export type Database = {
           created_at: string
           encrypted_data: Json
           entry_type: string
+          expiration_reminder_sent: boolean | null
           folder_id: string | null
           id: string
           is_compromised: boolean | null
@@ -12109,6 +12152,7 @@ export type Database = {
           created_at?: string
           encrypted_data: Json
           entry_type?: string
+          expiration_reminder_sent?: boolean | null
           folder_id?: string | null
           id?: string
           is_compromised?: boolean | null
@@ -12133,6 +12177,7 @@ export type Database = {
           created_at?: string
           encrypted_data?: Json
           entry_type?: string
+          expiration_reminder_sent?: boolean | null
           folder_id?: string | null
           id?: string
           is_compromised?: boolean | null
@@ -12163,6 +12208,50 @@ export type Database = {
             columns: ["vault_id"]
             isOneToOne: false
             referencedRelation: "safepass_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_expiration_reminders: {
+        Row: {
+          created_at: string
+          dismissed_at: string | null
+          due_date: string
+          entry_id: string
+          id: string
+          is_dismissed: boolean | null
+          notification_sent: boolean | null
+          reminder_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed_at?: string | null
+          due_date: string
+          entry_id: string
+          id?: string
+          is_dismissed?: boolean | null
+          notification_sent?: boolean | null
+          reminder_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed_at?: string | null
+          due_date?: string
+          entry_id?: string
+          id?: string
+          is_dismissed?: boolean | null
+          notification_sent?: boolean | null
+          reminder_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_expiration_reminders_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_entries"
             referencedColumns: ["id"]
           },
         ]
@@ -12424,6 +12513,66 @@ export type Database = {
             columns: ["entry_id"]
             isOneToOne: false
             referencedRelation: "safepass_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safepass_shared_access: {
+        Row: {
+          access_count: number | null
+          created_at: string
+          entry_id: string | null
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          owner_user_id: string
+          permission_level: string
+          shared_at: string
+          shared_with_email: string | null
+          shared_with_user_id: string | null
+          vault_id: string
+        }
+        Insert: {
+          access_count?: number | null
+          created_at?: string
+          entry_id?: string | null
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          owner_user_id: string
+          permission_level?: string
+          shared_at?: string
+          shared_with_email?: string | null
+          shared_with_user_id?: string | null
+          vault_id: string
+        }
+        Update: {
+          access_count?: number | null
+          created_at?: string
+          entry_id?: string | null
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          owner_user_id?: string
+          permission_level?: string
+          shared_at?: string
+          shared_with_email?: string | null
+          shared_with_user_id?: string | null
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safepass_shared_access_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safepass_shared_access_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safepass_vaults"
             referencedColumns: ["id"]
           },
         ]
