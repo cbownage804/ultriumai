@@ -2,7 +2,9 @@
  * Subdomain detection utilities for routing
  */
 
-export function getSubdomain(): string | null {
+export type AppSubdomain = 'vanguard' | 'safesuite' | null;
+
+export function getSubdomain(): AppSubdomain {
   const hostname = window.location.hostname;
   
   // Handle localhost development
@@ -18,41 +20,46 @@ export function getSubdomain(): string | null {
   // Handle preview URLs (e.g., xxx.lovableproject.com)
   if (hostname.includes('lovableproject.com') || hostname.includes('lovable.app')) {
     const parts = hostname.split('.');
-    // If there's a subdomain before the main domain
     if (parts.length > 2) {
       const subdomain = parts[0];
-      // Check if it's a vanguard subdomain
-      if (subdomain === 'vanguard') {
-        return 'vanguard';
-      }
+      if (subdomain === 'vanguard') return 'vanguard';
+      if (subdomain === 'safesuite') return 'safesuite';
     }
     return null;
   }
   
-  // Handle custom domains with subdomains (e.g., vanguard.ultriumai.com)
+  // Handle custom domains with subdomains
   const parts = hostname.split('.');
   if (parts.length >= 3) {
     const subdomain = parts[0];
-    if (subdomain === 'vanguard') {
-      return 'vanguard';
-    }
+    if (subdomain === 'vanguard') return 'vanguard';
+    if (subdomain === 'safesuite') return 'safesuite';
   }
   
   return null;
 }
 
 export function isVanguardDomain(): boolean {
-  const subdomain = getSubdomain();
-  return subdomain === 'vanguard';
+  return getSubdomain() === 'vanguard';
+}
+
+export function isSafeSuiteDomain(): boolean {
+  return getSubdomain() === 'safesuite';
 }
 
 export function getVanguardBasePath(): string {
   const subdomain = getSubdomain();
-  // If on vanguard subdomain, protected routes are at /app
   if (subdomain === 'vanguard') {
     return '/app';
   }
-  // Otherwise, use /vanguard prefix
   return '/vanguard';
+}
+
+export function getSafeSuiteBasePath(): string {
+  const subdomain = getSubdomain();
+  if (subdomain === 'safesuite') {
+    return '/';
+  }
+  return '/safesuite';
 }
 

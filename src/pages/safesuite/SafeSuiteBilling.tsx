@@ -1,0 +1,256 @@
+/**
+ * SafeSuite Billing Page
+ * Subscription management and tier upgrades
+ */
+
+import { useState } from 'react';
+import { useSafeSuiteSubscription, useSafeSuiteCheckout } from '@/hooks/useSafeSuite';
+import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, SafeSuiteTier, TierFeatures } from '@/config/safeSuiteTiers';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  Check,
+  Crown,
+  Sparkles,
+  Lock,
+  CreditCard,
+  Calendar,
+  Loader2,
+  ExternalLink
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+
+export default function SafeSuiteBilling() {
+  const { subscription, tier, tierConfig, loading: subLoading } = useSafeSuiteSubscription();
+  const { createCheckout, openCustomerPortal, loading: checkoutLoading } = useSafeSuiteCheckout();
+  const [yearlyBilling, setYearlyBilling] = useState(false);
+
+  const handleUpgrade = async (targetTier: SafeSuiteTier) => {
+    const url = await createCheckout(targetTier, yearlyBilling ? 'yearly' : 'monthly');
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      toast.error('Failed to create checkout session');
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    const url = await openCustomerPortal();
+    if (url) {
+      window.open(url, '_blank');
+    } else {
+      toast.error('Failed to open customer portal');
+    }
+  };
+
+  const tiers = Object.values(SAFESUITE_TIERS);
+
+  return (
+    <div className="space-y-8 max-w-5xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold">Billing & Subscription</h1>
+        <p className="text-muted-foreground">
+          Manage your SafeSuite subscription and billing
+        </p>
+      </div>
+
+      {/* Current Plan Card */}
+      {subscription && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" />
+              Current Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl font-semibold">{tierConfig.name}</span>
+                  <Badge variant={tier === 'free' ? 'secondary' : 'default'}>
+                    {tier === 'business' && <Crown className="h-3 w-3 mr-1" />}
+                    {tier === 'pro' && <Sparkles className="h-3 w-3 mr-1" />}
+                    {tierConfig.badge}
+                  </Badge>
+                </div>
+                {subscription.currentPeriodEnd && tier !== 'free' && (
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+              {tier !== 'free' && (
+                <Button variant="outline" onClick={handleManageSubscription} disabled={checkoutLoading}>
+                  {checkoutLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      Manage Subscription
+                      <ExternalLink className="h-4 w-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Billing Toggle */}
+      <div className="flex items-center justify-center gap-4">
+        <Label htmlFor="billing-toggle" className={cn(!yearlyBilling && 'text-foreground font-medium')}>
+          Monthly
+        </Label>
+        <Switch
+          id="billing-toggle"
+          checked={yearlyBilling}
+          onCheckedChange={setYearlyBilling}
+        />
+        <Label htmlFor="billing-toggle" className={cn(yearlyBilling && 'text-foreground font-medium')}>
+          Yearly
+          <Badge variant="secondary" className="ml-2">Save 20%</Badge>
+        </Label>
+      </div>
+
+      {/* Pricing Grid */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {tiers.map((tierConfig) => {
+          const isCurrentTier = tier === tierConfig.id;
+          const isDowngrade = 
+            (tier === 'business' && (tierConfig.id === 'pro' || tierConfig.id === 'free')) ||
+            (tier === 'pro' && tierConfig.id === 'free');
+          const isUpgrade = 
+            (tier === 'free' && (tierConfig.id === 'pro' || tierConfig.id === 'business')) ||
+            (tier === 'pro' && tierConfig.id === 'business');
+
+          return (
+            <Card
+              key={tierConfig.id}
+              className={cn(
+                'relative',
+                isCurrentTier && 'border-primary shadow-lg',
+                tierConfig.popular && 'border-primary/50'
+              )}
+            >
+              {isCurrentTier && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-primary">Current Plan</Badge>
+                </div>
+              )}
+              {!isCurrentTier && tierConfig.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge variant="secondary" className="gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    Most Popular
+                  </Badge>
+                </div>
+              )}
+              <CardHeader className="text-center pb-2">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  {tierConfig.id === 'business' && <Crown className="h-5 w-5 text-amber-500" />}
+                  <CardTitle>{tierConfig.name}</CardTitle>
+                </div>
+                <CardDescription>{tierConfig.description}</CardDescription>
+                <div className="pt-4">
+                  <span className="text-4xl font-bold">
+                    {tierConfig.price === 0 ? 'Free' : formatMonthlyPrice(tierConfig, yearlyBilling)}
+                  </span>
+                  {tierConfig.price > 0 && (
+                    <span className="text-muted-foreground block text-sm mt-1">
+                      billed {yearlyBilling ? 'annually' : 'monthly'}
+                    </span>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Separator className="mb-4" />
+                <ul className="space-y-3">
+                  {Object.entries(tierConfig.features).map(([key, value]) => {
+                    const featureInfo = FEATURE_DESCRIPTIONS[key as keyof TierFeatures];
+                    return (
+                      <li key={key} className="flex items-center gap-2">
+                        {value.enabled ? (
+                          <Check className="h-4 w-4 text-success flex-shrink-0" />
+                        ) : (
+                          <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                        <span className={cn(!value.enabled && 'text-muted-foreground')}>
+                          {featureInfo.name}
+                          {value.enabled && (
+                            <span className="text-muted-foreground text-sm ml-1">
+                              ({value.limit === -1 ? 'Unlimited' : value.limit})
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                {isCurrentTier ? (
+                  <Button variant="outline" className="w-full" disabled>
+                    Current Plan
+                  </Button>
+                ) : isDowngrade ? (
+                  <Button variant="ghost" className="w-full" onClick={handleManageSubscription}>
+                    Downgrade
+                  </Button>
+                ) : (
+                  <Button 
+                    className="w-full" 
+                    variant={tierConfig.popular ? 'default' : 'outline'}
+                    onClick={() => handleUpgrade(tierConfig.id)}
+                    disabled={checkoutLoading}
+                  >
+                    {checkoutLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      `Upgrade to ${tierConfig.name}`
+                    )}
+                  </Button>
+                )}
+              </CardFooter>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* FAQ Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Frequently Asked Questions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <h4 className="font-medium mb-1">Can I cancel anytime?</h4>
+            <p className="text-sm text-muted-foreground">
+              Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your billing period.
+            </p>
+          </div>
+          <Separator />
+          <div>
+            <h4 className="font-medium mb-1">What happens to my data if I downgrade?</h4>
+            <p className="text-sm text-muted-foreground">
+              Your data is never deleted. If you downgrade and exceed limits, you'll still be able to view your data but won't be able to add new items until you're under the limit.
+            </p>
+          </div>
+          <Separator />
+          <div>
+            <h4 className="font-medium mb-1">Do you offer refunds?</h4>
+            <p className="text-sm text-muted-foreground">
+              We offer a 14-day money-back guarantee on all paid plans. Contact support if you're not satisfied.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

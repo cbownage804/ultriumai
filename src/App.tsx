@@ -11,9 +11,17 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute';
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
-import { isVanguardDomain } from '@/utils/subdomain';
+import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
+
+// SafeSuite imports
+import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
+import SafeSuiteLanding from '@/pages/safesuite/SafeSuiteLanding';
+import SafeSuiteAuth from '@/pages/safesuite/SafeSuiteAuth';
+import SafeSuiteDashboard from '@/pages/safesuite/SafeSuiteDashboard';
+import SafeSuiteBilling from '@/pages/safesuite/SafeSuiteBilling';
+import SafeSuiteSettings from '@/pages/safesuite/SafeSuiteSettings';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
