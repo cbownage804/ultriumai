@@ -1,0 +1,170 @@
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Download, Chrome, Monitor, CheckCircle2, ExternalLink } from "lucide-react";
+import JSZip from "jszip";
+import { toast } from "sonner";
+
+const SafePassExtension = () => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadExtension = async () => {
+    setIsDownloading(true);
+    try {
+      const zip = new JSZip();
+      
+      // Fetch all extension files
+      const files = [
+        'manifest.json',
+        'background.js',
+        'content.js',
+        'content.css',
+        'popup.html',
+        'popup.js',
+        'popup.css',
+        'icons/icon16.png',
+        'icons/icon32.png',
+        'icons/icon48.png',
+        'icons/icon128.png'
+      ];
+
+      for (const file of files) {
+        try {
+          const response = await fetch(`/safepass-extension/${file}`);
+          if (response.ok) {
+            const content = await response.blob();
+            zip.file(file, content);
+          }
+        } catch (e) {
+          console.warn(`Could not fetch ${file}`, e);
+        }
+      }
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "safepass-extension.zip";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success("Extension downloaded successfully!");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download extension");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const steps = [
+    "Download the extension ZIP file",
+    "Extract the ZIP to a folder on your computer",
+    "Open Chrome/Edge and go to chrome://extensions or edge://extensions",
+    "Enable 'Developer mode' (toggle in top right)",
+    "Click 'Load unpacked' and select the extracted folder",
+    "The SafePass icon will appear in your browser toolbar"
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Browser Extension</h1>
+        <p className="text-muted-foreground mt-1">
+          Install the SafePass extension for seamless autofill
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-primary" />
+              Download Extension
+            </CardTitle>
+            <CardDescription>
+              Get the SafePass browser extension for Chrome and Edge
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+                <Chrome className="h-5 w-5" />
+                <span className="text-sm font-medium">Chrome</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+                <Monitor className="h-5 w-5" />
+                <span className="text-sm font-medium">Edge</span>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={downloadExtension} 
+              disabled={isDownloading}
+              className="w-full"
+              size="lg"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {isDownloading ? "Preparing download..." : "Download Extension (ZIP)"}
+            </Button>
+
+            <p className="text-xs text-muted-foreground">
+              Version 1.1.0 • Manifest V3 • Works on Chrome 88+ and Edge
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Installation Steps</CardTitle>
+            <CardDescription>
+              Follow these steps to install the extension
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ol className="space-y-3">
+              {steps.map((step, index) => (
+                <li key={index} className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-medium flex items-center justify-center">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm text-muted-foreground">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            Extension Features
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { title: "Auto-detect Login Forms", desc: "Automatically finds username and password fields" },
+              { title: "One-Click Autofill", desc: "Fill credentials with a single click" },
+              { title: "Secure Vault Sync", desc: "Syncs with your SafePass vault via Supabase" },
+              { title: "Save New Passwords", desc: "Prompts to save new credentials when you sign up" },
+              { title: "AES-256 Encryption", desc: "All data encrypted with your master password" },
+              { title: "Offline Access", desc: "Cached credentials work without internet" }
+            ].map((feature, i) => (
+              <div key={i} className="p-3 rounded-lg bg-muted/50">
+                <h4 className="font-medium text-sm">{feature.title}</h4>
+                <p className="text-xs text-muted-foreground mt-1">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default SafePassExtension;
