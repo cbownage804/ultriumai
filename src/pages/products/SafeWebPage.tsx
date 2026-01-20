@@ -8,6 +8,7 @@ import { VanguardUpsell } from "@/components/products/VanguardUpsell";
 import { Search, Check, Star, Zap, Users, ArrowRight, Play, AlertTriangle, Eye, Globe, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroWeb from "@/assets/hero-web.jpg";
+import { safeSuiteProducts } from "@/components/safesuite/SafeSuiteProductIcons";
 
 const SafeWebPage = () => {
   const features = [
@@ -93,6 +94,13 @@ const SafeWebPage = () => {
                 <Eye className="h-3 w-3 mr-1" />
                 Dark Web Intelligence
               </Badge>
+              <div className="flex justify-center mb-6">
+                <img 
+                  src={safeSuiteProducts.safeweb.logo} 
+                  alt="SafeWeb" 
+                  className="h-20 w-20 object-contain"
+                />
+              </div>
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
                 Ultrium SafeWeb™
               </h1>

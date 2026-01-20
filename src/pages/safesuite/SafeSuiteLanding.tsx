@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
-import { safeSuiteProducts, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safeSuiteProducts, safesuiteLogo, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
 import {
   Shield,
   Check,
@@ -28,9 +28,11 @@ export default function SafeSuiteLanding() {
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/safesuite" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
-              <Shield className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img 
+              src={safesuiteLogo} 
+              alt="SafeSuite" 
+              className="h-10 w-10 rounded-lg object-contain"
+            />
             <span className="font-bold text-xl">SafeSuite</span>
           </Link>
           <div className="flex items-center gap-4">

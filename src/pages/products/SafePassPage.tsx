@@ -8,6 +8,7 @@ import { VanguardUpsell } from "@/components/products/VanguardUpsell";
 import { Lock, Check, Star, Zap, Users, ArrowRight, Play, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroPassword from "@/assets/hero-password.jpg";
+import { safeSuiteProducts } from "@/components/safesuite/SafeSuiteProductIcons";
 
 const SafePassPage = () => {
   const features = [
@@ -94,6 +95,13 @@ const SafePassPage = () => {
                 <Lock className="h-3 w-3 mr-1" />
                 Enterprise Password Security
               </Badge>
+              <div className="flex justify-center mb-6">
+                <img 
+                  src={safeSuiteProducts.safepass.logo} 
+                  alt="SafePass" 
+                  className="h-20 w-20 object-contain"
+                />
+              </div>
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
                 Ultrium SafePass™
               </h1>

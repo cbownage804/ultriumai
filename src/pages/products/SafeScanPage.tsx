@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import heroScan from "@/assets/hero-scan.jpg";
+import { safeSuiteProducts } from "@/components/safesuite/SafeSuiteProductIcons";
 
 const SafeScanPage = () => {
   const [showFullApp, setShowFullApp] = useState(false);
@@ -233,6 +234,13 @@ const SafeScanPage = () => {
                 <Shield className="h-3 w-3 mr-1" />
                 AI-Powered Threat Detection
               </Badge>
+              <div className="flex justify-center mb-6">
+                <img 
+                  src={safeSuiteProducts.safescan.logo} 
+                  alt="SafeScan" 
+                  className="h-20 w-20 object-contain"
+                />
+              </div>
               <h1 className="text-4xl md:text-6xl font-bold mb-6">
                 Ultrium SafeScan™
               </h1>
