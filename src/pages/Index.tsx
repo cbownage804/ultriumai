@@ -88,34 +88,34 @@ const Index = () => {
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in flex-wrap">
               <Link to="/ai-studio">
-                <Button size="lg" className="text-lg px-8 py-8 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3">
-                  <div className="h-14 w-14 rounded-xl bg-black p-2 flex items-center justify-center overflow-hidden">
+                <Button size="lg" className="text-lg px-10 py-10 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col items-center gap-4">
+                  <div className="h-20 w-20 rounded-2xl bg-black p-2 flex items-center justify-center overflow-hidden">
                     <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
                   </div>
-                  <span>Explore AI Studio</span>
+                  <span className="text-xl font-semibold">Explore AI Studio</span>
                 </Button>
               </Link>
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="text-lg px-8 py-8 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3"
+                className="text-lg px-10 py-10 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-4"
                 onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
               >
-                <div className="h-14 w-14 rounded-xl bg-black p-2 flex items-center justify-center overflow-hidden">
+                <div className="h-20 w-20 rounded-2xl bg-black p-2 flex items-center justify-center overflow-hidden">
                   <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
                 </div>
-                <span>Explore Vanguard</span>
+                <span className="text-xl font-semibold">Explore Vanguard</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="text-lg px-8 py-8 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-3"
+                className="text-lg px-10 py-10 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-4"
                 onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
               >
-                <div className="h-14 w-14 rounded-xl bg-black p-2 flex items-center justify-center overflow-hidden">
+                <div className="h-20 w-20 rounded-2xl bg-black p-2 flex items-center justify-center overflow-hidden">
                   <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
                 </div>
-                <span>Try SafeSuite</span>
+                <span className="text-xl font-semibold">Try SafeSuite</span>
               </Button>
             </div>
           </div>
