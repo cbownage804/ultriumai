@@ -27,6 +27,10 @@ import SafeSuitePass from '@/pages/safesuite/SafeSuitePass';
 import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
 import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
 import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
+import SafePassSettings from '@/pages/safesuite/SafePassSettings';
+import SafeScanSettings from '@/pages/safesuite/SafeScanSettings';
+import SafeWebSettings from '@/pages/safesuite/SafeWebSettings';
+import SafeTrackSettings from '@/pages/safesuite/SafeTrackSettings';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
@@ -603,9 +607,13 @@ function AppRouter() {
           <Route path="/safesuite/pass" element={<SafeSuitePass />} />
           <Route path="/safesuite/pass/import" element={<SafePassImport />} />
           <Route path="/safesuite/pass/export" element={<SafePassExport />} />
+          <Route path="/safesuite/pass/settings" element={<SafePassSettings />} />
           <Route path="/safesuite/scan" element={<SafeSuiteScan />} />
+          <Route path="/safesuite/scan/settings" element={<SafeScanSettings />} />
           <Route path="/safesuite/web" element={<SafeSuiteWeb />} />
+          <Route path="/safesuite/web/settings" element={<SafeWebSettings />} />
           <Route path="/safesuite/track" element={<SafeSuiteTrack />} />
+          <Route path="/safesuite/track/settings" element={<SafeTrackSettings />} />
           <Route path="/safesuite/billing" element={<SafeSuiteBilling />} />
           <Route path="/safesuite/settings" element={<SafeSuiteSettings />} />
         </Route>
