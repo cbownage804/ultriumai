@@ -12,6 +12,7 @@ import SubscriptionProtectedRoute from '@/components/SubscriptionProtectedRoute'
 import EnhancedErrorBoundary from '@/components/EnhancedErrorBoundary';
 import CookieConsent from '@/components/CookieConsent';
 import { isVanguardDomain, isSafeSuiteDomain } from '@/utils/subdomain';
+import { SafeSuiteSubdomainRoutes } from '@/components/SubdomainRouter';
 import { VanguardLayout } from '@/components/vanguard/VanguardLayout';
 import { getVanguardProtectedRoutes, getVanguardPublicRoutes } from '@/routes/vanguardRoutes';
 
@@ -179,8 +180,9 @@ function AppRouter() {
   const { trackPageView, identifyUser } = useAnalytics();
   useScrollToTop();
   
-  // Check if we're on Vanguard subdomain
+  // Check if we're on subdomains
   const isVanguard = isVanguardDomain();
+  const isSafeSuite = isSafeSuiteDomain();
 
   // Track page views
   useEffect(() => {
@@ -220,6 +222,16 @@ function AppRouter() {
     if (location.pathname.includes('safescan')) return 'safescan';
     return 'ultrium';
   };
+
+  // If on SafeSuite subdomain (safesuite.ultriumai.com), render SafeSuite-specific routes
+  if (isSafeSuite) {
+    return (
+      <EnhancedErrorBoundary context="SafeSuite Application" level="critical">
+        <SafeSuiteSubdomainRoutes />
+        <CookieConsent />
+      </EnhancedErrorBoundary>
+    );
+  }
 
   // If on Vanguard subdomain, render Vanguard-specific routes
   if (isVanguard) {
