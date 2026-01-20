@@ -1,0 +1,169 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Map Stripe price IDs to tiers
+const PRICE_TO_TIER: Record<string, string> = {
+  "price_safesuite_pro_monthly": "pro",
+  "price_safesuite_pro_yearly": "pro",
+  "price_safesuite_business_monthly": "business",
+  "price_safesuite_business_yearly": "business"
+};
+
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[SAFESUITE-CHECK-SUB] ${step}${detailsStr}`);
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const supabaseClient = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } }
+  );
+
+  try {
+    logStep("Function started");
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
+    const user = userData.user;
+    if (!user?.email) throw new Error("User not authenticated or email not available");
+    logStep("User authenticated", { userId: user.id, email: user.email });
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    
+    // Check for existing customer
+    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+    
+    if (customers.data.length === 0) {
+      logStep("No Stripe customer found, returning free tier");
+      
+      // Ensure user has a free subscription record
+      await supabaseClient
+        .from('safesuite_subscriptions')
+        .upsert({
+          user_id: user.id,
+          tier: 'free',
+          status: 'active'
+        }, { onConflict: 'user_id' });
+      
+      return new Response(JSON.stringify({
+        subscribed: false,
+        tier: 'free',
+        subscription_end: null
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const customerId = customers.data[0].id;
+    logStep("Found Stripe customer", { customerId });
+
+    // Look for SafeSuite subscriptions
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+      limit: 10,
+    });
+
+    // Find a SafeSuite subscription
+    let safeSuiteSubscription = null;
+    for (const sub of subscriptions.data) {
+      if (sub.metadata?.product === 'safesuite') {
+        safeSuiteSubscription = sub;
+        break;
+      }
+      // Also check price IDs
+      const priceId = sub.items.data[0]?.price?.id;
+      if (priceId && PRICE_TO_TIER[priceId]) {
+        safeSuiteSubscription = sub;
+        break;
+      }
+    }
+
+    if (!safeSuiteSubscription) {
+      logStep("No active SafeSuite subscription found");
+      
+      // Ensure user has a free subscription record
+      await supabaseClient
+        .from('safesuite_subscriptions')
+        .upsert({
+          user_id: user.id,
+          tier: 'free',
+          status: 'active',
+          stripe_customer_id: customerId
+        }, { onConflict: 'user_id' });
+      
+      return new Response(JSON.stringify({
+        subscribed: false,
+        tier: 'free',
+        subscription_end: null
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const priceId = safeSuiteSubscription.items.data[0]?.price?.id;
+    const tier = safeSuiteSubscription.metadata?.tier || PRICE_TO_TIER[priceId || ''] || 'pro';
+    const subscriptionEnd = new Date(safeSuiteSubscription.current_period_end * 1000).toISOString();
+    
+    logStep("Active SafeSuite subscription found", { 
+      subscriptionId: safeSuiteSubscription.id, 
+      tier, 
+      endDate: subscriptionEnd 
+    });
+
+    // Update database subscription record
+    await supabaseClient
+      .from('safesuite_subscriptions')
+      .upsert({
+        user_id: user.id,
+        tier: tier,
+        stripe_subscription_id: safeSuiteSubscription.id,
+        stripe_customer_id: customerId,
+        stripe_price_id: priceId,
+        current_period_start: new Date(safeSuiteSubscription.current_period_start * 1000).toISOString(),
+        current_period_end: subscriptionEnd,
+        cancel_at_period_end: safeSuiteSubscription.cancel_at_period_end,
+        status: safeSuiteSubscription.status
+      }, { onConflict: 'user_id' });
+
+    return new Response(JSON.stringify({
+      subscribed: true,
+      tier: tier,
+      subscription_end: subscriptionEnd,
+      cancel_at_period_end: safeSuiteSubscription.cancel_at_period_end
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});
