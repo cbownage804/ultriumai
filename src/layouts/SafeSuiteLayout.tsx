@@ -31,6 +31,7 @@ import {
   Package,
   LayoutDashboard,
   Settings,
+  SlidersHorizontal,
   CreditCard,
   LogOut,
   Menu,
@@ -38,6 +39,7 @@ import {
   Crown,
   Lock,
   ChevronRight,
+  ChevronDown,
   Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -134,43 +136,80 @@ function TierBadge({ tier }: { tier: string }) {
   );
 }
 
+type NavSubItem = {
+  label: string;
+  path: string;
+};
+
 type NavItem = {
   id: string;
   label: string;
   path: string;
   icon: React.ComponentType<{ className?: string }>;
   feature: 'safepass' | 'safescan' | 'safeweb' | 'safetrack' | null;
+  subItems?: NavSubItem[];
 };
 
-function NavLink({ 
-  item, 
-  isActive, 
+function NavLink({
+  item,
+  isActive,
   isLocked,
-  onClick 
-}: { 
+  currentPath,
+  onClick
+}: {
   item: NavItem;
   isActive: boolean;
   isLocked: boolean;
+  currentPath: string;
   onClick?: () => void;
 }) {
   const Icon = item.icon;
+  const hasSubItems = Boolean(item.subItems?.length);
 
   return (
-    <Link
-      to={item.path}
-      onClick={onClick}
-      className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
-        'hover:bg-accent hover:text-accent-foreground',
-        isActive && 'bg-primary/10 text-primary font-medium',
-        isLocked && 'opacity-60'
+    <div className="space-y-1">
+      <Link
+        to={item.path}
+        onClick={onClick}
+        className={cn(
+          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
+          'hover:bg-accent hover:text-accent-foreground',
+          isActive && 'bg-primary/10 text-primary font-medium',
+          isLocked && 'opacity-60'
+        )}
+      >
+        <Icon className="h-5 w-5" />
+        <span className="flex-1">{item.label}</span>
+        {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+        {isActive && (hasSubItems ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        ))}
+      </Link>
+
+      {hasSubItems && isActive && (
+        <div className="ml-8 space-y-1">
+          {item.subItems!.map((sub) => {
+            const subActive = currentPath === sub.path;
+            return (
+              <Link
+                key={sub.path}
+                to={sub.path}
+                onClick={onClick}
+                className={cn(
+                  'block px-3 py-1.5 rounded-md text-sm transition-colors',
+                  'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  subActive && 'bg-primary/10 text-primary font-medium'
+                )}
+              >
+                {sub.label}
+              </Link>
+            );
+          })}
+        </div>
       )}
-    >
-      <Icon className="h-5 w-5" />
-      <span className="flex-1">{item.label}</span>
-      {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
-      {isActive && <ChevronRight className="h-4 w-4" />}
-    </Link>
+    </div>
   );
 }
 
@@ -178,8 +217,21 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
   const { tier, tierConfig } = useSafeSuiteSubscription();
   const navItems = getNavItems();
-  const basePath = getSafeSuitePath('');
   const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
+
+  const normalizedPath = isSafeSuiteDomain()
+    ? location.pathname
+    : location.pathname.replace(/^\/safesuite/, '');
+
+  const appSettingsPath = normalizedPath.startsWith('/pass')
+    ? getSafeSuitePath('/pass/settings')
+    : normalizedPath.startsWith('/scan')
+      ? getSafeSuitePath('/scan/settings')
+      : normalizedPath.startsWith('/web')
+        ? getSafeSuitePath('/web/settings')
+        : normalizedPath.startsWith('/track')
+          ? getSafeSuitePath('/track/settings')
+          : null;
 
   return (
     <aside className="flex flex-col h-full bg-card border-r border-border">
@@ -222,6 +274,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
               item={item}
               isActive={isActive}
               isLocked={isLocked}
+              currentPath={location.pathname}
               onClick={onItemClick}
             />
           );
@@ -230,12 +283,21 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
 
       {/* Footer links */}
       <div className="p-4 border-t border-border space-y-1">
+        {appSettingsPath && (
+          <Link
+            to={appSettingsPath}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <SlidersHorizontal className="h-5 w-5" />
+            <span>App Settings</span>
+          </Link>
+        )}
         <Link
           to={getSafeSuitePath('/settings')}
           className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
         >
           <Settings className="h-5 w-5" />
-          <span>Settings</span>
+          <span>Account</span>
         </Link>
         <Link
           to={getSafeSuitePath('/billing')}
