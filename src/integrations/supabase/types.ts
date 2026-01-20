@@ -12063,6 +12063,42 @@ export type Database = {
         }
         Relationships: []
       }
+      safepass_cards: {
+        Row: {
+          card_type: string | null
+          created_at: string
+          encrypted_data: string
+          holder_name: string
+          id: string
+          is_favorite: boolean | null
+          last_four: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_type?: string | null
+          created_at?: string
+          encrypted_data: string
+          holder_name: string
+          id?: string
+          is_favorite?: boolean | null
+          last_four: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_type?: string | null
+          created_at?: string
+          encrypted_data?: string
+          holder_name?: string
+          id?: string
+          is_favorite?: boolean | null
+          last_four?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       safepass_emergency_access: {
         Row: {
           access_type: string
@@ -12455,6 +12491,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safepass_notes: {
+        Row: {
+          created_at: string
+          encrypted_content: string
+          id: string
+          is_favorite: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_content: string
+          id?: string
+          is_favorite?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_content?: string
+          id?: string
+          is_favorite?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       safepass_password_history: {
         Row: {
