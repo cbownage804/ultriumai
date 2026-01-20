@@ -77,6 +77,7 @@ const getNavItems = () => [
       { label: 'Credit Cards', path: getSafeSuitePath('/pass/cards') },
       { label: 'Identity Profiles', path: getSafeSuitePath('/pass/identity') },
       { label: 'Password Health', path: getSafeSuitePath('/pass/health') },
+      { label: 'User Management', path: getSafeSuitePath('/pass/users') },
       { label: 'Shared With Me', path: getSafeSuitePath('/pass/shared') },
       { label: 'Emergency Access', path: getSafeSuitePath('/pass/emergency') },
       { label: 'Breach Monitor', path: getSafeSuitePath('/pass/breach') },
