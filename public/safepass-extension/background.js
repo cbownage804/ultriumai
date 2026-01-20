@@ -11,6 +11,7 @@ const DEFAULT_AUTO_LOCK_MS = 5 * 60 * 1000;
 
 // Cached data
 let cachedEntries = [];
+let cachedSharedEntries = []; // Business team shared entries
 let cachedTOTP = [];
 let cachedNotes = [];
 let cachedCards = [];
@@ -19,6 +20,7 @@ let lastSyncTime = 0;
 const SYNC_INTERVAL_MS = 2 * 60 * 1000; // Reduced to 2 minutes for faster sync
 const AUTO_SYNC_INTERVAL_MS = 30 * 1000; // Check for changes every 30 seconds
 let syncInProgress = false;
+let userTeamId = null; // Track if user is part of a business team
 
 // ===== AUTO-LOCK =====
 async function checkAutoLock() {
@@ -32,10 +34,12 @@ async function checkAutoLock() {
       console.log('[SafePass] Auto-locking vault due to inactivity');
       await chrome.storage.session.clear();
       cachedEntries = [];
+      cachedSharedEntries = [];
       cachedTOTP = [];
       cachedNotes = [];
       cachedCards = [];
       cachedIdentities = [];
+      userTeamId = null;
     }
   }
 }
@@ -127,6 +131,8 @@ chrome.commands.onCommand.addListener(async (command) => {
     case 'lock-vault':
       await chrome.storage.session.clear();
       cachedEntries = [];
+      cachedSharedEntries = [];
+      userTeamId = null;
       chrome.notifications.create({
         type: 'basic',
         iconUrl: 'icons/icon128.png',
@@ -303,12 +309,14 @@ async function handleMessage(message, sender) {
 // ===== SYNC VAULT =====
 async function syncVaultFromSupabase() {
   try {
+    syncInProgress = true;
     const session = await chrome.storage.session.get(['authToken', 'masterKey']);
     if (!session.authToken) {
+      syncInProgress = false;
       return { error: 'Not authenticated' };
     }
 
-    // Fetch vaults
+    // Fetch personal vaults
     const vaultsResponse = await fetch(`${SUPABASE_URL}/rest/v1/safepass_vaults?select=id,name`, {
       headers: {
         'apikey': SUPABASE_ANON_KEY,
@@ -321,48 +329,54 @@ async function syncVaultFromSupabase() {
     }
 
     const vaults = await vaultsResponse.json();
-    if (vaults.length === 0) {
-      cachedEntries = [];
-      return { success: true, entries: [] };
-    }
-
-    const vaultIds = vaults.map(v => v.id);
     
-    // Fetch password entries
-    const entriesResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/safepass_entries?vault_id=in.(${vaultIds.join(',')})&select=id,title,encrypted_username,encrypted_password,encrypted_url,category,is_favorite,url,is_breached,password_strength`, 
-      {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${session.authToken}`,
+    // Fetch personal entries if vaults exist
+    if (vaults.length > 0) {
+      const vaultIds = vaults.map(v => v.id);
+      
+      const entriesResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/safepass_entries?vault_id=in.(${vaultIds.join(',')})&select=id,title,encrypted_username,encrypted_password,encrypted_url,category,is_favorite,url,is_breached,password_strength`, 
+        {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${session.authToken}`,
+          }
         }
-      }
-    );
+      );
 
-    if (!entriesResponse.ok) {
-      throw new Error('Failed to fetch entries');
+      if (!entriesResponse.ok) {
+        throw new Error('Failed to fetch entries');
+      }
+
+      const entries = await entriesResponse.json();
+      
+      cachedEntries = entries.map(entry => ({
+        id: entry.id,
+        title: entry.title,
+        encrypted_username: entry.encrypted_username,
+        encrypted_password: entry.encrypted_password,
+        encrypted_url: entry.encrypted_url,
+        url: entry.url,
+        category: entry.category,
+        is_favorite: entry.is_favorite,
+        is_breached: entry.is_breached,
+        password_strength: entry.password_strength,
+        isShared: false
+      }));
+    } else {
+      cachedEntries = [];
     }
 
-    const entries = await entriesResponse.json();
-    
-    cachedEntries = entries.map(entry => ({
-      id: entry.id,
-      title: entry.title,
-      encrypted_username: entry.encrypted_username,
-      encrypted_password: entry.encrypted_password,
-      encrypted_url: entry.encrypted_url,
-      url: entry.url,
-      category: entry.category,
-      is_favorite: entry.is_favorite,
-      is_breached: entry.is_breached,
-      password_strength: entry.password_strength
-    }));
+    // Fetch shared team entries (Business tier)
+    await fetchSharedTeamEntries(session.authToken);
 
     lastSyncTime = Date.now();
     
     await chrome.storage.local.set({ 
       cachedEntries,
-      lastSyncTime 
+      cachedSharedEntries,
+      lastSyncTime,
+      userTeamId
     });
 
     // Also fetch TOTP, Notes, Cards, Identities
@@ -373,11 +387,110 @@ async function syncVaultFromSupabase() {
       fetchIdentities(session.authToken)
     ]);
 
-    console.log(`[SafePass] Synced ${cachedEntries.length} entries`);
-    return { success: true, entries: cachedEntries };
+    const totalEntries = cachedEntries.length + cachedSharedEntries.length;
+    console.log(`[SafePass] Synced ${cachedEntries.length} personal + ${cachedSharedEntries.length} shared entries`);
+    syncInProgress = false;
+    return { success: true, entries: cachedEntries, sharedEntries: cachedSharedEntries, total: totalEntries };
   } catch (error) {
     console.error('[SafePass] Sync error:', error);
+    syncInProgress = false;
     return { error: error.message };
+  }
+}
+
+// Fetch shared team entries for Business users
+async function fetchSharedTeamEntries(authToken) {
+  try {
+    // First check if user is part of a team
+    const membershipResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/safesuite_team_members?user_id=eq.self&status=eq.active&select=team_id,role`, 
+      {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${authToken}`,
+        }
+      }
+    );
+
+    if (!membershipResponse.ok) {
+      // Not a business user or no team membership
+      cachedSharedEntries = [];
+      userTeamId = null;
+      return;
+    }
+
+    const memberships = await membershipResponse.json();
+    if (!memberships || memberships.length === 0) {
+      cachedSharedEntries = [];
+      userTeamId = null;
+      return;
+    }
+
+    const teamId = memberships[0].team_id;
+    userTeamId = teamId;
+
+    // Fetch shared vaults for this team
+    const sharedVaultsResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/safesuite_shared_vaults?team_id=eq.${teamId}&select=id,name`, 
+      {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${authToken}`,
+        }
+      }
+    );
+
+    if (!sharedVaultsResponse.ok) {
+      cachedSharedEntries = [];
+      return;
+    }
+
+    const sharedVaults = await sharedVaultsResponse.json();
+    if (!sharedVaults || sharedVaults.length === 0) {
+      cachedSharedEntries = [];
+      return;
+    }
+
+    const sharedVaultIds = sharedVaults.map(v => v.id);
+
+    // Fetch shared entries from all team vaults
+    const sharedEntriesResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/safesuite_shared_entries?vault_id=in.(${sharedVaultIds.join(',')})&select=id,title,encrypted_data,website_url,entry_type,is_favorite,password_strength_score,folder,tags`, 
+      {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${authToken}`,
+        }
+      }
+    );
+
+    if (!sharedEntriesResponse.ok) {
+      cachedSharedEntries = [];
+      return;
+    }
+
+    const sharedEntries = await sharedEntriesResponse.json();
+    
+    // Map shared entries to match personal entry format
+    cachedSharedEntries = sharedEntries
+      .filter(e => e.entry_type === 'password')
+      .map(entry => ({
+        id: entry.id,
+        title: entry.title,
+        encrypted_data: entry.encrypted_data, // Contains username + password as JSON
+        url: entry.website_url,
+        category: entry.folder || 'shared',
+        is_favorite: entry.is_favorite,
+        password_strength: entry.password_strength_score,
+        tags: entry.tags,
+        isShared: true,
+        teamId: teamId
+      }));
+
+    console.log(`[SafePass] Fetched ${cachedSharedEntries.length} shared team entries`);
+  } catch (error) {
+    console.error('[SafePass] Failed to fetch shared entries:', error);
+    cachedSharedEntries = [];
   }
 }
 
@@ -547,10 +660,13 @@ async function getPasswordsForSite(hostname) {
 
     // Check if sync needed
     if (Date.now() - lastSyncTime > SYNC_INTERVAL_MS || cachedEntries.length === 0) {
-      const stored = await chrome.storage.local.get(['cachedEntries', 'lastSyncTime']);
+      const stored = await chrome.storage.local.get(['cachedEntries', 'cachedSharedEntries', 'lastSyncTime']);
       if (stored.cachedEntries) {
         cachedEntries = stored.cachedEntries;
         lastSyncTime = stored.lastSyncTime || 0;
+      }
+      if (stored.cachedSharedEntries) {
+        cachedSharedEntries = stored.cachedSharedEntries;
       }
       
       if (Date.now() - lastSyncTime > SYNC_INTERVAL_MS) {
@@ -560,6 +676,7 @@ async function getPasswordsForSite(hostname) {
 
     const matchingEntries = [];
     
+    // Process personal entries
     for (const entry of cachedEntries) {
       try {
         let entryUrl = entry.url || '';
@@ -592,7 +709,8 @@ async function getPasswordsForSite(hostname) {
             is_favorite: entry.is_favorite,
             isBreached: entry.is_breached,
             isWeak: entry.password_strength === 'weak',
-            hasPassword: !!entry.encrypted_password
+            hasPassword: !!entry.encrypted_password,
+            isShared: false
           });
         }
       } catch (error) {
@@ -600,7 +718,52 @@ async function getPasswordsForSite(hostname) {
       }
     }
 
-    return { entries: matchingEntries };
+    // Process shared team entries
+    for (const entry of cachedSharedEntries) {
+      try {
+        const entryUrl = entry.url || '';
+        
+        const matches = entryUrl && (
+          hostname.includes(extractHostname(entryUrl)) || 
+          extractHostname(entryUrl).includes(hostname)
+        );
+        
+        if (matches || !hostname) {
+          let username = '';
+          try {
+            if (entry.encrypted_data) {
+              const decrypted = JSON.parse(await decryptField(entry.encrypted_data, session.masterKey));
+              username = decrypted.username || '';
+            }
+          } catch {
+            username = '[shared]';
+          }
+          
+          matchingEntries.push({
+            id: entry.id,
+            title: `🔗 ${entry.title}`, // Prefix shared entries
+            username,
+            website: entryUrl,
+            is_favorite: entry.is_favorite,
+            isWeak: entry.password_strength && entry.password_strength < 60,
+            hasPassword: !!entry.encrypted_data,
+            isShared: true,
+            teamId: entry.teamId
+          });
+        }
+      } catch (error) {
+        console.error('[SafePass] Error processing shared entry:', error);
+      }
+    }
+
+    // Sort: favorites first, then personal, then shared
+    matchingEntries.sort((a, b) => {
+      if (a.is_favorite !== b.is_favorite) return b.is_favorite ? 1 : -1;
+      if (a.isShared !== b.isShared) return a.isShared ? 1 : -1;
+      return 0;
+    });
+
+    return { entries: matchingEntries, hasTeam: !!userTeamId };
   } catch (error) {
     console.error('[SafePass] getPasswordsForSite error:', error);
     return { entries: [], error: error.message };
@@ -613,12 +776,24 @@ async function getDecryptedPassword(entryId) {
     throw new Error('Vault is locked');
   }
 
+  // Check personal entries first
   const entry = cachedEntries.find(e => e.id === entryId);
-  if (!entry || !entry.encrypted_password) {
-    throw new Error('Entry not found');
+  if (entry && entry.encrypted_password) {
+    return await decryptField(entry.encrypted_password, session.masterKey);
   }
 
-  return await decryptField(entry.encrypted_password, session.masterKey);
+  // Check shared entries
+  const sharedEntry = cachedSharedEntries.find(e => e.id === entryId);
+  if (sharedEntry && sharedEntry.encrypted_data) {
+    try {
+      const decrypted = JSON.parse(await decryptField(sharedEntry.encrypted_data, session.masterKey));
+      return decrypted.password || '';
+    } catch {
+      throw new Error('Failed to decrypt shared entry');
+    }
+  }
+
+  throw new Error('Entry not found');
 }
 
 async function getDecryptedNote(noteId) {
