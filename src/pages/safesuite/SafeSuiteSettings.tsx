@@ -2,7 +2,7 @@
  * SafeSuite Settings Page
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { useSecurity } from '@/hooks/useSecurity';
@@ -35,7 +35,7 @@ export default function SafeSuiteSettings() {
   
   // 2FA Setup state
   const [twoFactorDialog, setTwoFactorDialog] = useState(false);
-  const [twoFactorSetup, setTwoFactorSetup] = useState<{ qrCode?: string; secret?: string } | null>(null);
+  const [twoFactorSetup, setTwoFactorSetup] = useState<{ qr_code?: string; secret?: string; backup_codes?: string[] } | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
   const [setupStep, setSetupStep] = useState<'setup' | 'verify'>('setup');
@@ -75,15 +75,11 @@ export default function SafeSuiteSettings() {
     if (result) {
       setTwoFactorSetup(result);
       // Generate QR code image from the otpauth URL
-      if (result.qrCode) {
+      if (result.qr_code) {
         try {
-          const dataUrl = await QRCode.toDataURL(result.qrCode, {
+          const dataUrl = await QRCode.toDataURL(result.qr_code, {
             width: 200,
             margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#ffffff'
-            }
           });
           setQrCodeDataUrl(dataUrl);
         } catch (err) {
