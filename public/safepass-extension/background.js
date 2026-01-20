@@ -1,5 +1,5 @@
-// SafePass Background Service Worker v2.0
-// Enhanced with keyboard shortcuts, context menus, TOTP, Notes, Cards support
+// SafePass Background Service Worker v2.1
+// Enhanced with keyboard shortcuts, context menus, TOTP, Notes, Cards, Identity support
 
 const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
@@ -14,6 +14,7 @@ let cachedEntries = [];
 let cachedTOTP = [];
 let cachedNotes = [];
 let cachedCards = [];
+let cachedIdentities = [];
 let lastSyncTime = 0;
 const SYNC_INTERVAL_MS = 5 * 60 * 1000;
 
@@ -221,6 +222,28 @@ async function handleMessage(message, sender) {
     case 'saveCreditCard':
       return await handleSaveCard(message.data);
     
+    case 'getIdentities':
+      return { identities: cachedIdentities };
+    
+    case 'getDecryptedIdentity':
+      return await getDecryptedIdentity(message.identityId);
+    
+    case 'saveIdentity':
+      return await handleSaveIdentity(message.data);
+    
+    case 'fillIdentity':
+      const [identityTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (identityTab?.id) {
+        const identityData = await getDecryptedIdentity(message.identityId);
+        if (identityData.identity) {
+          await chrome.tabs.sendMessage(identityTab.id, {
+            action: 'fillIdentity',
+            identity: identityData.identity
+          });
+        }
+      }
+      return { success: true };
+    
     case 'fillCredentials':
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
@@ -305,11 +328,12 @@ async function syncVaultFromSupabase() {
       lastSyncTime 
     });
 
-    // Also fetch TOTP, Notes, Cards
+    // Also fetch TOTP, Notes, Cards, Identities
     await Promise.all([
       fetchTOTPEntries(session.authToken),
       fetchSecureNotes(session.authToken),
-      fetchCreditCards(session.authToken)
+      fetchCreditCards(session.authToken),
+      fetchIdentities(session.authToken)
     ]);
 
     console.log(`[SafePass] Synced ${cachedEntries.length} entries`);
@@ -385,6 +409,94 @@ async function fetchCreditCards(authToken) {
     }
   } catch (error) {
     console.error('[SafePass] Cards fetch error:', error);
+  }
+}
+
+async function fetchIdentities(authToken) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_identities?select=id,name,encrypted_data`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${authToken}`,
+      }
+    });
+    
+    if (response.ok) {
+      const identities = await response.json();
+      cachedIdentities = identities.map(i => ({
+        id: i.id,
+        name: i.name,
+        encrypted_data: i.encrypted_data
+      }));
+    }
+  } catch (error) {
+    console.error('[SafePass] Identities fetch error:', error);
+  }
+}
+
+async function getDecryptedIdentity(identityId) {
+  const session = await chrome.storage.session.get(['masterKey']);
+  if (!session.masterKey) {
+    return { error: 'Vault is locked' };
+  }
+
+  const identity = cachedIdentities.find(i => i.id === identityId);
+  if (!identity) {
+    return { error: 'Identity not found' };
+  }
+
+  try {
+    const identityData = JSON.parse(await decryptField(identity.encrypted_data, session.masterKey));
+    return { identity: identityData };
+  } catch {
+    return { error: 'Decryption failed' };
+  }
+}
+
+async function handleSaveIdentity(data) {
+  try {
+    const session = await chrome.storage.session.get(['masterKey', 'authToken']);
+    if (!session.masterKey || !session.authToken) {
+      return { error: 'Not authenticated' };
+    }
+
+    const identityData = {
+      firstName: data.firstName || '',
+      lastName: data.lastName || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      address: data.address || '',
+      city: data.city || '',
+      state: data.state || '',
+      zip: data.zip || '',
+      country: data.country || ''
+    };
+
+    const encryptedData = await encryptField(JSON.stringify(identityData), session.masterKey);
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_identities`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${session.authToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        name: data.name || `${data.firstName} ${data.lastName}`.trim() || 'My Identity',
+        encrypted_data: encryptedData
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save identity');
+    }
+
+    await fetchIdentities(session.authToken);
+    return { success: true };
+  } catch (error) {
+    console.error('[SafePass] Save identity error:', error);
+    return { error: error.message };
   }
 }
 
@@ -838,4 +950,4 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-console.log('[SafePass] Background service worker v2.0 initialized');
+console.log('[SafePass] Background service worker v2.1 initialized');
