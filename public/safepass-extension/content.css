@@ -278,3 +278,130 @@
 .safepass-strength-dot.strong { background: #22c55e; }
 .safepass-strength-dot.medium { background: #f59e0b; }
 .safepass-strength-dot.weak { background: #ef4444; }
+
+/* Save Password Prompt */
+.safepass-save-prompt {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: safepass-promptIn 0.3s ease;
+}
+
+@keyframes safepass-promptIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.safepass-save-prompt-content {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(59, 130, 246, 0.2);
+  min-width: 320px;
+  overflow: hidden;
+}
+
+.safepass-save-prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.safepass-save-prompt-icon {
+  font-size: 20px;
+}
+
+.safepass-save-prompt-title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+}
+
+.safepass-save-prompt-close {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.safepass-save-prompt-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.safepass-save-prompt-body {
+  padding: 16px;
+}
+
+.safepass-save-prompt-site {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e2e8f0;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.safepass-save-prompt-username {
+  font-size: 13px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.safepass-save-prompt-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.safepass-save-prompt-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.safepass-save-prompt-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  color: white;
+}
+
+.safepass-save-prompt-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.safepass-save-prompt-btn-secondary {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.safepass-save-prompt-btn-secondary:hover {
+  background: #475569;
+  color: #e2e8f0;
+}

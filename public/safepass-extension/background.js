@@ -219,6 +219,9 @@ async function handleMessage(message, sender) {
     case 'savePassword':
       return await handleSavePassword(message.data);
     
+    case 'ignoreCredential':
+      return await handleIgnoreCredential(message.data);
+    
     case 'getDecryptedPassword':
       const password = await getDecryptedPassword(message.entryId);
       return { password };
@@ -794,6 +797,27 @@ async function handleSavePassword(data) {
       return { error: 'Not authenticated' };
     }
 
+    // Check if this credential is in the ignored list
+    const stored = await chrome.storage.local.get('ignoredCredentials');
+    const ignored = stored.ignoredCredentials || [];
+    const key = `${data.website}:${data.username}`;
+    if (ignored.includes(key)) {
+      return { error: 'Credential ignored by user' };
+    }
+
+    // Check for duplicates in cached entries
+    const hostname = extractHostname(data.website);
+    const existingEntry = cachedEntries.find(entry => {
+      const entryHostname = extractHostname(entry.url || entry.website);
+      return entryHostname === hostname && entry.username === data.username;
+    });
+    
+    if (existingEntry) {
+      // Could update existing entry instead - for now just skip
+      console.log('[SafePass] Entry already exists for this site/username');
+      return { error: 'Entry already exists', duplicate: true };
+    }
+
     const encryptedUsername = await encryptField(data.username, session.masterKey);
     const encryptedPassword = await encryptField(data.password, session.masterKey);
     const encryptedUrl = await encryptField(data.website, session.masterKey);
@@ -837,6 +861,26 @@ async function handleSavePassword(data) {
     return { success: true };
   } catch (error) {
     console.error('[SafePass] Save password error:', error);
+    return { error: error.message };
+  }
+}
+
+// Handle ignoring credentials for a site
+async function handleIgnoreCredential(data) {
+  try {
+    const stored = await chrome.storage.local.get('ignoredCredentials');
+    const ignored = stored.ignoredCredentials || [];
+    
+    // Add to ignored list
+    const key = `${data.website}:${data.username}`;
+    if (!ignored.includes(key)) {
+      ignored.push(key);
+      await chrome.storage.local.set({ ignoredCredentials: ignored });
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('[SafePass] Ignore credential error:', error);
     return { error: error.message };
   }
 }
