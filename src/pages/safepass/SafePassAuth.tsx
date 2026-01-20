@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Key, Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -141,9 +142,11 @@ export default function SafePassAuth() {
       <div className="flex-1 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center mb-4">
-              <Key className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img 
+              src={safeSuiteProducts.safepass.logo} 
+              alt="SafePass" 
+              className="mx-auto h-12 w-12 rounded-xl object-contain mb-4"
+            />
             <CardTitle className="text-2xl">SafePass</CardTitle>
             <CardDescription>
               {mode === 'signin' 
