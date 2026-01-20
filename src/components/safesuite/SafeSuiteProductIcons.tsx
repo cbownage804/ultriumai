@@ -2,6 +2,9 @@ import safepassLogo from "@/assets/safepass-logo.png";
 import safescanLogo from "@/assets/safescan-logo.png";
 import safewebLogo from "@/assets/safeweb-logo.png";
 import safetrackLogo from "@/assets/safetrack-logo.png";
+import safesuiteLogo from "@/assets/safesuite-logo.png";
+
+export { safesuiteLogo };
 
 export const safeSuiteProducts = {
   safepass: {
