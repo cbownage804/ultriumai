@@ -1,27 +1,84 @@
-// SafePass Content Script - Autofill with inline dropdown
-// Compatible with Chrome and Microsoft Edge
+// SafePass Content Script v2.0
+// Enhanced with keyboard shortcuts, card autofill, and improved detection
 
 let dropdownVisible = false;
 let currentDropdown = null;
 let currentField = null;
 let matchingPasswords = [];
 
-// Listen for messages from popup/background
+// ===== MESSAGE LISTENERS =====
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'fill') {
-    fillCredentials(message.username, message.password);
-    sendResponse({ success: true });
-  } else if (message.action === 'fillPassword') {
-    fillPasswordField(message.password);
-    sendResponse({ success: true });
-  } else if (message.action === 'showDropdown') {
-    showInlineDropdown(message.entries, message.field);
-    sendResponse({ success: true });
+  switch (message.action) {
+    case 'fill':
+      fillCredentials(message.username, message.password);
+      sendResponse({ success: true });
+      break;
+    case 'fillPassword':
+      fillPasswordField(message.password);
+      sendResponse({ success: true });
+      break;
+    case 'fillCard':
+      fillCreditCard(message.card);
+      sendResponse({ success: true });
+      break;
+    case 'showDropdown':
+      showInlineDropdown(message.entries, message.field);
+      sendResponse({ success: true });
+      break;
+    case 'showAllPasswords':
+      checkForMatchingPasswords(true);
+      sendResponse({ success: true });
+      break;
   }
   return true;
 });
 
-// Fill username and password fields
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', (e) => {
+  // Escape to close dropdown
+  if (e.key === 'Escape' && dropdownVisible) {
+    hideDropdown();
+    return;
+  }
+  
+  // Arrow keys to navigate dropdown
+  if (dropdownVisible && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    e.preventDefault();
+    navigateDropdown(e.key === 'ArrowDown' ? 1 : -1);
+    return;
+  }
+  
+  // Enter to select
+  if (dropdownVisible && e.key === 'Enter') {
+    const selected = currentDropdown?.querySelector('.safepass-dropdown-item.selected');
+    if (selected) {
+      e.preventDefault();
+      selected.click();
+    }
+  }
+});
+
+function navigateDropdown(direction) {
+  if (!currentDropdown) return;
+  
+  const items = currentDropdown.querySelectorAll('.safepass-dropdown-item');
+  let currentIndex = -1;
+  
+  items.forEach((item, index) => {
+    if (item.classList.contains('selected')) {
+      currentIndex = index;
+      item.classList.remove('selected');
+    }
+  });
+  
+  let newIndex = currentIndex + direction;
+  if (newIndex < 0) newIndex = items.length - 1;
+  if (newIndex >= items.length) newIndex = 0;
+  
+  items[newIndex]?.classList.add('selected');
+}
+
+// ===== FILL FUNCTIONS =====
 function fillCredentials(username, password) {
   const usernameFields = findUsernameFields();
   const passwordFields = findPasswordFields();
@@ -35,10 +92,9 @@ function fillCredentials(username, password) {
   }
   
   hideDropdown();
-  showNotification('Credentials filled!');
+  showNotification('✅ Credentials filled!');
 }
 
-// Fill just password field
 function fillPasswordField(password) {
   const passwordFields = findPasswordFields();
   const newPasswordFields = document.querySelectorAll('input[autocomplete="new-password"]');
@@ -47,21 +103,39 @@ function fillPasswordField(password) {
   
   if (allFields.length > 0) {
     fillField(allFields[0], password);
+    showNotification('🔐 Password filled!');
   }
 }
 
-// Find username/email input fields
+function fillCreditCard(card) {
+  // Find card fields
+  const numberField = document.querySelector('input[autocomplete="cc-number"], input[name*="card"], input[name*="number"], input[id*="card"]');
+  const nameField = document.querySelector('input[autocomplete="cc-name"], input[name*="holder"], input[name*="name"]');
+  const expiryField = document.querySelector('input[autocomplete="cc-exp"], input[name*="expir"], input[name*="exp"]');
+  const cvvField = document.querySelector('input[autocomplete="cc-csc"], input[name*="cvv"], input[name*="cvc"], input[name*="security"]');
+  const zipField = document.querySelector('input[autocomplete="billing postal-code"], input[name*="zip"], input[name*="postal"]');
+  
+  if (numberField && card.number) fillField(numberField, card.number);
+  if (nameField && card.holderName) fillField(nameField, card.holderName);
+  if (expiryField && card.expiry) fillField(expiryField, card.expiry);
+  if (cvvField && card.cvv) fillField(cvvField, card.cvv);
+  if (zipField && card.zip) fillField(zipField, card.zip);
+  
+  showNotification('💳 Card details filled!');
+}
+
+// ===== FIELD DETECTION =====
 function findUsernameFields() {
   const selectors = [
     'input[type="email"]',
+    'input[autocomplete="username"]',
+    'input[autocomplete="email"]',
     'input[type="text"][name*="user"]',
     'input[type="text"][name*="email"]',
     'input[type="text"][name*="login"]',
     'input[type="text"][id*="user"]',
     'input[type="text"][id*="email"]',
     'input[type="text"][id*="login"]',
-    'input[autocomplete="username"]',
-    'input[autocomplete="email"]',
   ];
 
   for (const selector of selectors) {
@@ -74,13 +148,11 @@ function findUsernameFields() {
   return [];
 }
 
-// Find password input fields
 function findPasswordFields() {
   const fields = document.querySelectorAll('input[type="password"]');
   return Array.from(fields).filter(isVisible);
 }
 
-// Check if element is visible
 function isVisible(element) {
   const style = window.getComputedStyle(element);
   return (
@@ -90,13 +162,12 @@ function isVisible(element) {
   );
 }
 
-// Fill a field with value and trigger events
 function fillField(field, value) {
   field.focus();
   field.value = '';
   field.value = value;
 
-  // Trigger events for React/Vue/Angular
+  // Trigger events for frameworks
   const inputEvent = new Event('input', { bubbles: true });
   field.dispatchEvent(inputEvent);
 
@@ -109,7 +180,7 @@ function fillField(field, value) {
   field.blur();
 }
 
-// Show inline autofill dropdown
+// ===== DROPDOWN UI =====
 function showInlineDropdown(entries, targetField) {
   hideDropdown();
   
@@ -124,7 +195,7 @@ function showInlineDropdown(entries, targetField) {
   dropdown.className = 'safepass-dropdown';
   dropdown.id = 'safepass-autofill-dropdown';
   
-  // Header
+  // Header with count
   const header = document.createElement('div');
   header.className = 'safepass-dropdown-header';
   header.innerHTML = `
@@ -136,44 +207,124 @@ function showInlineDropdown(entries, targetField) {
   // Password items
   entries.forEach((entry, index) => {
     const item = document.createElement('div');
-    item.className = 'safepass-dropdown-item';
+    item.className = 'safepass-dropdown-item' + (index === 0 ? ' selected' : '');
     item.dataset.index = index;
     item.dataset.id = entry.id;
     
+    // Get favicon
+    const hostname = extractHostname(entry.website);
+    const faviconUrl = hostname ? `https://www.google.com/s2/favicons?domain=${hostname}&sz=32` : null;
+    
+    let badges = '';
+    if (entry.isBreached) badges += '<span class="safepass-badge breach">⚠️</span>';
+    if (entry.isWeak) badges += '<span class="safepass-badge weak">⚠️</span>';
+    
     item.innerHTML = `
-      <div class="safepass-dropdown-favicon">${entry.is_favorite ? '⭐' : '🔐'}</div>
+      <div class="safepass-dropdown-favicon">
+        ${faviconUrl ? `<img src="${faviconUrl}" onerror="this.style.display='none';this.parentElement.textContent='🔐'" />` : '🔐'}
+      </div>
       <div class="safepass-dropdown-details">
-        <div class="safepass-dropdown-site">${escapeHtml(entry.title)}</div>
+        <div class="safepass-dropdown-site">${escapeHtml(entry.title)}${badges}</div>
         <div class="safepass-dropdown-username">${escapeHtml(entry.username || 'No username')}</div>
+      </div>
+      <div class="safepass-dropdown-actions">
+        <button class="safepass-action-btn" data-action="copy" title="Copy password">📋</button>
       </div>
     `;
     
     item.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      await fillFromEntry(entry);
+      if (e.target.closest('.safepass-action-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        await copyPasswordFromEntry(entry);
+      } else {
+        e.preventDefault();
+        e.stopPropagation();
+        await fillFromEntry(entry);
+      }
     });
     
     dropdown.appendChild(item);
   });
   
-  // Position dropdown below the field
+  // Footer with generate button
+  const footer = document.createElement('div');
+  footer.className = 'safepass-dropdown-footer';
+  footer.innerHTML = `
+    <button class="safepass-generate-btn">⚡ Generate New</button>
+  `;
+  footer.querySelector('.safepass-generate-btn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await generateAndFillNew();
+  });
+  dropdown.appendChild(footer);
+  
+  // Position dropdown
   const rect = field.getBoundingClientRect();
   dropdown.style.position = 'fixed';
   dropdown.style.top = `${rect.bottom + 4}px`;
   dropdown.style.left = `${rect.left}px`;
-  dropdown.style.width = `${Math.max(rect.width, 280)}px`;
+  dropdown.style.width = `${Math.max(rect.width, 300)}px`;
   dropdown.style.zIndex = '2147483647';
   
   document.body.appendChild(dropdown);
   currentDropdown = dropdown;
   dropdownVisible = true;
   
-  // Close on click outside
+  // Event listeners
   setTimeout(() => {
     document.addEventListener('click', handleClickOutside);
     document.addEventListener('keydown', handleKeydown);
   }, 100);
+}
+
+async function generateAndFillNew() {
+  const password = generateSecurePassword(16);
+  fillPasswordField(password);
+  hideDropdown();
+  
+  // Copy to clipboard
+  try {
+    await navigator.clipboard.writeText(password);
+    showNotification('🔐 New password generated and copied!');
+  } catch {
+    showNotification('🔐 New password generated!');
+  }
+}
+
+function generateSecurePassword(length) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  const array = new Uint32Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, x => chars[x % chars.length]).join('');
+}
+
+async function copyPasswordFromEntry(entry) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'getDecryptedPassword',
+      entryId: entry.id
+    });
+    
+    if (response.password) {
+      await navigator.clipboard.writeText(response.password);
+      showNotification('🔑 Password copied!');
+      hideDropdown();
+    }
+  } catch (error) {
+    showNotification('Failed to copy', 'error');
+  }
+}
+
+function extractHostname(url) {
+  if (!url) return '';
+  try {
+    if (!url.startsWith('http')) url = 'https://' + url;
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url.replace(/^www\./, '');
+  }
 }
 
 function handleClickOutside(e) {
@@ -198,10 +349,9 @@ function hideDropdown() {
   document.removeEventListener('keydown', handleKeydown);
 }
 
-// Fill credentials from a saved entry
+// ===== FILL FROM ENTRY =====
 async function fillFromEntry(entry) {
   try {
-    // Request decrypted password from background script
     const response = await chrome.runtime.sendMessage({
       action: 'getDecryptedPassword',
       entryId: entry.id
@@ -215,7 +365,6 @@ async function fillFromEntry(entry) {
     fillCredentials(entry.username, response.password);
   } catch (error) {
     console.error('[SafePass] Fill error:', error);
-    // Fallback: just fill username
     const usernameFields = findUsernameFields();
     if (usernameFields.length > 0 && entry.username) {
       fillField(usernameFields[0], entry.username);
@@ -224,7 +373,6 @@ async function fillFromEntry(entry) {
   }
 }
 
-// Escape HTML
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -232,9 +380,8 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// Show notification toast
+// ===== NOTIFICATIONS =====
 function showNotification(message, type = 'success') {
-  // Remove existing notifications
   document.querySelectorAll('.safepass-notification').forEach(n => n.remove());
   
   const notification = document.createElement('div');
@@ -251,7 +398,7 @@ function showNotification(message, type = 'success') {
   setTimeout(() => notification.remove(), 3000);
 }
 
-// Add SafePass icons to login fields and handle focus
+// ===== FIELD INITIALIZATION =====
 function initializeFields() {
   const usernameFields = findUsernameFields();
   const passwordFields = findPasswordFields();
@@ -261,10 +408,8 @@ function initializeFields() {
     
     field.dataset.safepassInitialized = 'true';
     
-    // Add icon wrapper
     addSafePassIcon(field);
     
-    // Show dropdown on focus if we have matching passwords
     field.addEventListener('focus', async () => {
       currentField = field;
       await checkForMatchingPasswords();
@@ -290,10 +435,9 @@ function addSafePassIcon(field) {
     e.preventDefault();
     e.stopPropagation();
     currentField = field;
-    await checkForMatchingPasswords();
+    await checkForMatchingPasswords(true);
   });
 
-  // Position the icon inside the field
   const parent = field.parentElement;
   if (parent) {
     if (getComputedStyle(parent).position === 'static') {
@@ -303,14 +447,13 @@ function addSafePassIcon(field) {
   }
 }
 
-// Check for matching passwords and show dropdown
-async function checkForMatchingPasswords() {
+async function checkForMatchingPasswords(showAll = false) {
   try {
     const hostname = window.location.hostname.replace(/^www\./, '');
     
     const response = await chrome.runtime.sendMessage({
       action: 'getPasswordsForSite',
-      hostname: hostname
+      hostname: showAll ? '' : hostname
     });
     
     if (response.needsAuth) {
@@ -320,13 +463,15 @@ async function checkForMatchingPasswords() {
     
     if (response.entries && response.entries.length > 0) {
       showInlineDropdown(response.entries, currentField);
+    } else if (showAll) {
+      showNotification('No passwords saved yet', 'info');
     }
   } catch (error) {
     console.error('[SafePass] Error checking passwords:', error);
   }
 }
 
-// Detect new password forms (for auto-save)
+// ===== AUTO-SAVE =====
 function detectNewPasswordForm() {
   const forms = document.querySelectorAll('form');
   
@@ -339,7 +484,6 @@ function detectNewPasswordForm() {
       const usernameField = form.querySelector('input[type="email"], input[type="text"][name*="user"], input[type="text"][name*="email"], input[autocomplete="username"]');
       
       if (passwordField && usernameField && passwordField.value && usernameField.value) {
-        // Automatically save password to vault
         try {
           const response = await chrome.runtime.sendMessage({
             action: 'savePassword',
@@ -363,26 +507,23 @@ function detectNewPasswordForm() {
     });
   });
   
-  // Also watch for password fields with change events (for single-page apps)
+  // Watch password fields for SPA support
   const passwordFields = document.querySelectorAll('input[type="password"]');
   passwordFields.forEach(field => {
     if (field.dataset.safepassAutoSave) return;
     field.dataset.safepassAutoSave = 'true';
     
-    // Track the current value to detect actual password entry
     let lastValue = '';
     
     field.addEventListener('blur', async () => {
       if (field.value && field.value !== lastValue && field.value.length >= 6) {
         lastValue = field.value;
         
-        // Find associated username field
         const form = field.closest('form');
         const container = form || field.parentElement?.parentElement?.parentElement;
         const usernameField = container?.querySelector('input[type="email"], input[type="text"][name*="user"], input[type="text"][name*="email"], input[autocomplete="username"]');
         
         if (usernameField && usernameField.value) {
-          // Attempt auto-save on blur
           try {
             const response = await chrome.runtime.sendMessage({
               action: 'savePassword',
@@ -406,7 +547,7 @@ function detectNewPasswordForm() {
   });
 }
 
-// Initialize
+// ===== INITIALIZATION =====
 function init() {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
@@ -418,7 +559,7 @@ function init() {
     detectNewPasswordForm();
   }
 
-  // Watch for dynamically added forms
+  // Watch for dynamic content
   const observer = new MutationObserver((mutations) => {
     let shouldCheck = false;
     for (const mutation of mutations) {
@@ -443,4 +584,4 @@ function init() {
 
 init();
 
-console.log('[SafePass] Content script loaded');
+console.log('[SafePass] Content script v2.0 loaded');

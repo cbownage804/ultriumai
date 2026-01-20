@@ -5,8 +5,8 @@
 }
 
 body {
-  width: 340px;
-  min-height: 420px;
+  width: 380px;
+  min-height: 480px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #0f172a;
   color: #e2e8f0;
@@ -19,7 +19,7 @@ body {
 .view {
   display: flex;
   flex-direction: column;
-  min-height: 420px;
+  min-height: 480px;
 }
 
 .header {
@@ -67,6 +67,18 @@ body {
   transform: scale(1.05);
 }
 
+.icon-btn.small {
+  padding: 6px;
+  font-size: 12px;
+  background: #334155;
+  color: #94a3b8;
+}
+
+.icon-btn.small:hover {
+  background: #475569;
+  color: #e2e8f0;
+}
+
 .content {
   flex: 1;
   padding: 16px;
@@ -80,16 +92,25 @@ body {
   line-height: 1.5;
 }
 
-.browser-note {
+.shortcuts-hint {
   text-align: center;
   font-size: 11px;
   color: #64748b;
   margin-top: 16px;
 }
 
+.shortcuts-hint kbd {
+  background: #1e293b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  border: 1px solid #334155;
+}
+
 input[type="email"],
 input[type="password"],
-input[type="text"] {
+input[type="text"],
+textarea {
   width: 100%;
   padding: 12px 16px;
   margin-bottom: 12px;
@@ -101,14 +122,63 @@ input[type="text"] {
   transition: all 0.2s;
 }
 
-input:focus {
+textarea {
+  resize: vertical;
+  font-family: inherit;
+  min-height: 100px;
+}
+
+input:focus,
+textarea:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
   color: #64748b;
+}
+
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  padding: 4px;
+  gap: 2px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 4px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+  color: #60a5fa;
+}
+
+.tab-content {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+}
+
+.tab-content.active {
+  display: flex;
 }
 
 .primary-btn {
@@ -151,6 +221,17 @@ input::placeholder {
 .secondary-btn:hover {
   background: #334155;
   border-color: #475569;
+}
+
+.breach-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.breach-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
 }
 
 .link {
@@ -211,6 +292,16 @@ input::placeholder {
   transform: translateX(2px);
 }
 
+.password-item.breached {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.password-item.weak {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
 .password-item .favicon {
   width: 36px;
   height: 36px;
@@ -221,6 +312,12 @@ input::placeholder {
   justify-content: center;
   margin-right: 12px;
   font-size: 16px;
+  overflow: hidden;
+}
+
+.password-item .favicon img {
+  width: 20px;
+  height: 20px;
 }
 
 .password-item .details {
@@ -235,6 +332,26 @@ input::placeholder {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.password-item .site-name .badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.password-item .site-name .badge.breach {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.password-item .site-name .badge.weak {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
 }
 
 .password-item .username {
@@ -283,7 +400,7 @@ input::placeholder {
 .generated-password {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .generated-password input {
@@ -293,6 +410,50 @@ input::placeholder {
   letter-spacing: 1px;
   font-size: 13px;
 }
+
+/* Strength Indicator */
+.strength-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: #1e293b;
+  border-radius: 8px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 6px;
+  background: #334155;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+.strength-fill.very-weak { width: 20%; background: #ef4444; }
+.strength-fill.weak { width: 40%; background: #f59e0b; }
+.strength-fill.fair { width: 60%; background: #eab308; }
+.strength-fill.strong { width: 80%; background: #22c55e; }
+.strength-fill.very-strong { width: 100%; background: linear-gradient(90deg, #22c55e, #10b981); }
+
+.strength-label {
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 70px;
+  text-align: right;
+}
+
+.strength-label.very-weak { color: #ef4444; }
+.strength-label.weak { color: #f59e0b; }
+.strength-label.fair { color: #eab308; }
+.strength-label.strong { color: #22c55e; }
+.strength-label.very-strong { color: #10b981; }
 
 .options {
   display: flex;
@@ -343,6 +504,184 @@ input::placeholder {
   height: 48px;
   margin-bottom: 12px;
   opacity: 0.5;
+}
+
+/* Entry Type Selector */
+.entry-type-selector {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.entry-type-btn {
+  flex: 1;
+  padding: 10px 8px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.entry-type-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.entry-type-btn.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+  border-color: #3b82f6;
+  color: #60a5fa;
+}
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.password-input-group {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.password-input-group input {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.card-row {
+  display: flex;
+  gap: 12px;
+}
+
+.card-row input {
+  flex: 1;
+}
+
+/* TOTP Styles */
+.totp-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.totp-item {
+  display: flex;
+  align-items: center;
+  padding: 14px;
+  background: #1e293b;
+  border-radius: 10px;
+  border: 1px solid #334155;
+}
+
+.totp-item .totp-info {
+  flex: 1;
+}
+
+.totp-item .totp-name {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.totp-item .totp-code {
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 24px;
+  font-weight: 600;
+  color: #60a5fa;
+  letter-spacing: 4px;
+}
+
+.totp-item .totp-timer {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.totp-item .totp-timer.warning {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.totp-item .totp-timer.danger {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Notes Styles */
+.note-item {
+  padding: 14px;
+  background: #1e293b;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.note-item:hover {
+  border-color: #3b82f6;
+  background: #334155;
+}
+
+.note-item .note-title {
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.note-item .note-preview {
+  font-size: 12px;
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Card Styles */
+.card-item {
+  padding: 16px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%);
+  border-radius: 12px;
+  border: 1px solid #334155;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.card-item .card-type {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.card-item .card-number {
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 16px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.card-item .card-holder {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
 }
 
 /* Animations */
