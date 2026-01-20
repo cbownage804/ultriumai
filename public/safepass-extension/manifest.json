@@ -1,16 +1,20 @@
 {
   "manifest_version": 3,
   "name": "SafePass - Password Manager",
-  "version": "1.0.0",
-  "description": "Secure password autofill and management powered by SafePass",
+  "version": "1.1.0",
+  "description": "Secure password autofill and management powered by SafePass. Works on Chrome and Microsoft Edge.",
   "permissions": [
-    "storage"
+    "storage",
+    "alarms",
+    "notifications",
+    "clipboardWrite"
   ],
   "host_permissions": [
     "https://*.supabase.co/*"
   ],
   "action": {
     "default_popup": "popup.html",
+    "default_title": "SafePass - Click to open vault",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
@@ -44,5 +48,6 @@
       "resources": ["icons/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "minimum_chrome_version": "88"
 }

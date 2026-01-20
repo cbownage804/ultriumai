@@ -1,25 +1,29 @@
 /* SafePass Content Script Styles */
+/* Compatible with Chrome and Microsoft Edge */
 
 .safepass-icon-wrapper {
   position: absolute;
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   cursor: pointer;
-  z-index: 10000;
+  z-index: 2147483646;
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  border-radius: 4px;
-  opacity: 0.8;
-  transition: opacity 0.2s;
+  border-radius: 6px;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .safepass-icon-wrapper:hover {
   opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
 }
 
 .safepass-icon {
@@ -30,99 +34,137 @@
 
 /* SafePass autofill dropdown */
 .safepass-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  position: fixed;
   background: #1e293b;
   border: 1px solid #334155;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-  z-index: 10001;
-  max-height: 300px;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(59, 130, 246, 0.1);
+  z-index: 2147483647;
+  max-height: 320px;
   overflow-y: auto;
-  margin-top: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: safepass-slideIn 0.2s ease;
+}
+
+@keyframes safepass-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.safepass-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border-radius: 11px 11px 0 0;
 }
 
 .safepass-dropdown-item {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 12px 14px;
   cursor: pointer;
-  transition: background 0.2s;
-}
-
-.safepass-dropdown-item:hover {
-  background: #334155;
-}
-
-.safepass-dropdown-item:first-child {
-  border-radius: 8px 8px 0 0;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid #334155;
 }
 
 .safepass-dropdown-item:last-child {
-  border-radius: 0 0 8px 8px;
+  border-bottom: none;
+  border-radius: 0 0 11px 11px;
+}
+
+.safepass-dropdown-item:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%);
 }
 
 .safepass-dropdown-favicon {
-  width: 24px;
-  height: 24px;
-  background: #475569;
-  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .safepass-dropdown-details {
   flex: 1;
+  min-width: 0;
 }
 
 .safepass-dropdown-site {
   font-size: 14px;
   font-weight: 500;
   color: #e2e8f0;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .safepass-dropdown-username {
   font-size: 12px;
   color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.safepass-dropdown-header {
-  padding: 8px 16px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #64748b;
-  background: #0f172a;
-  border-bottom: 1px solid #334155;
-}
-
+/* Notification toast */
 .safepass-notification {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: 24px;
+  right: 24px;
   background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
   color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: 14px 20px;
+  border-radius: 10px;
   font-size: 14px;
+  font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-shadow: 0 10px 40px rgba(59, 130, 246, 0.4);
-  z-index: 10002;
-  animation: slideIn 0.3s ease;
+  z-index: 2147483647;
+  animation: safepass-notifyIn 0.3s ease;
 }
 
-@keyframes slideIn {
+@keyframes safepass-notifyIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
+}
+
+/* Scrollbar for dropdown */
+.safepass-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.safepass-dropdown::-webkit-scrollbar-track {
+  background: #1e293b;
+  border-radius: 0 12px 12px 0;
+}
+
+.safepass-dropdown::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.safepass-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
