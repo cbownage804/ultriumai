@@ -1,0 +1,253 @@
+/**
+ * SafeSuite Settings Page
+ */
+
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  User,
+  Shield,
+  Bell,
+  Palette,
+  Download,
+  Trash2,
+  Loader2
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function SafeSuiteSettings() {
+  const { user } = useAuth();
+  const { tier } = useSafeSuiteSubscription();
+  const [loading, setLoading] = useState(false);
+
+  // Settings state
+  const [notifications, setNotifications] = useState({
+    breachAlerts: true,
+    weeklyReport: true,
+    productUpdates: false
+  });
+
+  const userInitials = user?.email
+    ?.split('@')[0]
+    .slice(0, 2)
+    .toUpperCase() || 'U';
+
+  const handleSaveSettings = async () => {
+    setLoading(true);
+    // TODO: Save settings to backend
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast.success('Settings saved successfully');
+    setLoading(false);
+  };
+
+  const handleExportData = async () => {
+    toast.info('Preparing data export...');
+    // TODO: Implement data export
+  };
+
+  return (
+    <div className="space-y-8 max-w-3xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your account settings and preferences
+        </p>
+      </div>
+
+      {/* Profile Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile
+          </CardTitle>
+          <CardDescription>
+            Your personal information
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src="" />
+              <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">{user?.email}</p>
+              <p className="text-sm text-muted-foreground">
+                {tier.charAt(0).toUpperCase() + tier.slice(1)} Plan
+              </p>
+            </div>
+          </div>
+          <Separator />
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" value={user?.email || ''} disabled />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="name">Display Name</Label>
+              <Input id="name" placeholder="Enter your name" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Security Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Security
+          </CardTitle>
+          <CardDescription>
+            Protect your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Two-Factor Authentication</p>
+              <p className="text-sm text-muted-foreground">
+                Add an extra layer of security to your account
+              </p>
+            </div>
+            <Button variant="outline">Enable 2FA</Button>
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Change Password</p>
+              <p className="text-sm text-muted-foreground">
+                Update your password regularly
+              </p>
+            </div>
+            <Button variant="outline">Change</Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notifications Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Notifications
+          </CardTitle>
+          <CardDescription>
+            Choose what alerts you want to receive
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Breach Alerts</p>
+              <p className="text-sm text-muted-foreground">
+                Get notified when your data appears in a breach
+              </p>
+            </div>
+            <Switch
+              checked={notifications.breachAlerts}
+              onCheckedChange={(checked) => 
+                setNotifications(prev => ({ ...prev, breachAlerts: checked }))
+              }
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Weekly Security Report</p>
+              <p className="text-sm text-muted-foreground">
+                Receive a summary of your security status
+              </p>
+            </div>
+            <Switch
+              checked={notifications.weeklyReport}
+              onCheckedChange={(checked) => 
+                setNotifications(prev => ({ ...prev, weeklyReport: checked }))
+              }
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Product Updates</p>
+              <p className="text-sm text-muted-foreground">
+                Learn about new features and improvements
+              </p>
+            </div>
+            <Switch
+              checked={notifications.productUpdates}
+              onCheckedChange={(checked) => 
+                setNotifications(prev => ({ ...prev, productUpdates: checked }))
+              }
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Data Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Download className="h-5 w-5" />
+            Data & Privacy
+          </CardTitle>
+          <CardDescription>
+            Manage your data
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Export Data</p>
+              <p className="text-sm text-muted-foreground">
+                Download all your SafeSuite data
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleExportData}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-destructive">Delete Account</p>
+              <p className="text-sm text-muted-foreground">
+                Permanently delete your account and all data
+              </p>
+            </div>
+            <Button variant="destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <Button onClick={handleSaveSettings} disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save Changes'
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+}
