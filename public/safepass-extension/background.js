@@ -1,5 +1,5 @@
-// SafePass Background Service Worker v2.1
-// Enhanced with keyboard shortcuts, context menus, TOTP, Notes, Cards, Identity support
+// SafePass Background Service Worker v2.2
+// Enhanced with auto-sync, keyboard shortcuts, context menus, TOTP, Notes, Cards, Identity support
 
 const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
@@ -16,7 +16,9 @@ let cachedNotes = [];
 let cachedCards = [];
 let cachedIdentities = [];
 let lastSyncTime = 0;
-const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+const SYNC_INTERVAL_MS = 2 * 60 * 1000; // Reduced to 2 minutes for faster sync
+const AUTO_SYNC_INTERVAL_MS = 30 * 1000; // Check for changes every 30 seconds
+let syncInProgress = false;
 
 // ===== AUTO-LOCK =====
 async function checkAutoLock() {
@@ -33,11 +35,31 @@ async function checkAutoLock() {
       cachedTOTP = [];
       cachedNotes = [];
       cachedCards = [];
+      cachedIdentities = [];
+    }
+  }
+}
+
+// ===== AUTO-SYNC =====
+async function autoSync() {
+  const session = await chrome.storage.session.get(['unlocked', 'authToken']);
+  if (!session.unlocked || !session.authToken || syncInProgress) return;
+  
+  // Check if enough time has passed since last sync
+  if (Date.now() - lastSyncTime >= SYNC_INTERVAL_MS) {
+    console.log('[SafePass] Auto-sync triggered');
+    await syncVaultFromSupabase();
+    // Notify popup if open
+    try {
+      await chrome.runtime.sendMessage({ action: 'syncComplete', timestamp: Date.now() });
+    } catch {
+      // Popup not open, ignore
     }
   }
 }
 
 setInterval(checkAutoLock, 60000);
+setInterval(autoSync, AUTO_SYNC_INTERVAL_MS);
 checkAutoLock();
 
 // ===== CONTEXT MENU =====
@@ -257,6 +279,18 @@ async function handleMessage(message, sender) {
     
     case 'getCachedEntries':
       return { entries: cachedEntries };
+    
+    case 'getGeneratorSettings':
+      return await getGeneratorSettings();
+    
+    case 'saveGeneratorSettings':
+      return await saveGeneratorSettings(message.settings);
+    
+    case 'forceSync':
+      return await forceFullSync();
+    
+    case 'getLastSyncTime':
+      return { lastSyncTime, syncInProgress };
     
     default:
       return { error: 'Unknown action' };
@@ -915,8 +949,17 @@ async function handleBreachCheck(passwordHash) {
 
 // ===== ALARMS =====
 chrome.alarms.create('dailyBreachCheck', { periodInMinutes: 24 * 60 });
+chrome.alarms.create('periodicSync', { periodInMinutes: 5 }); // Sync every 5 minutes via alarm
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'periodicSync') {
+    const session = await chrome.storage.session.get(['unlocked', 'authToken']);
+    if (session.unlocked && session.authToken) {
+      console.log('[SafePass] Periodic sync alarm triggered');
+      await syncVaultFromSupabase();
+    }
+  }
+  
   if (alarm.name === 'dailyBreachCheck') {
     console.log('[SafePass] Running daily breach check');
     
@@ -950,4 +993,34 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-console.log('[SafePass] Background service worker v2.1 initialized');
+// ===== PASSWORD GENERATOR SETTINGS =====
+async function getGeneratorSettings() {
+  const settings = await chrome.storage.local.get(['generatorSettings']);
+  return settings.generatorSettings || {
+    length: 16,
+    uppercase: true,
+    lowercase: true,
+    numbers: true,
+    symbols: true,
+    pronounceable: false,
+    excludeAmbiguous: false
+  };
+}
+
+async function saveGeneratorSettings(settings) {
+  await chrome.storage.local.set({ generatorSettings: settings });
+  return { success: true };
+}
+
+// ===== FORCE SYNC =====
+async function forceFullSync() {
+  syncInProgress = true;
+  try {
+    await syncVaultFromSupabase();
+    return { success: true, timestamp: Date.now() };
+  } finally {
+    syncInProgress = false;
+  }
+}
+
+console.log('[SafePass] Background service worker v2.2 initialized');
