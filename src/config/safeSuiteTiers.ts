@@ -86,28 +86,48 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
   name: string;
   description: string;
   icon: string;
+  limitUnit: string; // What the limit number represents
+  limitUnitPlural: string;
 }> = {
   safepass: {
     name: 'SafePass',
     description: 'Secure password manager with encryption',
-    icon: 'KeyRound'
+    icon: 'KeyRound',
+    limitUnit: 'password',
+    limitUnitPlural: 'passwords'
   },
   safescan: {
     name: 'SafeScan',
     description: 'Email, URL, and document security scanner',
-    icon: 'ScanSearch'
+    icon: 'ScanSearch',
+    limitUnit: 'scan/mo',
+    limitUnitPlural: 'scans/mo'
   },
   safeweb: {
     name: 'SafeWeb',
     description: 'Dark web monitoring and breach alerts',
-    icon: 'Globe'
+    icon: 'Globe',
+    limitUnit: 'monitored asset',
+    limitUnitPlural: 'monitored assets'
   },
   safetrack: {
     name: 'SafeTrack',
     description: 'Asset management and inventory tracking',
-    icon: 'Package'
+    icon: 'Package',
+    limitUnit: 'tracked asset',
+    limitUnitPlural: 'tracked assets'
   }
 };
+
+// Format limit with unit for display
+export function formatLimitWithUnit(feature: keyof TierFeatures, limit: number): string {
+  if (limit === -1) return 'Unlimited';
+  if (limit === 0) return '';
+  
+  const featureInfo = FEATURE_DESCRIPTIONS[feature];
+  const unit = limit === 1 ? featureInfo.limitUnit : featureInfo.limitUnitPlural;
+  return `${limit} ${unit}`;
+}
 
 // Helper functions
 export function getTierByPriceId(priceId: string): SafeSuiteTier | null {

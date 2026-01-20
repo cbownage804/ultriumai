@@ -5,7 +5,7 @@
 
 import { Link } from 'react-router-dom';
 import { useFeatureAccess, useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
-import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, TierFeatures } from '@/config/safeSuiteTiers';
+import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, formatLimitWithUnit, TierFeatures } from '@/config/safeSuiteTiers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -218,9 +218,9 @@ export function TierComparison({ highlightTier, className }: TierComparisonProps
                     )}
                     <span className={cn(!value.enabled && 'text-muted-foreground')}>
                       {featureInfo.name}
-                      {value.enabled && value.limit > 0 && (
+                      {value.enabled && value.limit !== 0 && (
                         <span className="text-muted-foreground ml-1">
-                          ({value.limit === -1 ? 'Unlimited' : `${value.limit}`})
+                          ({formatLimitWithUnit(key as keyof TierFeatures, value.limit)})
                         </span>
                       )}
                     </span>

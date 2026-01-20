@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useSafeSuiteSubscription, useSafeSuiteCheckout } from '@/hooks/useSafeSuite';
-import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, SafeSuiteTier, TierFeatures } from '@/config/safeSuiteTiers';
+import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice, formatLimitWithUnit, SafeSuiteTier, TierFeatures } from '@/config/safeSuiteTiers';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -183,9 +183,9 @@ export default function SafeSuiteBilling() {
                         )}
                         <span className={cn(!value.enabled && 'text-muted-foreground')}>
                           {featureInfo.name}
-                          {value.enabled && (
+                          {value.enabled && value.limit !== 0 && (
                             <span className="text-muted-foreground text-sm ml-1">
-                              ({value.limit === -1 ? 'Unlimited' : value.limit})
+                              ({formatLimitWithUnit(key as keyof TierFeatures, value.limit)})
                             </span>
                           )}
                         </span>
