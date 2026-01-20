@@ -1767,6 +1767,13 @@ export type Database = {
             referencedRelation: "client_portal_users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "client_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       client_portal_announcements: {
@@ -2076,6 +2083,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "client_portal_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_portal_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "client_portal_users_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -17404,6 +17418,42 @@ export type Database = {
       }
     }
     Views: {
+      client_portal_users_safe: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          last_login_at: string | null
+          role: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          last_login_at?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          last_login_at?: string | null
+          role?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       msp_billing_summary: {
         Row: {
           billing_period: string | null
@@ -17414,6 +17464,36 @@ export type Database = {
           total_cost: number | null
           total_quantity: number | null
           transaction_count: number | null
+        }
+        Relationships: []
+      }
+      profiles_safe: {
+        Row: {
+          account_type: Database["public"]["Enums"]["account_type"] | null
+          avatar_url: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          account_type?: Database["public"]["Enums"]["account_type"] | null
+          avatar_url?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
