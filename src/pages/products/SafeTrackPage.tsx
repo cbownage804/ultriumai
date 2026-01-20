@@ -12,6 +12,8 @@ import {
   Truck, MapPin, Wrench, Shield, Smartphone, Cloud,
   RefreshCw, Search, Download
 } from 'lucide-react';
+import heroTrack from '@/assets/hero-track.jpg';
+import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const features = [
   {
@@ -135,12 +137,28 @@ export default function SafeTrackPage() {
       <main className="pt-20">
         {/* Hero */}
         <section className="relative overflow-hidden border-b">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent" />
-          <div className="max-w-7xl mx-auto px-4 py-20 relative">
+          {/* Background Image */}
+          <div className="absolute inset-0">
+            <img 
+              src={heroTrack} 
+              alt="IT Asset Management"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+          </div>
+          <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
             <Badge className="mb-4 bg-orange-500/10 text-orange-500 border-orange-500/20">
               <Package className="h-3 w-3 mr-1" />
               IT Asset Management
             </Badge>
+            <div className="flex justify-start mb-6">
+              <img 
+                src={safeSuiteProducts.safetrack.logo} 
+                alt="SafeTrack" 
+                className="h-20 w-20 object-contain"
+              />
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl">
               Ultrium SafeTrack™
             </h1>
