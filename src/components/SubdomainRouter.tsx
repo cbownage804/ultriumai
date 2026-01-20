@@ -19,9 +19,17 @@ import SafePassCards from '@/pages/safesuite/SafePassCards';
 import SafePassIdentity from '@/pages/safesuite/SafePassIdentity';
 import SafePassHealth from '@/pages/safesuite/SafePassHealth';
 import SafePassUsers from '@/pages/safesuite/SafePassUsers';
+import SafePassImport from '@/pages/safepass/SafePassImport';
+import SafePassExport from '@/pages/safepass/SafePassExport';
+import SafePassReminders from '@/pages/safesuite/SafePassReminders';
+import SafePassBreach from '@/pages/safesuite/SafePassBreach';
+import SafePassSettings from '@/pages/safesuite/SafePassSettings';
 import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
+import SafeScanSettings from '@/pages/safesuite/SafeScanSettings';
 import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
+import SafeWebSettings from '@/pages/safesuite/SafeWebSettings';
 import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
+import SafeTrackSettings from '@/pages/safesuite/SafeTrackSettings';
 import ForgotPasswordPage from '@/pages/safesuite/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/safesuite/ResetPasswordPage';
 import MFARecoveryPage from '@/pages/safesuite/MFARecoveryPage';
@@ -56,9 +64,17 @@ export const SafeSuiteSubdomainRoutes = () => {
         <Route path="/pass/identity" element={<SafePassIdentity />} />
         <Route path="/pass/health" element={<SafePassHealth />} />
         <Route path="/pass/users" element={<SafePassUsers />} />
+        <Route path="/pass/import" element={<SafePassImport />} />
+        <Route path="/pass/export" element={<SafePassExport />} />
+        <Route path="/pass/reminders" element={<SafePassReminders />} />
+        <Route path="/pass/breach" element={<SafePassBreach />} />
+        <Route path="/pass/settings" element={<SafePassSettings />} />
         <Route path="/scan" element={<SafeSuiteScan />} />
+        <Route path="/scan/settings" element={<SafeScanSettings />} />
         <Route path="/web" element={<SafeSuiteWeb />} />
+        <Route path="/web/settings" element={<SafeWebSettings />} />
         <Route path="/track" element={<SafeSuiteTrack />} />
+        <Route path="/track/settings" element={<SafeTrackSettings />} />
         <Route path="/billing" element={<SafeSuiteBilling />} />
         <Route path="/settings" element={<SafeSuiteSettings />} />
       </Route>
