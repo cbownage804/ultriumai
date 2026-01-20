@@ -97,7 +97,9 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in flex-wrap">
               <Link to="/ai-studio">
                 <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  <img src={ultriumGPTLogo} alt="AI Studio" className="mr-2 h-6 w-6 object-contain" />
+                  <div className="mr-3 h-8 w-8 rounded-md bg-white/20 p-1 flex items-center justify-center">
+                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 object-contain" />
+                  </div>
                   Explore AI Studio
                 </Button>
               </Link>
@@ -107,7 +109,9 @@ const Index = () => {
                 className="text-lg px-8 py-6 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105"
                 onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
               >
-                <img src={vanguardLogo} alt="Vanguard" className="mr-2 h-6 w-6 object-contain" />
+                <div className="mr-3 h-8 w-8 rounded-md bg-white/10 p-1 flex items-center justify-center">
+                  <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 object-contain" />
+                </div>
                 Explore Vanguard
               </Button>
               <Button 
@@ -116,7 +120,9 @@ const Index = () => {
                 className="text-lg px-8 py-6 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105"
                 onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
               >
-                <img src={safesuiteLogo} alt="SafeSuite" className="mr-2 h-6 w-6 object-contain" />
+                <div className="mr-3 h-8 w-8 rounded-md bg-emerald-500/20 p-1 flex items-center justify-center">
+                  <img src={safesuiteLogo} alt="SafeSuite" className="h-6 w-6 object-contain" />
+                </div>
                 Try SafeSuite
               </Button>
             </div>
