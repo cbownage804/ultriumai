@@ -120,6 +120,18 @@ serve(async (req) => {
   }
 });
 
+// Helper to safely convert Unix timestamp to ISO string
+function safeTimestampToISO(timestamp: number | null | undefined): string | null {
+  if (!timestamp || timestamp <= 0) return null;
+  try {
+    const date = new Date(timestamp * 1000);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+  } catch {
+    return null;
+  }
+}
+
 async function handleSubscriptionUpdate(
   supabase: ReturnType<typeof createClient>,
   stripe: Stripe,
@@ -153,36 +165,52 @@ async function handleSubscriptionUpdate(
     return;
   }
 
-  // Get subscription details
+  // Get subscription details with safe date parsing
   const priceId = subscription.items.data[0]?.price.id;
   const tier = PRICE_TO_TIER[priceId] || 'pro';
   const status = subscription.status;
-  const currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
-  const currentPeriodStart = new Date(subscription.current_period_start * 1000).toISOString();
+  const currentPeriodEnd = safeTimestampToISO(subscription.current_period_end);
+  const currentPeriodStart = safeTimestampToISO(subscription.current_period_start);
   const cancelAtPeriodEnd = subscription.cancel_at_period_end;
 
-  logStep("Upserting subscription", { userId: user.id, tier, status });
+  logStep("Subscription details", { 
+    userId: user.id, 
+    tier, 
+    status,
+    priceId,
+    periodStart: currentPeriodStart,
+    periodEnd: currentPeriodEnd
+  });
+
+  const upsertData: Record<string, unknown> = {
+    user_id: user.id,
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id: customer.id,
+    stripe_price_id: priceId,
+    tier,
+    status: status === 'active' || status === 'trialing' ? 'active' : status,
+    cancel_at_period_end: cancelAtPeriodEnd,
+    updated_at: new Date().toISOString(),
+  };
+
+  // Only add period dates if valid
+  if (currentPeriodStart) {
+    upsertData.current_period_start = currentPeriodStart;
+  }
+  if (currentPeriodEnd) {
+    upsertData.current_period_end = currentPeriodEnd;
+  }
 
   const { error: upsertError } = await supabase
     .from('safesuite_subscriptions')
-    .upsert({
-      user_id: user.id,
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: customer.id,
-      tier,
-      status: status === 'active' || status === 'trialing' ? 'active' : status,
-      current_period_start: currentPeriodStart,
-      current_period_end: currentPeriodEnd,
-      cancel_at_period_end: cancelAtPeriodEnd,
-      updated_at: new Date().toISOString(),
-    }, {
+    .upsert(upsertData, {
       onConflict: 'user_id',
     });
 
   if (upsertError) {
     logStep("Error upserting subscription", { error: upsertError.message });
   } else {
-    logStep("Subscription upserted successfully");
+    logStep("Subscription upserted successfully", { tier, status });
   }
 }
 
