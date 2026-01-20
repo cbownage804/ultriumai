@@ -73,25 +73,31 @@ const Navigation = () => {
           <div className="hidden md:flex items-center gap-6">
             <button 
               onClick={() => handleNavigation('/ai-studio')}
-              className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors duration-200 flex items-center gap-1.5"
+              className="text-sm font-medium text-foreground/70 hover:text-primary transition-colors duration-200 flex items-center gap-2"
             >
-              <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 rounded object-contain bg-black" />
+              <div className="h-7 w-7 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
+              </div>
               AI Studio™
             </button>
             
             <button 
               onClick={() => handleExternalLink('https://vanguard.ultriumai.com')}
-              className="text-sm font-medium text-foreground/70 hover:text-destructive transition-colors duration-200 flex items-center gap-1.5"
+              className="text-sm font-medium text-foreground/70 hover:text-destructive transition-colors duration-200 flex items-center gap-2"
             >
-              <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />
+              <div className="h-7 w-7 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+                <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
+              </div>
               Vanguard™
             </button>
             
             <button 
               onClick={() => handleExternalLink('https://safesuite.ultriumai.com')}
-              className="text-sm font-medium text-foreground/70 hover:text-emerald-500 transition-colors duration-200 flex items-center gap-1.5"
+              className="text-sm font-medium text-foreground/70 hover:text-emerald-500 transition-colors duration-200 flex items-center gap-2"
             >
-              <img src={safesuiteLogo} alt="SafeSuite" className="h-6 w-6 rounded object-contain bg-black" />
+              <div className="h-7 w-7 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
+              </div>
               SafeSuite™
             </button>
             
@@ -216,25 +222,31 @@ const Navigation = () => {
             <div className="space-y-1">
               <button 
                 onClick={() => handleNavigationWithMenuClose('/ai-studio')} 
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
+                className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
               >
-                <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 rounded object-contain bg-black" />
+                <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
+                </div>
                 AI Studio™
               </button>
               
               <button 
                 onClick={() => handleExternalLink('https://vanguard.ultriumai.com')} 
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-destructive hover:bg-muted/50 rounded-md"
+                className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-destructive hover:bg-muted/50 rounded-md"
               >
-                <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />
+                <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+                  <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
+                </div>
                 Vanguard™
               </button>
               
               <button 
                 onClick={() => handleExternalLink('https://safesuite.ultriumai.com')} 
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
+                className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
               >
-                <img src={safesuiteLogo} alt="SafeSuite" className="h-6 w-6 rounded object-contain bg-black" />
+                <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
+                  <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
+                </div>
                 SafeSuite™
               </button>
               
