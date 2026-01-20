@@ -27,8 +27,10 @@ import {
   AlertTriangle,
   CheckCircle,
   RefreshCw,
-  Loader2
+  Loader2,
+  Upload
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 
@@ -61,6 +63,7 @@ const categories = [
 
 export const PasswordVault = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { 
     vaults, 
     entries: safePassEntries, 
@@ -315,13 +318,19 @@ export const PasswordVault = () => {
           <p className="text-muted-foreground">Securely store and manage your passwords</p>
         </div>
         
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Password
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => navigate('/safesuite/pass/import')}>
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
+          
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Password
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -452,6 +461,7 @@ export const PasswordVault = () => {
           </DialogContent>
         </Dialog>
       </div>
+    </div>
 
       {/* Security Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
