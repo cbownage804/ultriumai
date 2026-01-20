@@ -136,7 +136,7 @@ const Index = () => {
             {/* AI Studio Card */}
             <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="pb-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-primary/10 p-3">
+                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-black p-3">
                   <img src={ultriumGPTLogo} alt="AI Studio" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-2xl">UltriumAI Studio™</CardTitle>
@@ -178,7 +178,7 @@ const Index = () => {
                 v4.0 Enterprise Plus
               </div>
               <CardHeader className="pb-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-white/5 p-3">
+                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-black p-3">
                   <img src={vanguardLogo} alt="Vanguard" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Ultrium Vanguard™</CardTitle>
@@ -222,7 +222,7 @@ const Index = () => {
                 Consumer & SMB
               </div>
               <CardHeader className="pb-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-emerald-500/10 p-3">
+                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-black p-3">
                   <img src={safesuiteLogo} alt="SafeSuite" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-2xl bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">SafeSuite™</CardTitle>
