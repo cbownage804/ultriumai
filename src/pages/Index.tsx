@@ -19,7 +19,7 @@ const Index = () => {
   const mainFAQs = [
     {
       question: "What is UltriumAI and what do you build?",
-      answer: "UltriumAI is an AI development agency that builds custom AI solutions for businesses. We offer two flagship products: UltriumAI Studio™ for building custom GPTs, and Vanguard™ for complete security operations. We also provide full-service custom AI development for enterprises."
+      answer: "UltriumAI is an AI development agency that builds custom AI solutions for businesses. We offer two flagship products: AI Studio™ for building custom GPTs, and Vanguard™ for complete security operations. We also provide full-service custom AI development for enterprises."
     },
     {
       question: "What's the difference between AI Studio and custom development?",
@@ -139,7 +139,7 @@ const Index = () => {
                 <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 bg-black p-4">
                   <img src={ultriumGPTLogo} alt="AI Studio" className="w-full h-full object-contain" />
                 </div>
-                <CardTitle className="text-2xl">UltriumAI Studio™</CardTitle>
+                <CardTitle className="text-2xl">AI Studio™</CardTitle>
                 <CardDescription className="text-base">Custom GPT Builder Platform</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">

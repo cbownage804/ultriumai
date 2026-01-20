@@ -175,10 +175,10 @@ const AIStudio = () => {
             <div className="space-y-6">
               <Badge variant="secondary" className="mb-4">
                 <Brain className="h-4 w-4 mr-2" />
-                UltriumAI Studio™
+                AI Studio™
               </Badge>
               <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
-                UltriumAI Studio™
+                AI Studio™
               </h1>
               <h2 className="text-2xl md:text-3xl font-semibold text-muted-foreground mb-4">
                 Custom GPT Builder Platform
@@ -203,7 +203,7 @@ const AIStudio = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ultrium-gpt'}>
                 <Play className="mr-2 h-5 w-5" />
-                Launch UltriumAI Studio
+                Launch AI Studio
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
                 <Play className="mr-2 h-5 w-5" />

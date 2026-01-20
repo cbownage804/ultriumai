@@ -46,7 +46,7 @@ const AboutSection = () => {
                 UltriumAI was born from our experience as an MSP (Managed Service Provider) dealing with the chaos of managing dozens of security tools, RMM platforms, and vendor solutions. We were tired of juggling multiple dashboards, inconsistent APIs, and security gaps between systems.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                So we built what we wished existed: <strong>SafeSuite</strong> - our comprehensive cybersecurity platform with integrated <strong>UltriumAI Studio</strong> for creating custom AI chatbots and GPTs. One unified ecosystem that eliminates vendor sprawl while strengthening your security posture.
+                So we built what we wished existed: <strong>SafeSuite</strong> - our comprehensive cybersecurity platform with integrated <strong>AI Studio</strong> for creating custom AI chatbots and GPTs. One unified ecosystem that eliminates vendor sprawl while strengthening your security posture.
               </p>
               
               <div className="space-y-4">
@@ -61,7 +61,7 @@ const AboutSection = () => {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0 mt-1" />
                   <div>
-                    <h4 className="font-semibold">UltriumAI Studio - Build Custom AI Solutions</h4>
+                    <h4 className="font-semibold">AI Studio - Build Custom AI Solutions</h4>
                     <p className="text-muted-foreground">Integrated within SafeSuite, our AI Studio lets you create custom chatbots and GPTs trained on your specific environment, policies, and procedures. From automated helpdesk support to intelligent threat response, build AI that actually understands your business.</p>
                   </div>
                 </div>

@@ -54,7 +54,7 @@ const Footer = () => {
                   className="text-sm text-muted-foreground hover:text-primary flex items-center gap-2"
                 >
                   <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 rounded object-contain bg-black" />
-                  UltriumAI Studio™
+                  AI Studio™
                 </button>
               </li>
               <li>

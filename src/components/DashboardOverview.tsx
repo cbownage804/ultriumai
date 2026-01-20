@@ -110,7 +110,7 @@ export const DashboardOverview = () => {
             Good {getTimeOfDay()}, {profile?.full_name || user?.email?.split('@')[0]}!
           </h1>
           <p className="text-muted-foreground mt-1 animate-fade-in stagger-1">
-            Welcome to UltriumAI Studio - Build powerful AI solutions
+            Welcome to AI Studio - Build powerful AI solutions
           </p>
         </div>
         <div className="flex items-center space-x-3 animate-fade-in stagger-2">

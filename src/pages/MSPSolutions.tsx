@@ -127,7 +127,7 @@ const MSPSolutions = () => {
     },
     {
       id: "ai-studio-msp",
-      name: "UltriumAI Studio™ for MSPs",
+      name: "AI Studio™ for MSPs",
       category: "Custom AI Development Platform",
       description: "Build custom AI assistants for your MSP and deploy white-label AI solutions for your clients",
       longDescription: "Comprehensive AI development platform that allows MSPs to create custom AI assistants for internal use and deploy branded AI solutions for their clients.",
