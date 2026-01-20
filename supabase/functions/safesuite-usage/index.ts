@@ -36,19 +36,17 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const body = await req.json();
-    const { action, product } = body;
-
-    if (!product || !['safepass', 'safescan', 'safeweb', 'safetrack'].includes(product)) {
-      throw new Error("Invalid product specified");
+    let body = {};
+    try {
+      body = await req.json();
+    } catch {
+      // Empty body is fine for 'get all' action
     }
+    
+    const { action = 'get', product } = body as { action?: string; product?: string };
 
-    const now = new Date();
-    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-    if (action === 'get') {
-      // Get current usage for all products
+    // If no product specified and action is 'get', return all usage
+    if (action === 'get' && !product) {
       const { data: usageData, error: usageError } = await supabaseClient
         .from('safesuite_usage')
         .select('*')
@@ -58,15 +56,62 @@ serve(async (req) => {
 
       if (usageError) throw usageError;
 
-      logStep("Usage retrieved", { count: usageData?.length });
+      // Transform to expected format
+      const usage = {
+        safepass: 0,
+        safescan: 0,
+        safeweb: 0,
+        safetrack: 0
+      };
 
-      return new Response(JSON.stringify({ usage: usageData || [] }), {
+      for (const record of usageData || []) {
+        if (record.product in usage) {
+          usage[record.product as keyof typeof usage] = record.usage_count;
+        }
+      }
+
+      logStep("All usage retrieved", usage);
+
+      return new Response(JSON.stringify({ usage }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // For specific product operations, validate product
+    if (product && !['safepass', 'safescan', 'safeweb', 'safetrack'].includes(product)) {
+      throw new Error("Invalid product specified");
+    }
+
+    if (action === 'get' && product) {
+      // Get current usage for specific product
+      const { data: usageData, error: usageError } = await supabaseClient
+        .from('safesuite_usage')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('product', product)
+        .gte('period_start', periodStart.toISOString())
+        .lt('period_end', periodEnd.toISOString())
+        .maybeSingle();
+
+      if (usageError) throw usageError;
+
+      logStep("Usage retrieved", { product, count: usageData?.usage_count || 0 });
+
+      return new Response(JSON.stringify({ 
+        usage: usageData?.usage_count || 0,
+        product 
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
     if (action === 'increment') {
+      if (!product) {
+        throw new Error("Product required for increment action");
+      }
+
       // Increment usage for a specific product
       const { data: existingUsage, error: fetchError } = await supabaseClient
         .from('safesuite_usage')
@@ -75,9 +120,9 @@ serve(async (req) => {
         .eq('product', product)
         .gte('period_start', periodStart.toISOString())
         .lt('period_end', periodEnd.toISOString())
-        .single();
+        .maybeSingle();
 
-      if (fetchError && fetchError.code !== 'PGRST116') {
+      if (fetchError) {
         throw fetchError;
       }
 
