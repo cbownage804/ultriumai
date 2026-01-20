@@ -45,6 +45,10 @@ serve(async (req) => {
     
     const { action = 'get', product } = body as { action?: string; product?: string };
 
+    // Calculate current billing period
+    const now = new Date();
+    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     // If no product specified and action is 'get', return all usage
     if (action === 'get' && !product) {
       const { data: usageData, error: usageError } = await supabaseClient
