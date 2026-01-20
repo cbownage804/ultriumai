@@ -600,6 +600,7 @@ function AppRouter() {
         }>
           <Route path="/safesuite/dashboard" element={<SafeSuiteDashboard />} />
           <Route path="/safesuite/pass" element={<SafeSuitePass />} />
+          <Route path="/safesuite/pass/import" element={<SafePassImport />} />
           <Route path="/safesuite/scan" element={<SafeSuiteScan />} />
           <Route path="/safesuite/web" element={<SafeSuiteWeb />} />
           <Route path="/safesuite/track" element={<SafeSuiteTrack />} />
