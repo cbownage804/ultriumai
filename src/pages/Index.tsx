@@ -49,14 +49,6 @@ const Index = () => {
     { name: "Enterprise AI Solutions", description: "Full-service custom AI development", url: "https://ultriumai.com/contact" }
   ];
 
-  const portfolioItems = [
-    { name: "SafeScan™", description: "AI-powered unified security scanner", icon: Shield, link: "/demos/safescan" },
-    { name: "UltriumGPT", description: "Intelligent business assistant", icon: Bot, link: "/demos/ultriumgpt" },
-    { name: "SafeNet™", description: "Network discovery & monitoring", icon: Network, link: "/demos/safenet" },
-    { name: "SafePass™", description: "Enterprise password management", icon: Lock, link: "/demos/safepass" },
-    { name: "Helpdesk AI", description: "AI-powered ticket automation", icon: Headphones, link: "/demos/ticketing" },
-    { name: "RMM Platform", description: "Remote monitoring & management", icon: Wrench, link: "/demos/rmm" }
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -285,44 +277,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Portfolio/Showcase Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">See What We Build</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Examples of AI solutions we've created—imagine what we can build for you
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {portfolioItems.map((item) => (
-              <Card key={item.name} className="hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                <CardHeader className="pb-2">
-                  <item.icon className="h-8 w-8 text-primary mb-2" />
-                  <CardTitle className="text-lg">{item.name}</CardTitle>
-                  <CardDescription>{item.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link to={item.link}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Play className="mr-2 h-4 w-4" /> Try Demo
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link to="/portfolio">
-              <Button size="lg" variant="outline" className="px-8">
-                View Full Portfolio <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Trust Section */}
       <section className="py-20 px-4">
