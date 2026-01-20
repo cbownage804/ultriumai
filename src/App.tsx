@@ -36,6 +36,9 @@ import SafePassExtension from '@/pages/safesuite/SafePassExtension';
 import SafeScanSettings from '@/pages/safesuite/SafeScanSettings';
 import SafeWebSettings from '@/pages/safesuite/SafeWebSettings';
 import SafeTrackSettings from '@/pages/safesuite/SafeTrackSettings';
+import ForgotPasswordPage from '@/pages/safesuite/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/safesuite/ResetPasswordPage';
+import MFARecoveryPage from '@/pages/safesuite/MFARecoveryPage';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
@@ -603,6 +606,9 @@ function AppRouter() {
         {/* SafeSuite Portal Routes */}
         <Route path="/safesuite" element={<SafeSuiteLanding />} />
         <Route path="/safesuite/auth" element={<SafeSuiteAuth />} />
+        <Route path="/safesuite/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/safesuite/auth/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/safesuite/auth/mfa-recovery" element={<MFARecoveryPage />} />
         <Route element={
           <ProtectedRoute>
             <SafeSuiteLayout />

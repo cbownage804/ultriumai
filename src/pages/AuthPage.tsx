@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -184,12 +184,12 @@ const AuthPage = () => {
                   </Button>
                   
                   <div className="flex flex-col items-center gap-2 pt-2">
-                    <a href="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+                    <Link to="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
                       Forgot your password?
-                    </a>
-                    <a href="/safesuite/auth/mfa-recovery" className="text-sm text-muted-foreground hover:text-primary">
+                    </Link>
+                    <Link to="/safesuite/auth/mfa-recovery" className="text-sm text-muted-foreground hover:text-primary">
                       Lost access to your authenticator?
-                    </a>
+                    </Link>
                   </div>
                 </form>
               </TabsContent>
