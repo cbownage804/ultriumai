@@ -91,7 +91,7 @@ const Index = () => {
               From intelligent GPTs to enterprise security platforms—UltriumAI creates AI tools that work the way your business works. Built for Business. Secure by Design.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in flex-wrap">
               <Link to="/ai-studio">
                 <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                   <Brain className="mr-2 h-5 w-5" />
@@ -106,6 +106,15 @@ const Index = () => {
               >
                 <Shield className="mr-2 h-5 w-5" />
                 Explore Vanguard
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-lg px-8 py-6 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105"
+                onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
+              >
+                <Lock className="mr-2 h-5 w-5" />
+                Try SafeSuite
               </Button>
             </div>
           </div>

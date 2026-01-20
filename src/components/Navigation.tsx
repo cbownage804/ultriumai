@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Phone, Brain, Shield, Briefcase, X, ChevronDown, Package } from "lucide-react";
+import { Menu, LogOut, Phone, Brain, Shield, Briefcase, X, ChevronDown, Package, Lock } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -82,6 +82,14 @@ const Navigation = () => {
             >
               <Shield className="h-4 w-4" />
               Vanguard™
+            </button>
+            
+            <button 
+              onClick={() => handleExternalLink('https://safesuite.ultriumai.com')}
+              className="text-sm font-medium text-foreground/70 hover:text-emerald-500 transition-colors duration-200 flex items-center gap-1.5"
+            >
+              <Lock className="h-4 w-4" />
+              SafeSuite™
             </button>
             
             <DropdownMenu>
@@ -217,6 +225,14 @@ const Navigation = () => {
               >
                 <Shield className="h-4 w-4" />
                 Vanguard™
+              </button>
+              
+              <button 
+                onClick={() => handleExternalLink('https://safesuite.ultriumai.com')} 
+                className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
+              >
+                <Lock className="h-4 w-4" />
+                SafeSuite™
               </button>
               
               <button onClick={() => handleNavigationWithMenuClose('/portfolio')} className="flex items-center gap-2 w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
