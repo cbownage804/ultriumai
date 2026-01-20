@@ -13051,6 +13051,155 @@ export type Database = {
           },
         ]
       }
+      safesuite_entry_permissions: {
+        Row: {
+          entry_id: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          member_id: string
+          permission: string
+        }
+        Insert: {
+          entry_id: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          member_id: string
+          permission?: string
+        }
+        Update: {
+          entry_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          member_id?: string
+          permission?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safesuite_entry_permissions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "safesuite_shared_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safesuite_entry_permissions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "safesuite_team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safesuite_shared_entries: {
+        Row: {
+          created_at: string
+          created_by: string
+          encrypted_data: string
+          entry_type: string
+          folder: string | null
+          id: string
+          is_favorite: boolean | null
+          last_modified_by: string | null
+          password_strength_score: number | null
+          tags: string[] | null
+          team_id: string
+          title: string
+          updated_at: string
+          vault_id: string
+          website_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          encrypted_data: string
+          entry_type?: string
+          folder?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          last_modified_by?: string | null
+          password_strength_score?: number | null
+          tags?: string[] | null
+          team_id: string
+          title: string
+          updated_at?: string
+          vault_id: string
+          website_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          encrypted_data?: string
+          entry_type?: string
+          folder?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          last_modified_by?: string | null
+          password_strength_score?: number | null
+          tags?: string[] | null
+          team_id?: string
+          title?: string
+          updated_at?: string
+          vault_id?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safesuite_shared_entries_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "safesuite_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safesuite_shared_entries_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "safesuite_shared_vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safesuite_shared_vaults: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safesuite_shared_vaults_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "safesuite_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safesuite_subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -13093,6 +13242,133 @@ export type Database = {
           tier?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      safesuite_team_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown
+          resource_id: string | null
+          resource_type: string | null
+          team_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          resource_id?: string | null
+          resource_type?: string | null
+          team_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          resource_id?: string | null
+          resource_type?: string | null
+          team_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safesuite_team_audit_log_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "safesuite_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safesuite_team_members: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_at: string
+          invited_by: string | null
+          joined_at: string | null
+          role: string
+          status: string
+          team_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          role?: string
+          status?: string
+          team_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          role?: string
+          status?: string
+          team_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safesuite_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "safesuite_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safesuite_teams: {
+        Row: {
+          created_at: string
+          id: string
+          max_seats: number
+          name: string
+          owner_id: string
+          seat_count: number
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_seats?: number
+          name: string
+          owner_id: string
+          seat_count?: number
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_seats?: number
+          name?: string
+          owner_id?: string
+          seat_count?: number
+          subscription_id?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -17554,6 +17830,7 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"]
         }[]
       }
+      get_user_safesuite_team: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -17563,6 +17840,14 @@ export type Database = {
       }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_msp_or_mssp: { Args: { _user_id: string }; Returns: boolean }
+      is_safesuite_team_admin: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_safesuite_team_member: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_team_member: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean

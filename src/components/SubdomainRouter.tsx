@@ -25,6 +25,7 @@ import SafePassExport from '@/pages/safepass/SafePassExport';
 import SafePassReminders from '@/pages/safesuite/SafePassReminders';
 import SafePassBreach from '@/pages/safesuite/SafePassBreach';
 import SafePassSettings from '@/pages/safesuite/SafePassSettings';
+import SafePassTeam from '@/pages/safesuite/SafePassTeam';
 import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
 import SafeScanSettings from '@/pages/safesuite/SafeScanSettings';
 import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
@@ -70,6 +71,7 @@ export const SafeSuiteSubdomainRoutes = () => {
         <Route path="/pass/reminders" element={<SafePassReminders />} />
         <Route path="/pass/breach" element={<SafePassBreach />} />
         <Route path="/pass/settings" element={<SafePassSettings />} />
+        <Route path="/pass/team" element={<SafePassTeam />} />
         <Route path="/scan" element={<SafeSuiteScan />} />
         <Route path="/scan/settings" element={<SafeScanSettings />} />
         <Route path="/web" element={<SafeSuiteWeb />} />
