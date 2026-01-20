@@ -11,13 +11,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   Shield, 
-  Key, 
   Lock, 
   AlertTriangle, 
   Settings, 
   LogOut, 
   Upload,
-  BarChart3,
   Users,
   Bell,
   Menu,
@@ -25,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const navItems = [
   { path: '/safepass/dashboard', label: 'Vault', icon: Lock },
@@ -57,9 +56,11 @@ export function SafePassLayout() {
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/safepass" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-              <Key className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <img 
+              src={safeSuiteProducts.safepass.logo} 
+              alt="SafePass" 
+              className="h-8 w-8 rounded-lg object-contain"
+            />
             <span className="text-xl font-bold">SafePass</span>
           </Link>
 

@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
 import { 
-  Key, 
   Shield, 
   Lock, 
   AlertTriangle, 
@@ -66,9 +66,11 @@ export default function SafePassLanding() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/safepass" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-              <Key className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <img 
+              src={safeSuiteProducts.safepass.logo} 
+              alt="SafePass" 
+              className="h-8 w-8 rounded-lg object-contain"
+            />
             <span className="text-xl font-bold">SafePass</span>
           </Link>
 
@@ -327,9 +329,11 @@ export default function SafePassLanding() {
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                <Key className="h-4 w-4 text-primary-foreground" />
-              </div>
+              <img 
+                src={safeSuiteProducts.safepass.logo} 
+                alt="SafePass" 
+                className="h-8 w-8 rounded-lg object-contain"
+              />
               <span className="font-bold">SafePass</span>
               <span className="text-muted-foreground">by Ultrium</span>
             </div>
