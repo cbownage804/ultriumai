@@ -98,16 +98,23 @@ export const PasswordVault = () => {
     category: 'General'
   });
 
-  // Auto-create default vault if none exist
+  // Auto-create default vault if none exist (only once)
+  const [vaultInitialized, setVaultInitialized] = useState(false);
+  
   useEffect(() => {
     const initializeVault = async () => {
-      if (user && !vaultsLoading && vaults.length === 0) {
+      // Only run once, when vaults are loaded and empty
+      if (user && !vaultsLoading && vaults.length === 0 && !vaultInitialized) {
+        setVaultInitialized(true);
         await createVault({ name: 'My Vault', description: 'Default password vault' });
         await loadVaults();
+      } else if (vaults.length > 0) {
+        // Mark as initialized if vaults already exist
+        setVaultInitialized(true);
       }
     };
     initializeVault();
-  }, [user, vaultsLoading, vaults.length]);
+  }, [user, vaultsLoading, vaults.length, vaultInitialized]);
 
   // Auto-select first vault if none selected
   useEffect(() => {
