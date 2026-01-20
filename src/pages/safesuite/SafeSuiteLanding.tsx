@@ -165,7 +165,7 @@ export default function SafeSuiteLanding() {
                       {tier.price === 0 ? 'Free' : `$${(tier.price / 100).toFixed(0)}`}
                     </span>
                     {tier.price > 0 && (
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-muted-foreground">{tier.priceLabel || '/month'}</span>
                     )}
                   </div>
                 </CardHeader>
