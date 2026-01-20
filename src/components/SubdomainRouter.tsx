@@ -18,6 +18,7 @@ import SafePassNotes from '@/pages/safesuite/SafePassNotes';
 import SafePassCards from '@/pages/safesuite/SafePassCards';
 import SafePassIdentity from '@/pages/safesuite/SafePassIdentity';
 import SafePassHealth from '@/pages/safesuite/SafePassHealth';
+import SafePassUsers from '@/pages/safesuite/SafePassUsers';
 import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
 import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
 import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
@@ -48,6 +49,7 @@ export const SafeSuiteSubdomainRoutes = () => {
         <Route path="/pass/cards" element={<SafePassCards />} />
         <Route path="/pass/identity" element={<SafePassIdentity />} />
         <Route path="/pass/health" element={<SafePassHealth />} />
+        <Route path="/pass/users" element={<SafePassUsers />} />
         <Route path="/scan" element={<SafeSuiteScan />} />
         <Route path="/web" element={<SafeSuiteWeb />} />
         <Route path="/track" element={<SafeSuiteTrack />} />
