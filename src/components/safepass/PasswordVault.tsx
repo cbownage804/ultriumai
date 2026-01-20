@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Lock, 
   Plus, 
@@ -30,13 +31,19 @@ import {
   Loader2,
   Upload,
   Download,
-  Key
+  Key,
+  User,
+  Heart
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TOTPManager } from './TOTPManager';
 import { EntryAttachments } from './EntryAttachments';
 import { ShareEntry } from './ShareEntry';
 import { PasswordCard } from './PasswordCard';
+import { SecureNotes } from './SecureNotes';
+import { CreditCards } from './CreditCards';
+import { IdentityProfiles } from './IdentityProfiles';
+import { PasswordHealthDashboard } from './PasswordHealthDashboard';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { AnimatePresence } from 'framer-motion';
@@ -319,6 +326,37 @@ export const PasswordVault = () => {
 
   return (
     <div className="space-y-6">
+      {/* Tabs Navigation */}
+      <Tabs defaultValue="passwords" className="w-full">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-6">
+          <TabsTrigger value="passwords" className="flex items-center gap-2">
+            <Key className="h-4 w-4" />
+            <span className="hidden sm:inline">Passwords</span>
+          </TabsTrigger>
+          <TabsTrigger value="notes" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Notes</span>
+          </TabsTrigger>
+          <TabsTrigger value="cards" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            <span className="hidden sm:inline">Cards</span>
+          </TabsTrigger>
+          <TabsTrigger value="identity" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Identity</span>
+          </TabsTrigger>
+          <TabsTrigger value="2fa" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">2FA</span>
+          </TabsTrigger>
+          <TabsTrigger value="health" className="flex items-center gap-2">
+            <Heart className="h-4 w-4" />
+            <span className="hidden sm:inline">Health</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Passwords Tab */}
+        <TabsContent value="passwords" className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -597,11 +635,33 @@ export const PasswordVault = () => {
           </AnimatePresence>
         )}
       </div>
+        </TabsContent>
 
-      {/* TOTP / 2FA Authenticator Section */}
-      <div className="mt-8 pt-6 border-t">
-        <TOTPManager />
-      </div>
+        {/* Secure Notes Tab */}
+        <TabsContent value="notes">
+          <SecureNotes />
+        </TabsContent>
+
+        {/* Credit Cards Tab */}
+        <TabsContent value="cards">
+          <CreditCards />
+        </TabsContent>
+
+        {/* Identity Tab */}
+        <TabsContent value="identity">
+          <IdentityProfiles />
+        </TabsContent>
+
+        {/* 2FA / TOTP Tab */}
+        <TabsContent value="2fa">
+          <TOTPManager />
+        </TabsContent>
+
+        {/* Password Health Tab */}
+        <TabsContent value="health">
+          <PasswordHealthDashboard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
