@@ -8,52 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
+import { safeSuiteProducts, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
 import {
   Shield,
-  KeyRound,
-  ScanSearch,
-  Globe,
-  Package,
   Check,
   Sparkles,
   Crown,
   ArrowRight,
   Lock,
-  Zap,
-  Users,
   Star
 } from 'lucide-react';
 
-const features = [
-  {
-    id: 'safepass',
-    icon: KeyRound,
-    title: 'SafePass',
-    description: 'Secure password manager with military-grade encryption',
-    highlights: ['Zero-knowledge architecture', 'Auto-fill & sync', 'Password generator']
-  },
-  {
-    id: 'safescan',
-    icon: ScanSearch,
-    title: 'SafeScan',
-    description: 'Real-time email, URL, and document security scanning',
-    highlights: ['Phishing detection', 'Malware analysis', 'Threat intelligence']
-  },
-  {
-    id: 'safeweb',
-    icon: Globe,
-    title: 'SafeWeb',
-    description: 'Dark web monitoring and breach alerts',
-    highlights: ['24/7 monitoring', 'Instant alerts', 'Breach remediation']
-  },
-  {
-    id: 'safetrack',
-    icon: Package,
-    title: 'SafeTrack',
-    description: 'Asset management and inventory tracking',
-    highlights: ['Device tracking', 'License management', 'Depreciation reports']
-  }
-];
+const features: SafeSuiteProductKey[] = ['safepass', 'safescan', 'safeweb', 'safetrack'];
 
 export default function SafeSuiteLanding() {
   return (
@@ -129,27 +95,29 @@ export default function SafeSuiteLanding() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {features.map((feature) => {
-              const Icon = feature.icon;
+            {features.map((productKey) => {
+              const product = safeSuiteProducts[productKey];
               return (
-                <Card key={feature.id} className="relative overflow-hidden group hover:shadow-lg transition-shadow">
+                <Card key={productKey} className="relative overflow-hidden group hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                        <Icon className="h-6 w-6 text-primary" />
-                      </div>
+                      <img 
+                        src={product.logo} 
+                        alt={product.name} 
+                        className="h-12 w-12 object-contain rounded-lg"
+                      />
                       <div>
-                        <CardTitle>{feature.title}</CardTitle>
-                        <CardDescription>{feature.description}</CardDescription>
+                        <CardTitle>{product.name}</CardTitle>
+                        <CardDescription>{product.description}</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {feature.highlights.map((highlight, i) => (
+                      {product.features.map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm">
                           <Check className="h-4 w-4 text-success" />
-                          {highlight}
+                          {feature}
                         </li>
                       ))}
                     </ul>

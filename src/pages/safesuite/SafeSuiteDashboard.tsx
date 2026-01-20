@@ -10,6 +10,7 @@ import { useSafeSuiteSubscription, useFeatureAccess } from '@/hooks/useSafeSuite
 import { useSafePass } from '@/hooks/useSafePass';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, TierFeatures } from '@/config/safeSuiteTiers';
 import { supabase } from '@/integrations/supabase/client';
+import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -144,19 +145,19 @@ function QuickActionsCard() {
       <CardContent className="space-y-2">
         <Link to="/safesuite/pass">
           <Button variant="outline" className="w-full justify-start gap-2">
-            <KeyRound className="h-4 w-4" />
+            <img src={safeSuiteProducts.safepass.logo} alt="SafePass" className="h-4 w-4 rounded object-contain" />
             Add New Password
           </Button>
         </Link>
         <Link to="/safesuite/scan">
           <Button variant="outline" className="w-full justify-start gap-2">
-            <ScanSearch className="h-4 w-4" />
+            <img src={safeSuiteProducts.safescan.logo} alt="SafeScan" className="h-4 w-4 rounded object-contain" />
             Scan a URL
           </Button>
         </Link>
         <Link to="/safesuite/web">
           <Button variant="outline" className="w-full justify-start gap-2">
-            <Globe className="h-4 w-4" />
+            <img src={safeSuiteProducts.safeweb.logo} alt="SafeWeb" className="h-4 w-4 rounded object-contain" />
             Check for Breaches
           </Button>
         </Link>
@@ -170,12 +171,10 @@ function ProductCard({
   isLocked,
   stat
 }: { 
-  product: { id: string; icon: any; title: string; description: string; path: string; color: string; bgColor: string };
+  product: { id: string; productLogo: string; title: string; description: string; path: string };
   isLocked: boolean;
   stat: { label: string; value: number };
 }) {
-  const Icon = product.icon;
-
   return (
     <Link to={product.path}>
       <Card className={cn(
@@ -184,9 +183,11 @@ function ProductCard({
       )}>
         <CardContent className="pt-6">
           <div className="flex items-start justify-between mb-4">
-            <div className={cn('h-12 w-12 rounded-lg flex items-center justify-center', product.bgColor)}>
-              <Icon className={cn('h-6 w-6', product.color)} />
-            </div>
+            <img 
+              src={product.productLogo} 
+              alt={product.title} 
+              className="h-12 w-12 rounded-lg object-contain"
+            />
             {isLocked ? (
               <Badge variant="secondary" className="gap-1">
                 <Lock className="h-3 w-3" />
@@ -265,46 +266,38 @@ const productCardsConfig = [
   {
     id: 'safepass',
     feature: 'safepass' as keyof TierFeatures,
-    icon: KeyRound,
+    productLogo: safeSuiteProducts.safepass.logo,
     title: 'SafePass',
     description: 'Password Manager',
     path: '/safesuite/pass',
-    statLabel: 'Passwords',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-500/10'
+    statLabel: 'Passwords'
   },
   {
     id: 'safescan',
     feature: 'safescan' as keyof TierFeatures,
-    icon: ScanSearch,
+    productLogo: safeSuiteProducts.safescan.logo,
     title: 'SafeScan',
     description: 'Security Scanner',
     path: '/safesuite/scan',
-    statLabel: 'Scans this month',
-    color: 'text-emerald-500',
-    bgColor: 'bg-emerald-500/10'
+    statLabel: 'Scans this month'
   },
   {
     id: 'safeweb',
     feature: 'safeweb' as keyof TierFeatures,
-    icon: Globe,
+    productLogo: safeSuiteProducts.safeweb.logo,
     title: 'SafeWeb',
     description: 'Dark Web Monitoring',
     path: '/safesuite/web',
-    statLabel: 'Assets monitored',
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10'
+    statLabel: 'Assets monitored'
   },
   {
     id: 'safetrack',
     feature: 'safetrack' as keyof TierFeatures,
-    icon: Package,
+    productLogo: safeSuiteProducts.safetrack.logo,
     title: 'SafeTrack',
-    description: 'Asset Management',
+    description: 'Asset Tracking',
     path: '/safesuite/track',
-    statLabel: 'Assets tracked',
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-500/10'
+    statLabel: 'Assets tracked'
   }
 ];
 
