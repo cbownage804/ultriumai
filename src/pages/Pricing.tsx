@@ -49,7 +49,7 @@ const Pricing = () => {
               <Brain className="h-4 w-4 mr-2" />
               Self-Serve Platform
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">UltriumAI Studio™</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">AI Studio™</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Build custom AI assistants for your business. No coding required. Start with a free trial.
             </p>
