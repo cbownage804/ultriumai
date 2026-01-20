@@ -19,7 +19,7 @@ const Index = () => {
   const mainFAQs = [
     {
       question: "What is UltriumAI and what do you build?",
-      answer: "UltriumAI is an AI development agency that builds custom AI solutions for businesses. We offer two flagship products: UltriumAI Studio™ for building custom GPTs, and Ultrium Vanguard™ for complete security operations. We also provide full-service custom AI development for enterprises."
+      answer: "UltriumAI is an AI development agency that builds custom AI solutions for businesses. We offer two flagship products: UltriumAI Studio™ for building custom GPTs, and Vanguard™ for complete security operations. We also provide full-service custom AI development for enterprises."
     },
     {
       question: "What's the difference between AI Studio and custom development?",
@@ -89,8 +89,8 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in flex-wrap">
               <Link to="/ai-studio">
                 <Button size="lg" className="text-lg px-8 py-6 h-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                  <div className="mr-3 h-8 w-8 rounded-md bg-white/20 p-1 flex items-center justify-center">
-                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 object-contain" />
+                  <div className="mr-3 h-10 w-10 rounded-lg bg-black p-1.5 flex items-center justify-center">
+                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-7 w-7 object-contain" />
                   </div>
                   Explore AI Studio
                 </Button>
@@ -101,8 +101,8 @@ const Index = () => {
                 className="text-lg px-8 py-6 h-auto border-2 hover:bg-destructive/5 hover:border-destructive/50 transition-all duration-300 hover:scale-105"
                 onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
               >
-                <div className="mr-3 h-8 w-8 rounded-md bg-white/10 p-1 flex items-center justify-center">
-                  <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 object-contain" />
+                <div className="mr-3 h-10 w-10 rounded-lg bg-black p-1.5 flex items-center justify-center">
+                  <img src={vanguardLogo} alt="Vanguard" className="h-7 w-7 object-contain" />
                 </div>
                 Explore Vanguard
               </Button>
@@ -112,8 +112,8 @@ const Index = () => {
                 className="text-lg px-8 py-6 h-auto border-2 border-emerald-500/50 hover:bg-emerald-500/5 hover:border-emerald-500 transition-all duration-300 hover:scale-105"
                 onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
               >
-                <div className="mr-3 h-8 w-8 rounded-md bg-emerald-500/20 p-1 flex items-center justify-center">
-                  <img src={safesuiteLogo} alt="SafeSuite" className="h-6 w-6 object-contain" />
+                <div className="mr-3 h-10 w-10 rounded-lg bg-black p-1.5 flex items-center justify-center">
+                  <img src={safesuiteLogo} alt="SafeSuite" className="h-7 w-7 object-contain" />
                 </div>
                 Try SafeSuite
               </Button>
@@ -136,7 +136,7 @@ const Index = () => {
             {/* AI Studio Card */}
             <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
               <CardHeader className="pb-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-black p-3">
+                <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 bg-black p-4">
                   <img src={ultriumGPTLogo} alt="AI Studio" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-2xl">UltriumAI Studio™</CardTitle>
@@ -178,10 +178,10 @@ const Index = () => {
                 v4.0 Enterprise Plus
               </div>
               <CardHeader className="pb-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-black p-3">
+                <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 bg-black p-4">
                   <img src={vanguardLogo} alt="Vanguard" className="w-full h-full object-contain" />
                 </div>
-                <CardTitle className="text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Ultrium Vanguard™</CardTitle>
+                <CardTitle className="text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">Vanguard™</CardTitle>
                 <CardDescription className="text-base">All-in-One Security AI Platform</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -222,7 +222,7 @@ const Index = () => {
                 Consumer & SMB
               </div>
               <CardHeader className="pb-4">
-                <div className="w-24 h-24 rounded-xl overflow-hidden mb-4 bg-black p-3">
+                <div className="w-32 h-32 rounded-xl overflow-hidden mb-4 bg-black p-4">
                   <img src={safesuiteLogo} alt="SafeSuite" className="w-full h-full object-contain" />
                 </div>
                 <CardTitle className="text-2xl bg-gradient-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">SafeSuite™</CardTitle>

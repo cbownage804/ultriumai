@@ -259,8 +259,8 @@ export function AppSidebar() {
               <Card className="mx-2 mb-2 border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
                 <CardHeader className="p-3">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <img src={vanguardLogo} alt="Vanguard" className="h-5 w-5 rounded object-contain bg-black" />
-                    Ultrium Vanguard
+                    <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />
+                    Vanguard
                   </CardTitle>
                   <CardDescription className="text-xs">
                     AI-powered cybersecurity platform
