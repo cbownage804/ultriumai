@@ -76,7 +76,7 @@ const Navigation = () => {
               className="transition-transform duration-200 hover:scale-110"
               title="AI Studio™"
             >
-              <div className="h-10 w-10 rounded-lg bg-black flex items-center justify-center overflow-hidden">
+              <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
                 <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
               </div>
             </button>
@@ -86,7 +86,7 @@ const Navigation = () => {
               className="transition-transform duration-200 hover:scale-110"
               title="Vanguard™"
             >
-              <div className="h-10 w-10 rounded-lg bg-black flex items-center justify-center overflow-hidden">
+              <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
                 <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
               </div>
             </button>
@@ -96,7 +96,7 @@ const Navigation = () => {
               className="transition-transform duration-200 hover:scale-110"
               title="SafeSuite™"
             >
-              <div className="h-10 w-10 rounded-lg bg-black flex items-center justify-center overflow-hidden">
+              <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
                 <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
               </div>
             </button>
