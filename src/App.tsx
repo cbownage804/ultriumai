@@ -32,6 +32,7 @@ import SafePassReminders from '@/pages/safesuite/SafePassReminders';
 import SafePassBreach from '@/pages/safesuite/SafePassBreach';
 import SafePassShared from '@/pages/safesuite/SafePassShared';
 import SafePassEmergency from '@/pages/safesuite/SafePassEmergency';
+import SafePassExtension from '@/pages/safesuite/SafePassExtension';
 import SafeScanSettings from '@/pages/safesuite/SafeScanSettings';
 import SafeWebSettings from '@/pages/safesuite/SafeWebSettings';
 import SafeTrackSettings from '@/pages/safesuite/SafeTrackSettings';
@@ -611,6 +612,7 @@ function AppRouter() {
           <Route path="/safesuite/pass" element={<SafeSuitePass />} />
           <Route path="/safesuite/pass/shared" element={<SafePassShared />} />
           <Route path="/safesuite/pass/emergency" element={<SafePassEmergency />} />
+          <Route path="/safesuite/pass/extension" element={<SafePassExtension />} />
           <Route path="/safesuite/pass/import" element={<SafePassImport />} />
           <Route path="/safesuite/pass/export" element={<SafePassExport />} />
           <Route path="/safesuite/pass/reminders" element={<SafePassReminders />} />
