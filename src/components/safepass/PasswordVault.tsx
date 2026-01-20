@@ -94,6 +94,7 @@ export const PasswordVault = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DisplayEntry | null>(null);
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [newEntry, setNewEntry] = useState({
     title: '',
@@ -411,13 +412,25 @@ export const PasswordVault = () => {
                     Generate
                   </Button>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newEntry.password}
-                  onChange={(e) => setNewEntry(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Enter or generate password"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newEntry.password}
+                    onChange={(e) => setNewEntry(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Enter or generate password"
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
                 {newEntry.password && (
                   <div className="mt-1 text-sm">
                     Strength: <span className={getStrengthColor(calculatePasswordStrength(newEntry.password))}>
