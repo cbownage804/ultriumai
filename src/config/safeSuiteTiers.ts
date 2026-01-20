@@ -51,9 +51,9 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
     name: 'Pro',
     description: 'Advanced protection for power users',
     price: 999,  // $9.99/mo
-    yearlyPrice: 9588, // $7.99/mo billed annually
-    stripePriceId: 'price_safesuite_pro_monthly',
-    stripeYearlyPriceId: 'price_safesuite_pro_yearly',
+    yearlyPrice: 9590, // $95.90/year (~$7.99/mo)
+    stripePriceId: 'price_1SrTegH1u6E0bsJTKpGm5qxr',
+    stripeYearlyPriceId: 'price_1SrTeiH1u6E0bsJTarTH7ajs',
     badge: 'Most Popular',
     popular: true,
     features: {
@@ -68,9 +68,9 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
     name: 'Business',
     description: 'Complete security suite for teams',
     price: 2999,  // $29.99/mo
-    yearlyPrice: 28788, // $23.99/mo billed annually
-    stripePriceId: 'price_safesuite_business_monthly',
-    stripeYearlyPriceId: 'price_safesuite_business_yearly',
+    yearlyPrice: 28790, // $287.90/year (~$23.99/mo)
+    stripePriceId: 'price_1SrTejH1u6E0bsJTwd4K8st5',
+    stripeYearlyPriceId: 'price_1SrTelH1u6E0bsJTmep4lSIP',
     badge: 'Best Value',
     features: {
       safepass: { enabled: true, limit: -1, team: true },  // Unlimited + Team sharing

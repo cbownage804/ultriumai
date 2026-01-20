@@ -22,6 +22,10 @@ import SafeSuiteAuth from '@/pages/safesuite/SafeSuiteAuth';
 import SafeSuiteDashboard from '@/pages/safesuite/SafeSuiteDashboard';
 import SafeSuiteBilling from '@/pages/safesuite/SafeSuiteBilling';
 import SafeSuiteSettings from '@/pages/safesuite/SafeSuiteSettings';
+import SafeSuitePass from '@/pages/safesuite/SafeSuitePass';
+import SafeSuiteScan from '@/pages/safesuite/SafeSuiteScan';
+import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
+import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
@@ -572,6 +576,23 @@ function AppRouter() {
           <Route path="import" element={<SafePassImport />} />
           <Route path="security" element={<SafePassSecurity />} />
           <Route path="breach-monitor" element={<SafePassBreachMonitor />} />
+        </Route>
+        
+        {/* SafeSuite Portal Routes */}
+        <Route path="/safesuite" element={<SafeSuiteLanding />} />
+        <Route path="/safesuite/auth" element={<SafeSuiteAuth />} />
+        <Route element={
+          <ProtectedRoute>
+            <SafeSuiteLayout />
+          </ProtectedRoute>
+        }>
+          <Route path="/safesuite/dashboard" element={<SafeSuiteDashboard />} />
+          <Route path="/safesuite/pass" element={<SafeSuitePass />} />
+          <Route path="/safesuite/scan" element={<SafeSuiteScan />} />
+          <Route path="/safesuite/web" element={<SafeSuiteWeb />} />
+          <Route path="/safesuite/track" element={<SafeSuiteTrack />} />
+          <Route path="/safesuite/billing" element={<SafeSuiteBilling />} />
+          <Route path="/safesuite/settings" element={<SafeSuiteSettings />} />
         </Route>
         
         <Route path="*" element={<NotFound />} />
