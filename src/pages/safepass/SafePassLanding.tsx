@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
+import { SafePassLandingDemo } from '@/components/safepass/SafePassLandingDemo';
 import { 
   Shield, 
   Lock, 
@@ -14,7 +15,8 @@ import {
   ArrowRight,
   Zap,
   Globe,
-  RefreshCw
+  RefreshCw,
+  Play
 } from 'lucide-react';
 
 const features = [
@@ -103,19 +105,20 @@ export default function SafePassLanding() {
               you'll be alerted the moment your credentials are exposed.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/safepass/auth?mode=signup">
+              <Link to="/safepass-app/auth?mode=signup">
                 <Button size="lg" className="w-full sm:w-auto">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <a 
-                href="#chrome-extension" 
-                className="text-sm text-muted-foreground hover:text-foreground flex items-center"
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                <Chrome className="mr-2 h-4 w-4" />
-                Download Chrome Extension
-              </a>
+                <Play className="mr-2 h-4 w-4" />
+                Try Live Demo
+              </Button>
             </div>
           </div>
         </div>
@@ -283,8 +286,25 @@ export default function SafePassLanding() {
         </div>
       </section>
 
+      {/* Live Demo Section */}
+      <section id="demo" className="py-20">
+        <div className="container">
+          <div className="text-center mb-12">
+            <Badge className="mb-4">
+              <Play className="h-3 w-3 mr-1" />
+              Interactive Demo
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Try SafePass Live</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Experience our password vault, generator, 2FA manager, and breach monitoring — no signup required
+            </p>
+          </div>
+          <SafePassLandingDemo />
+        </div>
+      </section>
+
       {/* Security Section */}
-      <section className="py-20">
+      <section className="py-20 bg-muted/30">
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold">Enterprise-grade security</h2>
