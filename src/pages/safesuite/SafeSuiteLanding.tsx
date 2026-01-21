@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS, formatMonthlyPrice } from '@/config/safeSuiteTiers';
 import { safeSuiteProducts, safesuiteLogo, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
+import heroSafesuite from '@/assets/hero-safesuite.jpg';
 import {
   Shield,
   Check,
@@ -51,13 +52,29 @@ export default function SafeSuiteLanding() {
 
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroSafesuite} 
+            alt="SafeSuite Security Platform"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/80 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-background/70" />
+        </div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <Badge variant="secondary" className="mb-4 gap-1">
               <Sparkles className="h-3 w-3" />
               Complete Security Suite
             </Badge>
+            <div className="flex justify-center mb-6">
+              <img 
+                src={safesuiteLogo} 
+                alt="SafeSuite" 
+                className="h-24 w-24 object-contain"
+              />
+            </div>
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               All Your Security Tools in One Place
             </h1>
