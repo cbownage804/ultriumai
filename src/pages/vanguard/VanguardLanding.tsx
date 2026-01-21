@@ -28,6 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import heroVanguard from '@/assets/hero-vanguard.jpg';
 
 export default function VanguardLanding() {
   const navigate = useNavigate();
@@ -163,24 +164,42 @@ export default function VanguardLanding() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-600/5 to-[#0a0a0f]" />
-        <div className="absolute top-20 right-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl" />
+      <section className="relative overflow-hidden min-h-[80vh] flex items-center">
+        {/* Hero Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src={heroVanguard} 
+            alt="Cybersecurity Command Center" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/90 via-[#0a0a0f]/70 to-[#0a0a0f]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/70 via-transparent to-[#0a0a0f]/70" />
+        </div>
+        {/* Animated Overlay Effects */}
+        <div className="absolute top-20 right-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-cyan-500/5 to-purple-600/5 rounded-full blur-3xl" />
         
         <div className="container mx-auto px-6 py-24 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <Badge className="bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border-cyan-500/30 mb-6">
+            <Badge className="bg-gradient-to-r from-cyan-500/20 to-purple-600/20 text-cyan-400 border-cyan-500/30 mb-8 animate-fade-in">
               <Zap className="h-3 w-3 mr-1" />
               v4.0 Enterprise Plus - The Future of Cybersecurity
             </Badge>
             
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white">
-              Ultrium Vanguard
+            {/* Large Logo */}
+            <div className="flex justify-center mb-8">
+              <div className="p-6 bg-black rounded-3xl shadow-2xl shadow-cyan-500/20 animate-fade-in">
+                <img src={vanguardLogo} alt="Vanguard" className="h-32 w-auto" />
+              </div>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent animate-fade-in">
+              Vanguard
             </h1>
             
-            <p className="text-xl md:text-2xl text-white/60 mb-8 max-w-3xl mx-auto">
-              The world's first <strong className="text-white">AI-powered unified cybersecurity platform</strong> that combines SOC operations, 
+            <p className="text-xl md:text-2xl text-white/60 mb-8 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              The world's first <strong className="text-cyan-400">AI-powered unified cybersecurity platform</strong> that combines SOC operations, 
               threat detection, penetration testing, compliance, and identity management into one revolutionary solution.
             </p>
             

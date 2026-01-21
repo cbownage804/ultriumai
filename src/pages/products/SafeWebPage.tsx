@@ -94,15 +94,17 @@ const SafeWebPage = () => {
                 <Eye className="h-3 w-3 mr-1" />
                 Dark Web Intelligence
               </Badge>
-              <div className="flex justify-center mb-6">
-                <img 
-                  src={safeSuiteProducts.safeweb.logo} 
-                  alt="SafeWeb" 
-                  className="h-20 w-20 object-contain"
-                />
+              <div className="flex justify-center mb-8">
+                <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-violet-500/20 animate-fade-in">
+                  <img 
+                    src={safeSuiteProducts.safeweb.logo} 
+                    alt="SafeWeb" 
+                    className="h-28 w-28 object-contain"
+                  />
+                </div>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                Ultrium SafeWeb™
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-violet-400 via-purple-500 to-violet-600 bg-clip-text text-transparent animate-fade-in">
+                SafeWeb
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Dark web monitoring and threat intelligence platform. Protect your organization from credential theft, data breaches, and cyber threats with continuous monitoring.
@@ -134,10 +136,12 @@ const SafeWebPage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {features.map((feature, index) => (
-                <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                <Card key={index} className="hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300 hover:-translate-y-1 border-violet-500/10 hover:border-violet-500/30 group">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3">
-                      <Check className="h-5 w-5 text-violet-500" />
+                      <div className="w-8 h-8 rounded-full bg-violet-500/10 flex items-center justify-center group-hover:bg-violet-500/20 transition-colors">
+                        <Check className="h-4 w-4 text-violet-500" />
+                      </div>
                       <span className="font-medium">{feature}</span>
                     </div>
                   </CardContent>

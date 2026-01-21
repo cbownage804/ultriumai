@@ -152,15 +152,17 @@ export default function SafeTrackPage() {
               <Package className="h-3 w-3 mr-1" />
               IT Asset Management
             </Badge>
-            <div className="flex justify-start mb-6">
-              <img 
-                src={safeSuiteProducts.safetrack.logo} 
-                alt="SafeTrack" 
-                className="h-20 w-20 object-contain"
-              />
+            <div className="flex justify-start mb-8">
+              <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-orange-500/20 animate-fade-in">
+                <img 
+                  src={safeSuiteProducts.safetrack.logo} 
+                  alt="SafeTrack" 
+                  className="h-28 w-28 object-contain"
+                />
+              </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl">
-              Ultrium SafeTrack™
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl bg-gradient-to-r from-orange-400 via-amber-500 to-orange-600 bg-clip-text text-transparent animate-fade-in">
+              SafeTrack
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mb-8">
               Complete IT asset lifecycle management. Track hardware, software, and 
@@ -209,10 +211,10 @@ export default function SafeTrackPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map((feature, i) => (
-                <Card key={i} className="hover:shadow-lg transition-shadow">
+                <Card key={i} className="hover:shadow-lg hover:shadow-orange-500/10 transition-all duration-300 hover:-translate-y-1 border-orange-500/10 hover:border-orange-500/30 group">
                   <CardHeader>
-                    <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center mb-4">
-                      <feature.icon className="h-6 w-6 text-orange-500" />
+                    <div className="w-14 h-14 rounded-xl bg-orange-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <feature.icon className="h-7 w-7 text-orange-500" />
                     </div>
                     <CardTitle>{feature.title}</CardTitle>
                     <CardDescription>{feature.description}</CardDescription>

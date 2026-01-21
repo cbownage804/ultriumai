@@ -95,15 +95,17 @@ const SafePassPage = () => {
                 <Lock className="h-3 w-3 mr-1" />
                 Enterprise Password Security
               </Badge>
-              <div className="flex justify-center mb-6">
-                <img 
-                  src={safeSuiteProducts.safepass.logo} 
-                  alt="SafePass" 
-                  className="h-20 w-20 object-contain"
-                />
+              <div className="flex justify-center mb-8">
+                <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-amber-500/20 animate-fade-in">
+                  <img 
+                    src={safeSuiteProducts.safepass.logo} 
+                    alt="SafePass" 
+                    className="h-28 w-28 object-contain"
+                  />
+                </div>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                Ultrium SafePass™
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 bg-clip-text text-transparent animate-fade-in">
+                SafePass
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Enterprise password management and security platform. Secure, generate, and manage passwords across your organization with advanced breach monitoring.
@@ -135,10 +137,12 @@ const SafePassPage = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {features.map((feature, index) => (
-                <Card key={index} className="hover:shadow-lg transition-all duration-300">
+                <Card key={index} className="hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300 hover:-translate-y-1 border-amber-500/10 hover:border-amber-500/30 group">
                   <CardContent className="p-6">
                     <div className="flex items-center gap-3">
-                      <Check className="h-5 w-5 text-amber-500" />
+                      <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition-colors">
+                        <Check className="h-4 w-4 text-amber-500" />
+                      </div>
                       <span className="font-medium">{feature}</span>
                     </div>
                   </CardContent>
