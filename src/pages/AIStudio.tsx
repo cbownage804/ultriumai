@@ -37,7 +37,8 @@ const AIStudio = () => {
       subtitle: "DIY GPT Builder Platform",
       description: "Our intuitive platform empowers you to create custom GPTs without coding expertise.",
       icon: Wrench,
-      gradient: "from-blue-100 to-indigo-100",
+      gradient: "from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10",
+      textColor: "text-foreground",
       features: [
         "Drag-and-drop GPT builder",
         "Pre-built templates for common use cases", 
@@ -60,7 +61,8 @@ const AIStudio = () => {
       subtitle: "Full-Service GPT Development",
       description: "Our expert team creates custom GPTs tailored to your exact specifications and business needs.",
       icon: Rocket,
-      gradient: "from-purple-100 to-violet-100",
+      gradient: "from-secondary/50 to-muted/50 dark:from-secondary/30 dark:to-muted/30",
+      textColor: "text-foreground",
       features: [
         "Dedicated development team",
         "Custom training on your data",
@@ -235,47 +237,47 @@ const AIStudio = () => {
             {creationPaths.map((path, index) => {
               const Icon = path.icon;
               return (
-                <Card key={index} className={`hover:shadow-xl transition-all duration-300 bg-gradient-to-br ${path.gradient} border-2 hover:border-primary/20 hover:scale-105`}>
+                <Card key={index} className={`hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 bg-gradient-to-br ${path.gradient} border-2 border-border/50 hover:border-primary/30 hover:-translate-y-2`}>
                   <CardHeader className="text-center">
-                    <div className="mx-auto mb-4 w-16 h-16 bg-white/80 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="mx-auto mb-4 w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center shadow-lg">
                       <Icon className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl text-black">{path.title}</CardTitle>
-                    <CardDescription className="text-lg font-semibold text-black/80">
+                    <CardTitle className="text-2xl">{path.title}</CardTitle>
+                    <CardDescription className="text-lg font-semibold text-primary">
                       {path.subtitle}
                     </CardDescription>
-                    <p className="text-black/70 mt-2">
+                    <p className="text-muted-foreground mt-2">
                       {path.description}
                     </p>
                   </CardHeader>
                   
                   <CardContent className="space-y-6">
                     <div>
-                      <h4 className="font-semibold mb-3 text-black">What You Get:</h4>
+                      <h4 className="font-semibold mb-3 text-foreground">What You Get:</h4>
                       <ul className="space-y-2">
                         {path.features.map((feature, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm">
-                            <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                            <span className="text-black/70">{feature}</span>
+                            <CheckCircle className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
+                            <span className="text-muted-foreground">{feature}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
                     
                     <div>
-                      <h4 className="font-semibold mb-3 text-black">Key Benefits:</h4>
+                      <h4 className="font-semibold mb-3 text-foreground">Key Benefits:</h4>
                       <ul className="space-y-2">
                         {path.benefits.map((benefit, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm">
                             <ArrowRight className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                            <span className="text-black/70">{benefit}</span>
+                            <span className="text-muted-foreground">{benefit}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    <div className="pt-4 border-t border-black/10">
-                      <p className="text-sm text-black/60 font-medium mb-4">{path.audience}</p>
+                    <div className="pt-4 border-t border-border">
+                      <p className="text-sm text-muted-foreground font-medium mb-4">{path.audience}</p>
                       <Button 
                         className="w-full" 
                         size="lg"

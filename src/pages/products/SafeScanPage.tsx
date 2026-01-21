@@ -234,15 +234,17 @@ const SafeScanPage = () => {
                 <Shield className="h-3 w-3 mr-1" />
                 AI-Powered Threat Detection
               </Badge>
-              <div className="flex justify-center mb-6">
-                <img 
-                  src={safeSuiteProducts.safescan.logo} 
-                  alt="SafeScan" 
-                  className="h-20 w-20 object-contain"
-                />
+              <div className="flex justify-center mb-8">
+                <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-red-500/20 animate-fade-in">
+                  <img 
+                    src={safeSuiteProducts.safescan.logo} 
+                    alt="SafeScan" 
+                    className="h-28 w-28 object-contain"
+                  />
+                </div>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6">
-                Ultrium SafeScan™
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-red-400 via-rose-500 to-red-600 bg-clip-text text-transparent animate-fade-in">
+                SafeScan
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Enterprise-grade email, document, and URL security scanning. 
@@ -287,9 +289,9 @@ const SafeScanPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {scanningCapabilities.map((cap, i) => (
-                <Card key={i} className="hover:shadow-lg transition-shadow">
+                <Card key={i} className="hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300 hover:-translate-y-1 border-red-500/10 hover:border-red-500/30 group">
                   <CardHeader>
-                    <div className={`w-14 h-14 rounded-lg ${cap.bgColor} flex items-center justify-center mb-4`}>
+                    <div className={`w-14 h-14 rounded-xl ${cap.bgColor} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                       <cap.icon className={`h-7 w-7 ${cap.color}`} />
                     </div>
                     <CardTitle>{cap.title}</CardTitle>

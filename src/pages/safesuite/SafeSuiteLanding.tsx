@@ -64,21 +64,26 @@ export default function SafeSuiteLanding() {
         </div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <Badge variant="secondary" className="mb-4 gap-1">
+            <Badge variant="secondary" className="mb-6 gap-1 animate-fade-in bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
               <Sparkles className="h-3 w-3" />
               Complete Security Suite
             </Badge>
-            <div className="flex justify-center mb-6">
-              <img 
-                src={safesuiteLogo} 
-                alt="SafeSuite" 
-                className="h-24 w-24 object-contain"
-              />
+            <div className="flex justify-center mb-8">
+              <div className="p-5 bg-black rounded-3xl shadow-2xl shadow-emerald-500/20 animate-fade-in">
+                <img 
+                  src={safesuiteLogo} 
+                  alt="SafeSuite" 
+                  className="h-28 w-28 object-contain"
+                />
+              </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              All Your Security Tools in One Place
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 bg-clip-text text-transparent animate-fade-in">
+              SafeSuite
             </h1>
-            <p className="text-xl text-muted-foreground mb-8">
+            <p className="text-2xl md:text-3xl font-semibold text-muted-foreground mb-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              All Your Security Tools in One Place
+            </p>
+            <p className="text-lg text-muted-foreground mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
               Password management, threat scanning, dark web monitoring, and asset tracking — 
               unified in one powerful, easy-to-use suite.
             </p>
@@ -114,20 +119,29 @@ export default function SafeSuiteLanding() {
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {features.map((productKey) => {
+            {features.map((productKey, index) => {
               const product = safeSuiteProducts[productKey];
+              const colorMap = {
+                safepass: 'amber',
+                safescan: 'red',
+                safeweb: 'violet',
+                safetrack: 'orange'
+              };
+              const color = colorMap[productKey] || 'primary';
               return (
-                <Card key={productKey} className="relative overflow-hidden group hover:shadow-lg transition-shadow">
+                <Card key={productKey} className={`relative overflow-hidden group hover:shadow-lg hover:shadow-${color}-500/10 transition-all duration-300 hover:-translate-y-1 border-${color}-500/10 hover:border-${color}-500/30`}>
                   <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={product.logo} 
-                        alt={product.name} 
-                        className="h-12 w-12 object-contain rounded-lg"
-                      />
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-black rounded-xl group-hover:scale-110 transition-transform">
+                        <img 
+                          src={product.logo} 
+                          alt={product.name} 
+                          className="h-14 w-14 object-contain"
+                        />
+                      </div>
                       <div>
-                        <CardTitle>{product.name}</CardTitle>
-                        <CardDescription>{product.description}</CardDescription>
+                        <CardTitle className="text-xl">{product.name}</CardTitle>
+                        <CardDescription className="text-sm">{product.description}</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -135,11 +149,19 @@ export default function SafeSuiteLanding() {
                     <ul className="space-y-2">
                       {product.features.map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-success" />
+                          <div className="w-5 h-5 rounded-full bg-success/10 flex items-center justify-center">
+                            <Check className="h-3 w-3 text-success" />
+                          </div>
                           {feature}
                         </li>
                       ))}
                     </ul>
+                    <Link to={`/products/${productKey}`} className="block mt-4">
+                      <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10">
+                        Learn More
+                        <ArrowRight className="ml-2 h-3 w-3" />
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
               );
@@ -163,7 +185,7 @@ export default function SafeSuiteLanding() {
             {Object.values(SAFESUITE_TIERS).map((tier) => (
               <Card
                 key={tier.id}
-                className={`relative ${tier.popular ? 'border-primary shadow-lg scale-105 z-10' : ''}`}
+                className={`relative transition-all duration-300 hover:-translate-y-2 ${tier.popular ? 'border-primary shadow-lg shadow-primary/20 scale-105 z-10' : 'hover:shadow-lg hover:shadow-primary/10'}`}
               >
                 {tier.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
