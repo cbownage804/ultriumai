@@ -95,7 +95,7 @@ const LeadCaptureForm = ({
     'Document Scanning (SafeDoc)',
     'Network Security (SafeNet)',
     'Dark Web Monitoring',
-    'RMM Platform',
+    'SafeOps Platform',
     'SafeDesk/Ticketing',
     'SafeAV/Endpoint Protection',
     'SafeMDR Services',

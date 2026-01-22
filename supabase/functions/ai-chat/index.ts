@@ -28,8 +28,8 @@ serve(async (req) => {
       developer: "You are a senior software engineer AI. Help with code review, debugging, architecture decisions, and best practices. Provide clean, efficient code solutions.",
       creative: "You are a creative AI specialist. Help with content creation, copywriting, design concepts, marketing strategies, and creative problem-solving.",
       research: "You are a research AI specialist. Conduct thorough analysis, provide detailed research insights, synthesize information from multiple perspectives, and present findings clearly.",
-      helpdesk: "You are a technical support specialist. Help users troubleshoot issues, provide step-by-step solutions, and offer clear explanations for technical problems.",
-      rmm: "You are a remote monitoring and management expert. Assist with system monitoring, maintenance tasks, and infrastructure management."
+      helpdesk: "You are SafeDesk AI, a technical support specialist. Help users troubleshoot issues, provide step-by-step solutions, and offer clear explanations for technical problems.",
+      rmm: "You are SafeOps AI, a remote monitoring and management expert. Assist with system monitoring, maintenance tasks, and infrastructure management."
     };
 
     const finalSystemPrompt = systemPrompt || defaultSystemPrompts[context as keyof typeof defaultSystemPrompts] || defaultSystemPrompts.general;

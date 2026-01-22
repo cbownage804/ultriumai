@@ -31,16 +31,16 @@ const productCategories = [
     bgColor: 'bg-blue-500/10',
     textColor: 'text-blue-500',
     href: '/products/operations',
-    products: ['Patch Management', 'Backup Monitoring', 'Asset Inventory', 'Network Topology', 'RMM Tools']
+    products: ['Patch Management', 'Backup Monitoring', 'Asset Inventory', 'Network Topology', 'SafeOps']
   },
   {
     id: 'helpdesk',
-    name: 'AI Helpdesk',
+    name: 'SafeDesk™',
     description: 'Intelligent ticketing with AI-powered automation',
     icon: MessageSquare,
-    color: 'from-purple-500 to-pink-500',
-    bgColor: 'bg-purple-500/10',
-    textColor: 'text-purple-500',
+    color: 'from-cyan-500 to-blue-500',
+    bgColor: 'bg-cyan-500/10',
+    textColor: 'text-cyan-500',
     href: '/products/helpdesk',
     products: ['AI Responses', 'Smart Routing', 'SLA Management', 'Knowledge Base', 'Multi-Channel']
   },

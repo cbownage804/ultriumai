@@ -104,7 +104,7 @@ const BusinessCheckout = ({ onSuccess, packageType, children, className, size = 
       description: 'Complete service management platform',
       monthly: 35,
       annual: 350,
-      features: ['Integrated ticketing system', 'Remote monitoring & management (RMM)', 'Automated patch management']
+      features: ['Integrated ticketing system', 'SafeOps remote monitoring & management', 'Automated patch management']
     }
   };
 

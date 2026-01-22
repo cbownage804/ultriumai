@@ -88,7 +88,7 @@ const HelpdeskFeedback = () => {
           {status === 'success' && (
             <div className="bg-green-500/10 rounded-lg p-4 text-center">
               <p className="text-sm text-green-700">
-                Your feedback helps our AI learn and improve. Thank you for using Ultrium AI Helpdesk!
+                Your feedback helps our AI learn and improve. Thank you for using SafeDesk!
               </p>
             </div>
           )}
@@ -110,7 +110,7 @@ const HelpdeskFeedback = () => {
           </div>
 
           <p className="text-center text-xs text-muted-foreground pt-4">
-            Ticket #{ticketId?.slice(0, 8)} • Powered by Ultrium AI Helpdesk™
+            Ticket #{ticketId?.slice(0, 8)} • Powered by SafeDesk™
           </p>
         </CardContent>
       </Card>

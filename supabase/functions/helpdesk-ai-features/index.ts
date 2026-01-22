@@ -85,7 +85,7 @@ async function handleChat(supabase: any, params: any, apiKey: string) {
     .eq('is_published', true)
     .limit(10);
 
-  const systemPrompt = `You are Ultrium AI Helpdesk Assistant, a friendly and knowledgeable IT support chatbot.
+  const systemPrompt = `You are SafeDesk AI Assistant, a friendly and knowledgeable IT support chatbot.
 
 Your goals:
 1. Help users resolve their IT issues through conversation

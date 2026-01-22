@@ -173,8 +173,8 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
-    id: "ultrium-rmm",
-    name: "Ultrium RMM™",
+    id: "safeops",
+    name: "SafeOps™",
     category: "Remote Management", 
     description: "Next-generation RMM with web-based agent and Windows Defender integration",
     longDescription: "Advanced RMM solution featuring web-based agent deployment, real-time device monitoring, remote desktop control, Windows Defender endpoint management, and comprehensive IT automation for MSPs and IT professionals.",
@@ -191,7 +191,7 @@ const demoApps: DemoApp[] = [
     ],
     demoUrl: "/demos/rmm",
     isLive: true,
-    tags: ["RMM", "Remote Management", "Windows Defender", "Web Agent"],
+    tags: ["RMM", "Remote Management", "Windows Defender", "SafeOps"],
     useCases: [
       "Device registration via web interface",
       "Remote desktop support sessions",
