@@ -78,9 +78,6 @@ export default function SafeSuiteLanding() {
                 />
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-600 bg-clip-text text-transparent animate-fade-in">
-              SafeSuite
-            </h1>
             <p className="text-2xl md:text-3xl font-semibold text-muted-foreground mb-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
               All Your Security Tools in One Place
             </p>
