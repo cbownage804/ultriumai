@@ -112,17 +112,17 @@ export default function SafePassDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Password Vault</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-white">Password Vault</h1>
+          <p className="text-gray-400">
             Securely manage and monitor your credentials
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={lock}>
+          <Button variant="outline" onClick={lock} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10">
             <Lock className="h-4 w-4 mr-2" />
             Lock Vault
           </Button>
-          <Button onClick={() => setSelectedVault(null)}>
+          <Button onClick={() => setSelectedVault(null)} className="bg-amber-500 hover:bg-amber-600 text-black">
             <Plus className="h-4 w-4 mr-2" />
             New Entry
           </Button>
@@ -131,73 +131,73 @@ export default function SafePassDashboard() {
 
       {/* Security Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-[#141414] border-amber-500/10">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Security Score</p>
-                <p className="text-2xl font-bold">{securityScore}%</p>
+                <p className="text-sm font-medium text-gray-400">Security Score</p>
+                <p className="text-2xl font-bold text-white">{securityScore}%</p>
               </div>
               <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                securityScore >= 80 ? 'bg-primary/10' : 
-                securityScore >= 60 ? 'bg-yellow-500/10' : 'bg-destructive/10'
+                securityScore >= 80 ? 'bg-amber-500/20' : 
+                securityScore >= 60 ? 'bg-yellow-500/20' : 'bg-red-500/20'
               }`}>
                 <Shield className={`h-6 w-6 ${
-                  securityScore >= 80 ? 'text-primary' : 
-                  securityScore >= 60 ? 'text-yellow-500' : 'text-destructive'
+                  securityScore >= 80 ? 'text-amber-500' : 
+                  securityScore >= 60 ? 'text-yellow-500' : 'text-red-500'
                 }`} />
               </div>
             </div>
-            <Progress value={securityScore} className="mt-3" />
+            <Progress value={securityScore} className="mt-3 bg-[#1a1a1a] [&>div]:bg-amber-500" />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-[#141414] border-amber-500/10">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Passwords</p>
-                <p className="text-2xl font-bold">{totalPasswords}</p>
+                <p className="text-sm font-medium text-gray-400">Total Passwords</p>
+                <p className="text-2xl font-bold text-white">{totalPasswords}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Key className="h-6 w-6 text-primary" />
+              <div className="h-12 w-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <Key className="h-6 w-6 text-amber-500" />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               {vaults.length} vault{vaults.length !== 1 ? 's' : ''}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-[#141414] border-amber-500/10">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Weak Passwords</p>
+                <p className="text-sm font-medium text-gray-400">Weak Passwords</p>
                 <p className="text-2xl font-bold text-yellow-500">{weakPasswords}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
                 <AlertTriangle className="h-6 w-6 text-yellow-500" />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               Need stronger passwords
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-[#141414] border-amber-500/10">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Compromised</p>
-                <p className="text-2xl font-bold text-destructive">{compromisedPasswords}</p>
+                <p className="text-sm font-medium text-gray-400">Compromised</p>
+                <p className="text-2xl font-bold text-red-500">{compromisedPasswords}</p>
               </div>
-              <div className="h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                <AlertTriangle className="h-6 w-6 text-destructive" />
+              <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-red-500" />
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               Found in breach databases
             </p>
           </CardContent>

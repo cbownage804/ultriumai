@@ -24,17 +24,17 @@ export default function SafeSuitePass() {
 
   return (
     <FeatureGate feature="safepass">
-      <div className="space-y-6">
+      <div className="space-y-6 bg-[#0a0a0a] min-h-full p-6 -m-6 rounded-lg">
         {showExtensionBanner && (
-          <Alert className="bg-green-500/10 border-green-500/30">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <AlertTitle className="text-green-600">Extension Installed!</AlertTitle>
-            <AlertDescription className="text-green-600/80">
+          <Alert className="bg-amber-500/10 border-amber-500/30">
+            <CheckCircle2 className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-500">Extension Installed!</AlertTitle>
+            <AlertDescription className="text-amber-400/80">
               The SafePass browser extension is ready to use. Click the extension icon in your toolbar to start autofilling passwords.
             </AlertDescription>
             <button 
               onClick={() => setShowExtensionBanner(false)}
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-300"
             >
               <X className="h-4 w-4" />
             </button>
@@ -43,8 +43,8 @@ export default function SafeSuitePass() {
         
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">SafePass</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold text-amber-500">SafePass</h1>
+            <p className="text-gray-400">
               Securely store and manage your passwords with military-grade encryption
             </p>
           </div>

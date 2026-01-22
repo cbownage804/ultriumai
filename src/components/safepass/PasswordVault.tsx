@@ -328,28 +328,28 @@ export const PasswordVault = () => {
     <div className="space-y-6">
       {/* Tabs Navigation */}
       <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-6 bg-muted/50">
-          <TabsTrigger value="passwords" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-6 bg-[#1a1a1a] border border-amber-500/10">
+          <TabsTrigger value="passwords" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <Key className="h-4 w-4" />
             <span className="hidden sm:inline">Passwords</span>
           </TabsTrigger>
-          <TabsTrigger value="notes" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="notes" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Notes</span>
           </TabsTrigger>
-          <TabsTrigger value="cards" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="cards" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Cards</span>
           </TabsTrigger>
-          <TabsTrigger value="identity" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="identity" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Identity</span>
           </TabsTrigger>
-          <TabsTrigger value="2fa" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="2fa" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <Lock className="h-4 w-4" />
             <span className="hidden sm:inline">2FA</span>
           </TabsTrigger>
-          <TabsTrigger value="health" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
+          <TabsTrigger value="health" className="flex items-center gap-2 text-gray-400 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <Heart className="h-4 w-4" />
             <span className="hidden sm:inline">Health</span>
           </TabsTrigger>
@@ -360,16 +360,16 @@ export const PasswordVault = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Password Vault</h2>
-          <p className="text-muted-foreground">Securely store and manage your passwords</p>
+          <h2 className="text-2xl font-bold text-white">Password Vault</h2>
+          <p className="text-gray-400">Securely store and manage your passwords</p>
         </div>
         
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => navigate('/safesuite/pass/import')}>
+          <Button variant="outline" onClick={() => navigate('/safesuite/pass/import')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400">
             <Upload className="w-4 h-4 mr-2" />
             Import
           </Button>
-          <Button variant="outline" onClick={() => navigate('/safesuite/pass/export')}>
+          <Button variant="outline" onClick={() => navigate('/safesuite/pass/export')} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:text-amber-400">
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
