@@ -191,8 +191,8 @@ export default function VanguardLanding() {
             
             {/* Large Logo */}
             <div className="flex justify-center mb-8">
-              <div className="px-6 py-4 bg-black rounded-2xl shadow-2xl shadow-cyan-500/20 animate-fade-in">
-                <img src={vanguardLogo} alt="Vanguard" className="h-20 w-auto" />
+              <div className="px-12 py-6 bg-black rounded-2xl shadow-2xl shadow-cyan-500/20 animate-fade-in">
+                <img src={vanguardLogo} alt="Vanguard" className="h-28 w-auto" />
               </div>
             </div>
             
