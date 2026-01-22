@@ -1,10 +1,10 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { VanguardUpsell } from "@/components/products/VanguardUpsell";
+
 import { Search, Check, Star, Zap, Users, ArrowRight, Play, AlertTriangle, Eye, Globe, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroWeb from "@/assets/hero-web.jpg";
@@ -23,40 +23,7 @@ const SafeWebPage = () => {
     "Incident response support"
   ];
 
-  const pricingTiers = [
-    {
-      name: 'SafeWeb',
-      price: '$3',
-      duration: '/user/mo',
-      icon: Star,
-      features: [
-        'Credential monitoring',
-        'Real-time alerts',
-        'Brand protection',
-        'API access',
-        'Custom reports',
-        'Priority support'
-      ],
-      popular: true,
-      cta: 'Start Free Trial'
-    },
-    {
-      name: 'SafeWeb Enterprise',
-      price: 'Custom',
-      duration: 'Contact sales',
-      icon: Users,
-      features: [
-        'Everything included',
-        'Executive protection',
-        'Threat intelligence feeds',
-        'White-label customization',
-        'SSO & SAML integration',
-        'Dedicated account manager'
-      ],
-      popular: false,
-      cta: 'Contact Sales'
-    }
-  ];
+  // SafeWeb is available only through SafeSuite tiers or Vanguard for business
 
   return (
     <div className="min-h-screen bg-background">
@@ -165,68 +132,103 @@ const SafeWebPage = () => {
           </div>
         </section>
 
-        {/* Vanguard Upsell */}
-        <VanguardUpsell 
-          currentProduct="SafeWeb™" 
-          currentProductPrice="$3/user/mo"
-          competitorComparison="Best value vs. ID Agent when bundled in Vanguard Suite"
-        />
 
-        {/* Pricing Section */}
+        {/* Available Through Section */}
         <section className="py-20 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Standalone SafeWeb Pricing</h2>
+              <h2 className="text-3xl font-bold mb-4">Get SafeWeb</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Or get SafeWeb included in Vanguard Suite for even more value
+                SafeWeb is included in SafeSuite for personal/SMB use, or Vanguard for MSP/Enterprise
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {pricingTiers.map((tier, index) => {
-                const Icon = tier.icon;
-                return (
-                  <Card 
-                    key={index} 
-                    className={`relative ${tier.popular ? 'border-violet-500 border-2 shadow-lg' : ''} hover:shadow-lg transition-all duration-300`}
-                  >
-                    {tier.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-violet-500">Most Popular</Badge>
-                      </div>
-                    )}
-                    <CardHeader className="text-center">
-                      <div className="mx-auto mb-4 w-12 h-12 bg-violet-500/10 rounded-full flex items-center justify-center">
-                        <Icon className="h-6 w-6 text-violet-500" />
-                      </div>
-                      <CardTitle className="text-xl">{tier.name}</CardTitle>
-                      <div className="text-3xl font-bold text-primary">
-                        {tier.price}
-                        <span className="text-sm font-normal text-muted-foreground">{tier.duration}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-3 mb-6">
-                        {tier.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-center gap-2 text-sm">
-                            <Check className="h-4 w-4 text-violet-500 flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <Link to={tier.cta === 'Contact Sales' ? '/contact' : '/vanguard/auth'}>
-                        <Button 
-                          className={`w-full ${tier.popular ? 'bg-violet-500 hover:bg-violet-600' : ''}`}
-                          variant={tier.popular ? "default" : "outline"}
-                        >
-                          {tier.cta}
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* SafeSuite Option */}
+              <Card className="relative border-violet-500/30 hover:shadow-lg hover:shadow-violet-500/10 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-500">Personal & SMB</Badge>
+                  <div className="mx-auto mb-4 w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                    <Shield className="h-8 w-8 text-emerald-500" />
+                  </div>
+                  <CardTitle className="text-2xl">SafeSuite</CardTitle>
+                  <CardDescription className="text-base">
+                    Complete security suite for individuals and small businesses
+                  </CardDescription>
+                  <div className="text-3xl font-bold text-primary mt-4">
+                    Free - $15<span className="text-sm font-normal text-muted-foreground">/user/mo</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeWeb included in Pro & Business tiers</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafePass password manager</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeScan email & document scanning</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeTrack asset management (Business)</span>
+                    </li>
+                  </ul>
+                  <Link to="/safesuite">
+                    <Button className="w-full bg-emerald-500 hover:bg-emerald-600">
+                      View SafeSuite Plans
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Vanguard Option */}
+              <Card className="relative border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-cyan-500">MSP & Enterprise</Badge>
+                  <div className="mx-auto mb-4 w-16 h-16 bg-cyan-500/10 rounded-full flex items-center justify-center">
+                    <Users className="h-8 w-8 text-cyan-500" />
+                  </div>
+                  <CardTitle className="text-2xl">Vanguard Suite</CardTitle>
+                  <CardDescription className="text-base">
+                    Full IT operations platform for managed service providers
+                  </CardDescription>
+                  <div className="text-3xl font-bold text-primary mt-4">
+                    Custom<span className="text-sm font-normal text-muted-foreground"> pricing</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>SafeWeb with threat intelligence feeds</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>RMM & endpoint management</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>AI-powered helpdesk</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>Multi-tenant client management</span>
+                    </li>
+                  </ul>
+                  <Link to="/vanguard">
+                    <Button className="w-full bg-cyan-500 hover:bg-cyan-600">
+                      Explore Vanguard
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>

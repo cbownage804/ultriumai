@@ -4,7 +4,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { VanguardUpsell } from '@/components/products/VanguardUpsell';
+
 import { 
   Package, QrCode, Calendar, DollarSign, 
   ArrowRight, Check, Laptop, History, FileText,
@@ -102,26 +102,10 @@ const comparisonTable = [
   { feature: 'RMM Integration', safetrack: true, assetpanda: false, snipeit: false },
   { feature: 'Helpdesk Integration', safetrack: true, assetpanda: false, snipeit: false },
   { feature: 'Multi-tenant/MSP', safetrack: true, assetpanda: true, snipeit: false },
-  { feature: 'Pricing', safetrack: '$2/asset', assetpanda: '$3/asset', snipeit: 'Self-hosted' },
+  { feature: 'Access Via', safetrack: 'SafeSuite/Vanguard', assetpanda: 'Standalone only', snipeit: 'Self-hosted' },
 ];
 
-const pricing = [
-  {
-    name: 'SafeTrack',
-    price: 2,
-    description: 'Full lifecycle asset management',
-    features: ['Unlimited assets', 'QR code generation', 'Depreciation tracking', 'Maintenance scheduling', 'API access', 'Custom fields', 'Priority support'],
-    cta: 'Start Free Trial',
-    popular: true
-  },
-  {
-    name: 'SafeTrack Enterprise',
-    price: null,
-    description: 'Multi-location with integrations',
-    features: ['Everything included', 'Multi-tenant/MSP', 'RMM & Helpdesk sync', 'SSO/SAML', 'Custom integrations', 'Dedicated success manager'],
-    cta: 'Contact Sales'
-  }
-];
+// SafeTrack is available only through SafeSuite tiers or Vanguard for business
 
 export default function SafeTrackPage() {
   return (
@@ -351,62 +335,106 @@ export default function SafeTrackPage() {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* Available Through Section */}
         <section className="py-20">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Simple Per-Asset Pricing</h2>
-              <p className="text-muted-foreground">Pay only for what you track. No hidden fees.</p>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold mb-4">Get SafeTrack</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                SafeTrack is included in SafeSuite Business, or Vanguard for MSP/Enterprise
+              </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {pricing.map((plan, i) => (
-                <Card key={i} className={`relative ${plan.popular ? 'border-orange-500 shadow-lg' : ''}`}>
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-orange-500">Most Popular</Badge>
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <CardDescription>{plan.description}</CardDescription>
-                    <div className="mt-4">
-                      {plan.price ? (
-                        <>
-                          <span className="text-4xl font-bold">${plan.price}</span>
-                          <span className="text-muted-foreground">/asset/mo</span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold">Custom Pricing</span>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, j) => (
-                        <li key={j} className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-orange-500" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link to={plan.price ? '/vanguard/auth' : '/contact'} className="block">
-                      <Button className={`w-full ${plan.popular ? 'bg-orange-500 hover:bg-orange-600' : ''}`}>
-                        {plan.cta}
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* SafeSuite Option */}
+              <Card className="relative border-orange-500/30 hover:shadow-lg hover:shadow-orange-500/10 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-500">SMB Teams</Badge>
+                  <div className="mx-auto mb-4 w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                    <Shield className="h-8 w-8 text-emerald-500" />
+                  </div>
+                  <CardTitle className="text-2xl">SafeSuite Business</CardTitle>
+                  <CardDescription className="text-base">
+                    Complete security suite for small business teams
+                  </CardDescription>
+                  <div className="text-3xl font-bold text-primary mt-4">
+                    $15<span className="text-sm font-normal text-muted-foreground">/user/mo</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeTrack with unlimited assets</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafePass team password sharing</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeScan unlimited scans</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeWeb dark web monitoring</span>
+                    </li>
+                  </ul>
+                  <Link to="/safesuite">
+                    <Button className="w-full bg-emerald-500 hover:bg-emerald-600">
+                      View SafeSuite Plans
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Vanguard Option */}
+              <Card className="relative border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-cyan-500">MSP & Enterprise</Badge>
+                  <div className="mx-auto mb-4 w-16 h-16 bg-cyan-500/10 rounded-full flex items-center justify-center">
+                    <Users className="h-8 w-8 text-cyan-500" />
+                  </div>
+                  <CardTitle className="text-2xl">Vanguard Suite</CardTitle>
+                  <CardDescription className="text-base">
+                    Full IT operations platform for managed service providers
+                  </CardDescription>
+                  <div className="text-3xl font-bold text-primary mt-4">
+                    Custom<span className="text-sm font-normal text-muted-foreground"> pricing</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>SafeTrack with RMM integration</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>Multi-tenant asset management</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>AI-powered helpdesk</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>Client billing integration</span>
+                    </li>
+                  </ul>
+                  <Link to="/vanguard">
+                    <Button className="w-full bg-cyan-500 hover:bg-cyan-600">
+                      Explore Vanguard
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
 
-        {/* Vanguard Upsell */}
-        <VanguardUpsell 
-          currentProduct="SafeTrack™" 
-          currentProductPrice="$2/asset/mo"
-          competitorComparison="33% cheaper than Asset Panda, included in Vanguard Professional+"
-        />
 
         {/* CTA */}
         <section className="py-20">
