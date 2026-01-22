@@ -328,28 +328,28 @@ export const PasswordVault = () => {
     <div className="space-y-6">
       {/* Tabs Navigation */}
       <Tabs defaultValue="passwords" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-6">
-          <TabsTrigger value="passwords" className="flex items-center gap-2">
+        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid mb-6 bg-muted/50">
+          <TabsTrigger value="passwords" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <Key className="h-4 w-4" />
             <span className="hidden sm:inline">Passwords</span>
           </TabsTrigger>
-          <TabsTrigger value="notes" className="flex items-center gap-2">
+          <TabsTrigger value="notes" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Notes</span>
           </TabsTrigger>
-          <TabsTrigger value="cards" className="flex items-center gap-2">
+          <TabsTrigger value="cards" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <CreditCard className="h-4 w-4" />
             <span className="hidden sm:inline">Cards</span>
           </TabsTrigger>
-          <TabsTrigger value="identity" className="flex items-center gap-2">
+          <TabsTrigger value="identity" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <User className="h-4 w-4" />
             <span className="hidden sm:inline">Identity</span>
           </TabsTrigger>
-          <TabsTrigger value="2fa" className="flex items-center gap-2">
+          <TabsTrigger value="2fa" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <Lock className="h-4 w-4" />
             <span className="hidden sm:inline">2FA</span>
           </TabsTrigger>
-          <TabsTrigger value="health" className="flex items-center gap-2">
+          <TabsTrigger value="health" className="flex items-center gap-2 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-500">
             <Heart className="h-4 w-4" />
             <span className="hidden sm:inline">Health</span>
           </TabsTrigger>
@@ -376,7 +376,7 @@ export const PasswordVault = () => {
           
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-amber-500 hover:bg-amber-600 text-black">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Password
               </Button>
@@ -527,37 +527,43 @@ export const PasswordVault = () => {
 
       {/* Security Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="border-amber-500/20 bg-card/80">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-green-600" />
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Shield className="h-5 w-5 text-amber-500" />
+              </div>
               <div>
-                <p className="text-sm font-medium">Strong Passwords</p>
-                <p className="text-2xl font-bold text-green-600">{strongPasswords}</p>
+                <p className="text-sm font-medium text-muted-foreground">Verified</p>
+                <p className="text-2xl font-bold text-amber-500">{strongPasswords}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-red-500/20 bg-card/80">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg bg-red-500/10">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
               <div>
-                <p className="text-sm font-medium">Weak Passwords</p>
-                <p className="text-2xl font-bold text-yellow-600">{weakPasswords}</p>
+                <p className="text-sm font-medium text-muted-foreground">Weak</p>
+                <p className="text-2xl font-bold text-red-500">{weakPasswords}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-amber-500/20 bg-card/80">
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Lock className="h-5 w-5 text-primary" />
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Lock className="h-5 w-5 text-amber-500" />
+              </div>
               <div>
-                <p className="text-sm font-medium">Total Entries</p>
-                <p className="text-2xl font-bold text-primary">{entries.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Entries</p>
+                <p className="text-2xl font-bold text-amber-500">{entries.length}</p>
               </div>
             </div>
           </CardContent>
