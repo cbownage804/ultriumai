@@ -22,32 +22,34 @@ import { AddDeviceDialog } from "@/components/rmm/AddDeviceDialog";
 import { RealTimeMonitor } from "@/components/rmm/RealTimeMonitor";
 import { AlertCenter } from "@/components/rmm/AlertCenter";
 import { RemoteAccess } from "@/components/rmm/RemoteAccess";
-import { useRMMDevices } from "@/hooks/useRMMDevices";
+import { useSafeOps } from "@/hooks/useSafeOps";
 
 export const RMMDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const { 
     devices, 
-    isLoading, 
-    getCriticalDevices, 
+    alerts,
+    scripts,
+    stats,
+    isLoading,
+    refreshAll,
     getDevicesByType,
-    getDeviceStats
-  } = useRMMDevices();
-
-  const deviceStats = getDeviceStats();
+    getDevicesByStatus,
+    getCriticalAlerts
+  } = useSafeOps();
   
   // Transform stats to match RMMOverview expectations
-  const stats = {
-    totalDevices: deviceStats.total,
-    onlineDevices: deviceStats.online,
-    offlineDevices: deviceStats.offline,
-    alertsCount: deviceStats.critical,
-    serversCount: deviceStats.servers,
-    workstationsCount: deviceStats.workstations,
-    networkDevicesCount: 0, // placeholder
-    criticalAlerts: deviceStats.critical,
-    pendingPatches: 0, // placeholder
-    scriptsRunning: 0, // placeholder
+  const overviewStats = {
+    totalDevices: stats.totalDevices,
+    onlineDevices: stats.onlineDevices,
+    offlineDevices: stats.offlineDevices,
+    alertsCount: stats.openAlerts,
+    serversCount: stats.serversCount,
+    workstationsCount: stats.workstationsCount,
+    networkDevicesCount: devices.filter(d => d.device_type === 'network').length,
+    criticalAlerts: stats.criticalAlerts,
+    pendingPatches: 0, // Will be populated when patch management is implemented
+    scriptsRunning: stats.scriptsRunning,
   };
   console.log('Current active tab:', activeTab);
 
@@ -62,7 +64,7 @@ export const RMMDashboard = () => {
     uptime: device.last_seen ? `${Math.floor((Date.now() - new Date(device.last_seen).getTime()) / (1000 * 60 * 60 * 24))}d` : '0d',
     lastUser: device.last_logged_user || 'Unknown',
     lastReboot: device.last_seen ? new Date(device.last_seen).toLocaleDateString() : 'Unknown',
-    installedPrograms: Math.floor(Math.random() * 200) + 50 // Placeholder
+    installedPrograms: Math.floor(Math.random() * 200) + 50
   }));
 
   const workstationData = getDevicesByType('workstation').map(device => ({
@@ -72,20 +74,26 @@ export const RMMDashboard = () => {
     cpu: device.cpu_usage || 0,
     memory: device.memory_usage || 0,
     disk: device.disk_usage || 0,
-    department: 'General', // Could be derived from customer or device metadata
+    department: 'General',
     lastUser: device.last_logged_user || 'Unknown',
     lastReboot: device.last_seen ? new Date(device.last_seen).toLocaleDateString() : 'Unknown',
-    installedPrograms: 0 // Will be populated from software inventory
+    installedPrograms: 0
   }));
 
-  // Empty patching data - will be populated from real patch management when available
+  // Patching data placeholder
   const patchingData: Array<{ category: string; critical: number; important: number; optional: number; deployed: number }> = [];
 
-  // Empty policy data - will be populated from real policy management when available
+  // Policy data placeholder
   const policies: Array<{ name: string; status: string; compliance: number; lastUpdate: string }> = [];
 
-  // Empty automation scripts - will be populated from real automation system when available
-  const automationScripts: Array<{ name: string; status: string; lastRun: string; success: number; nextRun: string }> = [];
+  // Transform scripts to match AutomationManager expectations
+  const automationScripts = scripts.map(script => ({
+    name: script.name,
+    status: 'active',
+    lastRun: script.updated_at ? new Date(script.updated_at).toLocaleString() : 'Never',
+    success: 100,
+    nextRun: 'Manual'
+  }));
 
   if (isLoading) {
     return (
@@ -113,15 +121,19 @@ export const RMMDashboard = () => {
             Complete infrastructure monitoring and automated management - Live Data
           </div>
           <div className="text-sm text-muted-foreground mt-1">
-            {stats.totalDevices > 0 ? (
-              <span className="text-safeops">Connected to live database • {stats.totalDevices} devices monitored</span>
+            {overviewStats.totalDevices > 0 ? (
+              <span className="text-safeops">Connected to live database • {overviewStats.totalDevices} devices monitored</span>
             ) : (
               <span className="text-muted-foreground">No devices found - Add devices to get started</span>
             )}
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-safeops/20 hover:bg-safeops/5 hover:text-safeops">
+          <Button 
+            variant="outline" 
+            className="border-safeops/20 hover:bg-safeops/5 hover:text-safeops"
+            onClick={() => refreshAll()}
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh All
           </Button>
@@ -129,8 +141,6 @@ export const RMMDashboard = () => {
             variant="outline" 
             className="border-safeops/20 hover:bg-safeops/5 hover:text-safeops"
             onClick={() => {
-              console.log('Starting RMM Agent download...');
-              
             // Download the GUI installer file
             const link = document.createElement('a');
             link.href = '/UltriumRMMAgent-GUI-Installer.ps1';
@@ -205,7 +215,7 @@ export const RMMDashboard = () => {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6">
-          <RMMOverview stats={stats} />
+          <RMMOverview stats={overviewStats} onTabChange={setActiveTab} alerts={alerts} />
         </TabsContent>
 
         {/* Servers Tab */}
