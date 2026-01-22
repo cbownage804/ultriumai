@@ -118,8 +118,8 @@ export const HelpdeskDashboard = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            <HeadphonesIcon className="h-10 w-10 text-primary" />
+          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-cyan-500 to-cyan-400 bg-clip-text text-transparent">
+            <HeadphonesIcon className="h-10 w-10 text-cyan-500" />
             SafeDesk System
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
@@ -127,11 +127,11 @@ export const HelpdeskDashboard = () => {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-primary/20 hover:bg-primary/5">
+          <Button variant="outline" className="border-cyan-500/20 hover:bg-cyan-500/5">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button className="bg-gradient-to-r from-primary to-primary/90">
+          <Button className="bg-gradient-to-r from-cyan-500 to-cyan-600">
             <Plus className="h-4 w-4 mr-2" />
             New Ticket
           </Button>
@@ -140,47 +140,47 @@ export const HelpdeskDashboard = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-cyan-50 to-cyan-100/50 dark:from-cyan-900/20 dark:to-cyan-800/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
-            <Clock className="h-5 w-5 text-blue-600" />
+            <Clock className="h-5 w-5 text-cyan-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{stats.openTickets}</div>
-            <p className="text-xs text-blue-600 mt-2">{stats.inProgress} in progress</p>
+            <div className="text-3xl font-bold text-cyan-600">{stats.openTickets}</div>
+            <p className="text-xs text-cyan-600 mt-2">{stats.inProgress} in progress</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-teal-900/20 dark:to-teal-800/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Resolved Today</CardTitle>
-            <CheckCircle className="h-5 w-5 text-green-600" />
+            <CheckCircle className="h-5 w-5 text-teal-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">{stats.resolved}</div>
-            <p className="text-xs text-green-600 mt-2">Last 24 hours</p>
+            <div className="text-3xl font-bold text-teal-600">{stats.resolved}</div>
+            <p className="text-xs text-teal-600 mt-2">Last 24 hours</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-sky-50 to-sky-100/50 dark:from-sky-900/20 dark:to-sky-800/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Response</CardTitle>
-            <Zap className="h-5 w-5 text-orange-600" />
+            <Zap className="h-5 w-5 text-sky-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-600">{stats.avgResponseTime}</div>
-            <p className="text-xs text-orange-600 mt-2">Response time</p>
+            <div className="text-3xl font-bold text-sky-600">{stats.avgResponseTime}</div>
+            <p className="text-xs text-sky-600 mt-2">Response time</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-50 to-yellow-100/50 dark:from-yellow-900/20 dark:to-yellow-800/10">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Satisfaction</CardTitle>
-            <Star className="h-5 w-5 text-yellow-600" />
+            <Star className="h-5 w-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-yellow-600">{stats.satisfaction}</div>
-            <p className="text-xs text-yellow-600 mt-2">Out of 5.0</p>
+            <div className="text-3xl font-bold text-blue-600">{stats.satisfaction}</div>
+            <p className="text-xs text-blue-600 mt-2">Out of 5.0</p>
           </CardContent>
         </Card>
       </div>
@@ -188,19 +188,19 @@ export const HelpdeskDashboard = () => {
       {/* Main Content Tabs */}
       <Tabs defaultValue="tickets" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 bg-muted/50">
-          <TabsTrigger value="tickets" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsTrigger value="tickets" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <FileText className="h-4 w-4 mr-2" />
             Tickets
           </TabsTrigger>
-          <TabsTrigger value="agents" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsTrigger value="agents" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <Users className="h-4 w-4 mr-2" />
             Agents
           </TabsTrigger>
-          <TabsTrigger value="categories" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsTrigger value="categories" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <BarChart3 className="h-4 w-4 mr-2" />
             Categories
           </TabsTrigger>
-          <TabsTrigger value="settings" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+          <TabsTrigger value="settings" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </TabsTrigger>
