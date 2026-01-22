@@ -10,7 +10,7 @@ import {
   ArrowRight, Check, Terminal, HardDrive, Cpu,
   Download, RefreshCw, Settings, Activity
 } from 'lucide-react';
-import heroMonitoring from '@/assets/hero-monitoring.jpg';
+import logoRmm from '@/assets/logos/logo-rmm.png';
 
 const features = [
   {
@@ -82,41 +82,43 @@ export default function RMMPage() {
       <Navigation />
       
       <main className="pt-20">
-        {/* Hero */}
-        <section className="relative overflow-hidden border-b">
-          <div className="absolute inset-0">
-            <img 
-              src={heroMonitoring} 
-              alt="Remote monitoring dashboard"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
-          </div>
-          <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
-            <Badge className="mb-4 bg-green-500/10 text-green-500 border-green-500/20">
-              <Monitor className="h-3 w-3 mr-1" />
-              Remote Monitoring & Management
-            </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl">
-              Ultrium RMM™
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mb-8">
-              Enterprise endpoint management at $3/endpoint. Monitor, patch, and automate 
-              across your entire fleet with a single unified platform.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link to="/vanguard/auth">
-                <Button size="lg" className="bg-gradient-to-r from-green-500 to-emerald-500">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/demos/rmm">
-                <Button size="lg" variant="outline">
-                  Try Live Demo
-                </Button>
-              </Link>
+        {/* Hero with Logo */}
+        <section className="relative overflow-hidden border-b bg-[#000000]">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10" />
+          <div className="max-w-7xl mx-auto px-4 py-16 relative z-10">
+            {/* Logo Display */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(34,197,94,0.3)] border border-green-500/20">
+                <img 
+                  src={logoRmm} 
+                  alt="RMM Logo"
+                  className="h-28 w-auto"
+                />
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <Badge className="mb-4 bg-green-500/20 text-green-400 border-green-500/30">
+                <Monitor className="h-3 w-3 mr-1" />
+                Remote Monitoring & Management
+              </Badge>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+                Enterprise endpoint management at $3/endpoint. Monitor, patch, and automate 
+                across your entire fleet with a single unified platform.
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Link to="/vanguard/auth">
+                  <Button size="lg" className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/demos/rmm">
+                  <Button size="lg" variant="outline" className="border-green-500/30 text-green-400 hover:bg-green-500/10">
+                    Try Live Demo
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
