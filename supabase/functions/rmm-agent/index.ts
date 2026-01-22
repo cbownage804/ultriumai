@@ -450,50 +450,55 @@ async function createRMMAlert(supabaseClient: any, clientId: string, alert: any)
 }
 
 async function performAntivirusScan(scanParams: any) {
-  // Mock antivirus scan implementation
-  const filesScanned = Math.floor(Math.random() * 50000) + 10000;
-  const threatsFound = Math.floor(Math.random() * 5);
-  
-  return {
-    duration: Math.floor(Math.random() * 300) + 60, // 1-5 minutes
-    filesScanned,
-    threatsFound,
-    threatsQuarantined: threatsFound,
-    detailedResults: threatsFound > 0 ? [
-      {
-        file: 'C:\\Users\\User\\Downloads\\suspicious.exe',
-        threat: 'Trojan.Win32.Generic',
-        action: 'Quarantined'
-      }
-    ] : []
-  };
+  // Agent-side scan: This function receives results from the Python agent
+  // The agent performs the actual scan and reports back
+  // This stub accepts whatever the agent sends
+  throw new Error('Antivirus scan must be performed by the agent. This endpoint receives results only.');
 }
 
 async function executeRemoteCommand(command: string, parameters: any) {
-  // Mock remote command execution
-  const commands: Record<string, any> = {
-    'restart_service': { success: true, message: `Service ${parameters.serviceName} restarted` },
-    'install_update': { success: true, message: 'Updates installed successfully' },
-    'run_disk_cleanup': { success: true, message: 'Disk cleanup completed, freed 2.3 GB' },
-    'system_info': { 
-      success: true, 
-      data: {
-        uptime: '5 days, 3 hours',
-        lastBoot: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
-      }
-    }
+  // Remote commands are queued for the agent to execute
+  // The agent polls for pending commands and reports results
+  // This function returns acknowledgment that command was queued
+  const supportedCommands = [
+    'restart_service',
+    'install_update', 
+    'run_disk_cleanup',
+    'system_info',
+    'get_processes',
+    'get_services',
+    'run_script'
+  ];
+
+  if (!supportedCommands.includes(command)) {
+    return { 
+      success: false, 
+      queued: false,
+      message: `Unknown command: ${command}. Supported: ${supportedCommands.join(', ')}` 
+    };
+  }
+
+  // Command will be picked up by agent on next poll
+  return { 
+    success: true, 
+    queued: true,
+    message: `Command '${command}' queued for agent execution`,
+    parameters
   };
-  
-  return commands[command] || { success: false, message: 'Unknown command' };
 }
 
 async function deploySoftwarePackage(packageId: string, installParams: any) {
-  // Mock software deployment
-  const packages: Record<string, any> = {
-    'chrome': { status: 'completed', log: 'Google Chrome installed successfully' },
-    'office365': { status: 'in_progress', log: 'Installing Microsoft Office 365...' },
-    'antivirus_update': { status: 'completed', log: 'Antivirus definitions updated' }
+  // Software deployment is queued for agent execution
+  // Agent downloads and installs packages based on package manifest
+  if (!packageId) {
+    return { status: 'failed', queued: false, log: 'Package ID is required' };
+  }
+
+  return { 
+    status: 'queued', 
+    queued: true,
+    log: `Package '${packageId}' queued for installation`,
+    packageId,
+    installParams
   };
-  
-  return packages[packageId] || { status: 'failed', log: 'Package not found' };
 }

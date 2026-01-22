@@ -75,34 +75,17 @@ export const RMMDashboard = () => {
     department: 'General', // Could be derived from customer or device metadata
     lastUser: device.last_logged_user || 'Unknown',
     lastReboot: device.last_seen ? new Date(device.last_seen).toLocaleDateString() : 'Unknown',
-    installedPrograms: Math.floor(Math.random() * 150) + 30 // Placeholder
+    installedPrograms: 0 // Will be populated from software inventory
   }));
 
-  // Mock patching data (would come from patch management system)
-  const patchingData = [
-    { category: "Security Updates", critical: 8, important: 12, optional: 14, deployed: 67 },
-    { category: "Windows Updates", critical: 3, important: 8, optional: 23, deployed: 89 },
-    { category: "Application Updates", critical: 2, important: 6, optional: 16, deployed: 45 },
-    { category: "Driver Updates", critical: 1, important: 4, optional: 12, deployed: 23 }
-  ];
+  // Empty patching data - will be populated from real patch management when available
+  const patchingData: Array<{ category: string; critical: number; important: number; optional: number; deployed: number }> = [];
 
-  // Mock policy data (would come from policy management system)
-  const policies = [
-    { name: "Password Policy", status: "active", compliance: 94, lastUpdate: "2 days ago" },
-    { name: "Antivirus Policy", status: "active", compliance: 98, lastUpdate: "1 week ago" },
-    { name: "Firewall Rules", status: "active", compliance: 89, lastUpdate: "3 days ago" },
-    { name: "USB Restrictions", status: "active", compliance: 87, lastUpdate: "5 days ago" },
-    { name: "Software Installation", status: "pending", compliance: 76, lastUpdate: "2 weeks ago" }
-  ];
+  // Empty policy data - will be populated from real policy management when available
+  const policies: Array<{ name: string; status: string; compliance: number; lastUpdate: string }> = [];
 
-  // Mock automation scripts (would come from automation system)
-  const automationScripts = [
-    { name: "Daily Backup Check", status: "running", lastRun: "2 min ago", success: 98, nextRun: "Tomorrow 2:00 AM" },
-    { name: "Disk Cleanup", status: "scheduled", lastRun: "1 hour ago", success: 95, nextRun: "Sunday 3:00 AM" },
-    { name: "Security Scan", status: "running", lastRun: "30 min ago", success: 92, nextRun: "In 4 hours" },
-    { name: "Patch Deployment", status: "idle", lastRun: "3 days ago", success: 88, nextRun: "Next Tuesday" },
-    { name: "System Health Check", status: "running", lastRun: "5 min ago", success: 96, nextRun: "Every hour" }
-  ];
+  // Empty automation scripts - will be populated from real automation system when available
+  const automationScripts: Array<{ name: string; status: string; lastRun: string; success: number; nextRun: string }> = [];
 
   if (isLoading) {
     return (

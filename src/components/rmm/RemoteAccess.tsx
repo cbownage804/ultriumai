@@ -2,28 +2,19 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Monitor, 
   Terminal, 
-  Server, 
-  Play, 
-  Square, 
-  Clock,
   ExternalLink,
   Shield,
   Wifi,
-  Eye
+  Clock,
+  Construction,
+  Rocket
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useRemoteAccess } from "@/hooks/useRemoteAccess";
-import { RemoteDesktopViewer } from "./RemoteDesktopViewer";
 
 interface Device {
   id: string;
@@ -34,37 +25,10 @@ interface Device {
   os_info?: string;
 }
 
-interface RemoteSession {
-  id: string;
-  hostname: string;
-  session_type: string;
-  session_status: string;
-  started_at: string;
-  ended_at?: string;
-  duration_seconds?: number;
-}
-
 export const RemoteAccess = () => {
   const [devices, setDevices] = useState<Device[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<string>('');
-  const [sessionType, setSessionType] = useState<'desktop' | 'terminal' | 'file_transfer'>('desktop');
-  const [loading, setLoading] = useState(false);
-  const [showNewSession, setShowNewSession] = useState(false);
-  const [activeDesktopSession, setActiveDesktopSession] = useState<{
-    sessionId: string;
-    deviceId: string;
-    deviceName: string;
-  } | null>(null);
-  
-  const { toast } = useToast();
   const { user } = useAuth();
-  const { 
-    sessions, 
-    isLoading: remoteLoading, 
-    startSession, 
-    endSession,
-    loadSessions 
-  } = useRemoteAccess();
+  const { sessions } = useRemoteAccess();
 
   useEffect(() => {
     loadDevices();
@@ -85,96 +49,7 @@ export const RemoteAccess = () => {
     }
   };
 
-  const startRemoteSession = async () => {
-    if (!selectedDevice || !user) return;
-
-    setLoading(true);
-    try {
-      const device = devices.find(d => d.id === selectedDevice);
-      if (!device) throw new Error('Device not found');
-
-      const session = await startSession(selectedDevice, sessionType);
-      
-      if (session && sessionType === 'desktop') {
-        setActiveDesktopSession({
-          sessionId: session.id,
-          deviceId: selectedDevice,
-          deviceName: device.hostname
-        });
-      }
-
-      setShowNewSession(false);
-      setSelectedDevice('');
-    } catch (error) {
-      console.error('Failed to start remote session:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEndSession = async (sessionId: string) => {
-    try {
-      await endSession(sessionId);
-      
-      // Close desktop viewer if this was the active session
-      if (activeDesktopSession?.sessionId === sessionId) {
-        setActiveDesktopSession(null);
-      }
-    } catch (error) {
-      console.error('Failed to end session:', error);
-    }
-  };
-
-  const openDesktopViewer = (session: any) => {
-    const device = devices.find(d => d.id === session.device_id);
-    if (device) {
-      setActiveDesktopSession({
-        sessionId: session.id,
-        deviceId: session.device_id,
-        deviceName: device.hostname
-      });
-    }
-  };
-
-  const getSessionIcon = (type: string) => {
-    switch (type) {
-      case 'desktop': return <Monitor className="h-4 w-4" />;
-      case 'terminal': return <Terminal className="h-4 w-4" />;
-      case 'file_transfer': return <ExternalLink className="h-4 w-4" />;
-      default: return <ExternalLink className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'connecting': return 'bg-yellow-100 text-yellow-800';
-      case 'disconnected': return 'bg-gray-100 text-gray-800';
-      case 'ended': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatDuration = (seconds?: number) => {
-    if (!seconds) return 'N/A';
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
-  };
-
   const activeSessions = sessions.filter(s => s.status === 'active').length;
-
-  // Show desktop viewer if active session
-  if (activeDesktopSession) {
-    return (
-      <RemoteDesktopViewer
-        sessionId={activeDesktopSession.sessionId}
-        deviceId={activeDesktopSession.deviceId}
-        deviceName={activeDesktopSession.deviceName}
-        onClose={() => setActiveDesktopSession(null)}
-      />
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -217,200 +92,125 @@ export const RemoteAccess = () => {
         </Card>
       </div>
 
-      {/* Remote Access Controls */}
-      <Card>
+      {/* Coming Soon Banner */}
+      <Card className="border-amber-500/30 bg-amber-500/5">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Monitor className="h-5 w-5" />
-                Remote Access Center
-              </CardTitle>
-              <CardDescription>
-                Connect to devices remotely for support and management
+          <div className="flex items-center gap-4">
+            <div className="p-4 bg-amber-500/20 rounded-xl">
+              <Construction className="h-10 w-10 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <CardTitle className="text-xl">Remote Access Center</CardTitle>
+                <Badge className="bg-amber-500 text-white">Coming Soon</Badge>
+              </div>
+              <CardDescription className="text-base">
+                Live remote desktop, terminal, and file transfer capabilities are currently in development
               </CardDescription>
             </div>
-            <Dialog open={showNewSession} onOpenChange={setShowNewSession}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-primary to-primary/90">
-                  <Play className="h-4 w-4 mr-2" />
-                  New Session
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Start Remote Session</DialogTitle>
-                  <DialogDescription>
-                    Connect to a device for remote support
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Device</Label>
-                    <Select value={selectedDevice} onValueChange={setSelectedDevice}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a device" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {devices.map((device) => (
-                          <SelectItem key={device.id} value={device.id}>
-                            <div className="flex items-center gap-2">
-                              <Monitor className="h-4 w-4" />
-                              {device.hostname} ({device.ip_address})
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Connection Type</Label>
-                    <Select value={sessionType} onValueChange={(value: any) => setSessionType(value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="desktop">
-                          <div className="flex items-center gap-2">
-                            <Monitor className="h-4 w-4" />
-                            Remote Desktop (Full Control)
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="terminal">
-                          <div className="flex items-center gap-2">
-                            <Terminal className="h-4 w-4" />
-                            Terminal Only
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="file_transfer">
-                          <div className="flex items-center gap-2">
-                            <ExternalLink className="h-4 w-4" />
-                            File Transfer Only
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex gap-2 pt-4">
-                    <Button 
-                      onClick={startRemoteSession} 
-                      disabled={!selectedDevice || loading}
-                      className="flex-1"
-                    >
-                      {loading ? "Connecting..." : "Connect"}
-                    </Button>
-                    <Button variant="outline" onClick={() => setShowNewSession(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="active" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="active">Active Sessions</TabsTrigger>
-              <TabsTrigger value="history">Session History</TabsTrigger>
-            </TabsList>
+        <CardContent className="space-y-6">
+          {/* Feature Preview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
+              <Monitor className="h-8 w-8 text-muted-foreground mb-3" />
+              <h4 className="font-semibold mb-1">Remote Desktop</h4>
+              <p className="text-sm text-muted-foreground">
+                Full visual control with mouse and keyboard support
+              </p>
+            </div>
+            <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
+              <Terminal className="h-8 w-8 text-muted-foreground mb-3" />
+              <h4 className="font-semibold mb-1">Remote Terminal</h4>
+              <p className="text-sm text-muted-foreground">
+                PowerShell and command-line access for scripting
+              </p>
+            </div>
+            <div className="p-4 bg-muted/50 rounded-lg border border-dashed">
+              <ExternalLink className="h-8 w-8 text-muted-foreground mb-3" />
+              <h4 className="font-semibold mb-1">File Transfer</h4>
+              <p className="text-sm text-muted-foreground">
+                Secure file upload and download between devices
+              </p>
+            </div>
+          </div>
 
-            <TabsContent value="active" className="space-y-4">
-              {sessions.filter(s => s.status === 'active').map((session) => {
-                const device = devices.find(d => d.id === session.device_id);
-                return (
-                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {getSessionIcon(session.session_type)}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{device?.hostname || 'Unknown Device'}</span>
-                          <Badge variant="outline">
-                            {session.session_type.toUpperCase()}
-                          </Badge>
-                          <Badge className={getStatusColor(session.status)}>
-                            {session.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Started: {new Date(session.started_at).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {session.session_type === 'desktop' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openDesktopViewer(session)}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Screen
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEndSession(session.id)}
-                      >
-                        <Square className="h-4 w-4 mr-2" />
-                        Disconnect
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+          {/* What's Working Now */}
+          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="h-5 w-5 text-green-500" />
+              <h4 className="font-semibold text-green-700">Available Now</h4>
+            </div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                Real-time device monitoring and health metrics
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                Remote command execution via agent (PowerShell scripts)
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                Software inventory and system information
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                Alerting based on CPU, memory, and disk thresholds
+              </li>
+            </ul>
+          </div>
 
-              {sessions.filter(s => s.status === 'active').length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No active remote sessions</p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="history" className="space-y-4">
-              {sessions.map((session) => {
-                const device = devices.find(d => d.id === session.device_id);
-                return (
-                  <div key={session.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      {getSessionIcon(session.session_type)}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{device?.hostname || 'Unknown Device'}</span>
-                          <Badge variant="outline">
-                            {session.session_type.toUpperCase()}
-                          </Badge>
-                          <Badge className={getStatusColor(session.status)}>
-                            {session.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(session.started_at).toLocaleString()}
-                          {session.ended_at && ` - ${new Date(session.ended_at).toLocaleString()}`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right text-sm text-muted-foreground">
-                      <p>Session: {session.session_type}</p>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {sessions.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No session history</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          {/* ETA */}
+          <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+            <div className="flex items-center gap-3">
+              <Rocket className="h-6 w-6 text-primary" />
+              <div>
+                <p className="font-medium">Estimated Availability</p>
+                <p className="text-sm text-muted-foreground">Q2 2026</p>
+              </div>
+            </div>
+            <Button variant="outline" disabled>
+              <Clock className="h-4 w-4 mr-2" />
+              Notify Me
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Session History (read-only) */}
+      {sessions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Session History</CardTitle>
+            <CardDescription>Previous remote access sessions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {sessions.slice(0, 5).map((session) => {
+                const device = devices.find(d => d.id === session.device_id);
+                return (
+                  <div key={session.id} className="flex items-center justify-between p-3 border rounded-lg opacity-60">
+                    <div className="flex items-center gap-3">
+                      <Monitor className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <span className="font-medium">{device?.hostname || 'Unknown Device'}</span>
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {session.session_type}
+                        </Badge>
+                      </div>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(session.started_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
