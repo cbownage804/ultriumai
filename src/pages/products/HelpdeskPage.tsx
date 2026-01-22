@@ -60,17 +60,10 @@ const stats = [
 
 const pricing = [
   {
-    name: 'Helpdesk Starter',
+    name: 'AI Helpdesk',
     price: 29,
-    description: 'Essential ticketing for small teams',
-    features: ['Unlimited tickets', 'Email integration', 'Basic SLAs', '3 agents included'],
-    cta: 'Start Free Trial'
-  },
-  {
-    name: 'Helpdesk Pro',
-    price: 59,
-    description: 'AI-powered helpdesk with automation',
-    features: ['Everything in Starter', 'AI responses', 'Smart routing', 'Knowledge base', '10 agents included'],
+    description: 'AI-powered helpdesk with full automation',
+    features: ['Unlimited tickets', 'AI responses', 'Smart routing', 'Knowledge base', 'Email integration', 'API access'],
     cta: 'Start Free Trial',
     popular: true
   },
@@ -78,7 +71,7 @@ const pricing = [
     name: 'Enterprise Helpdesk',
     price: null,
     description: 'Full platform with custom workflows',
-    features: ['Everything in Pro', 'Custom workflows', 'SSO/SAML', 'API access', 'Unlimited agents'],
+    features: ['Everything included', 'Custom workflows', 'SSO/SAML', 'Dedicated support', 'Unlimited agents'],
     cta: 'Contact Sales'
   }
 ];

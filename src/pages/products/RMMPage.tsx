@@ -60,17 +60,10 @@ const stats = [
 
 const pricing = [
   {
-    name: 'RMM Starter',
+    name: 'RMM',
     price: 3,
-    description: 'Essential monitoring and remote access',
-    features: ['Real-time monitoring', 'Remote desktop', 'Basic alerting', 'Script execution'],
-    cta: 'Start Free Trial'
-  },
-  {
-    name: 'RMM Professional',
-    price: 5,
-    description: 'Full RMM suite with automation',
-    features: ['Everything in Starter', 'Patch management', 'Advanced scripting', 'Custom dashboards', 'API access'],
+    description: 'Full RMM suite with monitoring and automation',
+    features: ['Real-time monitoring', 'Remote desktop', 'Patch management', 'Advanced scripting', 'Custom dashboards', 'API access'],
     cta: 'Start Free Trial',
     popular: true
   },
@@ -78,7 +71,7 @@ const pricing = [
     name: 'RMM Enterprise',
     price: null,
     description: 'White-label with custom integrations',
-    features: ['Everything in Pro', 'White-label branding', 'Custom integrations', 'Dedicated support', 'On-prem option'],
+    features: ['Everything included', 'White-label branding', 'Custom integrations', 'Dedicated support', 'On-prem option'],
     cta: 'Contact Sales'
   }
 ];

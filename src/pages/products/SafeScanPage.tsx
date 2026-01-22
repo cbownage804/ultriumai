@@ -131,7 +131,7 @@ const SafeScanPage = () => {
 
   const pricingTiers = [
     {
-      name: 'SafeScan Starter',
+      name: 'SafeScan',
       price: '$99',
       duration: '/month flat',
       icon: Star,
@@ -140,27 +140,12 @@ const SafeScanPage = () => {
         'Document & URL scanning',
         'AI threat detection',
         'Real-time alerts',
-        'Basic reporting',
-        'Email support',
-      ],
-      popular: false,
-      cta: 'Start Free Trial',
-    },
-    {
-      name: 'SafeScan Pro',
-      price: '$199',
-      duration: '/month flat',
-      icon: Zap,
-      features: [
-        'Everything in Starter',
-        'API access (10K calls/mo)',
-        'Bulk document scanning',
-        'Scheduled scans',
+        'API access',
         'Webhook integrations',
         'Priority support',
       ],
       popular: true,
-      cta: 'Start Pro Trial',
+      cta: 'Start Free Trial',
     },
     {
       name: 'SafeScan Enterprise',
@@ -168,7 +153,7 @@ const SafeScanPage = () => {
       duration: 'Contact sales',
       icon: Users,
       features: [
-        'Everything in Pro',
+        'Everything included',
         'Unlimited API calls',
         'White-label deployment',
         'On-premise option',
