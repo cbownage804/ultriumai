@@ -76,21 +76,21 @@ const SafeWebDashboard = () => {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
-      case 'high': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'critical': return 'text-red-500 bg-red-500/20 border-red-500/30';
+      case 'high': return 'text-orange-500 bg-orange-500/20 border-orange-500/30';
+      case 'medium': return 'text-yellow-500 bg-yellow-500/20 border-yellow-500/30';
+      case 'low': return 'text-violet-500 bg-violet-500/20 border-violet-500/30';
+      default: return 'text-gray-400 bg-gray-500/20 border-gray-500/30';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-red-100 text-red-800';
-      case 'investigating': return 'bg-yellow-100 text-yellow-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'false_positive': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'new': return 'bg-red-500/20 text-red-500 border-red-500/30';
+      case 'investigating': return 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30';
+      case 'resolved': return 'bg-green-500/20 text-green-500 border-green-500/30';
+      case 'false_positive': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
   };
 
@@ -104,27 +104,27 @@ const SafeWebDashboard = () => {
   const activeScans = assets.filter(a => a.status === 'active').length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <Navigation />
       
       <div className="container mx-auto px-4 py-8 pt-24">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Eye className="h-8 w-8 text-primary" />
-              SafeWeb™ Intelligence Center
+            <h1 className="text-3xl font-bold flex items-center gap-3 text-white">
+              <Eye className="h-8 w-8 text-violet-500" />
+              <span className="text-violet-500">SafeWeb™</span> Intelligence Center
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-gray-400 mt-2">
               Continuous dark web monitoring and threat intelligence
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline">
+            <Button variant="outline" className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10">
               <Download className="h-4 w-4 mr-2" />
               Export Report
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
@@ -132,68 +132,68 @@ const SafeWebDashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="threats">Threats ({newThreats})</TabsTrigger>
-            <TabsTrigger value="assets">Assets ({totalAssets})</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-[#1a1a1a] border border-violet-500/10">
+            <TabsTrigger value="dashboard" className="text-gray-400 data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-500">Dashboard</TabsTrigger>
+            <TabsTrigger value="threats" className="text-gray-400 data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-500">Threats ({newThreats})</TabsTrigger>
+            <TabsTrigger value="assets" className="text-gray-400 data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-500">Assets ({totalAssets})</TabsTrigger>
+            <TabsTrigger value="reports" className="text-gray-400 data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-500">Reports</TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">
             {/* Key Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card>
+              <Card className="bg-[#141414] border-violet-500/10">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <AlertTriangle className="h-6 w-6 text-red-600" />
+                    <div className="p-2 bg-red-500/20 rounded-lg">
+                      <AlertTriangle className="h-6 w-6 text-red-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Critical Threats</p>
-                      <p className="text-2xl font-bold text-red-600">{criticalThreats}</p>
+                      <p className="text-sm text-gray-400">Critical Threats</p>
+                      <p className="text-2xl font-bold text-red-500">{criticalThreats}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#141414] border-violet-500/10">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <Bell className="h-6 w-6 text-orange-600" />
+                    <div className="p-2 bg-orange-500/20 rounded-lg">
+                      <Bell className="h-6 w-6 text-orange-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">New Alerts</p>
-                      <p className="text-2xl font-bold text-orange-600">{newThreats}</p>
+                      <p className="text-sm text-gray-400">New Alerts</p>
+                      <p className="text-2xl font-bold text-orange-500">{newThreats}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#141414] border-violet-500/10">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <Database className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-violet-500/20 rounded-lg">
+                      <Database className="h-6 w-6 text-violet-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Monitored Assets</p>
-                      <p className="text-2xl font-bold text-blue-600">{totalAssets}</p>
+                      <p className="text-sm text-gray-400">Monitored Assets</p>
+                      <p className="text-2xl font-bold text-violet-500">{totalAssets}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="bg-[#141414] border-violet-500/10">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Activity className="h-6 w-6 text-green-600" />
+                    <div className="p-2 bg-green-500/20 rounded-lg">
+                      <Activity className="h-6 w-6 text-green-500" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Active Scans</p>
-                      <p className="text-2xl font-bold text-green-600">{activeScans}</p>
+                      <p className="text-sm text-gray-400">Active Scans</p>
+                      <p className="text-2xl font-bold text-green-500">{activeScans}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -201,14 +201,14 @@ const SafeWebDashboard = () => {
             </div>
 
             {/* Recent Threats */}
-            <Card>
+            <Card className="bg-[#141414] border-violet-500/10">
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <div>
-                    <CardTitle>Recent Threat Intelligence</CardTitle>
-                    <CardDescription>Latest threats detected in the past 7 days</CardDescription>
+                    <CardTitle className="text-white">Recent Threat Intelligence</CardTitle>
+                    <CardDescription className="text-gray-400">Latest threats detected in the past 7 days</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10">
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Refresh
                   </Button>
@@ -217,19 +217,19 @@ const SafeWebDashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   {threats.slice(0, 3).map((threat) => (
-                    <div key={threat.id} className="flex items-start gap-4 p-4 border rounded-lg">
+                    <div key={threat.id} className="flex items-start gap-4 p-4 border border-violet-500/10 rounded-lg bg-[#1a1a1a]">
                       <div className={`p-2 rounded-full ${getSeverityColor(threat.severity)}`}>
                         <Shield className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold">{threat.title}</h4>
+                          <h4 className="font-semibold text-white">{threat.title}</h4>
                           <Badge className={getStatusColor(threat.status)}>
                             {threat.status.replace('_', ' ')}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{threat.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <p className="text-sm text-gray-400 mb-2">{threat.description}</p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span>Source: {threat.source}</span>
                           <span>•</span>
                           <span>{new Date(threat.date).toLocaleDateString()}</span>
