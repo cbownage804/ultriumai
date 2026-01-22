@@ -8,6 +8,7 @@ import { VanguardUpsell } from "@/components/products/VanguardUpsell";
 import { Lock, Check, Star, Zap, Users, ArrowRight, Play, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroPassword from "@/assets/hero-password.jpg";
+import screenshotSafepass from "@/assets/screenshot-safepass.jpg";
 import { safeSuiteProducts } from "@/components/safesuite/SafeSuiteProductIcons";
 
 const SafePassPage = () => {
@@ -96,11 +97,11 @@ const SafePassPage = () => {
                 Enterprise Password Security
               </Badge>
               <div className="flex justify-center mb-8">
-                <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-amber-500/20 animate-fade-in">
+                <div className="px-8 py-4 bg-black rounded-2xl shadow-2xl shadow-amber-500/20 animate-fade-in">
                   <img 
                     src={safeSuiteProducts.safepass.logo} 
                     alt="SafePass" 
-                    className="h-28 w-28 object-contain"
+                    className="h-24 w-auto object-contain"
                   />
                 </div>
               </div>
@@ -122,6 +123,23 @@ const SafePassPage = () => {
                   Try Live Demo
                 </Button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Screenshot Section */}
+        <section className="py-16">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold mb-2">See SafePass in Action</h2>
+              <p className="text-muted-foreground">Your secure password vault at a glance</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-2xl shadow-amber-500/10 border border-amber-500/20">
+              <img 
+                src={screenshotSafepass} 
+                alt="SafePass Dashboard" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </section>

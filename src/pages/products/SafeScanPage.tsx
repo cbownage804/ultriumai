@@ -15,6 +15,7 @@ import {
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import heroScan from "@/assets/hero-scan.jpg";
+import screenshotSafescan from "@/assets/screenshot-safescan.jpg";
 import { safeSuiteProducts } from "@/components/safesuite/SafeSuiteProductIcons";
 
 const SafeScanPage = () => {
@@ -235,11 +236,11 @@ const SafeScanPage = () => {
                 AI-Powered Threat Detection
               </Badge>
               <div className="flex justify-center mb-8">
-                <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-red-500/20 animate-fade-in">
+                <div className="px-8 py-4 bg-black rounded-2xl shadow-2xl shadow-red-500/20 animate-fade-in">
                   <img 
                     src={safeSuiteProducts.safescan.logo} 
                     alt="SafeScan" 
-                    className="h-28 w-28 object-contain"
+                    className="h-24 w-auto object-contain"
                   />
                 </div>
               </div>
@@ -273,6 +274,23 @@ const SafeScanPage = () => {
                   <div className="text-sm text-muted-foreground">{stat.description}</div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Screenshot Section */}
+        <section className="py-16 bg-muted/30">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold mb-2">See SafeScan in Action</h2>
+              <p className="text-muted-foreground">Comprehensive threat analysis dashboard</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-2xl shadow-red-500/10 border border-red-500/20">
+              <img 
+                src={screenshotSafescan} 
+                alt="SafeScan Dashboard" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </section>
