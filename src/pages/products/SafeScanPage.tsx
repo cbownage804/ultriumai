@@ -244,9 +244,6 @@ const SafeScanPage = () => {
                   />
                 </div>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-red-400 via-rose-500 to-red-600 bg-clip-text text-transparent animate-fade-in">
-                SafeScan
-              </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Enterprise-grade email, document, and URL security scanning. 
                 Same AI engine that powers Ultrium Vanguard's threat detection.

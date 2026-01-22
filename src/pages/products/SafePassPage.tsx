@@ -105,9 +105,6 @@ const SafePassPage = () => {
                   />
                 </div>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 bg-clip-text text-transparent animate-fade-in">
-                SafePass
-              </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Enterprise password management and security platform. Secure, generate, and manage passwords across your organization with advanced breach monitoring.
               </p>
