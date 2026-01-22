@@ -104,9 +104,6 @@ const SafeWebPage = () => {
                   />
                 </div>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-violet-400 via-purple-500 to-violet-600 bg-clip-text text-transparent animate-fade-in">
-                SafeWeb
-              </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
                 Dark web monitoring and threat intelligence platform. Protect your organization from credential theft, data breaches, and cyber threats with continuous monitoring.
               </p>

@@ -162,9 +162,6 @@ export default function SafeTrackPage() {
                 />
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl bg-gradient-to-r from-orange-400 via-amber-500 to-orange-600 bg-clip-text text-transparent animate-fade-in">
-              SafeTrack
-            </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mb-8">
               Complete IT asset lifecycle management. Track hardware, software, and 
               licenses from procurement to retirement with automatic depreciation and full audit trails.
