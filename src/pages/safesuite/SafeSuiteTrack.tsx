@@ -11,11 +11,14 @@ import { Button } from '@/components/ui/button';
 export default function SafeSuiteTrack() {
   return (
     <FeatureGate feature="safetrack">
-      <div className="space-y-6">
+      <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">SafeTrack</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+              <Package className="h-7 w-7 text-emerald-500" />
+              <span className="text-emerald-500">SafeTrack</span>
+            </h1>
+            <p className="text-gray-400">
               Track and manage your IT assets with AI-powered search
             </p>
           </div>
@@ -23,15 +26,17 @@ export default function SafeSuiteTrack() {
 
         <UsageLimitBanner feature="safetrack" />
 
-        <Card>
+        <Card className="bg-[#141414] border-emerald-500/10">
           <CardContent className="py-12 text-center">
-            <Package className="h-16 w-16 mx-auto text-primary mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Asset Management</h3>
-            <p className="text-muted-foreground mb-4">
+            <div className="p-4 rounded-full bg-emerald-500/10 w-fit mx-auto mb-4">
+              <Package className="h-16 w-16 text-emerald-500" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-white">Asset Management</h3>
+            <p className="text-gray-400 mb-4">
               Track hardware, software licenses, and IT inventory across your organization
             </p>
             <Link to="/safetrack">
-              <Button>Open Full SafeTrack</Button>
+              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">Open Full SafeTrack</Button>
             </Link>
           </CardContent>
         </Card>

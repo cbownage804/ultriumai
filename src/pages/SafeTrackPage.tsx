@@ -417,35 +417,35 @@ const SafeTrackPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/80">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <div className="space-y-8 p-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/msp-control-center')}>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/msp-control-center')} className="text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent flex items-center gap-3">
-                <Package className="h-10 w-10 text-primary" />
-                SafeTrack
+              <h1 className="text-4xl font-bold tracking-tight flex items-center gap-3 text-white">
+                <Package className="h-10 w-10 text-emerald-500" />
+                <span className="text-emerald-500">SafeTrack™</span>
               </h1>
             </div>
-            <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-gray-400">
               IT Asset Management • {metrics.totalAssets} assets • ${metrics.totalValue.toFixed(0)} total value
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Dialog open={showAddAsset} onOpenChange={setShowAddAsset}>
               <DialogTrigger asChild>
-                <Button className="bg-primary/90 hover:bg-primary">
+                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Asset
                 </Button>
@@ -635,7 +635,7 @@ const SafeTrackPage = () => {
 
             <Dialog open={showAddSoftware} onOpenChange={setShowAddSoftware}>
               <DialogTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10">
                   <Code className="h-4 w-4 mr-2" />
                   Add Software
                 </Button>
@@ -770,61 +770,61 @@ const SafeTrackPage = () => {
 
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <Card className="bg-[#141414] border-emerald-500/10 hover:border-emerald-500/30 transition-colors">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Package className="h-4 w-4" />
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                <Package className="h-4 w-4 text-emerald-500" />
                 Total Assets
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-primary">{metrics.totalAssets}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-2xl font-bold text-white">{metrics.totalAssets}</div>
+              <p className="text-xs text-gray-500 mt-1">
                 {metrics.activeAssets} active • {metrics.maintenanceAssets} in maintenance
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-success/5 to-success/10 border-success/20">
+          <Card className="bg-[#141414] border-emerald-500/10 hover:border-emerald-500/30 transition-colors">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-emerald-500" />
                 Total Value
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">${metrics.totalValue.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-2xl font-bold text-emerald-500">${metrics.totalValue.toLocaleString()}</div>
+              <p className="text-xs text-gray-500 mt-1">
                 Current asset portfolio value
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-secondary/5 to-secondary/10 border-secondary/20">
+          <Card className="bg-[#141414] border-emerald-500/10 hover:border-emerald-500/30 transition-colors">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Code className="h-4 w-4" />
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                <Code className="h-4 w-4 text-emerald-500" />
                 Software Licenses
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-secondary">{metrics.usedLicenses}/{metrics.totalLicenses}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-2xl font-bold text-white">{metrics.usedLicenses}/{metrics.totalLicenses}</div>
+              <p className="text-xs text-gray-500 mt-1">
                 Licenses used
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-warning/5 to-warning/10 border-warning/20">
+          <Card className="bg-[#141414] border-emerald-500/10 hover:border-emerald-500/30 transition-colors">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
+              <CardTitle className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-yellow-500" />
                 Expiring Soon
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-warning">{metrics.expiringSoon}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-2xl font-bold text-yellow-500">{metrics.expiringSoon}</div>
+              <p className="text-xs text-gray-500 mt-1">
                 Licenses expiring in 30 days
               </p>
             </CardContent>
@@ -832,28 +832,28 @@ const SafeTrackPage = () => {
         </div>
 
         {/* Main Content */}
-        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+        <Card className="bg-[#141414] border-emerald-500/10">
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Shield className="h-5 w-5 text-emerald-500" />
                   Asset Inventory
                 </CardTitle>
-                <CardDescription>Comprehensive IT asset and software license management</CardDescription>
+                <CardDescription className="text-gray-400">Comprehensive IT asset and software license management</CardDescription>
               </div>
               <div className="flex flex-wrap gap-2">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                   <Input
                     placeholder="Search assets..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
+                    className="pl-10 w-64 bg-[#0f0f0f] border-emerald-500/20 text-white placeholder:text-gray-500 focus:border-emerald-500/50"
                   />
                 </div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40 bg-[#0f0f0f] border-emerald-500/20 text-gray-300">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -864,7 +864,7 @@ const SafeTrackPage = () => {
                   </SelectContent>
                 </Select>
                 <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-48">
+                  <SelectTrigger className="w-48 bg-[#0f0f0f] border-emerald-500/20 text-gray-300">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -881,21 +881,21 @@ const SafeTrackPage = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="hardware" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="hardware">Hardware Assets</TabsTrigger>
-                <TabsTrigger value="software">Software Licenses</TabsTrigger>
-                <TabsTrigger value="advanced">🚀 Advanced Features</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 bg-[#1a1a1a] border border-emerald-500/10">
+                <TabsTrigger value="hardware" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-500 text-gray-400">Hardware Assets</TabsTrigger>
+                <TabsTrigger value="software" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-500 text-gray-400">Software Licenses</TabsTrigger>
+                <TabsTrigger value="advanced" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-500 text-gray-400">🚀 Advanced Features</TabsTrigger>
               </TabsList>
 
               <TabsContent value="hardware" className="space-y-4">
                 {filteredAssets.length === 0 ? (
                   <div className="text-center py-12">
-                    <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No assets found</h3>
-                    <p className="text-muted-foreground mb-4">
+                    <Package className="h-16 w-16 mx-auto text-emerald-500/50 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-white">No assets found</h3>
+                    <p className="text-gray-400 mb-4">
                       {assets.length === 0 ? "Get started by adding your first asset" : "Try adjusting your search filters"}
                     </p>
-                    <Button onClick={() => setShowAddAsset(true)}>
+                    <Button onClick={() => setShowAddAsset(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white">
                       <Plus className="h-4 w-4 mr-2" />
                       Add First Asset
                     </Button>
@@ -905,16 +905,16 @@ const SafeTrackPage = () => {
                     {filteredAssets.map((asset) => {
                       const IconComponent = getIconComponent(asset.category?.icon || 'package');
                       return (
-                        <Card key={asset.id} className="hover:shadow-md transition-shadow">
+                        <Card key={asset.id} className="bg-[#0f0f0f] border-emerald-500/10 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 transition-all">
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10">
-                                  <IconComponent className="h-5 w-5 text-primary" />
+                                <div className="p-2 rounded-lg bg-emerald-500/10">
+                                  <IconComponent className="h-5 w-5 text-emerald-500" />
                                 </div>
                                 <div>
-                                  <h3 className="font-semibold text-sm">{asset.name}</h3>
-                                  <p className="text-xs text-muted-foreground">{asset.manufacturer} {asset.model}</p>
+                                  <h3 className="font-semibold text-sm text-white">{asset.name}</h3>
+                                  <p className="text-xs text-gray-400">{asset.manufacturer} {asset.model}</p>
                                 </div>
                               </div>
                               <Badge variant="outline" className={cn("text-xs", getStatusColor(asset.status))}>
@@ -925,36 +925,36 @@ const SafeTrackPage = () => {
                           <CardContent className="space-y-2">
                             {asset.serial_number && (
                               <div className="flex items-center gap-2 text-xs">
-                                <span className="text-muted-foreground">S/N:</span>
-                                <span className="font-mono">{asset.serial_number}</span>
+                                <span className="text-gray-500">S/N:</span>
+                                <span className="font-mono text-gray-300">{asset.serial_number}</span>
                               </div>
                             )}
                             {asset.location && (
-                              <div className="flex items-center gap-2 text-xs">
-                                <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <div className="flex items-center gap-2 text-xs text-gray-400">
+                                <MapPin className="h-3 w-3 text-emerald-500" />
                                 <span>{asset.location}</span>
                               </div>
                             )}
                             {asset.assigned_to && (
-                              <div className="flex items-center gap-2 text-xs">
-                                <User className="h-3 w-3 text-muted-foreground" />
+                              <div className="flex items-center gap-2 text-xs text-gray-400">
+                                <User className="h-3 w-3 text-emerald-500" />
                                 <span>{asset.assigned_to}</span>
                               </div>
                             )}
                             {asset.purchase_price && (
-                              <div className="flex items-center gap-2 text-xs">
-                                <DollarSign className="h-3 w-3 text-muted-foreground" />
+                              <div className="flex items-center gap-2 text-xs text-gray-400">
+                                <DollarSign className="h-3 w-3 text-emerald-500" />
                                 <span>${asset.purchase_price.toLocaleString()}</span>
                               </div>
                             )}
                             <div className="flex gap-1 pt-2">
-                              <Button size="sm" variant="ghost" className="h-7 px-2">
+                              <Button size="sm" variant="ghost" className="h-7 px-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10">
                                 <Eye className="h-3 w-3" />
                               </Button>
-                              <Button size="sm" variant="ghost" className="h-7 px-2">
+                              <Button size="sm" variant="ghost" className="h-7 px-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10">
                                 <Edit className="h-3 w-3" />
                               </Button>
-                              <Button size="sm" variant="ghost" className="h-7 px-2">
+                              <Button size="sm" variant="ghost" className="h-7 px-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-500/10">
                                 <Wrench className="h-3 w-3" />
                               </Button>
                             </div>
@@ -969,12 +969,12 @@ const SafeTrackPage = () => {
               <TabsContent value="software" className="space-y-4">
                 {softwareAssets.length === 0 ? (
                   <div className="text-center py-12">
-                    <Code className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No software licenses found</h3>
-                    <p className="text-muted-foreground mb-4">
+                    <Code className="h-16 w-16 mx-auto text-emerald-500/50 mb-4" />
+                    <h3 className="text-lg font-semibold mb-2 text-white">No software licenses found</h3>
+                    <p className="text-gray-400 mb-4">
                       Start tracking your software licenses and ensure compliance
                     </p>
-                    <Button onClick={() => setShowAddSoftware(true)}>
+                    <Button onClick={() => setShowAddSoftware(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white">
                       <Plus className="h-4 w-4 mr-2" />
                       Add First License
                     </Button>
@@ -982,16 +982,16 @@ const SafeTrackPage = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {softwareAssets.map((software) => (
-                      <Card key={software.id} className="hover:shadow-md transition-shadow">
+                      <Card key={software.id} className="bg-[#0f0f0f] border-emerald-500/10 hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/5 transition-all">
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 rounded-lg bg-secondary/10">
-                                <Code className="h-5 w-5 text-secondary" />
+                              <div className="p-2 rounded-lg bg-emerald-500/10">
+                                <Code className="h-5 w-5 text-emerald-500" />
                               </div>
                               <div>
-                                <h3 className="font-semibold text-sm">{software.name}</h3>
-                                <p className="text-xs text-muted-foreground">{software.vendor} {software.version}</p>
+                                <h3 className="font-semibold text-sm text-white">{software.name}</h3>
+                                <p className="text-xs text-gray-400">{software.vendor} {software.version}</p>
                               </div>
                             </div>
                             <Badge variant="outline" className={cn("text-xs", getComplianceColor(software.compliance_status))}>
