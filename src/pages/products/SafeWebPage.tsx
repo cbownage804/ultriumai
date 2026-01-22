@@ -8,6 +8,7 @@ import { VanguardUpsell } from "@/components/products/VanguardUpsell";
 import { Search, Check, Star, Zap, Users, ArrowRight, Play, AlertTriangle, Eye, Globe, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroWeb from "@/assets/hero-web.jpg";
+import screenshotSafeweb from "@/assets/screenshot-safeweb.jpg";
 import { safeSuiteProducts } from "@/components/safesuite/SafeSuiteProductIcons";
 
 const SafeWebPage = () => {
@@ -95,11 +96,11 @@ const SafeWebPage = () => {
                 Dark Web Intelligence
               </Badge>
               <div className="flex justify-center mb-8">
-                <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-violet-500/20 animate-fade-in">
+                <div className="px-8 py-4 bg-black rounded-2xl shadow-2xl shadow-violet-500/20 animate-fade-in">
                   <img 
                     src={safeSuiteProducts.safeweb.logo} 
                     alt="SafeWeb" 
-                    className="h-28 w-28 object-contain"
+                    className="h-24 w-auto object-contain"
                   />
                 </div>
               </div>
@@ -121,6 +122,23 @@ const SafeWebPage = () => {
                   Try Live Demo
                 </Button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Screenshot Section */}
+        <section className="py-16">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold mb-2">See SafeWeb in Action</h2>
+              <p className="text-muted-foreground">Dark web monitoring and breach detection</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-violet-500/20">
+              <img 
+                src={screenshotSafeweb} 
+                alt="SafeWeb Dashboard" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </section>

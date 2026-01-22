@@ -13,6 +13,7 @@ import {
   RefreshCw, Search, Download
 } from 'lucide-react';
 import heroTrack from '@/assets/hero-track.jpg';
+import screenshotSafetrack from '@/assets/screenshot-safetrack.jpg';
 import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const features = [
@@ -153,11 +154,11 @@ export default function SafeTrackPage() {
               IT Asset Management
             </Badge>
             <div className="flex justify-start mb-8">
-              <div className="p-4 bg-black rounded-2xl shadow-2xl shadow-orange-500/20 animate-fade-in">
+              <div className="px-8 py-4 bg-black rounded-2xl shadow-2xl shadow-orange-500/20 animate-fade-in">
                 <img 
                   src={safeSuiteProducts.safetrack.logo} 
                   alt="SafeTrack" 
-                  className="h-28 w-28 object-contain"
+                  className="h-24 w-auto object-contain"
                 />
               </div>
             </div>
@@ -181,6 +182,23 @@ export default function SafeTrackPage() {
                   Try Live Demo
                 </Button>
               </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Screenshot Section */}
+        <section className="py-16">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold mb-2">See SafeTrack in Action</h2>
+              <p className="text-muted-foreground">Complete asset lifecycle management</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-2xl shadow-emerald-500/10 border border-emerald-500/20">
+              <img 
+                src={screenshotSafetrack} 
+                alt="SafeTrack Dashboard" 
+                className="w-full h-auto"
+              />
             </div>
           </div>
         </section>
