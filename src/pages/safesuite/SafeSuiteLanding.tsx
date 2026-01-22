@@ -70,11 +70,11 @@ export default function SafeSuiteLanding() {
               Complete Security Suite
             </Badge>
             <div className="flex justify-center mb-8">
-              <div className="px-6 py-4 bg-black rounded-2xl shadow-2xl shadow-emerald-500/20 animate-fade-in">
+              <div className="px-8 py-6 bg-black rounded-2xl shadow-2xl shadow-emerald-500/30 animate-fade-in">
                 <img 
                   src={safesuiteLogo} 
                   alt="SafeSuite" 
-                  className="h-20 w-auto object-contain"
+                  className="h-32 w-auto object-contain"
                 />
               </div>
             </div>
