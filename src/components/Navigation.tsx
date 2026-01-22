@@ -70,34 +70,34 @@ const Navigation = () => {
           </div>
           
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4">
             <button 
               onClick={() => handleNavigation('/ai-studio')}
-              className="transition-transform duration-200 hover:scale-110"
+              className="transition-transform duration-200 hover:scale-105"
               title="AI Studio™"
             >
-              <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
-                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-125" />
+              <div className="h-12 w-12 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20">
+                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-110" />
               </div>
             </button>
             
             <button 
               onClick={() => handleExternalLink('https://vanguard.ultriumai.com')}
-              className="transition-transform duration-200 hover:scale-110"
+              className="transition-transform duration-200 hover:scale-105"
               title="Vanguard™"
             >
-              <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
+              <div className="h-12 w-12 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-cyan-500/20">
                 <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
               </div>
             </button>
             
             <button 
               onClick={() => handleExternalLink('https://safesuite.ultriumai.com')}
-              className="transition-transform duration-200 hover:scale-110"
+              className="transition-transform duration-200 hover:scale-105"
               title="SafeSuite™"
             >
-              <div className="h-20 w-20 rounded-xl bg-black flex items-center justify-center overflow-hidden">
-                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-125" />
+              <div className="h-12 w-12 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-500/20">
+                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-110" />
               </div>
             </button>
             

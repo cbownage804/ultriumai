@@ -28,13 +28,14 @@ export default function SafeSuiteLanding() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/safesuite" className="flex items-center gap-2">
-            <img 
-              src={safesuiteLogo} 
-              alt="SafeSuite" 
-              className="h-10 w-10 rounded-lg object-contain"
-            />
-            <span className="font-bold text-xl">SafeSuite</span>
+          <Link to="/safesuite" className="flex items-center gap-2 transition-transform hover:scale-105">
+            <div className="h-12 w-12 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-500/20">
+              <img 
+                src={safesuiteLogo} 
+                alt="SafeSuite" 
+                className="h-full w-full object-contain scale-110"
+              />
+            </div>
           </Link>
           <div className="flex items-center gap-4">
             <Link to="/safesuite/auth">
