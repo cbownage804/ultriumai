@@ -48,8 +48,8 @@ const VANGUARD_TIERS: VanguardTier[] = [
     description: 'Complete IT operations platform',
     includes: [
       'Everything in Professional',
-      'RMM™ - Remote Monitoring',
-      'AI Helpdesk™ - IT Service Desk',
+      'SafeOps™ - Remote Monitoring',
+      'SafeDesk™ - IT Service Desk',
       'Patch Management',
       'Script Automation',
       '24/7 AI SOC Monitoring',

@@ -21,12 +21,12 @@ const PRODUCTS: Record<string, { priceId: string; name: string; unit: string }> 
   },
   rmm: {
     priceId: "price_1SpENbH1u6E0bsJT6p9Bvwgx",
-    name: "RMM™",
+    name: "SafeOps™",
     unit: "endpoint",
   },
   helpdesk: {
     priceId: "price_1SpENcH1u6E0bsJT5xuOIwvt",
-    name: "Ultrium AI Helpdesk™",
+    name: "SafeDesk™",
     unit: "agent",
   },
   safeweb: {

@@ -219,7 +219,7 @@ export const Agent = () => {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
-                  Ultrium RMM Agent v{agentVersion}
+                  SafeOps Agent v{agentVersion}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   Status: <Badge variant={isConnected ? "default" : "destructive"} className="ml-1">

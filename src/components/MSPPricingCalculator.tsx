@@ -74,7 +74,7 @@ const MSPPricingCalculator = () => {
     },
     {
       id: 'rmm',
-      name: 'Ultrium RMM',
+      name: 'SafeOps',
       chargePrice: 45,
       costPrice: 15,
       unit: 'client/month',

@@ -124,7 +124,7 @@ const Portfolio = () => {
                 AI-Powered Support
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Ultrium AI Helpdesk™
+                SafeDesk™
               </h2>
               <p className="text-xl text-muted-foreground">
                 Let AI handle Tier 1 support—automatically resolve routine tickets while escalating complex issues intelligently.
@@ -198,7 +198,7 @@ const Portfolio = () => {
               Get Everything in Vanguard Suite
             </h2>
             <p className="text-xl text-muted-foreground mb-2">
-              SafeScan + SafePass + RMM + AI Helpdesk + SafeWeb + Network Monitoring + AI SOC
+              SafeScan + SafePass + SafeOps + SafeDesk + SafeWeb + Network Monitoring + AI SOC
             </p>
             <p className="text-muted-foreground mb-6">
               <span className="text-primary font-semibold">Save up to 40%</span> vs. individual purchases

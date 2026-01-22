@@ -62,7 +62,7 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
   },
   rmm: {
     id: 'rmm',
-    name: 'RMM™',
+    name: 'SafeOps™',
     description: 'Endpoint monitoring, patch management, and remote access',
     price: 300, // $3/endpoint/mo
     unit: 'endpoint',
@@ -76,7 +76,7 @@ export const STANDALONE_PRODUCTS: Record<string, ProductPricing> = {
   },
   helpdesk: {
     id: 'helpdesk',
-    name: 'Ultrium AI Helpdesk™',
+    name: 'SafeDesk™',
     description: 'AI-powered service desk with autonomous ticket resolution',
     price: 2900, // $29/agent/mo
     unit: 'agent',

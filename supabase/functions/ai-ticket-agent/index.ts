@@ -207,7 +207,7 @@ async function processNewTicket(
 }
 
 async function analyzeTicket(ticketData: Record<string, unknown>, apiKey: string) {
-  const systemPrompt = `You are Ultrium AI Helpdesk, an expert IT support AI agent. You analyze support tickets and provide solutions.
+  const systemPrompt = `You are SafeDesk AI, an expert IT support AI agent. You analyze support tickets and provide solutions.
 
 IMPORTANT: You must determine if a ticket can be auto-resolved (sent directly to the user) or needs technician review.
 
@@ -441,7 +441,7 @@ async function analyzeTicketWithRouting(
     excerpt: a.excerpt
   }));
 
-  const systemPrompt = `You are Ultrium AI Helpdesk, an expert IT support AI agent with smart routing capabilities.
+  const systemPrompt = `You are SafeDesk AI, an expert IT support AI agent with smart routing capabilities.
 
 Your tasks:
 1. Analyze the ticket and provide a solution
@@ -659,7 +659,7 @@ async function sendTier1Email(
 <body>
   <div class="container">
     <div class="header">
-      <h1>🤖 Ultrium AI Helpdesk</h1>
+      <h1>🤖 SafeDesk AI</h1>
     </div>
     <div class="content">
       <p>Hi ${userName},</p>
@@ -683,7 +683,7 @@ async function sendTier1Email(
       </p>
     </div>
     <div class="footer">
-      <p>Powered by Ultrium AI Helpdesk™ | Ticket #${ticketId.slice(0, 8)}</p>
+      <p>Powered by SafeDesk™ | Ticket #${ticketId.slice(0, 8)}</p>
     </div>
   </div>
 </body>
@@ -697,7 +697,7 @@ async function sendTier1Email(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Ultrium AI Helpdesk <support@ultriumai.com>',
+        from: 'SafeDesk AI <support@ultriumai.com>',
         to: [toEmail],
         subject: `[AI Solution] ${ticketTitle}`,
         html: emailHtml,

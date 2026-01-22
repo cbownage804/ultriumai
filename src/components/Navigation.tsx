@@ -128,10 +128,10 @@ const Navigation = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Operations</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/rmm')}>
-                  RMM™ - Remote Monitoring
+                  SafeOps™ - Remote Monitoring
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/helpdesk')}>
-                  AI Helpdesk™ - IT Service Desk
+                  SafeDesk™ - IT Service Desk
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/safetrack')}>
                   SafeTrack™ - Asset Management

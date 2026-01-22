@@ -71,7 +71,7 @@ const products: ProductModule[] = [
   },
   {
     id: 'rmm',
-    name: 'RMM™',
+    name: 'SafeOps™',
     description: 'Remote monitoring and management',
     icon: Wrench,
     features: ['Remote desktop', 'Script execution', 'Device monitoring', 'Patch management'],

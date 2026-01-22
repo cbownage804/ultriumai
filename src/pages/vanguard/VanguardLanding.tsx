@@ -422,7 +422,7 @@ export default function VanguardLanding() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <ul className="space-y-3">
-                  {['Everything in Starter', 'SafeNet™ vulnerability scanning', 'Helpdesk™ ticketing', 'RMM™ remote management', 'Priority support', 'API access'].map((feature, idx) => (
+                  {['Everything in Starter', 'SafeNet™ vulnerability scanning', 'SafeDesk™ ticketing', 'SafeOps™ remote management', 'Priority support', 'API access'].map((feature, idx) => (
                     <li key={idx} className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-cyan-400 flex-shrink-0" />
                       <span className="text-sm text-white/70">{feature}</span>
