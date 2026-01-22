@@ -63,9 +63,9 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
   };
 
   const getStrengthInfo = (strength: number) => {
-    if (strength >= 80) return { color: 'bg-emerald-500', text: 'Strong', textColor: 'text-emerald-600' };
-    if (strength >= 60) return { color: 'bg-amber-500', text: 'Medium', textColor: 'text-amber-600' };
-    return { color: 'bg-red-500', text: 'Weak', textColor: 'text-red-600' };
+    if (strength >= 80) return { color: 'bg-amber-500', text: 'Verified', textColor: 'text-amber-500', badgeBg: 'bg-amber-500/10 border-amber-500/30' };
+    if (strength >= 60) return { color: 'bg-amber-400', text: 'Medium', textColor: 'text-amber-400', badgeBg: 'bg-amber-400/10 border-amber-400/30' };
+    return { color: 'bg-red-500', text: 'Weak', textColor: 'text-red-500', badgeBg: 'bg-red-500/10 border-red-500/30' };
   };
 
   const strengthInfo = getStrengthInfo(entry.password_strength);
@@ -80,7 +80,7 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <Card className="group relative overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+      <Card className="group relative overflow-hidden border border-border/50 bg-card/80 backdrop-blur-sm hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
         {/* Strength indicator bar */}
         <div className="absolute top-0 left-0 right-0 h-1">
           <div 
@@ -93,8 +93,8 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
           <div className="flex items-start gap-4">
             {/* Icon */}
             <div className="flex-shrink-0">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
-                <CategoryIcon className="w-5 h-5 text-primary" />
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 flex items-center justify-center transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`}>
+                <CategoryIcon className="w-5 h-5 text-amber-500" />
               </div>
             </div>
 
@@ -114,10 +114,10 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
                   </Button>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs bg-muted/50">
                     {entry.category}
                   </Badge>
-                  <Badge variant="outline" className={`text-xs ${strengthInfo.textColor}`}>
+                  <Badge variant="outline" className={`text-xs ${strengthInfo.textColor} ${strengthInfo.badgeBg}`}>
                     {strengthInfo.text}
                   </Badge>
                 </div>
@@ -199,7 +199,7 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
                     href={entry.website.startsWith('http') ? entry.website : `https://${entry.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary hover:underline truncate flex items-center gap-1"
+                    className="text-amber-500 hover:underline truncate flex items-center gap-1"
                   >
                     {entry.website}
                     <ExternalLink className="w-3 h-3" />
