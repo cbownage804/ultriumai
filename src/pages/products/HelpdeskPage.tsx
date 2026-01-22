@@ -10,7 +10,7 @@ import {
   ArrowRight, Check, Brain, BarChart3,
   Target
 } from 'lucide-react';
-import logoHelpdesk from '@/assets/logos/logo-helpdesk.png';
+import logoSafedesk from '@/assets/logos/logo-safedesk.png';
 
 const features = [
   {
@@ -60,7 +60,7 @@ const stats = [
 
 const pricing = [
   {
-    name: 'AI Helpdesk',
+    name: 'SafeDesk',
     price: 29,
     description: 'AI-powered helpdesk with full automation',
     features: ['Unlimited tickets', 'AI responses', 'Smart routing', 'Knowledge base', 'Email integration', 'API access'],
@@ -68,7 +68,7 @@ const pricing = [
     popular: true
   },
   {
-    name: 'Enterprise Helpdesk',
+    name: 'SafeDesk Enterprise',
     price: null,
     description: 'Full platform with custom workflows',
     features: ['Everything included', 'Custom workflows', 'SSO/SAML', 'Dedicated support', 'Unlimited agents'],
@@ -90,8 +90,8 @@ export default function HelpdeskPage() {
             <div className="flex justify-center mb-8">
               <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(6,182,212,0.3)] border border-cyan-500/20">
                 <img 
-                  src={logoHelpdesk} 
-                  alt="AI Helpdesk Logo"
+                  src={logoSafedesk} 
+                  alt="SafeDesk Logo"
                   className="h-28 w-auto"
                 />
               </div>
@@ -225,7 +225,7 @@ export default function HelpdeskPage() {
 
         {/* Vanguard Upsell */}
         <VanguardUpsell 
-          currentProduct="AI Helpdesk™" 
+          currentProduct="SafeDesk™" 
           currentProductPrice="$29/agent/mo"
           competitorComparison="47% cheaper than Zendesk, plus get full RMM in Vanguard Enterprise"
         />
