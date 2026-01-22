@@ -151,12 +151,12 @@ export default function SafeSuiteLanding() {
                         </li>
                       ))}
                     </ul>
-                    <Link to={`/products/${productKey}`} className="block mt-4">
+                    <a href={`https://ultriumai.com/products/${productKey}`} className="block mt-4">
                       <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10">
                         Learn More
                         <ArrowRight className="ml-2 h-3 w-3" />
                       </Button>
-                    </Link>
+                    </a>
                   </CardContent>
                 </Card>
               );
