@@ -117,20 +117,18 @@ export const useRMMData = () => {
         (d.memory_usage && d.memory_usage > 90)
       ).length;
 
-      // Estimate pending patches (simplified for demo)
-      const pendingPatches = Math.floor(totalDevices * 2.5); // Average 2.5 patches per device
-
+      // Real stats from device data - no mock estimates
       setStats({
         totalDevices,
         onlineDevices,
         offlineDevices,
-        alertsCount: criticalAlerts + Math.floor(totalDevices * 0.1), // 10% of devices have alerts
+        alertsCount: criticalAlerts, // Real alerts from device health only
         serversCount,
         workstationsCount,
         networkDevicesCount,
         criticalAlerts,
-        pendingPatches,
-        scriptsRunning: Math.floor(totalDevices * 0.3) // 30% of devices running scripts
+        pendingPatches: 0, // Will be populated from real patch management data
+        scriptsRunning: 0 // Will be populated from real automation data
       });
 
     } catch (error) {
