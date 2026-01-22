@@ -2,6 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge"; 
 import { Server, Activity, Download, Code, CheckCircle, AlertTriangle } from "lucide-react";
 
+interface RMMAlert {
+  id: string;
+  title: string;
+  severity: string;
+  message?: string | null;
+  created_at: string;
+}
+
 interface RMMOverviewProps {
   stats: {
     totalDevices: number;
@@ -16,9 +24,11 @@ interface RMMOverviewProps {
     scriptsRunning: number;
   };
   onTabChange?: (tab: string) => void;
+  alerts?: RMMAlert[];
 }
 
-export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
+export const RMMOverview = ({ stats, onTabChange, alerts = [] }: RMMOverviewProps) => {
+  const displayAlerts = alerts.slice(0, 3);
   return (
     <>
       {/* Stats Overview */}
@@ -156,22 +166,30 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-center gap-3 p-3 border border-red-200 dark:border-red-800 rounded-lg bg-red-50 dark:bg-red-900/20">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                <div className="flex-1">
-                  <p className="font-medium">FILE-SERVER: High CPU Usage (89%)</p>
-                  <p className="text-sm text-muted-foreground">Requires immediate attention</p>
+              {displayAlerts.length > 0 ? displayAlerts.map((alert) => (
+                <div 
+                  key={alert.id}
+                  className={`flex items-center gap-3 p-3 border rounded-lg ${
+                    alert.severity === 'critical' 
+                      ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
+                      : 'border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20'
+                  }`}
+                >
+                  <AlertTriangle className={`h-5 w-5 ${alert.severity === 'critical' ? 'text-red-600' : 'text-orange-600'}`} />
+                  <div className="flex-1">
+                    <p className="font-medium">{alert.title}</p>
+                    <p className="text-sm text-muted-foreground">{alert.message || 'No details'}</p>
+                  </div>
+                  <Badge variant={alert.severity === 'critical' ? 'destructive' : 'default'}>
+                    {alert.severity}
+                  </Badge>
                 </div>
-                <Badge variant="destructive">Critical</Badge>
-              </div>
-              <div className="flex items-center gap-3 p-3 border border-orange-200 dark:border-orange-800 rounded-lg bg-orange-50 dark:bg-orange-900/20">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
-                <div className="flex-1">
-                  <p className="font-medium">ROUTER-MAIN: Connection Timeout</p>
-                  <p className="text-sm text-muted-foreground">Network connectivity issue</p>
+              )) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  <CheckCircle className="h-8 w-8 mx-auto mb-2 text-safeops" />
+                  <p>No active alerts</p>
                 </div>
-                <Badge variant="default">High</Badge>
-              </div>
+              )}
             </div>
           </CardContent>
         </Card>
