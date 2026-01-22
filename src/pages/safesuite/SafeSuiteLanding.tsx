@@ -130,14 +130,14 @@ export default function SafeSuiteLanding() {
               };
               const color = colorMap[productKey] || 'primary';
               return (
-                <Card key={productKey} className={`relative overflow-hidden group hover:shadow-lg hover:shadow-${color}-500/10 transition-all duration-300 hover:-translate-y-1 border-${color}-500/10 hover:border-${color}-500/30`}>
+                <Card key={productKey} className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                   <CardHeader>
                     <div className="flex items-center gap-4">
-                      <div className="p-2 bg-black rounded-xl group-hover:scale-110 transition-transform">
+                      <div className="h-16 w-16 rounded-xl bg-black flex items-center justify-center overflow-hidden shadow-lg group-hover:scale-110 transition-transform">
                         <img 
                           src={product.logo} 
                           alt={product.name} 
-                          className="h-14 w-14 object-contain"
+                          className="h-full w-full object-contain p-1"
                         />
                       </div>
                       <div>
