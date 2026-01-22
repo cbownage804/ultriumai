@@ -412,20 +412,20 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6">
       {/* Guest Mode Banner */}
       {isGuestMode && (
-        <Alert className="bg-primary/10 border-primary">
-          <Info className="h-4 w-4" />
+        <Alert className="bg-red-500/10 border-red-500/30 text-red-100">
+          <Info className="h-4 w-4 text-red-500" />
           <AlertDescription className="flex items-center justify-between">
             <span>
-              <strong>Guest Mode:</strong> {GUEST_SCAN_LIMIT - guestScanCount} free scans remaining. 
+              <strong className="text-red-400">Guest Mode:</strong> {GUEST_SCAN_LIMIT - guestScanCount} free scans remaining. 
               Sign in to unlock unlimited scans, save history, and access all features.
             </span>
             <Button 
               size="sm" 
               onClick={() => navigate('/vanguard/auth')}
-              className="ml-4"
+              className="ml-4 bg-red-500 hover:bg-red-600 text-white"
             >
               Sign In
             </Button>
@@ -441,20 +441,20 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
               variant="ghost"
               size="sm"
               onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
             >
               <ArrowLeft className="h-4 w-4" />
               {isMSPContext ? "Back to MSP Dashboard" : "Back to Dashboard"}
             </Button>
           )}
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Shield className="h-8 w-8" style={{ color: brandColor }} />
-              {isWhiteLabeled ? brandName : 'Ultrium'} SafeScan
-              {isMSPContext && <Badge variant="secondary">MSP Edition</Badge>}
-              {isGuestMode && <Badge variant="outline">Demo</Badge>}
+            <h1 className="text-3xl font-bold flex items-center gap-2 text-white">
+              <Shield className="h-8 w-8 text-red-500" />
+              <span className="text-red-500">SafeScan™</span>
+              {isMSPContext && <Badge className="bg-red-500/20 text-red-400 border-red-500/30">MSP Edition</Badge>}
+              {isGuestMode && <Badge className="bg-gray-800 text-gray-300 border-gray-700">Demo</Badge>}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-gray-400">
               {isMSPContext 
                 ? "MSP security scanning for client emails, documents, and URLs" 
                 : "Comprehensive security scanning for emails, documents, and URLs"
@@ -467,6 +467,7 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             <Button 
               variant="secondary"
               onClick={() => window.open('/safescan-embed-demo', '_blank')}
+              className="bg-[#1a1a1a] border-red-500/20 text-gray-300 hover:bg-red-500/10 hover:text-red-400"
             >
               <Globe className="h-4 w-4 mr-2" />
               Widget Demo
@@ -476,13 +477,17 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             <Button 
               variant="outline"
               onClick={() => setActiveTab('deployment')}
+              className="border-red-500/30 text-red-400 hover:bg-red-500/10"
             >
               <Zap className="h-4 w-4 mr-2" />
               Client Deployment
             </Button>
           )}
           {isGuestMode && (
-            <Button onClick={() => navigate('/vanguard/auth')}>
+            <Button 
+              onClick={() => navigate('/vanguard/auth')}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
               Sign In for Full Access
             </Button>
           )}
@@ -492,28 +497,28 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
       {/* Stats Overview */}
       {isGuestMode ? (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="bg-[#141414] border-red-500/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Demo Scans</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-300">Demo Scans</CardTitle>
+              <Shield className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{guestScanCount}/{GUEST_SCAN_LIMIT}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold text-white">{guestScanCount}/{GUEST_SCAN_LIMIT}</div>
+              <p className="text-xs text-gray-500">
                 Free scans used
               </p>
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-3 bg-muted/50">
+          <Card className="md:col-span-3 bg-[#141414] border-red-500/10">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Unlock Full Features</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-300">Unlock Full Features</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-gray-400 mb-3">
                 Sign in to access unlimited scans, scan history, bulk scanning, API access, scheduled scans, and more.
               </p>
-              <Button size="sm" onClick={() => navigate('/vanguard/auth')}>
+              <Button size="sm" onClick={() => navigate('/vanguard/auth')} className="bg-red-500 hover:bg-red-600 text-white">
                 Get Started Free
               </Button>
             </CardContent>
@@ -521,53 +526,53 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="bg-[#141414] border-red-500/10 hover:border-red-500/30 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Items Scanned</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-300">Items Scanned</CardTitle>
+              <Shield className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalScans}</div>
-              <p className="text-xs text-muted-foreground">
+              <div className="text-2xl font-bold text-white">{stats.totalScans}</div>
+              <p className="text-xs text-gray-500">
                 Security checks performed
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#141414] border-red-500/10 hover:border-red-500/30 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Threats Blocked</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-300">Threats Blocked</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-500">{stats.threatsBlocked}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-500">
                 Malicious items detected
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#141414] border-red-500/10 hover:border-red-500/30 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Safe Items</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-300">Safe Items</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-500">{stats.safeItems}</div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-gray-500">
                 Verified legitimate content
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#141414] border-red-500/10 hover:border-red-500/30 transition-colors">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Risk Score</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-300">Risk Score</CardTitle>
+              <TrendingUp className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-500">{stats.riskScore}%</div>
-              <Progress value={stats.riskScore} className="mt-2" />
+              <div className="text-2xl font-bold text-red-400">{stats.riskScore}%</div>
+              <Progress value={stats.riskScore} className="mt-2 [&>div]:bg-red-500" />
             </CardContent>
           </Card>
         </div>
@@ -575,57 +580,56 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
 
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className={`grid w-full ${isGuestMode ? 'grid-cols-4' : (isMSPContext ? 'grid-cols-10' : 'grid-cols-9')}`}>
-          <TabsTrigger value="email">Email Security</TabsTrigger>
-          <TabsTrigger value="document">Document Scanning</TabsTrigger>
-          <TabsTrigger value="url">URL Analysis</TabsTrigger>
-          <TabsTrigger value="history">Scan History</TabsTrigger>
+        <TabsList className={`grid w-full bg-[#1a1a1a] border border-red-500/10 ${isGuestMode ? 'grid-cols-4' : (isMSPContext ? 'grid-cols-10' : 'grid-cols-9')}`}>
+          <TabsTrigger value="email" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Email Security</TabsTrigger>
+          <TabsTrigger value="document" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Document Scanning</TabsTrigger>
+          <TabsTrigger value="url" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">URL Analysis</TabsTrigger>
+          <TabsTrigger value="history" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Scan History</TabsTrigger>
           {!isGuestMode && (
             <>
-              <TabsTrigger value="bulk">Bulk Scanner</TabsTrigger>
-              <TabsTrigger value="api">API Access</TabsTrigger>
-              <TabsTrigger value="scheduled">Scheduling</TabsTrigger>
-              <TabsTrigger value="branding">Branding</TabsTrigger>
-              <TabsTrigger value="bookmarklet">Bookmarklet</TabsTrigger>
+              <TabsTrigger value="bulk" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Bulk Scanner</TabsTrigger>
+              <TabsTrigger value="api" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">API Access</TabsTrigger>
+              <TabsTrigger value="scheduled" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Scheduling</TabsTrigger>
+              <TabsTrigger value="branding" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Branding</TabsTrigger>
+              <TabsTrigger value="bookmarklet" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Bookmarklet</TabsTrigger>
             </>
           )}
-          {isMSPContext && !isGuestMode && <TabsTrigger value="deployment">Client Deployment</TabsTrigger>}
+          {isMSPContext && !isGuestMode && <TabsTrigger value="deployment" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 text-gray-400">Client Deployment</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="email" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="bg-[#141414] border-red-500/10">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Mail className="h-5 w-5 text-red-500" />
                   Email Security Scanner
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-400">
                   Analyze email content for phishing and threats
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" size="sm" onClick={loadSampleEmail}>
+                <Button variant="outline" size="sm" onClick={loadSampleEmail} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
                   Load Sample Phishing Email
                 </Button>
 
                 <div>
-                  <Label htmlFor="email-content">Email Content</Label>
+                  <Label htmlFor="email-content" className="text-gray-300">Email Content</Label>
                   <Textarea
                     id="email-content"
                     value={emailContent}
                     onChange={(e) => setEmailContent(e.target.value)}
                     placeholder="Paste email content here..."
                     rows={8}
-                    className="mt-1"
+                    className="mt-1 bg-[#0f0f0f] border-red-500/20 text-white placeholder:text-gray-500 focus:border-red-500/50"
                   />
                 </div>
                 
                 <Button 
                   onClick={scanEmail}
                   disabled={!emailContent.trim() || isScanning}
-                  className="w-full"
-                  variant="hero"
+                  className="w-full bg-red-500 hover:bg-red-600 text-white"
                 >
                   {isScanning ? (
                     <>
@@ -643,11 +647,11 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             </Card>
 
             {/* Beautiful Results Display */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden bg-[#141414] border-red-500/10">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Shield className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <Shield className="h-5 w-5 text-red-500" />
                   </div>
                   Scan Results
                 </CardTitle>
@@ -657,14 +661,14 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                   <div className="text-center py-16 px-6">
                     <div className="relative mb-6">
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/5 rounded-full animate-pulse" />
+                        <div className="w-24 h-24 bg-gradient-to-br from-red-500/20 to-red-500/5 rounded-full animate-pulse" />
                       </div>
-                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 w-fit mx-auto">
-                        <Shield className="h-12 w-12 text-primary" />
+                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-red-500/10 to-red-500/5 w-fit mx-auto">
+                        <Shield className="h-12 w-12 text-red-500" />
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Ready to Scan</h3>
-                    <p className="text-muted-foreground max-w-sm mx-auto">
+                    <h3 className="text-xl font-semibold mb-2 text-white">Ready to Scan</h3>
+                    <p className="text-gray-400 max-w-sm mx-auto">
                       Run a security scan to see detailed threat analysis and recommendations
                     </p>
                   </div>
@@ -813,19 +817,19 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
         {/* Similar patterns for document and url tabs... */}
         <TabsContent value="document" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="bg-[#141414] border-red-500/10">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <FileText className="h-5 w-5 text-red-500" />
                   Document Security Scanner
                 </CardTitle>
-                 <CardDescription>
+                 <CardDescription className="text-gray-400">
                    Scan documents for malware and threats. Supports 25+ file types including PDFs, Office docs, images, and archives.
                  </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="document-upload">Upload Document</Label>
+                  <Label htmlFor="document-upload" className="text-gray-300">Upload Document</Label>
                   <div className="mt-1">
                     <input
                       id="document-upload"
@@ -836,11 +840,11 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                     />
                     <label 
                       htmlFor="document-upload"
-                      className="flex items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg cursor-pointer hover:border-muted-foreground/50 transition-colors"
+                      className="flex items-center justify-center w-full h-32 border-2 border-dashed border-red-500/20 rounded-lg cursor-pointer hover:border-red-500/40 transition-colors bg-[#0f0f0f]"
                     >
                       <div className="text-center">
-                        <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
+                        <Upload className="h-8 w-8 mx-auto mb-2 text-red-500" />
+                        <p className="text-sm text-gray-400">
                           {documentFile ? documentFile.name : 'Click to upload or drag and drop'}
                         </p>
                       </div>
@@ -851,8 +855,7 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                 <Button 
                   onClick={scanDocument}
                   disabled={!documentFile || isScanning}
-                  className="w-full"
-                  variant="hero"
+                  className="w-full bg-red-500 hover:bg-red-600 text-white"
                 >
                   {isScanning ? (
                     <>
@@ -870,11 +873,11 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             </Card>
 
             {/* Beautiful Results Display */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden bg-[#141414] border-red-500/10">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Shield className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <Shield className="h-5 w-5 text-red-500" />
                   </div>
                   Scan Results
                 </CardTitle>
@@ -884,14 +887,14 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                   <div className="text-center py-16 px-6">
                     <div className="relative mb-6">
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 bg-gradient-to-br from-purple-500/20 to-purple-300/5 rounded-full animate-pulse" />
+                        <div className="w-24 h-24 bg-gradient-to-br from-red-500/20 to-red-500/5 rounded-full animate-pulse" />
                       </div>
-                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-purple-500/10 to-purple-300/5 w-fit mx-auto">
-                        <FileText className="h-12 w-12 text-purple-500" />
+                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-red-500/10 to-red-500/5 w-fit mx-auto">
+                        <FileText className="h-12 w-12 text-red-500" />
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Upload Document</h3>
-                    <p className="text-muted-foreground max-w-sm mx-auto">
+                    <h3 className="text-xl font-semibold mb-2 text-white">Upload Document</h3>
+                    <p className="text-gray-400 max-w-sm mx-auto">
                       Upload a document to scan for malware and security threats
                     </p>
                   </div>
@@ -1072,37 +1075,36 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
 
         <TabsContent value="url" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="bg-[#141414] border-red-500/10">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <Link className="h-5 w-5 text-red-500" />
                   URL Security Scanner
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-gray-400">
                   Analyze URLs for phishing and malware
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" size="sm" onClick={loadSampleUrl}>
+                <Button variant="outline" size="sm" onClick={loadSampleUrl} className="border-red-500/30 text-red-400 hover:bg-red-500/10">
                   Load Sample Malicious URL
                 </Button>
 
                 <div>
-                  <Label htmlFor="url-input">Enter URL to Scan</Label>
+                  <Label htmlFor="url-input" className="text-gray-300">Enter URL to Scan</Label>
                   <Input
                     id="url-input"
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
                     placeholder="https://example.com"
-                    className="mt-1"
+                    className="mt-1 bg-[#0f0f0f] border-red-500/20 text-white placeholder:text-gray-500 focus:border-red-500/50"
                   />
                 </div>
                 
                 <Button 
                   onClick={scanUrl}
                   disabled={!urlInput.trim() || isScanning}
-                  className="w-full"
-                  variant="hero"
+                  className="w-full bg-red-500 hover:bg-red-600 text-white"
                 >
                   {isScanning ? (
                     <>
@@ -1120,11 +1122,11 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
             </Card>
 
             {/* Beautiful Results Display */}
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden bg-[#141414] border-red-500/10">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Shield className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <Shield className="h-5 w-5 text-red-500" />
                   </div>
                   Scan Results
                 </CardTitle>
@@ -1134,14 +1136,14 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
                   <div className="text-center py-16 px-6">
                     <div className="relative mb-6">
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-24 h-24 bg-gradient-to-br from-blue-500/20 to-blue-300/5 rounded-full animate-pulse" />
+                        <div className="w-24 h-24 bg-gradient-to-br from-red-500/20 to-red-500/5 rounded-full animate-pulse" />
                       </div>
-                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-blue-500/10 to-blue-300/5 w-fit mx-auto">
-                        <Link className="h-12 w-12 text-blue-500" />
+                      <div className="relative z-10 p-4 rounded-full bg-gradient-to-br from-red-500/10 to-red-500/5 w-fit mx-auto">
+                        <Link className="h-12 w-12 text-red-500" />
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Enter URL</h3>
-                    <p className="text-muted-foreground max-w-sm mx-auto">
+                    <h3 className="text-xl font-semibold mb-2 text-white">Enter URL</h3>
+                    <p className="text-gray-400 max-w-sm mx-auto">
                       Enter a URL to analyze for phishing and malicious content
                     </p>
                   </div>
@@ -1286,35 +1288,35 @@ We detected suspicious activity. Click here to verify: https://malicious-site.co
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          <Card>
+          <Card className="bg-[#141414] border-red-500/10">
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
+              <CardTitle className="flex items-center justify-between text-white">
                 <span>Recent Scans</span>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground font-normal">
+                <div className="flex items-center gap-2 text-xs text-gray-500 font-normal">
                   <Info className="h-3 w-3" />
                   <span>Only 20 most recent scans kept</span>
                 </div>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-400">
                 Your recent security scan history
               </CardDescription>
             </CardHeader>
             <CardContent>
               {scanHistory.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-gray-500">
                   No scan history available
                 </div>
               ) : (
                 <div className="space-y-4">
                   {scanHistory.map((scan, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={index} className="flex items-center justify-between p-4 border border-red-500/10 rounded-lg bg-[#0f0f0f] hover:border-red-500/30 transition-colors">
                       <div className="flex items-center gap-3">
-                        {scan.type === 'email' && <Mail className="h-4 w-4" />}
-                        {scan.type === 'document' && <FileText className="h-4 w-4" />}
-                        {scan.type === 'url' && <Link className="h-4 w-4" />}
+                        {scan.type === 'email' && <Mail className="h-4 w-4 text-red-500" />}
+                        {scan.type === 'document' && <FileText className="h-4 w-4 text-red-500" />}
+                        {scan.type === 'url' && <Link className="h-4 w-4 text-red-500" />}
                         <div>
-                          <div className="font-medium">{scan.type} scan</div>
-                          <div className="text-sm text-muted-foreground">{scan.content}</div>
+                          <div className="font-medium text-white">{scan.type} scan</div>
+                          <div className="text-sm text-gray-400">{scan.content}</div>
                         </div>
                       </div>
                       <Badge variant={getRiskBadgeVariant(scan.risk_level)}>
