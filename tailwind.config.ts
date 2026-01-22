@@ -91,6 +91,24 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// SafeOps (RMM) Theme - Emerald/Green
+				safeops: {
+					DEFAULT: 'hsl(var(--safeops))',
+					foreground: 'hsl(var(--safeops-foreground))',
+					glow: 'hsl(var(--safeops-glow))',
+					soft: 'hsl(var(--safeops-soft))',
+					dark: 'hsl(var(--safeops-dark))',
+					muted: 'hsl(var(--safeops-muted))',
+				},
+				// SafeDesk (Helpdesk) Theme - Cyan/Blue
+				safedesk: {
+					DEFAULT: 'hsl(var(--safedesk))',
+					foreground: 'hsl(var(--safedesk-foreground))',
+					glow: 'hsl(var(--safedesk-glow))',
+					soft: 'hsl(var(--safedesk-soft))',
+					dark: 'hsl(var(--safedesk-dark))',
+					muted: 'hsl(var(--safedesk-muted))',
 				}
 			},
 			borderRadius: {

@@ -24,7 +24,7 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card 
-          className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50 cursor-pointer hover:shadow-xl transition-shadow duration-200"
+          className="border-0 shadow-lg bg-gradient-to-br from-safeops-soft/30 to-safeops-soft/10 dark:from-safeops-soft dark:to-safeops-soft/50 cursor-pointer hover:shadow-xl transition-shadow duration-200"
           onClick={() => {
             console.log('Total Devices card clicked - switching to monitor tab');
             onTabChange?.('monitor');
@@ -33,12 +33,12 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Devices</CardTitle>
-            <Server className="h-5 w-5 text-primary" />
+            <Server className="h-5 w-5 text-safeops" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">{stats.totalDevices}</div>
+            <div className="text-3xl font-bold text-safeops">{stats.totalDevices}</div>
             <div className="flex items-center gap-2 mt-2">
-              <div className="flex items-center gap-1 text-xs text-green-600">
+              <div className="flex items-center gap-1 text-xs text-safeops">
                 <CheckCircle className="h-3 w-3" />
                 {stats.onlineDevices} online
               </div>
@@ -50,16 +50,16 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-safeops-soft/30 to-safeops-soft/10 dark:from-safeops-soft dark:to-safeops-soft/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">System Health</CardTitle>
-            <Activity className="h-5 w-5 text-green-600" />
+            <Activity className="h-5 w-5 text-safeops" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">
-              {Math.round((stats.onlineDevices / stats.totalDevices) * 100)}%
+            <div className="text-3xl font-bold text-safeops">
+              {stats.totalDevices > 0 ? Math.round((stats.onlineDevices / stats.totalDevices) * 100) : 0}%
             </div>
-            <p className="text-xs text-green-600 mt-2">Excellent uptime</p>
+            <p className="text-xs text-safeops-muted mt-2">Excellent uptime</p>
           </CardContent>
         </Card>
 
@@ -81,16 +81,16 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
         </Card>
 
         <Card 
-          className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 cursor-pointer hover:shadow-xl transition-shadow duration-200"
+          className="border-0 shadow-lg bg-gradient-to-br from-safeops-soft/30 to-safeops-soft/10 dark:from-safeops-soft dark:to-safeops-soft/50 cursor-pointer hover:shadow-xl transition-shadow duration-200"
           onClick={() => onTabChange?.('automation')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Scripts</CardTitle>
-            <Code className="h-5 w-5 text-blue-600" />
+            <Code className="h-5 w-5 text-safeops" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{stats.scriptsRunning}</div>
-            <p className="text-xs text-blue-600 mt-2">Automation running</p>
+            <div className="text-3xl font-bold text-safeops">{stats.scriptsRunning}</div>
+            <p className="text-xs text-safeops-muted mt-2">Automation running</p>
           </CardContent>
         </Card>
       </div>
@@ -100,49 +100,49 @@ export const RMMOverview = ({ stats, onTabChange }: RMMOverviewProps) => {
         <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Server className="h-5 w-5 text-primary" />
+              <Server className="h-5 w-5 text-safeops" />
               Device Categories
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div 
-              className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors duration-200"
+              className="flex items-center justify-between p-3 bg-safeops-soft/30 dark:bg-safeops-soft rounded-lg cursor-pointer hover:bg-safeops-soft/50 dark:hover:bg-safeops-soft/80 transition-colors duration-200"
               onClick={() => onTabChange?.('servers')}
             >
               <div className="flex items-center gap-3">
-                <Server className="h-8 w-8 text-green-600" />
+                <Server className="h-8 w-8 text-safeops" />
                 <div>
                   <p className="font-medium">Servers</p>
                   <p className="text-sm text-muted-foreground">{stats.serversCount} devices</p>
                 </div>
               </div>
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className="h-5 w-5 text-safeops" />
             </div>
             <div 
-              className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200"
+              className="flex items-center justify-between p-3 bg-safeops-soft/20 dark:bg-safeops-soft/50 rounded-lg cursor-pointer hover:bg-safeops-soft/40 dark:hover:bg-safeops-soft/70 transition-colors duration-200"
               onClick={() => onTabChange?.('workstations')}
             >
               <div className="flex items-center gap-3">
-                <Server className="h-8 w-8 text-blue-600" />
+                <Server className="h-8 w-8 text-safeops-dark" />
                 <div>
                   <p className="font-medium">Workstations</p>
                   <p className="text-sm text-muted-foreground">{stats.workstationsCount} devices</p>
                 </div>
               </div>
-              <CheckCircle className="h-5 w-5 text-blue-600" />
+              <CheckCircle className="h-5 w-5 text-safeops-dark" />
             </div>
             <div 
-              className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors duration-200"
+              className="flex items-center justify-between p-3 bg-safeops-soft/10 dark:bg-safeops-soft/30 rounded-lg cursor-pointer hover:bg-safeops-soft/30 dark:hover:bg-safeops-soft/50 transition-colors duration-200"
               onClick={() => onTabChange?.('monitor')}
             >
               <div className="flex items-center gap-3">
-                <Server className="h-8 w-8 text-purple-600" />
+                <Server className="h-8 w-8 text-safeops-muted" />
                 <div>
                   <p className="font-medium">Network Devices</p>
                   <p className="text-sm text-muted-foreground">{stats.networkDevicesCount} devices</p>
                 </div>
               </div>
-              <CheckCircle className="h-5 w-5 text-purple-600" />
+              <CheckCircle className="h-5 w-5 text-safeops-muted" />
             </div>
           </CardContent>
         </Card>

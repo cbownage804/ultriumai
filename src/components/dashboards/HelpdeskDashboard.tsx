@@ -84,7 +84,7 @@ export const HelpdeskDashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'text-blue-600';
+      case 'open': return 'text-safedesk';
       case 'in-progress': return 'text-orange-600';
       case 'resolved': return 'text-green-600';
       case 'online': return 'text-green-600';
@@ -104,7 +104,7 @@ export const HelpdeskDashboard = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'open': return <Clock className="h-4 w-4 text-blue-500" />;
+      case 'open': return <Clock className="h-4 w-4 text-safedesk" />;
       case 'in-progress': return <RefreshCw className="h-4 w-4 text-orange-500" />;
       case 'resolved': return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'online': return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -114,12 +114,12 @@ export const HelpdeskDashboard = () => {
   };
 
   return (
-    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-safedesk-soft/20">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-cyan-500 to-cyan-400 bg-clip-text text-transparent">
-            <HeadphonesIcon className="h-10 w-10 text-cyan-500" />
+          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-safedesk to-safedesk-glow bg-clip-text text-transparent">
+            <HeadphonesIcon className="h-10 w-10 text-safedesk" />
             SafeDesk System
           </h1>
           <p className="text-lg text-muted-foreground mt-2">
@@ -127,11 +127,11 @@ export const HelpdeskDashboard = () => {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-cyan-500/20 hover:bg-cyan-500/5">
+          <Button variant="outline" className="border-safedesk/20 hover:bg-safedesk/5 hover:text-safedesk">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button className="bg-gradient-to-r from-cyan-500 to-cyan-600">
+          <Button className="bg-gradient-to-r from-safedesk to-safedesk-dark text-safedesk-foreground hover:opacity-90">
             <Plus className="h-4 w-4 mr-2" />
             New Ticket
           </Button>
@@ -140,14 +140,14 @@ export const HelpdeskDashboard = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-cyan-50 to-cyan-100/50 dark:from-cyan-900/20 dark:to-cyan-800/10">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-safedesk-soft/30 to-safedesk-soft/10 dark:from-safedesk-soft dark:to-safedesk-soft/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
-            <Clock className="h-5 w-5 text-cyan-600" />
+            <Clock className="h-5 w-5 text-safedesk" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-cyan-600">{stats.openTickets}</div>
-            <p className="text-xs text-cyan-600 mt-2">{stats.inProgress} in progress</p>
+            <div className="text-3xl font-bold text-safedesk">{stats.openTickets}</div>
+            <p className="text-xs text-safedesk-muted mt-2">{stats.inProgress} in progress</p>
           </CardContent>
         </Card>
 
@@ -173,14 +173,14 @@ export const HelpdeskDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-safedesk-soft/30 to-safedesk-soft/10 dark:from-safedesk-soft dark:to-safedesk-soft/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Satisfaction</CardTitle>
-            <Star className="h-5 w-5 text-blue-600" />
+            <Star className="h-5 w-5 text-safedesk" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{stats.satisfaction}</div>
-            <p className="text-xs text-blue-600 mt-2">Out of 5.0</p>
+            <div className="text-3xl font-bold text-safedesk">{stats.satisfaction}</div>
+            <p className="text-xs text-safedesk-muted mt-2">Out of 5.0</p>
           </CardContent>
         </Card>
       </div>
@@ -188,19 +188,19 @@ export const HelpdeskDashboard = () => {
       {/* Main Content Tabs */}
       <Tabs defaultValue="tickets" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 bg-muted/50">
-          <TabsTrigger value="tickets" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+          <TabsTrigger value="tickets" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
             <FileText className="h-4 w-4 mr-2" />
             Tickets
           </TabsTrigger>
-          <TabsTrigger value="agents" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+          <TabsTrigger value="agents" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
             <Users className="h-4 w-4 mr-2" />
             Agents
           </TabsTrigger>
-          <TabsTrigger value="categories" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+          <TabsTrigger value="categories" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
             <BarChart3 className="h-4 w-4 mr-2" />
             Categories
           </TabsTrigger>
-          <TabsTrigger value="settings" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+          <TabsTrigger value="settings" className="data-[state=active]:bg-safedesk data-[state=active]:text-safedesk-foreground">
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </TabsTrigger>
@@ -211,7 +211,7 @@ export const HelpdeskDashboard = () => {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
+                <FileText className="h-5 w-5 text-safedesk" />
                 Active Support Tickets
               </CardTitle>
               <CardDescription>Manage and track customer support requests</CardDescription>
@@ -220,7 +220,7 @@ export const HelpdeskDashboard = () => {
               <div className="space-y-4">
                 {tickets.length > 0 ? (
                   tickets.map((ticket) => (
-                    <div key={ticket.id} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20">
+                    <div key={ticket.id} className="p-4 border rounded-lg bg-gradient-to-r from-background to-muted/20 hover:border-safedesk/30 transition-colors">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           {getStatusIcon(ticket.status)}
@@ -260,7 +260,7 @@ export const HelpdeskDashboard = () => {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
+                <Users className="h-5 w-5 text-safedesk" />
                 Support Team
               </CardTitle>
               <CardDescription>Agent availability and performance metrics</CardDescription>
@@ -311,7 +311,7 @@ export const HelpdeskDashboard = () => {
           <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
+                <BarChart3 className="h-5 w-5 text-safedesk" />
                 Ticket Categories
               </CardTitle>
               <CardDescription>Distribution of support requests by category</CardDescription>
@@ -348,7 +348,7 @@ export const HelpdeskDashboard = () => {
             <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-primary" />
+                  <Settings className="h-5 w-5 text-safedesk" />
                   SafeDesk Configuration
                 </CardTitle>
               </CardHeader>
@@ -362,7 +362,7 @@ export const HelpdeskDashboard = () => {
                   <h4 className="font-medium mb-2">Auto-Assignment</h4>
                   <p className="text-sm text-muted-foreground">Round-robin distribution enabled</p>
                 </div>
-                <Button className="w-full">
+                <Button className="w-full bg-safedesk hover:bg-safedesk-dark text-safedesk-foreground">
                   <Settings className="h-4 w-4 mr-2" />
                   Configure Settings
                 </Button>
@@ -372,7 +372,7 @@ export const HelpdeskDashboard = () => {
             <Card className="border-0 shadow-lg bg-gradient-to-br from-card to-card/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <MessageSquare className="h-5 w-5 text-safedesk" />
                   Communication
                 </CardTitle>
               </CardHeader>
@@ -385,7 +385,7 @@ export const HelpdeskDashboard = () => {
                   <h4 className="font-medium mb-2">Chat Support</h4>
                   <p className="text-sm text-muted-foreground">Live chat integration active</p>
                 </div>
-                <Button className="w-full">
+                <Button className="w-full bg-safedesk hover:bg-safedesk-dark text-safedesk-foreground">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Manage Templates
                 </Button>

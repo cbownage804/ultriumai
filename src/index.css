@@ -183,6 +183,22 @@
     --terminal-bg: 0 0% 2%;
     --terminal-text: 162 95% 60%;
     --terminal-cursor: 162 95% 50%;
+
+    /* SafeOps Theme (Emerald/Green) - matches logo */
+    --safeops: 160 84% 39%;
+    --safeops-foreground: 0 0% 98%;
+    --safeops-glow: 160 84% 49%;
+    --safeops-soft: 160 84% 15%;
+    --safeops-dark: 160 84% 29%;
+    --safeops-muted: 160 30% 65%;
+
+    /* SafeDesk Theme (Cyan/Blue) - matches logo */
+    --safedesk: 187 85% 53%;
+    --safedesk-foreground: 0 0% 98%;
+    --safedesk-glow: 187 85% 63%;
+    --safedesk-soft: 187 85% 15%;
+    --safedesk-dark: 187 85% 43%;
+    --safedesk-muted: 187 30% 65%;
   }
 }
 
