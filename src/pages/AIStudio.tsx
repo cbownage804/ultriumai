@@ -178,8 +178,8 @@ const AIStudio = () => {
             <div className="space-y-6">
               {/* Logo */}
               <div className="flex justify-center">
-                <div className="px-8 py-5 bg-black rounded-3xl shadow-2xl shadow-primary/30 animate-fade-in">
-                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-24 w-auto object-contain" />
+                <div className="px-6 py-4 bg-black rounded-2xl shadow-2xl shadow-primary/30 animate-fade-in">
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-20 w-auto object-contain" />
                 </div>
               </div>
               
