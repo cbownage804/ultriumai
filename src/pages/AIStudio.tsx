@@ -176,11 +176,6 @@ const AIStudio = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             <div className="space-y-6">
-              <Badge variant="secondary" className="mb-4">
-                <Brain className="h-4 w-4 mr-2" />
-                AI Studio™
-              </Badge>
-              
               {/* Logo */}
               <div className="flex justify-center">
                 <div className="p-6 bg-black rounded-3xl shadow-2xl shadow-primary/30 animate-fade-in">
