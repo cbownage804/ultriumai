@@ -271,7 +271,7 @@ export function AppSidebar() {
                     size="sm" 
                     variant="outline" 
                     className="w-full text-xs"
-                    onClick={() => window.open('https://vanguard.ultriumai.com', '_blank')}
+                    onClick={() => window.location.href = 'https://vanguard.ultriumai.com'}
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />
                     Open Vanguard

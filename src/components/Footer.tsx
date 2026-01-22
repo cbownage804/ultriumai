@@ -59,7 +59,7 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')} 
+                  onClick={() => window.location.href = 'https://vanguard.ultriumai.com'} 
                   className="text-sm text-muted-foreground hover:text-destructive flex items-center gap-2"
                 >
                   <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />

@@ -99,7 +99,7 @@ const Index = () => {
                 variant="outline" 
                 size="lg" 
                 className="text-lg px-10 py-10 h-auto bg-black border-2 border-muted-foreground/30 hover:bg-black/80 hover:border-destructive/50 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-4"
-                onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
+                onClick={() => window.location.href = 'https://vanguard.ultriumai.com'}
               >
                 <div className="h-28 w-28 rounded-2xl bg-black p-2 flex items-center justify-center overflow-hidden">
                   <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
@@ -110,7 +110,7 @@ const Index = () => {
                 variant="outline" 
                 size="lg" 
                 className="text-lg px-10 py-10 h-auto bg-black border-2 border-emerald-500/50 hover:bg-black/80 hover:border-emerald-500 transition-all duration-300 hover:scale-105 flex flex-col items-center gap-4"
-                onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
+                onClick={() => window.location.href = 'https://safesuite.ultriumai.com'}
               >
                 <div className="h-28 w-28 rounded-2xl bg-black p-2 flex items-center justify-center overflow-hidden">
                   <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-125" />

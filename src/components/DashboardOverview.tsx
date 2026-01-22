@@ -307,7 +307,7 @@ export const DashboardOverview = () => {
             </ul>
             <Button 
               className="w-full mt-4"
-              onClick={() => window.open('https://vanguard.ultriumai.com', '_blank')}
+              onClick={() => window.location.href = 'https://vanguard.ultriumai.com'}
             >
               <ExternalLink className="h-4 w-4 mr-2" />
               Explore Vanguard

@@ -254,11 +254,9 @@ const Pricing = () => {
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Link>
                     </Button>
-                    <Button variant="outline" className="w-full" asChild>
-                      <a href="https://vanguard.ultriumai.com" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full" onClick={() => window.location.href = 'https://vanguard.ultriumai.com'}>
                         Explore Vanguard
                         <ArrowRight className="w-4 h-4 ml-2" />
-                      </a>
                     </Button>
                   </div>
                 </div>
