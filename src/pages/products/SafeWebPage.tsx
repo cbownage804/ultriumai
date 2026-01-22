@@ -25,34 +25,20 @@ const SafeWebPage = () => {
 
   const pricingTiers = [
     {
-      name: 'SafeWeb Starter',
+      name: 'SafeWeb',
       price: '$3',
       duration: '/user/mo',
       icon: Star,
       features: [
-        'Basic credential monitoring',
-        'Weekly reports',
-        'Email alerts',
-        'Standard support'
-      ],
-      popular: false,
-      cta: 'Start Free Trial'
-    },
-    {
-      name: 'SafeWeb Pro',
-      price: '$5',
-      duration: '/user/mo',
-      icon: Zap,
-      features: [
-        'Everything in Starter',
+        'Credential monitoring',
         'Real-time alerts',
         'Brand protection',
         'API access',
-        'Priority support',
-        'Custom reports'
+        'Custom reports',
+        'Priority support'
       ],
       popular: true,
-      cta: 'Start Pro Trial'
+      cta: 'Start Free Trial'
     },
     {
       name: 'SafeWeb Enterprise',
@@ -60,7 +46,7 @@ const SafeWebPage = () => {
       duration: 'Contact sales',
       icon: Users,
       features: [
-        'Everything in Pro',
+        'Everything included',
         'Executive protection',
         'Threat intelligence feeds',
         'White-label customization',

@@ -25,35 +25,21 @@ const SafePassPage = () => {
 
   const pricingTiers = [
     {
-      name: 'SafePass Starter',
+      name: 'SafePass',
       price: '$4',
       duration: '/user/mo',
       icon: Star,
       features: [
         'Personal password vault',
         'Password generator',
-        'Basic security reports',
-        'Browser extensions',
-        'Email support'
-      ],
-      popular: false,
-      cta: 'Start Free Trial'
-    },
-    {
-      name: 'SafePass Pro',
-      price: '$6',
-      duration: '/user/mo',
-      icon: Zap,
-      features: [
-        'Everything in Starter',
         'Team password sharing',
         'Advanced breach monitoring',
         'MFA enforcement',
-        'API access',
+        'Browser extensions',
         'Priority support'
       ],
       popular: true,
-      cta: 'Start Pro Trial'
+      cta: 'Start Free Trial'
     },
     {
       name: 'SafePass Enterprise',
@@ -61,7 +47,7 @@ const SafePassPage = () => {
       duration: 'Contact sales',
       icon: Users,
       features: [
-        'Everything in Pro',
+        'Everything included',
         'Advanced compliance reporting',
         'White-label customization',
         'SSO & SAML integration',

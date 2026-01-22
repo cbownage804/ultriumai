@@ -107,17 +107,10 @@ const comparisonTable = [
 
 const pricing = [
   {
-    name: 'SafeTrack Starter',
+    name: 'SafeTrack',
     price: 2,
-    description: 'Essential asset tracking for small teams',
-    features: ['Up to 500 assets', 'QR code generation', 'Basic reporting', 'Mobile app access', 'Email support'],
-    cta: 'Start Free Trial'
-  },
-  {
-    name: 'SafeTrack Pro',
-    price: 3,
-    description: 'Full lifecycle management',
-    features: ['Unlimited assets', 'Depreciation tracking', 'Maintenance scheduling', 'API access', 'Custom fields', 'Priority support'],
+    description: 'Full lifecycle asset management',
+    features: ['Unlimited assets', 'QR code generation', 'Depreciation tracking', 'Maintenance scheduling', 'API access', 'Custom fields', 'Priority support'],
     cta: 'Start Free Trial',
     popular: true
   },
@@ -125,7 +118,7 @@ const pricing = [
     name: 'SafeTrack Enterprise',
     price: null,
     description: 'Multi-location with integrations',
-    features: ['Everything in Pro', 'Multi-tenant/MSP', 'RMM & Helpdesk sync', 'SSO/SAML', 'Custom integrations', 'Dedicated success manager'],
+    features: ['Everything included', 'Multi-tenant/MSP', 'RMM & Helpdesk sync', 'SSO/SAML', 'Custom integrations', 'Dedicated success manager'],
     cta: 'Contact Sales'
   }
 ];
