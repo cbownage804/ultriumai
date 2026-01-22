@@ -38,7 +38,7 @@ const Navigation = () => {
   };
 
   const handleExternalLink = (url: string) => {
-    safeWindowOpen(url, '_blank');
+    window.location.href = url;
     setIsMenuOpen(false);
   };
 
