@@ -4,7 +4,7 @@ import { SafeScanApp } from "@/components/apps/SafeScanApp";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { VanguardUpsell } from "@/components/products/VanguardUpsell";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Shield, Check, Star, Zap, Users, ArrowRight, Play, 
@@ -129,41 +129,7 @@ const SafeScanPage = () => {
     { label: 'Organizations', value: '10K+', description: 'Protected' },
   ];
 
-  const pricingTiers = [
-    {
-      name: 'SafeScan',
-      price: '$99',
-      duration: '/month flat',
-      icon: Star,
-      features: [
-        'Unlimited email scans',
-        'Document & URL scanning',
-        'AI threat detection',
-        'Real-time alerts',
-        'API access',
-        'Webhook integrations',
-        'Priority support',
-      ],
-      popular: true,
-      cta: 'Start Free Trial',
-    },
-    {
-      name: 'SafeScan Enterprise',
-      price: 'Custom',
-      duration: 'Contact sales',
-      icon: Users,
-      features: [
-        'Everything included',
-        'Unlimited API calls',
-        'White-label deployment',
-        'On-premise option',
-        'SSO & SAML',
-        'Dedicated account manager',
-      ],
-      popular: false,
-      cta: 'Contact Sales',
-    },
-  ];
+  // SafeScan is available only through SafeSuite tiers or Vanguard for business
 
   const comparisonTable = [
     { feature: 'Email Threat Scanning', safescan: true, proofpoint: true, mimecast: true },
@@ -171,9 +137,9 @@ const SafeScanPage = () => {
     { feature: 'URL Reputation', safescan: true, proofpoint: true, mimecast: true },
     { feature: 'AI-Powered Detection', safescan: true, proofpoint: true, mimecast: false },
     { feature: 'Real-time API Access', safescan: true, proofpoint: false, mimecast: false },
-    { feature: 'White-Label Option', safescan: true, proofpoint: false, mimecast: false },
+    { feature: 'Bundled Suite', safescan: true, proofpoint: false, mimecast: false },
     { feature: 'No Per-User Pricing', safescan: true, proofpoint: false, mimecast: false },
-    { feature: 'Starting Price', safescan: '$99/mo', proofpoint: '$6/user/mo', mimecast: '$4/user/mo' },
+    { feature: 'Access Via', safescan: 'SafeSuite/Vanguard', proofpoint: 'Standalone only', mimecast: 'Standalone only' },
   ];
 
   if (showFullApp) {
@@ -434,68 +400,102 @@ const SafeScanPage = () => {
           </div>
         </section>
 
-        {/* Vanguard Upsell */}
-        <VanguardUpsell 
-          currentProduct="SafeScan™" 
-          currentProductPrice="$99/mo"
-          competitorComparison="Save 40%+ vs. Proofpoint or Mimecast when bundled in Vanguard"
-        />
-
-        {/* Pricing Section */}
+        {/* Available Through Section */}
         <section className="py-20 bg-muted/30">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold mb-4">Standalone SafeScan Pricing</h2>
+              <h2 className="text-3xl font-bold mb-4">Get SafeScan</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Flat monthly pricing. No per-user fees. Unlimited scans.
+                SafeScan is included in SafeSuite for personal/SMB use, or Vanguard for MSP/Enterprise
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {pricingTiers.map((tier, index) => {
-                const Icon = tier.icon;
-                return (
-                  <Card 
-                    key={index} 
-                    className={`relative ${tier.popular ? 'border-red-500 border-2 shadow-lg' : ''} hover:shadow-lg transition-all duration-300`}
-                  >
-                    {tier.popular && (
-                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                        <Badge className="bg-red-500">Most Popular</Badge>
-                      </div>
-                    )}
-                    <CardHeader className="text-center">
-                      <div className="mx-auto mb-4 w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
-                        <Icon className="h-6 w-6 text-red-500" />
-                      </div>
-                      <CardTitle className="text-xl">{tier.name}</CardTitle>
-                      <div className="text-3xl font-bold text-primary">
-                        {tier.price}
-                        <span className="text-sm font-normal text-muted-foreground">{tier.duration}</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-3 mb-6">
-                        {tier.features.map((feature, featureIndex) => (
-                          <li key={featureIndex} className="flex items-center gap-2 text-sm">
-                            <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <Link to={tier.cta === 'Contact Sales' ? '/contact' : '/vanguard/auth'}>
-                        <Button 
-                          className={`w-full ${tier.popular ? 'bg-red-500 hover:bg-red-600' : ''}`}
-                          variant={tier.popular ? "default" : "outline"}
-                        >
-                          {tier.cta}
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* SafeSuite Option */}
+              <Card className="relative border-red-500/30 hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-500">Personal & SMB</Badge>
+                  <div className="mx-auto mb-4 w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center">
+                    <Shield className="h-8 w-8 text-emerald-500" />
+                  </div>
+                  <CardTitle className="text-2xl">SafeSuite</CardTitle>
+                  <p className="text-base text-muted-foreground">
+                    Complete security suite for individuals and small businesses
+                  </p>
+                  <div className="text-3xl font-bold text-primary mt-4">
+                    Free - $15<span className="text-sm font-normal text-muted-foreground">/user/mo</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeScan included in Pro & Business tiers</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafePass password manager</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeWeb dark web monitoring</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                      <span>SafeTrack asset management (Business)</span>
+                    </li>
+                  </ul>
+                  <Link to="/safesuite">
+                    <Button className="w-full bg-emerald-500 hover:bg-emerald-600">
+                      View SafeSuite Plans
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Vanguard Option */}
+              <Card className="relative border-cyan-500/30 hover:shadow-lg hover:shadow-cyan-500/10 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-cyan-500">MSP & Enterprise</Badge>
+                  <div className="mx-auto mb-4 w-16 h-16 bg-cyan-500/10 rounded-full flex items-center justify-center">
+                    <Users className="h-8 w-8 text-cyan-500" />
+                  </div>
+                  <CardTitle className="text-2xl">Vanguard Suite</CardTitle>
+                  <p className="text-base text-muted-foreground">
+                    Full IT operations platform for managed service providers
+                  </p>
+                  <div className="text-3xl font-bold text-primary mt-4">
+                    Custom<span className="text-sm font-normal text-muted-foreground"> pricing</span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>SafeScan with unlimited API access</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>RMM & endpoint management</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>AI-powered helpdesk</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-cyan-500 flex-shrink-0" />
+                      <span>Multi-tenant client management</span>
+                    </li>
+                  </ul>
+                  <Link to="/vanguard">
+                    <Button className="w-full bg-cyan-500 hover:bg-cyan-600">
+                      Explore Vanguard
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
