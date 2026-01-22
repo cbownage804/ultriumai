@@ -10,7 +10,7 @@ import {
   ArrowRight, Check, Brain, BarChart3,
   Target
 } from 'lucide-react';
-import heroAi from '@/assets/hero-ai.jpg';
+import logoHelpdesk from '@/assets/logos/logo-helpdesk.png';
 
 const features = [
   {
@@ -82,52 +82,54 @@ export default function HelpdeskPage() {
       <Navigation />
       
       <main className="pt-20">
-        {/* Hero */}
-        <section className="relative overflow-hidden border-b">
-          <div className="absolute inset-0">
-            <img 
-              src={heroAi} 
-              alt="AI neural network"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
-            <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
+        {/* Hero with Logo */}
+        <section className="relative overflow-hidden border-b bg-[#000000]">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-blue-500/10" />
+          <div className="max-w-7xl mx-auto px-4 py-16 relative z-10">
+            {/* Logo Display */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(6,182,212,0.3)] border border-cyan-500/20">
+                <img 
+                  src={logoHelpdesk} 
+                  alt="AI Helpdesk Logo"
+                  className="h-28 w-auto"
+                />
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <Badge className="mb-4 bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+                <MessageSquare className="h-3 w-3 mr-1" />
+                AI-Powered Support
+              </Badge>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+                Intelligent ticketing with AI-powered responses, smart routing, and automated resolution. 
+                Resolve 35% of tickets automatically.
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Link to="/vanguard/auth">
+                  <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600">
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/contact">
+                  <Button size="lg" variant="outline" className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10">
+                    Schedule Demo
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
-        <div className="max-w-7xl mx-auto px-4 py-20 relative z-10">
-          <Badge className="mb-4 bg-purple-500/10 text-purple-500 border-purple-500/20">
-            <MessageSquare className="h-3 w-3 mr-1" />
-            AI Helpdesk
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl">
-            AI-Powered IT Service Desk
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mb-8">
-            Intelligent ticketing with AI-powered responses, smart routing, and automated resolution. 
-            Resolve 35% of tickets automatically.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link to="/vanguard/auth">
-              <Button size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/contact">
-              <Button size="lg" variant="outline">
-                Schedule Demo
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
 
       {/* Stats */}
       <section className="py-12 border-b bg-muted/30">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
-              <div key={i} className="text-center">
-                <stat.icon className="h-8 w-8 mx-auto mb-2 text-purple-500" />
+            <div key={i} className="text-center">
+                <stat.icon className="h-8 w-8 mx-auto mb-2 text-cyan-500" />
                 <div className="text-3xl font-bold">{stat.value}</div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
               </div>
