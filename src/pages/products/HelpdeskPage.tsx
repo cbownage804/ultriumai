@@ -151,8 +151,8 @@ export default function HelpdeskPage() {
             {features.map((feature, i) => (
               <Card key={i} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center mb-4">
-                    <feature.icon className="h-6 w-6 text-purple-500" />
+                  <div className="w-12 h-12 rounded-lg bg-cyan-500/10 flex items-center justify-center mb-4">
+                    <feature.icon className="h-6 w-6 text-cyan-500" />
                   </div>
                   <CardTitle>{feature.title}</CardTitle>
                   <CardDescription>{feature.description}</CardDescription>
@@ -161,7 +161,7 @@ export default function HelpdeskPage() {
                   <ul className="space-y-2">
                     {feature.capabilities.map((cap, j) => (
                       <li key={j} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4 text-cyan-500" />
                         {cap}
                       </li>
                     ))}
@@ -182,10 +182,10 @@ export default function HelpdeskPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {pricing.map((plan, i) => (
-              <Card key={i} className={`relative ${plan.popular ? 'border-purple-500 shadow-lg' : ''}`}>
+              <Card key={i} className={`relative ${plan.popular ? 'border-cyan-500 shadow-lg' : ''}`}>
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-purple-500">Most Popular</Badge>
+                    <Badge className="bg-cyan-500">Most Popular</Badge>
                   </div>
                 )}
                 <CardHeader>
@@ -206,13 +206,13 @@ export default function HelpdeskPage() {
                   <ul className="space-y-2">
                     {plan.features.map((feature, j) => (
                       <li key={j} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-500" />
+                        <Check className="h-4 w-4 text-cyan-500" />
                         {feature}
                       </li>
                     ))}
                   </ul>
                   <Link to={plan.price ? '/vanguard/auth' : '/contact'} className="block">
-                    <Button className={`w-full ${plan.popular ? 'bg-purple-500 hover:bg-purple-600' : ''}`}>
+                    <Button className={`w-full ${plan.popular ? 'bg-cyan-500 hover:bg-cyan-600' : ''}`}>
                       {plan.cta}
                     </Button>
                   </Link>
@@ -239,7 +239,7 @@ export default function HelpdeskPage() {
           </p>
           <div className="flex justify-center gap-4">
             <Link to="/vanguard/auth">
-              <Button size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500">
+              <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-500">
                 Start Free Trial
               </Button>
             </Link>
