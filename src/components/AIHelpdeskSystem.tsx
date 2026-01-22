@@ -197,46 +197,46 @@ export const AIHelpdeskSystem = () => {
     <div className="space-y-6">
       {/* AI Helpdesk Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="border-safedesk/20 bg-gradient-to-br from-safedesk-soft/30 to-safedesk-soft/10 dark:from-safedesk-soft dark:to-safedesk-soft/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">AI Resolved Tickets</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CheckCircle className="h-4 w-4 text-safedesk" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.aiResolved}</div>
+            <div className="text-2xl font-bold text-safedesk">{stats.aiResolved}</div>
             <p className="text-xs text-muted-foreground">Automatically resolved</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-safedesk/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg Resolution Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Clock className="h-4 w-4 text-safedesk" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.avgResolutionTime}m</div>
+            <div className="text-2xl font-bold text-safedesk">{stats.avgResolutionTime}m</div>
             <p className="text-xs text-muted-foreground">AI-assisted resolution</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-safedesk/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">AI Confidence</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
+            <Brain className="h-4 w-4 text-safedesk" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.aiConfidence}%</div>
+            <div className="text-2xl font-bold text-safedesk">{stats.aiConfidence}%</div>
             <p className="text-xs text-muted-foreground">Solution accuracy</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-safedesk/20 bg-gradient-to-br from-safedesk-soft/30 to-safedesk-soft/10 dark:from-safedesk-soft dark:to-safedesk-soft/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Co-Managed</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-safedesk" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.coManaged}</div>
+            <div className="text-2xl font-bold text-safedesk">{stats.coManaged}</div>
             <p className="text-xs text-muted-foreground">Human + AI support</p>
           </CardContent>
         </Card>

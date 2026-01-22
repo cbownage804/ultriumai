@@ -76,7 +76,7 @@ export const RealTimeMonitor = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'online': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'online': return <CheckCircle className="h-4 w-4 text-safeops" />;
       case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       case 'critical': return <AlertTriangle className="h-4 w-4 text-red-500" />;
       default: return <WifiOff className="h-4 w-4 text-gray-500" />;
@@ -93,7 +93,7 @@ export const RealTimeMonitor = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'online': return 'bg-green-500';
+      case 'online': return 'bg-safeops';
       case 'warning': return 'bg-yellow-500';  
       case 'critical': return 'bg-red-500';
       default: return 'bg-gray-500';
@@ -114,10 +114,10 @@ export const RealTimeMonitor = () => {
 
   if (loading) {
     return (
-      <Card>
+      <Card className="border-safeops/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 animate-pulse" />
+            <Activity className="h-5 w-5 animate-pulse text-safeops" />
             Real-Time Device Monitor
           </CardTitle>
         </CardHeader>
@@ -137,19 +137,19 @@ export const RealTimeMonitor = () => {
     <div className="space-y-6">
       {/* Status Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="border-safeops/20 bg-gradient-to-br from-safeops-soft/30 to-safeops-soft/10 dark:from-safeops-soft dark:to-safeops-soft/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Online</p>
-                <p className="text-2xl font-bold text-green-600">{onlineDevices}</p>
+                <p className="text-2xl font-bold text-safeops">{onlineDevices}</p>
               </div>
-              <Wifi className="h-8 w-8 text-green-500" />
+              <Wifi className="h-8 w-8 text-safeops" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="border-yellow-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -161,7 +161,7 @@ export const RealTimeMonitor = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-red-500/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -187,19 +187,19 @@ export const RealTimeMonitor = () => {
       </div>
 
       {/* Device List */}
-      <Card>
+      <Card className="border-safeops/20">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
+                <Activity className="h-5 w-5 text-safeops" />
                 Live Device Status
               </CardTitle>
               <CardDescription>
                 Real-time monitoring of all managed devices
               </CardDescription>
             </div>
-            <Button variant="outline" onClick={loadDevices} disabled={loading}>
+            <Button variant="outline" onClick={loadDevices} disabled={loading} className="border-safeops/20 hover:bg-safeops/5 hover:text-safeops">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
@@ -210,7 +210,7 @@ export const RealTimeMonitor = () => {
             {devices.map((device) => (
               <div 
                 key={device.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-safeops/5 hover:border-safeops/30 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="relative">
@@ -220,7 +220,7 @@ export const RealTimeMonitor = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{device.hostname}</span>
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs border-safeops/30 text-safeops">
                         {device.device_type}
                       </Badge>
                     </div>
@@ -267,8 +267,8 @@ export const RealTimeMonitor = () => {
 
             {devices.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
-                <Monitor className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No devices found. Deploy RMM agents to start monitoring.</p>
+                <Monitor className="h-12 w-12 mx-auto mb-4 opacity-50 text-safeops" />
+                <p>No devices found. Deploy SafeOps agents to start monitoring.</p>
               </div>
             )}
           </div>

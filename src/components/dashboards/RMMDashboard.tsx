@@ -89,11 +89,11 @@ export const RMMDashboard = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-safeops-soft/20">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading RMM data...</p>
+            <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin text-safeops" />
+            <p className="text-muted-foreground">Loading SafeOps data...</p>
           </div>
         </div>
       </div>
@@ -101,12 +101,12 @@ export const RMMDashboard = () => {
   }
 
   return (
-    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="space-y-6 p-6 bg-gradient-to-br from-background via-background to-safeops-soft/20">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-emerald-500 to-green-400 bg-clip-text text-transparent">
-            <Server className="h-10 w-10 text-emerald-500" />
+          <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-safeops to-safeops-glow bg-clip-text text-transparent">
+            <Server className="h-10 w-10 text-safeops" />
             SafeOps RMM
           </h1>
           <div className="text-lg text-muted-foreground mt-2">
@@ -114,20 +114,20 @@ export const RMMDashboard = () => {
           </div>
           <div className="text-sm text-muted-foreground mt-1">
             {stats.totalDevices > 0 ? (
-              <span className="text-emerald-500">Connected to live database • {stats.totalDevices} devices monitored</span>
+              <span className="text-safeops">Connected to live database • {stats.totalDevices} devices monitored</span>
             ) : (
               <span className="text-muted-foreground">No devices found - Add devices to get started</span>
             )}
           </div>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="border-emerald-500/20 hover:bg-emerald-500/5">
+          <Button variant="outline" className="border-safeops/20 hover:bg-safeops/5 hover:text-safeops">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh All
           </Button>
           <Button 
             variant="outline" 
-            className="border-emerald-500/20 hover:bg-emerald-500/5"
+            className="border-safeops/20 hover:bg-safeops/5 hover:text-safeops"
             onClick={() => {
               console.log('Starting RMM Agent download...');
               
@@ -150,39 +150,39 @@ export const RMMDashboard = () => {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-9 bg-muted/50 text-xs overflow-x-auto">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <BarChart3 className="h-3 w-3 mr-1" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="monitor" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="monitor" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <BarChart3 className="h-3 w-3 mr-1" />
             Monitor
           </TabsTrigger>
-          <TabsTrigger value="alerts" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="alerts" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <Shield className="h-3 w-3 mr-1" />
             Alerts
           </TabsTrigger>
-          <TabsTrigger value="remote" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="remote" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <Monitor className="h-3 w-3 mr-1" />
             Remote
           </TabsTrigger>
-          <TabsTrigger value="servers" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="servers" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <Server className="h-3 w-3 mr-1" />
             Servers
           </TabsTrigger>
-          <TabsTrigger value="workstations" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="workstations" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <Monitor className="h-3 w-3 mr-1" />
             Stations
           </TabsTrigger>
-          <TabsTrigger value="patching" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="patching" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <Download className="h-3 w-3 mr-1" />
             Patches
           </TabsTrigger>
-          <TabsTrigger value="policies" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="policies" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <Shield className="h-3 w-3 mr-1" />
             Policies
           </TabsTrigger>
-          <TabsTrigger value="automation" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+          <TabsTrigger value="automation" className="data-[state=active]:bg-safeops data-[state=active]:text-safeops-foreground">
             <Zap className="h-3 w-3 mr-1" />
             Scripts
           </TabsTrigger>

@@ -41,7 +41,7 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
   const isTier1 = confidenceScore >= 85;
 
   const getConfidenceColor = (score: number) => {
-    if (score >= 85) return 'text-green-500 bg-green-500/10';
+    if (score >= 85) return 'text-safedesk bg-safedesk/10';
     if (score >= 60) return 'text-yellow-500 bg-yellow-500/10';
     return 'text-red-500 bg-red-500/10';
   };
@@ -106,7 +106,7 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
 
       toast({
         title: 'Ticket Processed',
-        description: 'AI has analyzed the ticket',
+        description: 'SafeDesk AI has analyzed the ticket',
       });
 
       onActionComplete?.();
@@ -126,11 +126,11 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
   // Show processing state
   if (ticket.ai_processing_status === 'processing') {
     return (
-      <Card className="border-blue-500/30 bg-blue-500/5">
+      <Card className="border-safedesk/30 bg-safedesk/5">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-            <span className="text-blue-500 font-medium">AI is analyzing this ticket...</span>
+            <Loader2 className="h-5 w-5 animate-spin text-safedesk" />
+            <span className="text-safedesk font-medium">SafeDesk AI is analyzing this ticket...</span>
           </div>
         </CardContent>
       </Card>
@@ -140,18 +140,18 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
   // Show trigger button if not yet processed
   if (!ticket.ai_suggested_solution && ticket.ai_processing_status !== 'completed') {
     return (
-      <Card className="border-dashed border-2">
+      <Card className="border-dashed border-2 border-safedesk/30">
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <Bot className="h-12 w-12 mx-auto text-muted-foreground" />
-            <p className="text-muted-foreground">AI hasn't analyzed this ticket yet</p>
-            <Button onClick={handleProcessTicket} disabled={isLoading}>
+            <Bot className="h-12 w-12 mx-auto text-safedesk/50" />
+            <p className="text-muted-foreground">SafeDesk AI hasn't analyzed this ticket yet</p>
+            <Button onClick={handleProcessTicket} disabled={isLoading} className="bg-safedesk hover:bg-safedesk-dark text-safedesk-foreground">
               {isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Brain className="mr-2 h-4 w-4" />
               )}
-              Analyze with AI
+              Analyze with SafeDesk AI
             </Button>
           </div>
         </CardContent>
@@ -162,14 +162,14 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
   // Show auto-responded state
   if (ticket.ai_auto_responded && ticket.status === 'pending_confirmation') {
     return (
-      <Card className="border-green-500/30 bg-green-500/5">
+      <Card className="border-safedesk/30 bg-safedesk/5">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Bot className="h-5 w-5 text-green-500" />
-              AI Auto-Responded (Tier 1)
+              <Bot className="h-5 w-5 text-safedesk" />
+              SafeDesk AI Auto-Responded (Tier 1)
             </CardTitle>
-            <Badge variant="outline" className="text-green-500 border-green-500/30">
+            <Badge variant="outline" className="text-safedesk border-safedesk/30">
               <Clock className="h-3 w-3 mr-1" />
               Awaiting User Confirmation
             </Badge>
@@ -177,11 +177,11 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            AI sent a solution directly to the user with {confidenceScore}% confidence.
+            SafeDesk AI sent a solution directly to the user with {confidenceScore}% confidence.
             Waiting for user to confirm if the issue is resolved.
           </p>
           
-          <div className="bg-background rounded-lg p-4 border">
+          <div className="bg-background rounded-lg p-4 border border-safedesk/20">
             <p className="text-sm font-medium mb-2">Solution Sent:</p>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">
               {ticket.ai_suggested_solution}
@@ -191,7 +191,7 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
           {ticket.user_feedback && (
             <div className="flex items-center gap-2">
               {ticket.user_feedback === 'resolved' ? (
-                <Badge className="bg-green-500">
+                <Badge className="bg-safedesk">
                   <ThumbsUp className="h-3 w-3 mr-1" />
                   User Confirmed Resolved
                 </Badge>
@@ -210,14 +210,14 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
 
   // Show tech review UI (Tier 2)
   return (
-    <Card className="border-primary/30">
+    <Card className="border-safedesk/30">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Bot className="h-5 w-5 text-primary" />
-            AI Suggestion
+            <Bot className="h-5 w-5 text-safedesk" />
+            SafeDesk AI Suggestion
             {isTier1 ? (
-              <Badge className="bg-green-500 ml-2">Tier 1 Eligible</Badge>
+              <Badge className="bg-safedesk ml-2">Tier 1 Eligible</Badge>
             ) : (
               <Badge variant="secondary" className="ml-2">Tier 2 - Review Required</Badge>
             )}
@@ -247,11 +247,11 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
             <Textarea
               value={editedSolution}
               onChange={(e) => setEditedSolution(e.target.value)}
-              className="min-h-[200px]"
+              className="min-h-[200px] border-safedesk/30 focus:border-safedesk"
               placeholder="Edit the AI solution..."
             />
           ) : (
-            <div className="bg-muted/50 rounded-lg p-4 text-sm whitespace-pre-wrap">
+            <div className="bg-safedesk-soft/20 rounded-lg p-4 text-sm whitespace-pre-wrap border border-safedesk/10">
               {ticket.ai_suggested_solution}
             </div>
           )}
@@ -264,7 +264,7 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
             <div className="text-sm">
               <p className="font-medium text-yellow-600">Low Confidence Score</p>
               <p className="text-muted-foreground">
-                AI is uncertain about this solution. Please review carefully before sending.
+                SafeDesk AI is uncertain about this solution. Please review carefully before sending.
               </p>
             </div>
           </div>
@@ -277,6 +277,7 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
               <Button
                 onClick={() => handleTechAction('edit')}
                 disabled={isLoading}
+                className="bg-safedesk hover:bg-safedesk-dark text-safedesk-foreground"
               >
                 {isLoading && actionType === 'edit' ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -300,7 +301,7 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
               <Button
                 onClick={() => handleTechAction('accept')}
                 disabled={isLoading}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-safedesk hover:bg-safedesk-dark text-safedesk-foreground"
               >
                 {isLoading && actionType === 'accept' ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -312,6 +313,7 @@ const AITicketReview = ({ ticket, onActionComplete }: AITicketReviewProps) => {
               <Button
                 variant="outline"
                 onClick={() => setIsEditing(true)}
+                className="border-safedesk/30 hover:bg-safedesk/5"
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
