@@ -50,9 +50,9 @@ export function SafePassLayout() {
     : user?.email?.substring(0, 2).toUpperCase() || 'SP';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-amber-500/10 bg-[#0f0f0f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0f0f0f]/60">
         <div className="container flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/safepass" className="flex items-center space-x-2">
@@ -61,7 +61,7 @@ export function SafePassLayout() {
               alt="SafePass" 
               className="h-8 w-8 rounded-lg object-contain"
             />
-            <span className="text-xl font-bold">SafePass</span>
+            <span className="text-xl font-bold text-amber-500">SafePass</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -75,8 +75,8 @@ export function SafePassLayout() {
                   className={cn(
                     "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? "bg-amber-500/20 text-amber-500"
+                      : "text-gray-400 hover:text-amber-400 hover:bg-amber-500/10"
                   )}
                 >
                   <item.icon className="h-4 w-4 mr-2" />
@@ -89,9 +89,9 @@ export function SafePassLayout() {
           {/* Right Side */}
           <div className="flex items-center space-x-4">
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative text-gray-400 hover:text-amber-400 hover:bg-amber-500/10">
               <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-500 text-[10px] font-medium text-black flex items-center justify-center">
                 3
               </span>
             </Button>
@@ -146,7 +146,7 @@ export function SafePassLayout() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t">
+          <div className="md:hidden border-t border-amber-500/10 bg-[#0f0f0f]">
             <nav className="container py-4 space-y-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -158,8 +158,8 @@ export function SafePassLayout() {
                     className={cn(
                       "flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
                       isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-amber-500/20 text-amber-500"
+                        : "text-gray-400 hover:text-amber-400 hover:bg-amber-500/10"
                     )}
                   >
                     <item.icon className="h-4 w-4 mr-2" />
@@ -173,20 +173,20 @@ export function SafePassLayout() {
       </header>
 
       {/* Main Content */}
-      <main className="container py-6">
+      <main className="container py-6 bg-[#0a0a0a]">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-6 mt-auto">
+      <footer className="border-t border-amber-500/10 py-6 mt-auto bg-[#0a0a0a]">
         <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             © {new Date().getFullYear()} SafePass by Ultrium. All rights reserved.
           </p>
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-            <Link to="/terms" className="hover:text-foreground">Terms</Link>
-            <Link to="/security" className="hover:text-foreground">Security</Link>
+          <div className="flex items-center space-x-4 text-sm text-gray-500">
+            <Link to="/privacy" className="hover:text-amber-400">Privacy</Link>
+            <Link to="/terms" className="hover:text-amber-400">Terms</Link>
+            <Link to="/security" className="hover:text-amber-400">Security</Link>
           </div>
         </div>
       </footer>

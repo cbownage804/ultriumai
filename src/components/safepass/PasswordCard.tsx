@@ -80,7 +80,7 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
     >
-      <Card className="group relative overflow-hidden border border-border/50 bg-card/80 backdrop-blur-sm hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+      <Card className="group relative overflow-hidden border border-amber-500/10 bg-[#141414] backdrop-blur-sm hover:border-amber-500/30 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
         {/* Strength indicator bar */}
         <div className="absolute top-0 left-0 right-0 h-1">
           <div 
