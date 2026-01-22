@@ -191,14 +191,10 @@ export default function VanguardLanding() {
             
             {/* Large Logo */}
             <div className="flex justify-center mb-8">
-              <div className="p-6 bg-black rounded-3xl shadow-2xl shadow-cyan-500/20 animate-fade-in">
-                <img src={vanguardLogo} alt="Vanguard" className="h-32 w-auto" />
+              <div className="px-6 py-4 bg-black rounded-2xl shadow-2xl shadow-cyan-500/20 animate-fade-in">
+                <img src={vanguardLogo} alt="Vanguard" className="h-20 w-auto" />
               </div>
             </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 via-purple-500 to-cyan-400 bg-clip-text text-transparent animate-fade-in">
-              Vanguard
-            </h1>
             
             <p className="text-xl md:text-2xl text-white/60 mb-8 max-w-3xl mx-auto animate-fade-in" style={{ animationDelay: '0.2s' }}>
               The world's first <strong className="text-cyan-400">AI-powered unified cybersecurity platform</strong> that combines SOC operations, 
