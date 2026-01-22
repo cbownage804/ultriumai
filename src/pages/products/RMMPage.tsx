@@ -10,7 +10,7 @@ import {
   ArrowRight, Check, Terminal, HardDrive, Cpu,
   Download, RefreshCw, Settings, Activity
 } from 'lucide-react';
-import logoRmm from '@/assets/logos/logo-rmm.png';
+import logoSafeops from '@/assets/logos/logo-safeops.png';
 
 const features = [
   {
@@ -60,7 +60,7 @@ const stats = [
 
 const pricing = [
   {
-    name: 'RMM',
+    name: 'SafeOps',
     price: 3,
     description: 'Full RMM suite with monitoring and automation',
     features: ['Real-time monitoring', 'Remote desktop', 'Patch management', 'Advanced scripting', 'Custom dashboards', 'API access'],
@@ -68,7 +68,7 @@ const pricing = [
     popular: true
   },
   {
-    name: 'RMM Enterprise',
+    name: 'SafeOps Enterprise',
     price: null,
     description: 'White-label with custom integrations',
     features: ['Everything included', 'White-label branding', 'Custom integrations', 'Dedicated support', 'On-prem option'],
@@ -90,8 +90,8 @@ export default function RMMPage() {
             <div className="flex justify-center mb-8">
               <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(34,197,94,0.3)] border border-green-500/20">
                 <img 
-                  src={logoRmm} 
-                  alt="RMM Logo"
+                  src={logoSafeops} 
+                  alt="SafeOps Logo"
                   className="h-28 w-auto"
                 />
               </div>
@@ -225,7 +225,7 @@ export default function RMMPage() {
 
         {/* Vanguard Upsell */}
         <VanguardUpsell 
-          currentProduct="RMM™" 
+          currentProduct="SafeOps™" 
           currentProductPrice="$3/endpoint/mo"
           competitorComparison="Compete with Atera & NinjaOne at a fraction of the cost in Vanguard Enterprise"
         />
