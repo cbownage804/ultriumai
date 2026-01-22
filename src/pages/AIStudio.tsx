@@ -29,6 +29,7 @@ import {
   Check
 } from "lucide-react";
 import heroAi from "@/assets/hero-ai.jpg";
+import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
 
 const AIStudio = () => {
   const creationPaths = [
@@ -179,7 +180,15 @@ const AIStudio = () => {
                 <Brain className="h-4 w-4 mr-2" />
                 AI Studio™
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent leading-tight">
+              
+              {/* Logo */}
+              <div className="flex justify-center">
+                <div className="p-5 bg-black rounded-3xl shadow-2xl shadow-primary/30 animate-fade-in">
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-28 w-28 object-contain" />
+                </div>
+              </div>
+              
+              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-blue-400 to-primary bg-clip-text text-transparent leading-tight">
                 AI Studio™
               </h1>
               <h2 className="text-2xl md:text-3xl font-semibold text-muted-foreground mb-4">

@@ -140,8 +140,10 @@ export default function VanguardLanding() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={vanguardLogo} alt="Vanguard" className="h-10 w-auto" />
+          <div className="flex items-center gap-3 transition-transform hover:scale-105">
+            <div className="h-12 w-12 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-cyan-500/20">
+              <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
+            </div>
           </div>
           
           <nav className="hidden md:flex items-center gap-6">
