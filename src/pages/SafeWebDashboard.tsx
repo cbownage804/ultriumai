@@ -246,31 +246,58 @@ const SafeWebDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {threats.slice(0, 3).map((threat) => (
-                    <div key={threat.id} className="flex items-start gap-4 p-4 border border-violet-500/10 rounded-lg bg-[#1a1a1a]">
-                      <div className={`p-2 rounded-full ${getSeverityColor(threat.severity)}`}>
-                        <Shield className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-white">{threat.title}</h4>
-                          <Badge className={getStatusColor(threat.status)}>
-                            {threat.status.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-400 mb-2">{threat.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span>Source: {threat.source}</span>
-                          <span>•</span>
-                          <span>{new Date(threat.date).toLocaleDateString()}</span>
-                          <span>•</span>
-                          <span>Confidence: {threat.confidence}%</span>
-                        </div>
-                      </div>
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <RefreshCw className="h-6 w-6 text-violet-500 animate-spin" />
+                    <span className="ml-2 text-gray-400">Loading threats...</span>
+                  </div>
+                ) : threats.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="p-4 bg-violet-500/10 rounded-full mb-4">
+                      <Inbox className="h-8 w-8 text-violet-500" />
                     </div>
-                  ))}
-                </div>
+                    <h4 className="text-lg font-semibold text-white mb-2">No Threats Detected</h4>
+                    <p className="text-sm text-gray-400 max-w-md">
+                      Great news! No threats have been detected for your monitored assets. 
+                      Add assets to monitor or run a manual scan.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-4 border-violet-500/30 text-violet-500 hover:bg-violet-500/10"
+                      onClick={() => setActiveTab('assets')}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Assets to Monitor
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {threats.slice(0, 3).map((threat) => (
+                      <div key={threat.id} className="flex items-start gap-4 p-4 border border-violet-500/10 rounded-lg bg-[#1a1a1a]">
+                        <div className={`p-2 rounded-full ${getSeverityColor(threat.severity)}`}>
+                          <Shield className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-white">{threat.title}</h4>
+                            <Badge className={getStatusColor(threat.status)}>
+                              {threat.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-400 mb-2">{threat.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <span>Source: {threat.source}</span>
+                            <span>•</span>
+                            <span>{new Date(threat.date).toLocaleDateString()}</span>
+                            <span>•</span>
+                            <span>Confidence: {threat.confidence}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
