@@ -109,21 +109,33 @@ const Navigation = () => {
                   <ChevronDown className="h-3 w-3" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuLabel>Product Portfolio</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleNavigation('/portfolio')}>
-                  All Products
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Security</DropdownMenuLabel>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Security Suite</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/safescan')}>
-                  SafeScan™ - Email & URL Security
+                  SafeScan™ - Vulnerability Scanner
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/safepass')}>
                   SafePass™ - Password Manager
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/safeweb')}>
                   SafeWeb™ - Dark Web Monitoring
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safelink')}>
+                  SafeLink™ - URL Scanner
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safemail')}>
+                  SafeMail™ - Email Security
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safedoc')}>
+                  SafeDoc™ - Document Scanner
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Endpoint Protection</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/antivirus')}>
+                  SafeAV™ - Antivirus
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigation('/products/safemdr')}>
+                  SafeEDR™ - Detection & Response
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Operations</DropdownMenuLabel>
@@ -139,7 +151,7 @@ const Navigation = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">AI Platform</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleNavigation('/ai-studio')}>
-                  UltriumGPT™ - Custom AI
+                  AI Studio™ - Custom AI Builder
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
