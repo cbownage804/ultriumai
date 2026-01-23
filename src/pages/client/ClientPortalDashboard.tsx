@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useClientPortalServices } from "@/hooks/useClientPortalServices";
 
 interface ServiceStatus {
   id: string;
@@ -28,10 +29,10 @@ interface ServiceStatus {
 
 const ClientPortalDashboard = () => {
   const [clientData, setClientData] = useState<any>(null);
-  const [serviceStatuses, setServiceStatuses] = useState<ServiceStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { services: serviceStatuses, stats } = useClientPortalServices();
 
   useEffect(() => {
     loadClientData();
@@ -42,40 +43,21 @@ const ClientPortalDashboard = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get client information
       const { data: clientUser } = await supabase
         .from('client_users')
-        .select(`
-          *,
-          msp_clients!inner(*)
-        `)
+        .select(`*, msp_clients!inner(*)`)
         .eq('user_id', user.id)
         .single();
 
       if (clientUser) {
         setClientData(clientUser);
-        loadMockData();
       }
     } catch (error) {
       console.error('Error loading client data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load client data",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to load client data", variant: "destructive" });
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadMockData = () => {
-    // Mock service statuses
-    setServiceStatuses([
-      { id: '1', name: 'Email Service', status: 'operational', lastChecked: new Date().toISOString() },
-      { id: '2', name: 'Network Security', status: 'operational', lastChecked: new Date().toISOString() },
-      { id: '3', name: 'Backup System', status: 'operational', lastChecked: new Date().toISOString() },
-      { id: '4', name: 'Monitoring', status: 'operational', lastChecked: new Date().toISOString() }
-    ]);
   };
 
   const getStatusIcon = (status: string) => {
