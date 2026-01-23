@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link, Check, Star, Zap, Users, Shield, ArrowRight, Play, ArrowLeft, Home } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useNavigate } from "react-router-dom";
+import heroSafelink from "@/assets/hero-safelink.jpg";
 
 const SafeLinkPage = () => {
   const navigate = useNavigate();
@@ -100,26 +101,30 @@ const SafeLinkPage = () => {
         </div>
 
         {/* Hero Section */}
-        <section className="py-20 bg-gradient-to-br from-background via-background/95 to-primary/5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative py-24 overflow-hidden">
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroSafelink})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-background" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="text-center mb-12">
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Link className="h-8 w-8 text-primary" />
-                </div>
-                <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
-                  Ultrium SafeLink™
-                </h1>
-              </div>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
+              <Badge className="mb-4 bg-purple-500/20 text-purple-400 border-purple-500/30">
+                <Link className="h-3 w-3 mr-1" />
+                URL Security
+              </Badge>
+              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+                SafeLink
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-8">
                 Comprehensive URL analysis and safety verification. Protect your users from malicious links, phishing sites, and unsafe web content.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="btn-glow">
+                <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
                   <Play className="mr-2 h-5 w-5" />
                   Try Live Demo Below
                 </Button>
-                <Button variant="outline" size="lg">
+                <Button variant="outline" size="lg" className="border-purple-500/50 text-white hover:bg-purple-500/10">
                   <Shield className="mr-2 h-5 w-5" />
                   Start Free Trial
                 </Button>
