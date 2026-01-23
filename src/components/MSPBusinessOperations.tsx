@@ -1,8 +1,6 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,50 +9,19 @@ import { Progress } from "@/components/ui/progress";
 import { 
   DollarSign, 
   TrendingUp, 
-  Calendar, 
   FileText, 
   Clock, 
-  AlertTriangle,
   CheckCircle,
   Users,
   Target,
-  BarChart3
+  BarChart3,
+  Inbox,
+  Loader2
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface Invoice {
-  id: string;
-  clientName: string;
-  amount: number;
-  status: 'paid' | 'pending' | 'overdue';
-  dueDate: string;
-  invoiceNumber: string;
-}
-
-interface Contract {
-  id: string;
-  clientName: string;
-  contractType: string;
-  value: number;
-  startDate: string;
-  endDate: string;
-  status: 'active' | 'expired' | 'pending';
-}
-
-interface SLAMetric {
-  id: string;
-  metric: string;
-  target: number;
-  current: number;
-  unit: string;
-  status: 'good' | 'warning' | 'critical';
-}
+import { useMSPBusinessOps } from "@/hooks/useMSPBusinessData";
 
 export function MSPBusinessOperations() {
-  const [invoices] = useState<Invoice[]>([]);
-  const [contracts] = useState<Contract[]>([]);
-  const [slaMetrics] = useState<SLAMetric[]>([]);
-  const { toast } = useToast();
+  const { invoices, contracts, slaMetrics, isLoading } = useMSPBusinessOps();
 
   const getStatusBadge = (status: string, type: 'invoice' | 'contract' | 'sla' = 'invoice') => {
     const variants: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
@@ -83,6 +50,25 @@ export function MSPBusinessOperations() {
   const totalRevenue = invoices.reduce((sum, inv) => sum + inv.amount, 0);
   const paidRevenue = invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.amount, 0);
   const pendingRevenue = invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + inv.amount, 0);
+
+  const EmptyState = ({ title, description, icon: Icon }: { title: string; description: string; icon: React.ElementType }) => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="p-4 bg-muted rounded-full mb-4">
+        <Icon className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-muted-foreground max-w-md">{description}</p>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading business data...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -178,39 +164,47 @@ export function MSPBusinessOperations() {
 
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">
-                        {invoice.invoiceNumber}
-                      </TableCell>
-                      <TableCell>{invoice.clientName}</TableCell>
-                      <TableCell>${invoice.amount.toLocaleString()}</TableCell>
-                      <TableCell>{invoice.dueDate}</TableCell>
-                      <TableCell>
-                        {getStatusBadge(invoice.status, 'invoice')}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">View</Button>
-                          <Button variant="ghost" size="sm">Edit</Button>
-                        </div>
-                      </TableCell>
+              {invoices.length === 0 ? (
+                <EmptyState 
+                  title="No Invoices Yet" 
+                  description="Create your first invoice to start tracking revenue and payments from clients."
+                  icon={FileText}
+                />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">
+                          {invoice.invoiceNumber}
+                        </TableCell>
+                        <TableCell>{invoice.clientName}</TableCell>
+                        <TableCell>${invoice.amount.toLocaleString()}</TableCell>
+                        <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(invoice.status, 'invoice')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm">View</Button>
+                            <Button variant="ghost" size="sm">Edit</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -234,66 +228,82 @@ export function MSPBusinessOperations() {
             <Button>New Contract</Button>
           </div>
 
-          <div className="grid gap-4">
-            {contracts.map((contract) => (
-              <Card key={contract.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{contract.clientName}</CardTitle>
-                      <CardDescription>{contract.contractType}</CardDescription>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold">
-                        ${contract.value.toLocaleString()}
+          {contracts.length === 0 ? (
+            <EmptyState 
+              title="No Active Contracts" 
+              description="Set up service contracts with your clients to track agreements and renewal dates."
+              icon={FileText}
+            />
+          ) : (
+            <div className="grid gap-4">
+              {contracts.map((contract) => (
+                <Card key={contract.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{contract.clientName}</CardTitle>
+                        <CardDescription>{contract.contractType}</CardDescription>
                       </div>
-                      {getStatusBadge(contract.status, 'contract')}
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">
+                          ${contract.value.toLocaleString()}
+                        </div>
+                        {getStatusBadge(contract.status, 'contract')}
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Start: {contract.startDate}</span>
-                    <span>End: {contract.endDate}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span>Start: {new Date(contract.startDate).toLocaleDateString()}</span>
+                      <span>End: {new Date(contract.endDate).toLocaleDateString()}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="sla" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            {slaMetrics.map((metric) => (
-              <Card key={metric.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{metric.metric}</CardTitle>
-                    {getStatusBadge(metric.status, 'sla')}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold">
-                        {metric.current}{metric.unit}
+          {slaMetrics.length === 0 ? (
+            <EmptyState 
+              title="No SLA Metrics Configured" 
+              description="Set up Service Level Agreement targets to monitor your performance and client satisfaction."
+              icon={Target}
+            />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {slaMetrics.map((metric) => (
+                <Card key={metric.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{metric.metric}</CardTitle>
+                      {getStatusBadge(metric.status, 'sla')}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl font-bold">
+                          {metric.current}{metric.unit}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Target: {metric.target}{metric.unit}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Target: {metric.target}{metric.unit}
+                      <div className="text-right">
+                        <Target className="h-6 w-6 text-muted-foreground" />
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Target className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  </div>
-                  <Progress 
-                    value={calculateProgress(metric.current, metric.target)} 
-                    className="w-full"
-                  />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <Progress 
+                      value={calculateProgress(metric.current, metric.target)} 
+                      className="w-full"
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-4">

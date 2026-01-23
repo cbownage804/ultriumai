@@ -1,139 +1,18 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, TrendingDown, Trophy, Target, BarChart3, Zap, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, Trophy, Target, BarChart3, Zap, DollarSign, Inbox } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-
-interface CompetitiveBenchmark {
-  id: string;
-  metric_name: string;
-  metric_value: number;
-  industry_average: number;
-  top_quartile: number;
-  percentile_rank: number;
-  trend_direction: 'up' | 'down' | 'stable';
-  benchmark_date: string;
-  data_source: string;
-  recommendations: string[];
-}
+import { useMSPBenchmarks, CompetitiveBenchmark } from "@/hooks/useMSPBusinessData";
 
 interface MSPCompetitiveBenchmarksProps {
   mspId: string;
 }
 
 export const MSPCompetitiveBenchmarks = ({ mspId }: MSPCompetitiveBenchmarksProps) => {
-  const [benchmarks, setBenchmarks] = useState<CompetitiveBenchmark[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockData: CompetitiveBenchmark[] = [
-      {
-        id: '1',
-        metric_name: 'Client Retention Rate',
-        metric_value: 94.2,
-        industry_average: 87.5,
-        top_quartile: 92.0,
-        percentile_rank: 85,
-        trend_direction: 'up',
-        benchmark_date: '2024-01-01',
-        data_source: 'Industry Report 2024',
-        recommendations: [
-          'Maintain current retention strategies',
-          'Share best practices with industry peers',
-          'Consider offering retention consulting services'
-        ]
-      },
-      {
-        id: '2',
-        metric_name: 'Profit Margin',
-        metric_value: 28.5,
-        industry_average: 25.2,
-        top_quartile: 32.8,
-        percentile_rank: 72,
-        trend_direction: 'up',
-        benchmark_date: '2024-01-01',
-        data_source: 'MSP Benchmark Study',
-        recommendations: [
-          'Optimize service delivery processes',
-          'Automate routine tasks',
-          'Review pricing strategy for underperforming services'
-        ]
-      },
-      {
-        id: '3',
-        metric_name: 'Average Response Time',
-        metric_value: 12.3,
-        industry_average: 18.7,
-        top_quartile: 8.5,
-        percentile_rank: 78,
-        trend_direction: 'down',
-        benchmark_date: '2024-01-01',
-        data_source: 'Service Desk Analytics',
-        recommendations: [
-          'Implement AI-powered ticket routing',
-          'Expand first-level support team',
-          'Invest in proactive monitoring tools'
-        ]
-      },
-      {
-        id: '4',
-        metric_name: 'Client Satisfaction Score',
-        metric_value: 8.7,
-        industry_average: 7.9,
-        top_quartile: 9.2,
-        percentile_rank: 68,
-        trend_direction: 'stable',
-        benchmark_date: '2024-01-01',
-        data_source: 'Customer Survey Platform',
-        recommendations: [
-          'Focus on communication improvements',
-          'Implement regular feedback loops',
-          'Enhance service quality training'
-        ]
-      },
-      {
-        id: '5',
-        metric_name: 'Revenue per Client',
-        metric_value: 4200,
-        industry_average: 3800,
-        top_quartile: 5100,
-        percentile_rank: 62,
-        trend_direction: 'up',
-        benchmark_date: '2024-01-01',
-        data_source: 'Financial Benchmarks',
-        recommendations: [
-          'Develop premium service tiers',
-          'Cross-sell complementary services',
-          'Focus on high-value client acquisition'
-        ]
-      },
-      {
-        id: '6',
-        metric_name: 'Security Incident Rate',
-        metric_value: 0.8,
-        industry_average: 2.1,
-        top_quartile: 0.5,
-        percentile_rank: 82,
-        trend_direction: 'down',
-        benchmark_date: '2024-01-01',
-        data_source: 'Security Metrics Report',
-        recommendations: [
-          'Share security best practices',
-          'Invest in advanced threat detection',
-          'Maintain current security protocols'
-        ]
-      }
-    ];
-
-    setTimeout(() => {
-      setBenchmarks(mockData);
-      setIsLoading(false);
-    }, 1000);
-  }, [mspId]);
+  const { benchmarks, isLoading } = useMSPBenchmarks();
 
   const avgPercentile = benchmarks.length > 0 ? 
     benchmarks.reduce((sum, b) => sum + b.percentile_rank, 0) / benchmarks.length : 0;
@@ -168,6 +47,26 @@ export const MSPCompetitiveBenchmarks = ({ mspId }: MSPCompetitiveBenchmarksProp
         </div>
       </div>
     );
+  }
+
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="p-4 bg-muted rounded-full mb-4">
+        <Inbox className="h-10 w-10 text-muted-foreground" />
+      </div>
+      <h3 className="text-xl font-semibold mb-2">No Benchmark Data Available</h3>
+      <p className="text-muted-foreground max-w-md mb-6">
+        Competitive benchmarking requires performance data. Start managing clients to see how you compare to industry standards.
+      </p>
+      <Button>
+        <BarChart3 className="w-4 h-4 mr-2" />
+        Generate Report
+      </Button>
+    </div>
+  );
+
+  if (benchmarks.length === 0) {
+    return <EmptyState />;
   }
 
   return (
