@@ -171,3 +171,6 @@ verify_jwt = false
 
 [functions.helpdesk-ai-features]
 verify_jwt = false
+
+[functions.app-ai-assistant]
+verify_jwt = false

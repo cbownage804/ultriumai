@@ -49,12 +49,17 @@ import {
   Unlock,
   History,
   Globe,
-  User
+  User,
+  Bot,
+  ShieldAlert
 } from "lucide-react";
 import { useSafePass, PasswordEntry, PasswordVault } from "@/hooks/useSafePass";
 import { useToast } from "@/hooks/use-toast";
 import { MasterPasswordSetup } from "@/components/safepass/MasterPasswordSetup";
 import { SecurePasswordGenerator } from "@/components/safepass/SecurePasswordGenerator";
+import { AppAIChat } from "@/components/shared/AppAIChat";
+import { DarkWebCheck } from "@/components/shared/DarkWebCheck";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SafePassAppProps {
   isWhiteLabeled?: boolean;
@@ -63,6 +68,7 @@ interface SafePassAppProps {
 }
 
 export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', brandName = 'Ultrium AI' }: SafePassAppProps) => {
+  const { user } = useAuth();
   const {
     vaults,
     entries,
@@ -96,6 +102,8 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   const [showCreateEntry, setShowCreateEntry] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<PasswordEntry | null>(null);
   const [showPasswordGenerator, setShowPasswordGenerator] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [showDarkWebCheck, setShowDarkWebCheck] = useState(false);
   
   const { toast } = useToast();
 
@@ -309,6 +317,24 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAIChat(!showAIChat)}
+            size="sm"
+            className={showAIChat ? 'bg-blue-500/10 text-blue-500' : ''}
+          >
+            <Bot className="h-4 w-4 mr-2" />
+            AI Assistant
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowDarkWebCheck(!showDarkWebCheck)}
+            size="sm"
+            className={showDarkWebCheck ? 'bg-purple-500/10 text-purple-500' : ''}
+          >
+            <ShieldAlert className="h-4 w-4 mr-2" />
+            Breach Check
+          </Button>
           <Button
             variant="outline"
             onClick={() => masterPassword.lock()}
@@ -689,6 +715,27 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
           </Card>
         </div>
       </div>
+
+      {/* AI Chat Sidebar */}
+      {showAIChat && (
+        <div className="fixed right-4 bottom-4 w-96 z-50">
+          <AppAIChat
+            appType="safepass"
+            context={{ entries_count: entries.length, weak_passwords: weakPasswords }}
+            onClose={() => setShowAIChat(false)}
+          />
+        </div>
+      )}
+
+      {/* Dark Web Check Modal */}
+      {showDarkWebCheck && (
+        <div className="fixed right-4 bottom-4 w-[450px] z-50">
+          <DarkWebCheck
+            userId={user?.id}
+            onClose={() => setShowDarkWebCheck(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
