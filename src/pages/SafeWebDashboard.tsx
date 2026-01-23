@@ -28,11 +28,13 @@ import {
   Network,
   Lock,
   Users,
-  Activity
+  Activity,
+  Inbox
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useNavigate } from "react-router-dom";
+import { useSafeWebData } from "@/hooks/useSafeWebData";
 
 interface ThreatIntelligence {
   id: string;
@@ -61,18 +63,47 @@ interface MonitoredAsset {
 const SafeWebDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [threats, setThreats] = useState<ThreatIntelligence[]>([]);
-  const [assets, setAssets] = useState<MonitoredAsset[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [newAsset, setNewAsset] = useState('');
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
+  
+  // Use real data from Supabase
+  const { 
+    threats: realThreats, 
+    assets: realAssets, 
+    loading, 
+    fetchAssets,
+    fetchThreats,
+    addAsset,
+    triggerScan,
+    updateThreatStatus
+  } = useSafeWebData();
 
-  // TODO: Replace with real data from Supabase
-  useEffect(() => {
-    // Load real threat intelligence and monitored assets here
-    setThreats([]);
-    setAssets([]);
-  }, []);
+  // Transform SafeWebThreat to ThreatIntelligence format
+  const threats: ThreatIntelligence[] = realThreats.map(t => ({
+    id: t.id,
+    type: t.threat_type === 'executive_mention' ? 'brand_mention' : t.threat_type,
+    title: t.title,
+    description: t.description,
+    severity: t.severity,
+    source: t.source_name || 'Dark Web Scanner',
+    date: t.created_at,
+    status: t.status,
+    affectedAssets: t.affected_assets || [],
+    confidence: t.confidence_score || 75,
+    tags: t.tags || []
+  }));
+
+  // Transform SafeWebAsset to MonitoredAsset format
+  const assets: MonitoredAsset[] = realAssets.map(a => ({
+    id: a.id,
+    type: a.asset_type,
+    value: a.asset_value,
+    status: a.status === 'archived' ? 'paused' : a.status,
+    threatsFound: a.threats_found || 0,
+    lastScan: a.last_scan_at || a.created_at,
+    addedDate: a.created_at
+  }));
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
