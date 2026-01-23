@@ -16,6 +16,7 @@ export interface TierFeatures {
   safescan: FeatureLimit;
   safeweb: FeatureLimit;
   safetrack: FeatureLimit;
+  whitelabeling: FeatureLimit;
 }
 
 export interface TierConfig {
@@ -45,7 +46,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safepass: { enabled: true, limit: 25 },      // 25 passwords
       safescan: { enabled: true, limit: 5 },       // 5 scans/month
       safeweb: { enabled: false, limit: 0 },
-      safetrack: { enabled: false, limit: 0 }
+      safetrack: { enabled: false, limit: 0 },
+      whitelabeling: { enabled: false, limit: 0 }  // Not available on free
     }
   },
   pro: {
@@ -62,7 +64,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safepass: { enabled: true, limit: -1 },      // Unlimited
       safescan: { enabled: true, limit: 100 },     // 100 scans/month
       safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
-      safetrack: { enabled: false, limit: 0 }
+      safetrack: { enabled: false, limit: 0 },
+      whitelabeling: { enabled: false, limit: 0 }  // Not available on pro
     }
   },
   business: {
@@ -80,7 +83,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safepass: { enabled: true, limit: -1, team: true },  // Unlimited + Team sharing
       safescan: { enabled: true, limit: -1 },              // Unlimited scans
       safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
-      safetrack: { enabled: true, limit: -1 }              // Unlimited tracked assets
+      safetrack: { enabled: true, limit: -1 },             // Unlimited tracked assets
+      whitelabeling: { enabled: true, limit: -1 }          // Full whitelabeling (Business only)
     }
   }
 };
@@ -120,6 +124,13 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
     icon: 'Package',
     limitUnit: 'tracked asset',
     limitUnitPlural: 'tracked assets'
+  },
+  whitelabeling: {
+    name: 'Whitelabeling',
+    description: 'Custom branding with your logo, colors, and domain',
+    icon: 'Palette',
+    limitUnit: 'brand',
+    limitUnitPlural: 'brands'
   }
 };
 

@@ -11,11 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { 
   Palette, Users, Settings, Upload, Eye, Check, X, 
-  Building2, Globe, Mail, Crown, AlertCircle
+  Building2, Globe, Mail, Crown, AlertCircle, Lock
 } from 'lucide-react'
 import { useMSPClientWhiteLabel } from '@/hooks/useMSPClientWhiteLabel'
+import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite'
 import { MSPClientWhiteLabelConfig } from '@/types/whiteLabel'
 import { useToast } from '@/hooks/use-toast'
+import { useNavigate } from 'react-router-dom'
 
 export const MSPClientBrandingManager = () => {
   const { 
@@ -27,11 +29,34 @@ export const MSPClientBrandingManager = () => {
     approveChangeRequest,
     uploadClientFile 
   } = useMSPClientWhiteLabel()
+  const { isBusiness, tier, loading: subLoading } = useSafeSuiteSubscription()
+  const navigate = useNavigate()
   
   const [selectedConfig, setSelectedConfig] = useState<MSPClientWhiteLabelConfig | null>(null)
   const [newClientName, setNewClientName] = useState('')
   const [reviewNotes, setReviewNotes] = useState('')
   const { toast } = useToast()
+
+  // Gate: Only Business tier can access whitelabeling
+  if (!subLoading && !isBusiness) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="p-4 bg-amber-100 rounded-full mb-4">
+          <Lock className="h-10 w-10 text-amber-600" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">Client Branding is a Business Feature</h3>
+        <p className="text-muted-foreground max-w-md mb-6">
+          Managing client branding configurations is only available on the Business plan.
+          {tier === 'free' && " Upgrade to unlock this and other premium features."}
+          {tier === 'pro' && " Upgrade from Pro to Business to unlock client branding."}
+        </p>
+        <Button onClick={() => navigate('/safesuite/billing')} className="gap-2">
+          <Crown className="h-4 w-4" />
+          Upgrade to Business
+        </Button>
+      </div>
+    );
+  }
 
   const handleCreateClient = async () => {
     if (!newClientName.trim()) return

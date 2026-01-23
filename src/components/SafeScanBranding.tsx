@@ -6,14 +6,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Palette, Upload, Eye, Save } from "lucide-react";
+import { Palette, Upload, Eye, Save, Lock, Crown } from "lucide-react";
 import { useWhiteLabelConfig } from "@/hooks/useWhiteLabelConfig";
+import { useSafeSuiteSubscription } from "@/hooks/useSafeSuite";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 export const SafeScanBranding = () => {
   const { config, setConfig, loading, saveConfig, uploadFile } = useWhiteLabelConfig();
+  const { isBusiness, tier, loading: subLoading } = useSafeSuiteSubscription();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [previewMode, setPreviewMode] = useState(false);
+
+  // Gate: Only Business tier can access whitelabeling
+  if (!subLoading && !isBusiness) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="p-4 bg-amber-100 rounded-full mb-4">
+          <Lock className="h-10 w-10 text-amber-600" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">SafeScan Branding is a Business Feature</h3>
+        <p className="text-muted-foreground max-w-md mb-6">
+          Custom branding for SafeScan is only available on the Business plan.
+          {tier === 'free' && " Upgrade to unlock this and other premium features."}
+          {tier === 'pro' && " Upgrade from Pro to Business to unlock branding."}
+        </p>
+        <Button onClick={() => navigate('/safesuite/billing')} className="gap-2">
+          <Crown className="h-4 w-4" />
+          Upgrade to Business
+        </Button>
+      </div>
+    );
+  }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') => {
     const file = event.target.files?.[0];
