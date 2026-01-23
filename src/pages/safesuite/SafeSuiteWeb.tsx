@@ -21,7 +21,6 @@ import {
   Trash2,
   RefreshCw,
   Mail,
-  CreditCard,
   Hash,
   Loader2,
   CheckCircle,
@@ -46,7 +45,7 @@ export default function SafeSuiteWeb() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [newAsset, setNewAsset] = useState('');
-  const [assetType, setAssetType] = useState<'email' | 'domain' | 'credit_card'>('email');
+  const [assetType, setAssetType] = useState<'email' | 'domain' | 'brand'>('email');
 
   useEffect(() => {
     if (user) {
@@ -81,7 +80,8 @@ export default function SafeSuiteWeb() {
           user_id: user?.id,
           asset_type: assetType,
           asset_value: newAsset.trim(),
-          status: 'pending'
+          status: 'active',
+          scan_frequency: 'daily'
         })
         .select()
         .single();
@@ -125,7 +125,7 @@ export default function SafeSuiteWeb() {
     switch (type) {
       case 'email': return <Mail className="h-4 w-4" />;
       case 'domain': return <Globe className="h-4 w-4" />;
-      case 'credit_card': return <CreditCard className="h-4 w-4" />;
+      case 'brand': return <Hash className="h-4 w-4" />;
       default: return <Hash className="h-4 w-4" />;
     }
   };
@@ -223,13 +223,13 @@ export default function SafeSuiteWeb() {
               >
                 <option value="email">Email</option>
                 <option value="domain">Domain</option>
-                <option value="credit_card">Credit Card (last 4)</option>
+                <option value="brand">Brand</option>
               </select>
               <Input
                 placeholder={
                   assetType === 'email' ? 'Enter email address...' :
                   assetType === 'domain' ? 'Enter domain...' :
-                  'Enter last 4 digits...'
+                  'Enter brand name...'
                 }
                 value={newAsset}
                 onChange={(e) => setNewAsset(e.target.value)}
