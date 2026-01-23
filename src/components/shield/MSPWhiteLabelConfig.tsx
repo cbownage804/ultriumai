@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSafeSuiteSubscription } from "@/hooks/useSafeSuite";
 import { 
   Palette,
   Upload,
@@ -15,8 +16,11 @@ import {
   Mail,
   Phone,
   Globe,
-  Shield
+  Shield,
+  Lock,
+  Crown
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface WhiteLabelConfig {
   id?: string;
@@ -33,6 +37,8 @@ interface WhiteLabelConfig {
 }
 
 export const MSPWhiteLabelConfig = () => {
+  const { isBusiness, tier, loading: subLoading } = useSafeSuiteSubscription();
+  const navigate = useNavigate();
   const [config, setConfig] = useState<WhiteLabelConfig>({
     company_name: '',
     logo_url: '',
@@ -49,6 +55,27 @@ export const MSPWhiteLabelConfig = () => {
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const { toast } = useToast();
+
+  // Gate: Only Business tier can access whitelabeling
+  if (!subLoading && !isBusiness) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="p-4 bg-amber-100 rounded-full mb-4">
+          <Lock className="h-10 w-10 text-amber-600" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">Whitelabeling is a Business Feature</h3>
+        <p className="text-muted-foreground max-w-md mb-6">
+          Custom branding with your logo, colors, and domain is only available on the Business plan.
+          {tier === 'free' && " Upgrade to unlock this and other premium features."}
+          {tier === 'pro' && " Upgrade from Pro to Business to unlock whitelabeling."}
+        </p>
+        <Button onClick={() => navigate('/safesuite/billing')} className="gap-2">
+          <Crown className="h-4 w-4" />
+          Upgrade to Business
+        </Button>
+      </div>
+    );
+  }
 
   useEffect(() => {
     loadWhiteLabelConfig();

@@ -2,16 +2,43 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { useWhiteLabelConfig } from "@/hooks/useWhiteLabelConfig";
+import { useSafeSuiteSubscription } from "@/hooks/useSafeSuite";
 import { WhiteLabelBranding } from "./whiteLabel/WhiteLabelBranding";
 import { WhiteLabelColors } from "./whiteLabel/WhiteLabelColors";
 import { WhiteLabelDomain } from "./whiteLabel/WhiteLabelDomain";
 import { WhiteLabelAdvanced } from "./whiteLabel/WhiteLabelAdvanced";
 import { WhiteLabelPreview } from "./whiteLabel/WhiteLabelPreview";
+import { Lock, Crown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const WhiteLabelCustomization = () => {
   const { config, setConfig, loading, saveConfig, uploadFile } = useWhiteLabelConfig();
+  const { isBusiness, tier, loading: subLoading } = useSafeSuiteSubscription();
+  const navigate = useNavigate();
   const [previewMode, setPreviewMode] = useState(false);
+
+  // Gate: Only Business tier can access whitelabeling
+  if (!subLoading && !isBusiness) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="p-4 bg-amber-100 rounded-full mb-4">
+          <Lock className="h-10 w-10 text-amber-600" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">Whitelabeling is a Business Feature</h3>
+        <p className="text-muted-foreground max-w-md mb-6">
+          Custom branding with your logo, colors, and domain is only available on the Business plan.
+          {tier === 'free' && " Upgrade to unlock this and other premium features."}
+          {tier === 'pro' && " Upgrade from Pro to Business to unlock whitelabeling."}
+        </p>
+        <Button onClick={() => navigate('/safesuite/billing')} className="gap-2">
+          <Crown className="h-4 w-4" />
+          Upgrade to Business
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
