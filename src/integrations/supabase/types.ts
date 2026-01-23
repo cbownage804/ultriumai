@@ -18100,6 +18100,10 @@ export type Database = {
         Args: { p_roi_id: string }
         Returns: undefined
       }
+      can_access_safepass_entry: {
+        Args: { checking_user_id: string; entry_id: string }
+        Returns: boolean
+      }
       current_device_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }
       generate_analytics_snapshot: {
@@ -18167,6 +18171,10 @@ export type Database = {
         Returns: boolean
       }
       is_ultrium_employee: { Args: { _user_id: string }; Returns: boolean }
+      owns_safepass_entry: {
+        Args: { checking_user_id: string; entry_user_id: string }
+        Returns: boolean
+      }
       send_notification: {
         Args: {
           p_action_url?: string
