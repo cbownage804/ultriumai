@@ -459,6 +459,107 @@ export const useSafeDesk = () => {
     };
   }, [user, refreshAll, loadTickets, toast]);
 
+  // AI-powered ticket analysis
+  const analyzeTicket = async (ticketId: string) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (!ticket) return null;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-helpdesk-assistant', {
+        body: {
+          action: 'generate_solution',
+          ticketId: ticket.id,
+          ticketData: {
+            title: ticket.title,
+            description: ticket.description,
+            category: ticket.category,
+            priority: ticket.priority
+          }
+        }
+      });
+
+      if (error) throw error;
+      
+      toast({
+        title: "AI Analysis Complete",
+        description: `Confidence: ${data?.confidence || 'N/A'}%`
+      });
+      
+      await loadTickets();
+      return data;
+    } catch (error) {
+      console.error('Error analyzing ticket:', error);
+      toast({
+        title: "AI Analysis Failed",
+        description: "Could not analyze ticket",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Auto-resolve ticket with AI
+  const autoResolveTicket = async (ticketId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-helpdesk-assistant', {
+        body: {
+          action: 'auto_resolve',
+          ticketId
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.autoResolved) {
+        toast({
+          title: "Ticket Auto-Resolved",
+          description: "AI successfully resolved the ticket"
+        });
+      } else {
+        toast({
+          title: "Manual Review Required",
+          description: "Ticket requires human intervention"
+        });
+      }
+      
+      await loadTickets();
+      return data;
+    } catch (error) {
+      console.error('Error auto-resolving ticket:', error);
+      toast({
+        title: "Error",
+        description: "Failed to auto-resolve ticket",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Generate AI summary for ticket
+  const generateSummary = async (ticketId: string) => {
+    const ticket = tickets.find(t => t.id === ticketId);
+    if (!ticket) return null;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-helpdesk-assistant', {
+        body: {
+          action: 'generate_summary',
+          ticketData: {
+            title: ticket.title,
+            description: ticket.description,
+            category: ticket.category
+          }
+        }
+      });
+
+      if (error) throw error;
+      return data?.summary || null;
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      return null;
+    }
+  };
+
   // Helper functions
   const getTicketsByStatus = (status: string) => tickets.filter(t => t.status === status);
   const getTicketsByPriority = (priority: string) => tickets.filter(t => t.priority === priority);
@@ -471,6 +572,7 @@ export const useSafeDesk = () => {
       t.status !== 'closed'
     );
   };
+  const getHighPriorityTickets = () => tickets.filter(t => t.priority === 'high' || t.priority === 'critical');
 
   return {
     // Data
@@ -488,6 +590,11 @@ export const useSafeDesk = () => {
     escalateTicket,
     loadTickets,
     
+    // AI operations
+    analyzeTicket,
+    autoResolveTicket,
+    generateSummary,
+    
     // Comment operations
     addComment,
     loadComments,
@@ -499,6 +606,7 @@ export const useSafeDesk = () => {
     getTicketsByStatus,
     getTicketsByPriority,
     getOverdueTickets,
+    getHighPriorityTickets,
     refreshAll
   };
 };

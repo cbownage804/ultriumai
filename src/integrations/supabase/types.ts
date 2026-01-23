@@ -10718,6 +10718,122 @@ export type Database = {
         }
         Relationships: []
       }
+      rmm_patches: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          device_id: string | null
+          id: string
+          installed_at: string | null
+          kb_article: string | null
+          reboot_required: boolean
+          release_date: string | null
+          scheduled_for: string | null
+          severity: string
+          size_bytes: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          installed_at?: string | null
+          kb_article?: string | null
+          reboot_required?: boolean
+          release_date?: string | null
+          scheduled_for?: string | null
+          severity?: string
+          size_bytes?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          installed_at?: string | null
+          kb_article?: string | null
+          reboot_required?: boolean
+          release_date?: string | null
+          scheduled_for?: string | null
+          severity?: string
+          size_bytes?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rmm_patches_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "rmm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rmm_policies: {
+        Row: {
+          assigned_device_count: number
+          category: string | null
+          compliance_score: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          last_evaluated_at: string | null
+          name: string
+          policy_type: string
+          settings: Json
+          target_device_types: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_device_count?: number
+          category?: string | null
+          compliance_score?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_evaluated_at?: string | null
+          name: string
+          policy_type?: string
+          settings?: Json
+          target_device_types?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_device_count?: number
+          category?: string | null
+          compliance_score?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          last_evaluated_at?: string | null
+          name?: string
+          policy_type?: string
+          settings?: Json
+          target_device_types?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       rmm_script_executions: {
         Row: {
           agent_id: string
