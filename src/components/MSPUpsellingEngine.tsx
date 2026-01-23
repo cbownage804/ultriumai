@@ -1,115 +1,18 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TrendingUp, Star, DollarSign, Calendar, Target, MessageSquare, CheckCircle } from 'lucide-react';
-
-interface UpsellingOpportunity {
-  id: string;
-  client_id: string;
-  client_name: string;
-  opportunity_type: string;
-  service_name: string;
-  current_spend: number;
-  potential_revenue: number;
-  confidence_score: number;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  status: 'identified' | 'contacted' | 'proposal_sent' | 'negotiating' | 'closed_won' | 'closed_lost';
-  reasons: string[];
-  action_items: string[];
-  estimated_close_date: string;
-}
+import { TrendingUp, Star, DollarSign, Calendar, Target, MessageSquare, CheckCircle, Inbox } from 'lucide-react';
+import { useMSPUpselling, UpsellingOpportunity } from "@/hooks/useMSPBusinessData";
 
 interface MSPUpsellingEngineProps {
   mspId: string;
 }
 
 export const MSPUpsellingEngine = ({ mspId }: MSPUpsellingEngineProps) => {
-  const [opportunities, setOpportunities] = useState<UpsellingOpportunity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockData: UpsellingOpportunity[] = [
-      {
-        id: '1',
-        client_id: 'client-1',
-        client_name: 'TechCorp Inc',
-        opportunity_type: 'Service Upgrade',
-        service_name: 'Premium Security Package',
-        current_spend: 2500,
-        potential_revenue: 4200,
-        confidence_score: 0.85,
-        priority: 'high',
-        status: 'identified',
-        reasons: [
-          'Recent security incidents in their industry',
-          'Current basic plan insufficient for compliance needs',
-          'CEO mentioned cybersecurity concerns in last meeting'
-        ],
-        action_items: [
-          'Schedule security assessment presentation',
-          'Prepare ROI analysis for premium features',
-          'Get compliance requirements documentation'
-        ],
-        estimated_close_date: '2024-02-15'
-      },
-      {
-        id: '2',
-        client_id: 'client-2',
-        client_name: 'RetailPlus Co',
-        opportunity_type: 'Additional Services',
-        service_name: 'Cloud Backup & Recovery',
-        current_spend: 1800,
-        potential_revenue: 2700,
-        confidence_score: 0.72,
-        priority: 'medium',
-        status: 'proposal_sent',
-        reasons: [
-          'Data loss incident last quarter',
-          'Growing data storage needs',
-          'Asked about backup solutions during support call'
-        ],
-        action_items: [
-          'Follow up on proposal status',
-          'Address any technical concerns',
-          'Schedule demo of recovery process'
-        ],
-        estimated_close_date: '2024-02-28'
-      },
-      {
-        id: '3',
-        client_id: 'client-3',
-        client_name: 'Healthcare Partners',
-        opportunity_type: 'Compliance',
-        service_name: 'HIPAA Compliance Package',
-        current_spend: 3200,
-        potential_revenue: 5800,
-        confidence_score: 0.91,
-        priority: 'urgent',
-        status: 'negotiating',
-        reasons: [
-          'HIPAA audit coming up next month',
-          'Current setup has compliance gaps',
-          'Budget approved for compliance initiatives'
-        ],
-        action_items: [
-          'Finalize contract terms',
-          'Prepare implementation timeline',
-          'Schedule compliance training session'
-        ],
-        estimated_close_date: '2024-02-10'
-      }
-    ];
-
-    setTimeout(() => {
-      setOpportunities(mockData);
-      setIsLoading(false);
-    }, 1000);
-  }, [mspId]);
+  const { opportunities, isLoading } = useMSPUpselling();
 
   const totalPotentialRevenue = opportunities.reduce((sum, opp) => sum + opp.potential_revenue, 0);
   const avgConfidenceScore = opportunities.length > 0 ?
@@ -144,6 +47,26 @@ export const MSPUpsellingEngine = ({ mspId }: MSPUpsellingEngineProps) => {
         </div>
       </div>
     );
+  }
+
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="p-4 bg-muted rounded-full mb-4">
+        <Inbox className="h-10 w-10 text-muted-foreground" />
+      </div>
+      <h3 className="text-xl font-semibold mb-2">No Upselling Opportunities</h3>
+      <p className="text-muted-foreground max-w-md mb-6">
+        Add clients to your MSP account to start identifying revenue opportunities with AI-powered analysis.
+      </p>
+      <Button>
+        <Target className="w-4 h-4 mr-2" />
+        Set Revenue Goals
+      </Button>
+    </div>
+  );
+
+  if (opportunities.length === 0) {
+    return <EmptyState />;
   }
 
   return (

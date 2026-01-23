@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,53 +9,24 @@ import {
   Users, 
   Building2, 
   DollarSign, 
-  TrendingUp, 
   AlertTriangle, 
   Shield, 
   Settings, 
   Plus,
   Search,
-  Filter,
   Download,
-  Bell,
-  Activity,
-  Globe,
-  User,
-  Network,
-  BarChart3
+  BarChart3,
+  Loader2
 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-
-interface MSPClient {
-  id: string;
-  name: string;
-  domain: string;
-  status: 'active' | 'trial' | 'suspended';
-  threats: number;
-  assets: number;
-  plan: 'basic' | 'professional' | 'enterprise';
-  monthlyRevenue: number;
-  lastScan: string;
-}
-
-interface ThreatSummary {
-  clientId: string;
-  clientName: string;
-  criticalThreats: number;
-  highThreats: number;
-  totalThreats: number;
-  lastUpdated: string;
-}
+import { useMSPDashboard } from "@/hooks/useMSPDashboard";
 
 const SafeWebMSPDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [clients, setClients] = useState<MSPClient[]>([]);
-  const [threatSummary, setThreatSummary] = useState<ThreatSummary[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Data is now loaded via the useMSPDashboard hook when available
-  // For now, keeping empty state until hook integration is complete
+  
+  const { clients, threatSummary, loading } = useMSPDashboard();
 
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

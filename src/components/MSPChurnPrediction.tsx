@@ -1,114 +1,18 @@
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AlertTriangle, TrendingDown, Users, Calendar, Heart, Phone, Mail, CheckCircle2 } from 'lucide-react';
-
-interface ChurnPrediction {
-  id: string;
-  client_id: string;
-  client_name: string;
-  churn_risk_score: number;
-  risk_level: 'low' | 'medium' | 'high' | 'critical';
-  contributing_factors: string[];
-  recommended_actions: string[];
-  last_engagement_date: string;
-  contract_renewal_date: string;
-  satisfaction_trend: 'improving' | 'stable' | 'declining';
-  support_ticket_trend: 'decreasing' | 'stable' | 'increasing';
-  payment_history_score: number;
-}
+import { AlertTriangle, TrendingDown, Users, Heart, Phone, Mail, CheckCircle2, Inbox } from 'lucide-react';
+import { useMSPChurnPrediction as useChurnData, ChurnPrediction } from "@/hooks/useMSPBusinessData";
 
 interface MSPChurnPredictionProps {
   mspId: string;
 }
 
 export const MSPChurnPrediction = ({ mspId }: MSPChurnPredictionProps) => {
-  const [predictions, setPredictions] = useState<ChurnPrediction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockData: ChurnPrediction[] = [
-      {
-        id: '1',
-        client_id: 'client-1',
-        client_name: 'TechCorp Inc',
-        churn_risk_score: 0.82,
-        risk_level: 'high',
-        contributing_factors: [
-          'Support ticket volume increased 150% last month',
-          'No engagement with account manager in 45 days',
-          'Contract renewal approaching in 30 days',
-          'Recent competitor pricing inquiry'
-        ],
-        recommended_actions: [
-          'Schedule urgent executive meeting',
-          'Conduct satisfaction survey',
-          'Offer service optimization review',
-          'Prepare retention offer'
-        ],
-        last_engagement_date: '2024-01-02',
-        contract_renewal_date: '2024-02-15',
-        satisfaction_trend: 'declining',
-        support_ticket_trend: 'increasing',
-        payment_history_score: 0.95
-      },
-      {
-        id: '2',
-        client_id: 'client-2',
-        client_name: 'RetailPlus Co',
-        churn_risk_score: 0.34,
-        risk_level: 'low',
-        contributing_factors: [
-          'Minor decrease in platform usage',
-          'Delayed payment by 5 days last month'
-        ],
-        recommended_actions: [
-          'Send monthly check-in email',
-          'Share new feature updates',
-          'Monitor usage patterns'
-        ],
-        last_engagement_date: '2024-01-12',
-        contract_renewal_date: '2024-06-20',
-        satisfaction_trend: 'stable',
-        support_ticket_trend: 'stable',
-        payment_history_score: 0.88
-      },
-      {
-        id: '3',
-        client_id: 'client-3',
-        client_name: 'FinanceFirst LLC',
-        churn_risk_score: 0.67,
-        risk_level: 'medium',
-        contributing_factors: [
-          'New IT director hired recently',
-          'Asked about contract termination clauses',
-          'Reduced service utilization by 25%',
-          'Missed last two quarterly review meetings'
-        ],
-        recommended_actions: [
-          'Introduction meeting with new IT director',
-          'Present case studies and value proposition',
-          'Offer pilot of additional services',
-          'Schedule immediate business review'
-        ],
-        last_engagement_date: '2024-01-08',
-        contract_renewal_date: '2024-04-10',
-        satisfaction_trend: 'declining',
-        support_ticket_trend: 'decreasing',
-        payment_history_score: 0.92
-      }
-    ];
-
-    setTimeout(() => {
-      setPredictions(mockData);
-      setIsLoading(false);
-    }, 1000);
-  }, [mspId]);
+  const { predictions, isLoading } = useChurnData();
 
   const riskLevelColor = {
     low: 'bg-green-500',
@@ -149,6 +53,26 @@ export const MSPChurnPrediction = ({ mspId }: MSPChurnPredictionProps) => {
         </div>
       </div>
     );
+  }
+
+  const EmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="p-4 bg-muted rounded-full mb-4">
+        <Inbox className="h-10 w-10 text-muted-foreground" />
+      </div>
+      <h3 className="text-xl font-semibold mb-2">No Churn Predictions</h3>
+      <p className="text-muted-foreground max-w-md mb-6">
+        Once you have active clients, our AI will analyze engagement patterns and predict churn risk to help you retain customers.
+      </p>
+      <Button>
+        <Heart className="w-4 h-4 mr-2" />
+        Start Retention Campaign
+      </Button>
+    </div>
+  );
+
+  if (predictions.length === 0) {
+    return <EmptyState />;
   }
 
   return (
