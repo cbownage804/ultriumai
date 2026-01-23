@@ -534,6 +534,264 @@ export const useSafeOps = () => {
     }
   };
 
+  // Load patches
+  const loadPatches = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('rmm_patches')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const patchesData = data || [];
+      setPatches(patchesData as unknown as RMMPatch[]);
+      
+      const pendingPatches = patchesData.filter(p => p.status === 'pending').length;
+      setStats(prev => ({ ...prev, pendingPatches }));
+      
+      return patchesData;
+    } catch (error) {
+      console.error('Error loading patches:', error);
+      return [];
+    }
+  }, [user]);
+
+  // Create patch
+  const createPatch = async (patchData: Partial<RMMPatch>) => {
+    if (!user) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('rmm_patches')
+        .insert({
+          user_id: user.id,
+          title: patchData.title || 'New Patch',
+          description: patchData.description,
+          category: patchData.category || 'security',
+          severity: patchData.severity || 'medium',
+          status: patchData.status || 'pending',
+          kb_article: patchData.kb_article,
+          release_date: patchData.release_date,
+          reboot_required: patchData.reboot_required ?? false
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Patch Created",
+        description: "New patch has been added"
+      });
+      
+      await loadPatches();
+      return data;
+    } catch (error) {
+      console.error('Error creating patch:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create patch",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Update patch
+  const updatePatch = async (patchId: string, updates: Partial<RMMPatch>) => {
+    try {
+      const { data, error } = await supabase
+        .from('rmm_patches')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', patchId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      await loadPatches();
+      return data;
+    } catch (error) {
+      console.error('Error updating patch:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update patch",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Deploy patch
+  const deployPatch = async (patchId: string, deviceId?: string) => {
+    try {
+      const updates: Record<string, unknown> = {
+        status: 'installing',
+        device_id: deviceId,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('rmm_patches')
+        .update(updates)
+        .eq('id', patchId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Patch Deploying",
+        description: "Patch deployment has started"
+      });
+      
+      await loadPatches();
+      return data;
+    } catch (error) {
+      console.error('Error deploying patch:', error);
+      toast({
+        title: "Error",
+        description: "Failed to deploy patch",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Load policies
+  const loadPolicies = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('rmm_policies')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const policiesData = data || [];
+      setPolicies(policiesData as unknown as RMMPolicy[]);
+      
+      const activePolicies = policiesData.filter(p => p.is_active).length;
+      setStats(prev => ({ ...prev, activePolicies }));
+      
+      return policiesData;
+    } catch (error) {
+      console.error('Error loading policies:', error);
+      return [];
+    }
+  }, [user]);
+
+  // Create policy
+  const createPolicy = async (policyData: Partial<RMMPolicy>) => {
+    if (!user) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('rmm_policies')
+        .insert({
+          user_id: user.id,
+          name: policyData.name || 'New Policy',
+          description: policyData.description,
+          policy_type: policyData.policy_type || 'compliance',
+          category: policyData.category,
+          settings: policyData.settings || {},
+          is_active: policyData.is_active ?? true,
+          target_device_types: policyData.target_device_types || ['workstation'],
+          compliance_score: 100
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Policy Created",
+        description: "New policy has been created"
+      });
+      
+      await loadPolicies();
+      return data;
+    } catch (error) {
+      console.error('Error creating policy:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create policy",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Update policy
+  const updatePolicy = async (policyId: string, updates: Partial<RMMPolicy>) => {
+    try {
+      const { data, error } = await supabase
+        .from('rmm_policies')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', policyId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      toast({
+        title: "Policy Updated",
+        description: "Policy has been updated"
+      });
+      
+      await loadPolicies();
+      return data;
+    } catch (error) {
+      console.error('Error updating policy:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update policy",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
+
+  // Toggle policy active status
+  const togglePolicyActive = async (policyId: string) => {
+    const policy = policies.find(p => p.id === policyId);
+    if (!policy) return null;
+    
+    return updatePolicy(policyId, { is_active: !policy.is_active });
+  };
+
+  // Delete policy
+  const deletePolicy = async (policyId: string) => {
+    try {
+      const { error } = await supabase
+        .from('rmm_policies')
+        .delete()
+        .eq('id', policyId);
+
+      if (error) throw error;
+      
+      setPolicies(prev => prev.filter(p => p.id !== policyId));
+      toast({
+        title: "Policy Deleted",
+        description: "Policy has been removed"
+      });
+      return true;
+    } catch (error) {
+      console.error('Error deleting policy:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete policy",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   // Refresh all data
   const refreshAll = useCallback(async () => {
     setIsLoading(true);
@@ -541,10 +799,12 @@ export const useSafeOps = () => {
       loadDevices(),
       loadAlerts(),
       loadScripts(),
-      loadExecutions()
+      loadExecutions(),
+      loadPatches(),
+      loadPolicies()
     ]);
     setIsLoading(false);
-  }, [loadDevices, loadAlerts, loadScripts, loadExecutions]);
+  }, [loadDevices, loadAlerts, loadScripts, loadExecutions, loadPatches, loadPolicies]);
 
   // Initialize data and set up real-time subscriptions
   useEffect(() => {
@@ -564,7 +824,6 @@ export const useSafeOps = () => {
       .channel('safeops-alerts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rmm_alerts' }, (payload) => {
         loadAlerts();
-        // Show toast for new critical alerts
         if (payload.eventType === 'INSERT') {
           const newAlert = payload.new as { severity?: string; title?: string };
           if (newAlert.severity === 'critical') {
@@ -585,12 +844,28 @@ export const useSafeOps = () => {
       })
       .subscribe();
 
+    const patchesChannel = supabase
+      .channel('safeops-patches')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rmm_patches' }, () => {
+        loadPatches();
+      })
+      .subscribe();
+
+    const policiesChannel = supabase
+      .channel('safeops-policies')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rmm_policies' }, () => {
+        loadPolicies();
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(devicesChannel);
       supabase.removeChannel(alertsChannel);
       supabase.removeChannel(executionsChannel);
+      supabase.removeChannel(patchesChannel);
+      supabase.removeChannel(policiesChannel);
     };
-  }, [user, refreshAll, loadDevices, loadAlerts, loadExecutions, toast]);
+  }, [user, refreshAll, loadDevices, loadAlerts, loadExecutions, loadPatches, loadPolicies, toast]);
 
   // Helper functions
   const getDevicesByType = (type: string) => devices.filter(d => d.device_type === type);
@@ -602,6 +877,9 @@ export const useSafeOps = () => {
   );
   const getOpenAlerts = () => alerts.filter(a => a.status === 'open');
   const getCriticalAlerts = () => alerts.filter(a => a.severity === 'critical' && a.status === 'open');
+  const getPendingPatches = () => patches.filter(p => p.status === 'pending');
+  const getCriticalPatches = () => patches.filter(p => p.severity === 'critical' && p.status === 'pending');
+  const getActivePolicies = () => policies.filter(p => p.is_active);
 
   return {
     // Data
@@ -609,6 +887,8 @@ export const useSafeOps = () => {
     alerts,
     scripts,
     executions,
+    patches,
+    policies,
     stats,
     isLoading,
     
@@ -630,12 +910,28 @@ export const useSafeOps = () => {
     loadScripts,
     loadExecutions,
     
+    // Patch operations
+    createPatch,
+    updatePatch,
+    deployPatch,
+    loadPatches,
+    
+    // Policy operations
+    createPolicy,
+    updatePolicy,
+    togglePolicyActive,
+    deletePolicy,
+    loadPolicies,
+    
     // Helpers
     getDevicesByType,
     getDevicesByStatus,
     getCriticalDevices,
     getOpenAlerts,
     getCriticalAlerts,
+    getPendingPatches,
+    getCriticalPatches,
+    getActivePolicies,
     refreshAll
   };
 };
