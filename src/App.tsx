@@ -81,7 +81,7 @@ import Blog from '@/pages/Blog';
 import Documentation from '@/pages/Documentation';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
-import SafeScanProductPage from '@/pages/products/SafeScanPage';
+
 import { SafeShieldApp } from '@/components/apps/SafeShieldApp';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
 import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
@@ -101,14 +101,11 @@ import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
 import SafeKBDemoPage from '@/pages/demos/SafeKBDemoPage';
 import SafeSOCDemoPage from '@/pages/demos/SafeSOCDemoPage';
 import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
-import SafeLinkPage from '@/pages/products/SafeLinkPage';
-import SafeDocPage from '@/pages/products/SafeDocPage';
-import SafePassPage from '@/pages/products/SafePassPage';
 import SecuritySuitePage from '@/pages/products/SecuritySuitePage';
 import OperationsSuitePage from '@/pages/products/OperationsSuitePage';
 import HelpdeskPage from '@/pages/products/HelpdeskPage';
 import RMMPage from '@/pages/products/RMMPage';
-import SafeTrackProductPage from '@/pages/products/SafeTrackPage';
+import SafeSuiteFeatures from '@/pages/safesuite/SafeSuiteFeatures';
 
 // SafePass Standalone App
 import SafePassLayout from '@/layouts/SafePassLayout';
@@ -119,7 +116,7 @@ import SafePassImport from '@/pages/safepass/SafePassImport';
 import SafePassExport from '@/pages/safepass/SafePassExport';
 import SafePassSecurity from '@/pages/safepass/SafePassSecurity';
 import SafePassBreachMonitor from '@/pages/safepass/SafePassBreachMonitor';
-import SafeWebPage from '@/pages/products/SafeWebPage';
+
 import SafeScorePage from '@/pages/products/SafeScorePage';
 import SafeNetPage from '@/pages/products/SafeNetPage';
 import TicketingPage from '@/pages/products/TicketingPage';
@@ -377,10 +374,10 @@ function AppRouter() {
         <Route path="/products/operations" element={<OperationsSuitePage />} />
         <Route path="/products/helpdesk" element={<HelpdeskPage />} />
         <Route path="/products/rmm" element={<RMMPage />} />
-        <Route path="/products/safetrack" element={<SafeTrackProductPage />} />
-        <Route path="/products/safepass" element={<SafePassPage />} />
-        <Route path="/products/safeweb" element={<SafeWebPage />} />
-        <Route path="/products/safescan" element={<SafeScanProductPage />} />
+        <Route path="/products/safetrack" element={<Navigate to="/safesuite/features" replace />} />
+        <Route path="/products/safepass" element={<Navigate to="/safesuite/features" replace />} />
+        <Route path="/products/safeweb" element={<Navigate to="/safesuite/features" replace />} />
+        <Route path="/products/safescan" element={<Navigate to="/safesuite/features" replace />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
         <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
         <Route path="/demos/rmm" element={<RMMDemoPage />} />
@@ -391,9 +388,10 @@ function AppRouter() {
         <Route path="/demos/safelink" element={<Navigate to="/demos/safescan" replace />} />
         <Route path="/demos/safemail" element={<Navigate to="/demos/safescan" replace />} />
         <Route path="/demos/safedoc" element={<Navigate to="/demos/safescan" replace />} />
-        <Route path="/products/safelink" element={<Navigate to="/products/safescan" replace />} />
-        <Route path="/products/safemail" element={<Navigate to="/products/safescan" replace />} />
-        <Route path="/products/safedoc" element={<Navigate to="/products/safescan" replace />} />
+        <Route path="/products/safelink" element={<Navigate to="/safesuite/features" replace />} />
+        <Route path="/products/safemail" element={<Navigate to="/safesuite/features" replace />} />
+        <Route path="/products/safedoc" element={<Navigate to="/safesuite/features" replace />} />
+        <Route path="/safesuite/features" element={<SafeSuiteFeatures />} />
         <Route path="/demos/safeshield" element={<AntivirusDemoPage />} />
         <Route path="/demos/safecenter" element={<SafeCenterDemoPage />} />
         <Route path="/demos/safekb" element={<SafeKBDemoPage />} />
@@ -514,7 +512,7 @@ function AppRouter() {
         } />
         <Route path="/dashboard/safescan" element={
           <ProtectedRoute>
-            <SafeScanProductPage />
+            <Navigate to="/safesuite/features" replace />
           </ProtectedRoute>
         } />
         <Route path="/dashboard/safenet" element={

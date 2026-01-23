@@ -45,6 +45,7 @@ export const SafeSuiteSubdomainRoutes = () => {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<SafeSuiteLanding />} />
+      <Route path="/features" element={<SafeSuiteLanding />} />
       <Route path="/auth" element={<SafeSuiteAuth />} />
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />

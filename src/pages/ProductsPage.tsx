@@ -45,15 +45,16 @@ const productCategories = [
     products: ['AI Responses', 'Smart Routing', 'SLA Management', 'Knowledge Base', 'Multi-Channel']
   },
   {
-    id: 'safepass',
-    name: 'SafePass™',
-    description: 'Enterprise password management with breach monitoring',
-    icon: Key,
-    color: 'from-green-500 to-emerald-500',
-    bgColor: 'bg-green-500/10',
-    textColor: 'text-green-500',
-    href: '/safepass',
-    products: ['Password Vault', 'Breach Monitoring', 'Secure Sharing', 'Browser Extension']
+    id: 'safesuite',
+    name: 'SafeSuite™',
+    description: 'Complete security bundle: passwords, scanning, dark web, and assets',
+    icon: Shield,
+    color: 'from-emerald-500 to-green-500',
+    bgColor: 'bg-emerald-500/10',
+    textColor: 'text-emerald-500',
+    href: '/safesuite/features',
+    popular: true,
+    products: ['SafePass', 'SafeScan', 'SafeWeb', 'SafeTrack']
   },
   {
     id: 'safenet',
@@ -65,17 +66,6 @@ const productCategories = [
     textColor: 'text-indigo-500',
     href: '/products/safenet',
     products: ['Network Scanning', 'Asset Discovery', 'Vulnerability Detection', 'Topology Mapping']
-  },
-  {
-    id: 'safescan',
-    name: 'SafeScan™',
-    description: 'AI-powered email, link, and document scanning',
-    icon: Search,
-    color: 'from-amber-500 to-yellow-500',
-    bgColor: 'bg-amber-500/10',
-    textColor: 'text-amber-500',
-    href: '/products/safescan',
-    products: ['Email Scanning', 'Link Analysis', 'Document Security', 'AI Threat Detection']
   }
 ];
 

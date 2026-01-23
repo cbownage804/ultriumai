@@ -23,7 +23,7 @@ const SecurityAppsSection = () => {
       riskTypes: ['Phishing', 'Malware', 'Trojans', 'Suspicious Links', 'Document Threats'],
       category: 'Unified Security',
       demoUrl: '/demos/safescan',
-      productUrl: '/products/safescan'
+      productUrl: '/safesuite/features'
     },
     {
       id: 'safepass',
@@ -34,7 +34,7 @@ const SecurityAppsSection = () => {
       riskTypes: ['Weak Passwords', 'Breached Credentials', 'Policy Violations'],
       category: 'Password Security',
       demoUrl: '/demos/safepass',
-      productUrl: '/products/safepass'
+      productUrl: '/safesuite/features'
     },
     {
       id: 'safeweb',
@@ -45,7 +45,7 @@ const SecurityAppsSection = () => {
       riskTypes: ['Data Breaches', 'Credential Theft', 'Identity Theft'],
       category: 'Threat Intelligence',
       demoUrl: '/demos/safeweb',
-      productUrl: '/products/safeweb'
+      productUrl: '/safesuite/features'
     },
     {
       id: 'safescore',
