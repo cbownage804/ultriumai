@@ -130,14 +130,6 @@ const Navigation = () => {
                   SafeDoc™ - Document Scanner
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Endpoint Protection</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/antivirus')}>
-                  SafeAV™ - Antivirus
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safemdr')}>
-                  SafeEDR™ - Detection & Response
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Operations</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/rmm')}>
                   SafeOps™ - Remote Monitoring
