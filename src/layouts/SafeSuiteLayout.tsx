@@ -169,44 +169,65 @@ function NavLink({
   isActive,
   isLocked,
   currentPath,
-  onClick
+  onClick,
+  isExpanded,
+  onToggle
 }: {
   item: NavItem;
   isActive: boolean;
   isLocked: boolean;
   currentPath: string;
   onClick?: () => void;
+  isExpanded: boolean;
+  onToggle: () => void;
 }) {
   const Icon = item.icon;
   const hasSubItems = Boolean(item.subItems?.length);
 
+  const handleToggle = (e: React.MouseEvent) => {
+    if (hasSubItems) {
+      e.preventDefault();
+      onToggle();
+    }
+  };
+
   return (
     <div className="space-y-1">
-      <Link
-        to={item.path}
-        onClick={onClick}
-        className={cn(
-          'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200',
-          'hover:bg-accent hover:text-accent-foreground',
-          isActive && 'bg-primary/10 text-primary font-medium',
-          isLocked && 'opacity-60'
+      <div className="flex items-center">
+        <Link
+          to={item.path}
+          onClick={onClick}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 flex-1',
+            'hover:bg-accent hover:text-accent-foreground',
+            isActive && 'bg-primary/10 text-primary font-medium',
+            isLocked && 'opacity-60'
+          )}
+        >
+          {item.productLogo ? (
+            <img src={item.productLogo} alt={item.label} className="h-6 w-6 rounded object-contain" />
+          ) : Icon ? (
+            <Icon className="h-5 w-5" />
+          ) : null}
+          <span className="flex-1">{item.label}</span>
+          {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+        </Link>
+        {hasSubItems && (
+          <button
+            onClick={handleToggle}
+            className="p-2 hover:bg-accent rounded-md transition-colors"
+            aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          >
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </button>
         )}
-      >
-        {item.productLogo ? (
-          <img src={item.productLogo} alt={item.label} className="h-6 w-6 rounded object-contain" />
-        ) : Icon ? (
-          <Icon className="h-5 w-5" />
-        ) : null}
-        <span className="flex-1">{item.label}</span>
-        {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
-        {isActive && (hasSubItems ? (
-          <ChevronDown className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        ))}
-      </Link>
+      </div>
 
-      {hasSubItems && isActive && (
+      {hasSubItems && isExpanded && (
         <div className="ml-8 space-y-1">
           {item.subItems!.map((sub) => {
             const subActive = currentPath === sub.path;
@@ -236,6 +257,28 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const { tier, tierConfig } = useSafeSuiteSubscription();
   const navItems = getNavItems();
   const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
+
+  // Track which nav items are expanded
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(() => {
+    // Auto-expand the currently active section
+    const activeItem = navItems.find(item => 
+      location.pathname === item.path || 
+      (item.path !== getSafeSuitePath('/dashboard') && location.pathname.startsWith(item.path))
+    );
+    return activeItem ? new Set([activeItem.id]) : new Set();
+  });
+
+  const toggleExpanded = (itemId: string) => {
+    setExpandedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  };
 
   const normalizedPath = isSafeSuiteDomain()
     ? location.pathname
@@ -280,7 +323,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
             (item.path !== getSafeSuitePath('/dashboard') && location.pathname.startsWith(item.path));
@@ -294,6 +337,8 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
               isLocked={isLocked}
               currentPath={location.pathname}
               onClick={onItemClick}
+              isExpanded={expandedItems.has(item.id)}
+              onToggle={() => toggleExpanded(item.id)}
             />
           );
         })}
