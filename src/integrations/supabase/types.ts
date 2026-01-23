@@ -5022,6 +5022,7 @@ export type Database = {
           resolved_at: string | null
           sla_due_at: string | null
           sla_policy_id: string | null
+          source: string | null
           status: string | null
           tags: string[] | null
           title: string
@@ -5047,6 +5048,7 @@ export type Database = {
           resolved_at?: string | null
           sla_due_at?: string | null
           sla_policy_id?: string | null
+          source?: string | null
           status?: string | null
           tags?: string[] | null
           title: string
@@ -5072,6 +5074,7 @@ export type Database = {
           resolved_at?: string | null
           sla_due_at?: string | null
           sla_policy_id?: string | null
+          source?: string | null
           status?: string | null
           tags?: string[] | null
           title?: string
