@@ -148,21 +148,32 @@ Please provide a JSON response with:
 
     // Update helpdesk_tickets with AI solution
     if (ticketId) {
+      // First get current device_context to merge
+      const { data: currentTicket } = await supabase
+        .from('helpdesk_tickets')
+        .select('device_context')
+        .eq('id', ticketId)
+        .maybeSingle();
+
+      const currentContext = (currentTicket?.device_context as Record<string, unknown>) || {};
+      const updatedContext = {
+        ...currentContext,
+        ai_analysis: {
+          confidence: solutionData.confidence,
+          auto_resolvable: solutionData.auto_resolvable,
+          estimated_time: solutionData.estimated_time,
+          severity_assessment: solutionData.severity_assessment,
+          recommended_actions: solutionData.recommended_actions,
+          analyzed_at: new Date().toISOString()
+        }
+      };
+
       const { error } = await supabase
         .from('helpdesk_tickets')
         .update({
           resolution_notes: `AI Suggested Solution (Confidence: ${solutionData.confidence}%):\n\n${solutionData.solution}`,
           updated_at: new Date().toISOString(),
-          device_context: supabase.sql`COALESCE(device_context, '{}'::jsonb) || ${JSON.stringify({
-            ai_analysis: {
-              confidence: solutionData.confidence,
-              auto_resolvable: solutionData.auto_resolvable,
-              estimated_time: solutionData.estimated_time,
-              severity_assessment: solutionData.severity_assessment,
-              recommended_actions: solutionData.recommended_actions,
-              analyzed_at: new Date().toISOString()
-            }
-          })}::jsonb`
+          device_context: updatedContext
         })
         .eq('id', ticketId);
 
@@ -265,6 +276,22 @@ async function autoResolveTicket(supabase: ReturnType<typeof createClient>, tick
   const resolutionNotes = matchedPattern?.resolution || 
     `Auto-resolved by AI with ${aiConfidence}% confidence. Solution applied automatically based on pattern recognition.`;
 
+  // Get current device_context to merge
+  const { data: currentTicket } = await supabase
+    .from('helpdesk_tickets')
+    .select('device_context')
+    .eq('id', ticketId)
+    .maybeSingle();
+
+  const currentContext = (currentTicket?.device_context as Record<string, unknown>) || {};
+  const updatedContext = {
+    ...currentContext,
+    auto_resolved: true,
+    resolved_by_ai: true,
+    resolution_confidence: aiConfidence,
+    resolved_at: new Date().toISOString()
+  };
+
   const { error } = await supabase
     .from('helpdesk_tickets')
     .update({
@@ -272,12 +299,7 @@ async function autoResolveTicket(supabase: ReturnType<typeof createClient>, tick
       resolved_at: new Date().toISOString(),
       resolution_notes: resolutionNotes,
       updated_at: new Date().toISOString(),
-      device_context: supabase.sql`COALESCE(device_context, '{}'::jsonb) || ${JSON.stringify({
-        auto_resolved: true,
-        resolved_by_ai: true,
-        resolution_confidence: aiConfidence,
-        resolved_at: new Date().toISOString()
-      })}::jsonb`
+      device_context: updatedContext
     })
     .eq('id', ticketId);
 
