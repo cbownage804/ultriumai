@@ -17,27 +17,81 @@ import {
   Target,
   Settings,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Scan,
+  Key,
+  Globe,
+  Eye
 } from "lucide-react";
 import { AnalyticsDashboard } from "@/components/analytics/AnalyticsDashboard";
 import { SecurityMetrics } from "@/components/analytics/SecurityMetrics";
 import { ComplianceAnalytics } from "@/components/analytics/ComplianceAnalytics";
 import { PerformanceAnalytics } from "@/components/analytics/PerformanceAnalytics";
 import { Header } from "@/components/layout/Header";
+import { useSafeSuiteAnalytics } from "@/hooks/useSafeSuiteAnalytics";
 
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('7_days');
+  const { metrics, loading, refreshData } = useSafeSuiteAnalytics(timeRange);
   const [refreshing, setRefreshing] = useState(false);
 
-  // TODO: Replace with real analytics data from Supabase
-  const keyMetrics = [];
-
-  const refreshData = async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await refreshData();
     setRefreshing(false);
   };
+
+  // Build key metrics from real data
+  const keyMetrics = [
+    {
+      title: 'Total Scans',
+      value: metrics.scans.total.toString(),
+      icon: Scan,
+      color: 'text-blue-500',
+      trend: metrics.scans.weeklyChange >= 0 ? 'up' : 'down',
+      change: `${Math.abs(metrics.scans.weeklyChange)}%`
+    },
+    {
+      title: 'Threats Detected',
+      value: metrics.scans.threats.toString(),
+      icon: AlertTriangle,
+      color: 'text-red-500',
+      trend: 'down',
+      change: '0%'
+    },
+    {
+      title: 'Passwords Stored',
+      value: metrics.passwords.total.toString(),
+      icon: Key,
+      color: 'text-amber-500',
+      trend: 'up',
+      change: '0%'
+    },
+    {
+      title: 'Password Strength',
+      value: `${metrics.passwords.averageStrength}%`,
+      icon: Shield,
+      color: 'text-green-500',
+      trend: metrics.passwords.averageStrength >= 70 ? 'up' : 'down',
+      change: '0%'
+    },
+    {
+      title: 'Dark Web Monitors',
+      value: metrics.darkWeb.monitored.toString(),
+      icon: Eye,
+      color: 'text-violet-500',
+      trend: 'up',
+      change: '0%'
+    },
+    {
+      title: 'Exposures Found',
+      value: metrics.darkWeb.exposures.toString(),
+      icon: Globe,
+      color: metrics.darkWeb.exposures > 0 ? 'text-red-500' : 'text-green-500',
+      trend: metrics.darkWeb.exposures > 0 ? 'down' : 'up',
+      change: '0%'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,9 +120,9 @@ const Analytics = () => {
               <SelectItem value="90_days">Last 90 Days</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={refreshData} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
+          <Button variant="outline" onClick={handleRefresh} disabled={refreshing || loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing || loading ? 'animate-spin' : ''}`} />
+            {loading ? 'Loading...' : 'Refresh'}
           </Button>
           <Button variant="outline">
             <Filter className="h-4 w-4 mr-2" />
