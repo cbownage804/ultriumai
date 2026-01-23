@@ -1,5 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.0";
+import { Resend } from "npm:resend@2.0.0";
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -112,11 +115,59 @@ async function handleTeamInvite(req: Request, supabaseClient: any, user: any) {
     });
   }
 
-  // Send invitation email (mock for now)
-  const inviteUrl = `${Deno.env.get('SITE_URL')}/accept-invite?token=${token}`;
+  // Send invitation email
+  const siteUrl = Deno.env.get('SITE_URL') || 'https://ultriumai.lovable.app';
+  const inviteUrl = `${siteUrl}/accept-invite?token=${token}`;
   
-  // Here you would integrate with your email service
-  console.log(`Invitation sent to ${email}: ${inviteUrl}`);
+  try {
+    await resend.emails.send({
+      from: "SafeSuite Team <team@ultriumai.com>",
+      to: [email],
+      subject: `You've been invited to join ${team.name} on SafeSuite`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #10b981; margin-bottom: 10px;">You're Invited! 🎉</h1>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 30px; border-radius: 8px; margin-bottom: 30px;">
+            <p style="margin-top: 0;">You've been invited to join <strong>${team.name}</strong> on SafeSuite.</p>
+            <p>Your role will be: <strong>${role}</strong></p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${inviteUrl}" 
+                 style="background: #10b981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
+                Accept Invitation
+              </a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; margin-bottom: 0;">
+              This invitation expires in 7 days. If you didn't expect this invitation, you can safely ignore this email.
+            </p>
+          </div>
+          
+          <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center; color: #666;">
+            <p style="font-size: 14px;">
+              © ${new Date().getFullYear()} UltriumAI. All rights reserved.<br>
+              <a href="https://ultriumai.com/privacy" style="color: #666;">Privacy</a> • 
+              <a href="https://ultriumai.com/terms" style="color: #666;">Terms</a>
+            </p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    console.log(`Invitation email sent successfully to ${email}`);
+  } catch (emailError) {
+    console.error('Failed to send invitation email:', emailError);
+    // Don't fail the invitation creation if email fails
+  }
 
   return new Response(JSON.stringify({ 
     success: true, 

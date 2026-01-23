@@ -151,12 +151,12 @@ export default function SafeSuiteLanding() {
                         </li>
                       ))}
                     </ul>
-                    <a href={`https://ultriumai.com/products/${productKey}`} className="block mt-4">
+                    <Link to="/safesuite/features" className="block mt-4">
                       <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10">
-                        Learn More
+                        Explore Features
                         <ArrowRight className="ml-2 h-3 w-3" />
                       </Button>
-                    </a>
+                    </Link>
                   </CardContent>
                 </Card>
               );
@@ -273,6 +273,9 @@ export default function SafeSuiteLanding() {
               <span className="font-semibold">SafeSuite</span>
               <span className="text-muted-foreground">by UltriumAI</span>
             </div>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} UltriumAI. All rights reserved.
+            </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
               <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
