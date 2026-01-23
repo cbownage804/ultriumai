@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -8,127 +7,26 @@ import {
   TrendingUp, 
   DollarSign, 
   Target, 
-  Zap,
   ArrowUp,
-  ArrowDown,
   Calculator,
   Brain,
-  Sparkles
+  Sparkles,
+  Inbox
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-
-interface RevenueOptimization {
-  client_id: string;
-  company_name: string;
-  current_rate: number;
-  suggested_rate: number;
-  potential_increase: number;
-  confidence_score: number;
-  reasoning: string[];
-  risk_level: 'low' | 'medium' | 'high';
-  market_data: {
-    avg_market_rate: number;
-    competitor_rates: number[];
-    demand_indicator: number;
-  };
-}
+import { useMSPRevenueOptimizer, RevenueOptimization } from "@/hooks/useMSPRevenueOptimizer";
 
 export const MSPRevenueOptimizer = () => {
-  const [optimizations, setOptimizations] = useState<RevenueOptimization[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalPotential, setTotalPotential] = useState(0);
+  const { optimizations, loading, totalPotential, refresh, applyPriceIncrease } = useMSPRevenueOptimizer();
   const { toast } = useToast();
 
-  useEffect(() => {
-    generateRevenueOptimizations();
-  }, []);
-
-  const generateRevenueOptimizations = async () => {
+  const handleApplyIncrease = async (optimization: RevenueOptimization) => {
     try {
-      setLoading(true);
-
-      // Get MSP clients data
-      const { data: mspData } = await supabase.auth.getUser();
-      if (!mspData.user) return;
-
-      const { data: msps } = await supabase
-        .from('msps')
-        .select('*')
-        .eq('user_id', mspData.user.id);
-
-      if (!msps || msps.length === 0) return;
-
-      const { data: clients } = await supabase
-        .from('msp_clients')
-        .select('*')
-        .eq('msp_id', msps[0].id);
-
-      if (!clients) return;
-
-      // Generate AI-powered pricing optimizations
-      const mockOptimizations: RevenueOptimization[] = clients.map(client => {
-        const currentRate = client.monthly_rate || 2500;
-        const riskFactor = Math.random();
-        const marketMultiplier = 1.1 + (Math.random() * 0.4); // 10-50% increase potential
-        const suggestedRate = Math.round(currentRate * marketMultiplier);
-        const increase = suggestedRate - currentRate;
-        
-        return {
-          client_id: client.id,
-          company_name: client.company_name,
-          current_rate: currentRate,
-          suggested_rate: suggestedRate,
-          potential_increase: increase,
-          confidence_score: Math.round(80 + (Math.random() * 15)),
-          reasoning: [
-            'Client security posture improved significantly',
-            'Market rates have increased 12% in your area',
-            'Low churn risk based on engagement metrics',
-            'Additional security services can be bundled'
-          ].slice(0, 2 + Math.floor(Math.random() * 3)),
-          risk_level: riskFactor < 0.3 ? 'low' : riskFactor < 0.7 ? 'medium' : 'high',
-          market_data: {
-            avg_market_rate: Math.round(currentRate * 1.15),
-            competitor_rates: [
-              Math.round(currentRate * 0.9),
-              Math.round(currentRate * 1.2),
-              Math.round(currentRate * 1.05)
-            ],
-            demand_indicator: Math.round(75 + (Math.random() * 20))
-          }
-        };
-      });
-
-      setOptimizations(mockOptimizations);
-      setTotalPotential(mockOptimizations.reduce((sum, opt) => sum + opt.potential_increase, 0));
-    } catch (error) {
-      console.error('Error generating revenue optimizations:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate revenue optimizations",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const applyPriceIncrease = async (optimization: RevenueOptimization) => {
-    try {
-      await supabase
-        .from('msp_clients')
-        .update({ monthly_rate: optimization.suggested_rate })
-        .eq('id', optimization.client_id);
-
+      await applyPriceIncrease(optimization);
       toast({
         title: "Price Updated",
         description: `${optimization.company_name} rate updated to $${optimization.suggested_rate}/month`,
       });
-
-      // Remove from optimizations list
-      setOptimizations(prev => prev.filter(opt => opt.client_id !== optimization.client_id));
-      setTotalPotential(prev => prev - optimization.potential_increase);
     } catch (error) {
       toast({
         title: "Error",
@@ -155,6 +53,42 @@ export const MSPRevenueOptimizer = () => {
     );
   }
 
+  if (optimizations.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Brain className="h-6 w-6 text-primary" />
+              AI Revenue Optimizer
+            </h2>
+            <p className="text-muted-foreground">
+              AI-powered pricing suggestions to maximize your revenue
+            </p>
+          </div>
+          <Button onClick={refresh} disabled={loading}>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Refresh Analysis
+          </Button>
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="p-4 bg-muted rounded-full mb-4">
+            <Inbox className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2">No Optimization Opportunities</h3>
+          <p className="text-muted-foreground max-w-md mb-6">
+            Add clients to your MSP account to start identifying revenue optimization opportunities with AI-powered analysis.
+          </p>
+          <Button variant="outline">
+            <Target className="w-4 h-4 mr-2" />
+            Add Your First Client
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -168,7 +102,7 @@ export const MSPRevenueOptimizer = () => {
             AI-powered pricing suggestions to maximize your revenue
           </p>
         </div>
-        <Button onClick={generateRevenueOptimizations} disabled={loading}>
+        <Button onClick={refresh} disabled={loading}>
           <Sparkles className="h-4 w-4 mr-2" />
           Refresh Analysis
         </Button>
@@ -273,7 +207,7 @@ export const MSPRevenueOptimizer = () => {
               {/* Actions */}
               <div className="flex gap-2">
                 <Button 
-                  onClick={() => applyPriceIncrease(optimization)}
+                  onClick={() => handleApplyIncrease(optimization)}
                   className="flex-1"
                   size="sm"
                 >
@@ -289,15 +223,6 @@ export const MSPRevenueOptimizer = () => {
           </Card>
         ))}
       </div>
-
-      {optimizations.length === 0 && (
-        <Alert>
-          <Target className="h-4 w-4" />
-          <AlertDescription>
-            All client pricing is optimized! Your rates are aligned with market standards.
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 };

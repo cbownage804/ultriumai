@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Building2, Users, Settings, CheckCircle, Globe, Phone, Mail, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface OnboardingData {
   // Company Info
@@ -101,6 +103,7 @@ export const ClientOnboardingFlow = ({ onComplete }: { onComplete?: () => void }
   const [data, setData] = useState<OnboardingData>(initialData);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const steps = [
     { title: "Company Information", icon: Building2, description: "Basic company details" },
@@ -151,10 +154,76 @@ export const ClientOnboardingFlow = ({ onComplete }: { onComplete?: () => void }
   };
 
   const handleSubmit = async () => {
+    if (!user?.id) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to onboard clients.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // TODO: Submit to Supabase MSP clients endpoint
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      // Get or create MSP for current user
+      let mspId: string;
+      
+      const { data: existingMsps } = await supabase
+        .from('msps')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (existingMsps && existingMsps.length > 0) {
+        mspId = existingMsps[0].id;
+      } else {
+        // Create new MSP record
+        const { data: newMsp, error: mspError } = await supabase
+          .from('msps')
+          .insert({
+            user_id: user.id,
+            company_name: 'My MSP',
+            contact_email: user.email || ''
+          })
+          .select('id')
+          .single();
+
+        if (mspError) throw mspError;
+        mspId = newMsp.id;
+      }
+
+      // Map subscription tier to monthly rate
+      const tierRates: { [key: string]: number } = {
+        starter: 99,
+        professional: 299,
+        enterprise: 599,
+        custom: 999
+      };
+
+      // Insert the new client
+      const { error: clientError } = await supabase
+        .from('msp_clients')
+        .insert({
+          msp_id: mspId,
+          company_name: data.companyName,
+          domain: data.domain,
+          contact_name: data.primaryContactName,
+          contact_email: data.primaryContactEmail,
+          phone: data.primaryContactPhone || null,
+          monthly_rate: tierRates[data.subscriptionTier] || 299,
+          business_size: data.employeeCount === '1-10' || data.employeeCount === '11-50' ? 'small' :
+                        data.employeeCount === '51-100' || data.employeeCount === '101-250' ? 'medium' : 'enterprise',
+          tool_access: {
+            services: data.services,
+            compliance: data.complianceRequirements,
+            integrations: data.integrationNeeds,
+            existingTools: data.existingTools,
+            specialRequirements: data.specialRequirements
+          },
+          is_active: true
+        });
+
+      if (clientError) throw clientError;
       
       toast({
         title: "Client onboarded successfully!",
@@ -163,6 +232,7 @@ export const ClientOnboardingFlow = ({ onComplete }: { onComplete?: () => void }
       
       onComplete?.();
     } catch (error) {
+      console.error('Error creating client:', error);
       toast({
         title: "Error creating client",
         description: "There was an issue creating the client. Please try again.",
