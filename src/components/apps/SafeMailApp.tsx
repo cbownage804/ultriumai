@@ -32,11 +32,14 @@ import {
   AlertCircle,
   ShieldCheck,
   ShieldAlert,
-  Activity
+  Activity,
+  Bot
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AppAIChat } from "@/components/shared/AppAIChat";
+import { DarkWebCheck } from "@/components/shared/DarkWebCheck";
 
 interface EmailScanResult {
   email: string;
@@ -74,6 +77,8 @@ export const SafeMailApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<EmailScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<EmailScanResult[]>([]);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [showDarkWebCheck, setShowDarkWebCheck] = useState(false);
   const [stats, setStats] = useState({
     totalScans: 0,
     threatsBlocked: 0,
@@ -752,6 +757,28 @@ PayPal Security Team`);
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* AI Chat Sidebar */}
+      {showAIChat && (
+        <div className="fixed right-4 bottom-4 w-96 z-50">
+          <AppAIChat
+            appType="safemail"
+            context={scanResult}
+            onClose={() => setShowAIChat(false)}
+          />
+        </div>
+      )}
+
+      {/* Dark Web Check */}
+      {showDarkWebCheck && (
+        <div className="fixed right-4 bottom-4 w-[450px] z-50">
+          <DarkWebCheck
+            defaultEmail={senderEmail}
+            userId={user?.id}
+            onClose={() => setShowDarkWebCheck(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

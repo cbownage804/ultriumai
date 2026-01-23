@@ -19,12 +19,14 @@ import {
   Download,
   Clock,
   File,
-  Trash2
+  Trash2,
+  Bot
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDropzone } from 'react-dropzone';
+import { AppAIChat } from "@/components/shared/AppAIChat";
 
 interface DocumentScanResult {
   file_name: string;
@@ -63,6 +65,7 @@ export const SafeDocApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
   const [scanResult, setScanResult] = useState<DocumentScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<DocumentScanResult[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [showAIChat, setShowAIChat] = useState(false);
   const [stats, setStats] = useState({
     totalScans: 0,
     threatsFound: 0,
@@ -604,6 +607,17 @@ export const SafeDocApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', bra
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* AI Chat Sidebar */}
+      {showAIChat && (
+        <div className="fixed right-4 bottom-4 w-96 z-50">
+          <AppAIChat
+            appType="safedoc"
+            context={scanResult}
+            onClose={() => setShowAIChat(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };

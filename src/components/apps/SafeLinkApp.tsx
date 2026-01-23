@@ -21,11 +21,13 @@ import {
   Clock,
   Copy,
   Eye,
-  Zap
+  Zap,
+  Bot
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AppAIChat } from "@/components/shared/AppAIChat";
 
 interface LinkScanResult {
   url: string;
@@ -59,6 +61,7 @@ export const SafeLinkApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<LinkScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<LinkScanResult[]>([]);
+  const [showAIChat, setShowAIChat] = useState(false);
   const [stats, setStats] = useState({
     totalScans: 0,
     threatsBlocked: 0,
@@ -638,6 +641,17 @@ export const SafeLinkApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* AI Chat Sidebar */}
+      {showAIChat && (
+        <div className="fixed right-4 bottom-4 w-96 z-50">
+          <AppAIChat
+            appType="safelink"
+            context={scanResult}
+            onClose={() => setShowAIChat(false)}
+          />
+        </div>
+      )}
     </div>
   );
 };
