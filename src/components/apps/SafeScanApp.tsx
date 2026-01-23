@@ -14,8 +14,9 @@ import {
   Globe, TrendingUp, Loader2, Upload, ArrowLeft, Info, Search,
   Clock, History, Zap, Settings, BookOpen, FileSearch, BarChart3,
   LinkIcon, FileWarning, MailWarning, ShieldCheck, ShieldAlert,
-  Sparkles, Eye, RefreshCw, Download
+  Sparkles, Eye, RefreshCw, Download, Bot, MessageSquare
 } from "lucide-react";
+import { SecurityAIChat } from "./safescan/SecurityAIChat";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +84,8 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [aiChatExpanded, setAIChatExpanded] = useState(false);
   const [stats, setStats] = useState({
     totalScans: 0,
     threatsBlocked: 0,
@@ -364,17 +367,28 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {!isGuestMode && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowHistory(!showHistory)}
-                  className={`text-gray-400 hover:text-red-400 ${showHistory ? 'bg-red-500/10 text-red-400' : ''}`}
-                >
-                  <History className="h-4 w-4 mr-2" />
-                  History
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAIChat(!showAIChat)}
+                    className={`text-gray-400 hover:text-red-400 ${showAIChat ? 'bg-red-500/10 text-red-400' : ''}`}
+                  >
+                    <Bot className="h-4 w-4 mr-2" />
+                    AI Assistant
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowHistory(!showHistory)}
+                    className={`text-gray-400 hover:text-red-400 ${showHistory ? 'bg-red-500/10 text-red-400' : ''}`}
+                  >
+                    <History className="h-4 w-4 mr-2" />
+                    History
+                  </Button>
+                </>
               )}
               {isGuestMode && (
                 <Button 
@@ -734,26 +748,46 @@ Security Team`)}
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* AI Chat Panel */}
+            {showAIChat && !isGuestMode && (
+              <SecurityAIChat 
+                scanContext={scanResult}
+                onClose={() => setShowAIChat(false)}
+                isExpanded={aiChatExpanded}
+                onToggleExpand={() => setAIChatExpanded(!aiChatExpanded)}
+              />
+            )}
+            
             {/* Quick Actions */}
-            <Card className="bg-[#141414] border-red-500/10">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-300">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" onClick={() => setActiveMode('url')}>
-                  <LinkIcon className="h-4 w-4 mr-3" />
-                  Scan a URL
-                </Button>
-                <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" onClick={() => setActiveMode('email')}>
-                  <MailWarning className="h-4 w-4 mr-3" />
-                  Check Email
-                </Button>
-                <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" onClick={() => setActiveMode('document')}>
-                  <FileWarning className="h-4 w-4 mr-3" />
-                  Scan File
-                </Button>
-              </CardContent>
-            </Card>
+            {!showAIChat && (
+              <Card className="bg-[#141414] border-red-500/10">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-300">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
+                    onClick={() => { setShowAIChat(true); }}
+                  >
+                    <Bot className="h-4 w-4 mr-3 text-red-400" />
+                    Ask AI Assistant
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" onClick={() => setActiveMode('url')}>
+                    <LinkIcon className="h-4 w-4 mr-3" />
+                    Scan a URL
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" onClick={() => setActiveMode('email')}>
+                    <MailWarning className="h-4 w-4 mr-3" />
+                    Check Email
+                  </Button>
+                  <Button variant="ghost" className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" onClick={() => setActiveMode('document')}>
+                    <FileWarning className="h-4 w-4 mr-3" />
+                    Scan File
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Scan History */}
             {(showHistory || scanHistory.length > 0) && (
