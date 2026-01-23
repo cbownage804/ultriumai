@@ -14,41 +14,18 @@ import {
   TrendingDown,
   Zap
 } from "lucide-react";
+import { usePerformanceAnalytics } from "@/hooks/usePerformanceAnalytics";
 
 interface PerformanceAnalyticsProps {
   timeRange: string;
 }
 
 export const PerformanceAnalytics = ({ timeRange }: PerformanceAnalyticsProps) => {
-  // TODO: Replace with real performance analytics data from Supabase
-  const performanceData = {
-    systemHealth: {
-      uptime: 0,
-      responseTime: 0,
-      throughput: 0,
-      errorRate: 0
-    },
-    resourceUtilization: {
-      cpu: 0,
-      memory: 0,
-      disk: 0,
-      network: 0
-    },
-    userActivity: {
-      activeUsers: 0,
-      peakUsers: 0,
-      avgSessionDuration: 0,
-      bounceRate: 0
-    },
-    systemComponents: [],
-    networkMetrics: {
-      bandwidth: 0,
-      latency: 0,
-      packetLoss: 0,
-      connections: 0
-    },
-    applicationMetrics: []
-  };
+  const { data: performanceData, loading } = usePerformanceAnalytics(timeRange);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {

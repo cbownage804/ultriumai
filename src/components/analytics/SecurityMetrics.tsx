@@ -11,36 +11,18 @@ import {
   Server,
   Globe
 } from "lucide-react";
+import { useSecurityMetrics } from "@/hooks/useSecurityMetrics";
 
 interface SecurityMetricsProps {
   timeRange: string;
 }
 
 export const SecurityMetrics = ({ timeRange }: SecurityMetricsProps) => {
-  // TODO: Replace with real security analytics data from Supabase
-  const securityData = {
-    threatDetection: {
-      malwareDetected: 0,
-      phishingBlocked: 0,
-      intrusionAttempts: 0,
-      suspiciousActivities: 0
-    },
-    vulnerabilityManagement: {
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0,
-      totalScanned: 0
-    },
-    networkSecurity: {
-      firewallBlocks: 0,
-      dnsFiltering: 0,
-      vpnConnections: 0,
-      bandwidthUsage: 0
-    },
-    endpointProtection: [],
-    incidentResponse: []
-  };
+  const { data: securityData, loading } = useSecurityMetrics(timeRange);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+  }
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

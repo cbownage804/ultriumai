@@ -11,30 +11,18 @@ import {
   TrendingUp,
   Calendar
 } from "lucide-react";
+import { useComplianceAnalytics } from "@/hooks/useComplianceAnalytics";
 
 interface ComplianceAnalyticsProps {
   timeRange: string;
 }
 
 export const ComplianceAnalytics = ({ timeRange }: ComplianceAnalyticsProps) => {
-  // TODO: Replace with real compliance analytics data from Supabase
-  const complianceData = {
-    frameworkScores: [],
-    auditReadiness: {
-      lastAudit: '',
-      nextAudit: '',
-      daysUntilAudit: 0,
-      readinessScore: 0
-    },
-    evidenceCollection: {
-      total: 0,
-      collected: 0,
-      pending: 0,
-      missing: 0
-    },
-    riskAssessment: [],
-    recentActivity: []
-  };
+  const { data: complianceData, loading } = useComplianceAnalytics(timeRange);
+
+  if (loading) {
+    return <div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+  }
 
   const getScoreColor = (score: number) => {
     if (score >= 95) return 'text-green-600';

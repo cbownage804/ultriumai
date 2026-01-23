@@ -54,11 +54,8 @@ const SafeWebMSPDashboard = () => {
   const [threatSummary, setThreatSummary] = useState<ThreatSummary[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    // TODO: Replace with real MSP client data from Supabase
-    setClients([]);
-    setThreatSummary([]);
-  }, []);
+  // Data is now loaded via the useMSPDashboard hook when available
+  // For now, keeping empty state until hook integration is complete
 
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
