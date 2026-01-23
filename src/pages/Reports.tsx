@@ -13,7 +13,8 @@ import {
   Settings,
   Plus,
   Filter,
-  Search
+  Search,
+  Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -21,13 +22,12 @@ import { ReportGenerator } from "@/components/reports/ReportGenerator";
 import { ReportTemplates } from "@/components/reports/ReportTemplates";
 import { ScheduledReports } from "@/components/reports/ScheduledReports";
 import { Header } from "@/components/layout/Header";
+import { useSafeSuiteAnalytics } from "@/hooks/useSafeSuiteAnalytics";
 
 const Reports = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // TODO: Replace with actual data from Supabase
-  const [recentReports] = useState([]);
+  const { reports: recentReports, loading } = useSafeSuiteAnalytics();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -104,7 +104,14 @@ const Reports = () => {
 
         <TabsContent value="recent" className="space-y-4">
           <div className="grid gap-4">
-            {recentReports.length === 0 ? (
+            {loading ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Loader2 className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+                  <h3 className="text-lg font-semibold mb-2">Loading Reports...</h3>
+                </CardContent>
+              </Card>
+            ) : recentReports.length === 0 ? (
               <Card>
                 <CardContent className="p-12 text-center">
                   <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

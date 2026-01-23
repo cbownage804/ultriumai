@@ -35,6 +35,8 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useNavigate } from "react-router-dom";
 import { useSafeWebData } from "@/hooks/useSafeWebData";
+import { generateExecutiveSummaryPDF, downloadPDF } from "@/utils/pdfExport";
+import { toast } from "sonner";
 
 interface ThreatIntelligence {
   id: string;
@@ -151,7 +153,18 @@ const SafeWebDashboard = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10">
+            <Button 
+              variant="outline" 
+              className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10"
+              onClick={() => {
+                const pdf = generateExecutiveSummaryPDF(threats, assets, {
+                  title: 'SafeWeb Intelligence Report',
+                  subtitle: 'Dark Web Threat Analysis'
+                });
+                downloadPDF(pdf, `safeweb-report-${new Date().toISOString().split('T')[0]}.pdf`);
+                toast.success('Report exported successfully');
+              }}
+            >
               <Download className="h-4 w-4 mr-2" />
               Export Report
             </Button>

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { useSecurity } from '@/hooks/useSecurity';
+import { useSafeSuiteSettings } from '@/hooks/useSafeSuiteSettings';
 import QRCode from 'qrcode';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ export default function SafeSuiteSettings() {
   const { user } = useAuth();
   const { tier } = useSafeSuiteSubscription();
   const { securitySettings, setupTwoFactor, enableTwoFactor, disableTwoFactor, loading: securityLoading } = useSecurity();
-  const [loading, setLoading] = useState(false);
+  const { settings, saving, saveSettings, updateNotifications } = useSafeSuiteSettings();
   
   // 2FA Setup state
   const [twoFactorDialog, setTwoFactorDialog] = useState(false);
@@ -40,24 +41,13 @@ export default function SafeSuiteSettings() {
   const [verificationCode, setVerificationCode] = useState('');
   const [setupStep, setSetupStep] = useState<'setup' | 'verify'>('setup');
 
-  // Settings state
-  const [notifications, setNotifications] = useState({
-    breachAlerts: true,
-    weeklyReport: true,
-    productUpdates: false
-  });
-
   const userInitials = user?.email
     ?.split('@')[0]
     .slice(0, 2)
     .toUpperCase() || 'U';
 
   const handleSaveSettings = async () => {
-    setLoading(true);
-    // TODO: Save settings to backend
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('Settings saved successfully');
-    setLoading(false);
+    await saveSettings(settings);
   };
 
   const handleExportData = async () => {
@@ -233,10 +223,8 @@ export default function SafeSuiteSettings() {
               </p>
             </div>
             <Switch
-              checked={notifications.breachAlerts}
-              onCheckedChange={(checked) => 
-                setNotifications(prev => ({ ...prev, breachAlerts: checked }))
-              }
+              checked={settings.notifications.breachAlerts}
+              onCheckedChange={(checked) => updateNotifications('breachAlerts', checked)}
             />
           </div>
           <Separator />
@@ -248,10 +236,8 @@ export default function SafeSuiteSettings() {
               </p>
             </div>
             <Switch
-              checked={notifications.weeklyReport}
-              onCheckedChange={(checked) => 
-                setNotifications(prev => ({ ...prev, weeklyReport: checked }))
-              }
+              checked={settings.notifications.weeklyReport}
+              onCheckedChange={(checked) => updateNotifications('weeklyReport', checked)}
             />
           </div>
           <Separator />
@@ -263,10 +249,8 @@ export default function SafeSuiteSettings() {
               </p>
             </div>
             <Switch
-              checked={notifications.productUpdates}
-              onCheckedChange={(checked) => 
-                setNotifications(prev => ({ ...prev, productUpdates: checked }))
-              }
+              checked={settings.notifications.productUpdates}
+              onCheckedChange={(checked) => updateNotifications('productUpdates', checked)}
             />
           </div>
         </CardContent>
@@ -314,8 +298,8 @@ export default function SafeSuiteSettings() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} disabled={loading}>
-          {loading ? (
+        <Button onClick={handleSaveSettings} disabled={saving}>
+          {saving ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Saving...
