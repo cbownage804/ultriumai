@@ -388,9 +388,12 @@ function AppRouter() {
         <Route path="/demos/antivirus" element={<AntivirusDemoPage />} />
         <Route path="/demos/safemdr" element={<SafeMDRDemoPage />} />
         <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
-        <Route path="/demos/safelink" element={<SafeScanDemoPage />} />
-        <Route path="/demos/safemail" element={<SafeScanDemoPage />} />
-        <Route path="/demos/safedoc" element={<SafeScanDemoPage />} />
+        <Route path="/demos/safelink" element={<Navigate to="/demos/safescan" replace />} />
+        <Route path="/demos/safemail" element={<Navigate to="/demos/safescan" replace />} />
+        <Route path="/demos/safedoc" element={<Navigate to="/demos/safescan" replace />} />
+        <Route path="/products/safelink" element={<Navigate to="/products/safescan" replace />} />
+        <Route path="/products/safemail" element={<Navigate to="/products/safescan" replace />} />
+        <Route path="/products/safedoc" element={<Navigate to="/products/safescan" replace />} />
         <Route path="/demos/safeshield" element={<AntivirusDemoPage />} />
         <Route path="/demos/safecenter" element={<SafeCenterDemoPage />} />
         <Route path="/demos/safekb" element={<SafeKBDemoPage />} />

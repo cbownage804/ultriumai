@@ -120,15 +120,6 @@ const Navigation = () => {
                 <DropdownMenuItem onClick={() => handleNavigation('/products/safeweb')}>
                   SafeWeb™ - Dark Web Monitoring
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safelink')}>
-                  SafeLink™ - URL Scanner
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safemail')}>
-                  SafeMail™ - Email Security
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safedoc')}>
-                  SafeDoc™ - Document Scanner
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Operations</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/rmm')}>
