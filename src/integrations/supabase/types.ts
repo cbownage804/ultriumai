@@ -14006,6 +14006,41 @@ export type Database = {
           },
         ]
       }
+      scheduled_scan_results: {
+        Row: {
+          created_at: string
+          id: string
+          results: Json
+          scheduled_scan_id: string
+          threats_found: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          results?: Json
+          scheduled_scan_id: string
+          threats_found?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          results?: Json
+          scheduled_scan_id?: string
+          threats_found?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_scan_results_scheduled_scan_id_fkey"
+            columns: ["scheduled_scan_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_scans: {
         Row: {
           created_at: string
@@ -14013,10 +14048,14 @@ export type Database = {
           id: string
           is_active: boolean
           last_run_at: string | null
+          name: string | null
           next_run_at: string
+          notify_email: string | null
+          notify_on_threat: boolean | null
           scan_target: string
           scan_type: string
           schedule_time: string
+          targets: Json | null
           updated_at: string
           user_id: string
         }
@@ -14026,10 +14065,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_run_at?: string | null
+          name?: string | null
           next_run_at: string
+          notify_email?: string | null
+          notify_on_threat?: boolean | null
           scan_target: string
           scan_type: string
           schedule_time?: string
+          targets?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -14039,10 +14082,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_run_at?: string | null
+          name?: string | null
           next_run_at?: string
+          notify_email?: string | null
+          notify_on_threat?: boolean | null
           scan_target?: string
           scan_type?: string
           schedule_time?: string
+          targets?: Json | null
           updated_at?: string
           user_id?: string
         }
