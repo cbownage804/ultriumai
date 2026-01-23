@@ -29,6 +29,10 @@ export interface Ticket {
   last_activity_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+  source?: string | null;
+  ai_processing_status?: string | null;
+  ai_suggested_solution?: string | null;
+  ai_confidence_score?: number | null;
 }
 
 export interface TicketComment {
@@ -430,17 +434,75 @@ export const useSafeDesk = () => {
     // Real-time subscriptions
     const ticketsChannel = supabase
       .channel('safedesk-tickets')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'helpdesk_tickets' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'helpdesk_tickets' }, async (payload) => {
         loadTickets();
         
-        // Show toast for new high priority tickets
+        // Handle new tickets
         if (payload.eventType === 'INSERT') {
-          const newTicket = payload.new as { priority?: string; title?: string };
+          const newTicket = payload.new as { 
+            id?: string;
+            priority?: string; 
+            title?: string; 
+            source?: string;
+            device_context?: { auto_generated?: boolean; alert_id?: string };
+          };
+          
+          // Show toast for new high priority tickets
           if (newTicket.priority === 'critical' || newTicket.priority === 'high') {
             toast({
               title: `🎫 New ${newTicket.priority} Priority Ticket`,
               description: newTicket.title || 'New ticket created'
             });
+          }
+          
+          // Auto-trigger AI processing for RMM-generated tickets
+          if (newTicket.source === 'rmm_alert' && newTicket.device_context?.auto_generated && newTicket.id) {
+            console.log('[SafeDesk] Auto-triggering AI processing for RMM alert ticket:', newTicket.id);
+            
+            // Invoke AI helpdesk assistant for automatic processing
+            try {
+              const { data: aiResult, error: aiError } = await supabase.functions.invoke('ai-helpdesk-assistant', {
+                body: {
+                  action: 'generate_solution',
+                  ticketId: newTicket.id,
+                  ticketData: {
+                    title: newTicket.title,
+                    priority: newTicket.priority,
+                    source: 'rmm_alert',
+                    auto_generated: true
+                  }
+                }
+              });
+
+              if (aiError) {
+                console.error('[SafeDesk] AI processing error:', aiError);
+              } else {
+                console.log('[SafeDesk] AI processing complete:', aiResult);
+                
+                // Show AI processing result
+                toast({
+                  title: "🤖 AI Analyzing RMM Alert",
+                  description: `Confidence: ${aiResult?.confidence || 'Analyzing...'}%`
+                });
+                
+                // If confidence is high enough, auto-resolve
+                if (aiResult?.confidence >= 85) {
+                  await supabase.functions.invoke('ai-helpdesk-assistant', {
+                    body: {
+                      action: 'auto_resolve',
+                      ticketId: newTicket.id
+                    }
+                  });
+                  
+                  toast({
+                    title: "✅ AI Auto-Resolved Ticket",
+                    description: "High-confidence solution applied automatically"
+                  });
+                }
+              }
+            } catch (err) {
+              console.error('[SafeDesk] Failed to invoke AI processing:', err);
+            }
           }
         }
       })
