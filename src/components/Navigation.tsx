@@ -111,14 +111,8 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Security Suite</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safescan')}>
-                  SafeScan™ - Vulnerability Scanner
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safepass')}>
-                  SafePass™ - Password Manager
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safeweb')}>
-                  SafeWeb™ - Dark Web Monitoring
+                <DropdownMenuItem onClick={() => handleNavigation('/safesuite/features')}>
+                  SafeSuite™ - All Security Tools
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">Operations</DropdownMenuLabel>
@@ -127,9 +121,6 @@ const Navigation = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/products/helpdesk')}>
                   SafeDesk™ - IT Service Desk
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/safetrack')}>
-                  SafeTrack™ - Asset Management
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuLabel className="text-xs text-muted-foreground">AI Platform</DropdownMenuLabel>
