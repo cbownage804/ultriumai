@@ -59,10 +59,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.safedoc-scanner]
-verify_jwt = true
+verify_jwt = false
 
 [functions.safemail-scanner]
-verify_jwt = true
+verify_jwt = false
 
 [functions.safenet-scanner]
 verify_jwt = true
@@ -86,7 +86,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.ultrium-safelink-scanner]
-verify_jwt = true
+verify_jwt = false
 
 [functions.safenet-topology-processor]
 verify_jwt = true
