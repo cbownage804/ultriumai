@@ -24,7 +24,7 @@ export default function SafeWebSettings() {
   const [loading, setLoading] = useState(false);
   
   const [settings, setSettings] = useState({
-    monitoringFrequency: '15min',
+    monitoringFrequency: 'daily',
     sslMonitoring: true,
     uptimeMonitoring: true,
     domainExpiry: true,
@@ -75,7 +75,7 @@ export default function SafeWebSettings() {
                 Check Frequency
               </Label>
               <p className="text-sm text-muted-foreground">
-                How often to check your monitored sites
+                How often to scan for dark web exposures
               </p>
             </div>
             <Select
@@ -88,10 +88,9 @@ export default function SafeWebSettings() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="5min">Every 5 min</SelectItem>
-                <SelectItem value="15min">Every 15 min</SelectItem>
-                <SelectItem value="30min">Every 30 min</SelectItem>
-                <SelectItem value="1hour">Every hour</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
               </SelectContent>
             </Select>
           </div>
