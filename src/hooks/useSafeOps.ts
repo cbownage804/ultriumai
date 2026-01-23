@@ -75,6 +75,44 @@ export interface ScriptExecution {
   parameters: Json | null;
 }
 
+// Patch types
+export interface RMMPatch {
+  id: string;
+  device_id: string | null;
+  user_id: string | null;
+  title: string;
+  description: string | null;
+  kb_article: string | null;
+  category: string;
+  severity: string;
+  status: string;
+  size_bytes: number | null;
+  release_date: string | null;
+  installed_at: string | null;
+  scheduled_for: string | null;
+  reboot_required: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Policy types
+export interface RMMPolicy {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  policy_type: string;
+  category: string | null;
+  settings: Json;
+  is_active: boolean;
+  compliance_score: number;
+  target_device_types: string[];
+  assigned_device_count: number;
+  last_evaluated_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SafeOpsStats {
   totalDevices: number;
   onlineDevices: number;
@@ -84,6 +122,8 @@ export interface SafeOpsStats {
   serversCount: number;
   workstationsCount: number;
   scriptsRunning: number;
+  pendingPatches: number;
+  activePolicies: number;
 }
 
 export const useSafeOps = () => {
@@ -91,6 +131,8 @@ export const useSafeOps = () => {
   const [alerts, setAlerts] = useState<RMMAlert[]>([]);
   const [scripts, setScripts] = useState<RMMScript[]>([]);
   const [executions, setExecutions] = useState<ScriptExecution[]>([]);
+  const [patches, setPatches] = useState<RMMPatch[]>([]);
+  const [policies, setPolicies] = useState<RMMPolicy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<SafeOpsStats>({
     totalDevices: 0,
@@ -100,7 +142,9 @@ export const useSafeOps = () => {
     openAlerts: 0,
     serversCount: 0,
     workstationsCount: 0,
-    scriptsRunning: 0
+    scriptsRunning: 0,
+    pendingPatches: 0,
+    activePolicies: 0
   });
 
   const { user } = useAuth();

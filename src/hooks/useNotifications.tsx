@@ -1,6 +1,7 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Notification {
   id: string;
@@ -11,7 +12,7 @@ export interface Notification {
   category: 'security' | 'ticket' | 'system' | 'general';
   read_at?: string;
   action_url?: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   created_at: string;
   expires_at?: string;
 }
@@ -29,7 +30,7 @@ export interface RealtimeAlert {
   acknowledged_by?: string;
   resolved_at?: string;
   resolution_notes?: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   created_at: string;
 }
 
@@ -52,7 +53,20 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within NotificationProvider');
+    // Return safe defaults when used outside provider
+    return {
+      notifications: [] as Notification[],
+      alerts: [] as RealtimeAlert[],
+      unreadCount: 0,
+      markAsRead: async () => {},
+      markAllAsRead: async () => {},
+      acknowledgeAlert: async () => {},
+      sendNotification: async () => {},
+      createNotification: async () => {},
+      createSecurityAlert: async () => {},
+      isLoading: false,
+      loading: false
+    } as NotificationContextType;
   }
   return context;
 };
@@ -62,33 +76,121 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const [alerts, setAlerts] = useState<RealtimeAlert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Load initial notifications
+  // Load initial notifications from notification_queue table
+  const loadNotifications = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('notification_queue')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      
+      // Map notification_queue to Notification interface
+      setNotifications((data || []).map(n => {
+        const metadata = (n.metadata as Record<string, unknown>) || {};
+        return {
+          id: n.id,
+          user_id: n.user_id,
+          title: n.title,
+          message: n.message,
+          type: (metadata.type as Notification['type']) || 'info',
+          category: (metadata.category as Notification['category']) || 'general',
+          read_at: n.read_at || undefined,
+          action_url: n.action_url || undefined,
+          metadata,
+          created_at: n.created_at
+        };
+      }));
+    } catch (error: unknown) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Load alerts from rmm_alerts table
+  const loadAlerts = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('rmm_alerts')
+        .select('*')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      
+      setAlerts((data || []).map(a => ({
+        id: a.id,
+        user_id: a.client_id || '',
+        alert_type: a.alert_type || 'general',
+        severity: (a.severity as RealtimeAlert['severity']) || 'low',
+        title: a.title,
+        description: a.message || undefined,
+        acknowledged_at: a.acknowledged_at || undefined,
+        acknowledged_by: a.acknowledged_by || undefined,
+        resolved_at: a.resolved_at || undefined,
+        metadata: (a.metadata as Record<string, unknown>) || {},
+        created_at: a.created_at
+      })));
+    } catch (error: unknown) {
+      console.error('Error loading alerts:', error);
+    }
+  }, [user]);
+
+  // Load on mount and user change
   useEffect(() => {
     loadNotifications();
     loadAlerts();
-  }, []);
+  }, [loadNotifications, loadAlerts]);
 
   // Set up real-time subscriptions
   useEffect(() => {
+    if (!user) return;
+
     const notificationChannel = supabase
-      .channel('notifications')
+      .channel('notifications-realtime')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'notifications'
+          table: 'notification_queue',
+          filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
+          const newNotif = payload.new as Record<string, unknown>;
+          const metadata = (newNotif.metadata as Record<string, unknown>) || {};
+          
+          const notification: Notification = {
+            id: newNotif.id as string,
+            user_id: newNotif.user_id as string,
+            title: newNotif.title as string,
+            message: newNotif.message as string,
+            type: (metadata.type as Notification['type']) || 'info',
+            category: (metadata.category as Notification['category']) || 'general',
+            read_at: (newNotif.read_at as string) || undefined,
+            action_url: (newNotif.action_url as string) || undefined,
+            metadata,
+            created_at: newNotif.created_at as string
+          };
+          
+          setNotifications(prev => [notification, ...prev]);
           
           // Show toast for new notifications
           toast({
-            title: newNotification.title,
-            description: newNotification.message,
-            variant: newNotification.type === 'error' ? 'destructive' : 'default',
+            title: notification.title,
+            description: notification.message,
+            variant: notification.type === 'error' ? 'destructive' : 'default',
           });
         }
       )
@@ -97,35 +199,44 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'notifications'
+          table: 'notification_queue',
+          filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
-          const updatedNotification = payload.new as Notification;
-          setNotifications(prev => 
-            prev.map(n => n.id === updatedNotification.id ? updatedNotification : n)
-          );
+        () => {
+          loadNotifications();
         }
       )
       .subscribe();
 
     const alertChannel = supabase
-      .channel('security_alerts')
+      .channel('alerts-realtime')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'security_alerts'
+          table: 'rmm_alerts'
         },
         (payload) => {
-          const newAlert = payload.new as RealtimeAlert;
-          setAlerts(prev => [newAlert, ...prev]);
+          const newAlert = payload.new as Record<string, unknown>;
+          const alert: RealtimeAlert = {
+            id: newAlert.id as string,
+            user_id: (newAlert.client_id as string) || '',
+            alert_type: (newAlert.alert_type as string) || 'general',
+            severity: (newAlert.severity as RealtimeAlert['severity']) || 'low',
+            title: newAlert.title as string,
+            description: (newAlert.message as string) || undefined,
+            metadata: (newAlert.metadata as Record<string, unknown>) || {},
+            created_at: newAlert.created_at as string
+          };
+          
+          setAlerts(prev => [alert, ...prev]);
           
           // Show urgent toast for critical alerts
-          if (newAlert.severity === 'critical' || newAlert.severity === 'high') {
+          if (alert.severity === 'critical' || alert.severity === 'high') {
             toast({
-              title: `🚨 ${newAlert.title}`,
-              description: newAlert.description,
+              title: `🚨 ${alert.title}`,
+              description: alert.description,
               variant: 'destructive',
             });
           }
@@ -137,62 +248,31 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       supabase.removeChannel(notificationChannel);
       supabase.removeChannel(alertChannel);
     };
-  }, [toast]);
-
-  const loadNotifications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) throw error;
-      setNotifications((data || []).map(n => ({
-        ...n,
-        type: n.type as 'success' | 'warning' | 'error' | 'info',
-        category: n.category as 'security' | 'ticket' | 'system' | 'general'
-      })));
-    } catch (error: any) {
-      console.error('Error loading notifications:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loadAlerts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('security_alerts')
-        .select('*')
-        .is('resolved_at', null)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setAlerts((data || []).map(a => ({
-        ...a,
-        severity: a.severity as 'low' | 'medium' | 'high' | 'critical',
-        metadata: a.affected_systems || {}
-      })));
-    } catch (error: any) {
-      console.error('Error loading alerts:', error);
-    }
-  };
+  }, [user, toast, loadNotifications]);
 
   const markAsRead = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('notifications')
-        .update({ read_at: new Date().toISOString() })
+        .from('notification_queue')
+        .update({ 
+          read_at: new Date().toISOString(),
+          status: 'read'
+        })
         .eq('id', id);
 
       if (error) throw error;
-    } catch (error: any) {
+      
+      setNotifications(prev =>
+        prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n)
+      );
+    } catch (error: unknown) {
       console.error('Error marking notification as read:', error);
     }
   };
 
   const markAllAsRead = async () => {
+    if (!user) return;
+    
     try {
       const unreadIds = notifications
         .filter(n => !n.read_at)
@@ -201,46 +281,78 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       if (unreadIds.length === 0) return;
 
       const { error } = await supabase
-        .from('notifications')
-        .update({ read_at: new Date().toISOString() })
+        .from('notification_queue')
+        .update({ 
+          read_at: new Date().toISOString(),
+          status: 'read'
+        })
         .in('id', unreadIds);
 
       if (error) throw error;
-    } catch (error: any) {
+      
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, read_at: n.read_at || new Date().toISOString() }))
+      );
+      
+      toast({
+        title: "All Notifications Read",
+        description: "Marked all notifications as read"
+      });
+    } catch (error: unknown) {
       console.error('Error marking all notifications as read:', error);
     }
   };
 
   const acknowledgeAlert = async (id: string, notes?: string) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
-        .from('security_alerts')
+        .from('rmm_alerts')
         .update({ 
+          status: 'acknowledged',
           acknowledged_at: new Date().toISOString(),
-          resolution_notes: notes 
+          acknowledged_by: user.id
         })
         .eq('id', id);
 
       if (error) throw error;
-    } catch (error: any) {
+      
+      setAlerts(prev => prev.filter(a => a.id !== id));
+      
+      toast({
+        title: "Alert Acknowledged",
+        description: notes || "Security alert has been acknowledged"
+      });
+    } catch (error: unknown) {
       console.error('Error acknowledging alert:', error);
     }
   };
 
   const sendNotification = async (notification: Partial<Notification>) => {
+    if (!user) return;
+    
     try {
-      const { error } = await supabase.rpc('send_notification', {
-        p_user_id: notification.user_id,
-        p_title: notification.title,
-        p_message: notification.message,
-        p_type: notification.type || 'info',
-        p_category: notification.category || 'general',
-        p_action_url: notification.action_url,
-        p_metadata: notification.metadata || {}
-      });
+      const { error } = await supabase
+        .from('notification_queue')
+        .insert({
+          user_id: notification.user_id || user.id,
+          title: notification.title || 'Notification',
+          message: notification.message || '',
+          type: 'in_app',
+          channel: 'app',
+          priority: 'normal',
+          status: 'pending',
+          action_url: notification.action_url,
+          metadata: {
+            type: notification.type || 'info',
+            category: notification.category || 'general',
+            ...notification.metadata
+          }
+        });
 
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error sending notification:', error);
       throw error;
     }
@@ -251,26 +363,37 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const createSecurityAlert = async (alert: Partial<RealtimeAlert>) => {
+    if (!user) return;
+    
     try {
+      const insertData = {
+          client_id: user.id,
+          title: alert.title || 'Security Alert',
+          message: alert.description,
+          alert_type: alert.alert_type || 'security',
+          severity: alert.severity || 'medium',
+          status: 'open',
+          source: 'user',
+          metadata: JSON.parse(JSON.stringify(alert.metadata || {}))
+        };
       const { error } = await supabase
-        .from('security_alerts')
-        .insert({
-          user_id: alert.user_id,
-          alert_type: alert.alert_type || 'general',
-          severity: alert.severity || 'low',
-          title: alert.title,
-          description: alert.description,
-          metadata: alert.metadata || {}
-        });
+        .from('rmm_alerts')
+        .insert(insertData);
 
       if (error) throw error;
-    } catch (error: any) {
+      
+      toast({
+        title: "🚨 Alert Created",
+        description: alert.title,
+        variant: alert.severity === 'critical' ? 'destructive' : 'default'
+      });
+    } catch (error: unknown) {
       console.error('Error creating security alert:', error);
       throw error;
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read_at).length;
+  const unreadCount = notifications.filter(n => !n.read_at).length + alerts.length;
 
   return (
     <NotificationContext.Provider

@@ -422,6 +422,42 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_aggregates: {
+        Row: {
+          created_at: string
+          dimensions: Json | null
+          id: string
+          metric_name: string
+          metric_type: string
+          metric_value: number | null
+          period_end: string
+          period_start: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dimensions?: Json | null
+          id?: string
+          metric_name: string
+          metric_type: string
+          metric_value?: number | null
+          period_end: string
+          period_start: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dimensions?: Json | null
+          id?: string
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number | null
+          period_end?: string
+          period_start?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       analytics_dashboards: {
         Row: {
           created_at: string
@@ -5595,6 +5631,60 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_base_articles: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          helpful_count: number | null
+          id: string
+          is_internal: boolean | null
+          is_published: boolean | null
+          not_helpful_count: number | null
+          related_articles: string[] | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_internal?: boolean | null
+          is_published?: boolean | null
+          not_helpful_count?: number | null
+          related_articles?: string[] | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_internal?: boolean | null
+          is_published?: boolean | null
+          not_helpful_count?: number | null
+          related_articles?: string[] | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       knowledge_chunks: {
         Row: {
           chunk_index: number
@@ -8384,6 +8474,63 @@ export type Database = {
           system_notifications?: boolean | null
           ticket_updates?: boolean | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_queue: {
+        Row: {
+          action_url: string | null
+          channel: string
+          created_at: string
+          error_message: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          priority: string | null
+          read_at: string | null
+          retry_count: number | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          priority?: string | null
+          read_at?: string | null
+          retry_count?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          priority?: string | null
+          read_at?: string | null
+          retry_count?: number | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
