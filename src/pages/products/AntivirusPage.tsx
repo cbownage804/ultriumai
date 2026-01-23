@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import heroAntivirus from '@/assets/hero-antivirus.jpg';
 
 const AntivirusPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -148,38 +149,44 @@ const AntivirusPage = () => {
       
       <div className="pt-20">
         {/* Hero Section */}
-        <section className="py-20 px-4">
-          <div className="max-w-6xl mx-auto text-center space-y-8">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <Shield className="h-12 w-12 text-primary" />
-              <h1 className="text-5xl font-bold text-gradient">
-                Ultrium SafeAV
-              </h1>
-            </div>
-            <p className="text-2xl text-muted-foreground max-w-3xl mx-auto">
+        <section className="relative py-24 overflow-hidden">
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroAntivirus})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-background" />
+          <div className="max-w-6xl mx-auto px-4 text-center space-y-8 relative z-10">
+            <Badge className="mb-4 bg-red-500/20 text-red-400 border-red-500/30">
+              <Shield className="h-3 w-3 mr-1" />
+              Endpoint Protection
+            </Badge>
+            <h1 className="text-5xl font-bold text-white">
+              SafeAV
+            </h1>
+            <p className="text-2xl text-gray-300 max-w-3xl mx-auto">
               Next-generation endpoint protection powered by AI. Defend against advanced threats 
               with behavioral analysis and real-time cloud intelligence
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
-              <Button size="lg" className="text-lg px-8 py-3" variant="hero">
+              <Button size="lg" className="text-lg px-8 py-3 bg-red-600 hover:bg-red-700">
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-3">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-3 border-red-500/50 text-white hover:bg-red-500/10">
                 Watch Demo
               </Button>
             </div>
-            <div className="flex justify-center gap-6 text-sm text-muted-foreground">
+            <div className="flex justify-center gap-6 text-sm text-gray-400">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success" />
+                <CheckCircle className="h-4 w-4 text-green-500" />
                 30-day free trial
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success" />
+                <CheckCircle className="h-4 w-4 text-green-500" />
                 No credit card required
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-success" />
+                <CheckCircle className="h-4 w-4 text-green-500" />
                 Enterprise-grade protection
               </div>
             </div>
