@@ -76,17 +76,38 @@ export const TicketAnalyticsDashboard = () => {
         ? resolvedWithTime.reduce((sum, t) => sum + (t.resolution_time_minutes || 0), 0) / resolvedWithTime.length
         : 0;
 
-      // Generate trend data (simulated for demo)
-      const trendData = Array.from({ length: daysBack }, (_, i) => {
+      // Generate trend data from actual tickets
+      const trendData: { date: string; tickets: number; resolved: number; aiResolved: number }[] = [];
+      const ticketsByDate: { [key: string]: { tickets: number; resolved: number; aiResolved: number } } = {};
+
+      // Initialize all dates in range
+      for (let i = 0; i < daysBack; i++) {
         const date = new Date();
         date.setDate(date.getDate() - (daysBack - 1 - i));
-        return {
-          date: date.toISOString().split('T')[0],
-          tickets: Math.floor(Math.random() * 20) + 5,
-          resolved: Math.floor(Math.random() * 15) + 3,
-          aiResolved: Math.floor(Math.random() * 8) + 1
-        };
+        const dateKey = date.toISOString().split('T')[0];
+        ticketsByDate[dateKey] = { tickets: 0, resolved: 0, aiResolved: 0 };
+      }
+
+      // Count tickets by date
+      tickets?.forEach(ticket => {
+        const dateKey = new Date(ticket.created_at).toISOString().split('T')[0];
+        if (ticketsByDate[dateKey]) {
+          ticketsByDate[dateKey].tickets++;
+          if (ticket.status === 'resolved' || ticket.status === 'closed') {
+            ticketsByDate[dateKey].resolved++;
+          }
+          if (ticket.auto_resolved) {
+            ticketsByDate[dateKey].aiResolved++;
+          }
+        }
       });
+
+      // Convert to array
+      Object.entries(ticketsByDate)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .forEach(([date, counts]) => {
+          trendData.push({ date, ...counts });
+        });
 
       // Priority distribution
       const priorityCount = { low: 0, medium: 0, high: 0, urgent: 0 };
