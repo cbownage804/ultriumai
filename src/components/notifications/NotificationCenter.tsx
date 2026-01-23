@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { useNotifications } from '@/hooks/useNotifications';
+import { useNotifications, Notification } from '@/hooks/useNotifications';
 import { 
   Bell, 
   AlertTriangle, 
@@ -152,9 +152,9 @@ export const NotificationCenter = () => {
                             <div className="flex items-center gap-2">
                               {getNotificationIcon(notification.type)}
                               <div className="flex items-center gap-2">
-                                {getCategoryIcon(notification.category)}
+                                {getCategoryIcon(notification.category || 'general')}
                                 <span className="text-xs text-muted-foreground capitalize">
-                                  {notification.category}
+                                  {notification.category || 'general'}
                                 </span>
                               </div>
                             </div>
