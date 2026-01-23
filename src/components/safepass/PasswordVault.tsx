@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { useSafePass, PasswordEntry as SafePassEntry } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -116,19 +117,36 @@ export const PasswordVault = () => {
     category: 'General'
   });
 
-  // Auto-create default vault if none exist (only once)
+  // Auto-create default vault if none exist (only once per session, with DB check)
   const [vaultInitialized, setVaultInitialized] = useState(false);
   
   useEffect(() => {
     const initializeVault = async () => {
-      // Only run once, when vaults are loaded and empty
+      // Mark as initialized if vaults already exist (no toast needed)
+      if (vaults.length > 0) {
+        setVaultInitialized(true);
+        return;
+      }
+      
+      // Only create vault once: when loaded, empty, and not yet initialized this session
       if (user && !vaultsLoading && vaults.length === 0 && !vaultInitialized) {
+        // Double-check database to prevent duplicates from race conditions
+        const { data: existingVaults } = await supabase
+          .from('safepass_vaults')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1);
+        
+        if (existingVaults && existingVaults.length > 0) {
+          // Vault exists in DB but wasn't loaded yet - just refresh
+          setVaultInitialized(true);
+          await loadVaults();
+          return;
+        }
+        
         setVaultInitialized(true);
         await createVault({ name: 'My Vault', description: 'Default password vault' });
         await loadVaults();
-      } else if (vaults.length > 0) {
-        // Mark as initialized if vaults already exist
-        setVaultInitialized(true);
       }
     };
     initializeVault();
