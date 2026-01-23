@@ -235,7 +235,7 @@ export const RMMDashboard = () => {
 
         {/* Policies Tab */}
         <TabsContent value="policies" className="space-y-6">
-          <PolicyManager policies={policies} />
+          <PolicyManager />
         </TabsContent>
 
         {/* Automation Tab */}
