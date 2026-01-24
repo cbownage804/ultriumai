@@ -122,47 +122,26 @@ export const PasswordVault = () => {
   
   useEffect(() => {
     const initializeVault = async () => {
-      // Mark as initialized if vaults already exist (no toast needed)
+      if (!user || vaultInitialized || vaultsLoading) return;
+
+      // Mark as initialized if vaults already exist
       if (vaults.length > 0) {
         setVaultInitialized(true);
         return;
       }
-      
-      // Only create vault once: when loaded, empty, and not yet initialized this session
-      if (user && !vaultsLoading && vaults.length === 0 && !vaultInitialized) {
-        setVaultInitialized(true);
-        
-        // Double-check database to prevent duplicates from race conditions
-        const { data: existingVaults, error: existingVaultsError } = await supabase
-          .from('safepass_vaults')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('vault_name', 'My Vault')
-          .limit(1);
 
-        // If we can't verify existence, do NOT try to create (avoids noisy failures)
-        if (existingVaultsError) {
-          console.error('Error checking for existing vault');
-          await loadVaults();
-          return;
-        }
-        
-        if (existingVaults && existingVaults.length > 0) {
-          // Vault exists in DB but wasn't loaded yet - just refresh
-          await loadVaults();
-          return;
-        }
-        
-        // Try to create, but ignore duplicate constraint errors
-        try {
-          await createVault({ name: 'My Vault', description: 'Default password vault' });
-        } catch (e) {
-          // Constraint violation is expected if vault already exists
-          console.log('Vault already exists or could not be created');
-        }
-        await loadVaults();
+      setVaultInitialized(true);
+
+      // Use a single, idempotent DB function to avoid duplicate creation races
+      const { error } = await supabase.rpc('ensure_my_vault');
+      if (error) {
+        // Avoid leaking details; vault may already exist or be blocked by policy.
+        console.error('Failed to ensure default vault');
       }
+
+      await loadVaults();
     };
+
     initializeVault();
   }, [user, vaultsLoading, vaults.length, vaultInitialized]);
 
