@@ -104,26 +104,37 @@ async function scanWithVirusTotal(domain: string, apiKey: string): Promise<ScanR
   }
 }
 
-async function scanWithHaveIBeenPwned(email: string): Promise<ScanResult[]> {
+async function scanWithHaveIBeenPwned(email: string, apiKey: string): Promise<ScanResult[]> {
   try {
     logStep('Scanning with Have I Been Pwned', { email });
-    const response = await fetch(`https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(email)}`, {
+    
+    const response = await fetch(`https://haveibeenpwned.com/api/v3/breachedaccount/${encodeURIComponent(email)}?truncateResponse=false`, {
       headers: {
-        'User-Agent': 'SafeWeb-Scanner-v1.0'
+        'User-Agent': 'SafeWeb-Scanner-v1.0',
+        'hibp-api-key': apiKey
       }
     });
+    
+    logStep('HIBP response status', { status: response.status });
     
     if (response.status === 404) {
       logStep('No breaches found in HIBP');
       return []; // No breaches found
     }
     
+    if (response.status === 401) {
+      logStep('HIBP API key invalid or unauthorized');
+      return [];
+    }
+    
     if (response.status === 200) {
       const breaches = await response.json();
+      logStep('HIBP breaches found', { count: breaches.length });
+      
       const threats = breaches.map((breach: any) => ({
         threat_type: 'data_breach',
         title: `Email found in ${breach.Name} breach`,
-        description: `Email address compromised in ${breach.Name} data breach on ${breach.BreachDate}. ${breach.Description}`,
+        description: `Email address compromised in ${breach.Name} data breach on ${breach.BreachDate}. ${breach.Description || ''}`.trim(),
         severity: breach.IsSensitive ? 'critical' : (breach.IsVerified ? 'high' : 'medium'),
         confidence_score: breach.IsVerified ? 100 : 85,
         source_name: 'Have I Been Pwned',
@@ -147,6 +158,7 @@ async function scanWithHaveIBeenPwned(email: string): Promise<ScanResult[]> {
       return [];
     }
     
+    logStep('HIBP unexpected status', { status: response.status });
     return [];
   } catch (error) {
     logStep('HaveIBeenPwned scan error', error.message);
@@ -422,7 +434,13 @@ async function performRealScan(asset: Asset): Promise<ScanResult[]> {
         
       case 'email':
         // Use multiple premium sources for comprehensive breach detection
-        const breachThreats = await scanWithHaveIBeenPwned(asset.asset_value);
+        const hibpKey = Deno.env.get('HAVEIBEENPWNED_API_KEY');
+        if (hibpKey) {
+          const breachThreats = await scanWithHaveIBeenPwned(asset.asset_value, hibpKey);
+          threats.push(...breachThreats);
+        } else {
+          logStep('HaveIBeenPwned API key not configured');
+        }
         threats.push(...breachThreats);
         
         // Add Intelligence X scanning if API key is available
