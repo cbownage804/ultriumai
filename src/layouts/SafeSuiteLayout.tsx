@@ -255,8 +255,12 @@ function NavLink({
 function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
   const { tier, tierConfig } = useSafeSuiteSubscription();
+  const { user } = useAuth();
   const navItems = getNavItems();
   const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
+  
+  // Admin check: UltriumAI employee with confirmed email
+  const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
 
   // Track which nav items are expanded
   const [expandedItems, setExpandedItems] = useState<Set<string>>(() => {
@@ -369,6 +373,18 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
           <CreditCard className="h-5 w-5" />
           <span>Billing</span>
         </Link>
+        
+        {/* Admin link - only visible to verified UltriumAI employees */}
+        {isAdmin && (
+          <Link
+            to="/admin"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-orange-500 hover:text-orange-400 transition-colors"
+            onClick={onItemClick}
+          >
+            <Crown className="h-5 w-5" />
+            <span>Admin Center</span>
+          </Link>
+        )}
       </div>
     </aside>
   );

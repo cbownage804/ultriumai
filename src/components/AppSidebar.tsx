@@ -66,8 +66,8 @@ export function AppSidebar() {
   const { subscription } = useSubscription();
   const { toast } = useToast();
   
-  // Check if user is admin (UltriumAI employee)
-  const isAdmin = user?.email?.endsWith('@ultriumai.com');
+  // Check if user is admin (UltriumAI employee with confirmed email)
+  const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
   
   const [openSections, setOpenSections] = useState({
     gpt: true,
