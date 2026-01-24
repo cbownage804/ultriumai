@@ -128,6 +128,7 @@ import AntivirusPage from '@/pages/products/AntivirusPage';
 import SafeMDRPage from '@/pages/products/SafeMDRPage';
 import AdvancedHelpdeskAdmin from '@/pages/admin/AdvancedHelpdeskAdmin';
 import VanguardSubscriptionAdmin from '@/pages/admin/VanguardSubscriptionAdmin';
+import SafeSuiteAdminCenter from '@/pages/admin/SafeSuiteAdminCenter';
 import EmbedDemo from '@/pages/EmbedDemo';
 import SafeDocEmbedDemo from '@/pages/SafeDocEmbedDemo';
 import MSPDemos from '@/pages/MSPDemos';
@@ -496,6 +497,11 @@ function AppRouter() {
         <Route path="/admin/subscriptions" element={
           <ProtectedRoute>
             <VanguardSubscriptionAdmin />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/safesuite" element={
+          <ProtectedRoute>
+            <SafeSuiteAdminCenter />
           </ProtectedRoute>
         } />
         <Route path="/dashboard/safeshield" element={

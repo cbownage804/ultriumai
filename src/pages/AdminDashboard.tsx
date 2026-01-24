@@ -426,6 +426,13 @@ const AdminDashboard = () => {
                 <Home className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
+              <Button
+                variant="default"
+                onClick={() => navigate('/admin/safesuite')}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                SafeSuite Admin
+              </Button>
             </div>
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
