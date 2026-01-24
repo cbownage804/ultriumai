@@ -22,8 +22,8 @@ export const safeSuiteProducts = {
   safeweb: {
     name: "SafeWeb",
     logo: safewebLogo,
-    description: "Dark web monitoring with AI-powered threat analysis and remediation guidance",
-    features: ["24/7 credential monitoring", "AI threat response plans", "Exposure risk scoring"],
+    description: "Breach database monitoring with AI-powered threat analysis and remediation guidance",
+    features: ["Aggregated breach intelligence", "AI threat response plans", "Exposure risk scoring"],
   },
   safetrack: {
     name: "SafeTrack",
