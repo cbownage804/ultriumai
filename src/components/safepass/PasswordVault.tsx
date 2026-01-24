@@ -107,6 +107,7 @@ export const PasswordVault = () => {
   const [editingEntry, setEditingEntry] = useState<DisplayEntry | null>(null);
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newEntry, setNewEntry] = useState({
     title: '',
@@ -249,11 +250,18 @@ export const PasswordVault = () => {
       return;
     }
 
+    // Prevent double-clicks
+    if (isSaving) return;
+    setIsSaving(true);
+
     // Ensure we have a vault on first save
     let vaultId = selectedVault;
     if (!vaultId) {
       vaultId = await ensureDefaultVault();
-      if (!vaultId) return;
+      if (!vaultId) {
+        setIsSaving(false);
+        return;
+      }
     }
 
     try {
@@ -285,6 +293,7 @@ export const PasswordVault = () => {
         const result = await updateEntry(editingEntry.id, sanitizedEntry);
         if (!result) {
           toast.error('Failed to update password entry');
+          setIsSaving(false);
           return;
         }
 
@@ -307,6 +316,7 @@ export const PasswordVault = () => {
         if (!result) {
           // Don't close the dialog on failure
           toast.error('Failed to save password entry');
+          setIsSaving(false);
           return;
         }
 
@@ -323,10 +333,12 @@ export const PasswordVault = () => {
         notes: '',
         category: 'General'
       });
+      setIsSaving(false);
     } catch (error) {
       // Log generic error without sensitive data
       console.error('Error saving password entry');
       toast.error('Failed to save password entry');
+      setIsSaving(false);
     }
   };
 
@@ -563,10 +575,22 @@ export const PasswordVault = () => {
               <div className="flex gap-2 pt-4">
                 <Button 
                   onClick={handleSaveEntry}
-                  disabled={!newEntry.title || !newEntry.password}
+                  disabled={!newEntry.title || !newEntry.password || !isUnlocked || isSaving}
                   className="flex-1"
                 >
-                  {editingEntry ? 'Update' : 'Save'} Password
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : !isUnlocked ? (
+                    <>
+                      <Lock className="h-4 w-4 mr-2" />
+                      Unlock to Save
+                    </>
+                  ) : (
+                    <>{editingEntry ? 'Update' : 'Save'} Password</>
+                  )}
                 </Button>
                 <Button 
                   variant="outline" 
