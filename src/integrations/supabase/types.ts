@@ -13323,6 +13323,45 @@ export type Database = {
           },
         ]
       }
+      safepass_webauthn_credentials: {
+        Row: {
+          attestation_object: string | null
+          authenticator_type: string
+          counter: number
+          created_at: string
+          credential_id: string
+          id: string
+          last_used_at: string | null
+          name: string
+          public_key: string
+          user_id: string
+        }
+        Insert: {
+          attestation_object?: string | null
+          authenticator_type?: string
+          counter?: number
+          created_at?: string
+          credential_id: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          public_key: string
+          user_id: string
+        }
+        Update: {
+          attestation_object?: string | null
+          authenticator_type?: string
+          counter?: number
+          created_at?: string
+          credential_id?: string
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          public_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       safesuite_entry_permissions: {
         Row: {
           entry_id: string
