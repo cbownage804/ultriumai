@@ -28,7 +28,7 @@ export default function SafeSuiteLanding() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/safesuite" className="flex items-center gap-2 transition-transform hover:scale-105">
+          <Link to="/" className="flex items-center gap-2 transition-transform hover:scale-105">
             <div className="h-12 w-12 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-500/20">
               <img 
                 src={safesuiteLogo} 
@@ -38,10 +38,10 @@ export default function SafeSuiteLanding() {
             </div>
           </Link>
           <div className="flex items-center gap-4">
-            <Link to="/safesuite/auth">
+            <Link to="/auth">
               <Button variant="ghost">Sign In</Button>
             </Link>
-            <Link to="/safesuite/auth?tab=signup">
+            <Link to="/auth?tab=signup">
               <Button className="gap-2">
                 Get Started
                 <ArrowRight className="h-4 w-4" />
@@ -86,7 +86,7 @@ export default function SafeSuiteLanding() {
               unified in one powerful, easy-to-use suite.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/safesuite/auth?tab=signup">
+              <Link to="/auth?tab=signup">
                 <Button size="lg" className="gap-2 w-full sm:w-auto">
                   Start Free Trial
                   <ArrowRight className="h-4 w-4" />
@@ -151,7 +151,7 @@ export default function SafeSuiteLanding() {
                         </li>
                       ))}
                     </ul>
-                    <Link to="/safesuite/features" className="block mt-4">
+                    <Link to="/features" className="block mt-4">
                       <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10">
                         Explore Features
                         <ArrowRight className="ml-2 h-3 w-3" />
@@ -230,7 +230,7 @@ export default function SafeSuiteLanding() {
                   </ul>
                 </CardContent>
                 <div className="p-6 pt-0">
-                  <Link to="/safesuite/auth?tab=signup">
+                  <Link to="/auth?tab=signup">
                     <Button 
                       variant={tier.popular ? 'default' : 'outline'} 
                       className="w-full"
@@ -255,7 +255,7 @@ export default function SafeSuiteLanding() {
             Join thousands of users who trust SafeSuite to protect their passwords, 
             scan for threats, and monitor the dark web.
           </p>
-          <Link to="/safesuite/auth?tab=signup">
+          <Link to="/auth?tab=signup">
             <Button size="lg" className="gap-2">
               Start Your Free Trial
               <ArrowRight className="h-4 w-4" />
