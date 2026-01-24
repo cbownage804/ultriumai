@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import safetrackLogo from '@/assets/safetrack-logo.png';
 
 export default function SafeSuiteTrack() {
   return (
@@ -14,11 +15,8 @@ export default function SafeSuiteTrack() {
       <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
-              <Package className="h-7 w-7 text-emerald-500" />
-              <span className="text-emerald-500">SafeTrack</span>
-            </h1>
-            <p className="text-gray-400">
+            <img src={safetrackLogo} alt="SafeTrack" className="h-10 w-auto" />
+            <p className="text-gray-400 mt-1">
               Track and manage your IT assets with AI-powered search
             </p>
           </div>

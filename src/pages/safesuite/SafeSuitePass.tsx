@@ -10,6 +10,7 @@ import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X } from 'lucide-react';
+import safepassLogo from '@/assets/safepass-logo.png';
 
 export default function SafeSuitePass() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -100,8 +101,8 @@ export default function SafeSuitePass() {
           <>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-amber-500">SafePass</h1>
-                <p className="text-gray-400">
+                <img src={safepassLogo} alt="SafePass" className="h-10 w-auto" />
+                <p className="text-gray-400 mt-1">
                   Securely store and manage your passwords with military-grade encryption
                 </p>
               </div>
