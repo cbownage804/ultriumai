@@ -4,24 +4,43 @@
 
 import { FeatureGate, UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
 import { SafeScanApp } from '@/components/apps/SafeScanApp';
+import { motion } from 'framer-motion';
+import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
 import safescanLogo from '@/assets/safescan-logo.png';
 
 export default function SafeSuiteScan() {
   return (
     <FeatureGate feature="safescan">
-      <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <img src={safescanLogo} alt="SafeScan" className="h-10 w-auto" />
-            <p className="text-gray-400 mt-1">
-              Scan emails, URLs, and documents for security threats
-            </p>
-          </div>
-        </div>
+      <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6 -m-6">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <AnimatedHeader
+            logo={safescanLogo}
+            logoAlt="SafeScan"
+            tagline="Scan emails, URLs, and documents for security threats"
+            theme="safescan"
+            badge="Real-time Protection"
+          />
+        </motion.div>
         
-        <UsageLimitBanner feature="safescan" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <UsageLimitBanner feature="safescan" />
+        </motion.div>
         
-        <SafeScanApp isWhiteLabeled={false} brandName="SafeSuite" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
+          <SafeScanApp isWhiteLabeled={false} brandName="SafeSuite" />
+        </motion.div>
       </div>
     </FeatureGate>
   );
