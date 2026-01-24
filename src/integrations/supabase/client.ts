@@ -8,37 +8,12 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Determine the storage key prefix based on subdomain for session isolation
-const getStorageKeyPrefix = () => {
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (hostname.startsWith('safesuite.')) {
-    return 'sb-safesuite-auth-token';
-  }
-  return 'sb-nsyobmjpdpvesjwdphlh-auth-token';
-};
-
-// Custom storage that uses consistent keys across page refreshes
-const customStorage = {
-  getItem: (key: string) => {
-    const storageKey = key.includes('auth-token') ? getStorageKeyPrefix() : key;
-    return localStorage.getItem(storageKey);
-  },
-  setItem: (key: string, value: string) => {
-    const storageKey = key.includes('auth-token') ? getStorageKeyPrefix() : key;
-    localStorage.setItem(storageKey, value);
-  },
-  removeItem: (key: string) => {
-    const storageKey = key.includes('auth-token') ? getStorageKeyPrefix() : key;
-    localStorage.removeItem(storageKey);
-  },
-};
-
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: customStorage,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'sb-nsyobmjpdpvesjwdphlh-auth-token',
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
   }
 });
