@@ -10,26 +10,26 @@ export const safeSuiteProducts = {
   safepass: {
     name: "SafePass",
     logo: safepassLogo,
-    description: "Secure password manager with military-grade encryption",
-    features: ["Zero-knowledge architecture", "Auto-fill & sync", "Password generator"],
+    description: "Zero-knowledge password vault with AES-256-GCM encryption and breach monitoring",
+    features: ["600K PBKDF2 key derivation", "Built-in TOTP authenticator", "Password health dashboard"],
   },
   safescan: {
     name: "SafeScan",
     logo: safescanLogo,
-    description: "Real-time email, URL, and document security scanning",
-    features: ["Phishing detection", "Malware analysis", "Threat intelligence"],
+    description: "Unified security scanner for emails, URLs, and documents with AI threat detection",
+    features: ["Bulk scanning up to 50 items", "Scheduled recurring scans", "PDF/CSV reports"],
   },
   safeweb: {
     name: "SafeWeb",
     logo: safewebLogo,
-    description: "Dark web monitoring and breach alerts",
-    features: ["24/7 monitoring", "Instant alerts", "Breach remediation"],
+    description: "Dark web monitoring with AI-powered threat analysis and remediation guidance",
+    features: ["24/7 credential monitoring", "AI threat response plans", "Exposure risk scoring"],
   },
   safetrack: {
     name: "SafeTrack",
     logo: safetrackLogo,
-    description: "Asset management and inventory tracking",
-    features: ["Device tracking", "License management", "Depreciation reports"],
+    description: "IT asset lifecycle management with QR tracking and depreciation calculations",
+    features: ["Hardware & software inventory", "Maintenance scheduling", "Compliance audit trails"],
   },
 } as const;
 
