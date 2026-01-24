@@ -18100,6 +18100,10 @@ export type Database = {
         Args: { p_roi_id: string }
         Returns: undefined
       }
+      can_access_password_entry: {
+        Args: { p_entry_id: string; p_user_id: string }
+        Returns: boolean
+      }
       can_access_safepass_entry: {
         Args: { checking_user_id: string; entry_id: string }
         Returns: boolean
