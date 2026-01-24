@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
+import { PBKDF2_ITERATIONS } from '@/utils/crypto';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -86,7 +87,7 @@ export const IdentityProfiles = () => {
     );
 
     const key = await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' },
+      { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
       keyMaterial,
       { name: 'AES-GCM', length: 256 },
       false,
@@ -126,7 +127,7 @@ export const IdentityProfiles = () => {
     );
 
     const key = await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt: saltArray, iterations: 600000, hash: 'SHA-256' },
+      { name: 'PBKDF2', salt: saltArray, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
       keyMaterial,
       { name: 'AES-GCM', length: 256 },
       false,

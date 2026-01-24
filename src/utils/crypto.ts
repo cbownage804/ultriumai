@@ -8,8 +8,11 @@ const ALGORITHM = 'AES-GCM';
 const KEY_LENGTH = 256;
 const IV_LENGTH = 12; // 96 bits for GCM
 const SALT_LENGTH = 32; // 256 bits
-const PBKDF2_ITERATIONS = 100000; // OWASP recommended minimum
 const TAG_LENGTH = 16; // 128 bits for GCM tag
+
+// OWASP 2023 recommended minimum for PBKDF2-SHA256
+// Exported for use across all SafePass components
+export const PBKDF2_ITERATIONS = 600000;
 
 export interface EncryptedData {
   ciphertext: string;

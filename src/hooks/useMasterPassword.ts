@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './useAuth';
-import { hashData, generateSecureRandom, validateMasterPassword } from '@/utils/crypto';
+import { generateSecureRandom, validateMasterPassword, PBKDF2_ITERATIONS } from '@/utils/crypto';
 import { supabase } from '@/integrations/supabase/client';
 
 interface MasterPasswordState {
@@ -49,7 +49,6 @@ const setSharedState = (updater: MasterPasswordState | ((prev: MasterPasswordSta
 const MAX_UNLOCK_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes of inactivity
-const INCREASED_ITERATIONS = 600000; // OWASP 2023 recommendation
 
 export const useMasterPassword = () => {
   const { user } = useAuth();
@@ -90,10 +89,31 @@ export const useMasterPassword = () => {
     return btoa(String.fromCharCode(...saltBytes));
   };
 
-  // Hash password with salt for server storage
+  // Hash password with salt using PBKDF2 for server storage (much stronger than SHA-256)
   const hashPasswordWithSalt = async (password: string, salt: string): Promise<string> => {
-    const combined = salt + password;
-    return hashData(combined);
+    const encoder = new TextEncoder();
+    const saltBytes = Uint8Array.from(atob(salt), c => c.charCodeAt(0));
+    
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    
+    const hashBits = await crypto.subtle.deriveBits(
+      { 
+        name: 'PBKDF2', 
+        salt: saltBytes, 
+        iterations: PBKDF2_ITERATIONS, 
+        hash: 'SHA-256' 
+      },
+      keyMaterial,
+      256
+    );
+    
+    return btoa(String.fromCharCode(...new Uint8Array(hashBits)));
   };
 
   // Load server-side password state
@@ -256,7 +276,7 @@ export const useMasterPassword = () => {
           user_id: user.id,
           password_hash: hash,
           salt: salt,
-          iterations: INCREASED_ITERATIONS,
+          iterations: PBKDF2_ITERATIONS,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'user_id'
