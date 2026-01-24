@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -55,20 +55,65 @@ export interface PasswordAuditLog {
   created_at: string;
 }
 
+// Global cache for SafePass data - persists across component remounts
+interface SafePassCache {
+  vaults: PasswordVault[];
+  entries: Map<string, PasswordEntry[]>;
+  auditLogs: PasswordAuditLog[];
+  selectedVault: string | null;
+  lastFetchTime: number;
+  userId: string | null;
+}
+
+const cache: SafePassCache = {
+  vaults: [],
+  entries: new Map(),
+  auditLogs: [],
+  selectedVault: null,
+  lastFetchTime: 0,
+  userId: null,
+};
+
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export const useSafePass = () => {
-  const [vaults, setVaults] = useState<PasswordVault[]>([]);
+  const [vaults, setVaults] = useState<PasswordVault[]>(cache.vaults);
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
-  const [auditLogs, setAuditLogs] = useState<PasswordAuditLog[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedVault, setSelectedVault] = useState<string | null>(null);
+  const [auditLogs, setAuditLogs] = useState<PasswordAuditLog[]>(cache.auditLogs);
+  const [isLoading, setIsLoading] = useState(cache.vaults.length === 0);
+  const [selectedVault, setSelectedVaultState] = useState<string | null>(cache.selectedVault);
   
   const { user } = useAuth();
   const { toast } = useToast();
   const masterPassword = useMasterPassword();
+  
+  // Track if we've already initialized in this session
+  const initRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
 
-  // Load vaults
-  const loadVaults = async () => {
+  // Sync selected vault to cache
+  const setSelectedVault = useCallback((vaultId: string | null) => {
+    cache.selectedVault = vaultId;
+    setSelectedVaultState(vaultId);
+  }, []);
+
+  // Check if cache is valid
+  const isCacheValid = useCallback(() => {
+    if (!user) return false;
+    if (cache.userId !== user.id) return false;
+    if (cache.vaults.length === 0) return false;
+    return Date.now() - cache.lastFetchTime < CACHE_TTL;
+  }, [user]);
+
+  // Load vaults with caching
+  const loadVaults = useCallback(async (forceRefresh = false) => {
     if (!user) return;
+
+    // Return cached data if valid and not forcing refresh
+    if (!forceRefresh && isCacheValid()) {
+      setVaults(cache.vaults);
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -79,7 +124,18 @@ export const useSafePass = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setVaults(data || []);
+      
+      const vaultData = data || [];
+      cache.vaults = vaultData;
+      cache.userId = user.id;
+      cache.lastFetchTime = Date.now();
+      setVaults(vaultData);
+      
+      // Auto-select first vault if none selected
+      if (vaultData.length > 0 && !cache.selectedVault) {
+        const defaultVault = vaultData.find(v => v.vault_name === 'My Vault') || vaultData[0];
+        setSelectedVault(defaultVault.id);
+      }
     } catch (error) {
       console.error('Error loading vaults:', error);
       toast({
@@ -88,11 +144,20 @@ export const useSafePass = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [user, isCacheValid, setSelectedVault, toast]);
 
-  // Load entries for a specific vault
-  const loadEntries = async (vaultId: string) => {
+  // Load entries for a specific vault with caching
+  const loadEntries = useCallback(async (vaultId: string, forceRefresh = false) => {
     if (!user) return;
+
+    // Return cached entries if available and not forcing refresh
+    if (!forceRefresh && cache.entries.has(vaultId)) {
+      const cachedEntries = cache.entries.get(vaultId);
+      if (cachedEntries) {
+        setEntries(cachedEntries);
+        return;
+      }
+    }
 
     try {
       const { data, error } = await supabase
@@ -103,7 +168,10 @@ export const useSafePass = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setEntries(data || []);
+      
+      const entryData = data || [];
+      cache.entries.set(vaultId, entryData);
+      setEntries(entryData);
     } catch (error) {
       console.error('Error loading entries:', error);
       toast({
@@ -112,7 +180,7 @@ export const useSafePass = () => {
         variant: "destructive",
       });
     }
-  };
+  }, [user, toast]);
 
   // Create vault
   const createVault = async (vaultData: {
@@ -124,7 +192,6 @@ export const useSafePass = () => {
     if (!user) return null;
 
     try {
-      // Generate a simple encryption key hash for demo purposes
       const encryptionKeyHash = btoa(`vault_${Date.now()}_${user.id}`);
       
       const { data, error } = await supabase
@@ -144,7 +211,6 @@ export const useSafePass = () => {
         .single();
 
       if (error) {
-        // Ignore duplicate constraint errors (vault already exists)
         const isDuplicate =
           error.code === '23505' ||
           (typeof (error as any).message === 'string' && (error as any).message.includes('idx_safepass_vaults_user_name'));
@@ -156,8 +222,10 @@ export const useSafePass = () => {
         throw error;
       }
 
-      setVaults(prev => [data, ...prev]);
-      // Only show toast for manually created vaults, not auto-created ones
+      // Update cache and state
+      cache.vaults = [data, ...cache.vaults];
+      setVaults(cache.vaults);
+      
       if (vaultData.name !== 'My Vault') {
         toast({
           title: "Success",
@@ -191,10 +259,8 @@ export const useSafePass = () => {
     if (!user || !masterPassword.isUnlocked) return null;
 
     try {
-      // Calculate password strength
       const strength = calculatePasswordStrength(entryData.password);
       
-      // Encrypt password data using master password
       const dataToEncrypt = JSON.stringify({
         username: entryData.username || '',
         password: entryData.password,
@@ -225,9 +291,11 @@ export const useSafePass = () => {
 
       if (error) throw error;
 
-      setEntries(prev => [data, ...prev]);
+      // Update cache and state
+      const currentEntries = cache.entries.get(entryData.vault_id) || [];
+      cache.entries.set(entryData.vault_id, [data, ...currentEntries]);
+      setEntries([data, ...entries]);
       
-      // Log the action
       await logAction('created', data.id, { title: data.title });
       
       toast({
@@ -262,7 +330,14 @@ export const useSafePass = () => {
 
       if (error) throw error;
 
-      setEntries(prev => prev.map(entry => entry.id === id ? data : entry));
+      // Update cache and state
+      const updatedEntries = entries.map(entry => entry.id === id ? data : entry);
+      setEntries(updatedEntries);
+      
+      if (selectedVault) {
+        cache.entries.set(selectedVault, updatedEntries);
+      }
+      
       await logAction('updated', id, { changes: Object.keys(updates) });
 
       toast({
@@ -297,7 +372,14 @@ export const useSafePass = () => {
 
       if (error) throw error;
 
-      setEntries(prev => prev.filter(entry => entry.id !== id));
+      // Update cache and state
+      const filteredEntries = entries.filter(entry => entry.id !== id);
+      setEntries(filteredEntries);
+      
+      if (selectedVault) {
+        cache.entries.set(selectedVault, filteredEntries);
+      }
+      
       await logAction('deleted', id, { title: entry?.title });
 
       toast({
@@ -349,12 +431,10 @@ export const useSafePass = () => {
   const calculatePasswordStrength = (password: string): number => {
     let score = 0;
     
-    // Length
     if (password.length >= 8) score += 20;
     if (password.length >= 12) score += 10;
     if (password.length >= 16) score += 10;
     
-    // Character types
     if (/[a-z]/.test(password)) score += 15;
     if (/[A-Z]/.test(password)) score += 15;
     if (/[0-9]/.test(password)) score += 15;
@@ -383,8 +463,8 @@ export const useSafePass = () => {
     }
   };
 
-  // Load audit logs
-  const loadAuditLogs = async () => {
+  // Load audit logs (lazy - not needed for initial render)
+  const loadAuditLogs = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -397,33 +477,58 @@ export const useSafePass = () => {
         .limit(100);
 
       if (error) throw error;
-      setAuditLogs(data || []);
+      cache.auditLogs = data || [];
+      setAuditLogs(cache.auditLogs);
     } catch (error) {
       console.error('Error loading audit logs:', error);
     }
-  };
+  }, [user]);
 
-  // Initialize
+  // Initialize - only fetch if cache is invalid
   useEffect(() => {
-    let cancelled = false;
+    // If user changed, clear cache
+    if (user && userIdRef.current !== user.id) {
+      cache.vaults = [];
+      cache.entries.clear();
+      cache.auditLogs = [];
+      cache.selectedVault = null;
+      cache.userId = null;
+      userIdRef.current = user.id;
+      initRef.current = false;
+    }
+
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+
+    // If already initialized with valid cache, skip fetch
+    if (initRef.current && isCacheValid()) {
+      setVaults(cache.vaults);
+      setAuditLogs(cache.auditLogs);
+      if (cache.selectedVault) {
+        setSelectedVaultState(cache.selectedVault);
+        const cachedEntries = cache.entries.get(cache.selectedVault);
+        if (cachedEntries) {
+          setEntries(cachedEntries);
+        }
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    initRef.current = true;
 
     const init = async () => {
-      // No user: nothing to load
-      if (!user) {
-        if (!cancelled) setIsLoading(false);
-        return;
-      }
-
-      if (!cancelled) setIsLoading(true);
-      await Promise.all([loadVaults(), loadAuditLogs()]);
-      if (!cancelled) setIsLoading(false);
+      setIsLoading(true);
+      await loadVaults();
+      // Load audit logs in background - not blocking
+      loadAuditLogs();
+      setIsLoading(false);
     };
 
     init();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+  }, [user, isCacheValid, loadVaults, loadAuditLogs]);
 
   // Load entries when vault is selected
   useEffect(() => {
@@ -432,7 +537,7 @@ export const useSafePass = () => {
     } else {
       setEntries([]);
     }
-  }, [selectedVault]);
+  }, [selectedVault, loadEntries]);
 
   // Helper functions for backward compatibility with encryption/decryption
   const getEntryName = (entry: PasswordEntry) => entry.title;
@@ -494,7 +599,7 @@ export const useSafePass = () => {
   };
   
   const getEntryStrengthScore = (entry: PasswordEntry) => entry.password_strength_score;
-  const isEntryShared = (entry: PasswordEntry) => false; // Not implemented in current schema
+  const isEntryShared = (entry: PasswordEntry) => false;
   const getVaultName = (vault: PasswordVault) => vault.vault_name;
 
   return {
@@ -510,12 +615,10 @@ export const useSafePass = () => {
     deleteEntry,
     generatePassword,
     calculatePasswordStrength,
-    loadVaults,
-    loadEntries,
+    loadVaults: () => loadVaults(true), // Force refresh when called manually
+    loadEntries: (vaultId: string) => loadEntries(vaultId, true),
     loadAuditLogs,
-    // Master password integration
     masterPassword,
-    // Helper functions
     getEntryName,
     getEntryUsername,
     getEntryWebsite,

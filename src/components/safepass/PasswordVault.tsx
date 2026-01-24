@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useSafePass, PasswordEntry as SafePassEntry } from '@/hooks/useSafePass';
@@ -54,6 +54,11 @@ const sanitizeInput = (input: string): string => {
   return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }).trim();
 };
 
+// Cache for decrypted entries - persists across component remounts
+const decryptedEntriesCache = new Map<string, DisplayEntry[]>();
+const lastDecryptTime = new Map<string, number>();
+const DECRYPT_CACHE_TTL = 60 * 1000; // 1 minute
+
 interface DisplayEntry {
   id: string;
   title: string;
@@ -98,8 +103,19 @@ export const PasswordVault = () => {
   } = useSafePass();
   const { isUnlocked, masterPassword } = useMasterPassword();
   
-  const [entries, setEntries] = useState<DisplayEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize with cached data if available
+  const getCachedEntries = useCallback(() => {
+    if (selectedVault && decryptedEntriesCache.has(selectedVault)) {
+      const lastTime = lastDecryptTime.get(selectedVault) || 0;
+      if (Date.now() - lastTime < DECRYPT_CACHE_TTL) {
+        return decryptedEntriesCache.get(selectedVault) || [];
+      }
+    }
+    return [];
+  }, [selectedVault]);
+  
+  const [entries, setEntries] = useState<DisplayEntry[]>(getCachedEntries);
+  const [loading, setLoading] = useState(!getCachedEntries().length);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
@@ -108,6 +124,9 @@ export const PasswordVault = () => {
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Track decryption in progress to avoid duplicates
+  const decryptionInProgress = useRef(false);
 
   const [newEntry, setNewEntry] = useState({
     title: '',
@@ -117,7 +136,6 @@ export const PasswordVault = () => {
     notes: '',
     category: 'General'
   });
-
   // Auto-create default vault if none exist (only once per session, with DB check)
   const [vaultInitialized, setVaultInitialized] = useState(false);
 
@@ -169,52 +187,88 @@ export const PasswordVault = () => {
     }
   }, [vaults, selectedVault]);
 
-  // Decrypt entries when they change
+  // Decrypt entries when they change - with caching
   useEffect(() => {
     const decryptEntries = async () => {
+      // Skip if no entries or not unlocked
       if (!isUnlocked || safePassEntries.length === 0) {
         setEntries([]);
         setLoading(false);
         return;
       }
-
-      setLoading(true);
-      const decrypted: DisplayEntry[] = [];
-
-      for (const entry of safePassEntries) {
-        try {
-          const [username, password, website, notes] = await Promise.all([
-            getEntryUsername(entry),
-            getEntryPassword(entry),
-            getEntryWebsite(entry),
-            getEntryNotes(entry)
-          ]);
-
-          decrypted.push({
-            id: entry.id,
-            title: entry.title,
-            username: username || '',
-            password: password || '',
-            website: website || entry.url || '',
-            notes: notes || '',
-            category: entry.category || 'General',
-            is_favorite: entry.is_favorite,
-            password_strength: entry.password_strength_score,
-            created_at: entry.created_at,
-            vault_id: entry.vault_id
-          });
-        } catch (error) {
-          // Log generic error without sensitive entry IDs
-          console.error('Error decrypting password entry');
+      
+      // Skip if already decrypting
+      if (decryptionInProgress.current) return;
+      
+      // Check cache first - show cached data immediately while re-decrypting in background
+      const cacheKey = selectedVault || 'default';
+      const cachedData = decryptedEntriesCache.get(cacheKey);
+      const cacheTime = lastDecryptTime.get(cacheKey) || 0;
+      const cacheValid = cachedData && (Date.now() - cacheTime < DECRYPT_CACHE_TTL);
+      
+      // Show cached data immediately if available
+      if (cachedData && cachedData.length > 0) {
+        setEntries(cachedData);
+        // If cache is still valid, no need to re-decrypt
+        if (cacheValid && cachedData.length === safePassEntries.length) {
+          setLoading(false);
+          return;
         }
       }
+      
+      // Only show loading if no cached data
+      if (!cachedData || cachedData.length === 0) {
+        setLoading(true);
+      }
+      
+      decryptionInProgress.current = true;
+      
+      try {
+        // Decrypt all entries in parallel for speed
+        const decryptPromises = safePassEntries.map(async (entry) => {
+          try {
+            const [username, password, website, notes] = await Promise.all([
+              getEntryUsername(entry),
+              getEntryPassword(entry),
+              getEntryWebsite(entry),
+              getEntryNotes(entry)
+            ]);
 
-      setEntries(decrypted);
-      setLoading(false);
+            return {
+              id: entry.id,
+              title: entry.title,
+              username: username || '',
+              password: password || '',
+              website: website || entry.url || '',
+              notes: notes || '',
+              category: entry.category || 'General',
+              is_favorite: entry.is_favorite,
+              password_strength: entry.password_strength_score,
+              created_at: entry.created_at,
+              vault_id: entry.vault_id
+            } as DisplayEntry;
+          } catch (error) {
+            console.error('Error decrypting password entry');
+            return null;
+          }
+        });
+        
+        const results = await Promise.all(decryptPromises);
+        const decrypted = results.filter((e): e is DisplayEntry => e !== null);
+        
+        // Update cache
+        decryptedEntriesCache.set(cacheKey, decrypted);
+        lastDecryptTime.set(cacheKey, Date.now());
+        
+        setEntries(decrypted);
+      } finally {
+        decryptionInProgress.current = false;
+        setLoading(false);
+      }
     };
 
     decryptEntries();
-  }, [safePassEntries, isUnlocked]);
+  }, [safePassEntries, isUnlocked, selectedVault, getEntryUsername, getEntryPassword, getEntryWebsite, getEntryNotes]);
 
   const calculatePasswordStrength = (password: string): number => {
     let score = 0;
@@ -320,6 +374,10 @@ export const PasswordVault = () => {
           return;
         }
 
+        // Invalidate cache so fresh data shows
+        if (selectedVault) {
+          decryptedEntriesCache.delete(selectedVault);
+        }
         toast.success('Password entry added successfully');
       }
 
@@ -348,6 +406,10 @@ export const PasswordVault = () => {
     try {
       const success = await deleteSafePassEntry(entryId);
       if (success) {
+        // Invalidate cache
+        if (selectedVault) {
+          decryptedEntriesCache.delete(selectedVault);
+        }
         toast.success('Password entry deleted');
       }
     } catch (error) {
