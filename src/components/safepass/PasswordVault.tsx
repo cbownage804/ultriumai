@@ -234,9 +234,34 @@ export const PasswordVault = () => {
 
     try {
       if (editingEntry) {
-        // Update existing entry - for now just update local state
-        // Full implementation would re-encrypt and update in DB
-        toast.success('Password entry updated successfully');
+        // Update existing entry - re-encrypt and update in DB
+        const sanitizedEntry = {
+          title: sanitizeInput(newEntry.title),
+          url: sanitizeInput(newEntry.website),
+          category: sanitizeInput(newEntry.category),
+          notes: sanitizeInput(newEntry.notes),
+        };
+
+        // If password changed, need to re-encrypt
+        if (newEntry.password !== editingEntry.password && masterPassword) {
+          const { encryptData } = await import('@/utils/crypto');
+          const dataToEncrypt = JSON.stringify({
+            username: sanitizeInput(newEntry.username),
+            password: newEntry.password,
+            website: sanitizeInput(newEntry.website),
+            notes: sanitizeInput(newEntry.notes)
+          });
+          const encryptedData = await encryptData(dataToEncrypt, masterPassword);
+          Object.assign(sanitizedEntry, { 
+            encrypted_data: encryptedData,
+            password_strength_score: calculatePasswordStrength(newEntry.password)
+          });
+        }
+
+        const result = await updateEntry(editingEntry.id, sanitizedEntry);
+        if (result) {
+          toast.success('Password entry updated successfully');
+        }
       } else {
         // Sanitize all inputs before saving
         const sanitizedEntry = {

@@ -51,7 +51,7 @@ export default function SafeSuiteAuth() {
         return;
       }
       toast.success('Welcome back!');
-      navigate('/safesuite/dashboard');
+      navigate('/dashboard');
     } catch (err) {
       setError('An unexpected error occurred');
     }
