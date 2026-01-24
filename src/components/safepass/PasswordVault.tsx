@@ -133,11 +133,19 @@ export const PasswordVault = () => {
         setVaultInitialized(true);
         
         // Double-check database to prevent duplicates from race conditions
-        const { data: existingVaults } = await supabase
+        const { data: existingVaults, error: existingVaultsError } = await supabase
           .from('safepass_vaults')
           .select('id')
           .eq('user_id', user.id)
+          .eq('vault_name', 'My Vault')
           .limit(1);
+
+        // If we can't verify existence, do NOT try to create (avoids noisy failures)
+        if (existingVaultsError) {
+          console.error('Error checking for existing vault');
+          await loadVaults();
+          return;
+        }
         
         if (existingVaults && existingVaults.length > 0) {
           // Vault exists in DB but wasn't loaded yet - just refresh

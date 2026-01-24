@@ -145,7 +145,11 @@ export const useSafePass = () => {
 
       if (error) {
         // Ignore duplicate constraint errors (vault already exists)
-        if (error.code === '23505') {
+        const isDuplicate =
+          error.code === '23505' ||
+          (typeof (error as any).message === 'string' && (error as any).message.includes('idx_safepass_vaults_user_name'));
+
+        if (isDuplicate) {
           console.log('Vault already exists, skipping creation');
           return null;
         }
@@ -401,11 +405,24 @@ export const useSafePass = () => {
 
   // Initialize
   useEffect(() => {
-    if (user) {
-      loadVaults();
-      loadAuditLogs();
-    }
-    setIsLoading(false);
+    let cancelled = false;
+
+    const init = async () => {
+      // No user: nothing to load
+      if (!user) {
+        if (!cancelled) setIsLoading(false);
+        return;
+      }
+
+      if (!cancelled) setIsLoading(true);
+      await Promise.all([loadVaults(), loadAuditLogs()]);
+      if (!cancelled) setIsLoading(false);
+    };
+
+    init();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Load entries when vault is selected
