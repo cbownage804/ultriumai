@@ -14,6 +14,38 @@ interface MasterPasswordState {
   isLoading: boolean;
 }
 
+// NOTE: This hook is used in many places. If it keeps its own local state per
+// component instance, the app can get into a split-brain situation where the UI
+// says “unlocked” but the data layer (useSafePass) still thinks it’s locked.
+//
+// To avoid that, we keep one shared store per active user session.
+type Listener = (state: MasterPasswordState) => void;
+
+const createInitialState = (overrides: Partial<MasterPasswordState> = {}): MasterPasswordState => ({
+  isUnlocked: false,
+  masterPassword: null,
+  passwordHash: null,
+  unlockAttempts: 0,
+  isLocked: false,
+  lockoutUntil: null,
+  hasServerPassword: false,
+  isLoading: true,
+  ...overrides,
+});
+
+let sharedUserId: string | null = null;
+let sharedState: MasterPasswordState = createInitialState();
+const listeners = new Set<Listener>();
+
+const emit = () => {
+  for (const l of listeners) l(sharedState);
+};
+
+const setSharedState = (updater: MasterPasswordState | ((prev: MasterPasswordState) => MasterPasswordState)) => {
+  sharedState = typeof updater === 'function' ? (updater as (p: MasterPasswordState) => MasterPasswordState)(sharedState) : updater;
+  emit();
+};
+
 const MAX_UNLOCK_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 const AUTO_LOCK_TIMEOUT = 5 * 60 * 1000; // 5 minutes of inactivity
@@ -21,19 +53,36 @@ const INCREASED_ITERATIONS = 600000; // OWASP 2023 recommendation
 
 export const useMasterPassword = () => {
   const { user } = useAuth();
-  const [state, setState] = useState<MasterPasswordState>({
-    isUnlocked: false,
-    masterPassword: null,
-    passwordHash: null,
-    unlockAttempts: 0,
-    isLocked: false,
-    lockoutUntil: null,
-    hasServerPassword: false,
-    isLoading: true
-  });
+  const [state, setState] = useState<MasterPasswordState>(() => sharedState);
   
   const autoLockTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
+
+  // Subscribe this hook instance to the shared store
+  useEffect(() => {
+    const listener: Listener = (s) => setState(s);
+    listeners.add(listener);
+    // sync immediately
+    setState(sharedState);
+    return () => {
+      listeners.delete(listener);
+    };
+  }, []);
+
+  // Reset shared state when the authenticated user changes
+  useEffect(() => {
+    if (!user) {
+      sharedUserId = null;
+      setSharedState(createInitialState({ isLoading: false }));
+      return;
+    }
+
+    if (sharedUserId !== user.id) {
+      sharedUserId = user.id;
+      // Start fresh for the new user session
+      setSharedState(createInitialState({ isLoading: true }));
+    }
+  }, [user]);
 
   // Generate cryptographically secure salt
   const generateSalt = (): string => {
@@ -51,7 +100,7 @@ export const useMasterPassword = () => {
   useEffect(() => {
     const loadServerState = async () => {
       if (!user) {
-        setState(prev => ({ ...prev, isLoading: false }));
+        setSharedState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
@@ -82,7 +131,7 @@ export const useMasterPassword = () => {
         const lockedUntil = lockoutData?.locked_until ? new Date(lockoutData.locked_until).getTime() : null;
         const isLocked = lockedUntil ? lockedUntil > now : false;
 
-        setState(prev => ({
+        setSharedState(prev => ({
           ...prev,
           hasServerPassword: !!masterPasswordData,
           passwordHash: masterPasswordData?.password_hash || null,
@@ -93,7 +142,7 @@ export const useMasterPassword = () => {
         }));
       } catch (error) {
         console.error('Error loading master password state:', error);
-        setState(prev => ({ ...prev, isLoading: false }));
+        setSharedState(prev => ({ ...prev, isLoading: false }));
       }
     };
 
@@ -171,7 +220,7 @@ export const useMasterPassword = () => {
   }, [state.isLocked, state.lockoutUntil]);
 
   const clearLockout = async () => {
-    setState(prev => ({
+    setSharedState(prev => ({
       ...prev,
       isLocked: false,
       lockoutUntil: null,
@@ -218,7 +267,7 @@ export const useMasterPassword = () => {
         return { success: false, errors: ['Failed to save master password'] };
       }
       
-      setState(prev => ({
+      setSharedState(prev => ({
         ...prev,
         isUnlocked: true,
         masterPassword: password,
@@ -271,7 +320,7 @@ export const useMasterPassword = () => {
       
       if (hash === masterPasswordData.password_hash) {
         // Successful unlock
-        setState(prev => ({
+        setSharedState(prev => ({
           ...prev,
           isUnlocked: true,
           masterPassword: password,
@@ -296,7 +345,7 @@ export const useMasterPassword = () => {
           // Lock account
           const lockoutUntil = new Date(Date.now() + LOCKOUT_DURATION);
           
-          setState(prev => ({
+          setSharedState(prev => ({
             ...prev,
             unlockAttempts: newAttempts,
             isLocked: true,
@@ -321,7 +370,7 @@ export const useMasterPassword = () => {
           };
         } else {
           // Increment attempts
-          setState(prev => ({
+          setSharedState(prev => ({
             ...prev,
             unlockAttempts: newAttempts
           }));
@@ -352,7 +401,7 @@ export const useMasterPassword = () => {
 
   const lock = useCallback(() => {
     // Clear sensitive data from memory
-    setState(prev => ({
+    setSharedState(prev => ({
       ...prev,
       isUnlocked: false,
       masterPassword: null
@@ -399,16 +448,7 @@ export const useMasterPassword = () => {
       .delete()
       .eq('user_id', user.id);
     
-    setState({
-      isUnlocked: false,
-      masterPassword: null,
-      passwordHash: null,
-      unlockAttempts: 0,
-      isLocked: false,
-      lockoutUntil: null,
-      hasServerPassword: false,
-      isLoading: false
-    });
+    setSharedState(createInitialState({ isLoading: false }));
   };
 
   const hasUserSetMasterPassword = (): boolean => {
