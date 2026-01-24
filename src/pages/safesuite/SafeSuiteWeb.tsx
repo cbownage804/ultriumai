@@ -334,7 +334,19 @@ export default function SafeSuiteWeb() {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-[#141414] border-violet-500/10">
+          <Card 
+            className="bg-[#141414] border-violet-500/10 cursor-pointer hover:border-red-500/30 transition-colors"
+            onClick={async () => {
+              // Expand all assets with threats
+              const assetsWithThreats = assets.filter(a => a.threats_found > 0);
+              for (const asset of assetsWithThreats) {
+                if (!expandedAssets.has(asset.id)) {
+                  await loadThreatsForAsset(asset.id);
+                  setExpandedAssets(prev => new Set(prev).add(asset.id));
+                }
+              }
+            }}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-500/20 rounded-lg">
