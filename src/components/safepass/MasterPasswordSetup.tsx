@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Eye, EyeOff, Shield, Key, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Eye, EyeOff, Shield, Lock, Key, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { validateMasterPassword, calculatePasswordStrength, generateSecurePassword } from '@/utils/crypto';
 
 interface MasterPasswordSetupProps {
@@ -93,7 +93,7 @@ export const MasterPasswordSetup = ({
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
           <div className="p-3 rounded-full bg-primary/10">
-            <Shield className="h-8 w-8 text-primary" />
+            <Lock className="h-8 w-8 text-primary" />
           </div>
         </div>
         <CardTitle className="text-2xl">

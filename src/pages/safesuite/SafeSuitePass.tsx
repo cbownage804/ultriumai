@@ -107,24 +107,15 @@ export default function SafeSuitePass() {
               className="max-w-md mx-auto py-12"
             >
               <GlowContainer theme="safepass" className="p-8">
-                {/* Animated lock icon */}
+                {/* SafePass Logo */}
                 <motion.div 
-                  className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 flex items-center justify-center"
+                  className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 flex items-center justify-center p-3"
                   animate={{ 
                     boxShadow: ['0 0 20px rgba(245,158,11,0.2)', '0 0 40px rgba(245,158,11,0.3)', '0 0 20px rgba(245,158,11,0.2)']
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <motion.div
-                    animate={{ rotateY: isSettingUp ? 0 : [0, 180, 360] }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    {isSettingUp ? (
-                      <Shield className="h-10 w-10 text-amber-400" />
-                    ) : (
-                      <Lock className="h-10 w-10 text-amber-400" />
-                    )}
-                  </motion.div>
+                  <img src={safepassLogo} alt="SafePass" className="h-16 w-auto" />
                 </motion.div>
                 
                 <MasterPasswordSetup
