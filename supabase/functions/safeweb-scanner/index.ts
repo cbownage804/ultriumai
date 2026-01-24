@@ -616,18 +616,25 @@ serve(async (req) => {
       }
     }
 
-    // Update asset with scan results and status
-    const newStatus = threatsCount > 0 ? 'exposed' : 'clean';
-    await supabaseClient
+    // Update asset with scan results (status column is for asset lifecycle, not scan results)
+    logStep('Updating asset', { asset_id: asset.id, threatsCount });
+    
+    const { error: updateError, data: updateData } = await supabaseClient
       .from('safeweb_assets')
       .update({
         last_scan_at: new Date().toISOString(),
         next_scan_at: getNextScanTime(asset.scan_frequency),
         threats_found: threatsCount,
-        status: newStatus,
         updated_at: new Date().toISOString()
       })
-      .eq('id', asset.id);
+      .eq('id', asset.id)
+      .select();
+    
+    if (updateError) {
+      logStep('ERROR: Failed to update asset', { error: updateError.message, code: updateError.code });
+    } else {
+      logStep('Asset updated successfully', { updated: updateData });
+    }
 
     // Complete the scan job
     await supabaseClient
