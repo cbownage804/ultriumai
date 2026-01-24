@@ -119,6 +119,25 @@ export const PasswordVault = () => {
 
   // Auto-create default vault if none exist (only once per session, with DB check)
   const [vaultInitialized, setVaultInitialized] = useState(false);
+
+  const ensureDefaultVault = async (): Promise<string | null> => {
+    if (!user) return null;
+
+    const { data, error } = await supabase.rpc('ensure_my_vault');
+    if (error) {
+      console.error('Failed to ensure default vault');
+      toast.error('Failed to initialize your vault. Please try again.');
+      return null;
+    }
+
+    // RPC returns the vault id (existing or created)
+    const vaultId = (data as unknown as string) || null;
+    if (vaultId) {
+      setSelectedVault(vaultId);
+    }
+    await loadVaults();
+    return vaultId;
+  };
   
   useEffect(() => {
     const initializeVault = async () => {
@@ -133,17 +152,14 @@ export const PasswordVault = () => {
       setVaultInitialized(true);
 
       // Use a single, idempotent DB function to avoid duplicate creation races
-      const { error } = await supabase.rpc('ensure_my_vault');
-      if (error) {
-        // Avoid leaking details; vault may already exist or be blocked by policy.
-        console.error('Failed to ensure default vault');
+      const vaultId = await ensureDefaultVault();
+      if (vaultId && !selectedVault) {
+        setSelectedVault(vaultId);
       }
-
-      await loadVaults();
     };
 
     initializeVault();
-  }, [user, vaultsLoading, vaults.length, vaultInitialized]);
+  }, [user, vaultsLoading, vaults.length, vaultInitialized, selectedVault]);
 
   // Auto-select first vault if none selected
   useEffect(() => {
@@ -227,9 +243,17 @@ export const PasswordVault = () => {
   };
 
   const handleSaveEntry = async () => {
-    if (!selectedVault) {
-      toast.error('No vault selected. Please wait for initialization.');
+    // Must be unlocked to encrypt & save
+    if (!isUnlocked || !masterPassword) {
+      toast.error('Unlock SafePass to save passwords.');
       return;
+    }
+
+    // Ensure we have a vault on first save
+    let vaultId = selectedVault;
+    if (!vaultId) {
+      vaultId = await ensureDefaultVault();
+      if (!vaultId) return;
     }
 
     try {
@@ -259,13 +283,16 @@ export const PasswordVault = () => {
         }
 
         const result = await updateEntry(editingEntry.id, sanitizedEntry);
-        if (result) {
-          toast.success('Password entry updated successfully');
+        if (!result) {
+          toast.error('Failed to update password entry');
+          return;
         }
+
+        toast.success('Password entry updated successfully');
       } else {
         // Sanitize all inputs before saving
         const sanitizedEntry = {
-          vault_id: selectedVault,
+          vault_id: vaultId,
           title: sanitizeInput(newEntry.title),
           username: sanitizeInput(newEntry.username),
           password: newEntry.password, // Don't sanitize password - may contain special chars
@@ -277,9 +304,13 @@ export const PasswordVault = () => {
         // Create new entry using the hook
         const result = await createEntry(sanitizedEntry);
 
-        if (result) {
-          toast.success('Password entry added successfully');
+        if (!result) {
+          // Don't close the dialog on failure
+          toast.error('Failed to save password entry');
+          return;
         }
+
+        toast.success('Password entry added successfully');
       }
 
       setIsAddDialogOpen(false);
