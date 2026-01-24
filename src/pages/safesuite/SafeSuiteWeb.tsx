@@ -199,7 +199,7 @@ export default function SafeSuiteWeb() {
           user_id: user?.id,
           asset_type: assetType,
           asset_value: newAsset.trim(),
-          status: 'pending',
+          status: 'active',
           scan_frequency: 'daily'
         })
         .select()
