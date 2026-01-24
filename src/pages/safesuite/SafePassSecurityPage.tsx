@@ -117,6 +117,24 @@ const comparisonPoints = [
   { feature: 'Open Security Documentation', safepass: true, others: 'Rarely' },
 ];
 
+const browserComparison = [
+  { feature: 'Encryption', safepass: 'AES-256-GCM', browser: 'AES (varies)' },
+  { feature: 'Key Derivation', safepass: '600,000 PBKDF2 iterations', browser: '~10,000–100,000' },
+  { feature: 'Zero-Knowledge', safepass: 'Yes', browser: 'No / Partial' },
+  { feature: 'Tamper Protection (AAD)', safepass: 'Yes', browser: 'Rare' },
+  { feature: 'Client-Side Encryption', safepass: 'Always', browser: 'Often mixed' },
+  { feature: 'Vault Recovery Backdoor', safepass: 'None', browser: 'Common' },
+];
+
+const breachProtections = [
+  'Database breaches',
+  'Insider threats',
+  'Legal or administrative data access',
+  'Credential stuffing',
+  'Phishing (via WebAuthn / FIDO2 support)',
+  'Vault tampering or replay attacks',
+];
+
 const faqs = [
   {
     question: 'Can SafePass employees see my passwords?',
@@ -326,15 +344,189 @@ export default function SafePassSecurityPage() {
         </div>
       </section>
 
-      {/* Comparison Table */}
+      {/* Why Safer Than Browsers */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
+            <Badge className="mb-4 bg-red-500/10 text-red-400 border-red-500/30">
+              Critical Difference
+            </Badge>
             <h2 className="text-3xl font-bold text-white mb-4">
-              Security Comparison
+              Why SafePass Is Safer Than Browser Password Managers
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Browser password managers are designed for ease of use, not for protecting your most sensitive credentials against modern threats. 
+              SafePass is purpose-built as a zero-knowledge password manager with a breach-assume security model.
+            </p>
+          </div>
+          
+          {/* Core Difference */}
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            <Card className="bg-[#141414] border-gray-700">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-400 mb-4">Browser Password Managers</h3>
+                <ul className="space-y-3 text-sm text-gray-500">
+                  <li className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    Passwords often encrypted server-side
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    Providers may be able to access or reset vaults
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    Encryption keys may be available to the platform
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    Sync prioritizes convenience over isolation
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-[#141414] border-amber-500/30">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-amber-400 mb-4">SafePass</h3>
+                <ul className="space-y-3 text-sm text-gray-300">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    Zero-knowledge by design
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    All encryption happens locally on your device
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    Master password never leaves your browser
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    We cannot see, reset, or recover your vault — ever
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Key Insight */}
+          <div className="p-6 rounded-xl bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-amber-500/20 mb-12">
+            <p className="text-center text-lg">
+              <span className="text-red-400 font-semibold">If a system can reset your passwords, it can also access them.</span>
+              <br />
+              <span className="text-amber-400 font-bold">SafePass cannot.</span>
+            </p>
+          </div>
+          
+          {/* Detailed Comparison Table */}
+          <div className="mb-12">
+            <h3 className="text-xl font-semibold text-white mb-6 text-center">
+              Cryptography That Exceeds Industry Defaults
+            </h3>
+            <div className="rounded-xl overflow-hidden border border-amber-500/10">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#141414]">
+                    <th className="text-left p-4 text-gray-400 font-medium">Security Feature</th>
+                    <th className="text-center p-4 text-amber-400 font-medium">SafePass</th>
+                    <th className="text-center p-4 text-gray-400 font-medium">Typical Browser Manager</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {browserComparison.map((point, index) => (
+                    <tr key={index} className="border-t border-amber-500/10">
+                      <td className="p-4 text-gray-300">{point.feature}</td>
+                      <td className="p-4 text-center text-emerald-400 font-medium">{point.safepass}</td>
+                      <td className="p-4 text-center text-gray-500">{point.browser}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          {/* Breach Scenario */}
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
+            <div className="p-6 rounded-xl bg-[#141414] border border-amber-500/10">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-amber-400" />
+                Designed for Breach Scenarios
+              </h3>
+              <p className="text-gray-400 text-sm mb-4">
+                SafePass is built under a simple assumption: <strong className="text-white">Attackers will eventually breach infrastructure.</strong>
+              </p>
+              <p className="text-gray-400 text-sm">If that happens, attackers obtain:</p>
+              <ul className="mt-3 space-y-2 text-sm">
+                <li className="flex items-center gap-2 text-gray-500">
+                  <Lock className="h-4 w-4 text-amber-400" />
+                  Only encrypted blobs — useless without your password
+                </li>
+                <li className="flex items-center gap-2 text-gray-500">
+                  <Lock className="h-4 w-4 text-amber-400" />
+                  No master passwords or encryption keys
+                </li>
+                <li className="flex items-center gap-2 text-gray-500">
+                  <Lock className="h-4 w-4 text-amber-400" />
+                  No way to brute-force vaults at scale
+                </li>
+              </ul>
+            </div>
+            
+            <div className="p-6 rounded-xl bg-[#141414] border border-amber-500/10">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-amber-400" />
+                Protection Against Real-World Attacks
+              </h3>
+              <ul className="space-y-2">
+                {breachProtections.map((protection, index) => (
+                  <li key={index} className="flex items-center gap-2 text-sm text-gray-400">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                    {protection}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          
+          {/* No Backdoors */}
+          <div className="p-6 rounded-xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/20 text-center">
+            <h3 className="text-xl font-bold text-white mb-4">No Backdoors. No Exceptions.</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 rounded-lg bg-black/50">
+                <EyeOff className="h-6 w-6 text-amber-400 mx-auto mb-2" />
+                <p className="text-xs text-gray-400">We cannot access your passwords</p>
+              </div>
+              <div className="p-4 rounded-lg bg-black/50">
+                <Lock className="h-6 w-6 text-amber-400 mx-auto mb-2" />
+                <p className="text-xs text-gray-400">We cannot reset your vault</p>
+              </div>
+              <div className="p-4 rounded-lg bg-black/50">
+                <Key className="h-6 w-6 text-amber-400 mx-auto mb-2" />
+                <p className="text-xs text-gray-400">We cannot decrypt your data</p>
+              </div>
+              <div className="p-4 rounded-lg bg-black/50">
+                <Shield className="h-6 w-6 text-amber-400 mx-auto mb-2" />
+                <p className="text-xs text-gray-400">Even under legal compulsion</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500">
+              This is not a policy choice. <span className="text-amber-400">It is a cryptographic limitation — by design.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Industry Comparison Table */}
+      <section className="py-20 px-4 bg-[#0d0d0d]">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Security Comparison vs Industry
             </h2>
             <p className="text-gray-400">
-              How SafePass stacks up against industry standards
+              How SafePass stacks up against other password managers
             </p>
           </div>
           
