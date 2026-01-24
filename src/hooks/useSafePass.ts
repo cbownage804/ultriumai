@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
-import { encryptData, decryptData, EncryptedData } from '@/utils/crypto';
+import { encryptData, decryptData, EncryptedData, AADContext } from '@/utils/crypto';
 
 export interface PasswordVault {
   id: string;
@@ -268,7 +268,13 @@ export const useSafePass = () => {
         notes: entryData.notes || ''
       });
       
-      const encryptedData = await encryptData(dataToEncrypt, masterPassword.masterPassword!);
+      // Use AAD context to bind ciphertext to this user and vault
+      const aadContext: AADContext = {
+        userId: user.id,
+        vaultId: entryData.vault_id,
+      };
+      
+      const encryptedData = await encryptData(dataToEncrypt, masterPassword.masterPassword!, undefined, aadContext);
 
       const { data, error } = await supabase
         .from('safepass_entries')
