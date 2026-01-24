@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
 import { getSafeSuiteBasePath, isSafeSuiteDomain } from '@/utils/subdomain';
-import { safeSuiteProducts, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
+import { safeSuiteProducts, safesuiteLogo, type SafeSuiteProductKey } from '@/components/safesuite/SafeSuiteProductIcons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -198,19 +198,25 @@ function NavLink({
           to={item.path}
           onClick={onClick}
           className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 flex-1',
+            'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1',
             'hover:bg-accent hover:text-accent-foreground',
-            isActive && 'bg-primary/10 text-primary font-medium',
+            isActive && 'bg-primary/10',
             isLocked && 'opacity-60'
           )}
         >
           {item.productLogo ? (
-            <img src={item.productLogo} alt={item.label} className="h-6 w-6 rounded object-contain" />
+            <img 
+              src={item.productLogo} 
+              alt={item.label} 
+              className="h-8 w-auto object-contain" 
+            />
           ) : Icon ? (
-            <Icon className="h-5 w-5" />
+            <>
+              <Icon className="h-5 w-5" />
+              <span className="flex-1">{item.label}</span>
+            </>
           ) : null}
-          <span className="flex-1">{item.label}</span>
-          {isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+          {isLocked && <Lock className="h-4 w-4 text-muted-foreground ml-auto" />}
         </Link>
         {hasSubItems && (
           <button
@@ -302,11 +308,12 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
     <aside className="flex flex-col h-full bg-card border-r border-border">
       {/* Logo */}
       <div className="p-4 border-b border-border">
-        <Link to={landingPath} className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
-            <Shield className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="font-bold text-lg">SafeSuite</span>
+        <Link to={landingPath} className="flex items-center justify-center">
+          <img 
+            src={safesuiteLogo} 
+            alt="SafeSuite" 
+            className="h-12 w-auto object-contain"
+          />
         </Link>
       </div>
 
