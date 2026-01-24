@@ -79,12 +79,14 @@ export default function SafePassProduct() {
           <Badge className="mb-6 bg-amber-500/10 text-amber-400 border-amber-500/30">
             Included with SafeSuite
           </Badge>
-          <div className="inline-block bg-black px-12 py-6 rounded-xl mb-8 shadow-[0_0_60px_rgba(245,158,11,0.3)] border border-amber-500/20">
-            <img 
-              src={safepassLogo} 
-              alt="SafePass" 
-              className="h-24 w-auto object-contain"
-            />
+          <div className="flex justify-center mb-8">
+            <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(245,158,11,0.3)] border border-amber-500/20">
+              <img 
+                src={safepassLogo} 
+                alt="SafePass" 
+                className="h-24 w-auto object-contain"
+              />
+            </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Secure Password Management
