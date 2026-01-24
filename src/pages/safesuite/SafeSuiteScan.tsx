@@ -39,7 +39,7 @@ export default function SafeSuiteScan() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
         >
-          <SafeScanApp isWhiteLabeled={false} brandName="SafeSuite" />
+          <SafeScanApp isWhiteLabeled={false} brandName="SafeSuite" hideHeader={true} />
         </motion.div>
       </div>
     </FeatureGate>

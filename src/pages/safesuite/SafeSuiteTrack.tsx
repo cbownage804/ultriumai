@@ -86,9 +86,9 @@ export default function SafeSuiteTrack() {
               </p>
               
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link to="/safetrack">
+                <Link to="/asset-management">
                   <Button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white gap-2 shadow-lg shadow-emerald-500/20">
-                    Open Full SafeTrack
+                    Open Asset Manager
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
