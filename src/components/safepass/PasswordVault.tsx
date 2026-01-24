@@ -625,7 +625,7 @@ export const PasswordVault = () => {
                 <Shield className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Verified</p>
+                <p className="text-sm font-medium text-muted-foreground">No Breaches</p>
                 <p className="text-2xl font-bold text-amber-500">{strongPasswords}</p>
               </div>
             </div>
