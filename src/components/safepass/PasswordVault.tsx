@@ -118,6 +118,7 @@ export const PasswordVault = () => {
   const [loading, setLoading] = useState(!getCachedEntries().length);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [sortBy, setSortBy] = useState<'all' | 'weak' | 'strong'>('all');
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<DisplayEntry | null>(null);
@@ -454,13 +455,26 @@ export const PasswordVault = () => {
     return 'Weak';
   };
 
-  const filteredEntries = entries.filter(entry => {
-    const matchesSearch = entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.website.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || entry.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredEntries = useMemo(() => {
+    let result = entries.filter(entry => {
+      const matchesSearch = entry.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           entry.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           entry.website.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || entry.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+    
+    // Apply sorting based on sortBy
+    if (sortBy === 'weak') {
+      // Show weak passwords first (lowest strength first)
+      result = [...result].sort((a, b) => a.password_strength - b.password_strength);
+    } else if (sortBy === 'strong') {
+      // Show strong passwords first (highest strength first)
+      result = [...result].sort((a, b) => b.password_strength - a.password_strength);
+    }
+    
+    return result;
+  }, [entries, searchTerm, selectedCategory, sortBy]);
 
   const weakPasswords = entries.filter(entry => entry.password_strength < 60).length;
   const strongPasswords = entries.filter(entry => entry.password_strength >= 80).length;
@@ -678,32 +692,52 @@ export const PasswordVault = () => {
       </div>
     </div>
 
-      {/* Security Overview */}
+      {/* Security Overview - Clickable to sort */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-amber-500/20 bg-card/80">
+        <Card 
+          className={`border-amber-500/20 bg-card/80 cursor-pointer transition-all hover:border-amber-500/50 ${sortBy === 'strong' ? 'ring-2 ring-amber-500 ring-offset-2 ring-offset-background' : ''}`}
+          onClick={() => setSortBy(sortBy === 'strong' ? 'all' : 'strong')}
+        >
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Shield className="h-5 w-5 text-amber-500" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Shield className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">No Breaches</p>
+                  <p className="text-2xl font-bold text-amber-500">{strongPasswords}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">No Breaches</p>
-                <p className="text-2xl font-bold text-amber-500">{strongPasswords}</p>
-              </div>
+              {sortBy === 'strong' && (
+                <Badge variant="outline" className="border-amber-500/50 text-amber-500 text-xs">
+                  Sorted
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-red-500/20 bg-card/80">
+        <Card 
+          className={`border-red-500/20 bg-card/80 cursor-pointer transition-all hover:border-red-500/50 ${sortBy === 'weak' ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-background' : ''}`}
+          onClick={() => setSortBy(sortBy === 'weak' ? 'all' : 'weak')}
+        >
           <CardContent className="p-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-red-500/10">
+                  <AlertTriangle className="h-5 w-5 text-red-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Weak</p>
+                  <p className="text-2xl font-bold text-red-500">{weakPasswords}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Weak</p>
-                <p className="text-2xl font-bold text-red-500">{weakPasswords}</p>
-              </div>
+              {sortBy === 'weak' && (
+                <Badge variant="outline" className="border-red-500/50 text-red-500 text-xs">
+                  Sorted
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
