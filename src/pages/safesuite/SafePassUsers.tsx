@@ -38,6 +38,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSafeSuiteSubscription } from "@/hooks/useSafeSuite";
+import { useNavigate } from "react-router-dom";
+import { isSafeSuiteDomain } from "@/utils/subdomain";
 import { 
   Users, 
   Plus, 
@@ -53,7 +56,9 @@ import {
   Mail,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Lock,
+  Crown
 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -79,8 +84,32 @@ interface ActionDialogState {
 
 const SafePassUsers = () => {
   const { session } = useAuth();
+  const navigate = useNavigate();
+  const { isBusiness, loading: subLoading, tier } = useSafeSuiteSubscription();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Business tier gate
+  if (!subLoading && !isBusiness) {
+    const billingPath = isSafeSuiteDomain() ? '/billing' : '/safesuite/billing';
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="p-4 bg-amber-500/10 rounded-full mb-4">
+          <Lock className="h-10 w-10 text-amber-500" />
+        </div>
+        <h3 className="text-xl font-semibold mb-2">Team Management is a Business Feature</h3>
+        <p className="text-muted-foreground max-w-md mb-6">
+          Invite and manage team members with their own secure vaults on the Business plan.
+          {tier === 'free' && " Upgrade to unlock team features and collaboration."}
+          {tier === 'pro' && " Upgrade from Pro to Business to unlock team management."}
+        </p>
+        <Button onClick={() => navigate(billingPath)} className="gap-2 bg-amber-500 hover:bg-amber-600 text-black">
+          <Crown className="h-4 w-4" />
+          Upgrade to Business
+        </Button>
+      </div>
+    );
+  }
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionDialog, setActionDialog] = useState<ActionDialogState>({

@@ -17,6 +17,7 @@ export interface TierFeatures {
   safeweb: FeatureLimit;
   safetrack: FeatureLimit;
   whitelabeling: FeatureLimit;
+  team: FeatureLimit;  // Team/User Management feature
 }
 
 export interface TierConfig {
@@ -47,7 +48,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safescan: { enabled: true, limit: 5 },       // 5 scans/month
       safeweb: { enabled: false, limit: 0 },
       safetrack: { enabled: false, limit: 0 },
-      whitelabeling: { enabled: false, limit: 0 }  // Not available on free
+      whitelabeling: { enabled: false, limit: 0 }, // Not available on free
+      team: { enabled: false, limit: 0 }           // Team management not available
     }
   },
   pro: {
@@ -65,7 +67,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safescan: { enabled: true, limit: 100 },     // 100 scans/month
       safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
       safetrack: { enabled: false, limit: 0 },
-      whitelabeling: { enabled: false, limit: 0 }  // Not available on pro
+      whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
+      team: { enabled: false, limit: 0 }           // Team management not available
     }
   },
   business: {
@@ -84,7 +87,8 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safescan: { enabled: true, limit: -1 },              // Unlimited scans
       safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
       safetrack: { enabled: true, limit: -1 },             // Unlimited tracked assets
-      whitelabeling: { enabled: true, limit: -1 }          // Full whitelabeling (Business only)
+      whitelabeling: { enabled: true, limit: -1 },         // Full whitelabeling (Business only)
+      team: { enabled: true, limit: -1 }                   // Team/User management (Business only)
     }
   }
 };
@@ -131,6 +135,13 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
     icon: 'Palette',
     limitUnit: 'brand',
     limitUnitPlural: 'brands'
+  },
+  team: {
+    name: 'Team Management',
+    description: 'Invite and manage team members with their own vaults',
+    icon: 'Users',
+    limitUnit: 'user',
+    limitUnitPlural: 'users'
   }
 };
 
