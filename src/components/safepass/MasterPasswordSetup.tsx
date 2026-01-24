@@ -283,11 +283,20 @@ export const MasterPasswordSetup = ({
             Security Features
           </h4>
           <ul className="text-xs text-muted-foreground space-y-1">
-            <li>• AES-256 encryption with PBKDF2 key derivation</li>
+            <li>• AES-256-GCM authenticated encryption</li>
             <li>• Zero-knowledge architecture</li>
-            <li>• Client-side encryption only</li>
             <li>• 600,000 PBKDF2 iterations (OWASP 2023)</li>
+            <li>• Tamper-proof AAD binding</li>
           </ul>
+          <a 
+            href="/products/safepass/security" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 mt-3 text-xs text-primary hover:underline"
+          >
+            Learn more about our security
+            <Info className="h-3 w-3" />
+          </a>
         </div>
       </CardContent>
     </Card>
