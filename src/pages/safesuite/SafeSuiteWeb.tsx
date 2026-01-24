@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import safewebLogo from '@/assets/safeweb-logo.png';
 import {
   Globe,
   Shield,
@@ -303,11 +304,8 @@ export default function SafeSuiteWeb() {
       <div className="space-y-6 bg-[#0a0a0a] min-h-full p-6 -m-6 rounded-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2 text-violet-500">
-              <Eye className="h-6 w-6 text-violet-500" />
-              SafeWeb
-            </h1>
-            <p className="text-gray-400">
+            <img src={safewebLogo} alt="SafeWeb" className="h-10 w-auto" />
+            <p className="text-gray-400 mt-1">
               Monitor the dark web for your exposed credentials and data
             </p>
           </div>
