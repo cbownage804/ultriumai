@@ -45,12 +45,11 @@ export default function SafeWebProduct() {
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur border-b border-violet-500/10">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-black flex items-center justify-center overflow-hidden border border-violet-500/20">
-              <img src={safewebLogo} alt="SafeWeb" className="h-full w-full object-contain" />
+        <div className="container mx-auto px-4 h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center">
+            <div className="h-14 rounded-xl bg-black flex items-center justify-center overflow-hidden border border-violet-500/20 px-4 shadow-lg shadow-violet-500/10">
+              <img src={safewebLogo} alt="SafeWeb" className="h-10 w-auto object-contain" />
             </div>
-            <span className="font-semibold text-violet-400">SafeWeb</span>
           </Link>
           <div className="flex items-center gap-4">
             <Link to="/">
