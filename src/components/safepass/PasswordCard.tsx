@@ -63,7 +63,7 @@ export const PasswordCard = ({ entry, onEdit, onDelete, onToggleFavorite }: Pass
   };
 
   const getStrengthInfo = (strength: number) => {
-    if (strength >= 80) return { color: 'bg-amber-500', text: 'Verified', textColor: 'text-amber-500', badgeBg: 'bg-amber-500/10 border-amber-500/30' };
+    if (strength >= 80) return { color: 'bg-amber-500', text: 'No Breaches', textColor: 'text-amber-500', badgeBg: 'bg-amber-500/10 border-amber-500/30' };
     if (strength >= 60) return { color: 'bg-amber-400', text: 'Medium', textColor: 'text-amber-400', badgeBg: 'bg-amber-400/10 border-amber-400/30' };
     return { color: 'bg-red-500', text: 'Weak', textColor: 'text-red-500', badgeBg: 'bg-red-500/10 border-red-500/30' };
   };
