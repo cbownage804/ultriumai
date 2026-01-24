@@ -500,7 +500,7 @@ export const IdentityProfiles = () => {
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                           <User className="h-5 w-5 text-primary" />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           <CardTitle className="text-base font-medium">
                             {identity.name}
                           </CardTitle>
@@ -509,6 +509,15 @@ export const IdentityProfiles = () => {
                           </p>
                         </div>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100"
+                        onClick={() => copyToClipboard(`${identity.firstName} ${identity.lastName}`.trim())}
+                        title="Copy full name"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -531,17 +540,42 @@ export const IdentityProfiles = () => {
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Phone className="h-3.5 w-3.5" />
                           <span>{identity.phone}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 ml-auto opacity-0 group-hover:opacity-100"
+                            onClick={() => copyToClipboard(identity.phone)}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
                         </div>
                       )}
                       {identity.address && (
                         <div className="flex items-start gap-2 text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5 mt-0.5" />
-                          <span className="line-clamp-2">
+                          <span className="line-clamp-2 flex-1">
                             {identity.address}
                             {identity.city && `, ${identity.city}`}
                             {identity.state && `, ${identity.state}`}
                             {identity.zip && ` ${identity.zip}`}
                           </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 ml-auto opacity-0 group-hover:opacity-100 shrink-0"
+                            onClick={() => {
+                              const fullAddress = [
+                                identity.address,
+                                identity.city,
+                                identity.state,
+                                identity.zip,
+                                identity.country
+                              ].filter(Boolean).join(', ');
+                              copyToClipboard(fullAddress);
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
                         </div>
                       )}
                     </div>
