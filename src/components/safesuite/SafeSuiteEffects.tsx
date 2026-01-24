@@ -153,7 +153,7 @@ export function AnimatedHeader({ logo, logoAlt, tagline, theme, badge }: Animate
             'border'
           )}
         >
-          <img src={logo} alt={logoAlt} className="h-[120px] w-auto" />
+          <img src={logo} alt={logoAlt} className="h-32 w-auto" />
         </motion.div>
         <div>
           <div className="flex items-center gap-2">

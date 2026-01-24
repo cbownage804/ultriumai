@@ -39,11 +39,12 @@ interface SafeScanAppProps {
   isWhiteLabeled?: boolean;
   brandColor?: string;
   brandName?: string;
+  hideHeader?: boolean;
 }
 
 const GUEST_SCAN_LIMIT = 3;
 
-export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', brandName = 'SafeScan' }: SafeScanAppProps) => {
+export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', brandName = 'SafeScan', hideHeader = false }: SafeScanAppProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -185,72 +186,98 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#0a0a0a]/80 border-b border-red-500/10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {user && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate(-1)}
-                  className="text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              )}
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-red-600 shadow-lg shadow-red-500/20">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white flex items-center gap-2">
-                    SafeScan™
-                    {isMSPContext && <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">MSP</Badge>}
-                  </h1>
-                  <p className="text-xs text-gray-500">AI-Powered Security Scanner</p>
+    <div className={hideHeader ? "" : "min-h-screen bg-[#0a0a0a]"}>
+      {/* Header - conditionally rendered */}
+      {!hideHeader && (
+        <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#0a0a0a]/80 border-b border-red-500/10">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {user && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigate(-1)}
+                    className="text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                )}
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-red-600 shadow-lg shadow-red-500/20">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                      SafeScan™
+                      {isMSPContext && <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">MSP</Badge>}
+                    </h1>
+                    <p className="text-xs text-gray-500">AI-Powered Security Scanner</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {!isGuestMode && (
-                <>
-                  <Button
-                    variant="ghost"
+              
+              <div className="flex items-center gap-2">
+                {!isGuestMode && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAIChat(!showAIChat)}
+                      className={`text-gray-400 hover:text-red-400 ${showAIChat ? 'bg-red-500/10 text-red-400' : ''}`}
+                    >
+                      <Bot className="h-4 w-4 mr-2" />
+                      AI Assistant
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowHistory(!showHistory)}
+                      className={`text-gray-400 hover:text-red-400 ${showHistory ? 'bg-red-500/10 text-red-400' : ''}`}
+                    >
+                      <History className="h-4 w-4 mr-2" />
+                      History
+                    </Button>
+                  </>
+                )}
+                {isGuestMode && (
+                  <Button 
+                    onClick={() => navigate('/safesuite/auth')}
+                    className="bg-red-500 hover:bg-red-600 text-white"
                     size="sm"
-                    onClick={() => setShowAIChat(!showAIChat)}
-                    className={`text-gray-400 hover:text-red-400 ${showAIChat ? 'bg-red-500/10 text-red-400' : ''}`}
                   >
-                    <Bot className="h-4 w-4 mr-2" />
-                    AI Assistant
+                    Sign In
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowHistory(!showHistory)}
-                    className={`text-gray-400 hover:text-red-400 ${showHistory ? 'bg-red-500/10 text-red-400' : ''}`}
-                  >
-                    <History className="h-4 w-4 mr-2" />
-                    History
-                  </Button>
-                </>
-              )}
-              {isGuestMode && (
-                <Button 
-                  onClick={() => navigate('/safesuite/auth')}
-                  className="bg-red-500 hover:bg-red-600 text-white"
-                  size="sm"
-                >
-                  Sign In
-                </Button>
-              )}
+                )}
+              </div>
             </div>
           </div>
+        </header>
+      )}
+
+      {/* Inline controls when header is hidden */}
+      {hideHeader && !isGuestMode && (
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowAIChat(!showAIChat)}
+            className={`text-gray-400 hover:text-red-400 ${showAIChat ? 'bg-red-500/10 text-red-400' : ''}`}
+          >
+            <Bot className="h-4 w-4 mr-2" />
+            AI Assistant
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHistory(!showHistory)}
+            className={`text-gray-400 hover:text-red-400 ${showHistory ? 'bg-red-500/10 text-red-400' : ''}`}
+          >
+            <History className="h-4 w-4 mr-2" />
+            History
+          </Button>
         </div>
-      </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         {/* Guest Mode Banner */}

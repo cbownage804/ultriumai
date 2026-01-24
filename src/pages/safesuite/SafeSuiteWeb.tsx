@@ -341,9 +341,11 @@ export default function SafeSuiteWeb() {
     <FeatureGate feature="safeweb">
       <div className="space-y-6 bg-[#0a0a0a] min-h-full p-6 -m-6 rounded-lg">
         <div className="flex items-center justify-between">
-          <div>
-            <img src={safewebLogo} alt="SafeWeb" className="h-10 w-auto" />
-            <p className="text-gray-400 mt-1">
+          <div className="flex items-center gap-4">
+            <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/20 via-purple-500/10 to-fuchsia-500/20 border border-violet-500/20 shadow-[0_0_60px_rgba(139,92,246,0.15)]">
+              <img src={safewebLogo} alt="SafeWeb" className="h-32 w-auto" />
+            </div>
+            <p className="text-gray-400">
               Monitor the dark web for your exposed credentials and data
             </p>
           </div>
