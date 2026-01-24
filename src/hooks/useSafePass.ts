@@ -209,7 +209,7 @@ export const useSafePass = () => {
         .insert({
           user_id: user.id,
           vault_id: entryData.vault_id,
-          entry_type: 'password',
+          entry_type: 'login',
           title: entryData.title,
           encrypted_data: encryptedData as any,
           url: entryData.website,
