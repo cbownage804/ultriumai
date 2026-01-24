@@ -41,6 +41,7 @@ import SafePassProduct from '@/pages/safesuite/products/SafePassProduct';
 import SafeScanProduct from '@/pages/safesuite/products/SafeScanProduct';
 import SafeWebProduct from '@/pages/safesuite/products/SafeWebProduct';
 import SafeTrackProduct from '@/pages/safesuite/products/SafeTrackProduct';
+import SafePassSecurityPage from '@/pages/safesuite/SafePassSecurityPage';
 
 /**
  * SafeSuite routes for the dedicated subdomain (safesuite.ultriumai.com)
@@ -52,6 +53,7 @@ export const SafeSuiteSubdomainRoutes = () => {
       <Route path="/" element={<SafeSuiteLanding />} />
       <Route path="/features" element={<SafeSuiteLanding />} />
       <Route path="/products/safepass" element={<SafePassProduct />} />
+      <Route path="/products/safepass/security" element={<SafePassSecurityPage />} />
       <Route path="/products/safescan" element={<SafeScanProduct />} />
       <Route path="/products/safeweb" element={<SafeWebProduct />} />
       <Route path="/products/safetrack" element={<SafeTrackProduct />} />
