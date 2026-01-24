@@ -45,6 +45,7 @@ import { SecureNotes } from './SecureNotes';
 import { CreditCards } from './CreditCards';
 import { IdentityProfiles } from './IdentityProfiles';
 import { PasswordHealthDashboard } from './PasswordHealthDashboard';
+import { VaultLoadingScreen } from './VaultLoadingScreen';
 import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 import { AnimatePresence } from 'framer-motion';
@@ -786,7 +787,10 @@ export const PasswordVault = () => {
 
       {/* Password Entries */}
       <div className="space-y-4">
-        {filteredEntries.length === 0 ? (
+        {/* Show loading screen while decrypting */}
+        {loading ? (
+          <VaultLoadingScreen isLoading={loading} />
+        ) : filteredEntries.length === 0 ? (
           <Card className="p-8 text-center border-dashed">
             <Lock className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">No passwords found</h3>
