@@ -79,12 +79,14 @@ export default function SafeScanProduct() {
           <Badge className="mb-6 bg-red-500/10 text-red-400 border-red-500/30">
             Included with SafeSuite
           </Badge>
-          <div className="inline-block bg-black px-12 py-6 rounded-xl mb-8 shadow-[0_0_60px_rgba(239,68,68,0.3)] border border-red-500/20">
-            <img 
-              src={safescanLogo} 
-              alt="SafeScan" 
-              className="h-24 w-auto object-contain"
-            />
+          <div className="flex justify-center mb-8">
+            <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(239,68,68,0.3)] border border-red-500/20">
+              <img 
+                src={safescanLogo} 
+                alt="SafeScan" 
+                className="h-24 w-auto object-contain"
+              />
+            </div>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             AI-Powered Threat Scanner
