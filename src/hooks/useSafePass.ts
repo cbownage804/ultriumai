@@ -143,13 +143,23 @@ export const useSafePass = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Ignore duplicate constraint errors (vault already exists)
+        if (error.code === '23505') {
+          console.log('Vault already exists, skipping creation');
+          return null;
+        }
+        throw error;
+      }
 
       setVaults(prev => [data, ...prev]);
-      toast({
-        title: "Success",
-        description: "Password vault created successfully",
-      });
+      // Only show toast for manually created vaults, not auto-created ones
+      if (vaultData.name !== 'My Vault') {
+        toast({
+          title: "Success",
+          description: "Password vault created successfully",
+        });
+      }
 
       return data;
     } catch (error) {

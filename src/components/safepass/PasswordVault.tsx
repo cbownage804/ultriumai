@@ -130,6 +130,8 @@ export const PasswordVault = () => {
       
       // Only create vault once: when loaded, empty, and not yet initialized this session
       if (user && !vaultsLoading && vaults.length === 0 && !vaultInitialized) {
+        setVaultInitialized(true);
+        
         // Double-check database to prevent duplicates from race conditions
         const { data: existingVaults } = await supabase
           .from('safepass_vaults')
@@ -139,13 +141,17 @@ export const PasswordVault = () => {
         
         if (existingVaults && existingVaults.length > 0) {
           // Vault exists in DB but wasn't loaded yet - just refresh
-          setVaultInitialized(true);
           await loadVaults();
           return;
         }
         
-        setVaultInitialized(true);
-        await createVault({ name: 'My Vault', description: 'Default password vault' });
+        // Try to create, but ignore duplicate constraint errors
+        try {
+          await createVault({ name: 'My Vault', description: 'Default password vault' });
+        } catch (e) {
+          // Constraint violation is expected if vault already exists
+          console.log('Vault already exists or could not be created');
+        }
         await loadVaults();
       }
     };
