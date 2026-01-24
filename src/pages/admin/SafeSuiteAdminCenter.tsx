@@ -110,12 +110,16 @@ const SafeSuiteAdminCenter = () => {
         return;
       }
 
-      // Check if user is admin (UltriumAI employee)
+      // Check if user is admin (UltriumAI employee with CONFIRMED email)
+      const isEmailConfirmed = user.email_confirmed_at != null;
       const isUltriumEmployee = user.email?.endsWith('@ultriumai.com');
-      if (!isUltriumEmployee) {
+      
+      if (!isUltriumEmployee || !isEmailConfirmed) {
         toast({
           title: "Access Denied",
-          description: "You don't have admin privileges.",
+          description: !isEmailConfirmed 
+            ? "Please confirm your email address first." 
+            : "You don't have admin privileges.",
           variant: "destructive",
         });
         navigate('/dashboard');
