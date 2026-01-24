@@ -19,6 +19,16 @@ export interface EncryptedData {
   iv: string;
   salt: string;
   tag: string;
+  /** Optional AAD context for swapping attack prevention */
+  aad?: string;
+  /** Key version for future key rotation support */
+  keyVersion?: number;
+}
+
+export interface AADContext {
+  userId: string;
+  entryId?: string;
+  vaultId?: string;
 }
 
 export interface KeyDerivationParams {
@@ -86,12 +96,15 @@ export async function deriveKeyFromPassword(
 }
 
 /**
- * Encrypt data using AES-GCM
+ * Encrypt data using AES-GCM with optional Associated Authenticated Data (AAD)
+ * AAD binds the ciphertext to its context, preventing swapping attacks
  */
 export async function encryptData(
   plaintext: string,
   masterPassword: string,
-  salt?: Uint8Array
+  salt?: Uint8Array,
+  aadContext?: AADContext,
+  keyVersion: number = 1
 ): Promise<EncryptedData> {
   const encoder = new TextEncoder();
   const data = encoder.encode(plaintext);
@@ -103,16 +116,25 @@ export async function encryptData(
   // Derive key from master password
   const key = await deriveKeyFromPassword(masterPassword, cryptoSalt);
   
+  // Build AAD string if context provided
+  const aadString = aadContext 
+    ? `${aadContext.userId}:${aadContext.entryId || ''}:${aadContext.vaultId || ''}`
+    : undefined;
+  
+  // Configure encryption with optional AAD
+  const encryptParams: AesGcmParams = {
+    name: ALGORITHM,
+    iv: new Uint8Array(iv.buffer, iv.byteOffset, iv.byteLength) as BufferSource,
+    tagLength: TAG_LENGTH * 8 // Convert to bits
+  };
+  
+  // Add AAD if provided - this binds ciphertext to its context
+  if (aadString) {
+    encryptParams.additionalData = encoder.encode(aadString);
+  }
+  
   // Encrypt data
-  const encrypted = await crypto.subtle.encrypt(
-    {
-      name: ALGORITHM,
-      iv: new Uint8Array(iv.buffer, iv.byteOffset, iv.byteLength) as BufferSource,
-      tagLength: TAG_LENGTH * 8 // Convert to bits
-    },
-    key,
-    data
-  );
+  const encrypted = await crypto.subtle.encrypt(encryptParams, key, data);
   
   // Extract ciphertext and tag
   const encryptedArray = new Uint8Array(encrypted);
@@ -123,18 +145,23 @@ export async function encryptData(
     ciphertext: arrayBufferToBase64(ciphertext),
     iv: arrayBufferToBase64(iv),
     salt: arrayBufferToBase64(cryptoSalt),
-    tag: arrayBufferToBase64(tag)
+    tag: arrayBufferToBase64(tag),
+    aad: aadString,
+    keyVersion
   };
 }
 
 /**
- * Decrypt data using AES-GCM
+ * Decrypt data using AES-GCM with optional AAD verification
+ * If AAD was used during encryption, it must match during decryption
  */
 export async function decryptData(
   encryptedData: EncryptedData,
-  masterPassword: string
+  masterPassword: string,
+  aadContext?: AADContext
 ): Promise<string> {
   const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
   
   // Convert base64 to arrays
   const ciphertext = base64ToArrayBuffer(encryptedData.ciphertext);
@@ -152,21 +179,30 @@ export async function decryptData(
   // Derive key from master password
   const key = await deriveKeyFromPassword(masterPassword, new Uint8Array(salt));
   
+  // Build AAD string - use stored AAD or provided context
+  const aadString = encryptedData.aad || (aadContext 
+    ? `${aadContext.userId}:${aadContext.entryId || ''}:${aadContext.vaultId || ''}`
+    : undefined);
+  
+  // Configure decryption with optional AAD
+  const decryptParams: AesGcmParams = {
+    name: ALGORITHM,
+    iv: new Uint8Array(iv),
+    tagLength: TAG_LENGTH * 8
+  };
+  
+  // Add AAD if present - must match what was used during encryption
+  if (aadString) {
+    decryptParams.additionalData = encoder.encode(aadString);
+  }
+  
   try {
     // Decrypt data
-    const decrypted = await crypto.subtle.decrypt(
-      {
-        name: ALGORITHM,
-        iv: new Uint8Array(iv),
-        tagLength: TAG_LENGTH * 8
-      },
-      key,
-      encryptedWithTag
-    );
+    const decrypted = await crypto.subtle.decrypt(decryptParams, key, encryptedWithTag);
     
     return decoder.decode(decrypted);
   } catch (error) {
-    throw new Error('Decryption failed - incorrect master password or corrupted data');
+    throw new Error('Decryption failed - incorrect master password, corrupted data, or AAD mismatch');
   }
 }
 

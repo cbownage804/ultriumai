@@ -12448,6 +12448,7 @@ export type Database = {
           id: string
           is_compromised: boolean | null
           is_favorite: boolean | null
+          key_version: number
           last_password_change: string | null
           last_used_at: string | null
           msp_id: string | null
@@ -12473,6 +12474,7 @@ export type Database = {
           id?: string
           is_compromised?: boolean | null
           is_favorite?: boolean | null
+          key_version?: number
           last_password_change?: string | null
           last_used_at?: string | null
           msp_id?: string | null
@@ -12498,6 +12500,7 @@ export type Database = {
           id?: string
           is_compromised?: boolean | null
           is_favorite?: boolean | null
+          key_version?: number
           last_password_change?: string | null
           last_used_at?: string | null
           msp_id?: string | null
@@ -13268,6 +13271,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_shared: boolean | null
+          key_version: number
           last_accessed_at: string | null
           msp_org_id: string | null
           shared_with: Json | null
@@ -13284,6 +13288,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_shared?: boolean | null
+          key_version?: number
           last_accessed_at?: string | null
           msp_org_id?: string | null
           shared_with?: Json | null
@@ -13300,6 +13305,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_shared?: boolean | null
+          key_version?: number
           last_accessed_at?: string | null
           msp_org_id?: string | null
           shared_with?: Json | null
