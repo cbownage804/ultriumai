@@ -142,18 +142,18 @@ export function AnimatedHeader({ logo, logoAlt, tagline, theme, badge }: Animate
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className="flex items-center justify-between"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-6">
         <motion.div
           whileHover={{ scale: 1.05 }}
           className={cn(
-            'p-3 rounded-xl bg-gradient-to-br',
+            'p-4 rounded-xl bg-gradient-to-br',
             colors.gradient,
             colors.glow,
             colors.border,
             'border'
           )}
         >
-          <img src={logo} alt={logoAlt} className="h-10 w-auto" />
+          <img src={logo} alt={logoAlt} className="h-[120px] w-auto" />
         </motion.div>
         <div>
           <div className="flex items-center gap-2">
