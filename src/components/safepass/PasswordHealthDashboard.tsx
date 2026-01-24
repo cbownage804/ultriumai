@@ -33,10 +33,11 @@ interface PasswordIssue {
 export const PasswordHealthDashboard = () => {
   const { user } = useAuth();
   const { isUnlocked, masterPassword } = useMasterPassword();
-  const { entries, getEntryPassword } = useSafePass();
+  const { getEntryPassword, loadAllEntries } = useSafePass();
   
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
+  const [allEntries, setAllEntries] = useState<any[]>([]);
   const [healthScore, setHealthScore] = useState(0);
   const [stats, setStats] = useState({
     total: 0,
@@ -60,7 +61,7 @@ export const PasswordHealthDashboard = () => {
     return Math.min(score, 100);
   };
 
-  const analyzePasswords = async () => {
+  const analyzePasswords = async (entries: any[]) => {
     if (!isUnlocked || entries.length === 0) {
       setLoading(false);
       return;
@@ -165,13 +166,34 @@ export const PasswordHealthDashboard = () => {
     setScanning(false);
   };
 
+  // Load all entries on mount and when vault is unlocked
   useEffect(() => {
-    if (isUnlocked && entries.length > 0) {
-      analyzePasswords();
-    } else {
-      setLoading(false);
-    }
-  }, [isUnlocked, entries.length]);
+    const fetchAndAnalyze = async () => {
+      if (!isUnlocked || !user) {
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      const entries = await loadAllEntries();
+      setAllEntries(entries);
+      
+      if (entries.length > 0) {
+        await analyzePasswords(entries);
+      } else {
+        setLoading(false);
+      }
+    };
+    
+    fetchAndAnalyze();
+  }, [isUnlocked, user, loadAllEntries]);
+
+  const handleRescan = async () => {
+    setScanning(true);
+    const entries = await loadAllEntries();
+    setAllEntries(entries);
+    await analyzePasswords(entries);
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-500';
@@ -245,7 +267,7 @@ export const PasswordHealthDashboard = () => {
         
         <Button 
           variant="outline" 
-          onClick={analyzePasswords}
+          onClick={handleRescan}
           disabled={scanning}
         >
           <RefreshCw className={`w-4 h-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />

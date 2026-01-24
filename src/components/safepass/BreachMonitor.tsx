@@ -44,11 +44,12 @@ interface ScanResult {
 
 export const BreachMonitor = () => {
   const { user } = useAuth();
-  const { entries, getEntryPassword } = useSafePass();
+  const { getEntryPassword, loadAllEntries } = useSafePass();
   const { isUnlocked } = useMasterPassword();
   
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [allEntries, setAllEntries] = useState<any[]>([]);
   const [lastScan, setLastScan] = useState<BreachScan | null>(null);
   const [scanHistory, setScanHistory] = useState<BreachScan[]>([]);
   const [currentResults, setCurrentResults] = useState<ScanResult[]>([]);
@@ -83,9 +84,29 @@ export const BreachMonitor = () => {
     loadScanHistory();
   }, [loadScanHistory]);
 
+  // Load all entries on mount
+  useEffect(() => {
+    const fetchEntries = async () => {
+      if (user && isUnlocked) {
+        const entries = await loadAllEntries();
+        setAllEntries(entries);
+      }
+    };
+    fetchEntries();
+  }, [user, isUnlocked, loadAllEntries]);
+
   const runBreachScan = async () => {
-    if (!user || !isUnlocked || entries.length === 0) {
-      toast.error('Unlock vault and add passwords first');
+    if (!user || !isUnlocked) {
+      toast.error('Unlock vault first');
+      return;
+    }
+    
+    // Fetch fresh entries
+    const entries = await loadAllEntries();
+    setAllEntries(entries);
+    
+    if (entries.length === 0) {
+      toast.error('No passwords found to scan');
       return;
     }
 
@@ -226,7 +247,7 @@ export const BreachMonitor = () => {
         </div>
         <Button 
           onClick={runBreachScan} 
-          disabled={isScanning || entries.length === 0}
+          disabled={isScanning}
         >
           {isScanning ? (
             <>
