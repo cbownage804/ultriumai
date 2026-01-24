@@ -18106,6 +18106,7 @@ export type Database = {
       }
       current_device_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }
+      ensure_my_vault: { Args: never; Returns: string }
       generate_analytics_snapshot: {
         Args: { p_snapshot_type: string; p_user_id: string }
         Returns: string
