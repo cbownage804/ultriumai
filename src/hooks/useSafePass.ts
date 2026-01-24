@@ -602,6 +602,25 @@ export const useSafePass = () => {
   const isEntryShared = (entry: PasswordEntry) => false;
   const getVaultName = (vault: PasswordVault) => vault.vault_name;
 
+  // Load ALL entries across ALL vaults for analysis pages
+  const loadAllEntries = useCallback(async (): Promise<PasswordEntry[]> => {
+    if (!user) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('safepass_entries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error loading all entries:', error);
+      return [];
+    }
+  }, [user]);
+
   return {
     vaults,
     entries,
@@ -617,6 +636,7 @@ export const useSafePass = () => {
     calculatePasswordStrength,
     loadVaults: () => loadVaults(true), // Force refresh when called manually
     loadEntries: (vaultId: string) => loadEntries(vaultId, true),
+    loadAllEntries, // New: Load all entries across all vaults
     loadAuditLogs,
     masterPassword,
     getEntryName,
