@@ -286,7 +286,7 @@ export const MasterPasswordSetup = ({
             <li>• AES-256 encryption with PBKDF2 key derivation</li>
             <li>• Zero-knowledge architecture</li>
             <li>• Client-side encryption only</li>
-            <li>• 100,000+ PBKDF2 iterations</li>
+            <li>• 600,000 PBKDF2 iterations (OWASP 2023)</li>
           </ul>
         </div>
       </CardContent>
