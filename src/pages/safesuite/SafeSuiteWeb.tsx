@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import safewebLogo from '@/assets/safeweb-logo.png';
+import { Sparkles } from 'lucide-react';
 import {
   Globe,
   Shield,
@@ -79,6 +80,8 @@ export default function SafeSuiteWeb() {
   const [newAsset, setNewAsset] = useState('');
   const [assetType, setAssetType] = useState<'email' | 'domain' | 'brand'>('email');
   const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
+  const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
+  const [loadingRecommendation, setLoadingRecommendation] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -126,6 +129,41 @@ export default function SafeSuiteWeb() {
       });
     }
   };
+
+  const generateAiRecommendation = async (threat: ThreatDetails) => {
+    setLoadingRecommendation(true);
+    setAiRecommendation(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('safeweb-ai-recommendations', {
+        body: { threat }
+      });
+
+      if (error) throw error;
+      
+      if (data?.recommendation) {
+        setAiRecommendation(data.recommendation);
+      }
+    } catch (error: any) {
+      console.error('Error generating recommendation:', error);
+      toast({
+        title: "AI Recommendation Failed",
+        description: error.message || "Could not generate recommendations",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingRecommendation(false);
+    }
+  };
+
+  // Auto-generate recommendation when threat modal opens
+  useEffect(() => {
+    if (selectedThreat) {
+      generateAiRecommendation(selectedThreat);
+    } else {
+      setAiRecommendation(null);
+    }
+  }, [selectedThreat]);
 
   const toggleAssetExpand = async (assetId: string) => {
     const isExpanded = expandedAssets.has(assetId);
@@ -704,6 +742,37 @@ export default function SafeSuiteWeb() {
                       </div>
                     </div>
                   )}
+
+                  {/* AI Recommendations */}
+                  <div className="bg-gradient-to-br from-violet-500/10 to-purple-500/10 border border-violet-500/20 p-4 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="h-5 w-5 text-violet-400" />
+                      <h4 className="font-medium text-violet-300">AI-Powered Recommendations</h4>
+                    </div>
+                    
+                    {loadingRecommendation ? (
+                      <div className="flex items-center gap-3 py-4">
+                        <Loader2 className="h-5 w-5 animate-spin text-violet-400" />
+                        <span className="text-gray-400">Analyzing threat and generating recommendations...</span>
+                      </div>
+                    ) : aiRecommendation ? (
+                      <div className="prose prose-sm prose-invert max-w-none">
+                        <div className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
+                          {aiRecommendation}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <Button
+                          onClick={() => selectedThreat && generateAiRecommendation(selectedThreat)}
+                          className="bg-violet-500 hover:bg-violet-600"
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate Recommendations
+                        </Button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Source Link */}
                   {selectedThreat.source_url && (
