@@ -8,10 +8,92 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
+// Storage key for auth token
+const AUTH_STORAGE_KEY = 'sb-nsyobmjpdpvesjwdphlh-auth-token';
+
+// Helper to get the root domain for cookie sharing across subdomains
+const getRootDomain = (): string => {
+  const hostname = window.location.hostname;
+  
+  // Localhost - no domain sharing possible
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return '';
+  }
+  
+  // Handle preview/production domains
+  const parts = hostname.split('.');
+  if (parts.length >= 2) {
+    // Return last two parts (e.g., "ultriumai.com" from "safesuite.ultriumai.com")
+    // For lovable.app domains, return last two parts
+    return '.' + parts.slice(-2).join('.');
+  }
+  
+  return '';
+};
+
+// Cookie-based storage for cross-subdomain session sharing
+const cookieStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof document === 'undefined') return null;
+    
+    // First try localStorage (faster)
+    const localValue = localStorage.getItem(key);
+    if (localValue) return localValue;
+    
+    // Fallback to cookie
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [cookieName, cookieValue] = cookie.trim().split('=');
+      if (cookieName === key) {
+        try {
+          return decodeURIComponent(cookieValue);
+        } catch {
+          return cookieValue;
+        }
+      }
+    }
+    return null;
+  },
+  
+  setItem: (key: string, value: string): void => {
+    if (typeof document === 'undefined') return;
+    
+    // Always store in localStorage for fast access
+    localStorage.setItem(key, value);
+    
+    // Also store in cookie for cross-subdomain sharing
+    const rootDomain = getRootDomain();
+    const expires = new Date();
+    expires.setTime(expires.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
+    
+    let cookieString = `${key}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax; Secure`;
+    if (rootDomain) {
+      cookieString += `; domain=${rootDomain}`;
+    }
+    
+    document.cookie = cookieString;
+  },
+  
+  removeItem: (key: string): void => {
+    if (typeof document === 'undefined') return;
+    
+    // Remove from localStorage
+    localStorage.removeItem(key);
+    
+    // Remove from cookie
+    const rootDomain = getRootDomain();
+    let cookieString = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    if (rootDomain) {
+      cookieString += `; domain=${rootDomain}`;
+    }
+    document.cookie = cookieString;
+  },
+};
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    storageKey: 'sb-nsyobmjpdpvesjwdphlh-auth-token',
+    storage: typeof window !== 'undefined' ? cookieStorage : undefined,
+    storageKey: AUTH_STORAGE_KEY,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
