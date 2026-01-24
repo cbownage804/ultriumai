@@ -87,7 +87,10 @@ export const useAccountType = () => {
   const isMSSP = profile?.account_type === 'mssp';
   const isMSPOrMSSP = isMSP || isMSSP;
   const isBusiness = profile?.account_type === 'business';
-  const isUltriumEmployee = profile?.email?.endsWith('@ultriumai.com') || false;
+  
+  // Admin check requires BOTH @ultriumai.com email AND confirmed email
+  const isEmailConfirmed = user?.email_confirmed_at != null;
+  const isUltriumEmployee = (profile?.email?.endsWith('@ultriumai.com') && isEmailConfirmed) || false;
 
   return {
     profile,
