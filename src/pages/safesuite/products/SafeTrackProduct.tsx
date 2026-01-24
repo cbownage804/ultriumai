@@ -16,26 +16,30 @@ import {
   History, 
   BarChart3,
   Package,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Shield
 } from 'lucide-react';
 import safetrackLogo from '@/assets/safetrack-logo.png';
 import heroTrack from '@/assets/hero-track.jpg';
 import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
 
 const features = [
+  { icon: Sparkles, title: "AI Warranty Lookup", description: "Instantly retrieve warranty status by serial number using AI-powered web scraping.", featured: true },
   { icon: Laptop, title: "Hardware Inventory", description: "Track all physical IT assets including computers, monitors, and peripherals." },
   { icon: QrCode, title: "QR Code Scanning", description: "Instant asset lookup with mobile QR code scanning for quick audits." },
   { icon: DollarSign, title: "Depreciation Tracking", description: "Automatic depreciation calculations for accounting and tax purposes." },
-  { icon: Calendar, title: "Maintenance Schedules", description: "Set up preventive maintenance reminders and warranty tracking." },
+  { icon: Calendar, title: "Maintenance Schedules", description: "Set up preventive maintenance reminders and warranty expiration alerts." },
   { icon: History, title: "Audit Trail", description: "Complete history of every asset change, transfer, and update." },
   { icon: BarChart3, title: "Compliance Reports", description: "Generate detailed reports for ITAM audits and compliance requirements." },
 ];
 
 const highlights = [
+  "AI-powered warranty lookup by serial number",
   "Complete asset lifecycle management",
   "Automated depreciation calculations",
   "QR/barcode scanning support",
-  "Warranty expiration alerts",
+  "Warranty expiration alerts & history",
   "License management",
   "Custom reporting"
 ];
@@ -119,10 +123,24 @@ export default function SafeTrackProduct() {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
-              <Card key={index} className="bg-[#141414] border-emerald-500/10 hover:border-emerald-500/30 transition-all">
+              <Card 
+                key={index} 
+                className={`bg-[#141414] border-emerald-500/10 hover:border-emerald-500/30 transition-all ${
+                  feature.featured ? 'ring-2 ring-emerald-500/30 relative overflow-hidden' : ''
+                }`}
+              >
+                {feature.featured && (
+                  <div className="absolute top-0 right-0">
+                    <Badge className="rounded-none rounded-bl-lg bg-emerald-500 text-black text-xs">
+                      NEW
+                    </Badge>
+                  </div>
+                )}
                 <CardContent className="p-6">
-                  <div className="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-4">
-                    <feature.icon className="h-6 w-6 text-emerald-400" />
+                  <div className={`h-12 w-12 rounded-lg flex items-center justify-center mb-4 ${
+                    feature.featured ? 'bg-gradient-to-br from-emerald-500/20 to-cyan-500/20' : 'bg-emerald-500/10'
+                  }`}>
+                    <feature.icon className={`h-6 w-6 ${feature.featured ? 'text-emerald-300' : 'text-emerald-400'}`} />
                   </div>
                   <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
                   <p className="text-gray-400 text-sm">{feature.description}</p>

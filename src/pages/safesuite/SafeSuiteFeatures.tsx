@@ -80,12 +80,12 @@ const tools = [
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
     features: [
+      { icon: Brain, title: "AI Warranty Lookup", description: "Instant warranty status by serial number using AI" },
       { icon: Laptop, title: "Hardware Inventory", description: "Track all physical IT assets and equipment" },
       { icon: QrCode, title: "QR Code Scanning", description: "Instant asset lookup with mobile scanning" },
       { icon: DollarSign, title: "Depreciation Tracking", description: "Automatic calculations for accounting" },
       { icon: Calendar, title: "Maintenance Schedules", description: "Preventive maintenance reminders" },
       { icon: History, title: "Audit Trail", description: "Complete history of every asset change" },
-      { icon: BarChart3, title: "Compliance Reports", description: "Generate reports for ITAM audits" },
     ],
   },
 ];
