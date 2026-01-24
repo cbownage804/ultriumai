@@ -3,6 +3,7 @@ import { useSafePass } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
+import { VaultLoadingScreen } from '@/components/safepass/VaultLoadingScreen';
 import VanguardLinkingCard from '@/components/safepass/VanguardLinkingCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,8 +102,8 @@ export default function SafePassDashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-[400px]">
+        <VaultLoadingScreen isLoading={true} />
       </div>
     );
   }
