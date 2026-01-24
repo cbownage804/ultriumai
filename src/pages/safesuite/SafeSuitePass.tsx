@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
+import { MFARecommendationBanner } from '@/components/safepass/MFARecommendationBanner';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X, Lock, Shield } from 'lucide-react';
@@ -155,6 +156,9 @@ export default function SafeSuitePass() {
                 theme="safepass"
                 badge="Encrypted"
               />
+              
+              {/* MFA Recommendation Banner */}
+              <MFARecommendationBanner />
               
               <PasswordVault />
             </motion.div>
