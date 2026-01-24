@@ -6,21 +6,57 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
+import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
+import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X } from 'lucide-react';
 
 export default function SafeSuitePass() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showExtensionBanner, setShowExtensionBanner] = useState(false);
+  const [showMasterPasswordSetup, setShowMasterPasswordSetup] = useState(false);
+  const [isSettingUp, setIsSettingUp] = useState(false);
 
+  const {
+    isUnlocked,
+    hasUserSetMasterPassword,
+    setMasterPassword,
+    unlockWithPassword
+  } = useMasterPassword();
+
+  // Check if user needs to set up or unlock master password
+  useEffect(() => {
+    if (!hasUserSetMasterPassword()) {
+      setShowMasterPasswordSetup(true);
+      setIsSettingUp(true);
+    } else if (!isUnlocked) {
+      setShowMasterPasswordSetup(true);
+      setIsSettingUp(false);
+    }
+  }, [hasUserSetMasterPassword, isUnlocked]);
+
+  // Handle extension banner URL param
   useEffect(() => {
     if (searchParams.get('extension') === 'installed') {
       setShowExtensionBanner(true);
-      // Clean up the URL
       searchParams.delete('extension');
       setSearchParams(searchParams, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  const handleMasterPasswordSet = async (password: string) => {
+    if (isSettingUp) {
+      const success = await setMasterPassword(password);
+      if (success) {
+        setShowMasterPasswordSetup(false);
+      }
+    } else {
+      const result = await unlockWithPassword(password);
+      if (result.success) {
+        setShowMasterPasswordSetup(false);
+      }
+    }
+  };
 
   return (
     <FeatureGate feature="safepass">
@@ -41,16 +77,39 @@ export default function SafeSuitePass() {
           </Alert>
         )}
         
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-amber-500">SafePass</h1>
-            <p className="text-gray-400">
-              Securely store and manage your passwords with military-grade encryption
-            </p>
+        {/* Master Password Setup/Unlock Screen */}
+        {showMasterPasswordSetup ? (
+          <div className="max-w-md mx-auto py-12">
+            <MasterPasswordSetup
+              isCreating={isSettingUp}
+              onMasterPasswordSet={handleMasterPasswordSet}
+              onCancel={() => {
+                if (!isSettingUp) {
+                  setShowMasterPasswordSetup(false);
+                }
+              }}
+              title={isSettingUp ? 'Create Master Password' : 'Unlock Your Vault'}
+              description={
+                isSettingUp
+                  ? 'Create a strong master password to encrypt your vault. This password cannot be recovered.'
+                  : 'Enter your master password to access your passwords.'
+              }
+            />
           </div>
-        </div>
-        
-        <PasswordVault />
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-amber-500">SafePass</h1>
+                <p className="text-gray-400">
+                  Securely store and manage your passwords with military-grade encryption
+                </p>
+              </div>
+            </div>
+            
+            <PasswordVault />
+          </>
+        )}
       </div>
     </FeatureGate>
   );
