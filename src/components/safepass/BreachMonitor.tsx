@@ -86,14 +86,24 @@ export const BreachMonitor = () => {
 
   // Load all entries on mount
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchEntries = async () => {
       if (user && isUnlocked) {
-        const entries = await loadAllEntries();
-        setAllEntries(entries);
+        try {
+          const entries = await loadAllEntries();
+          if (isMounted) {
+            setAllEntries(entries);
+          }
+        } catch (error) {
+          console.error('Error loading entries:', error);
+        }
       }
     };
     fetchEntries();
-  }, [user, isUnlocked, loadAllEntries]);
+    
+    return () => { isMounted = false; };
+  }, [user?.id, isUnlocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runBreachScan = async () => {
     if (!user || !isUnlocked) {
