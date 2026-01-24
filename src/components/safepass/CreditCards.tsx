@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
-import { PBKDF2_ITERATIONS } from '@/utils/crypto';
+import { encryptData as cryptoEncrypt, decryptData as cryptoDecrypt, EncryptedData, AADContext } from '@/utils/crypto';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -67,78 +67,46 @@ export const CreditCards = () => {
     cardType: 'credit'
   });
 
-  // Encryption helpers
-  const encryptData = async (data: object): Promise<string> => {
-    if (!masterPassword) throw new Error('Master password required');
+  // Use centralized crypto utilities with AAD support
+  const encryptCardData = async (data: object, cardId?: string): Promise<string> => {
+    if (!masterPassword || !user) throw new Error('Master password and user required');
     
-    const encoder = new TextEncoder();
-    const plaintext = encoder.encode(JSON.stringify(data));
-    const salt = crypto.getRandomValues(new Uint8Array(32));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const aadContext: AADContext = {
+      userId: user.id,
+      entryId: cardId,
+    };
     
-    const keyMaterial = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(masterPassword),
-      { name: 'PBKDF2' },
-      false,
-      ['deriveBits', 'deriveKey']
-    );
-
-    const key = await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
-      keyMaterial,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt']
-    );
-
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      plaintext
-    );
-
-    return JSON.stringify({
-      iv: btoa(String.fromCharCode(...iv)),
-      salt: btoa(String.fromCharCode(...salt)),
-      ciphertext: btoa(String.fromCharCode(...new Uint8Array(encrypted)))
-    });
+    const encrypted = await cryptoEncrypt(JSON.stringify(data), masterPassword, undefined, aadContext);
+    return JSON.stringify(encrypted);
   };
 
-  const decryptData = async (encryptedData: string): Promise<any> => {
-    if (!masterPassword) throw new Error('Master password required');
+  const decryptCardData = async (encryptedData: string, cardId?: string): Promise<any> => {
+    if (!masterPassword || !user) throw new Error('Master password and user required');
     
-    const { iv, salt, ciphertext } = JSON.parse(encryptedData);
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+    const aadContext: AADContext = {
+      userId: user.id,
+      entryId: cardId,
+    };
     
-    const ivArray = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
-    const saltArray = Uint8Array.from(atob(salt), c => c.charCodeAt(0));
-    const ciphertextArray = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0));
+    // Parse the encrypted data (handle both old and new formats)
+    const parsed = JSON.parse(encryptedData);
     
-    const keyMaterial = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(masterPassword),
-      { name: 'PBKDF2' },
-      false,
-      ['deriveBits', 'deriveKey']
-    );
-
-    const key = await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', salt: saltArray, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' },
-      keyMaterial,
-      { name: 'AES-GCM', length: 256 },
-      false,
-      ['decrypt']
-    );
-
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: ivArray },
-      key,
-      ciphertextArray
-    );
-
-    return JSON.parse(decoder.decode(decrypted));
+    // Check if it's the new EncryptedData format (has ciphertext) or old format
+    if (parsed.ciphertext) {
+      const decrypted = await cryptoDecrypt(parsed as EncryptedData, masterPassword, parsed.aad ? undefined : aadContext);
+      return JSON.parse(decrypted);
+    } else {
+      // Legacy format with iv, salt, ciphertext (base64 encoded)
+      // Convert to new format for decryption
+      const legacyData: EncryptedData = {
+        ciphertext: parsed.ciphertext || '',
+        iv: parsed.iv || '',
+        salt: parsed.salt || '',
+        tag: '', // Legacy format doesn't have separate tag
+      };
+      const decrypted = await cryptoDecrypt(legacyData, masterPassword);
+      return JSON.parse(decrypted);
+    }
   };
 
   // Load and decrypt cards
@@ -162,7 +130,7 @@ export const CreditCards = () => {
         const decrypted: DecryptedCard[] = [];
         for (const card of data || []) {
           try {
-            const cardData = await decryptData(card.encrypted_data);
+            const cardData = await decryptCardData(card.encrypted_data, card.id);
             decrypted.push({
               id: card.id,
               holderName: card.holder_name,
@@ -223,7 +191,7 @@ export const CreditCards = () => {
         cvv: newCard.cvv,
         zip: newCard.zip
       };
-      const encryptedData = await encryptData(cardData);
+      const encryptedData = await encryptCardData(cardData, editingCard?.id);
       const lastFour = newCard.cardNumber.replace(/\s/g, '').slice(-4);
 
       if (editingCard) {
