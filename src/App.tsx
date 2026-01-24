@@ -39,6 +39,10 @@ import SafeTrackSettings from '@/pages/safesuite/SafeTrackSettings';
 import ForgotPasswordPage from '@/pages/safesuite/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/safesuite/ResetPasswordPage';
 import MFARecoveryPage from '@/pages/safesuite/MFARecoveryPage';
+import SafePassProduct from '@/pages/safesuite/products/SafePassProduct';
+import SafeScanProduct from '@/pages/safesuite/products/SafeScanProduct';
+import SafeWebProduct from '@/pages/safesuite/products/SafeWebProduct';
+import SafeTrackProduct from '@/pages/safesuite/products/SafeTrackProduct';
 import Index from '@/pages/Index';
 import { Agent } from '@/pages/Agent';
 import Reports from '@/pages/Reports';
@@ -374,10 +378,14 @@ function AppRouter() {
         <Route path="/products/operations" element={<OperationsSuitePage />} />
         <Route path="/products/helpdesk" element={<HelpdeskPage />} />
         <Route path="/products/rmm" element={<RMMPage />} />
-        <Route path="/products/safetrack" element={<Navigate to="/safesuite/features" replace />} />
-        <Route path="/products/safepass" element={<Navigate to="/safesuite/features" replace />} />
-        <Route path="/products/safeweb" element={<Navigate to="/safesuite/features" replace />} />
-        <Route path="/products/safescan" element={<Navigate to="/safesuite/features" replace />} />
+        <Route path="/products/safetrack" element={<SafeTrackProduct />} />
+        <Route path="/products/safepass" element={<SafePassProduct />} />
+        <Route path="/products/safeweb" element={<SafeWebProduct />} />
+        <Route path="/products/safescan" element={<SafeScanProduct />} />
+        <Route path="/safesuite/products/safetrack" element={<SafeTrackProduct />} />
+        <Route path="/safesuite/products/safepass" element={<SafePassProduct />} />
+        <Route path="/safesuite/products/safeweb" element={<SafeWebProduct />} />
+        <Route path="/safesuite/products/safescan" element={<SafeScanProduct />} />
         <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
         <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
         <Route path="/demos/rmm" element={<RMMDemoPage />} />
