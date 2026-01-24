@@ -33,7 +33,10 @@ export const MasterPasswordSetup = ({
   const passwordValidation = validateMasterPassword(masterPassword);
   const passwordsMatch = masterPassword === confirmPassword;
   
-  const canSubmit = passwordValidation.isValid && passwordsMatch && masterPassword.length > 0;
+  // For unlock mode, only require password. For create mode, require validation + confirmation
+  const canSubmit = isCreating 
+    ? (passwordValidation.isValid && passwordsMatch && masterPassword.length > 0)
+    : masterPassword.length > 0;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
