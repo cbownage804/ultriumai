@@ -208,7 +208,7 @@ function NavLink({
             <img 
               src={item.productLogo} 
               alt={item.label} 
-              className="h-8 w-auto object-contain" 
+              className="h-10 w-auto object-contain" 
             />
           ) : Icon ? (
             <>
@@ -312,7 +312,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
           <img 
             src={safesuiteLogo} 
             alt="SafeSuite" 
-            className="h-12 w-auto object-contain"
+            className="h-16 w-auto object-contain"
           />
         </Link>
       </div>
