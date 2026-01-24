@@ -8,6 +8,8 @@ import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
 import { MFARecommendationBanner } from '@/components/safepass/MFARecommendationBanner';
+import { SecurityTipsModal } from '@/components/safepass/SecurityTipsModal';
+import { SecurityArchitectureBadge } from '@/components/safepass/SecurityArchitectureBadge';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X, Lock, Shield } from 'lucide-react';
@@ -157,8 +159,16 @@ export default function SafeSuitePass() {
                 badge="Encrypted"
               />
               
+              {/* Security Badge - shows architecture on click */}
+              <div className="flex justify-center">
+                <SecurityArchitectureBadge />
+              </div>
+              
               {/* MFA Recommendation Banner */}
               <MFARecommendationBanner />
+              
+              {/* Security Tips Modal - shows on first visit */}
+              <SecurityTipsModal />
               
               <PasswordVault />
             </motion.div>
