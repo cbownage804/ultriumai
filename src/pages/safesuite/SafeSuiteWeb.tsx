@@ -44,6 +44,7 @@ export default function SafeSuiteWeb() {
   const [assets, setAssets] = useState<MonitoredAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
+  const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [newAsset, setNewAsset] = useState('');
   const [assetType, setAssetType] = useState<'email' | 'domain' | 'brand'>('email');
 
@@ -70,6 +71,40 @@ export default function SafeSuiteWeb() {
     }
   };
 
+  const triggerScan = async (assetId: string) => {
+    try {
+      setScanningAssetId(assetId);
+      
+      const { data, error } = await supabase.functions.invoke('safeweb-scanner', {
+        body: { asset_id: assetId, scan_type: 'manual' }
+      });
+
+      if (error) throw error;
+      
+      // Refresh data to get updated status
+      await loadData();
+      
+      toast({
+        title: "Scan completed",
+        description: data?.threats_found > 0 
+          ? `Found ${data.threats_found} threat(s)` 
+          : "No threats detected - your asset appears clean"
+      });
+      
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error triggering scan:', error);
+      toast({
+        title: "Scan failed",
+        description: error.message || "Failed to complete the scan",
+        variant: "destructive"
+      });
+      return { success: false, error: error.message };
+    } finally {
+      setScanningAssetId(null);
+    }
+  };
+
   const addAsset = async () => {
     if (!newAsset.trim()) return;
 
@@ -80,7 +115,7 @@ export default function SafeSuiteWeb() {
           user_id: user?.id,
           asset_type: assetType,
           asset_value: newAsset.trim(),
-          status: 'active',
+          status: 'pending',
           scan_frequency: 'daily'
         })
         .select()
@@ -93,8 +128,11 @@ export default function SafeSuiteWeb() {
       
       toast({
         title: "Asset added",
-        description: "Monitoring has been initiated for this asset"
+        description: "Starting initial scan..."
       });
+
+      // Trigger initial scan automatically
+      await triggerScan(data.id);
     } catch (error) {
       console.error('Error adding asset:', error);
       toast({
@@ -128,6 +166,33 @@ export default function SafeSuiteWeb() {
       case 'brand': return <Hash className="h-4 w-4" />;
       default: return <Hash className="h-4 w-4" />;
     }
+  };
+
+  const getStatusBadge = (asset: MonitoredAsset) => {
+    // Check if asset has been scanned (last_scan_at exists)
+    if (!asset.last_scan_at) {
+      return (
+        <Badge variant="outline" className="border-yellow-500/30 text-yellow-500">
+          <Loader2 className="h-3 w-3 mr-1" /> Pending
+        </Badge>
+      );
+    }
+    
+    // Check if threats were found
+    if (asset.threats_found > 0) {
+      return (
+        <Badge variant="destructive">
+          <XCircle className="h-3 w-3 mr-1" /> {asset.threats_found} Threat{asset.threats_found > 1 ? 's' : ''}
+        </Badge>
+      );
+    }
+    
+    // No threats found - asset is clean
+    return (
+      <Badge variant="outline" className="border-green-500/30 text-green-500">
+        <CheckCircle className="h-3 w-3 mr-1" /> Clean
+      </Badge>
+    );
   };
 
   if (loading) {
@@ -276,15 +341,20 @@ export default function SafeSuiteWeb() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={asset.status === 'clean' ? 'outline' : 'destructive'} className={asset.status === 'clean' ? 'border-green-500/30 text-green-500' : ''}>
-                        {asset.status === 'clean' ? (
-                          <><CheckCircle className="h-3 w-3 mr-1" /> Clean</>
-                        ) : asset.status === 'exposed' ? (
-                          <><XCircle className="h-3 w-3 mr-1" /> Exposed</>
+                      {getStatusBadge(asset)}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => triggerScan(asset.id)}
+                        disabled={scanningAssetId === asset.id}
+                        className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10"
+                      >
+                        {scanningAssetId === asset.id ? (
+                          <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Scanning...</>
                         ) : (
-                          'Pending'
+                          <><RefreshCw className="h-3 w-3 mr-1" /> Scan</>
                         )}
-                      </Badge>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"

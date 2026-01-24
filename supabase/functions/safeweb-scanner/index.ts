@@ -574,13 +574,15 @@ serve(async (req) => {
       }
     }
 
-    // Update asset with scan results
+    // Update asset with scan results and status
+    const newStatus = threatsCount > 0 ? 'exposed' : 'clean';
     await supabaseClient
       .from('safeweb_assets')
       .update({
         last_scan_at: new Date().toISOString(),
         next_scan_at: getNextScanTime(asset.scan_frequency),
         threats_found: threatsCount,
+        status: newStatus,
         updated_at: new Date().toISOString()
       })
       .eq('id', asset.id);
