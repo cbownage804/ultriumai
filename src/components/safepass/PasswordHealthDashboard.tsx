@@ -168,6 +168,8 @@ export const PasswordHealthDashboard = () => {
 
   // Load all entries on mount and when vault is unlocked
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchAndAnalyze = async () => {
       if (!isUnlocked || !user) {
         setLoading(false);
@@ -175,18 +177,27 @@ export const PasswordHealthDashboard = () => {
       }
       
       setLoading(true);
-      const entries = await loadAllEntries();
-      setAllEntries(entries);
-      
-      if (entries.length > 0) {
-        await analyzePasswords(entries);
-      } else {
-        setLoading(false);
+      try {
+        const entries = await loadAllEntries();
+        if (!isMounted) return;
+        
+        setAllEntries(entries);
+        
+        if (entries.length > 0) {
+          await analyzePasswords(entries);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error fetching entries:', error);
+        if (isMounted) setLoading(false);
       }
     };
     
     fetchAndAnalyze();
-  }, [isUnlocked, user, loadAllEntries]);
+    
+    return () => { isMounted = false; };
+  }, [isUnlocked, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRescan = async () => {
     setScanning(true);
