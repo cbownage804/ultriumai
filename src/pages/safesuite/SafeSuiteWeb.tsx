@@ -10,8 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import {
   Globe,
   Shield,
@@ -24,7 +26,14 @@ import {
   Hash,
   Loader2,
   CheckCircle,
-  XCircle
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Calendar,
+  Database,
+  ShieldAlert,
+  Info
 } from 'lucide-react';
 
 interface MonitoredAsset {
@@ -37,16 +46,38 @@ interface MonitoredAsset {
   created_at: string;
 }
 
+interface ThreatDetails {
+  id: string;
+  threat_type: string;
+  title: string;
+  description: string;
+  severity: string;
+  confidence_score: number;
+  status: string;
+  source_name: string;
+  source_url: string;
+  raw_data: any;
+  affected_assets: string[];
+  threat_indicators: any;
+  first_seen: string;
+  last_seen: string;
+  tags: string[];
+  created_at: string;
+}
+
 export default function SafeSuiteWeb() {
   const { user } = useAuth();
   const { toast } = useToast();
   
   const [assets, setAssets] = useState<MonitoredAsset[]>([]);
+  const [threats, setThreats] = useState<Record<string, ThreatDetails[]>>({});
+  const [expandedAssets, setExpandedAssets] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [scanning, setScanning] = useState(false);
+  const [loadingThreats, setLoadingThreats] = useState<Set<string>>(new Set());
   const [scanningAssetId, setScanningAssetId] = useState<string | null>(null);
   const [newAsset, setNewAsset] = useState('');
   const [assetType, setAssetType] = useState<'email' | 'domain' | 'brand'>('email');
+  const [selectedThreat, setSelectedThreat] = useState<ThreatDetails | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -71,6 +102,46 @@ export default function SafeSuiteWeb() {
     }
   };
 
+  const loadThreatsForAsset = async (assetId: string) => {
+    if (threats[assetId]) return; // Already loaded
+    
+    setLoadingThreats(prev => new Set(prev).add(assetId));
+    try {
+      const { data, error } = await supabase
+        .from('safeweb_threats')
+        .select('*')
+        .eq('asset_id', assetId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setThreats(prev => ({ ...prev, [assetId]: data || [] }));
+    } catch (error) {
+      console.error('Error loading threats:', error);
+    } finally {
+      setLoadingThreats(prev => {
+        const next = new Set(prev);
+        next.delete(assetId);
+        return next;
+      });
+    }
+  };
+
+  const toggleAssetExpand = async (assetId: string) => {
+    const isExpanded = expandedAssets.has(assetId);
+    if (!isExpanded) {
+      await loadThreatsForAsset(assetId);
+    }
+    setExpandedAssets(prev => {
+      const next = new Set(prev);
+      if (isExpanded) {
+        next.delete(assetId);
+      } else {
+        next.add(assetId);
+      }
+      return next;
+    });
+  };
+
   const triggerScan = async (assetId: string) => {
     try {
       setScanningAssetId(assetId);
@@ -81,8 +152,20 @@ export default function SafeSuiteWeb() {
 
       if (error) throw error;
       
+      // Clear cached threats to force reload
+      setThreats(prev => {
+        const next = { ...prev };
+        delete next[assetId];
+        return next;
+      });
+      
       // Refresh data to get updated status
       await loadData();
+      
+      // Reload threats if expanded
+      if (expandedAssets.has(assetId)) {
+        await loadThreatsForAsset(assetId);
+      }
       
       toast({
         title: "Scan completed",
@@ -169,7 +252,6 @@ export default function SafeSuiteWeb() {
   };
 
   const getStatusBadge = (asset: MonitoredAsset) => {
-    // Check if asset has been scanned (last_scan_at exists)
     if (!asset.last_scan_at) {
       return (
         <Badge variant="outline" className="border-yellow-500/30 text-yellow-500">
@@ -178,21 +260,34 @@ export default function SafeSuiteWeb() {
       );
     }
     
-    // Check if threats were found
     if (asset.threats_found > 0) {
       return (
-        <Badge variant="destructive">
+        <Badge variant="destructive" className="cursor-pointer" onClick={() => toggleAssetExpand(asset.id)}>
           <XCircle className="h-3 w-3 mr-1" /> {asset.threats_found} Threat{asset.threats_found > 1 ? 's' : ''}
         </Badge>
       );
     }
     
-    // No threats found - asset is clean
     return (
       <Badge variant="outline" className="border-green-500/30 text-green-500">
         <CheckCircle className="h-3 w-3 mr-1" /> Clean
       </Badge>
     );
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity?.toLowerCase()) {
+      case 'critical': return 'bg-red-600 text-white';
+      case 'high': return 'bg-red-500 text-white';
+      case 'medium': return 'bg-orange-500 text-white';
+      case 'low': return 'bg-yellow-500 text-black';
+      default: return 'bg-gray-500 text-white';
+    }
+  };
+
+  const stripHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
   };
 
   if (loading) {
@@ -216,8 +311,8 @@ export default function SafeSuiteWeb() {
               Monitor the dark web for your exposed credentials and data
             </p>
           </div>
-          <Button variant="outline" onClick={() => loadData()} disabled={scanning} className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10">
-            <RefreshCw className={`h-4 w-4 mr-2 ${scanning ? 'animate-spin' : ''}`} />
+          <Button variant="outline" onClick={() => loadData()} className="border-violet-500/30 text-violet-500 hover:bg-violet-500/10">
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </div>
@@ -262,7 +357,7 @@ export default function SafeSuiteWeb() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-green-500">
-                    {assets.filter(a => a.status === 'clean').length}
+                    {assets.filter(a => a.last_scan_at && a.threats_found === 0).length}
                   </p>
                   <p className="text-sm text-gray-400">Clean Assets</p>
                 </div>
@@ -342,6 +437,20 @@ export default function SafeSuiteWeb() {
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusBadge(asset)}
+                      {asset.threats_found > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleAssetExpand(asset.id)}
+                          className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10"
+                        >
+                          {expandedAssets.has(asset.id) ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -365,11 +474,245 @@ export default function SafeSuiteWeb() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Expandable threat details */}
+                  {expandedAssets.has(asset.id) && (
+                    <div className="mt-4 pt-4 border-t border-violet-500/10">
+                      {loadingThreats.has(asset.id) ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-violet-500" />
+                          <span className="ml-2 text-gray-400">Loading threats...</span>
+                        </div>
+                      ) : threats[asset.id]?.length > 0 ? (
+                        <div className="space-y-3">
+                          <p className="text-sm font-medium text-gray-400 mb-3">
+                            Found {threats[asset.id].length} threat(s) for this asset:
+                          </p>
+                          {threats[asset.id].map((threat) => (
+                            <div
+                              key={threat.id}
+                              className="p-4 bg-[#1a1a1a] rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors cursor-pointer"
+                              onClick={() => setSelectedThreat(threat)}
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <ShieldAlert className="h-4 w-4 text-red-500 flex-shrink-0" />
+                                    <h4 className="font-medium text-white truncate">{threat.title}</h4>
+                                    <Badge className={`${getSeverityColor(threat.severity)} text-xs`}>
+                                      {threat.severity}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm text-gray-400 line-clamp-2">
+                                    {stripHtml(threat.description)}
+                                  </p>
+                                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                    <span className="flex items-center gap-1">
+                                      <Database className="h-3 w-3" />
+                                      {threat.source_name}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {new Date(threat.first_seen).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-violet-400 hover:text-violet-300"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedThreat(threat);
+                                  }}
+                                >
+                                  <Info className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-center text-gray-400 py-4">No threat details available</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))
           )}
         </div>
+
+        {/* Threat Detail Modal */}
+        <Dialog open={!!selectedThreat} onOpenChange={() => setSelectedThreat(null)}>
+          <DialogContent className="max-w-2xl bg-[#141414] border-violet-500/20 text-white">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-400">
+                <ShieldAlert className="h-5 w-5" />
+                Threat Details
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Complete information about this security threat
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedThreat && (
+              <ScrollArea className="max-h-[70vh]">
+                <div className="space-y-6 pr-4">
+                  {/* Header */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={`${getSeverityColor(selectedThreat.severity)}`}>
+                        {selectedThreat.severity?.toUpperCase()}
+                      </Badge>
+                      <Badge variant="outline" className="border-violet-500/30 text-violet-400">
+                        {selectedThreat.threat_type}
+                      </Badge>
+                      <Badge variant="outline" className="border-gray-500/30 text-gray-400">
+                        {selectedThreat.status}
+                      </Badge>
+                    </div>
+                    <h3 className="text-xl font-semibold text-white">{selectedThreat.title}</h3>
+                  </div>
+
+                  <Separator className="bg-violet-500/10" />
+
+                  {/* Description */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-400 mb-2">Description</h4>
+                    <p className="text-gray-300 text-sm leading-relaxed">
+                      {stripHtml(selectedThreat.description)}
+                    </p>
+                  </div>
+
+                  {/* Source Info */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Source</h4>
+                      <div className="flex items-center gap-2">
+                        <Database className="h-4 w-4 text-violet-400" />
+                        <span className="text-white">{selectedThreat.source_name}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Confidence</h4>
+                      <div className="flex items-center gap-2">
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div 
+                            className="bg-violet-500 h-2 rounded-full" 
+                            style={{ width: `${selectedThreat.confidence_score}%` }}
+                          />
+                        </div>
+                        <span className="text-white text-sm">{selectedThreat.confidence_score}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">First Seen</h4>
+                      <p className="text-white flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-violet-400" />
+                        {new Date(selectedThreat.first_seen).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Last Seen</h4>
+                      <p className="text-white flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-violet-400" />
+                        {new Date(selectedThreat.last_seen).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Affected Assets */}
+                  {selectedThreat.affected_assets?.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Affected Assets</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedThreat.affected_assets.map((asset, i) => (
+                          <Badge key={i} variant="outline" className="border-red-500/30 text-red-400">
+                            {asset}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Threat Indicators / Data Classes */}
+                  {selectedThreat.threat_indicators?.data_classes && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Exposed Data Types</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedThreat.threat_indicators.data_classes.map((dataClass: string, i: number) => (
+                          <Badge key={i} variant="outline" className="border-orange-500/30 text-orange-400">
+                            {dataClass}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Breach Details */}
+                  {selectedThreat.threat_indicators?.breach_date && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Breach Information</h4>
+                      <div className="bg-[#1a1a1a] p-4 rounded-lg space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Breach Date:</span>
+                          <span className="text-white">{selectedThreat.threat_indicators.breach_date}</span>
+                        </div>
+                        {selectedThreat.threat_indicators.compromised_accounts && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Accounts Compromised:</span>
+                            <span className="text-red-400 font-medium">
+                              {Number(selectedThreat.threat_indicators.compromised_accounts).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Verified:</span>
+                          <span className={selectedThreat.threat_indicators.is_verified ? 'text-green-400' : 'text-yellow-400'}>
+                            {selectedThreat.threat_indicators.is_verified ? 'Yes' : 'No'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tags */}
+                  {selectedThreat.tags?.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-400 mb-2">Tags</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedThreat.tags.map((tag, i) => (
+                          <Badge key={i} variant="secondary" className="bg-violet-500/20 text-violet-300">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Source Link */}
+                  {selectedThreat.source_url && (
+                    <div>
+                      <Button
+                        variant="outline"
+                        className="w-full border-violet-500/30 text-violet-400 hover:bg-violet-500/10"
+                        onClick={() => window.open(selectedThreat.source_url, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Source
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </FeatureGate>
   );
