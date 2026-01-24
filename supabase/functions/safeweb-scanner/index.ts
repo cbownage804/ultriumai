@@ -582,11 +582,28 @@ serve(async (req) => {
     // Perform the actual scanning with real APIs
     const scanResults = await performRealScan(asset);
     
-    // Save threats to database
+    // Save threats to database - with deduplication
     const threats = [];
     let threatsCount = 0;
+    let skippedDuplicates = 0;
 
     for (const result of scanResults) {
+      // Check if this threat already exists for this asset (deduplicate by title + source)
+      const { data: existingThreat } = await supabaseClient
+        .from('safeweb_threats')
+        .select('id')
+        .eq('asset_id', asset.id)
+        .eq('title', result.title)
+        .eq('source_name', result.source_name)
+        .maybeSingle();
+
+      if (existingThreat) {
+        logStep('Skipping duplicate threat', { title: result.title, source: result.source_name });
+        skippedDuplicates++;
+        threatsCount++; // Still count it for the asset's threat count
+        continue;
+      }
+
       const { data: threat, error: threatError } = await supabaseClient
         .from('safeweb_threats')
         .insert({
@@ -615,16 +632,27 @@ serve(async (req) => {
         logStep('Error saving threat', threatError);
       }
     }
+    
+    logStep('Threat processing complete', { new: threats.length, duplicates_skipped: skippedDuplicates, total: threatsCount });
 
+    // Get actual threat count from database (not just this scan)
+    const { count: actualThreatCount } = await supabaseClient
+      .from('safeweb_threats')
+      .select('*', { count: 'exact', head: true })
+      .eq('asset_id', asset.id)
+      .neq('status', 'resolved');
+    
+    const finalThreatCount = actualThreatCount || 0;
+    
     // Update asset with scan results (status column is for asset lifecycle, not scan results)
-    logStep('Updating asset', { asset_id: asset.id, threatsCount });
+    logStep('Updating asset', { asset_id: asset.id, finalThreatCount });
     
     const { error: updateError, data: updateData } = await supabaseClient
       .from('safeweb_assets')
       .update({
         last_scan_at: new Date().toISOString(),
         next_scan_at: getNextScanTime(asset.scan_frequency),
-        threats_found: threatsCount,
+        threats_found: finalThreatCount,
         updated_at: new Date().toISOString()
       })
       .eq('id', asset.id)
