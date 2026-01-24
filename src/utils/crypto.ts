@@ -1,15 +1,12 @@
 /**
  * SafePass Cryptographic Utilities
- * Implements client-side AES-256 encryption with Argon2id/PBKDF2 key derivation
+ * Implements client-side AES-256 encryption with PBKDF2 key derivation
  * 
  * Security Features:
- * - Argon2id: Memory-hard KDF resistant to GPU/ASIC attacks (preferred)
- * - PBKDF2: Fallback KDF with 600K iterations (OWASP 2023)
+ * - PBKDF2: 600K iterations (OWASP 2023 recommendation)
  * - AES-256-GCM: AEAD encryption with authentication
  * - AAD: Associated Authenticated Data prevents ciphertext swapping
  */
-
-import argon2 from 'argon2-browser';
 
 // Crypto configuration
 const ALGORITHM = 'AES-GCM';
@@ -19,16 +16,9 @@ const SALT_LENGTH = 32; // 256 bits
 const TAG_LENGTH = 16; // 128 bits for GCM tag
 
 // OWASP 2023 recommended minimum for PBKDF2-SHA256
-// Exported for use across all SafePass components
 export const PBKDF2_ITERATIONS = 600000;
 
-// Argon2id parameters (OWASP recommendations for interactive login)
-const ARGON2_TIME_COST = 3; // iterations
-const ARGON2_MEMORY_COST = 65536; // 64 MB
-const ARGON2_PARALLELISM = 4; // threads
-const ARGON2_HASH_LENGTH = 32; // 256 bits
-
-export type KDFType = 'argon2id' | 'pbkdf2';
+export type KDFType = 'pbkdf2';
 
 export interface EncryptedData {
   ciphertext: string;
@@ -39,7 +29,7 @@ export interface EncryptedData {
   aad?: string;
   /** Key version for future key rotation support */
   keyVersion?: number;
-  /** KDF algorithm used (defaults to pbkdf2 for backward compatibility) */
+  /** KDF algorithm used */
   kdf?: KDFType;
 }
 
@@ -54,40 +44,11 @@ export interface KeyDerivationParams {
   iterations: number;
 }
 
-// Track if Argon2 is available (may fail to load in some browsers)
-let argon2Available: boolean | null = null;
-
 /**
- * Check if Argon2 WASM is available in the current environment
- */
-export async function isArgon2Available(): Promise<boolean> {
-  if (argon2Available !== null) return argon2Available;
-  
-  try {
-    // Test Argon2 with a minimal hash
-    await argon2.hash({
-      pass: 'test',
-      salt: new Uint8Array(16),
-      time: 1,
-      mem: 1024,
-      parallelism: 1,
-      hashLen: 32,
-      type: argon2.ArgonType.Argon2id
-    });
-    argon2Available = true;
-  } catch (error) {
-    console.warn('Argon2 not available, falling back to PBKDF2:', error);
-    argon2Available = false;
-  }
-  
-  return argon2Available;
-}
-
-/**
- * Get the preferred KDF based on availability
+ * Get the preferred KDF (PBKDF2)
  */
 export async function getPreferredKDF(): Promise<KDFType> {
-  return (await isArgon2Available()) ? 'argon2id' : 'pbkdf2';
+  return 'pbkdf2';
 }
 
 /**
@@ -112,28 +73,8 @@ export function generateIV(): Uint8Array {
 }
 
 /**
- * Derive encryption key using Argon2id (memory-hard, GPU/ASIC resistant)
- * Falls back to PBKDF2 if Argon2 is not available
- */
-export async function deriveKeyWithArgon2(
-  password: string,
-  salt: Uint8Array
-): Promise<Uint8Array> {
-  const result = await argon2.hash({
-    pass: password,
-    salt: salt,
-    time: ARGON2_TIME_COST,
-    mem: ARGON2_MEMORY_COST,
-    parallelism: ARGON2_PARALLELISM,
-    hashLen: ARGON2_HASH_LENGTH,
-    type: argon2.ArgonType.Argon2id
-  });
-  
-  return result.hash;
-}
-
-/**
- * Derive encryption key from master password using PBKDF2 (fallback)
+ * Derive encryption key from master password using PBKDF2
+ * Uses 600,000 iterations per OWASP 2023 recommendations
  */
 export async function deriveKeyFromPassword(
   password: string,
@@ -171,7 +112,7 @@ export async function deriveKeyFromPassword(
 }
 
 /**
- * Derive encryption key using the preferred KDF (Argon2id if available, PBKDF2 fallback)
+ * Derive encryption key using PBKDF2
  * Returns both the CryptoKey and the KDF type used
  */
 export async function deriveKey(
@@ -179,28 +120,6 @@ export async function deriveKey(
   salt: Uint8Array,
   preferredKdf?: KDFType
 ): Promise<{ key: CryptoKey; kdf: KDFType }> {
-  const kdfToUse = preferredKdf || await getPreferredKDF();
-  
-  if (kdfToUse === 'argon2id' && await isArgon2Available()) {
-    try {
-      const keyBytes = await deriveKeyWithArgon2(password, salt);
-      
-      // Import raw bytes as AES-GCM key
-      const key = await crypto.subtle.importKey(
-        'raw',
-        new Uint8Array(keyBytes) as BufferSource,
-        { name: ALGORITHM, length: KEY_LENGTH },
-        false,
-        ['encrypt', 'decrypt']
-      );
-      
-      return { key, kdf: 'argon2id' };
-    } catch (error) {
-      console.warn('Argon2 derivation failed, falling back to PBKDF2:', error);
-    }
-  }
-  
-  // Fallback to PBKDF2
   const key = await deriveKeyFromPassword(password, salt);
   return { key, kdf: 'pbkdf2' };
 }
