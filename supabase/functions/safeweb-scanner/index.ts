@@ -32,6 +32,14 @@ interface Asset {
   msp_client_id?: string;
 }
 
+// Helper to safely extract values from Dehashed entries (handles arrays)
+function pickDehashedValue(entry: any, key: string): string | null {
+  const v = entry?.[key];
+  if (Array.isArray(v)) return v[0] ?? null;
+  if (v == null) return null;
+  return typeof v === 'string' ? v : String(v);
+}
+
 // Real threat intelligence scanning functions
 async function scanWithVirusTotal(domain: string, apiKey: string): Promise<ScanResult[]> {
   try {
@@ -265,23 +273,38 @@ async function scanWithIntelligenceX(email: string, apiKey: string): Promise<Sca
 
 async function scanWithDehashed(email: string, apiKey: string): Promise<ScanResult[]> {
   try {
-    logStep('Scanning with Dehashed', { email });
+    logStep('Scanning with Dehashed v2 API', { email });
     
-    // Dehashed API endpoint for email search
-    const response = await fetch(`https://api.dehashed.com/search?query=email:${encodeURIComponent(email)}&size=100`, {
+    // Use Dehashed v2 API with POST request
+    const response = await fetch('https://api.dehashed.com/v2/search', {
+      method: 'POST',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Basic ${btoa(apiKey)}` // Dehashed uses API key as username with empty password
-      }
+        'Content-Type': 'application/json',
+        'Dehashed-Api-Key': apiKey,
+      },
+      body: JSON.stringify({
+        query: `email:"${email}"`,
+        size: 100,
+        page: 1,
+        de_dupe: true,
+        wildcard: false,
+        regex: false,
+      }),
     });
 
+    logStep('Dehashed v2 response status', { status: response.status });
+
     if (!response.ok) {
-      logStep('Dehashed API error', { status: response.status });
+      const errorText = await response.text();
+      logStep('Dehashed v2 API error', { status: response.status, error: errorText.substring(0, 200) });
       return [];
     }
 
     const data = await response.json();
     const entries = data.entries || [];
+    
+    logStep('Dehashed v2 results', { total: data.total || 0, entries_returned: entries.length, balance: data.balance });
 
     if (entries.length === 0) {
       logStep('No breaches found in Dehashed');
@@ -290,7 +313,7 @@ async function scanWithDehashed(email: string, apiKey: string): Promise<ScanResu
 
     // Group entries by database/breach source
     const breachGroups = entries.reduce((groups: any, entry: any) => {
-      const database = entry.database || 'Unknown Database';
+      const database = pickDehashedValue(entry, 'database_name') || 'Unknown Database';
       if (!groups[database]) {
         groups[database] = [];
       }
@@ -304,9 +327,9 @@ async function scanWithDehashed(email: string, apiKey: string): Promise<ScanResu
       
       // Determine severity based on data available
       let severity: 'low' | 'medium' | 'high' | 'critical' = 'medium';
-      const hasPassword = entryList.some(e => e.password && e.password.length > 0);
-      const hasHashedPassword = entryList.some(e => e.hashed_password && e.hashed_password.length > 0);
-      const hasSensitiveData = entryList.some(e => e.phone || e.address || e.ip_address);
+      const hasPassword = entryList.some(e => pickDehashedValue(e, 'password'));
+      const hasHashedPassword = entryList.some(e => pickDehashedValue(e, 'hashed_password'));
+      const hasSensitiveData = entryList.some(e => pickDehashedValue(e, 'phone') || pickDehashedValue(e, 'address') || pickDehashedValue(e, 'ip_address'));
       
       if (hasPassword) {
         severity = 'critical';
@@ -317,10 +340,11 @@ async function scanWithDehashed(email: string, apiKey: string): Promise<ScanResu
       }
 
       // Extract available data fields
-      const dataFields = new Set();
+      const dataFields = new Set<string>();
       entryList.forEach(entry => {
         Object.keys(entry).forEach(key => {
-          if (entry[key] && key !== 'id' && key !== 'email' && key !== 'database') {
+          const val = pickDehashedValue(entry, key);
+          if (val && key !== 'id' && key !== 'email' && key !== 'database_name') {
             dataFields.add(key);
           }
         });
@@ -433,15 +457,24 @@ async function performRealScan(asset: Asset): Promise<ScanResult[]> {
         break;
         
       case 'email':
-        // Use multiple premium sources for comprehensive breach detection
+        // Use Dehashed as PRIMARY source (most reliable)
+        const dehashedKey = Deno.env.get('DEHASHED_API_KEY');
+        if (dehashedKey) {
+          logStep('Using Dehashed API (primary source)');
+          const dehashedThreats = await scanWithDehashed(asset.asset_value, dehashedKey);
+          threats.push(...dehashedThreats);
+        } else {
+          logStep('Dehashed API key not configured');
+        }
+        
+        // Add HaveIBeenPwned as secondary source
         const hibpKey = Deno.env.get('HAVEIBEENPWNED_API_KEY');
         if (hibpKey) {
-          const breachThreats = await scanWithHaveIBeenPwned(asset.asset_value, hibpKey);
-          threats.push(...breachThreats);
+          const hibpThreats = await scanWithHaveIBeenPwned(asset.asset_value, hibpKey);
+          threats.push(...hibpThreats);
         } else {
           logStep('HaveIBeenPwned API key not configured');
         }
-        threats.push(...breachThreats);
         
         // Add Intelligence X scanning if API key is available
         const intelXKey = Deno.env.get('INTELX_API_KEY');
@@ -450,15 +483,6 @@ async function performRealScan(asset: Asset): Promise<ScanResult[]> {
           threats.push(...intelXThreats);
         } else {
           logStep('Intelligence X API key not configured');
-        }
-
-        // Add Dehashed scanning if API key is available
-        const dehashedKey = Deno.env.get('DEHASHED_API_KEY');
-        if (dehashedKey) {
-          const dehashedThreats = await scanWithDehashed(asset.asset_value, dehashedKey);
-          threats.push(...dehashedThreats);
-        } else {
-          logStep('Dehashed API key not configured');
         }
         break;
         
