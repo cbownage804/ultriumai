@@ -376,14 +376,19 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
         
         {/* Admin link - only visible to verified UltriumAI employees */}
         {isAdmin && (
-          <Link
-            to="/admin"
+          <a
+            href="/admin/safesuite"
             className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-orange-500 hover:text-orange-400 transition-colors"
-            onClick={onItemClick}
+            onClick={(e) => {
+              e.preventDefault();
+              onItemClick?.();
+              // Navigate within the same origin
+              window.location.href = `${window.location.origin}/admin/safesuite`;
+            }}
           >
             <Crown className="h-5 w-5" />
             <span>Admin Center</span>
-          </Link>
+          </a>
         )}
       </div>
     </aside>
