@@ -151,7 +151,7 @@ export default function SafeSuiteLanding() {
                         </li>
                       ))}
                     </ul>
-                    <Link to="/features" className="block mt-4">
+                    <Link to={`/products/${productKey}`} className="block mt-4">
                       <Button variant="outline" size="sm" className="w-full group-hover:bg-primary/10">
                         Explore Features
                         <ArrowRight className="ml-2 h-3 w-3" />

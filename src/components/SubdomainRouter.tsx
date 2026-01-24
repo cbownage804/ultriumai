@@ -36,6 +36,12 @@ import ForgotPasswordPage from '@/pages/safesuite/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/safesuite/ResetPasswordPage';
 import MFARecoveryPage from '@/pages/safesuite/MFARecoveryPage';
 
+// Product pages
+import SafePassProduct from '@/pages/safesuite/products/SafePassProduct';
+import SafeScanProduct from '@/pages/safesuite/products/SafeScanProduct';
+import SafeWebProduct from '@/pages/safesuite/products/SafeWebProduct';
+import SafeTrackProduct from '@/pages/safesuite/products/SafeTrackProduct';
+
 /**
  * SafeSuite routes for the dedicated subdomain (safesuite.ultriumai.com)
  * Uses clean URLs at root level (/, /dashboard, /pass, etc.)
@@ -43,9 +49,12 @@ import MFARecoveryPage from '@/pages/safesuite/MFARecoveryPage';
 export const SafeSuiteSubdomainRoutes = () => {
   return (
     <Routes>
-      {/* Public routes */}
       <Route path="/" element={<SafeSuiteLanding />} />
       <Route path="/features" element={<SafeSuiteLanding />} />
+      <Route path="/products/safepass" element={<SafePassProduct />} />
+      <Route path="/products/safescan" element={<SafeScanProduct />} />
+      <Route path="/products/safeweb" element={<SafeWebProduct />} />
+      <Route path="/products/safetrack" element={<SafeTrackProduct />} />
       <Route path="/auth" element={<SafeSuiteAuth />} />
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
