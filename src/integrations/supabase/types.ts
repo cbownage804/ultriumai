@@ -13716,6 +13716,72 @@ export type Database = {
         }
         Relationships: []
       }
+      safetrack_warranties: {
+        Row: {
+          ai_analysis: string | null
+          coverage_type: string | null
+          created_at: string
+          device_name: string | null
+          id: string
+          last_checked_at: string | null
+          manufacturer: string | null
+          model: string | null
+          purchase_date: string | null
+          raw_warranty_data: Json | null
+          repair_options: Json | null
+          serial_number: string
+          source_url: string | null
+          support_contacts: Json | null
+          updated_at: string
+          user_id: string
+          warranty_end_date: string | null
+          warranty_start_date: string | null
+          warranty_status: string | null
+        }
+        Insert: {
+          ai_analysis?: string | null
+          coverage_type?: string | null
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          last_checked_at?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          purchase_date?: string | null
+          raw_warranty_data?: Json | null
+          repair_options?: Json | null
+          serial_number: string
+          source_url?: string | null
+          support_contacts?: Json | null
+          updated_at?: string
+          user_id: string
+          warranty_end_date?: string | null
+          warranty_start_date?: string | null
+          warranty_status?: string | null
+        }
+        Update: {
+          ai_analysis?: string | null
+          coverage_type?: string | null
+          created_at?: string
+          device_name?: string | null
+          id?: string
+          last_checked_at?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          purchase_date?: string | null
+          raw_warranty_data?: Json | null
+          repair_options?: Json | null
+          serial_number?: string
+          source_url?: string | null
+          support_contacts?: Json | null
+          updated_at?: string
+          user_id?: string
+          warranty_end_date?: string | null
+          warranty_start_date?: string | null
+          warranty_status?: string | null
+        }
+        Relationships: []
+      }
       safeweb_assets: {
         Row: {
           asset_type: string
