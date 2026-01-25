@@ -223,6 +223,8 @@ export const AssetManagement = () => {
 
   // AI Serial Number Lookup
   const handleAiLookup = async () => {
+    console.log("AI Lookup triggered with serial:", assetForm.serial_number);
+    
     const serialNumber = assetForm.serial_number?.trim();
     if (!serialNumber || serialNumber.length < 3) {
       toast.error("Enter a serial number (min 3 characters) to use AI lookup");
@@ -231,13 +233,20 @@ export const AssetManagement = () => {
 
     setIsAiLookupLoading(true);
     setAiLookupResult(null);
+    toast.info("Looking up device info...");
 
     try {
+      console.log("Calling safetrack-ai-lookup with:", serialNumber);
       const { data, error } = await supabase.functions.invoke('safetrack-ai-lookup', {
         body: { serialNumber }
       });
 
-      if (error) throw error;
+      console.log("AI Lookup response:", data, error);
+
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
 
       if (data?.success && data?.data) {
         const result = data.data;
@@ -253,7 +262,6 @@ export const AssetManagement = () => {
           ...prev,
           manufacturer: result.manufacturer || prev.manufacturer,
           model: result.model || prev.model,
-          // Try to match category by name
           notes: result.notes ? `${prev.notes ? prev.notes + '\n' : ''}AI detected: ${result.notes}` : prev.notes
         }));
         
@@ -269,9 +277,9 @@ export const AssetManagement = () => {
       } else {
         toast.error(data?.error || "Could not identify device from serial number");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("AI lookup error:", err);
-      toast.error("AI lookup failed. Try again later.");
+      toast.error(err?.message || "AI lookup failed. Try again later.");
     } finally {
       setIsAiLookupLoading(false);
     }
