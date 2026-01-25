@@ -7,61 +7,201 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Manufacturer warranty page patterns
-const manufacturerPatterns: Record<string, { name: string; warrantyUrl: string; serialPatterns: RegExp[] }> = {
+// Manufacturer warranty page patterns - improved for better detection
+const manufacturerPatterns: Record<string, { 
+  name: string; 
+  warrantyUrl: (serial: string) => string;
+  searchQueries: (serial: string, device?: string) => string[];
+  serialPatterns: RegExp[];
+  aliases?: string[];
+}> = {
   dell: {
     name: 'Dell',
-    warrantyUrl: 'https://www.dell.com/support/home/en-us/product-support/servicetag/',
-    serialPatterns: [/^[A-Z0-9]{7}$/i, /^[A-Z0-9]{5}-[A-Z0-9]{7}$/i]
+    aliases: ['Alienware', 'XPS', 'Latitude', 'Precision', 'Inspiron', 'OptiPlex', 'PowerEdge', 'Vostro'],
+    warrantyUrl: (serial) => `https://www.dell.com/support/home/en-us/product-support/servicetag/${serial}/overview`,
+    searchQueries: (serial, device) => [
+      `site:dell.com/support service tag ${serial} warranty`,
+      `Dell ${device || ''} service tag ${serial} warranty status`,
+      `${serial} Dell warranty expiration coverage`
+    ],
+    // Dell service tags: 7 alphanumeric chars (most common), also 5-char express service codes
+    serialPatterns: [/^[A-Z0-9]{5,7}$/i, /^[A-Z0-9]{5}-[A-Z0-9]{7}$/i]
   },
   hp: {
     name: 'HP / Hewlett-Packard',
-    warrantyUrl: 'https://support.hp.com/us-en/check-warranty',
-    serialPatterns: [/^[A-Z]{3}[A-Z0-9]{7}$/i, /^[A-Z0-9]{10}$/i]
+    aliases: ['Pavilion', 'EliteBook', 'ProBook', 'Spectre', 'Envy', 'Omen', 'ZBook'],
+    warrantyUrl: (serial) => `https://support.hp.com/us-en/check-warranty`,
+    searchQueries: (serial, device) => [
+      `site:support.hp.com ${serial} warranty check`,
+      `HP ${device || ''} serial ${serial} warranty status`,
+      `${serial} HP warranty expiration`
+    ],
+    serialPatterns: [/^[A-Z]{3}[A-Z0-9]{7}$/i, /^[A-Z0-9]{10}$/i, /^[A-Z0-9]{12}$/i]
   },
   lenovo: {
     name: 'Lenovo',
-    warrantyUrl: 'https://pcsupport.lenovo.com/us/en/warranty-lookup',
-    serialPatterns: [/^[A-Z0-9]{8}$/i, /^[A-Z]{2}[A-Z0-9]{6}$/i]
+    aliases: ['ThinkPad', 'ThinkCentre', 'ThinkStation', 'IdeaPad', 'Legion', 'Yoga'],
+    warrantyUrl: (serial) => `https://pcsupport.lenovo.com/us/en/products/${serial}`,
+    searchQueries: (serial, device) => [
+      `site:pcsupport.lenovo.com ${serial} warranty`,
+      `Lenovo ${device || ''} serial ${serial} warranty status`,
+      `${serial} Lenovo warranty check`
+    ],
+    serialPatterns: [/^[A-Z0-9]{8}$/i, /^[A-Z]{2}[A-Z0-9]{6}$/i, /^PF[A-Z0-9]{6}$/i]
   },
   apple: {
     name: 'Apple',
-    warrantyUrl: 'https://checkcoverage.apple.com/',
-    serialPatterns: [/^[A-Z0-9]{12}$/i, /^[A-Z0-9]{10,14}$/i]
+    aliases: ['MacBook', 'iMac', 'Mac Pro', 'Mac Mini', 'iPhone', 'iPad'],
+    warrantyUrl: (serial) => `https://checkcoverage.apple.com/`,
+    searchQueries: (serial, device) => [
+      `site:support.apple.com ${serial} coverage`,
+      `Apple ${device || ''} serial ${serial} AppleCare status`,
+      `${serial} Apple warranty check`
+    ],
+    serialPatterns: [/^[A-Z0-9]{10,14}$/i]
   },
   microsoft: {
     name: 'Microsoft',
-    warrantyUrl: 'https://support.microsoft.com/en-us/devices',
+    aliases: ['Surface', 'Xbox'],
+    warrantyUrl: (serial) => `https://account.microsoft.com/devices`,
+    searchQueries: (serial, device) => [
+      `site:support.microsoft.com ${serial} warranty`,
+      `Microsoft ${device || ''} serial ${serial} coverage`,
+      `Surface ${serial} warranty status`
+    ],
     serialPatterns: [/^\d{12}$/]
-  },
-  samsung: {
-    name: 'Samsung',
-    warrantyUrl: 'https://www.samsung.com/us/support/warranty/',
-    serialPatterns: [/^[A-Z0-9]{15}$/i, /^[A-Z]\d{3}[A-Z0-9]{11}$/i]
   },
   asus: {
     name: 'ASUS',
-    warrantyUrl: 'https://www.asus.com/support/warranty-status-inquiry/',
-    serialPatterns: [/^[A-Z0-9]{14,15}$/i]
+    aliases: ['ROG', 'TUF', 'ZenBook', 'VivoBook', 'Strix'],
+    warrantyUrl: (serial) => `https://www.asus.com/support/warranty-status-inquiry/`,
+    searchQueries: (serial, device) => [
+      `site:asus.com ${serial} warranty`,
+      `ASUS ${device || ''} serial ${serial} warranty`,
+      `ROG ${serial} warranty status`
+    ],
+    serialPatterns: [/^[A-Z0-9]{14,15}$/i, /^[A-Z]{1,2}[A-Z0-9]{12,14}$/i]
   },
-  cisco: {
-    name: 'Cisco',
-    warrantyUrl: 'https://cway.cisco.com/sncheck/',
-    serialPatterns: [/^[A-Z]{3}[A-Z0-9]{8}$/i]
+  acer: {
+    name: 'Acer',
+    aliases: ['Predator', 'Aspire', 'Nitro', 'Swift'],
+    warrantyUrl: (serial) => `https://www.acer.com/ac/en/US/content/support`,
+    searchQueries: (serial, device) => [
+      `site:acer.com ${serial} warranty`,
+      `Acer ${device || ''} serial ${serial} warranty`
+    ],
+    serialPatterns: [/^[A-Z0-9]{22}$/i]
+  },
+  msi: {
+    name: 'MSI',
+    aliases: ['Stealth', 'Raider', 'Creator'],
+    warrantyUrl: (serial) => `https://www.msi.com/support`,
+    searchQueries: (serial, device) => [
+      `site:msi.com ${serial} warranty`,
+      `MSI ${device || ''} serial ${serial} warranty`
+    ],
+    serialPatterns: [/^[A-Z0-9]{16,20}$/i]
   }
 };
 
-function identifyManufacturer(serialNumber: string): { manufacturer: string; warrantyUrl: string } | null {
+function identifyManufacturer(serialNumber: string, deviceName?: string): { 
+  manufacturer: string; 
+  warrantyUrl: string;
+  searchQueries: string[];
+} | null {
   const cleanSerial = serialNumber.replace(/[\s-]/g, '').toUpperCase();
+  const deviceLower = (deviceName || '').toLowerCase();
   
+  // First check device name for manufacturer hints
+  for (const [key, info] of Object.entries(manufacturerPatterns)) {
+    // Check main name
+    if (deviceLower.includes(key)) {
+      return { 
+        manufacturer: info.name, 
+        warrantyUrl: info.warrantyUrl(cleanSerial),
+        searchQueries: info.searchQueries(cleanSerial, deviceName)
+      };
+    }
+    // Check aliases (e.g., "Alienware" -> Dell)
+    if (info.aliases?.some(alias => deviceLower.includes(alias.toLowerCase()))) {
+      return { 
+        manufacturer: info.name, 
+        warrantyUrl: info.warrantyUrl(cleanSerial),
+        searchQueries: info.searchQueries(cleanSerial, deviceName)
+      };
+    }
+  }
+  
+  // Fall back to serial number pattern matching
   for (const [key, info] of Object.entries(manufacturerPatterns)) {
     for (const pattern of info.serialPatterns) {
       if (pattern.test(cleanSerial)) {
-        return { manufacturer: info.name, warrantyUrl: info.warrantyUrl };
+        return { 
+          manufacturer: info.name, 
+          warrantyUrl: info.warrantyUrl(cleanSerial),
+          searchQueries: info.searchQueries(cleanSerial, deviceName)
+        };
       }
     }
   }
+  
   return null;
+}
+
+async function scrapeWithFirecrawl(apiKey: string, url: string): Promise<{ success: boolean; markdown?: string; error?: string }> {
+  try {
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url,
+        formats: ['markdown'],
+        onlyMainContent: true,
+        waitFor: 3000, // Wait for dynamic content
+      }),
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `Scrape failed: ${response.status}` };
+    }
+
+    const data = await response.json();
+    return { 
+      success: true, 
+      markdown: data?.data?.markdown || data?.markdown || '' 
+    };
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Scrape failed' };
+  }
+}
+
+async function searchWithFirecrawl(apiKey: string, query: string): Promise<{ success: boolean; results?: any[]; error?: string }> {
+  try {
+    const response = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query,
+        limit: 5,
+        scrapeOptions: { formats: ['markdown'] }
+      }),
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `Search failed: ${response.status}` };
+    }
+
+    const data = await response.json();
+    return { success: true, results: data?.data || [] };
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Search failed' };
+  }
 }
 
 serve(async (req) => {
@@ -103,115 +243,118 @@ serve(async (req) => {
       );
     }
 
-    console.log('Processing warranty lookup for serial:', serialNumber);
+    const cleanSerial = serialNumber.replace(/[\s-]/g, '').toUpperCase();
+    console.log('Processing warranty lookup for serial:', cleanSerial, 'device:', deviceName);
 
-    // Step 1: Identify manufacturer from serial number pattern
-    const manufacturerInfo = identifyManufacturer(serialNumber);
+    // Step 1: Identify manufacturer from serial number pattern AND device name
+    const manufacturerInfo = identifyManufacturer(cleanSerial, deviceName);
     
-    // Step 2: Search for warranty information using Firecrawl
-    const searchQuery = manufacturerInfo 
-      ? `${manufacturerInfo.manufacturer} warranty check serial number ${serialNumber}`
-      : `warranty lookup serial number ${serialNumber} check coverage`;
-
-    console.log('Searching with query:', searchQuery);
-
-    const searchResponse = await fetch('https://api.firecrawl.dev/v1/search', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${firecrawlApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: searchQuery,
-        limit: 5,
-        scrapeOptions: {
-          formats: ['markdown']
-        }
-      }),
-    });
-
     let scrapedContent = '';
     let sourceUrl = '';
+    const allSources: string[] = [];
 
-    if (searchResponse.ok) {
-      const searchData = await searchResponse.json();
-      console.log('Search results:', searchData?.data?.length || 0, 'results');
+    // Step 2: Try direct manufacturer warranty page first (best source)
+    if (manufacturerInfo) {
+      console.log('Identified manufacturer:', manufacturerInfo.manufacturer);
+      console.log('Scraping manufacturer warranty URL:', manufacturerInfo.warrantyUrl);
       
-      if (searchData?.data && searchData.data.length > 0) {
-        // Combine relevant results
-        scrapedContent = searchData.data
-          .slice(0, 3)
-          .map((result: any) => `Source: ${result.url}\n${result.markdown || result.description || ''}`)
-          .join('\n\n---\n\n');
-        sourceUrl = searchData.data[0]?.url || '';
+      const directScrape = await scrapeWithFirecrawl(firecrawlApiKey, manufacturerInfo.warrantyUrl);
+      if (directScrape.success && directScrape.markdown) {
+        scrapedContent = directScrape.markdown;
+        sourceUrl = manufacturerInfo.warrantyUrl;
+        allSources.push(manufacturerInfo.warrantyUrl);
+        console.log('Direct scrape successful, got', scrapedContent.length, 'chars');
       }
     }
 
-    // Step 3: If we identified a manufacturer, also try to scrape their warranty page
-    if (manufacturerInfo && !scrapedContent) {
-      console.log('Scraping manufacturer warranty page:', manufacturerInfo.warrantyUrl);
-      
-      const scrapeResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${firecrawlApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: manufacturerInfo.warrantyUrl,
-          formats: ['markdown'],
-          onlyMainContent: true
-        }),
-      });
-
-      if (scrapeResponse.ok) {
-        const scrapeData = await scrapeResponse.json();
-        if (scrapeData?.data?.markdown) {
-          scrapedContent = scrapeData.data.markdown;
-          sourceUrl = manufacturerInfo.warrantyUrl;
+    // Step 3: Search with manufacturer-specific queries
+    if (manufacturerInfo?.searchQueries) {
+      for (const query of manufacturerInfo.searchQueries.slice(0, 2)) {
+        console.log('Searching:', query);
+        const searchResult = await searchWithFirecrawl(firecrawlApiKey, query);
+        
+        if (searchResult.success && searchResult.results?.length) {
+          const relevantResults = searchResult.results
+            .filter((r: any) => r.markdown && r.markdown.length > 200)
+            .slice(0, 2);
+          
+          for (const result of relevantResults) {
+            scrapedContent += `\n\n---\nSource: ${result.url}\n${result.markdown}`;
+            allSources.push(result.url);
+          }
+          
+          if (!sourceUrl && relevantResults.length > 0) {
+            sourceUrl = relevantResults[0].url;
+          }
         }
       }
     }
 
-    // Step 4: Use AI to analyze the warranty information
-    const systemPrompt = `You are a warranty analysis expert. Analyze the provided information about a device warranty and extract structured data.
+    // Step 4: Fallback generic search if no manufacturer identified
+    if (!scrapedContent) {
+      const genericQuery = `warranty lookup serial number ${cleanSerial} ${deviceName || ''} check coverage expiration`;
+      console.log('Fallback search:', genericQuery);
+      
+      const searchResult = await searchWithFirecrawl(firecrawlApiKey, genericQuery);
+      if (searchResult.success && searchResult.results?.length) {
+        scrapedContent = searchResult.results
+          .slice(0, 3)
+          .map((r: any) => `Source: ${r.url}\n${r.markdown || r.description || ''}`)
+          .join('\n\n---\n\n');
+        sourceUrl = searchResult.results[0]?.url || '';
+      }
+    }
 
-Your task is to:
-1. Identify the manufacturer and model if possible
-2. Determine the warranty status (active, expired, or unknown)
-3. Extract warranty end date if available
-4. Identify coverage type (standard, extended, accidental protection, etc.)
-5. List available repair options
-6. Provide support contact information
-7. Give a brief analysis summary
+    console.log('Total scraped content:', scrapedContent.length, 'chars from', allSources.length, 'sources');
 
-If information is not available from the scraped data, provide reasonable estimates based on industry standards for the identified manufacturer.
+    // Step 5: Use AI to analyze the warranty information
+    const systemPrompt = `You are a warranty analysis expert specializing in IT hardware. Analyze the provided information about a device warranty and extract structured data.
 
-Respond in this JSON format:
+IMPORTANT CONTEXT:
+- Alienware is a Dell subsidiary - all Alienware products use Dell's warranty system and service tags
+- Dell service tags are 7 alphanumeric characters
+- For gaming laptops (Alienware, ROG, Predator, etc.), standard warranties are typically 1 year with optional extended warranties
+
+Your task:
+1. Identify the manufacturer and exact model/product line
+2. Determine the warranty status based on any dates found or industry standards
+3. Extract specific warranty end date if found in the scraped data
+4. Identify coverage type (Basic, Premium Support, ProSupport, Accidental Damage, etc.)
+5. List available repair options for this manufacturer
+6. Provide accurate support contact information
+7. Give actionable recommendations
+
+If the scraped data doesn't contain specific warranty dates for this serial number, provide:
+- Industry-standard warranty periods for this type of product
+- Direct links to check warranty online
+- Clear guidance on how the user can verify their specific coverage
+
+Response MUST be valid JSON with this structure:
 {
-  "manufacturer": "string or null",
-  "model": "string or null",
+  "manufacturer": "string",
+  "model": "string describing product line",
   "warranty_status": "active" | "expired" | "unknown",
   "warranty_end_date": "YYYY-MM-DD or null",
-  "coverage_type": "string describing coverage",
-  "repair_options": ["array of repair options"],
+  "coverage_type": "specific coverage description",
+  "repair_options": ["array of specific repair options"],
   "support_contacts": {
-    "phone": "phone number or null",
-    "website": "support website or null",
-    "chat": "chat url or null"
+    "phone": "phone number",
+    "website": "direct support URL",
+    "chat": "live chat URL or null"
   },
-  "ai_analysis": "Brief paragraph summarizing the warranty situation and recommendations"
+  "ai_analysis": "Detailed paragraph with warranty analysis, findings, and recommendations"
 }`;
 
-    const userPrompt = `Analyze the warranty information for this device:
+    const userPrompt = `Analyze the warranty for this device:
 
-Serial Number: ${serialNumber}
-${deviceName ? `Device Name: ${deviceName}` : ''}
-${manufacturerInfo ? `Identified Manufacturer: ${manufacturerInfo.manufacturer}` : 'Manufacturer: Unknown - please identify from serial number format'}
+Serial Number / Service Tag: ${cleanSerial}
+Device Name: ${deviceName || 'Not specified'}
+Identified Manufacturer: ${manufacturerInfo?.manufacturer || 'Unknown'}
+Manufacturer Warranty Portal: ${manufacturerInfo?.warrantyUrl || 'Unknown'}
 
-${scrapedContent ? `Scraped Warranty Information:\n${scrapedContent.substring(0, 8000)}` : 'No warranty page data could be retrieved. Please provide estimates based on the serial number pattern and manufacturer.'}
+${scrapedContent ? `\n=== SCRAPED WARRANTY INFORMATION ===\n${scrapedContent.substring(0, 12000)}` : '\nNo warranty page data could be retrieved.'}
 
-Provide a comprehensive warranty analysis.`;
+Provide a comprehensive warranty analysis. If specific warranty dates weren't found for this serial number, clearly state that and provide guidance on how to verify the warranty status directly.`;
 
     console.log('Sending to AI for analysis...');
 
@@ -235,8 +378,8 @@ Provide a comprehensive warranty analysis.`;
             parameters: {
               type: 'object',
               properties: {
-                manufacturer: { type: 'string', nullable: true },
-                model: { type: 'string', nullable: true },
+                manufacturer: { type: 'string' },
+                model: { type: 'string' },
                 warranty_status: { type: 'string', enum: ['active', 'expired', 'unknown'] },
                 warranty_end_date: { type: 'string', nullable: true },
                 coverage_type: { type: 'string' },
@@ -251,7 +394,7 @@ Provide a comprehensive warranty analysis.`;
                 },
                 ai_analysis: { type: 'string' }
               },
-              required: ['warranty_status', 'coverage_type', 'ai_analysis']
+              required: ['manufacturer', 'warranty_status', 'coverage_type', 'ai_analysis']
             }
           }
         }],
@@ -307,20 +450,26 @@ Provide a comprehensive warranty analysis.`;
       }
     }
 
+    // Provide sensible defaults with manufacturer-specific info
     if (!warrantyData) {
+      const mfr = manufacturerInfo?.manufacturer || 'Unknown';
       warrantyData = {
-        manufacturer: manufacturerInfo?.manufacturer || null,
-        model: null,
+        manufacturer: mfr,
+        model: deviceName || null,
         warranty_status: 'unknown',
         warranty_end_date: null,
-        coverage_type: 'Unknown',
-        repair_options: [],
-        support_contacts: {},
-        ai_analysis: 'Unable to determine warranty status. Please check directly with the manufacturer.'
+        coverage_type: 'Standard Limited Hardware Warranty',
+        repair_options: ['Contact manufacturer support', 'Authorized service center'],
+        support_contacts: {
+          phone: mfr === 'Dell' ? '1-800-624-9896' : null,
+          website: manufacturerInfo?.warrantyUrl || null,
+          chat: null
+        },
+        ai_analysis: `Unable to retrieve specific warranty data for this ${mfr} device. Please visit the manufacturer's warranty portal directly to check your coverage.`
       };
     }
 
-    // Step 5: Save to database
+    // Step 6: Save to database
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -328,7 +477,7 @@ Provide a comprehensive warranty analysis.`;
 
     const warrantyRecord = {
       user_id: userId,
-      serial_number: serialNumber,
+      serial_number: cleanSerial,
       device_name: deviceName || warrantyData.model || null,
       manufacturer: warrantyData.manufacturer,
       model: warrantyData.model,
@@ -337,7 +486,11 @@ Provide a comprehensive warranty analysis.`;
       coverage_type: warrantyData.coverage_type,
       repair_options: warrantyData.repair_options || [],
       support_contacts: warrantyData.support_contacts || {},
-      raw_warranty_data: { scrapedContent: scrapedContent?.substring(0, 5000), searchQuery },
+      raw_warranty_data: { 
+        scrapedContent: scrapedContent?.substring(0, 5000), 
+        sources: allSources,
+        searchQueries: manufacturerInfo?.searchQueries || []
+      },
       ai_analysis: warrantyData.ai_analysis,
       source_url: sourceUrl,
       last_checked_at: new Date().toISOString()
@@ -363,8 +516,9 @@ Provide a comprehensive warranty analysis.`;
         success: true,
         data: {
           ...warrantyData,
-          serial_number: serialNumber,
+          serial_number: cleanSerial,
           source_url: sourceUrl,
+          sources: allSources,
           id: savedRecord?.id || null
         }
       }),
