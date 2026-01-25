@@ -222,16 +222,6 @@ const Contact = () => {
                       <p className="text-sm text-white/50">Email support</p>
                     </div>
                   </a>
-
-                  <div className="flex items-center gap-4 p-4 rounded-lg bg-white/5">
-                    <div className="h-12 w-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <MessageSquare className="h-5 w-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-white font-medium">Live Chat</p>
-                      <p className="text-sm text-white/50">Available in dashboard</p>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
