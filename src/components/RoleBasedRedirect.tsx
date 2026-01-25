@@ -8,7 +8,7 @@ const PRODUCT_URLS: Record<string, string> = {
 };
 
 export const RoleBasedRedirect = () => {
-  const { getRedirectPath, shouldRedirectToRole, loading } = useRoleBasedRedirect();
+  const { getRedirectPath, shouldRedirectToRole, loading, profile } = useRoleBasedRedirect();
   const [searchParams] = useSearchParams();
   
   // Check if redirecting to a specific product
@@ -35,6 +35,7 @@ export const RoleBasedRedirect = () => {
     return <Navigate to={redirectPath} replace />;
   }
 
-  // Default redirect to Product Hub instead of home
+  // Default redirect to Product Hub - user is authenticated at this point
+  // (This component is only rendered when user exists - see App.tsx)
   return <Navigate to="/hub" replace />;
 };

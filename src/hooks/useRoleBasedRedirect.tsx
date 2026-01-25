@@ -30,17 +30,20 @@ export const useRoleBasedRedirect = () => {
       }
 
       try {
-        // Fetch user profile
+        // Fetch user profile - use user_id, not id
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('id, account_type, email, full_name, company_name')
-          .eq('id', user.id)
-          .single();
+          .select('id, user_id, account_type, email, full_name, company_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
 
         if (profileError) {
           console.error('Error fetching profile:', profileError);
-        } else {
-          setProfile(profileData);
+        } else if (profileData) {
+          setProfile({
+            ...profileData,
+            id: profileData.user_id // Ensure id matches user.id for consistency
+          });
         }
 
         // Fetch user roles
