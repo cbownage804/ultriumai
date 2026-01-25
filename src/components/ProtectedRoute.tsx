@@ -65,14 +65,37 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const isEmailConfirmed = user.email_confirmed_at != null;
 
   if (!isEmailConfirmed) {
+    // Determine correct redirect URL based on product context
+    const getProductRedirectUrl = () => {
+      // Check subdomain first
+      if (isSafeSuiteDomain()) {
+        return `${window.location.origin}/dashboard`;
+      }
+      if (isVanguardDomain()) {
+        return `${window.location.origin}/dashboard`;
+      }
+      
+      // Check URL path prefix
+      if (location.pathname.startsWith('/safesuite')) {
+        return `${window.location.origin}/safesuite/dashboard`;
+      }
+      if (location.pathname.startsWith('/vanguard')) {
+        return `${window.location.origin}/vanguard/dashboard`;
+      }
+      
+      // Default to main domain dashboard
+      return `${window.location.origin}/dashboard`;
+    };
+
     const handleResendVerification = async () => {
       setResending(true);
       try {
+        const redirectUrl = getProductRedirectUrl();
         await supabase.functions.invoke('send-auth-email', {
           body: {
             type: 'confirmation',
             email: user.email,
-            redirectUrl: `${window.location.origin}/dashboard`,
+            redirectUrl,
           },
         });
         toast({
