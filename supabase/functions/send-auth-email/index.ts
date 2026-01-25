@@ -20,7 +20,8 @@ interface AuthEmailRequest {
 
 const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string; newEmail?: string }) => {
   const year = new Date().getFullYear();
-  const logoUrl = "https://safesuite.ultriumai.com/lovable-uploads/5c081c7e-1658-4a6a-b0fe-d85c5ba50617.png";
+  // UltriumAI parent brand logo
+  const logoUrl = "https://ultriumai.lovable.app/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
   const baseStyles = `
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #0a0a0a; }
@@ -28,6 +29,8 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       .card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid #2a2a4a; }
       .logo { text-align: center; margin-bottom: 30px; }
       .logo img { height: 48px; width: auto; }
+      .brand-name { color: #ffffff; font-size: 20px; font-weight: 700; margin-top: 12px; }
+      .brand-tagline { color: #71717a; font-size: 12px; margin-top: 4px; }
       h1 { color: #ffffff; font-size: 24px; margin: 0 0 16px 0; }
       p { color: #a1a1aa; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; }
       .button { display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; }
@@ -37,12 +40,17 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       .highlight { color: #8b5cf6; }
       .warning { background: #422006; border: 1px solid #854d0e; border-radius: 8px; padding: 16px; margin: 16px 0; }
       .warning p { color: #fbbf24; margin: 0; font-size: 14px; }
+      .products { margin-top: 8px; }
+      .products span { display: inline-block; padding: 4px 10px; margin: 2px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+      .product-ai { background: #3b82f620; color: #60a5fa; }
+      .product-safe { background: #8b5cf620; color: #a78bfa; }
+      .product-vanguard { background: #10b98120; color: #34d399; }
     </style>
   `;
 
   const templates: Record<string, { subject: string; html: string }> = {
     confirmation: {
-      subject: "Confirm your SafeSuite account",
+      subject: "Confirm your UltriumAI account",
       html: `
         <!DOCTYPE html>
         <html>
@@ -51,10 +59,12 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="SafeSuite" />
+                <img src="${logoUrl}" alt="UltriumAI" />
+                <div class="brand-name">UltriumAI</div>
+                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
               <h1>Welcome${data.name ? `, ${data.name}` : ''}!</h1>
-              <p>Thanks for signing up for SafeSuite. To get started, please confirm your email address by clicking the button below.</p>
+              <p>Thanks for creating your UltriumAI account. To get started, please confirm your email address by clicking the button below.</p>
               <div style="text-align: center;">
                 <a href="${data.actionUrl}" class="button">Confirm Email Address</a>
               </div>
@@ -63,7 +73,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
               </div>
               <div class="footer">
                 <p>© ${year} UltriumAI. All rights reserved.</p>
-                <p>This email was sent to you because you signed up for SafeSuite.</p>
+                <p>This email was sent because you signed up for an UltriumAI account.</p>
               </div>
             </div>
           </div>
@@ -72,7 +82,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       `,
     },
     password_reset: {
-      subject: "Reset your SafeSuite password",
+      subject: "Reset your UltriumAI password",
       html: `
         <!DOCTYPE html>
         <html>
@@ -81,10 +91,12 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="SafeSuite" />
+                <img src="${logoUrl}" alt="UltriumAI" />
+                <div class="brand-name">UltriumAI</div>
+                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
               <h1>Password Reset Request</h1>
-              <p>We received a request to reset the password for your SafeSuite account. Click the button below to set a new password.</p>
+              <p>We received a request to reset the password for your UltriumAI account. Click the button below to set a new password.</p>
               <div style="text-align: center;">
                 <a href="${data.actionUrl}" class="button">Reset Password</a>
               </div>
@@ -102,7 +114,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       `,
     },
     magic_link: {
-      subject: "Your SafeSuite login link",
+      subject: "Your UltriumAI login link",
       html: `
         <!DOCTYPE html>
         <html>
@@ -111,12 +123,14 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="SafeSuite" />
+                <img src="${logoUrl}" alt="UltriumAI" />
+                <div class="brand-name">UltriumAI</div>
+                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
-              <h1>Sign in to SafeSuite</h1>
-              <p>Click the button below to securely sign in to your SafeSuite account. No password needed!</p>
+              <h1>Sign in to UltriumAI</h1>
+              <p>Click the button below to securely sign in to your UltriumAI account. No password needed!</p>
               <div style="text-align: center;">
-                <a href="${data.actionUrl}" class="button">Sign In to SafeSuite</a>
+                <a href="${data.actionUrl}" class="button">Sign In to UltriumAI</a>
               </div>
               <div class="warning">
                 <p>⚠️ This link expires in 1 hour and can only be used once.</p>
@@ -131,7 +145,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       `,
     },
     email_change: {
-      subject: "Confirm your new email address",
+      subject: "Confirm your new email address - UltriumAI",
       html: `
         <!DOCTYPE html>
         <html>
@@ -140,10 +154,12 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="SafeSuite" />
+                <img src="${logoUrl}" alt="UltriumAI" />
+                <div class="brand-name">UltriumAI</div>
+                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
               <h1>Confirm Email Change</h1>
-              <p>You requested to change your email address to <span class="highlight">${data.newEmail || 'a new address'}</span>. Click the button below to confirm this change.</p>
+              <p>You requested to change your UltriumAI account email to <span class="highlight">${data.newEmail || 'a new address'}</span>. Click the button below to confirm this change.</p>
               <div style="text-align: center;">
                 <a href="${data.actionUrl}" class="button">Confirm New Email</a>
               </div>
@@ -160,7 +176,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       `,
     },
     welcome: {
-      subject: "Welcome to SafeSuite! 🛡️",
+      subject: "Welcome to UltriumAI! 🚀",
       html: `
         <!DOCTYPE html>
         <html>
@@ -169,16 +185,26 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <img src="${logoUrl}" alt="SafeSuite" />
+                <img src="${logoUrl}" alt="UltriumAI" />
+                <div class="brand-name">UltriumAI</div>
+                <div class="brand-tagline">Your gateway to AI Studio, SafeSuite & Vanguard</div>
               </div>
-              <h1>Welcome to SafeSuite${data.name ? `, ${data.name}` : ''}!</h1>
-              <p>Your account is now active. You now have access to enterprise-grade security tools:</p>
-              <ul style="color: #a1a1aa; padding-left: 20px;">
-                <li style="margin-bottom: 8px;"><strong style="color: #fbbf24;">SafePass</strong> - Zero-knowledge password vault</li>
-                <li style="margin-bottom: 8px;"><strong style="color: #ef4444;">SafeScan</strong> - Email, URL & document scanner</li>
-                <li style="margin-bottom: 8px;"><strong style="color: #8b5cf6;">SafeWeb</strong> - Dark web breach monitoring</li>
-                <li style="margin-bottom: 8px;"><strong style="color: #10b981;">SafeTrack</strong> - IT asset management</li>
-              </ul>
+              <h1>Welcome${data.name ? `, ${data.name}` : ''}!</h1>
+              <p>Your UltriumAI account is now active. You have access to our complete product suite:</p>
+              <div class="products" style="margin: 20px 0;">
+                <div style="margin-bottom: 12px;">
+                  <span class="product-ai">AI Studio</span>
+                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Build custom GPTs and AI agents</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <span class="product-safe">SafeSuite</span>
+                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Enterprise security tools & password vault</span>
+                </div>
+                <div style="margin-bottom: 12px;">
+                  <span class="product-vanguard">Vanguard</span>
+                  <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Endpoint security & compliance monitoring</span>
+                </div>
+              </div>
               <div style="text-align: center;">
                 <a href="${data.actionUrl}" class="button">Go to Dashboard</a>
               </div>
@@ -242,7 +268,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${type} email to ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "UltriumAI Support <support@ultriumai.com>",
+      from: "UltriumAI <noreply@ultriumai.com>",
       to: [email],
       subject: template.subject,
       html: template.html,
