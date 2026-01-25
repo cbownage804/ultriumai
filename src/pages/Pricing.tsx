@@ -36,8 +36,8 @@ const Pricing = () => {
       <section id="safesuite" className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center px-6 py-3 bg-black rounded-xl shadow-lg shadow-emerald-500/20 mb-6">
-              <img src={safesuiteLogo} alt="SafeSuite" className="h-12 w-auto" />
+            <div className="inline-flex items-center justify-center px-10 py-5 bg-black rounded-2xl shadow-lg shadow-emerald-500/30 mb-6">
+              <img src={safesuiteLogo} alt="SafeSuite" className="h-24 w-auto" />
             </div>
             <p className="text-lg text-white/50 max-w-xl mx-auto">
               Personal & SMB security toolkit with password vault, threat scanning, and dark web monitoring.
@@ -165,8 +165,8 @@ const Pricing = () => {
       <section id="ai-studio" className="py-20 px-4 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center px-6 py-3 bg-black rounded-xl shadow-lg shadow-primary/20 mb-6">
-              <img src={aiStudioLogo} alt="AI Studio" className="h-12 w-auto" />
+            <div className="inline-flex items-center justify-center px-10 py-5 bg-black rounded-2xl shadow-lg shadow-primary/30 mb-6">
+              <img src={aiStudioLogo} alt="AI Studio" className="h-24 w-auto" />
             </div>
             <p className="text-lg text-white/50 max-w-xl mx-auto">
               Build custom GPT assistants trained on your data. No coding required.
