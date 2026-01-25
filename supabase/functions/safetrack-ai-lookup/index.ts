@@ -41,28 +41,37 @@ serve(async (req) => {
 
     const systemPrompt = `You are an IT asset identification expert. Given a serial number, identify the manufacturer and likely device details based on serial number patterns.
 
-Known patterns:
-- Dell/Alienware: 7-character alphanumeric (e.g., "DL7K9H2", "4RT6H93")
-- HP/HPE: 10-char starting with letters (e.g., "CND1234567", "MXL1234567")
-- Lenovo: 8-char alphanumeric, often starts with "PF" or "R9" (e.g., "PF1A2B3C")
-- Apple: 12-char alphanumeric (e.g., "C02XL0GTJGH5")
-- Cisco: Often starts with "FCW", "FTX", "JAD" (e.g., "FCW2345X0AB")
-- Microsoft Surface: 12-digit numeric (e.g., "012345678901")
-- Samsung: 15-char, starts with "R" (e.g., "RF8M91234567890")
-- ASUS: starts with letters like "G", "H", "J" followed by numbers
-- Acer: Often "NX" or "SNID" prefix
+IMPORTANT: When identifying devices, be specific about sub-brands:
+- Dell owns Alienware - Alienware uses the SAME 7-character service tag format as Dell
+- HP owns HyperX gaming peripherals
+- Lenovo owns Motorola for phones
+- Microsoft Surface has its own format
 
-If you cannot identify the manufacturer from the pattern, make your best educated guess based on the format.`;
+Known serial number patterns:
+- Dell/Alienware: 7-character alphanumeric service tags (e.g., "6J2NRY3", "DL7K9H2", "4RT6H93")
+  * CRITICAL: You CANNOT distinguish Dell from Alienware by serial alone. If it's a 7-char Dell tag, say "Dell or Alienware" as manufacturer
+- HP/HPE: 10-char starting with letters like "CND", "MXL", "5CG" (e.g., "CND1234567", "MXL1234567", "5CG234ABC")
+- Lenovo ThinkPad: 8-char often starts with "PF", "R9", "PC" (e.g., "PF1A2B3C", "R90WXYZ1")
+- Lenovo IdeaPad/Legion: May start with "MP", "LR" 
+- Apple: 12-char alphanumeric (e.g., "C02XL0GTJGH5", "FVFXM2ABC123")
+- Cisco: Starts with "FCW", "FTX", "JAD", "FOC" (e.g., "FCW2345X0AB")
+- Microsoft Surface: 12-digit numeric (e.g., "012345678901")
+- Samsung: 15-char, often starts with "R" or "S" (e.g., "RF8M91234567890")
+- ASUS: Starts with letters like "G", "H", "J", "K", "M" followed by numbers
+- Acer: "NX" or "SNID" prefix (e.g., "NXH1234567890")
+- Razer: Often starts with "RZ" or has specific patterns
+
+When the serial format is ambiguous between parent and subsidiary brands (e.g., Dell/Alienware), list BOTH possibilities.`;
 
     const userPrompt = `Identify this serial number: "${serialNumber}"
 
 Respond ONLY with valid JSON in this exact format:
 {
-  "manufacturer": "Manufacturer name",
-  "model": "Best guess at model line (e.g., 'Latitude 5000 Series', 'ThinkPad T Series')",
-  "category": "One of: Laptop, Desktop, Server, Network Equipment, Peripheral, Monitor, Printer, Mobile Device, Other",
-  "device_type": "More specific type if known",
-  "notes": "Any relevant notes about this serial pattern"
+  "manufacturer": "Manufacturer name (if ambiguous like Dell/Alienware, say 'Dell or Alienware')",
+  "model": "Best guess at model line (e.g., 'Latitude 5000 Series', 'ThinkPad T Series', 'Alienware m15/m17 or Dell Laptop')",
+  "category": "One of: Laptop, Desktop, Server, Network Equipment, Peripheral, Monitor, Printer, Mobile Device, Gaming PC, Other",
+  "device_type": "More specific type if determinable",
+  "notes": "Any relevant notes - especially if manufacturer is ambiguous, explain why"
 }`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
