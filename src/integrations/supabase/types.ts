@@ -17984,6 +17984,42 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_credit_purchases: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          minutes_purchased: number
+          minutes_remaining: number
+          price_paid_cents: number
+          stripe_payment_intent: string | null
+          stripe_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          minutes_purchased: number
+          minutes_remaining: number
+          price_paid_cents: number
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          minutes_purchased?: number
+          minutes_remaining?: number
+          price_paid_cents?: number
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       web_crawl_jobs: {
         Row: {
           allowed_domains: string[] | null

@@ -284,7 +284,7 @@ export function FloatingSafeAssist() {
                         {/* Voice Button */}
                         <Button
                           onClick={handleStartVoice}
-                          disabled={isConnecting || isTyping || !voiceCredits.enabled || voiceCredits.remaining <= 0}
+                          disabled={isConnecting || isTyping || voiceCredits.total <= 0}
                           variant="outline"
                           size="icon"
                           className={cn(
@@ -292,11 +292,9 @@ export function FloatingSafeAssist() {
                             isConnecting && "animate-pulse",
                             !voiceCredits.enabled && "opacity-50"
                           )}
-                          title={!voiceCredits.enabled 
-                            ? "Upgrade to Pro for voice" 
-                            : voiceCredits.remaining <= 0 
-                              ? "No voice minutes remaining" 
-                              : `${voiceCredits.remaining} min remaining`}
+                          title={voiceCredits.total <= 0 
+                            ? "No voice minutes - Buy more" 
+                            : `${voiceCredits.total} min remaining`}
                         >
                           {isConnecting ? (
                             <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
