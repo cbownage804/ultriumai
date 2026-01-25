@@ -18,8 +18,6 @@ import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f92
 import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
 import vanguardLogo from "@/assets/vanguard-logo.png";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
-import safeopLogo from "@/assets/safeops-logo.png";
-import safedeskLogo from "@/assets/safedesk-logo.png";
 import { safeWindowOpen } from "@/utils/security";
 
 const Navigation = () => {
@@ -160,8 +158,8 @@ const Navigation = () => {
                     onClick={() => handleNavigation('/products/rmm')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
                   >
-                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
-                      <img src={safeopLogo} alt="SafeOps" className="w-10 h-10 object-contain" />
+                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                      <Monitor className="h-6 w-6 text-emerald-500" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -177,8 +175,8 @@ const Navigation = () => {
                     onClick={() => handleNavigation('/products/helpdesk')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
                   >
-                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
-                      <img src={safedeskLogo} alt="SafeDesk" className="w-10 h-10 object-contain" />
+                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                      <Headphones className="h-6 w-6 text-cyan-500" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
