@@ -30,10 +30,15 @@ import {
   Calendar,
   Loader2,
   ExternalLink,
-  Users
+  Users,
+  Star,
+  Zap,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { UsageSummary } from '@/components/safesuite/UsageMeter';
 
 export default function SafeSuiteBilling() {
   const { subscription, tier, tierConfig, loading: subLoading } = useSafeSuiteSubscription();
@@ -83,59 +88,93 @@ export default function SafeSuiteBilling() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
         <h1 className="text-2xl font-bold">Billing & Subscription</h1>
         <p className="text-muted-foreground">
           Manage your SafeSuite subscription and billing
         </p>
-      </div>
+      </motion.div>
 
-      {/* Current Plan Card */}
+      {/* Current Plan Card - Enhanced */}
       {subscription && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Current Plan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl font-semibold">{tierConfig.name}</span>
-                  <Badge variant={tier === 'free' ? 'secondary' : 'default'}>
-                    {tier === 'business' && <Crown className="h-3 w-3 mr-1" />}
-                    {tier === 'pro' && <Sparkles className="h-3 w-3 mr-1" />}
-                    {tierConfig.badge}
-                  </Badge>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card className={cn(
+            'overflow-hidden',
+            tier === 'business' && 'border-amber-500/30 bg-gradient-to-r from-amber-500/5 to-orange-500/5',
+            tier === 'pro' && 'border-violet-500/30 bg-gradient-to-r from-violet-500/5 to-purple-500/5'
+          )}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {tier === 'business' && <Crown className="h-5 w-5 text-amber-500" />}
+                {tier === 'pro' && <Zap className="h-5 w-5 text-violet-500" />}
+                {tier === 'free' && <Shield className="h-5 w-5" />}
+                Current Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl font-semibold">{tierConfig.name}</span>
+                    <Badge 
+                      variant={tier === 'free' ? 'secondary' : 'default'}
+                      className={cn(
+                        tier === 'business' && 'bg-gradient-to-r from-amber-500 to-orange-500 border-0',
+                        tier === 'pro' && 'bg-gradient-to-r from-violet-500 to-purple-500 border-0'
+                      )}
+                    >
+                      {tier === 'business' && <Crown className="h-3 w-3 mr-1" />}
+                      {tier === 'pro' && <Sparkles className="h-3 w-3 mr-1" />}
+                      {tierConfig.badge}
+                    </Badge>
+                  </div>
+                  {subscription.currentPeriodEnd && tier !== 'free' && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
-                {subscription.currentPeriodEnd && tier !== 'free' && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    Renews on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                  </p>
+                {tier !== 'free' && (
+                  <Button variant="outline" onClick={handleManageSubscription} disabled={checkoutLoading}>
+                    {checkoutLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        Manage Subscription
+                        <ExternalLink className="h-4 w-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
                 )}
               </div>
-              {tier !== 'free' && (
-                <Button variant="outline" onClick={handleManageSubscription} disabled={checkoutLoading}>
-                  {checkoutLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      Manage Subscription
-                      <ExternalLink className="h-4 w-4 ml-2" />
-                    </>
-                  )}
-                </Button>
+
+              {/* Usage Summary */}
+              {tier !== 'business' && (
+                <div className="pt-4 border-t border-border/50">
+                  <h4 className="text-sm font-medium mb-3">Your Usage</h4>
+                  <UsageSummary features={['safepass', 'safescan', 'safeweb']} />
+                </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Billing Toggle */}
-      <div className="flex items-center justify-center gap-4">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="flex items-center justify-center gap-4 py-4"
+      >
         <Label htmlFor="billing-toggle" className={cn(!yearlyBilling && 'text-foreground font-medium')}>
           Monthly
         </Label>
@@ -146,9 +185,9 @@ export default function SafeSuiteBilling() {
         />
         <Label htmlFor="billing-toggle" className={cn(yearlyBilling && 'text-foreground font-medium')}>
           Yearly
-          <Badge variant="secondary" className="ml-2">Save 20%</Badge>
+          <Badge variant="secondary" className="ml-2 bg-emerald-500/20 text-emerald-400">Save 20%</Badge>
         </Label>
-      </div>
+      </motion.div>
 
       {/* Pricing Grid */}
       <div className="grid md:grid-cols-3 gap-6">
