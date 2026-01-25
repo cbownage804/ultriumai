@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,15 +8,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock, Building, Eye, EyeOff, Shield, Mail, Phone, ArrowRight, CheckCircle } from 'lucide-react';
+import { Lock, Shield, Mail, Phone, ArrowRight, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 
 const VanguardAuthPage = () => {
   const [activeTab, setActiveTab] = useState('signin');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -27,7 +24,7 @@ const VanguardAuthPage = () => {
   const [requestMessage, setRequestMessage] = useState('');
   const [requestSubmitted, setRequestSubmitted] = useState(false);
 
-  const { signIn, user } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -44,33 +41,11 @@ const VanguardAuthPage = () => {
     }
   }, [user, navigate, from]);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please check your credentials and try again.');
-        } else if (error.message.includes('Email not confirmed')) {
-          setError('Please check your email and click the confirmation link before signing in.');
-        } else {
-          setError(error.message);
-        }
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in to Vanguard.",
-        });
-      }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  // Redirect to unified auth on main domain
+  const handleGoToUnifiedLogin = () => {
+    const mainDomain = 'https://ultriumai.com';
+    const authUrl = `${mainDomain}/auth?return=vanguard&path=${encodeURIComponent(from)}`;
+    window.location.href = authUrl;
   };
 
   const handleRequestAccess = async (e: React.FormEvent) => {
@@ -129,52 +104,28 @@ const VanguardAuthPage = () => {
 
               {/* Sign In Tab */}
               <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-white/80">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-cyan-500"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="text-white/80">Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="signin-password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-cyan-500"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 text-white/60 hover:text-white hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
+                <div className="space-y-4">
+                  <div className="text-center mb-6">
+                    <div className="w-12 h-12 bg-gradient-to-r from-cyan-500/20 to-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Lock className="h-6 w-6 text-cyan-400" />
                     </div>
+                    <p className="text-sm text-white/60">
+                      Sign in with your UltriumAI account to access Vanguard.
+                    </p>
                   </div>
-
+                  
                   <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0" 
-                    disabled={loading}
+                    onClick={handleGoToUnifiedLogin}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0"
                   >
-                    {loading ? 'Signing In...' : 'Sign In'}
+                    Continue to Sign In
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                </form>
+                  
+                  <p className="text-xs text-white/40 text-center mt-4">
+                    You'll be redirected to the secure UltriumAI login page.
+                  </p>
+                </div>
               </TabsContent>
 
               {/* Request Access Tab */}

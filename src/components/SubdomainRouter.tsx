@@ -3,11 +3,11 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { isSafeSuiteDomain } from '@/utils/subdomain';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import LegacySafeSuitePathRedirect from '@/components/LegacySafeSuitePathRedirect';
+import UnifiedAuthRedirect from '@/components/auth/UnifiedAuthRedirect';
 
 // SafeSuite imports
 import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
 import SafeSuiteLanding from '@/pages/safesuite/SafeSuiteLanding';
-import SafeSuiteAuth from '@/pages/safesuite/SafeSuiteAuth';
 import SafeSuiteDashboard from '@/pages/safesuite/SafeSuiteDashboard';
 import SafeSuiteBilling from '@/pages/safesuite/SafeSuiteBilling';
 import SafeSuiteSettings from '@/pages/safesuite/SafeSuiteSettings';
@@ -58,7 +58,7 @@ export const SafeSuiteSubdomainRoutes = () => {
       <Route path="/products/safescan" element={<SafeScanProduct />} />
       <Route path="/products/safeweb" element={<SafeWebProduct />} />
       <Route path="/products/safetrack" element={<SafeTrackProduct />} />
-      <Route path="/auth" element={<SafeSuiteAuth />} />
+      <Route path="/auth" element={<UnifiedAuthRedirect />} />
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth/mfa-recovery" element={<MFARecoveryPage />} />

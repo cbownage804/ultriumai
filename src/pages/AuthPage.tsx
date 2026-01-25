@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock, Building, Users, Eye, EyeOff, Mail } from 'lucide-react';
+import { Lock, Building, Users, Eye, EyeOff, Mail, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
+import safesuiteLogo from '@/assets/safesuite-logo.png';
+import vanguardLogo from '@/assets/vanguard-logo.png';
+
+// Product subdomain URLs
+const PRODUCT_URLS: Record<string, string> = {
+  safesuite: 'https://safesuite.ultriumai.com',
+  vanguard: 'https://vanguard.ultriumai.com',
+};
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState('signin');
@@ -33,15 +41,28 @@ const AuthPage = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
+
+  // Get return product and path from URL params
+  const returnProduct = searchParams.get('return');
+  const returnPath = searchParams.get('path') || '/dashboard';
 
   const from = location.state?.from?.pathname || '/';
 
+  // Handle post-login redirect based on return params
   useEffect(() => {
     if (user) {
+      // If returning to a specific product, redirect to its subdomain
+      if (returnProduct && PRODUCT_URLS[returnProduct]) {
+        const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
+        window.location.href = targetUrl;
+        return;
+      }
+      // Otherwise navigate within the app
       navigate(from, { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, navigate, from, returnProduct, returnPath]);
 
   useEffect(() => {
     // Don’t keep sign-up errors visible when switching tabs.
@@ -139,16 +160,49 @@ const AuthPage = () => {
     }
   };
 
+  // Determine branding based on return product
+  const getBranding = () => {
+    if (returnProduct === 'safesuite') {
+      return {
+        logo: safesuiteLogo,
+        name: 'SafeSuite',
+        tagline: 'Personal Security Suite',
+        bgClass: 'from-emerald-500/5 via-background to-emerald-900/5',
+      };
+    }
+    if (returnProduct === 'vanguard') {
+      return {
+        logo: vanguardLogo,
+        name: 'Vanguard',
+        tagline: 'Enterprise Security Platform',
+        bgClass: 'from-cyan-500/5 via-background to-purple-600/5',
+      };
+    }
+    return {
+      logo: ultraiumAiLogo,
+      name: 'UltriumAI',
+      tagline: 'AI Development Agency',
+      bgClass: 'from-primary/5 via-background to-secondary/5',
+    };
+  };
+
+  const branding = getBranding();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+    <div className={`min-h-screen bg-gradient-to-br ${branding.bgClass} flex items-center justify-center p-4`}>
       <div className="w-full max-w-md space-y-6">
-        {/* Header - UltriumAI Branding */}
+        {/* Header - Dynamic Branding */}
         <div className="text-center">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-14 w-auto" />
-            <span className="text-2xl font-bold text-foreground">UltriumAI</span>
+            <img src={branding.logo} alt={branding.name} className="h-14 w-auto" />
+            <span className="text-2xl font-bold text-foreground">{branding.name}</span>
           </div>
-          <p className="text-sm text-muted-foreground">AI Development Agency</p>
+          <p className="text-sm text-muted-foreground">{branding.tagline}</p>
+          {returnProduct && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Sign in to continue to {branding.name}
+            </p>
+          )}
         </div>
 
         <Card>
