@@ -49,6 +49,7 @@ import Reports from '@/pages/Reports';
 import Analytics from '@/pages/Analytics';
 import AuthPage from '@/pages/AuthPage';
 import Dashboard from '@/pages/Dashboard';
+import ProductHub from '@/pages/ProductHub';
 import GPTChat from '@/pages/GPTChat';
 import NotFound from '@/pages/NotFound';
 import ProfilePage from '@/pages/ProfilePage';
@@ -288,6 +289,11 @@ function AppRouter() {
         </Route>
         <Route path="/agent" element={<Agent />} />
         <Route path="/auth" element={user ? <RoleBasedRedirect /> : <AuthPage />} />
+        <Route path="/hub" element={
+          <ProtectedRoute>
+            <ProductHub />
+          </ProtectedRoute>
+        } />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/msp-pricing" element={<MSPPricing />} />
         <Route path="/contact" element={<Contact />} />

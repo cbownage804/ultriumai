@@ -65,7 +65,7 @@ export const useRoleBasedRedirect = () => {
   }, [user]);
 
   const getRedirectPath = () => {
-    if (!profile || !user) return '/';
+    if (!profile || !user) return '/hub';
 
     // Check for MSP admin role
     const isMSPAdmin = roles.some(role => role.role === 'msp_admin');
@@ -86,8 +86,8 @@ export const useRoleBasedRedirect = () => {
       return '/msp-control-center'; // For now, use same as MSP
     }
 
-    // Regular business users go to main dashboard
-    return '/dashboard';
+    // Regular users go to Product Hub to choose their product
+    return '/hub';
   };
 
   const shouldRedirectToRole = () => {

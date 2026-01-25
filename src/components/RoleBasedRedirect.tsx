@@ -1,9 +1,19 @@
-import { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
+
+// Product subdomain URLs
+const PRODUCT_URLS: Record<string, string> = {
+  safesuite: 'https://safesuite.ultriumai.com',
+  vanguard: 'https://vanguard.ultriumai.com',
+};
 
 export const RoleBasedRedirect = () => {
   const { getRedirectPath, shouldRedirectToRole, loading } = useRoleBasedRedirect();
+  const [searchParams] = useSearchParams();
+  
+  // Check if redirecting to a specific product
+  const returnProduct = searchParams.get('return');
+  const returnPath = searchParams.get('path') || '/dashboard';
 
   if (loading) {
     return (
@@ -13,11 +23,18 @@ export const RoleBasedRedirect = () => {
     );
   }
 
+  // If returning to a specific product subdomain, redirect there
+  if (returnProduct && PRODUCT_URLS[returnProduct]) {
+    const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
+    window.location.href = targetUrl;
+    return null;
+  }
+
   if (shouldRedirectToRole()) {
     const redirectPath = getRedirectPath();
     return <Navigate to={redirectPath} replace />;
   }
 
-  // Default redirect to home
-  return <Navigate to="/" replace />;
+  // Default redirect to Product Hub instead of home
+  return <Navigate to="/hub" replace />;
 };

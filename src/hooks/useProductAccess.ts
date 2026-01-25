@@ -64,6 +64,11 @@ export const useProductAccess = (): UseProductAccessReturn => {
   }, [user]);
 
   const hasAccess = (product: Product, requiredLevel: AccessLevel = 'free'): boolean => {
+    // SafeSuite has a free tier - all authenticated users have at least free access
+    if (product === 'safesuite' && requiredLevel === 'free') {
+      return true;
+    }
+    
     const productAccess = access.find(a => a.product === product);
     
     if (!productAccess) return false;
@@ -78,6 +83,16 @@ export const useProductAccess = (): UseProductAccessReturn => {
   };
 
   const getAccessLevel = (product: Product): AccessLevel | null => {
+    // SafeSuite has a free tier - all authenticated users have at least free access
+    if (product === 'safesuite') {
+      const productAccess = access.find(a => a.product === product);
+      if (!productAccess) return 'free'; // Default free tier for SafeSuite
+      if (productAccess.expires_at && new Date(productAccess.expires_at) < new Date()) {
+        return 'free'; // Expired subscription falls back to free
+      }
+      return productAccess.access_level;
+    }
+    
     const productAccess = access.find(a => a.product === product);
     
     if (!productAccess) return null;
