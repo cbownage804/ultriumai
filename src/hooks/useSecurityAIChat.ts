@@ -21,16 +21,17 @@ interface UseSecurityAIChatReturn {
   clearMessages: () => void;
 }
 
-const WELCOME_MESSAGE = `🛡️ **UltriumDefender AI Online**
+const WELCOME_MESSAGE = `👋 **Hi there! I'm your Security Assistant**
 
-I'm your real-time security analyst. I can help you with:
-- **Threat Analysis**: Analyze scan results and security events
-- **Risk Assessment**: Evaluate security posture and vulnerabilities
-- **Incident Response**: Guide you through security incidents
-- **Compliance**: Check against security frameworks
-- **Recommendations**: Provide actionable security advice
+I'm here to help you stay safe online. No technical knowledge required – just ask me anything in plain English!
 
-How can I assist with your security today?`;
+**Here's what I can help with:**
+- ✅ Checking if websites or links are safe
+- ✅ Explaining what security warnings mean
+- ✅ Tips to protect yourself online
+- ✅ Answering any security questions you have
+
+What would you like to know?`;
 
 export function useSecurityAIChat(): UseSecurityAIChatReturn {
   const { toast } = useToast();
