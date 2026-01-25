@@ -48,7 +48,7 @@ const AuthPage = () => {
   const returnProduct = searchParams.get('return');
   const returnPath = searchParams.get('path') || '/dashboard';
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/hub';
 
   // Handle post-login redirect based on return params
   useEffect(() => {
@@ -59,8 +59,8 @@ const AuthPage = () => {
         window.location.href = targetUrl;
         return;
       }
-      // Otherwise navigate within the app
-      navigate(from, { replace: true });
+      // Otherwise navigate to the Product Hub (or original location)
+      navigate(from === '/' ? '/hub' : from, { replace: true });
     }
   }, [user, navigate, from, returnProduct, returnPath]);
 
