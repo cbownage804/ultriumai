@@ -16,6 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import safewebLogo from '@/assets/safeweb-logo.png';
 import { Sparkles } from 'lucide-react';
+import { AIRecommendationsDisplay } from '@/components/safeweb/AIRecommendationsDisplay';
 import {
   Globe,
   Shield,
@@ -751,138 +752,12 @@ export default function SafeSuiteWeb() {
                     <div className="absolute inset-0 bg-gradient-to-r from-violet-600/5 via-transparent to-purple-600/5 animate-pulse" />
                     
                     <div className="relative">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-violet-500/20 rounded-lg">
-                          <Sparkles className="h-5 w-5 text-violet-400" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-violet-300">AI Security Advisor</h4>
-                          <p className="text-xs text-gray-500">Powered by SafeWeb AI</p>
-                        </div>
-                      </div>
-                      
-                      {loadingRecommendation ? (
-                        <div className="space-y-4">
-                          {/* Animated loading skeleton */}
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-violet-500/30 rounded-full animate-ping" />
-                              <Loader2 className="h-5 w-5 animate-spin text-violet-400 relative z-10" />
-                            </div>
-                            <span className="text-violet-300 animate-pulse">Analyzing threat data...</span>
-                          </div>
-                          
-                          {/* Skeleton lines with staggered animation */}
-                          <div className="space-y-3">
-                            <div className="h-4 bg-violet-500/10 rounded-full w-3/4 animate-pulse" style={{ animationDelay: '0ms' }} />
-                            <div className="h-4 bg-violet-500/10 rounded-full w-full animate-pulse" style={{ animationDelay: '100ms' }} />
-                            <div className="h-4 bg-violet-500/10 rounded-full w-5/6 animate-pulse" style={{ animationDelay: '200ms' }} />
-                            <div className="h-4 bg-violet-500/10 rounded-full w-2/3 animate-pulse" style={{ animationDelay: '300ms' }} />
-                          </div>
-                          
-                          <div className="mt-4 pt-4 border-t border-violet-500/10">
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <ShieldAlert className="h-3 w-3" />
-                              <span>Generating personalized security recommendations...</span>
-                            </div>
-                          </div>
-                        </div>
-                      ) : aiRecommendation ? (
-                        <div className="animate-fade-in">
-                          {/* Parse and render the AI response with better formatting */}
-                          <div className="space-y-4">
-                            {aiRecommendation.split('\n\n').map((section, idx) => {
-                              // Check if it's a header section
-                              const isHeader = section.includes('**') && section.startsWith('1.') || 
-                                               section.startsWith('2.') || 
-                                               section.startsWith('3.');
-                              const isBullet = section.trim().startsWith('-') || section.trim().startsWith('•');
-                              
-                              if (section.includes('Risk Assessment') || section.includes('Immediate Actions') || section.includes('Long-term')) {
-                                const headerMatch = section.match(/\*\*(.+?)\*\*/);
-                                const headerText = headerMatch ? headerMatch[1] : '';
-                                const content = section.replace(/\*\*(.+?)\*\*/, '').replace(/^\d+\.\s*/, '').trim();
-                                
-                                let iconColor = 'text-yellow-400';
-                                let bgColor = 'bg-yellow-500/10';
-                                let borderColor = 'border-yellow-500/20';
-                                
-                                if (headerText.includes('Immediate')) {
-                                  iconColor = 'text-red-400';
-                                  bgColor = 'bg-red-500/10';
-                                  borderColor = 'border-red-500/20';
-                                } else if (headerText.includes('Long-term')) {
-                                  iconColor = 'text-green-400';
-                                  bgColor = 'bg-green-500/10';
-                                  borderColor = 'border-green-500/20';
-                                }
-                                
-                                return (
-                                  <div 
-                                    key={idx} 
-                                    className={`p-4 rounded-lg ${bgColor} border ${borderColor} animate-scale-in`}
-                                    style={{ animationDelay: `${idx * 100}ms` }}
-                                  >
-                                    <h5 className={`font-semibold ${iconColor} mb-2 flex items-center gap-2`}>
-                                      {headerText.includes('Risk') && <AlertTriangle className="h-4 w-4" />}
-                                      {headerText.includes('Immediate') && <ShieldAlert className="h-4 w-4" />}
-                                      {headerText.includes('Long-term') && <Shield className="h-4 w-4" />}
-                                      {headerText}
-                                    </h5>
-                                    <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                                      {content.split('\n').map((line, lineIdx) => (
-                                        <div key={lineIdx} className={line.trim().startsWith('-') ? 'flex items-start gap-2 mt-1' : ''}>
-                                          {line.trim().startsWith('-') && (
-                                            <CheckCircle className="h-3 w-3 text-violet-400 mt-1 flex-shrink-0" />
-                                          )}
-                                          <span>{line.replace(/^-\s*/, '')}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              }
-                              
-                              return (
-                                <div key={idx} className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                                  {section}
-                                </div>
-                              );
-                            })}
-                          </div>
-                          
-                          {/* Regenerate button */}
-                          <div className="mt-4 pt-4 border-t border-violet-500/10 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <Sparkles className="h-3 w-3 text-violet-400" />
-                              <span>AI-generated recommendations</span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => selectedThreat && generateAiRecommendation(selectedThreat)}
-                              className="text-violet-400 hover:text-violet-300 hover:bg-violet-500/10"
-                            >
-                              <RefreshCw className="h-3 w-3 mr-1" />
-                              Regenerate
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center py-6">
-                          <div className="p-4 bg-violet-500/10 rounded-full w-fit mx-auto mb-4">
-                            <Sparkles className="h-8 w-8 text-violet-400" />
-                          </div>
-                          <p className="text-gray-400 mb-4">Get AI-powered security recommendations for this threat</p>
-                          <Button
-                            onClick={() => selectedThreat && generateAiRecommendation(selectedThreat)}
-                            className="bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-500/25"
-                          >
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Generate Recommendations
-                          </Button>
-                        </div>
-                      )}
+                      <AIRecommendationsDisplay
+                        recommendation={aiRecommendation}
+                        loading={loadingRecommendation}
+                        onRegenerate={() => selectedThreat && generateAiRecommendation(selectedThreat)}
+                        onGenerate={() => selectedThreat && generateAiRecommendation(selectedThreat)}
+                      />
                     </div>
                   </div>
 
