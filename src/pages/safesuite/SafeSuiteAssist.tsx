@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useSafeAssist, SafeAssistMessage, SafeAssistConversation } from "@/hooks/useSafeAssist";
 import { AIMessageContent } from "@/components/apps/safescan/AIMessageContent";
+import { VoiceButton } from "@/components/safeassist/VoiceButton";
 import { cn } from "@/lib/utils";
 import safeassistLogo from '@/assets/safeassist-logo.png';
 import safeassistIcon from '@/assets/safeassist-icon.png';
@@ -454,6 +455,13 @@ export default function SafeSuiteAssist() {
                 >
                   <Upload className="h-5 w-5 text-gray-400" />
                 </Button>
+                
+                {/* Voice Button */}
+                <VoiceButton
+                  onTranscript={(text) => setInputValue(prev => prev ? `${prev} ${text}` : text)}
+                  disabled={!isConnected || credits.remaining <= 0}
+                  className="shrink-0 h-12 w-12 rounded-xl border-gray-700 hover:border-cyan-500/50"
+                />
                 
                 {/* Text Input */}
                 <div className="flex-1 relative">
