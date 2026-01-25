@@ -20,13 +20,14 @@ interface AuthEmailRequest {
 
 const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string; newEmail?: string }) => {
   const year = new Date().getFullYear();
+  const logoUrl = "https://safesuite.ultriumai.com/lovable-uploads/5c081c7e-1658-4a6a-b0fe-d85c5ba50617.png";
   const baseStyles = `
     <style>
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #0a0a0a; }
       .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
       .card { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 40px; border: 1px solid #2a2a4a; }
       .logo { text-align: center; margin-bottom: 30px; }
-      .logo-text { font-size: 28px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+      .logo img { height: 48px; width: auto; }
       h1 { color: #ffffff; font-size: 24px; margin: 0 0 16px 0; }
       p { color: #a1a1aa; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; }
       .button { display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; }
@@ -50,7 +51,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <span class="logo-text">🛡️ SafeSuite</span>
+                <img src="${logoUrl}" alt="SafeSuite" />
               </div>
               <h1>Welcome${data.name ? `, ${data.name}` : ''}!</h1>
               <p>Thanks for signing up for SafeSuite. To get started, please confirm your email address by clicking the button below.</p>
@@ -80,7 +81,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <span class="logo-text">🛡️ SafeSuite</span>
+                <img src="${logoUrl}" alt="SafeSuite" />
               </div>
               <h1>Password Reset Request</h1>
               <p>We received a request to reset the password for your SafeSuite account. Click the button below to set a new password.</p>
@@ -110,7 +111,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <span class="logo-text">🛡️ SafeSuite</span>
+                <img src="${logoUrl}" alt="SafeSuite" />
               </div>
               <h1>Sign in to SafeSuite</h1>
               <p>Click the button below to securely sign in to your SafeSuite account. No password needed!</p>
@@ -139,7 +140,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <span class="logo-text">🛡️ SafeSuite</span>
+                <img src="${logoUrl}" alt="SafeSuite" />
               </div>
               <h1>Confirm Email Change</h1>
               <p>You requested to change your email address to <span class="highlight">${data.newEmail || 'a new address'}</span>. Click the button below to confirm this change.</p>
@@ -168,7 +169,7 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
           <div class="container">
             <div class="card">
               <div class="logo">
-                <span class="logo-text">🛡️ SafeSuite</span>
+                <img src="${logoUrl}" alt="SafeSuite" />
               </div>
               <h1>Welcome to SafeSuite${data.name ? `, ${data.name}` : ''}!</h1>
               <p>Your account is now active. You now have access to enterprise-grade security tools:</p>
