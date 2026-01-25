@@ -73,14 +73,18 @@ const UserProfileDropdown = () => {
       </Button>
       
       {isOpen && (
-        <div className="absolute top-full right-0 mt-1 w-80 bg-background/95 backdrop-blur-md border border-border/50 rounded-lg shadow-xl z-50 animate-fade-in animate-scale-in transform origin-top-right">
-          {loading ? (
-            <div className="p-4 text-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-              <p className="text-sm text-muted-foreground mt-2">Loading...</p>
-            </div>
-          ) : (
-            <div className="p-4 space-y-4">
+        <>
+          {/* Invisible bridge to prevent dropdown from closing when moving mouse */}
+          <div className="absolute top-full right-0 w-full h-2" />
+          <div className="absolute top-full right-0 pt-2 w-80 z-50">
+            <div className="bg-background border border-border/50 rounded-lg shadow-xl animate-fade-in animate-scale-in transform origin-top-right">
+              {loading ? (
+                <div className="p-4 text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground mt-2">Loading...</p>
+                </div>
+              ) : (
+                <div className="p-4 space-y-4">
               {/* Profile Header */}
               <div className="flex items-center space-x-3 pb-3 border-b border-border/50">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -208,7 +212,9 @@ const UserProfileDropdown = () => {
               </div>
             </div>
           )}
-        </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
