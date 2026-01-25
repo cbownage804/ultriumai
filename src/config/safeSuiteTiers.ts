@@ -17,6 +17,7 @@ export interface TierFeatures {
   safeweb: FeatureLimit;
   safetrack: FeatureLimit;
   safeassist: FeatureLimit;
+  safeassist_voice: FeatureLimit;  // Voice minutes per month
   whitelabeling: FeatureLimit;
   team: FeatureLimit;  // Team/User Management feature
 }
@@ -50,6 +51,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safeweb: { enabled: false, limit: 0 },
       safetrack: { enabled: false, limit: 0 },
       safeassist: { enabled: true, limit: 25 },    // 25 AI messages/month
+      safeassist_voice: { enabled: false, limit: 0 }, // No voice for free tier
       whitelabeling: { enabled: false, limit: 0 }, // Not available on free
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -70,6 +72,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
       safetrack: { enabled: false, limit: 0 },
       safeassist: { enabled: true, limit: 100 },   // 100 AI messages/month
+      safeassist_voice: { enabled: true, limit: 10 }, // 10 voice minutes/month
       whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -91,6 +94,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
       safetrack: { enabled: true, limit: -1 },             // Unlimited tracked assets
       safeassist: { enabled: true, limit: -1 },            // Unlimited AI messages
+      safeassist_voice: { enabled: true, limit: 30 },      // 30 voice minutes/month
       whitelabeling: { enabled: true, limit: -1 },         // Full whitelabeling (Business only)
       team: { enabled: true, limit: -1 }                   // Team/User management (Business only)
     }
@@ -139,6 +143,13 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
     icon: 'Bot',
     limitUnit: 'message/mo',
     limitUnitPlural: 'messages/mo'
+  },
+  safeassist_voice: {
+    name: 'SafeAssist Voice',
+    description: 'Voice conversations with SafeAssist AI',
+    icon: 'Mic',
+    limitUnit: 'minute/mo',
+    limitUnitPlural: 'minutes/mo'
   },
   whitelabeling: {
     name: 'Whitelabeling',
