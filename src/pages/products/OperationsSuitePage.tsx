@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   Wrench, Package, HardDrive, Network, Server, 
-  ArrowRight, Check, Download, RefreshCw, Map,
+  ArrowRight, Check, Download,
   BarChart3, Clock, Shield, Zap
 } from 'lucide-react';
 
@@ -54,28 +54,31 @@ const stats = [
   { label: 'Avg Resolution Time', value: '<15min', icon: Clock }
 ];
 
-const pricing = [
+const vanguardTiers = [
   {
-    name: 'Operations Starter',
-    price: 8,
-    description: 'Essential IT operations tools',
-    features: ['Patch management', 'Asset inventory', 'Basic monitoring', 'Up to 100 endpoints'],
-    cta: 'Start Free Trial'
+    name: 'Vanguard Starter',
+    price: 15,
+    description: 'Essential operations tools',
+    features: ['Basic monitoring', 'Asset inventory', 'Alert notifications', 'Up to 50 endpoints'],
+    cta: 'Get Started',
+    tier: 'starter'
   },
   {
-    name: 'Operations Pro',
-    price: 18,
+    name: 'Vanguard Professional',
+    price: 25,
     description: 'Complete operations suite',
-    features: ['Everything in Starter', 'Backup monitoring', 'Network topology', 'RMM tools', 'Up to 500 endpoints'],
-    cta: 'Start Free Trial',
-    popular: true
+    features: ['Everything in Starter', 'Patch management', 'Backup monitoring', 'Network topology', 'Up to 250 endpoints'],
+    cta: 'Get Started',
+    popular: true,
+    tier: 'professional'
   },
   {
-    name: 'Enterprise Ops',
-    price: null,
+    name: 'Vanguard Enterprise',
+    price: 40,
     description: 'Full platform with customizations',
-    features: ['Everything in Pro', 'Executive dashboard', 'Custom reports', 'API access', 'Unlimited endpoints'],
-    cta: 'Contact Sales'
+    features: ['Everything in Professional', 'Executive dashboard', 'Custom reports', 'API access', 'Unlimited endpoints'],
+    cta: 'Contact Sales',
+    tier: 'enterprise'
   }
 ];
 
@@ -86,21 +89,21 @@ export default function OperationsSuitePage() {
       <section className="relative overflow-hidden border-b">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-cyan-500/5 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 py-20 relative">
-          <Badge className="mb-4 bg-blue-500/10 text-blue-500 border-blue-500/20">
+          <Badge className="mb-4 bg-red-500/10 text-red-400 border-red-500/20">
             <Wrench className="h-3 w-3 mr-1" />
-            Operations Suite
+            Included with Vanguard Suite
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-4xl">
             Unified IT Operations & Infrastructure Management
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mb-8">
-            Patch management, backup monitoring, asset tracking, and network visibility—all in one platform. 
+            Patch management, backup monitoring, asset tracking, and network visibility—all included in Vanguard Suite. 
             Keep your infrastructure running smoothly.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link to="/vanguard/auth">
-              <Button size="lg" className="bg-gradient-to-r from-blue-500 to-cyan-500">
-                Start Free Trial
+              <Button size="lg" className="bg-gradient-to-r from-red-500 to-orange-500">
+                Get Started with Vanguard
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -163,33 +166,32 @@ export default function OperationsSuitePage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Access via Vanguard */}
       <section className="py-20 bg-muted/30 border-y">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Predictable Pricing</h2>
-            <p className="text-muted-foreground">Per-endpoint pricing. Scale as you grow.</p>
+            <Badge className="mb-4 bg-red-500/10 text-red-400 border-red-500/20">
+              Part of Vanguard Suite
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Access Operations Suite via Vanguard</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Operations tools are included in all Vanguard Suite tiers. Choose the plan that fits your MSP needs.
+            </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {pricing.map((plan, i) => (
-              <Card key={i} className={`relative ${plan.popular ? 'border-blue-500 shadow-lg' : ''}`}>
+            {vanguardTiers.map((plan, i) => (
+              <Card key={i} className={`relative ${plan.popular ? 'border-red-500 shadow-lg shadow-red-500/10' : ''}`}>
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-blue-500">Most Popular</Badge>
+                    <Badge className="bg-red-500">Most Popular</Badge>
                   </div>
                 )}
                 <CardHeader>
                   <CardTitle>{plan.name}</CardTitle>
                   <CardDescription>{plan.description}</CardDescription>
                   <div className="mt-4">
-                    {plan.price ? (
-                      <>
-                        <span className="text-4xl font-bold">${plan.price}</span>
-                        <span className="text-muted-foreground">/endpoint/mo</span>
-                      </>
-                    ) : (
-                      <span className="text-2xl font-bold">Custom Pricing</span>
-                    )}
+                    <span className="text-4xl font-bold">${plan.price}</span>
+                    <span className="text-muted-foreground">/user/mo</span>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -201,8 +203,8 @@ export default function OperationsSuitePage() {
                       </li>
                     ))}
                   </ul>
-                  <Link to={plan.price ? '/vanguard/auth' : '/contact'} className="block">
-                    <Button className={`w-full ${plan.popular ? 'bg-blue-500 hover:bg-blue-600' : ''}`}>
+                  <Link to={plan.tier === 'enterprise' ? '/contact' : '/vanguard/auth'} className="block">
+                    <Button className={`w-full ${plan.popular ? 'bg-red-500 hover:bg-red-600' : ''}`}>
                       {plan.cta}
                     </Button>
                   </Link>
@@ -218,12 +220,12 @@ export default function OperationsSuitePage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Streamline Your IT Operations</h2>
           <p className="text-muted-foreground mb-8">
-            Start your free 14-day trial. No credit card required.
+            Start your free 14-day trial with Vanguard Suite. No credit card required.
           </p>
           <div className="flex justify-center gap-4">
             <Link to="/vanguard/auth">
-              <Button size="lg" className="bg-gradient-to-r from-blue-500 to-cyan-500">
-                Start Free Trial
+              <Button size="lg" className="bg-gradient-to-r from-red-500 to-orange-500">
+                Get Started with Vanguard
               </Button>
             </Link>
             <Link to="/vanguard/suite">
