@@ -27,12 +27,16 @@ export default function SafeSuitePass() {
 
   const {
     isUnlocked,
+    isLoading: isMasterPasswordLoading,
     hasUserSetMasterPassword,
     setMasterPassword,
     unlockWithPassword
   } = useMasterPassword();
 
   useEffect(() => {
+    // Wait until master password state is loaded before deciding setup vs unlock
+    if (isMasterPasswordLoading) return;
+    
     if (!hasUserSetMasterPassword()) {
       setShowMasterPasswordSetup(true);
       setIsSettingUp(true);
@@ -40,7 +44,7 @@ export default function SafeSuitePass() {
       setShowMasterPasswordSetup(true);
       setIsSettingUp(false);
     }
-  }, [hasUserSetMasterPassword, isUnlocked]);
+  }, [hasUserSetMasterPassword, isUnlocked, isMasterPasswordLoading]);
 
   useEffect(() => {
     if (searchParams.get('extension') === 'installed') {
