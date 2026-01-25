@@ -933,16 +933,19 @@ export type Database = {
           assigned_to: string | null
           category_id: string | null
           client_id: string | null
+          condition: string | null
           created_at: string
           current_value: number | null
           depreciation_rate: number | null
           description: string | null
           id: string
+          last_warranty_check: string | null
           location: string | null
           manufacturer: string | null
           model: string | null
           name: string
           notes: string | null
+          office_location_id: string | null
           purchase_date: string | null
           purchase_price: number | null
           serial_number: string | null
@@ -951,22 +954,26 @@ export type Database = {
           updated_at: string
           user_id: string
           warranty_expiry: string | null
+          warranty_id: string | null
         }
         Insert: {
           asset_tag?: string | null
           assigned_to?: string | null
           category_id?: string | null
           client_id?: string | null
+          condition?: string | null
           created_at?: string
           current_value?: number | null
           depreciation_rate?: number | null
           description?: string | null
           id?: string
+          last_warranty_check?: string | null
           location?: string | null
           manufacturer?: string | null
           model?: string | null
           name: string
           notes?: string | null
+          office_location_id?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
           serial_number?: string | null
@@ -975,22 +982,26 @@ export type Database = {
           updated_at?: string
           user_id: string
           warranty_expiry?: string | null
+          warranty_id?: string | null
         }
         Update: {
           asset_tag?: string | null
           assigned_to?: string | null
           category_id?: string | null
           client_id?: string | null
+          condition?: string | null
           created_at?: string
           current_value?: number | null
           depreciation_rate?: number | null
           description?: string | null
           id?: string
+          last_warranty_check?: string | null
           location?: string | null
           manufacturer?: string | null
           model?: string | null
           name?: string
           notes?: string | null
+          office_location_id?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
           serial_number?: string | null
@@ -999,6 +1010,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           warranty_expiry?: string | null
+          warranty_id?: string | null
         }
         Relationships: [
           {
@@ -1006,6 +1018,20 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "asset_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_office_location_id_fkey"
+            columns: ["office_location_id"]
+            isOneToOne: false
+            referencedRelation: "office_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_warranty_id_fkey"
+            columns: ["warranty_id"]
+            isOneToOne: false
+            referencedRelation: "safetrack_warranties"
             referencedColumns: ["id"]
           },
         ]
@@ -8621,6 +8647,54 @@ export type Database = {
           read_at?: string | null
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      office_locations: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_primary: boolean | null
+          name: string
+          notes: string | null
+          postal_code: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          name: string
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_primary?: boolean | null
+          name?: string
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
