@@ -12,7 +12,7 @@ import {
   Layers, Calendar, BarChart3, CheckCircle, XCircle,
   AlertTriangle, Info
 } from "lucide-react";
-import { SecurityAIChat } from "./safescan/SecurityAIChat";
+import { SecurityAIChatEnhanced } from "./safescan/SecurityAIChatEnhanced";
 import { ScannerTab } from "./safescan/ScannerTab";
 import { BulkScanner } from "./safescan/BulkScanner";
 import { ScheduledScans } from "@/components/ScheduledScans";
@@ -54,7 +54,7 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
   const isGuestMode = !user;
   const [guestScanCount, setGuestScanCount] = useState(0);
   const [activeTab, setActiveTab] = useState('scanner');
-  const [showAIChat, setShowAIChat] = useState(false);
+  const [showAIChat, setShowAIChat] = useState(true); // Show AI chat by default
   const [aiChatExpanded, setAIChatExpanded] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
@@ -425,9 +425,9 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* AI Chat Panel */}
+              {/* AI Chat Panel - Now more prominent */}
               {showAIChat && !isGuestMode && (
-                <SecurityAIChat 
+                <SecurityAIChatEnhanced 
                   scanContext={scanResult}
                   onClose={() => setShowAIChat(false)}
                   isExpanded={aiChatExpanded}
