@@ -16512,6 +16512,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_product_access: {
+        Row: {
+          access_level: string
+          created_at: string
+          expires_at: string | null
+          granted_at: string
+          id: string
+          product: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_level?: string
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          product: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_level?: string
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          product?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
