@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, Suspense } from 'react';
+import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
 import { NotificationProvider } from '@/hooks/useNotifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -690,35 +691,28 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
-  // Initialize dark mode as default on app startup
+  // Ensure page starts at top on initial load
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme');
-    
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
-
-    // Ensure page starts at top on initial load
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   return (
-    <EnhancedErrorBoundary context="Application Root" level="critical">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <NotificationProvider>
-            <VoiceAssistantProvider>
-              <Router>
-                <AppRouter />
-                
-                <Toaster />
-              </Router>
-            </VoiceAssistantProvider>
-          </NotificationProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </EnhancedErrorBoundary>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+      <EnhancedErrorBoundary context="Application Root" level="critical">
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <NotificationProvider>
+              <VoiceAssistantProvider>
+                <Router>
+                  <AppRouter />
+                  
+                  <Toaster />
+                </Router>
+              </VoiceAssistantProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </EnhancedErrorBoundary>
+    </ThemeProvider>
   );
 }
