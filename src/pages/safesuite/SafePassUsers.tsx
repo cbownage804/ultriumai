@@ -62,6 +62,83 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TeaserLock } from "@/components/safesuite/TeaserLock";
+
+// Teaser content showing user management UI
+function UsersTeaserContent() {
+  return (
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Team Members</h2>
+          <p className="text-muted-foreground">Manage users and their access permissions</p>
+        </div>
+        <Button className="gap-2">
+          <UserPlus className="h-4 w-4" />
+          Invite User
+        </Button>
+      </div>
+      
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>MFA</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[
+                { name: 'Alice Johnson', email: 'alice@company.com', role: 'Admin', mfa: true, active: true },
+                { name: 'Bob Williams', email: 'bob@company.com', role: 'Member', mfa: true, active: true },
+                { name: 'Carol Davis', email: 'carol@company.com', role: 'Member', mfa: false, active: true },
+                { name: 'David Brown', email: 'david@company.com', role: 'Member', mfa: true, active: false },
+              ].map((user, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.mfa ? (
+                      <Shield className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <ShieldOff className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={user.active ? 'outline' : 'secondary'} className={user.active ? 'text-emerald-500 border-emerald-500/30' : ''}>
+                      {user.active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 interface ManagedUser {
   id: string;
@@ -89,25 +166,16 @@ const SafePassUsers = () => {
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Business tier gate
+  // Business tier gate - show teaser content
   if (!subLoading && !isBusiness) {
-    const billingPath = isSafeSuiteDomain() ? '/billing' : '/safesuite/billing';
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="p-4 bg-amber-500/10 rounded-full mb-4">
-          <Lock className="h-10 w-10 text-amber-500" />
-        </div>
-        <h3 className="text-xl font-semibold mb-2">Team Management is a Business Feature</h3>
-        <p className="text-muted-foreground max-w-md mb-6">
-          Invite and manage team members with their own secure vaults on the Business plan.
-          {tier === 'free' && " Upgrade to unlock team features and collaboration."}
-          {tier === 'pro' && " Upgrade from Pro to Business to unlock team management."}
-        </p>
-        <Button onClick={() => navigate(billingPath)} className="gap-2 bg-amber-500 hover:bg-amber-600 text-black">
-          <Crown className="h-4 w-4" />
-          Upgrade to Business
-        </Button>
-      </div>
+      <TeaserLock 
+        feature="team" 
+        message="Invite and manage team members with their own secure vaults"
+        teaserContent={<UsersTeaserContent />}
+      >
+        <div />
+      </TeaserLock>
     );
   }
   const [searchTerm, setSearchTerm] = useState("");

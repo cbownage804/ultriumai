@@ -5,34 +5,65 @@
 import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { SharedPasswordAccess } from '@/components/safepass/SharedPasswordAccess';
 import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
-import { useNavigate } from 'react-router-dom';
-import { isSafeSuiteDomain } from '@/utils/subdomain';
-import { Button } from '@/components/ui/button';
-import { Lock, Crown } from 'lucide-react';
+import { TeaserLock } from '@/components/safesuite/TeaserLock';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Link2, KeyRound, User, Clock } from 'lucide-react';
+
+// Teaser showing what shared passwords look like
+function SharedPasswordsTeaser() {
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold">Shared With Me</h1>
+        <p className="text-muted-foreground">
+          Access passwords that others have securely shared with you
+        </p>
+      </div>
+      
+      <div className="grid gap-4">
+        {[
+          { title: 'AWS Production Console', sharedBy: 'John Smith', category: 'Cloud Services' },
+          { title: 'GitHub Enterprise', sharedBy: 'Sarah Wilson', category: 'Development' },
+          { title: 'Slack Admin', sharedBy: 'Mike Chen', category: 'Communication' },
+          { title: 'Jira Project Board', sharedBy: 'Sarah Wilson', category: 'Project Management' },
+        ].map((item, i) => (
+          <Card key={i} className="hover:border-primary/50 transition-colors cursor-pointer">
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Link2 className="h-5 w-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="font-medium">{item.title}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <User className="h-3 w-3" />
+                    <span>Shared by {item.sharedBy}</span>
+                  </div>
+                </div>
+              </div>
+              <Badge variant="secondary">{item.category}</Badge>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function SafePassShared() {
-  const navigate = useNavigate();
-  const { isBusiness, loading: subLoading, tier } = useSafeSuiteSubscription();
+  const { isBusiness, loading: subLoading } = useSafeSuiteSubscription();
 
-  // Business tier gate
+  // Business tier gate with teaser
   if (!subLoading && !isBusiness) {
-    const billingPath = isSafeSuiteDomain() ? '/billing' : '/safesuite/billing';
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="p-4 bg-amber-500/10 rounded-full mb-4">
-          <Lock className="h-10 w-10 text-amber-500" />
-        </div>
-        <h3 className="text-xl font-semibold mb-2">Shared Passwords is a Business Feature</h3>
-        <p className="text-muted-foreground max-w-md mb-6">
-          Share passwords securely with team members on the Business plan.
-          {tier === 'free' && " Upgrade to unlock team sharing and collaboration."}
-          {tier === 'pro' && " Upgrade from Pro to Business to unlock password sharing."}
-        </p>
-        <Button onClick={() => navigate(billingPath)} className="gap-2 bg-amber-500 hover:bg-amber-600 text-black">
-          <Crown className="h-4 w-4" />
-          Upgrade to Business
-        </Button>
-      </div>
+      <TeaserLock 
+        feature="team" 
+        message="Share passwords securely with team members"
+        teaserContent={<SharedPasswordsTeaser />}
+      >
+        <div />
+      </TeaserLock>
     );
   }
 

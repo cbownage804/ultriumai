@@ -55,6 +55,81 @@ import {
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { TeaserLock } from '@/components/safesuite/TeaserLock';
+
+// Teaser content showing what team features look like
+function TeamTeaserContent() {
+  return (
+    <div className="container max-w-4xl py-8 space-y-6">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                My Team
+              </CardTitle>
+              <CardDescription>Manage your team members and permissions</CardDescription>
+            </div>
+            <Button className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Invite Member
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[
+              { name: 'John Smith', email: 'john@company.com', role: 'Owner' },
+              { name: 'Sarah Wilson', email: 'sarah@company.com', role: 'Admin' },
+              { name: 'Mike Chen', email: 'mike@company.com', role: 'Member' },
+            ].map((member, i) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-sm font-medium">{member.name.split(' ').map(n => n[0]).join('')}</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">{member.name}</p>
+                    <p className="text-sm text-muted-foreground">{member.email}</p>
+                  </div>
+                </div>
+                <Badge variant={member.role === 'Owner' ? 'default' : 'secondary'}>{member.role}</Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FolderKey className="h-5 w-5" />
+            Shared Vaults
+          </CardTitle>
+          <CardDescription>Password collections shared with your team</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2">
+            {['Development Credentials', 'Client Accounts', 'Infrastructure'].map((vault, i) => (
+              <div key={i} className="p-4 rounded-lg border bg-card">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                    <FolderKey className="h-5 w-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{vault}</p>
+                    <p className="text-xs text-muted-foreground">{(i + 2) * 8} passwords</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default function SafePassTeam() {
   const { tier } = useSafeSuiteSubscription();
@@ -83,30 +158,17 @@ export default function SafePassTeam() {
   const [createVaultDialogOpen, setCreateVaultDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Business tier required
+  // Business tier required - show teaser content
   if (tier !== 'business') {
     return (
-      <div className="container max-w-4xl py-8">
-        <Card className="border-dashed">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Lock className="h-8 w-8 text-primary" />
-            </div>
-            <CardTitle>Team Features Require Business Plan</CardTitle>
-            <CardDescription>
-              Upgrade to Business to create teams, invite members, and share passwords securely.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Link to="/billing">
-              <Button size="lg" className="gap-2">
-                <Crown className="h-4 w-4" />
-                Upgrade to Business - $15/user/mo
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <TeaserLock 
+        feature="team" 
+        message="Create teams, invite members, and share passwords securely"
+        teaserContent={<TeamTeaserContent />}
+      >
+        {/* This won't render for non-business users */}
+        <div />
+      </TeaserLock>
     );
   }
 
