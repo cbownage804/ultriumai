@@ -110,12 +110,6 @@ const Footer = () => {
             <h4 className="font-semibold text-foreground">Contact</h4>
             <ul className="space-y-3">
               <li>
-                <a href="tel:888-884-1410" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  888-884-1410
-                </a>
-              </li>
-              <li>
                 <a href="mailto:support@ultriumai.com" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   support@ultriumai.com
