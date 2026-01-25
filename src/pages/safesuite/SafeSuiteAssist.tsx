@@ -22,6 +22,7 @@ import { useSafeAssist, SafeAssistMessage, SafeAssistConversation } from "@/hook
 import { AIMessageContent } from "@/components/apps/safescan/AIMessageContent";
 import { cn } from "@/lib/utils";
 import safeassistLogo from '@/assets/safeassist-logo.png';
+import safeassistIcon from '@/assets/safeassist-icon.png';
 import heroSafeassistBg from '@/assets/hero-safeassist-bg.jpg';
 
 const QUICK_ACTIONS = [
@@ -271,10 +272,8 @@ export default function SafeSuiteAssist() {
               >
                 {sidebarOpen ? <ChevronLeft className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </Button>
-              <img src={safeassistLogo} alt="SafeAssist" className="h-10 w-10" />
-              <div>
-                <h1 className="text-lg font-semibold text-white">SafeAssist</h1>
-                <p className="text-xs text-gray-500">AI Security Assistant</p>
+              <div className="h-12 bg-black rounded-lg px-4 flex items-center justify-center border border-cyan-500/20 shadow-lg shadow-cyan-500/10">
+                <img src={safeassistLogo} alt="SafeAssist" className="h-8 w-auto object-contain" />
               </div>
             </div>
             
@@ -309,8 +308,8 @@ export default function SafeSuiteAssist() {
                   >
                     {message.role === 'assistant' && (
                       <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                          <ShieldCheck className="h-5 w-5 text-white" />
+                        <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-500/30 overflow-hidden">
+                          <img src={safeassistIcon} alt="SafeAssist" className="w-7 h-7 object-contain" />
                         </div>
                       </div>
                     )}
@@ -367,8 +366,8 @@ export default function SafeSuiteAssist() {
                   animate={{ opacity: 1 }}
                   className="flex items-start gap-4 mb-6"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                    <ShieldCheck className="h-5 w-5 text-white" />
+                  <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 border border-cyan-500/30 overflow-hidden">
+                    <img src={safeassistIcon} alt="SafeAssist" className="w-7 h-7 object-contain" />
                   </div>
                   <div className="bg-[#141414] border border-gray-800 rounded-2xl rounded-bl-sm px-5 py-4">
                     <div className="flex items-center gap-2">
