@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { Lock, Building, Users, Eye, EyeOff, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { AuthBrandHeader } from '@/components/auth/AuthBrandHeader';
+import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState('signin');
@@ -142,8 +142,14 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Header */}
-        <AuthBrandHeader />
+        {/* Header - UltriumAI Branding */}
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-14 w-auto" />
+            <span className="text-2xl font-bold text-foreground">UltriumAI</span>
+          </div>
+          <p className="text-sm text-muted-foreground">AI Development Agency</p>
+        </div>
 
         <Card>
           <CardHeader>
