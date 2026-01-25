@@ -29,16 +29,16 @@ serve(async (req) => {
     console.log('Security AI Assistant function called');
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY')!;
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
     console.log('Environment variables check:', {
       hasSupabaseUrl: !!supabaseUrl,
       hasServiceKey: !!supabaseServiceKey,
-      hasOpenAIKey: !!openAIApiKey
+      hasLovableApiKey: !!lovableApiKey
     });
 
-    if (!supabaseUrl || !supabaseServiceKey || !openAIApiKey) {
-      throw new Error(`Missing required environment variables: ${!supabaseUrl ? 'SUPABASE_URL ' : ''}${!supabaseServiceKey ? 'SUPABASE_SERVICE_ROLE_KEY ' : ''}${!openAIApiKey ? 'OPENAI_API_KEY' : ''}`);
+    if (!supabaseUrl || !supabaseServiceKey || !lovableApiKey) {
+      throw new Error(`Missing required environment variables: ${!supabaseUrl ? 'SUPABASE_URL ' : ''}${!supabaseServiceKey ? 'SUPABASE_SERVICE_ROLE_KEY ' : ''}${!lovableApiKey ? 'LOVABLE_API_KEY' : ''}`);
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -121,25 +121,25 @@ ${conversationHistory ? JSON.stringify(conversationHistory.slice(0, 5), null, 2)
       { role: 'user', content: message }
     ];
 
-    // Call OpenAI for intelligent security analysis
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call Lovable AI Gateway for intelligent security analysis
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'google/gemini-3-flash-preview',
         messages: messages,
         temperature: 0.3, // Lower temperature for more precise security responses
-        max_tokens: 2000,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1
+        max_tokens: 2000
       }),
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('Lovable AI Gateway error:', response.status, errorText);
+      throw new Error(`AI Gateway error: ${response.statusText}`);
     }
 
     const data = await response.json();
