@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -127,6 +128,20 @@ const AuthPage = () => {
           setError(error.message);
         }
       } else {
+        // Send branded confirmation email via Resend
+        try {
+          await supabase.functions.invoke('send-auth-email', {
+            body: {
+              type: 'confirmation',
+              email: email,
+              name: fullName || undefined,
+              redirectUrl: `${window.location.origin}/`,
+            },
+          });
+        } catch (emailErr) {
+          console.error('Failed to send branded confirmation email:', emailErr);
+        }
+        
         setSignupSuccess(true);
         setActiveTab('signin');
       }

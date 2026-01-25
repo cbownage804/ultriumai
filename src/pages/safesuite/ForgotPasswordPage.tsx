@@ -31,12 +31,26 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      // Send branded password reset email via our edge function
+      const { error: emailError } = await supabase.functions.invoke('send-auth-email', {
+        body: {
+          type: 'password_reset',
+          email: email,
+          redirectUrl: `${window.location.origin}/auth/reset-password`,
+        },
       });
 
-      if (error) {
-        setError(error.message);
+      if (emailError) {
+        // Fallback to Supabase default if our function fails
+        console.error('Branded email failed, falling back:', emailError);
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/auth/reset-password`,
+        });
+        if (error) {
+          setError(error.message);
+        } else {
+          setSuccess(true);
+        }
       } else {
         setSuccess(true);
       }
