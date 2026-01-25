@@ -9,7 +9,8 @@ import { Eye, EyeOff, Shield, Lock, Key, AlertTriangle, CheckCircle, Info } from
 import { validateMasterPassword, calculatePasswordStrength, generateSecurePassword } from '@/utils/crypto';
 
 interface MasterPasswordSetupProps {
-  onMasterPasswordSet: (masterPassword: string) => void;
+  // Some callers return { success, ... } objects; we await it but don't depend on the return type.
+  onMasterPasswordSet: (masterPassword: string) => unknown | Promise<unknown>;
   onCancel?: () => void;
   isCreating?: boolean;
   title?: string;
@@ -43,9 +44,8 @@ export const MasterPasswordSetup = ({
     
     setIsLoading(true);
     try {
-      // Simulate processing time for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
-      onMasterPasswordSet(masterPassword);
+      // Await unlock/setup so the UI stays responsive and prevents double-submits
+      await Promise.resolve(onMasterPasswordSet(masterPassword));
     } catch (error) {
       console.error('Error setting master password:', error);
     } finally {
