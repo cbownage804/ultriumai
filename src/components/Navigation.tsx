@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Phone, X, ChevronDown, Package } from "lucide-react";
+import { Menu, LogOut, Phone, X, ChevronDown, Package, Shield, Cpu, Monitor, Headphones, Sparkles, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,9 +11,6 @@ import ThemeToggle from "./ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import UserProfileDropdown from "./UserProfileDropdown";
@@ -21,6 +18,8 @@ import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f92
 import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
 import vanguardLogo from "@/assets/vanguard-logo.png";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
+import safeopLogo from "@/assets/safeops-logo.png";
+import safedeskLogo from "@/assets/safedesk-logo.png";
 import { safeWindowOpen } from "@/utils/security";
 
 const Navigation = () => {
@@ -103,30 +102,104 @@ const Navigation = () => {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 flex items-center gap-1">
-                  <Package className="h-4 w-4" />
+                <button className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200 flex items-center gap-1.5 group">
+                  <Sparkles className="h-4 w-4 text-primary group-hover:text-primary" />
                   Products
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown className="h-3 w-3 transition-transform group-data-[state=open]:rotate-180" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Security Suite</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleNavigation('/safesuite/features')}>
-                  SafeSuite™ - All Security Tools
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">Operations</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/rmm')}>
-                  SafeOps™ - Remote Monitoring
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/products/helpdesk')}>
-                  SafeDesk™ - IT Service Desk
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel className="text-xs text-muted-foreground">AI Platform</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleNavigation('/ai-studio')}>
-                  AI Studio™ - Custom AI Builder
-                </DropdownMenuItem>
+              <DropdownMenuContent 
+                align="center" 
+                sideOffset={12}
+                className="w-[520px] p-0 bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden"
+              >
+                {/* Header */}
+                <div className="px-5 py-4 bg-gradient-to-r from-primary/10 via-transparent to-cyan-500/10 border-b border-border/30">
+                  <h3 className="text-sm font-semibold text-foreground">Our Products</h3>
+                  <p className="text-xs text-muted-foreground">AI-powered security & operations tools</p>
+                </div>
+                
+                {/* Products Grid */}
+                <div className="p-4 grid grid-cols-2 gap-3">
+                  {/* SafeSuite */}
+                  <button
+                    onClick={() => handleNavigation('/safesuite/features')}
+                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
+                  >
+                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
+                      <img src={safesuiteLogo} alt="SafeSuite" className="w-10 h-10 object-contain" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm text-foreground group-hover/item:text-emerald-500 transition-colors">SafeSuite™</span>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">Password vault, threat scanning, dark web monitoring</p>
+                    </div>
+                  </button>
+
+                  {/* AI Studio */}
+                  <button
+                    onClick={() => handleNavigation('/ai-studio')}
+                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left"
+                  >
+                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
+                      <img src={ultriumGPTLogo} alt="AI Studio" className="w-10 h-10 object-contain" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm text-foreground group-hover/item:text-primary transition-colors">AI Studio™</span>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">Build custom GPT assistants trained on your data</p>
+                    </div>
+                  </button>
+
+                  {/* SafeOps */}
+                  <button
+                    onClick={() => handleNavigation('/products/rmm')}
+                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
+                  >
+                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
+                      <img src={safeopLogo} alt="SafeOps" className="w-10 h-10 object-contain" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm text-foreground group-hover/item:text-emerald-500 transition-colors">SafeOps™</span>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">Remote monitoring & endpoint management</p>
+                    </div>
+                  </button>
+
+                  {/* SafeDesk */}
+                  <button
+                    onClick={() => handleNavigation('/products/helpdesk')}
+                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
+                  >
+                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
+                      <img src={safedeskLogo} alt="SafeDesk" className="w-10 h-10 object-contain" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-sm text-foreground group-hover/item:text-cyan-500 transition-colors">SafeDesk™</span>
+                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">AI-powered IT service desk & ticketing</p>
+                    </div>
+                  </button>
+                </div>
+
+                {/* Footer CTA */}
+                <div className="px-5 py-3 bg-muted/30 border-t border-border/30 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Enterprise solutions available</span>
+                  <button 
+                    onClick={() => handleNavigation('/pricing')}
+                    className="text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
+                  >
+                    Compare plans <ArrowRight className="h-3 w-3" />
+                  </button>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
             
