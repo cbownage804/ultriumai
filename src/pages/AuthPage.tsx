@@ -135,7 +135,7 @@ const AuthPage = () => {
               type: 'confirmation',
               email: email,
               name: fullName || undefined,
-              redirectUrl: `${window.location.origin}/`,
+              redirectUrl: `${window.location.origin}/dashboard`,
             },
           });
         } catch (emailErr) {
