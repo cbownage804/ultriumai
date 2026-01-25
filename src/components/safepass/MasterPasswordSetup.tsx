@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -282,6 +283,18 @@ export const MasterPasswordSetup = ({
             </Button>
           )}
         </div>
+
+        {/* Forgot Master Password Link - only show on unlock (not creating) */}
+        {!isCreating && (
+          <div className="text-center mt-3">
+            <Link 
+              to="/pass/reset-master-password" 
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              Forgot your master password?
+            </Link>
+          </div>
+        )}
 
         {/* Security Note */}
         <div className="mt-6 p-4 bg-muted/50 rounded-lg">

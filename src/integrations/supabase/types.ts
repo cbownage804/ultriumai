@@ -12736,6 +12736,8 @@ export type Database = {
           id: string
           iterations: number | null
           password_hash: string
+          reset_token: string | null
+          reset_token_expires_at: string | null
           salt: string
           updated_at: string | null
           user_id: string
@@ -12745,6 +12747,8 @@ export type Database = {
           id?: string
           iterations?: number | null
           password_hash: string
+          reset_token?: string | null
+          reset_token_expires_at?: string | null
           salt: string
           updated_at?: string | null
           user_id: string
@@ -12754,6 +12758,8 @@ export type Database = {
           id?: string
           iterations?: number | null
           password_hash?: string
+          reset_token?: string | null
+          reset_token_expires_at?: string | null
           salt?: string
           updated_at?: string | null
           user_id?: string

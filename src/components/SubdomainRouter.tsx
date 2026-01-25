@@ -36,6 +36,7 @@ import AssetManagementPage from '@/pages/AssetManagementPage';
 import ForgotPasswordPage from '@/pages/safesuite/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/safesuite/ResetPasswordPage';
 import MFARecoveryPage from '@/pages/safesuite/MFARecoveryPage';
+import SafePassResetMasterPassword from '@/pages/safesuite/SafePassResetMasterPassword';
 
 // Product pages
 import SafePassProduct from '@/pages/safesuite/products/SafePassProduct';
@@ -62,6 +63,7 @@ export const SafeSuiteSubdomainRoutes = () => {
       <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth/mfa-recovery" element={<MFARecoveryPage />} />
+      <Route path="/pass/reset-master-password" element={<SafePassResetMasterPassword />} />
       
       {/* Protected routes with layout */}
       <Route element={
