@@ -439,14 +439,14 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
         
         {/* Admin link - only visible to verified UltriumAI employees */}
         {isAdmin && (
-          <a
-            href="https://ultriumai.lovable.app/admin/safesuite"
+          <Link
+            to={isSafeSuiteDomain() ? '/admin/safesuite' : '/safesuite/admin'}
             className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-orange-500 hover:text-orange-400 transition-colors"
             onClick={() => onItemClick?.()}
           >
             <Crown className="h-5 w-5" />
             <span>Admin Center</span>
-          </a>
+          </Link>
         )}
       </div>
     </aside>
