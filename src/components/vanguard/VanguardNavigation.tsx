@@ -34,7 +34,9 @@ import {
   Wifi,
   Key,
   Search,
-  Users
+  Users,
+  Headphones,
+  Rocket
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -203,6 +205,69 @@ export function VanguardNavigation() {
                 <p className="text-xs text-white/40">Security Platform</p>
               </div>
             )}
+          </div>
+
+          {/* Quick Access Shortcuts */}
+          <div className={cn("px-2 py-3 border-b border-white/10", isCollapsed && "px-1")}>
+            {!isCollapsed && (
+              <p className="text-[10px] uppercase tracking-wider text-white/30 px-3 mb-2">Quick Access</p>
+            )}
+            <div className={cn("space-y-1", isCollapsed && "space-y-2")}>
+              <NavLink
+                to={`${basePath}/getting-started`}
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                  "bg-gradient-to-r from-cyan-500/10 to-purple-600/10 hover:from-cyan-500/20 hover:to-purple-600/20",
+                  "border border-white/10 hover:border-cyan-500/30",
+                  isActive(`${basePath}/getting-started`) && "border-cyan-500/50",
+                  isCollapsed && "justify-center px-2"
+                )}
+              >
+                <Rocket className={cn("h-5 w-5 text-cyan-400 shrink-0", isCollapsed && "h-6 w-6")} />
+                {!isCollapsed && (
+                  <span className="text-sm font-medium text-white">Getting Started</span>
+                )}
+              </NavLink>
+              
+              <NavLink
+                to={`${basePath}/rmm`}
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                  "bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 hover:border-cyan-500/40",
+                  isActive(`${basePath}/rmm`) && "border-cyan-500/50 bg-cyan-500/20",
+                  isCollapsed && "justify-center px-2"
+                )}
+              >
+                <Monitor className={cn("h-5 w-5 text-cyan-400 shrink-0", isCollapsed && "h-6 w-6")} />
+                {!isCollapsed && (
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-white">SafeOps™</span>
+                    <p className="text-[10px] text-white/40">RMM Dashboard</p>
+                  </div>
+                )}
+              </NavLink>
+              
+              <NavLink
+                to={`${basePath}/helpdesk`}
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                  "bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40",
+                  isActive(`${basePath}/helpdesk`) && "border-purple-500/50 bg-purple-500/20",
+                  isCollapsed && "justify-center px-2"
+                )}
+              >
+                <Headphones className={cn("h-5 w-5 text-purple-400 shrink-0", isCollapsed && "h-6 w-6")} />
+                {!isCollapsed && (
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-white">SafeDesk™</span>
+                    <p className="text-[10px] text-white/40">Helpdesk Dashboard</p>
+                  </div>
+                )}
+              </NavLink>
+            </div>
           </div>
 
           {/* Navigation Items */}

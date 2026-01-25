@@ -45,6 +45,9 @@ const MSPSafePassProvisioning = lazy(() => import('@/components/safepass/MSPSafe
 const VanguardSafeScan = lazy(() => import('@/pages/vanguard/VanguardSafeScan'));
 const VanguardSuite = lazy(() => import('@/pages/vanguard/VanguardSuite'));
 const VanguardSafeSuiteAdmin = lazy(() => import('@/pages/vanguard/VanguardSafeSuiteAdmin'));
+const VanguardGettingStarted = lazy(() => import('@/pages/vanguard/VanguardGettingStarted'));
+const VanguardHelpdesk = lazy(() => import('@/pages/vanguard/VanguardHelpdesk'));
+const VanguardRMM = lazy(() => import('@/pages/vanguard/VanguardRMM'));
 
 // Loading component for lazy-loaded pages
 const PageLoader = () => (
@@ -106,6 +109,9 @@ export const getVanguardProtectedRoutes = () => [
   <Route key="vanguard-safepass-admin" path="safepass-admin" element={<LazyProtectedPage component={MSPSafePassProvisioning} />} />,
   <Route key="vanguard-safescan" path="safescan" element={<LazyProtectedPage component={VanguardSafeScan} />} />,
   <Route key="vanguard-safesuite-admin" path="safesuite-admin" element={<LazyProtectedPage component={VanguardSafeSuiteAdmin} />} />,
+  <Route key="vanguard-getting-started" path="getting-started" element={<LazyProtectedPage component={VanguardGettingStarted} />} />,
+  <Route key="vanguard-helpdesk" path="helpdesk" element={<LazyProtectedPage component={VanguardHelpdesk} />} />,
+  <Route key="vanguard-rmm" path="rmm" element={<LazyProtectedPage component={VanguardRMM} />} />,
   <Route key="vanguard-catchall" path="*" element={<Navigate to="/vanguard" replace />} />,
 ];
 
