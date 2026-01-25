@@ -8,7 +8,7 @@ import {
   Bot, Send, Loader2, Wifi, WifiOff, X, Maximize2, Minimize2,
   ShieldCheck, Sparkles, MessageSquare, Zap
 } from "lucide-react";
-import { useSecurityAIRealtime } from "@/hooks/useSecurityAIRealtime";
+import { useSecurityAIChat } from "@/hooks/useSecurityAIChat";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface SecurityAIChatProps {
@@ -33,7 +33,7 @@ export function SecurityAIChat({
     disconnect, 
     sendMessage,
     clearMessages 
-  } = useSecurityAIRealtime();
+  } = useSecurityAIChat();
   
   const [inputValue, setInputValue] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);

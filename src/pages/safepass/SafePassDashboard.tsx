@@ -20,6 +20,8 @@ import {
   TrendingUp,
   Clock
 } from 'lucide-react';
+import safepassLogo from '@/assets/safepass-logo.png';
+import heroSafepassBg from '@/assets/hero-safepass-bg.jpg';
 
 export default function SafePassDashboard() {
   const { toast } = useToast();
@@ -96,22 +98,41 @@ export default function SafePassDashboard() {
   // Show master password setup/unlock screen
   if (showMasterPasswordSetup) {
     return (
-      <div className="max-w-md mx-auto py-12">
-        <MasterPasswordSetup
-          isCreating={isSettingUp}
-          onMasterPasswordSet={handleMasterPasswordSet}
-          onCancel={() => {
-            if (!isSettingUp) {
-              setShowMasterPasswordSetup(false);
+      <div 
+        className="min-h-screen flex items-center justify-center p-4 relative"
+        style={{
+          backgroundImage: `url(${heroSafepassBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Dark overlay for better readability */}
+        <div className="absolute inset-0 bg-black/70" />
+        
+        <div className="relative z-10 w-full max-w-md">
+          {/* Logo Header */}
+          <div className="flex justify-center mb-8">
+            <div className="p-4 bg-black rounded-xl shadow-lg shadow-amber-500/20">
+              <img src={safepassLogo} alt="SafePass" className="h-12 w-auto" />
+            </div>
+          </div>
+          
+          <MasterPasswordSetup
+            isCreating={isSettingUp}
+            onMasterPasswordSet={handleMasterPasswordSet}
+            onCancel={() => {
+              if (!isSettingUp) {
+                setShowMasterPasswordSetup(false);
+              }
+            }}
+            title={isSettingUp ? 'Create Master Password' : 'Unlock Your Vault'}
+            description={
+              isSettingUp
+                ? 'Create a strong master password to encrypt your vault. This password cannot be recovered.'
+                : 'Enter your master password to access your passwords.'
             }
-          }}
-          title={isSettingUp ? 'Create Master Password' : 'Unlock Your Vault'}
-          description={
-            isSettingUp
-              ? 'Create a strong master password to encrypt your vault. This password cannot be recovered.'
-              : 'Enter your master password to access your passwords.'
-          }
-        />
+          />
+        </div>
       </div>
     );
   }

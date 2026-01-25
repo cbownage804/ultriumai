@@ -45,7 +45,8 @@ export function useSecurityAIRealtime(): UseSecurityAIRealtimeReturn {
         throw new Error('Authentication required');
       }
 
-      const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/security-ai-realtime`;
+      // Include auth token in WebSocket URL query params
+      const wsUrl = `wss://nsyobmjpdpvesjwdphlh.supabase.co/functions/v1/security-ai-realtime?token=${session.access_token}`;
       
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;

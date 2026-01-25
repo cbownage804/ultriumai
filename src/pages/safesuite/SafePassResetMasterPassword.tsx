@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, AlertTriangle, Lock, Eye, EyeOff, CheckCircle, Shield, Smartphone } from 'lucide-react';
 import safepassLogo from '@/assets/safepass-logo.png';
+import heroSafepassBg from '@/assets/hero-safepass-bg.jpg';
 
 export default function SafePassResetMasterPassword() {
   const [searchParams] = useSearchParams();
@@ -168,8 +169,18 @@ export default function SafePassResetMasterPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: `url(${heroSafepassBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Dark overlay for better readability */}
+      <div className="absolute inset-0 bg-black/70" />
+      
+      <Card className="w-full max-w-md relative z-10">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 p-4 bg-black rounded-xl shadow-amber-500/20 shadow-lg">
             <img src={safepassLogo} alt="SafePass" className="h-12 w-auto" />
