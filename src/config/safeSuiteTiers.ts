@@ -16,6 +16,7 @@ export interface TierFeatures {
   safescan: FeatureLimit;
   safeweb: FeatureLimit;
   safetrack: FeatureLimit;
+  safeassist: FeatureLimit;
   whitelabeling: FeatureLimit;
   team: FeatureLimit;  // Team/User Management feature
 }
@@ -48,6 +49,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safescan: { enabled: true, limit: 5 },       // 5 scans/month
       safeweb: { enabled: false, limit: 0 },
       safetrack: { enabled: false, limit: 0 },
+      safeassist: { enabled: true, limit: 25 },    // 25 AI messages/month
       whitelabeling: { enabled: false, limit: 0 }, // Not available on free
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -67,6 +69,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safescan: { enabled: true, limit: 100 },     // 100 scans/month
       safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
       safetrack: { enabled: false, limit: 0 },
+      safeassist: { enabled: true, limit: 100 },   // 100 AI messages/month
       whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -87,6 +90,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safescan: { enabled: true, limit: -1 },              // Unlimited scans
       safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
       safetrack: { enabled: true, limit: -1 },             // Unlimited tracked assets
+      safeassist: { enabled: true, limit: -1 },            // Unlimited AI messages
       whitelabeling: { enabled: true, limit: -1 },         // Full whitelabeling (Business only)
       team: { enabled: true, limit: -1 }                   // Team/User management (Business only)
     }
@@ -128,6 +132,13 @@ export const FEATURE_DESCRIPTIONS: Record<keyof TierFeatures, {
     icon: 'Package',
     limitUnit: 'tracked asset',
     limitUnitPlural: 'tracked assets'
+  },
+  safeassist: {
+    name: 'SafeAssist',
+    description: 'AI-powered security assistant for plain-language guidance',
+    icon: 'Bot',
+    limitUnit: 'message/mo',
+    limitUnitPlural: 'messages/mo'
   },
   whitelabeling: {
     name: 'Whitelabeling',
