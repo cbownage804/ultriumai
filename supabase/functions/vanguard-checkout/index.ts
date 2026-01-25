@@ -8,24 +8,22 @@ const corsHeaders = {
 };
 
 // Vanguard Suite pricing tiers (per user per month)
-// NOTE: Price IDs need to be updated in Stripe to reflect new pricing ($30/$50/$80)
-// These are placeholders - update with actual Stripe price IDs after creating new prices
 const TIERS = {
   starter: {
-    price_id: "price_1SpDm3H1u6E0bsJT05izDSCy", // TODO: Update to $30/user price
-    product_id: "prod_TmnMFXO0ehpZ9s",
+    price_id: "price_1StZJ6H1u6E0bsJTdUTYYe0n",
+    product_id: "prod_TrHsD4Lf3avsrU",
     name: "Starter",
     per_user_cents: 3000,
   },
   professional: {
-    price_id: "price_1SpDmBH1u6E0bsJTjxIOisHL", // TODO: Update to $50/user price
-    product_id: "prod_TmnM7MufzeuNPz",
+    price_id: "price_1StZJ7H1u6E0bsJT3B51Mtld",
+    product_id: "prod_TrHshPxz3EaRf5",
     name: "Professional",
     per_user_cents: 5000,
   },
   enterprise: {
-    price_id: "price_1SpDmEH1u6E0bsJTvmKz9udK", // TODO: Update to $80/user price
-    product_id: "prod_TmnMhsqHnaL1ZQ",
+    price_id: "price_1StZJ8H1u6E0bsJTN9l5lk3Q",
+    product_id: "prod_TrHszdaeRbnVFP",
     name: "Enterprise",
     per_user_cents: 8000,
   },
