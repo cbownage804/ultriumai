@@ -128,8 +128,15 @@ export const MasterPasswordSetup = ({
                 type={showPassword ? 'text' : 'password'}
                 value={masterPassword}
                 onChange={(e) => setMasterPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && canSubmit && !isLoading) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
                 placeholder="Enter your master password"
                 className="pr-10"
+                autoFocus
               />
               <Button
                 type="button"
