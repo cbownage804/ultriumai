@@ -13,7 +13,6 @@
     "activeTab"
   ],
   "host_permissions": [
-    "https://*.supabase.co/*",
     "<all_urls>"
   ],
   "commands": {
