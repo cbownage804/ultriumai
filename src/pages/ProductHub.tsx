@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Lock, ArrowRight, Zap } from 'lucide-react';
+import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
@@ -130,8 +132,26 @@ export default function ProductHub() {
   const { user, loading: authLoading } = useAuth();
   const { access, loading: accessLoading, getAccessLevel } = useProductAccess();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const loading = authLoading || accessLoading;
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+      navigate('/');
+    }
+  };
 
   if (loading) {
     return (
@@ -210,16 +230,20 @@ export default function ProductHub() {
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
-          <span className="font-semibold text-lg">UltriumAI</span>
-        </a>
+          <div className="flex items-center gap-3">
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
+            <span className="font-semibold text-lg">UltriumAI</span>
+          </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
               Profile
             </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
               Upgrade
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:text-destructive">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
             </Button>
           </div>
         </div>
