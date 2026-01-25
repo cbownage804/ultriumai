@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import safewebLogo from '@/assets/safeweb-logo.png';
+import heroSafewebBg from '@/assets/hero-safeweb-bg.jpg';
 import { Sparkles } from 'lucide-react';
 import { AIRecommendationsDisplay } from '@/components/safeweb/AIRecommendationsDisplay';
 import {
@@ -340,7 +341,17 @@ export default function SafeSuiteWeb() {
 
   return (
     <FeatureGate feature="safeweb">
-      <div className="space-y-6 bg-[#0a0a0a] min-h-full p-6 -m-6 rounded-lg">
+      <div 
+        className="min-h-full p-6 -m-6 rounded-lg relative"
+        style={{
+          backgroundImage: `url(${heroSafewebBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm rounded-lg" />
+        <div className="relative z-10 space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="p-4 rounded-xl bg-gradient-to-br from-violet-500/20 via-purple-500/10 to-fuchsia-500/20 border border-violet-500/20 shadow-[0_0_60px_rgba(139,92,246,0.15)]">
@@ -779,6 +790,7 @@ export default function SafeSuiteWeb() {
             )}
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </FeatureGate>
   );
