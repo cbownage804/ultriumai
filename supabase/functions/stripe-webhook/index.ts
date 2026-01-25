@@ -12,6 +12,29 @@ const logStep = (step: string, details?: any) => {
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
 };
 
+// Map SafeSuite tier to user_product_access level
+const tierToAccessLevel = (tier: string): string => {
+  switch (tier) {
+    case 'business':
+    case 'enterprise':
+      return 'business';
+    case 'pro':
+    case 'premium':
+      return 'pro';
+    default:
+      return 'free';
+  }
+};
+
+// Determine product from metadata or price
+const determineProduct = (metadata: Record<string, string> | null): string => {
+  if (!metadata) return 'safesuite';
+  const product = metadata.product || metadata.plan_type;
+  if (product?.includes('vanguard')) return 'vanguard';
+  if (product?.includes('ai') || product?.includes('studio')) return 'ai_studio';
+  return 'safesuite';
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -57,36 +80,51 @@ serve(async (req) => {
           break;
         }
 
+        // Get user by email
+        const { data: users } = await supabaseClient.auth.admin.listUsers();
+        const user = users.users.find(u => u.email === customer.email);
+        
+        if (!user) {
+          logStep("No user found for email", { email: customer.email });
+          break;
+        }
+
         // Determine subscription tier based on amount and plan type
         const priceId = subscription.items.data[0].price.id;
         const price = await stripe.prices.retrieve(priceId);
         const amount = price.unit_amount || 0;
         
         let subscriptionTier = "free";
-        
-        // Determine tier based on amount and metadata
         const metadata = subscription.metadata || {};
         const planType = metadata.plan_type;
         
-        if (planType) {
-          // Use plan type from metadata for specific solution identification
-          if (planType === "ai-knowledge") subscriptionTier = "ai-knowledge";
-          else if (planType === "basic-security") subscriptionTier = "basic-security";
-          else if (planType === "custom-chatbot") subscriptionTier = "custom-chatbot";
-          else if (planType === "white-label") subscriptionTier = "white-label";
-          else if (planType === "security-knowledge") subscriptionTier = "security-knowledge";
-          else if (planType === "security-apps") subscriptionTier = "security-apps";
-          else if (planType === "security-portal") subscriptionTier = "security-portal";
-          else if (planType === "premium") subscriptionTier = "premium";
-          else if (planType === "enterprise") subscriptionTier = "enterprise";
+        // Check for SafeSuite-specific price IDs
+        const safeSuitePrices: Record<string, string> = {
+          'price_1SrTegH1u6E0bsJTKpGm5qxr': 'pro',
+          'price_1SrTeiH1u6E0bsJTarTH7ajs': 'pro',
+          'price_1SrTejH1u6E0bsJTwd4K8st5': 'business',
+          'price_1SrTelH1u6E0bsJTmep4lSIP': 'business',
+        };
+        
+        if (safeSuitePrices[priceId]) {
+          subscriptionTier = safeSuitePrices[priceId];
+        } else if (planType) {
+          // Use plan type from metadata
+          if (planType === "business" || planType === "enterprise") subscriptionTier = "business";
+          else if (planType === "pro" || planType === "premium") subscriptionTier = "pro";
+          else subscriptionTier = planType;
         } else {
-          // Fallback to amount-based determination for legacy subscriptions
+          // Fallback to amount-based determination
           if (amount >= 40000) subscriptionTier = "enterprise";
           else if (amount >= 8000) subscriptionTier = "premium";
+          else if (amount >= 500) subscriptionTier = "pro";
         }
         
         const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const product = determineProduct(metadata);
+        const accessLevel = tierToAccessLevel(subscriptionTier);
         
+        // Update subscribers table (legacy)
         await supabaseClient.from("subscribers").upsert({
           email: customer.email,
           stripe_customer_id: customer.id,
@@ -96,9 +134,34 @@ serve(async (req) => {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'email' });
         
-        logStep("Subscription updated", { 
+        // Update safesuite_subscriptions if it exists
+        await supabaseClient.from("safesuite_subscriptions").upsert({
+          user_id: user.id,
+          tier: subscriptionTier,
+          stripe_customer_id: customer.id,
+          stripe_subscription_id: subscription.id,
+          status: subscription.status,
+          current_period_end: subscriptionEnd,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' }).catch(() => {
+          // Table might not exist, that's okay
+        });
+        
+        // SYNC: Update user_product_access table
+        await supabaseClient.from("user_product_access").upsert({
+          user_id: user.id,
+          product: product,
+          access_level: subscription.status === "active" ? accessLevel : 'free',
+          granted_at: new Date().toISOString(),
+          expires_at: subscription.status === "active" ? subscriptionEnd : null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,product' });
+        
+        logStep("Subscription synced", { 
           email: customer.email, 
           tier: subscriptionTier,
+          product: product,
+          accessLevel: accessLevel,
           status: subscription.status 
         });
         break;
@@ -110,6 +173,11 @@ serve(async (req) => {
         
         if (!customer.email) break;
         
+        // Get user by email
+        const { data: users } = await supabaseClient.auth.admin.listUsers();
+        const user = users.users.find(u => u.email === customer.email);
+        
+        // Update subscribers table
         await supabaseClient.from("subscribers").upsert({
           email: customer.email,
           stripe_customer_id: customer.id,
@@ -118,6 +186,28 @@ serve(async (req) => {
           subscription_end: null,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'email' });
+        
+        if (user) {
+          const metadata = subscription.metadata || {};
+          const product = determineProduct(metadata);
+          
+          // Update safesuite_subscriptions
+          await supabaseClient.from("safesuite_subscriptions").upsert({
+            user_id: user.id,
+            tier: 'free',
+            status: 'canceled',
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id' }).catch(() => {});
+          
+          // SYNC: Downgrade user_product_access to free
+          await supabaseClient.from("user_product_access").upsert({
+            user_id: user.id,
+            product: product,
+            access_level: 'free',
+            expires_at: null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'user_id,product' });
+        }
         
         logStep("Subscription cancelled", { email: customer.email });
         break;
