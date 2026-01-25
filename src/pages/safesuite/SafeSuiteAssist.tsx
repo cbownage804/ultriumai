@@ -327,10 +327,10 @@ export default function SafeSuiteAssist() {
               </div>
               
               {/* Voice Credits */}
-              {voiceCredits.enabled && (
+              {(voiceCredits.enabled || voiceCredits.purchasedMinutes > 0) && (
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#141414] border border-cyan-500/20">
                   <Mic className="h-4 w-4 text-emerald-400" />
-                  <span className="text-sm font-medium text-white">{voiceCredits.remaining}</span>
+                  <span className="text-sm font-medium text-white">{voiceCredits.total}</span>
                   <span className="text-xs text-gray-500">min</span>
                 </div>
               )}
@@ -542,26 +542,24 @@ export default function SafeSuiteAssist() {
                 {/* Voice Button */}
                 <Button
                   onClick={handleStartVoice}
-                  disabled={!isConnected || credits.remaining <= 0 || isConnecting || isVoiceActive || !voiceCredits.enabled || voiceCredits.remaining <= 0}
+                  disabled={!isConnected || credits.remaining <= 0 || isConnecting || isVoiceActive || voiceCredits.total <= 0}
                   variant="outline"
                   className={cn(
                     "shrink-0 h-12 w-12 rounded-xl border-gray-700 hover:border-cyan-500/50 hover:bg-cyan-500/10 relative",
                     isConnecting && "animate-pulse",
                     isVoiceActive && "border-cyan-500 bg-cyan-500/20",
-                    !voiceCredits.enabled && "opacity-50"
+                    voiceCredits.total <= 0 && "opacity-50"
                   )}
-                  title={!voiceCredits.enabled 
-                    ? "Upgrade to Pro for voice conversations" 
-                    : voiceCredits.remaining <= 0 
-                      ? "No voice minutes remaining this month" 
-                      : `${voiceCredits.remaining} voice minutes remaining`}
+                  title={voiceCredits.total <= 0 
+                    ? "No voice minutes - Buy more" 
+                    : `${voiceCredits.total} voice minutes remaining`}
                 >
                   {isConnecting ? (
                     <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
-                  ) : !voiceCredits.enabled ? (
+                  ) : voiceCredits.total <= 0 ? (
                     <Lock className="h-5 w-5 text-gray-500" />
                   ) : (
-                    <Mic className={cn("h-5 w-5", isVoiceActive ? "text-cyan-400" : voiceCredits.remaining <= 0 ? "text-gray-500" : "text-gray-400")} />
+                    <Mic className={cn("h-5 w-5", isVoiceActive ? "text-cyan-400" : "text-gray-400")} />
                   )}
                 </Button>
                 

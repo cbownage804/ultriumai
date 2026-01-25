@@ -4,24 +4,25 @@
  */
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { useConversation } from '@elevenlabs/react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 
-// Voice minutes by tier
+// Voice minutes by tier (conservative limits)
 const VOICE_MINUTES_BY_TIER: Record<string, number> = {
   free: 0,
-  pro: 10,
-  business: 30
+  pro: 2,
+  business: 5
 };
 
 interface VoiceCredits {
-  total: number;
-  used: number;
-  remaining: number;
-  enabled: boolean;
+  tierMinutes: number;      // Minutes from subscription tier
+  tierUsed: number;         // Minutes used from tier
+  purchasedMinutes: number; // Purchased minutes remaining
+  total: number;            // Combined total remaining
+  enabled: boolean;         // Can use voice (has any credits)
 }
 
 interface FloatingSafeAssistContextType {
@@ -40,6 +41,8 @@ interface FloatingSafeAssistContextType {
   stopVoice: () => Promise<void>;
   onVoiceTranscript?: (text: string) => void;
   setOnVoiceTranscript: (handler: ((text: string) => void) | undefined) => void;
+  openPurchaseDialog: () => void;
+  refreshCredits: () => Promise<void>;
 }
 
 const FloatingSafeAssistContext = createContext<FloatingSafeAssistContextType | null>(null);
@@ -49,9 +52,13 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
   const [isConnecting, setIsConnecting] = useState(false);
   const [transcriptHandler, setTranscriptHandler] = useState<((text: string) => void) | undefined>();
   const [wasOnAssistPage, setWasOnAssistPage] = useState(false);
-  const [voiceCredits, setVoiceCredits] = useState<VoiceCredits>({ total: 0, used: 0, remaining: 0, enabled: false });
+  const [voiceCredits, setVoiceCredits] = useState<VoiceCredits>({ 
+    tierMinutes: 0, tierUsed: 0, purchasedMinutes: 0, total: 0, enabled: false 
+  });
   const [voiceStartTime, setVoiceStartTime] = useState<number | null>(null);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -86,10 +93,10 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
   const isSpeaking = conversation.isSpeaking;
   const isListening = isVoiceActive && !isSpeaking;
 
-  // Load voice credits based on tier
+  // Load voice credits based on tier + purchased
   const loadVoiceCredits = useCallback(async () => {
     if (!user) {
-      setVoiceCredits({ total: 0, used: 0, remaining: 0, enabled: false });
+      setVoiceCredits({ tierMinutes: 0, tierUsed: 0, purchasedMinutes: 0, total: 0, enabled: false });
       return;
     }
     
@@ -103,10 +110,9 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
         .maybeSingle();
 
       const tier = subscription?.tier || 'free';
-      const totalMinutes = VOICE_MINUTES_BY_TIER[tier] || 0;
-      const enabled = totalMinutes > 0;
+      const tierMinutes = VOICE_MINUTES_BY_TIER[tier] || 0;
       
-      // Get current month's usage
+      // Get current month's tier usage
       const now = new Date();
       const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       
@@ -118,12 +124,26 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
         .gte('period_start', periodStart)
         .maybeSingle();
 
-      const usedMinutes = usage?.usage_count || 0;
+      const tierUsed = usage?.usage_count || 0;
+      const tierRemaining = Math.max(0, tierMinutes - tierUsed);
+      
+      // Get purchased credits remaining
+      const { data: purchases } = await supabase
+        .from('voice_credit_purchases')
+        .select('minutes_remaining')
+        .eq('user_id', user.id)
+        .gt('minutes_remaining', 0);
+
+      const purchasedMinutes = purchases?.reduce((sum, p) => sum + p.minutes_remaining, 0) || 0;
+      
+      const total = tierRemaining + purchasedMinutes;
+      const enabled = tierMinutes > 0 || purchasedMinutes > 0;
       
       setVoiceCredits({
-        total: totalMinutes,
-        used: usedMinutes,
-        remaining: Math.max(0, totalMinutes - usedMinutes),
+        tierMinutes,
+        tierUsed,
+        purchasedMinutes,
+        total,
         enabled
       });
     } catch (error) {
@@ -135,38 +155,66 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
     loadVoiceCredits();
   }, [loadVoiceCredits]);
 
-  // Track voice session duration
+  // Track voice session duration - uses tier first, then purchased
   const trackVoiceUsage = useCallback(async (minutes: number) => {
     if (!user || minutes <= 0) return;
     
     try {
-      const now = new Date();
-      const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+      let remainingToDeduct = minutes;
+      const tierRemaining = voiceCredits.tierMinutes - voiceCredits.tierUsed;
       
-      const newUsed = voiceCredits.used + minutes;
+      // First deduct from tier allowance
+      if (tierRemaining > 0) {
+        const tierDeduction = Math.min(remainingToDeduct, tierRemaining);
+        remainingToDeduct -= tierDeduction;
+        
+        const now = new Date();
+        const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+        
+        const newTierUsed = voiceCredits.tierUsed + tierDeduction;
+        
+        await supabase
+          .from('safesuite_usage')
+          .upsert({
+            user_id: user.id,
+            product: 'safeassist_voice',
+            usage_count: newTierUsed,
+            period_start: periodStart,
+            period_end: periodEnd
+          }, {
+            onConflict: 'user_id,product,period_start'
+          });
+      }
       
-      await supabase
-        .from('safesuite_usage')
-        .upsert({
-          user_id: user.id,
-          product: 'safeassist_voice',
-          usage_count: newUsed,
-          period_start: periodStart,
-          period_end: periodEnd
-        }, {
-          onConflict: 'user_id,product,period_start'
-        });
+      // Then deduct from purchased credits (FIFO - oldest first)
+      if (remainingToDeduct > 0 && voiceCredits.purchasedMinutes > 0) {
+        const { data: purchases } = await supabase
+          .from('voice_credit_purchases')
+          .select('id, minutes_remaining')
+          .eq('user_id', user.id)
+          .gt('minutes_remaining', 0)
+          .order('created_at', { ascending: true });
 
-      setVoiceCredits(prev => ({
-        ...prev,
-        used: newUsed,
-        remaining: Math.max(0, prev.total - newUsed)
-      }));
+        for (const purchase of purchases || []) {
+          if (remainingToDeduct <= 0) break;
+          
+          const deduction = Math.min(remainingToDeduct, purchase.minutes_remaining);
+          remainingToDeduct -= deduction;
+          
+          await supabase
+            .from('voice_credit_purchases')
+            .update({ minutes_remaining: purchase.minutes_remaining - deduction })
+            .eq('id', purchase.id);
+        }
+      }
+
+      // Refresh credits after usage
+      loadVoiceCredits();
     } catch (error) {
       console.error('Error tracking voice usage:', error);
     }
-  }, [user, voiceCredits.used]);
+  }, [user, voiceCredits, loadVoiceCredits]);
 
   // Auto-open popup when leaving SafeAssist page
   useEffect(() => {
@@ -208,23 +256,25 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
   const startVoice = useCallback(async () => {
     if (isConnecting || isVoiceActive) return;
     
-    // Check if voice is enabled for this tier
+    // Check if voice is enabled (has tier or purchased credits)
     if (!voiceCredits.enabled) {
       toast({
         title: "Voice Not Available",
-        description: "Upgrade to Pro or Business to use voice conversations.",
+        description: "Upgrade to Pro or Business, or purchase voice minutes.",
         variant: "destructive"
       });
+      setShowPurchaseDialog(true);
       return;
     }
     
-    // Check if user has remaining credits
-    if (voiceCredits.remaining <= 0) {
+    // Check if user has remaining credits (tier + purchased)
+    if (voiceCredits.total <= 0) {
       toast({
         title: "Voice Minutes Exhausted",
-        description: `You've used all ${voiceCredits.total} voice minutes this month.`,
+        description: "Purchase more voice minutes to continue.",
         variant: "destructive"
       });
+      setShowPurchaseDialog(true);
       return;
     }
     
@@ -274,6 +324,24 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
     setTranscriptHandler(() => handler);
   }, []);
 
+  const openPurchaseDialog = useCallback(() => setShowPurchaseDialog(true), []);
+  const refreshCredits = useCallback(() => loadVoiceCredits(), [loadVoiceCredits]);
+
+  // Verify purchase after returning from checkout
+  useEffect(() => {
+    if (searchParams.get('purchase') === 'success') {
+      supabase.functions.invoke('voice-credits-verify').then(({ data }) => {
+        if (data?.creditsAdded > 0) {
+          toast({
+            title: "Purchase Complete!",
+            description: `Added ${data.creditsAdded} voice minutes to your account.`,
+          });
+          loadVoiceCredits();
+        }
+      });
+    }
+  }, [searchParams, loadVoiceCredits, toast]);
+
   return (
     <FloatingSafeAssistContext.Provider value={{ 
       isOpen, 
@@ -289,7 +357,9 @@ export function FloatingSafeAssistProvider({ children }: { children: ReactNode }
       startVoice,
       stopVoice,
       onVoiceTranscript: transcriptHandler,
-      setOnVoiceTranscript
+      setOnVoiceTranscript,
+      openPurchaseDialog,
+      refreshCredits
     }}>
       {children}
     </FloatingSafeAssistContext.Provider>
@@ -303,3 +373,5 @@ export function useFloatingSafeAssist() {
   }
   return context;
 }
+
+export { VoiceCreditPurchaseDialog } from '@/components/safeassist/VoiceCreditPurchaseDialog';
