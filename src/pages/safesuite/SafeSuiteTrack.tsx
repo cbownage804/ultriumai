@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AnimatedHeader, AnimatedStatsCard } from '@/components/safesuite/SafeSuiteEffects';
 import safetrackLogo from '@/assets/safetrack-logo.png';
+import heroSafetrackBg from '@/assets/hero-safetrack-bg.jpg';
 import WarrantyLookup from '@/components/safetrack/WarrantyLookup';
 import { AssetManagement } from '@/components/assets/AssetManagement';
 
@@ -24,7 +25,17 @@ export default function SafeSuiteTrack() {
 
   return (
     <FeatureGate feature="safetrack">
-      <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6 -m-6">
+      <div 
+        className="min-h-screen space-y-6 p-6 -m-6 relative"
+        style={{
+          backgroundImage: `url(${heroSafetrackBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+        <div className="relative z-10 space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -70,6 +81,7 @@ export default function SafeSuiteTrack() {
             <WarrantyLookup />
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </FeatureGate>
   );

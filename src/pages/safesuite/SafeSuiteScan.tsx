@@ -7,11 +7,22 @@ import { SafeScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
 import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
 import safescanLogo from '@/assets/safescan-logo.png';
+import heroSafescanBg from '@/assets/hero-safescan-bg.jpg';
 
 export default function SafeSuiteScan() {
   return (
     <FeatureGate feature="safescan">
-      <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6 -m-6">
+      <div 
+        className="min-h-screen space-y-6 p-6 -m-6 relative"
+        style={{
+          backgroundImage: `url(${heroSafescanBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+        <div className="relative z-10 space-y-6">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -41,6 +52,7 @@ export default function SafeSuiteScan() {
         >
           <SafeScanApp isWhiteLabeled={false} brandName="SafeSuite" hideHeader={true} />
         </motion.div>
+        </div>
       </div>
     </FeatureGate>
   );
