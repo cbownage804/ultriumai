@@ -87,16 +87,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const origin = window.location.origin;
       const pathname = window.location.pathname;
+      const searchParams = new URLSearchParams(window.location.search);
+      const returnProduct = searchParams.get('return');
 
       // Ensure email confirmation links return to the correct dashboard for subdomains
       // and for prefixed product routes on the main domain.
       let redirectPath = '/dashboard';
       if (isSafeSuiteDomain()) {
         redirectPath = '/dashboard';
+      } else if (returnProduct === 'safesuite') {
+        // Unified auth page (/auth) needs to honor the return param
+        redirectPath = '/safesuite/dashboard';
       } else if (pathname.startsWith('/safesuite')) {
         redirectPath = '/safesuite/dashboard';
       } else if (isVanguardDomain()) {
         redirectPath = '/dashboard';
+      } else if (returnProduct === 'vanguard') {
+        redirectPath = '/vanguard/dashboard';
       } else if (pathname.startsWith('/vanguard')) {
         redirectPath = '/vanguard/dashboard';
       }
