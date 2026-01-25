@@ -549,12 +549,12 @@ const SafeSuiteAdminCenter = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
-                    <TableHead>MFA</TableHead>
-                    <TableHead>Last Login</TableHead>
+                    <TableHead className="hidden sm:table-cell">MFA</TableHead>
+                    <TableHead className="hidden lg:table-cell">Last Login</TableHead>
                     <TableHead>Tier</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Period End</TableHead>
-                    <TableHead>Stripe</TableHead>
+                    <TableHead className="hidden md:table-cell">Status</TableHead>
+                    <TableHead className="hidden lg:table-cell">Period End</TableHead>
+                    <TableHead className="hidden xl:table-cell">Stripe</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -576,7 +576,7 @@ const SafeSuiteAdminCenter = () => {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           {subscriber.mfa_enabled ? (
                             <Badge className="bg-green-500/20 text-green-700 border-green-500/30">
                               <ShieldCheck className="h-3 w-3 mr-1" />
@@ -589,7 +589,7 @@ const SafeSuiteAdminCenter = () => {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {subscriber.last_login ? (
                             <div className="space-y-1">
                               <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -608,8 +608,8 @@ const SafeSuiteAdminCenter = () => {
                           )}
                         </TableCell>
                         <TableCell>{getTierBadge(subscriber.tier)}</TableCell>
-                        <TableCell>{getStatusBadge(subscriber.status)}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">{getStatusBadge(subscriber.status)}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {subscriber.current_period_end ? (
                             <div className="flex items-center gap-1 text-sm">
                               <Calendar className="h-3 w-3" />
@@ -619,7 +619,7 @@ const SafeSuiteAdminCenter = () => {
                             <span className="text-muted-foreground text-sm">—</span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden xl:table-cell">
                           {subscriber.stripe_subscription_id ? (
                             <Badge variant="outline" className="text-xs font-mono">
                               {subscriber.stripe_subscription_id.slice(0, 12)}...
