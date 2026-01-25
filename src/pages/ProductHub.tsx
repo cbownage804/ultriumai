@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Shield, Lock, ExternalLink, ArrowRight, Zap } from 'lucide-react';
-import aiStudioLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
+import { Loader2, Sparkles, Lock, ArrowRight, Zap } from 'lucide-react';
+import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import ultraiumAiLogo from '/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png';
 
 interface ProductCardProps {
   product: Product;
@@ -44,33 +45,39 @@ const ProductCard = ({
     }
   };
 
+  // Get shadow color based on product
+  const getShadowClass = () => {
+    if (color === 'primary') return 'shadow-primary/30';
+    if (color === 'emerald-500') return 'shadow-emerald-500/30';
+    if (color === 'cyan-500') return 'shadow-cyan-500/30';
+    return 'shadow-primary/30';
+  };
+
   return (
-    <Card className={`relative overflow-hidden border-border/50 hover:border-${color}/50 transition-all duration-300 group`}>
+    <Card className="relative overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 group bg-card/50">
       {/* Background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
       
       <CardHeader className="relative z-10 pb-2">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-lg bg-background/80 border border-border/50 p-2 flex items-center justify-center">
-              <img src={logo} alt={name} className="h-8 w-auto" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">{name}</CardTitle>
-              {accessLevel && (
-                <Badge variant="outline" className={`text-${color} border-${color}/30 bg-${color}/10 text-xs mt-1`}>
-                  {accessLevel.charAt(0).toUpperCase() + accessLevel.slice(1)} Plan
-                </Badge>
-              )}
-            </div>
+        {/* Centered Horizontal Logo */}
+        <div className="flex flex-col items-center mb-4">
+          <div className={`px-6 py-3 bg-black rounded-xl ${getShadowClass()} shadow-lg mb-3 flex items-center justify-center`}>
+            <img src={logo} alt={name} className="h-14 w-auto object-contain" />
           </div>
-          {hasAccess ? (
-            <div className={`h-3 w-3 rounded-full bg-emerald-500 animate-pulse`} title="Active" />
-          ) : (
-            <Lock className="h-4 w-4 text-muted-foreground" />
-          )}
+          <div className="flex items-center gap-2">
+            {accessLevel && (
+              <Badge variant="outline" className={`text-${color} border-${color}/30 bg-${color}/10 text-xs`}>
+                {accessLevel.charAt(0).toUpperCase() + accessLevel.slice(1)} Plan
+              </Badge>
+            )}
+            {hasAccess ? (
+              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" title="Active" />
+            ) : (
+              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+          </div>
         </div>
-        <CardDescription className="text-sm">{description}</CardDescription>
+        <CardDescription className="text-sm text-center">{description}</CardDescription>
       </CardHeader>
       
       <CardContent className="relative z-10 space-y-4">
@@ -87,7 +94,7 @@ const ProductCard = ({
           onClick={handleClick}
           className="w-full group/btn"
           variant={hasAccess ? "default" : "outline"}
-          disabled={!hasAccess && name === 'Vanguard'} // Vanguard is invite-only
+          disabled={!hasAccess && name === 'Vanguard'}
         >
           {hasAccess ? (
             <>
@@ -195,9 +202,9 @@ export default function ProductHub() {
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={aiStudioLogo} alt="UltriumAI" className="h-8 w-auto" />
-            <span className="font-semibold text-lg">UltriumAI</span>
+        <div className="flex items-center gap-3">
+          <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
+          <span className="font-semibold text-lg">UltriumAI</span>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
