@@ -30,19 +30,35 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    // Redirect to appropriate auth page based on subdomain
+    // Unified auth: Always redirect to main domain /auth with return param
+    const mainDomain = 'https://ultriumai.com';
+    const currentOrigin = window.location.origin;
+    const returnPath = location.pathname;
+    
+    // Determine product context for return routing
+    let returnProduct = '';
     if (isSafeSuiteDomain()) {
-      // On SafeSuite subdomain, redirect to /auth and preserve intended destination
-      return <Navigate to="/auth" state={{ from: location }} replace />;
+      returnProduct = 'safesuite';
+    } else if (isVanguardDomain()) {
+      returnProduct = 'vanguard';
+    } else if (location.pathname.startsWith('/safesuite')) {
+      returnProduct = 'safesuite';
+    } else if (location.pathname.startsWith('/vanguard')) {
+      returnProduct = 'vanguard';
     }
-    if (isVanguardDomain() || location.pathname.startsWith('/vanguard')) {
-      return <Navigate to="/vanguard/auth" state={{ from: location }} replace />;
+    
+    // If already on main domain, just go to /auth
+    if (!isSafeSuiteDomain() && !isVanguardDomain()) {
+      const authUrl = returnProduct 
+        ? `/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`
+        : '/auth';
+      return <Navigate to={authUrl} state={{ from: location }} replace />;
     }
-    // SafeSuite routes on main domain
-    if (location.pathname.startsWith('/safesuite')) {
-      return <Navigate to="/safesuite/auth" state={{ from: location }} replace />;
-    }
-    return <Navigate to="/auth" replace />;
+    
+    // On subdomain: redirect to main domain auth
+    const authUrl = `${mainDomain}/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
+    window.location.href = authUrl;
+    return null;
   }
 
   // Check if email is confirmed
