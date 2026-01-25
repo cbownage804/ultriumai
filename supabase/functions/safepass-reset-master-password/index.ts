@@ -195,7 +195,7 @@ serve(async (req) => {
       const resetUrl = `${origin}/pass/reset-master-password?token=${resetToken}`;
 
       await resend.emails.send({
-        from: "SafePass Security <noreply@ultriumai.com>",
+        from: "SafePass Security <support@ultriumai.com>",
         to: [email],
         subject: "Reset Your SafePass Master Password",
         html: `

@@ -121,7 +121,7 @@ async function handleTeamInvite(req: Request, supabaseClient: any, user: any) {
   
   try {
     await resend.emails.send({
-      from: "SafeSuite Team <team@ultriumai.com>",
+      from: "SafeSuite Team <support@ultriumai.com>",
       to: [email],
       subject: `You've been invited to join ${team.name} on SafeSuite`,
       html: `

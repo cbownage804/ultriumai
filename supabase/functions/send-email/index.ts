@@ -44,7 +44,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { templateId, to, variables, subject, htmlContent, textContent } = await req.json();
 
     let emailData = {
-      from: 'UltriumGPT <notifications@resend.dev>',
+      from: 'UltriumAI <support@ultriumai.com>',
       to: to || user.email,
       subject: '',
       html: '',

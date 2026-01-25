@@ -161,7 +161,7 @@ This ticket was automatically created by SafeShield EDR. Please review immediate
       `;
 
       const emailResponse = await resend.emails.send({
-        from: 'SafeShield Security <security@ultriumai.com>',
+        from: 'SafeShield Security <support@ultriumai.com>',
         to: [profile.email],
         subject: emailSubject,
         html: emailHtml,
