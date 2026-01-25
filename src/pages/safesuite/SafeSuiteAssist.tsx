@@ -1,9 +1,10 @@
 /**
  * SafeAssist - AI Security Assistant within SafeSuite
  * ChatGPT-style interface with conversation history
+ * Features animated VoiceOrb for voice interactions
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,12 @@ import {
   Shield, Lock, Eye, AlertTriangle, HelpCircle, Menu,
   Key, Globe, FileSearch, MessageSquare, Coins,
   ShieldCheck, History, Upload, Paperclip, X, Edit2,
-  ChevronLeft, ChevronRight, Crown, Zap
+  ChevronLeft, ChevronRight, Crown, Zap, Mic, PhoneOff
 } from "lucide-react";
 import { useSafeAssist, SafeAssistMessage, SafeAssistConversation } from "@/hooks/useSafeAssist";
 import { AIMessageContent } from "@/components/apps/safescan/AIMessageContent";
-import { VoiceButton } from "@/components/safeassist/VoiceButton";
+import { VoiceOrb } from "@/components/safeassist/VoiceOrb";
+import { useFloatingSafeAssist } from "@/contexts/FloatingSafeAssistContext";
 import { cn } from "@/lib/utils";
 import safeassistLogo from '@/assets/safeassist-logo-horizontal.png';
 import safeassistIcon from '@/assets/safeassist-logo.png';
@@ -53,14 +55,50 @@ export default function SafeSuiteAssist() {
     renameConversation
   } = useSafeAssist();
   
+  // Shared voice state from context
+  const {
+    isVoiceActive,
+    isSpeaking,
+    isListening,
+    isConnecting,
+    startVoice,
+    stopVoice,
+    setOnVoiceTranscript
+  } = useFloatingSafeAssist();
+  
   const [inputValue, setInputValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [editingConvoId, setEditingConvoId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Register transcript handler for voice
+  useEffect(() => {
+    setOnVoiceTranscript((text: string) => {
+      sendMessage(text);
+    });
+    return () => setOnVoiceTranscript(undefined);
+  }, [sendMessage, setOnVoiceTranscript]);
+  
+  // Sync voice mode with voice active state
+  useEffect(() => {
+    if (isVoiceActive) {
+      setIsVoiceMode(true);
+    }
+  }, [isVoiceActive]);
+  
+  const handleStartVoice = useCallback(async () => {
+    await startVoice();
+  }, [startVoice]);
+  
+  const handleStopVoice = useCallback(async () => {
+    await stopVoice();
+    setIsVoiceMode(false);
+  }, [stopVoice]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -292,6 +330,39 @@ export default function SafeSuiteAssist() {
             </div>
           </div>
 
+          {/* Voice Mode Overlay */}
+          {isVoiceMode && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gradient-to-b from-[#0a0a0a]/95 to-[#050510]/95 backdrop-blur-sm"
+            >
+              <VoiceOrb 
+                isActive={isVoiceActive}
+                isSpeaking={isSpeaking}
+                isListening={isListening}
+                size="lg"
+              />
+              
+              <p className="mt-8 text-white/80 text-lg font-medium">
+                {isSpeaking ? 'SafeAssist is speaking...' : 'Listening to you...'}
+              </p>
+              <p className="mt-2 text-white/40 text-sm">
+                Speak naturally - I'll respond when you pause
+              </p>
+              
+              <Button
+                onClick={handleStopVoice}
+                variant="outline"
+                className="mt-8 border-red-500/50 text-red-400 hover:bg-red-500/20 hover:text-red-300 px-6"
+              >
+                <PhoneOff className="h-4 w-4 mr-2" />
+                End Voice Session
+              </Button>
+            </motion.div>
+          )}
+
           {/* Chat Area */}
           <ScrollArea className="flex-1" ref={scrollRef}>
             <div className="max-w-4xl mx-auto px-4 py-6">
@@ -457,11 +528,23 @@ export default function SafeSuiteAssist() {
                 </Button>
                 
                 {/* Voice Button */}
-                <VoiceButton
-                  onTranscript={(text) => setInputValue(prev => prev ? `${prev} ${text}` : text)}
-                  disabled={!isConnected || credits.remaining <= 0}
-                  className="shrink-0 h-12 w-12 rounded-xl border-gray-700 hover:border-cyan-500/50"
-                />
+                <Button
+                  onClick={handleStartVoice}
+                  disabled={!isConnected || credits.remaining <= 0 || isConnecting || isVoiceActive}
+                  variant="outline"
+                  className={cn(
+                    "shrink-0 h-12 w-12 rounded-xl border-gray-700 hover:border-cyan-500/50 hover:bg-cyan-500/10",
+                    isConnecting && "animate-pulse",
+                    isVoiceActive && "border-cyan-500 bg-cyan-500/20"
+                  )}
+                  title="Start voice conversation"
+                >
+                  {isConnecting ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
+                  ) : (
+                    <Mic className={cn("h-5 w-5", isVoiceActive ? "text-cyan-400" : "text-gray-400")} />
+                  )}
+                </Button>
                 
                 {/* Text Input */}
                 <div className="flex-1 relative">

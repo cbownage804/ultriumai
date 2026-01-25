@@ -399,7 +399,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
               onClick={onItemClick}
               isExpanded={expandedItems.has(item.id)}
               onToggle={() => toggleExpanded(item.id)}
-              onCustomClick={item.id === 'safeassist' ? openAssistant : undefined}
+              onCustomClick={undefined} /* SafeAssist now uses full page navigation */
             />
           );
         })}
