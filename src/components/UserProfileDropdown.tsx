@@ -171,7 +171,7 @@ const UserProfileDropdown = () => {
                   variant="ghost" 
                   size="sm" 
                   className="w-full justify-start hover:bg-muted/50"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate('/hub')}
                 >
                   <Settings className="h-4 w-4 mr-2" />
                   Dashboard
