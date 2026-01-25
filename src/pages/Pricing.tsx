@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Check, ArrowRight, Phone, Brain, Shield, Sparkles, Users, Zap, Lock
+  Check, ArrowRight, Mail, Brain, Shield, Sparkles, Users, Zap, Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
@@ -368,14 +368,14 @@ const Pricing = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10" asChild>
-              <a href="tel:888-884-1410">
-                <Phone className="mr-2 h-5 w-5" />
-                888-884-1410
+              <a href="mailto:support@ultriumai.com">
+                <Mail className="mr-2 h-5 w-5" />
+                Email Us
               </a>
             </Button>
             <Button size="lg" asChild>
               <Link to="/contact">
-                Schedule a Call
+                Contact Us
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

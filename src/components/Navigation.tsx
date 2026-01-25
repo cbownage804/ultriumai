@@ -166,10 +166,6 @@ const Navigation = () => {
           
           {/* Desktop Auth */}
           <div className="hidden md:flex items-center gap-3">
-            <a href="tel:888-884-1410" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-              <Phone className="h-4 w-4" />
-              888-884-1410
-            </a>
             
             {user ? (
               <div className="flex items-center gap-2">

@@ -212,16 +212,6 @@ const Contact = () => {
               <Card className="bg-[#141414] border-white/10">
                 <CardContent className="p-6 space-y-6">
                   <h3 className="text-lg font-semibold text-white">Quick Contact</h3>
-                  
-                  <a href="tel:888-884-1410" className="flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
-                    <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Phone className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-white font-medium group-hover:text-primary transition-colors">888-884-1410</p>
-                      <p className="text-sm text-white/50">Call us directly</p>
-                    </div>
-                  </a>
 
                   <a href="mailto:support@ultriumai.com" className="flex items-center gap-4 p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
                     <div className="h-12 w-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
@@ -241,33 +231,6 @@ const Contact = () => {
                       <p className="text-white font-medium">Live Chat</p>
                       <p className="text-sm text-white/50">Available in dashboard</p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Business Hours */}
-              <Card className="bg-[#141414] border-white/10">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Clock className="h-5 w-5 text-white/60" />
-                    <h3 className="text-lg font-semibold text-white">Business Hours</h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between text-white/70">
-                      <span>Monday - Friday</span>
-                      <span className="text-white">9AM - 6PM EST</span>
-                    </div>
-                    <div className="flex justify-between text-white/70">
-                      <span>Saturday</span>
-                      <span className="text-white">10AM - 4PM EST</span>
-                    </div>
-                    <div className="flex justify-between text-white/70">
-                      <span>Sunday</span>
-                      <span className="text-white/50">Closed</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <p className="text-sm text-emerald-400">24/7 Emergency Support for Enterprise</p>
                   </div>
                 </CardContent>
               </Card>
