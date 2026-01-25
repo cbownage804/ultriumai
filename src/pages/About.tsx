@@ -4,11 +4,15 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import {
   Shield, Heart, Target, Brain, Lock,
-  ArrowRight, CheckCircle, Flag
+  ArrowRight, CheckCircle, Flag, Code
 } from 'lucide-react';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import heroSecurity from "@/assets/hero-security.jpg";
+import heroCustomAI from "@/assets/hero-custom-ai.jpg";
+import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+import safesuiteLogo from '@/assets/safesuite-logo.png';
+import vanguardLogo from '@/assets/vanguard-logo.png';
 
 const About = () => {
   const values = [
@@ -38,20 +42,20 @@ const About = () => {
     {
       name: "AI Studio",
       description: "Build custom GPT assistants trained on your data. Deploy via API, widget, or white-label solutions.",
-      icon: Brain,
-      color: "text-primary"
+      logo: aiStudioLogo,
+      shadowColor: "shadow-primary/30"
     },
     {
       name: "SafeSuite",
       description: "Personal and SMB security toolkit featuring password vault, dark web monitoring, email/link scanning, and asset management.",
-      icon: Lock,
-      color: "text-emerald-500"
+      logo: safesuiteLogo,
+      shadowColor: "shadow-emerald-500/30"
     },
     {
       name: "Vanguard",
       description: "Enterprise-grade cybersecurity operations platform for MSPs. XDR/EDR, compliance monitoring, SIEM, and managed SOC services.",
-      icon: Shield,
-      color: "text-cyan-500"
+      logo: vanguardLogo,
+      shadowColor: "shadow-cyan-500/30"
     }
   ];
 
@@ -103,28 +107,70 @@ const About = () => {
         </div>
       </section>
 
-      {/* What We Do */}
+      {/* What We Build */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">What We Build</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three flagship products designed to solve real problems for businesses
+              Flagship products and custom AI solutions for businesses of all sizes
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          
+          {/* Product Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
             {products.map((product, index) => (
-              <Card key={index} className="h-full hover:border-primary/30 transition-colors">
-                <CardHeader>
-                  <product.icon className={`h-10 w-10 mb-4 ${product.color}`} />
-                  <CardTitle>{product.name}</CardTitle>
+              <Card key={index} className="h-full hover:border-primary/30 transition-colors bg-card/50">
+                <CardHeader className="flex flex-col items-center">
+                  <div className={`px-6 py-4 bg-black rounded-xl ${product.shadowColor} shadow-lg mb-4 flex items-center justify-center min-w-[160px]`}>
+                    <img src={product.logo} alt={product.name} className="h-12 w-auto object-contain" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{product.description}</p>
+                  <p className="text-muted-foreground text-center">{product.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
+
+          {/* Custom AI Apps Card */}
+          <Card className="overflow-hidden hover:border-primary/30 transition-colors bg-card/50">
+            <div className="grid md:grid-cols-2 gap-0">
+              <div className="relative h-64 md:h-auto">
+                <img 
+                  src={heroCustomAI} 
+                  alt="Custom AI Development"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-card/80 md:block hidden" />
+              </div>
+              <div className="p-8 flex flex-col justify-center">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Code className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-xl">Custom AI Applications</CardTitle>
+                </div>
+                <p className="text-muted-foreground mb-6">
+                  Need something unique? We build custom AI-powered applications tailored to your specific business needs. 
+                  From intelligent automation to specialized chatbots, our team delivers enterprise-grade solutions 
+                  with security built in from the ground up.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <Badge variant="secondary">Custom GPT Agents</Badge>
+                  <Badge variant="secondary">Workflow Automation</Badge>
+                  <Badge variant="secondary">Data Analysis</Badge>
+                  <Badge variant="secondary">Integration APIs</Badge>
+                </div>
+                <Link to="/contact">
+                  <Button>
+                    Discuss Your Project
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
         </div>
       </section>
 
