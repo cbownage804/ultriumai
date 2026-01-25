@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import {
-  Shield, Award, Heart, Target, Lightbulb, Zap, Brain, Lock,
-  ArrowRight, CheckCircle, Flag, Code, Cpu
+  Shield, Heart, Target, Brain, Lock,
+  ArrowRight, CheckCircle, Flag
 } from 'lucide-react';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -55,32 +55,6 @@ const About = () => {
     }
   ];
 
-  const milestones = [
-    {
-      year: "2024",
-      title: "Company Founded",
-      description: "UltriumAI launched with a focus on making AI and cybersecurity accessible to businesses of all sizes",
-      icon: Lightbulb
-    },
-    {
-      year: "2024",
-      title: "AI Studio Launch",
-      description: "Released our custom GPT builder platform enabling businesses to create AI assistants without coding",
-      icon: Brain
-    },
-    {
-      year: "2025",
-      title: "SafeSuite Release",
-      description: "Launched the SafeSuite security bundle including SafePass, SafeScan, SafeWeb, and SafeTrack",
-      icon: Lock
-    },
-    {
-      year: "2025",
-      title: "Vanguard Platform",
-      description: "Introduced Vanguard, our enterprise MSP security operations platform with AI-powered threat detection",
-      icon: Zap
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -236,35 +210,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Timeline */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Our Journey</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Building the future of AI and cybersecurity, one product at a time
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {milestones.map((milestone, index) => (
-              <Card key={index} className="h-full">
-                <CardHeader>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <milestone.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <Badge variant="outline">{milestone.year}</Badge>
-                  </div>
-                  <CardTitle className="text-lg">{milestone.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{milestone.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
