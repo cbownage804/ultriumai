@@ -6,13 +6,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Shield, ArrowLeft, History, Bot, Search,
+  Shield, ArrowLeft, History, Search,
   Clock, ShieldCheck, ShieldAlert, TrendingUp,
   Sparkles, LinkIcon, MailWarning, FileWarning,
   Layers, Calendar, BarChart3, CheckCircle, XCircle,
   AlertTriangle, Info
 } from "lucide-react";
-import { SecurityAIChatEnhanced } from "./safescan/SecurityAIChatEnhanced";
 import { ScannerTab } from "./safescan/ScannerTab";
 import { BulkScanner } from "./safescan/BulkScanner";
 import { ScheduledScans } from "@/components/ScheduledScans";
@@ -54,8 +53,6 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
   const isGuestMode = !user;
   const [guestScanCount, setGuestScanCount] = useState(0);
   const [activeTab, setActiveTab] = useState('scanner');
-  const [showAIChat, setShowAIChat] = useState(true); // Show AI chat by default
-  const [aiChatExpanded, setAIChatExpanded] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanResult[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -223,15 +220,6 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setShowAIChat(!showAIChat)}
-                      className={`text-gray-400 hover:text-red-400 ${showAIChat ? 'bg-red-500/10 text-red-400' : ''}`}
-                    >
-                      <Bot className="h-4 w-4 mr-2" />
-                      AI Assistant
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => setShowHistory(!showHistory)}
                       className={`text-gray-400 hover:text-red-400 ${showHistory ? 'bg-red-500/10 text-red-400' : ''}`}
                     >
@@ -258,15 +246,6 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
       {/* Inline controls when header is hidden */}
       {hideHeader && !isGuestMode && (
         <div className="flex items-center justify-end gap-2 mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAIChat(!showAIChat)}
-            className={`text-gray-400 hover:text-red-400 ${showAIChat ? 'bg-red-500/10 text-red-400' : ''}`}
-          >
-            <Bot className="h-4 w-4 mr-2" />
-            AI Assistant
-          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -425,60 +404,40 @@ export const SafeScanApp = ({ isWhiteLabeled = false, brandColor = '#ef4444', br
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* AI Chat Panel - Now more prominent */}
-              {showAIChat && !isGuestMode && (
-                <SecurityAIChatEnhanced 
-                  scanContext={scanResult}
-                  onClose={() => setShowAIChat(false)}
-                  isExpanded={aiChatExpanded}
-                  onToggleExpand={() => setAIChatExpanded(!aiChatExpanded)}
-                />
-              )}
-              
               {/* Quick Actions */}
-              {!showAIChat && (
-                <Card className="bg-[#141414] border-red-500/10">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium text-gray-300">Quick Actions</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
-                      onClick={() => { setShowAIChat(true); }}
-                    >
-                      <Bot className="h-4 w-4 mr-3 text-red-400" />
-                      Ask AI Assistant
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
-                      onClick={() => setActiveTab('scanner')}
-                    >
-                      <LinkIcon className="h-4 w-4 mr-3" />
-                      Quick Scan
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
-                      onClick={() => setActiveTab('bulk')}
-                      disabled={isGuestMode}
-                    >
-                      <Layers className="h-4 w-4 mr-3" />
-                      Bulk Scan
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
-                      onClick={() => setActiveTab('scheduled')}
-                      disabled={isGuestMode}
-                    >
-                      <Calendar className="h-4 w-4 mr-3" />
-                      Schedule Scan
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
+              <Card className="bg-[#141414] border-red-500/10">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-gray-300">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
+                    onClick={() => setActiveTab('scanner')}
+                  >
+                    <LinkIcon className="h-4 w-4 mr-3" />
+                    Quick Scan
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
+                    onClick={() => setActiveTab('bulk')}
+                    disabled={isGuestMode}
+                  >
+                    <Layers className="h-4 w-4 mr-3" />
+                    Bulk Scan
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-gray-400 hover:text-white hover:bg-red-500/10" 
+                    onClick={() => setActiveTab('scheduled')}
+                    disabled={isGuestMode}
+                  >
+                    <Calendar className="h-4 w-4 mr-3" />
+                    Schedule Scan
+                  </Button>
+                </CardContent>
+              </Card>
 
               {/* Scan History */}
               {(showHistory || scanHistory.length > 0) && (
