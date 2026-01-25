@@ -40,6 +40,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
 
 /**
  * Get the correct path for SafeSuite routes based on subdomain
@@ -490,6 +491,9 @@ export default function SafeSuiteLayout() {
           <Outlet />
         </main>
       </div>
+      
+      {/* Floating SafeAssist Chat - available on all pages */}
+      <FloatingSafeAssist />
     </div>
   );
 }
