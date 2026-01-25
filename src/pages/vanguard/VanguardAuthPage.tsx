@@ -76,11 +76,13 @@ const VanguardAuthPage = () => {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center mb-4">
-            <img src={vanguardLogo} alt="Ultrium Vanguard" className="h-16 w-auto" />
+            <img src={vanguardLogo} alt="Vanguard" className="h-16 w-auto" />
           </div>
-          <h1 className="text-3xl font-bold text-white">Ultrium Vanguard</h1>
           <p className="text-white/60">
             Enterprise Security Platform
+          </p>
+          <p className="text-white/40 text-sm">
+            Sign in to continue to Vanguard
           </p>
         </div>
 
