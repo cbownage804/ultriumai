@@ -67,7 +67,7 @@ const ProductCard = ({
               alt={name} 
               className={`w-auto object-contain ${
                 name === 'Vanguard' 
-                  ? 'h-16 max-w-[160px]' 
+                  ? 'h-12 max-w-[140px]' 
                   : 'h-20 max-w-[200px] scale-125'
               }`} 
             />
