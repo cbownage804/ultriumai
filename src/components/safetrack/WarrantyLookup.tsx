@@ -10,6 +10,7 @@ import {
   Shield, 
   Clock, 
   AlertTriangle, 
+  AlertCircle,
   CheckCircle2, 
   XCircle,
   Phone,
@@ -20,7 +21,8 @@ import {
   Trash2,
   ChevronRight,
   Sparkles,
-  Package
+  Package,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -164,6 +166,41 @@ function WarrantyCard({
   );
 }
 
+// Parse AI analysis into structured sections
+function parseAIAnalysis(analysis: string): { summary: string; keyPoints: string[]; recommendation: string } {
+  const sentences = analysis.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  
+  // First 1-2 sentences as summary
+  const summary = sentences.slice(0, 2).join('. ').trim() + '.';
+  
+  // Extract key points (sentences mentioning specific details)
+  const keyPoints: string[] = [];
+  const recommendation: string[] = [];
+  
+  sentences.slice(2).forEach(sentence => {
+    const s = sentence.trim();
+    if (!s) return;
+    
+    // Categorize sentences
+    if (s.toLowerCase().includes('recommend') || 
+        s.toLowerCase().includes('should') || 
+        s.toLowerCase().includes('must') ||
+        s.toLowerCase().includes('suggest') ||
+        s.toLowerCase().includes('to get') ||
+        s.toLowerCase().includes('contact')) {
+      recommendation.push(s);
+    } else if (keyPoints.length < 4) {
+      keyPoints.push(s);
+    }
+  });
+  
+  return {
+    summary,
+    keyPoints,
+    recommendation: recommendation.join('. ').trim() + (recommendation.length ? '.' : '')
+  };
+}
+
 function WarrantyDetailModal({ 
   warranty, 
   open, 
@@ -175,86 +212,103 @@ function WarrantyDetailModal({
 }) {
   if (!warranty) return null;
 
+  const parsedAnalysis = warranty.ai_analysis ? parseAIAnalysis(warranty.ai_analysis) : null;
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-[#0a0a0a] border-emerald-500/20">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl bg-[#0a0a0a] border-emerald-500/20 max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4 border-b border-emerald-500/10">
           <DialogTitle className="flex items-center gap-3 text-white">
-            <div className="p-2 rounded-lg bg-emerald-500/10">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20">
               <Shield className="h-5 w-5 text-emerald-400" />
             </div>
-            Warranty Details
+            <div>
+              <span className="block">Warranty Details</span>
+              <span className="text-sm font-normal text-gray-500">
+                Service Tag: {warranty.serial_number}
+              </span>
+            </div>
           </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Serial Number: {warranty.serial_number}
-          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Device Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Device</p>
-              <p className="text-white font-medium">
-                {warranty.device_name || warranty.model || 'Unknown'}
+          {/* Device & Coverage Info Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Device Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-[#141414] to-[#1a1a1a] border border-white/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Package className="h-4 w-4 text-emerald-400" />
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Device</span>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-1">
+                {warranty.device_name || warranty.model || 'Unknown Device'}
+              </h3>
+              <p className="text-sm text-gray-400">
+                {warranty.manufacturer || 'Unknown Manufacturer'}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Manufacturer</p>
-              <p className="text-white font-medium">
-                {warranty.manufacturer || 'Unknown'}
+
+            {/* Status Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-[#141414] to-[#1a1a1a] border border-white/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="h-4 w-4 text-emerald-400" />
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Coverage Status</span>
+              </div>
+              <div className="flex items-center gap-3 mb-2">
+                <WarrantyStatusBadge 
+                  status={warranty.warranty_status}
+                  endDate={warranty.warranty_end_date}
+                />
+              </div>
+              <p className="text-sm text-gray-400">
+                {warranty.coverage_type || 'Standard Manufacturer Warranty'}
               </p>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Status</p>
-              <WarrantyStatusBadge 
-                status={warranty.warranty_status}
-                endDate={warranty.warranty_end_date}
-              />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-1">Coverage Type</p>
-              <p className="text-white font-medium">
-                {warranty.coverage_type || 'Standard'}
-              </p>
-            </div>
-            {warranty.warranty_end_date && (
-              <>
+          </div>
+
+          {/* Timeline Info */}
+          {warranty.warranty_end_date && (
+            <div className="p-4 rounded-xl bg-[#141414] border border-white/5">
+              <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Warranty End Date</p>
                   <p className="text-white font-medium">
                     {format(new Date(warranty.warranty_end_date), 'MMMM d, yyyy')}
                   </p>
                 </div>
-                <div>
+                <div className="text-right">
                   <p className="text-xs text-gray-500 mb-1">Time Remaining</p>
-                  <p className={`font-medium ${
+                  <p className={`font-semibold ${
                     isPast(new Date(warranty.warranty_end_date)) 
                       ? 'text-red-400' 
                       : 'text-emerald-400'
                   }`}>
                     {isPast(new Date(warranty.warranty_end_date))
                       ? 'Expired ' + formatDistanceToNow(new Date(warranty.warranty_end_date)) + ' ago'
-                      : formatDistanceToNow(new Date(warranty.warranty_end_date)) + ' remaining'
+                      : formatDistanceToNow(new Date(warranty.warranty_end_date)) + ' left'
                     }
                   </p>
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
 
           {/* Repair Options */}
           {warranty.repair_options && warranty.repair_options.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                <Wrench className="h-3 w-3" />
-                Repair Options
-              </p>
-              <div className="flex flex-wrap gap-2">
+            <div className="p-4 rounded-xl bg-[#141414] border border-white/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Wrench className="h-4 w-4 text-amber-400" />
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Available Services</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {warranty.repair_options.map((option, i) => (
-                  <Badge key={i} variant="secondary" className="bg-[#1a1a1a] text-gray-300">
-                    {option}
-                  </Badge>
+                  <div 
+                    key={i} 
+                    className="flex items-center gap-2 p-2.5 rounded-lg bg-[#1a1a1a] border border-white/5"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-sm text-gray-300">{option}</span>
+                  </div>
                 ))}
               </div>
             </div>
@@ -262,15 +316,18 @@ function WarrantyDetailModal({
 
           {/* Support Contacts */}
           {warranty.support_contacts && Object.keys(warranty.support_contacts).length > 0 && (
-            <div>
-              <p className="text-xs text-gray-500 mb-2">Support Contacts</p>
-              <div className="flex flex-wrap gap-3">
+            <div className="p-4 rounded-xl bg-[#141414] border border-white/5">
+              <div className="flex items-center gap-2 mb-3">
+                <Phone className="h-4 w-4 text-blue-400" />
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Support Channels</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
                 {warranty.support_contacts.phone && (
                   <a 
                     href={`tel:${warranty.support_contacts.phone}`}
-                    className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1a1a1a] border border-white/5 text-sm text-white hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all"
                   >
-                    <Phone className="h-4 w-4" />
+                    <Phone className="h-4 w-4 text-emerald-400" />
                     {warranty.support_contacts.phone}
                   </a>
                 )}
@@ -279,10 +336,10 @@ function WarrantyDetailModal({
                     href={warranty.support_contacts.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1a1a1a] border border-white/5 text-sm text-white hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all"
                   >
-                    <Globe className="h-4 w-4" />
-                    Support Website
+                    <Globe className="h-4 w-4 text-emerald-400" />
+                    Visit Support Portal
                   </a>
                 )}
                 {warranty.support_contacts.chat && (
@@ -290,9 +347,9 @@ function WarrantyDetailModal({
                     href={warranty.support_contacts.chat}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#1a1a1a] border border-white/5 text-sm text-white hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all"
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <MessageCircle className="h-4 w-4 text-emerald-400" />
                     Live Chat
                   </a>
                 )}
@@ -300,29 +357,73 @@ function WarrantyDetailModal({
             </div>
           )}
 
-          {/* AI Analysis */}
-          {warranty.ai_analysis && (
-            <div className="p-4 rounded-lg bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
-              <p className="text-xs text-emerald-400 mb-2 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                AI Analysis
-              </p>
-              <p className="text-sm text-gray-300 leading-relaxed">
-                {warranty.ai_analysis}
-              </p>
+          {/* AI Analysis - Structured */}
+          {parsedAnalysis && (
+            <div className="rounded-xl overflow-hidden border border-emerald-500/20">
+              {/* Header */}
+              <div className="px-4 py-3 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-b border-emerald-500/20">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/20">
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium text-emerald-400">AI Analysis</span>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-[#0d0d0d] space-y-4">
+                {/* Summary */}
+                <div>
+                  <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Summary</h4>
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    {parsedAnalysis.summary}
+                  </p>
+                </div>
+
+                {/* Key Findings */}
+                {parsedAnalysis.keyPoints.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Key Findings</h4>
+                    <ul className="space-y-2">
+                      {parsedAnalysis.keyPoints.map((point, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                          <span>{point.trim()}.</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Recommendation */}
+                {parsedAnalysis.recommendation && (
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+                      <div>
+                        <h4 className="text-xs font-medium text-amber-400 uppercase tracking-wider mb-1">Recommended Action</h4>
+                        <p className="text-sm text-gray-300">{parsedAnalysis.recommendation}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Source */}
+          {/* Source Link */}
           {warranty.source_url && (
-            <div className="text-xs text-gray-500">
+            <div className="flex items-center justify-between pt-2 border-t border-white/5">
+              <span className="text-xs text-gray-500">
+                Last checked: {warranty.last_checked_at ? format(new Date(warranty.last_checked_at), 'MMM d, yyyy h:mm a') : 'N/A'}
+              </span>
               <a 
                 href={warranty.source_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-emerald-400 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
               >
-                View Source →
+                <ExternalLink className="h-3 w-3" />
+                View Original Source
               </a>
             </div>
           )}
