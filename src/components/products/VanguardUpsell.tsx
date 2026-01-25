@@ -16,7 +16,7 @@ interface VanguardTier {
 const VANGUARD_TIERS: VanguardTier[] = [
   {
     name: 'Vanguard Starter',
-    price: '$15',
+    price: '$30',
     description: 'Core security protection',
     includes: [
       'SafeScan™ - Email/URL/Doc Scanning',
@@ -29,7 +29,7 @@ const VANGUARD_TIERS: VanguardTier[] = [
   },
   {
     name: 'Vanguard Professional',
-    price: '$25',
+    price: '$50',
     description: 'Security + Asset Management',
     includes: [
       'Everything in Starter',
@@ -44,7 +44,7 @@ const VANGUARD_TIERS: VanguardTier[] = [
   },
   {
     name: 'Vanguard Enterprise',
-    price: '$40',
+    price: '$80',
     description: 'Complete IT operations platform',
     includes: [
       'Everything in Professional',

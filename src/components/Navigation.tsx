@@ -18,8 +18,6 @@ import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f92
 import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
 import vanguardLogo from "@/assets/vanguard-logo.png";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
-import safeopsLogo from "@/assets/logos/logo-safeops.png";
-import safedeskLogo from "@/assets/logos/logo-safedesk.png";
 import { safeWindowOpen } from "@/utils/security";
 
 const Navigation = () => {
@@ -155,37 +153,20 @@ const Navigation = () => {
                     </div>
                   </button>
 
-                  {/* SafeOps */}
+                  {/* Vanguard Suite */}
                   <button
-                    onClick={() => handleNavigation('/products/rmm')}
-                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
-                  >
-                    <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
-                      <img src={safeopsLogo} alt="SafeOps" className="w-10 h-10 object-contain" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-sm text-foreground group-hover/item:text-emerald-500 transition-colors">SafeOps™</span>
-                        <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">Remote monitoring & endpoint management</p>
-                    </div>
-                  </button>
-
-                  {/* SafeDesk */}
-                  <button
-                    onClick={() => handleNavigation('/products/helpdesk')}
-                    className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
+                    onClick={() => handleExternalLink('https://vanguard.ultriumai.com')}
+                    className="group/item col-span-2 flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
-                      <img src={safedeskLogo} alt="SafeDesk" className="w-10 h-10 object-contain" />
+                      <img src={vanguardLogo} alt="Vanguard" className="w-10 h-10 object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-sm text-foreground group-hover/item:text-cyan-500 transition-colors">SafeDesk™</span>
+                        <span className="font-semibold text-sm text-foreground group-hover/item:text-cyan-500 transition-colors">Vanguard Suite™</span>
                         <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">AI-powered IT service desk & ticketing</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">Complete MSP platform including SafeOps™ (RMM), SafeDesk™ (Helpdesk), threat detection, compliance & more</p>
                     </div>
                   </button>
                 </div>
