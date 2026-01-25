@@ -149,16 +149,16 @@ const SafeSuiteAdminCenter = () => {
       // Get all user IDs to fetch profiles
       const userIds = subscriptions?.map(s => s.user_id) || [];
       
-      // Load profiles for these users
+      // Load profiles for these users - query by user_id, not id
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email, full_name')
-        .in('id', userIds);
+        .select('id, user_id, email, full_name')
+        .in('user_id', userIds);
 
       if (profileError) throw profileError;
 
-      // Create profile lookup map
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      // Create profile lookup map keyed by user_id
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
       // Merge subscription data with profile data
       const enrichedSubscribers: SafeSuiteSubscriber[] = (subscriptions || []).map(sub => ({
