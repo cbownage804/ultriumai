@@ -8,7 +8,6 @@ import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import { SAFESUITE_TIERS, formatMonthlyPrice, FEATURE_DESCRIPTIONS } from '@/config/safeSuiteTiers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { 
@@ -18,10 +17,11 @@ import {
   Lock, 
   ArrowRight,
   Zap,
-  Users,
   Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { isSafeSuiteDomain } from '@/utils/subdomain';
+import { UsageSummary } from './UsageMeter';
 
 interface SubscriptionBannerProps {
   className?: string;
@@ -35,6 +35,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
 
   const currentTier = SAFESUITE_TIERS[tier];
   const nextTier = tier === 'free' ? SAFESUITE_TIERS.pro : tier === 'pro' ? SAFESUITE_TIERS.business : null;
+  const billingPath = isSafeSuiteDomain() ? '/billing' : '/safesuite/billing';
 
   // Get key restrictions for current tier
   const restrictions: string[] = [];
@@ -62,7 +63,7 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
           {currentTier.name}
         </Badge>
         {!isBusiness && (
-          <Link to="/safesuite/billing" className="ml-auto">
+          <Link to={billingPath} className="ml-auto">
             <Button size="sm" variant="ghost" className="gap-1 text-xs">
               Upgrade <ArrowRight className="h-3 w-3" />
             </Button>
@@ -150,12 +151,12 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
             {/* Upgrade CTA */}
             {nextTier && (
               <div className="flex-shrink-0">
-                <Link to="/safesuite/billing">
+                <Link to={billingPath}>
                   <Button 
                     className={cn(
                       'gap-2',
                       tier === 'free' && 'bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600',
-                      tier === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600'
+                      tier === 'pro' && 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-black'
                     )}
                   >
                     <Sparkles className="h-4 w-4" />
@@ -168,6 +169,13 @@ export function SubscriptionBanner({ className, variant = 'full' }: Subscription
               </div>
             )}
           </div>
+
+          {/* Usage Summary for free/pro users */}
+          {!isBusiness && (
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <UsageSummary features={['safepass', 'safescan']} />
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
