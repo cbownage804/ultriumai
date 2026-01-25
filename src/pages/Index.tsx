@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -14,8 +15,18 @@ import heroMain from '@/assets/hero-main.jpg';
 import ultriumGPTLogo from '@/assets/ultrium-gpt-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 import { safesuiteLogo } from '@/components/safesuite/SafeSuiteProductIcons';
+import { useAuth } from '@/hooks/useAuth';
 
 const Index = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect authenticated users to the Product Hub
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/hub', { replace: true });
+    }
+  }, [user, loading, navigate]);
   const mainFAQs = [
     {
       question: "What is UltriumAI and what do you build?",
