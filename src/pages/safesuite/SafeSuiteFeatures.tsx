@@ -155,10 +155,10 @@ export default function SafeSuiteFeatures() {
                 <TabsTrigger
                   key={tool.id}
                   value={tool.id}
-                  className={`flex flex-col items-center gap-2 p-3 rounded-xl border ${tool.borderColor} data-[state=active]:border-2 data-[state=active]:${tool.borderColor} data-[state=active]:bg-black hover:bg-black/50 transition-all`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border ${tool.borderColor} data-[state=active]:border-2 data-[state=active]:${tool.borderColor} data-[state=active]:bg-black hover:bg-black/50 transition-all`}
                 >
-                  <div className={`bg-black rounded-lg p-2 ${tool.shadowColor} shadow-lg flex items-center justify-center min-w-[100px] min-h-[50px]`}>
-                    <img src={tool.logo} alt={tool.name} className="h-8 w-auto object-contain" />
+                  <div className={`bg-black rounded-lg px-6 py-4 ${tool.shadowColor} shadow-lg flex items-center justify-center min-w-[160px] min-h-[80px]`}>
+                    <img src={tool.logo} alt={tool.name} className="h-14 w-auto object-contain" />
                   </div>
                 </TabsTrigger>
               ))}
