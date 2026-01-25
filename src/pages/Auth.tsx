@@ -65,24 +65,9 @@ const Auth = () => {
           setError(error.message);
         }
       } else if (data?.user) {
-        // Send branded confirmation email via our custom edge function
-        try {
-          await supabase.functions.invoke('send-auth-email', {
-            body: {
-              type: 'confirmation',
-              email: data.user.email,
-              name: fullName || undefined,
-              redirectUrl: `${window.location.origin}/dashboard`,
-            },
-          });
-        } catch (emailError) {
-          console.error('Auth email exception:', emailError);
-          // Don't fail the signup if email fails
-        }
-
         toast({
           title: "Welcome to UltriumGPT!",
-          description: "Your account has been created successfully. Check your email for getting started tips!",
+          description: "Your account has been created successfully. Please check your email to confirm your address before signing in.",
         });
         
         // Navigate to appropriate dashboard based on role

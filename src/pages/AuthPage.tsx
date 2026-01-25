@@ -128,20 +128,6 @@ const AuthPage = () => {
           setError(error.message);
         }
       } else {
-        // Send branded confirmation email via Resend
-        try {
-          await supabase.functions.invoke('send-auth-email', {
-            body: {
-              type: 'confirmation',
-              email: email,
-              name: fullName || undefined,
-              redirectUrl: `${window.location.origin}/dashboard`,
-            },
-          });
-        } catch (emailErr) {
-          console.error('Failed to send branded confirmation email:', emailErr);
-        }
-        
         setSignupSuccess(true);
         setActiveTab('signin');
       }
