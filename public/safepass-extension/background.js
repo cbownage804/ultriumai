@@ -1,9 +1,9 @@
 // SafePass Background Service Worker v2.2
 // Enhanced with auto-sync, keyboard shortcuts, context menus, TOTP, Notes, Cards, Identity support
 
-const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
-const SAFEPASS_API_URL = `${SUPABASE_URL}/functions/v1`;
+const API_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
+const FUNCTIONS_URL = `${API_URL}/functions/v1`;
 const PORTAL_URL = 'https://safesuite.ultriumai.com/pass';
 
 // Security settings
@@ -317,9 +317,9 @@ async function syncVaultFromSupabase() {
     }
 
     // Fetch personal vaults
-    const vaultsResponse = await fetch(`${SUPABASE_URL}/rest/v1/safepass_vaults?select=id,name`, {
+    const vaultsResponse = await fetch(`${API_URL}/rest/v1/safepass_vaults?select=id,name`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
       }
     });
@@ -335,10 +335,10 @@ async function syncVaultFromSupabase() {
       const vaultIds = vaults.map(v => v.id);
       
       const entriesResponse = await fetch(
-        `${SUPABASE_URL}/rest/v1/safepass_entries?vault_id=in.(${vaultIds.join(',')})&select=id,title,encrypted_username,encrypted_password,encrypted_url,category,is_favorite,url,is_breached,password_strength`, 
+        `${API_URL}/rest/v1/safepass_entries?vault_id=in.(${vaultIds.join(',')})&select=id,title,encrypted_username,encrypted_password,encrypted_url,category,is_favorite,url,is_breached,password_strength`, 
         {
           headers: {
-            'apikey': SUPABASE_ANON_KEY,
+            'apikey': API_KEY,
             'Authorization': `Bearer ${session.authToken}`,
           }
         }
@@ -403,10 +403,10 @@ async function fetchSharedTeamEntries(authToken) {
   try {
     // First check if user is part of a team
     const membershipResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/safesuite_team_members?user_id=eq.self&status=eq.active&select=team_id,role`, 
+      `${API_URL}/rest/v1/safesuite_team_members?user_id=eq.self&status=eq.active&select=team_id,role`, 
       {
         headers: {
-          'apikey': SUPABASE_ANON_KEY,
+          'apikey': API_KEY,
           'Authorization': `Bearer ${authToken}`,
         }
       }
@@ -431,10 +431,10 @@ async function fetchSharedTeamEntries(authToken) {
 
     // Fetch shared vaults for this team
     const sharedVaultsResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/safesuite_shared_vaults?team_id=eq.${teamId}&select=id,name`, 
+      `${API_URL}/rest/v1/safesuite_shared_vaults?team_id=eq.${teamId}&select=id,name`, 
       {
         headers: {
-          'apikey': SUPABASE_ANON_KEY,
+          'apikey': API_KEY,
           'Authorization': `Bearer ${authToken}`,
         }
       }
@@ -455,10 +455,10 @@ async function fetchSharedTeamEntries(authToken) {
 
     // Fetch shared entries from all team vaults
     const sharedEntriesResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/safesuite_shared_entries?vault_id=in.(${sharedVaultIds.join(',')})&select=id,title,encrypted_data,website_url,entry_type,is_favorite,password_strength_score,folder,tags`, 
+      `${API_URL}/rest/v1/safesuite_shared_entries?vault_id=in.(${sharedVaultIds.join(',')})&select=id,title,encrypted_data,website_url,entry_type,is_favorite,password_strength_score,folder,tags`, 
       {
         headers: {
-          'apikey': SUPABASE_ANON_KEY,
+          'apikey': API_KEY,
           'Authorization': `Bearer ${authToken}`,
         }
       }
@@ -496,9 +496,9 @@ async function fetchSharedTeamEntries(authToken) {
 
 async function fetchTOTPEntries(authToken) {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_totp?select=id,name,encrypted_secret`, {
+    const response = await fetch(`${API_URL}/rest/v1/safepass_totp?select=id,name,encrypted_secret`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
       }
     });
@@ -518,9 +518,9 @@ async function fetchTOTPEntries(authToken) {
 
 async function fetchSecureNotes(authToken) {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_notes?select=id,title,encrypted_content`, {
+    const response = await fetch(`${API_URL}/rest/v1/safepass_notes?select=id,title,encrypted_content`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
       }
     });
@@ -541,9 +541,9 @@ async function fetchSecureNotes(authToken) {
 
 async function fetchCreditCards(authToken) {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_cards?select=id,holder_name,last_four,encrypted_data`, {
+    const response = await fetch(`${API_URL}/rest/v1/safepass_cards?select=id,holder_name,last_four,encrypted_data`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
       }
     });
@@ -564,9 +564,9 @@ async function fetchCreditCards(authToken) {
 
 async function fetchIdentities(authToken) {
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_identities?select=id,name,encrypted_data`, {
+    const response = await fetch(`${API_URL}/rest/v1/safepass_identities?select=id,name,encrypted_data`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${authToken}`,
       }
     });
@@ -624,10 +624,10 @@ async function handleSaveIdentity(data) {
 
     const encryptedData = await encryptField(JSON.stringify(identityData), session.masterKey);
 
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_identities`, {
+    const response = await fetch(`${API_URL}/rest/v1/safepass_identities`, {
       method: 'POST',
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
@@ -997,9 +997,9 @@ async function handleSavePassword(data) {
     const encryptedPassword = await encryptField(data.password, session.masterKey);
     const encryptedUrl = await encryptField(data.website, session.masterKey);
 
-    const vaultsResponse = await fetch(`${SUPABASE_URL}/rest/v1/safepass_vaults?select=id&limit=1`, {
+    const vaultsResponse = await fetch(`${API_URL}/rest/v1/safepass_vaults?select=id&limit=1`, {
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
       }
     });
@@ -1009,10 +1009,10 @@ async function handleSavePassword(data) {
       return { error: 'No vault found' };
     }
 
-    const saveResponse = await fetch(`${SUPABASE_URL}/rest/v1/safepass_entries`, {
+    const saveResponse = await fetch(`${API_URL}/rest/v1/safepass_entries`, {
       method: 'POST',
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
@@ -1069,10 +1069,10 @@ async function handleSaveNote(data) {
 
     const encryptedContent = await encryptField(data.content, session.masterKey);
 
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_notes`, {
+    const response = await fetch(`${API_URL}/rest/v1/safepass_notes`, {
       method: 'POST',
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
@@ -1111,10 +1111,10 @@ async function handleSaveCard(data) {
 
     const encryptedData = await encryptField(JSON.stringify(cardData), session.masterKey);
 
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/safepass_cards`, {
+    const response = await fetch(`${API_URL}/rest/v1/safepass_cards`, {
       method: 'POST',
       headers: {
-        'apikey': SUPABASE_ANON_KEY,
+        'apikey': API_KEY,
         'Authorization': `Bearer ${session.authToken}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
@@ -1146,7 +1146,7 @@ async function handleBreachCheck(passwordHash) {
       return { error: 'Not authenticated' };
     }
 
-    const response = await fetch(`${SAFEPASS_API_URL}/safepass-breach-check`, {
+    const response = await fetch(`${FUNCTIONS_URL}/safepass-breach-check`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1186,7 +1186,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     if (!session.authToken) return;
     
     try {
-      const response = await fetch(`${SAFEPASS_API_URL}/safepass-breach-check`, {
+      const response = await fetch(`${FUNCTIONS_URL}/safepass-breach-check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

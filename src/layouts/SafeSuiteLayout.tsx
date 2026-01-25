@@ -83,7 +83,7 @@ const getNavItems = () => [
       { label: 'Emergency Access', path: getSafeSuitePath('/pass/emergency') },
       { label: 'Breach Monitor', path: getSafeSuitePath('/pass/breach') },
       { label: 'Reminders', path: getSafeSuitePath('/pass/reminders') },
-      { label: 'Browser Extension', path: getSafeSuitePath('/pass/extension') },
+      { label: 'Browser Extension', path: getSafeSuitePath('/pass/extension'), badge: 'BETA' },
       { label: 'Import', path: getSafeSuitePath('/pass/import') },
       { label: 'Export', path: getSafeSuitePath('/pass/export') },
       { label: 'Team', path: getSafeSuitePath('/pass/team') },
@@ -285,18 +285,24 @@ function NavLink({
         <div className="ml-8 space-y-1">
           {item.subItems!.map((sub) => {
             const subActive = currentPath === sub.path;
+            const subItem = sub as { label: string; path: string; badge?: string };
             return (
               <Link
                 key={sub.path}
                 to={sub.path}
                 onClick={onClick}
                 className={cn(
-                  'block px-3 py-1.5 rounded-md text-sm transition-colors',
+                  'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors',
                   'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   subActive && 'bg-primary/10 text-primary font-medium'
                 )}
               >
                 {sub.label}
+                {subItem.badge && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
+                    {subItem.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

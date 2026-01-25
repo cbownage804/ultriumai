@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Globe, Monitor, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Download, Globe, Monitor, CheckCircle2, AlertTriangle, Beaker } from "lucide-react";
 import JSZip from "jszip";
 import { toast } from "sonner";
 
@@ -71,11 +73,27 @@ const SafePassExtension = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Browser Extension</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">Browser Extension</h1>
+          <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30 flex items-center gap-1">
+            <Beaker className="h-3 w-3" />
+            BETA
+          </Badge>
+        </div>
         <p className="text-muted-foreground mt-1">
           Install the SafePass extension for seamless autofill
         </p>
       </div>
+
+      {/* Beta Disclaimer */}
+      <Alert className="bg-amber-500/10 border-amber-500/30">
+        <AlertTriangle className="h-4 w-4 text-amber-400" />
+        <AlertDescription className="text-amber-200/80">
+          <span className="font-semibold text-amber-400">Beta Software:</span> This extension is currently in development. 
+          While we've tested core functionality, you may encounter bugs or missing features. 
+          Please report any issues to our support team. Your vault data remains encrypted and secure.
+        </AlertDescription>
+      </Alert>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="border-primary/20">
@@ -150,7 +168,7 @@ const SafePassExtension = () => {
             {[
               { title: "Auto-detect Login Forms", desc: "Automatically finds username and password fields" },
               { title: "One-Click Autofill", desc: "Fill credentials with a single click" },
-              { title: "Secure Vault Sync", desc: "Syncs with your SafePass vault via Supabase" },
+              { title: "Secure Vault Sync", desc: "Syncs with your encrypted SafePass vault" },
               { title: "Save New Passwords", desc: "Prompts to save new credentials when you sign up" },
               { title: "AES-256 Encryption", desc: "All data encrypted with your master password" },
               { title: "Offline Access", desc: "Cached credentials work without internet" }

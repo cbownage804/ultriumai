@@ -1,8 +1,8 @@
 // SafePass Extension Popup Script v2.1
 // Enhanced with Password Health Dashboard, Form Fill Profiles, and Biometric Unlock
 
-const SUPABASE_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
+const API_URL = 'https://nsyobmjpdpvesjwdphlh.supabase.co';
+const API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI';
 const PORTAL_URL = 'https://safesuite.ultriumai.com/pass';
 
 const DEFAULT_AUTO_LOCK_MS = 5 * 60 * 1000;
@@ -232,9 +232,9 @@ async function handleLogin() {
   loginBtn.textContent = 'Unlocking...';
 
   try {
-    const authResponse = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+    const authResponse = await fetch(`${API_URL}/auth/v1/token?grant_type=password`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+      headers: { 'Content-Type': 'application/json', 'apikey': API_KEY },
       body: JSON.stringify({ email, password: masterPassword })
     });
 

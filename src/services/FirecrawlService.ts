@@ -52,7 +52,7 @@ export class FirecrawlService {
 
   static async crawlWebsite(url: string, gptId?: string): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
-      console.log('Making crawl request via Supabase Edge Function');
+      console.log('Making crawl request via Edge Function');
       
       const response = await fetch(this.supabaseEdgeFunctionUrl, {
         method: 'POST',
