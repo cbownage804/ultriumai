@@ -76,8 +76,8 @@ const Navigation = () => {
               className="transition-transform duration-200 hover:scale-105"
               title="AI Studio™"
             >
-              <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20">
-                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-110" />
+              <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20 p-1">
+                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-150" />
               </div>
             </button>
             
@@ -96,8 +96,8 @@ const Navigation = () => {
               className="transition-transform duration-200 hover:scale-105"
               title="SafeSuite™"
             >
-              <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-500/20">
-                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-110" />
+              <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-emerald-500/20 p-1">
+                <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain scale-150" />
               </div>
             </button>
             
