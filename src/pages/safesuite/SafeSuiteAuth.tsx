@@ -12,8 +12,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, Loader2, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { AuthBrandHeader } from '@/components/auth/AuthBrandHeader';
 
 export default function SafeSuiteAuth() {
   const navigate = useNavigate();
@@ -103,15 +104,9 @@ export default function SafeSuiteAuth() {
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Logo */}
-          <div className="text-center mb-8">
-            <Link to="/safesuite" className="inline-flex items-center gap-2">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
-                <Shield className="h-7 w-7 text-primary-foreground" />
-              </div>
-            </Link>
-            <h1 className="text-2xl font-bold mt-4">SafeSuite</h1>
-            <p className="text-muted-foreground">Your complete security solution</p>
-          </div>
+          <Link to="/safesuite" className="block mb-8">
+            <AuthBrandHeader />
+          </Link>
 
           {/* Auth card */}
           <Card>
