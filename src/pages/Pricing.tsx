@@ -1,203 +1,158 @@
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Check, 
-  ArrowRight, 
-  Building2, 
-  Phone,
-  Crown,
-  Brain,
-  Shield,
-  Cpu,
-  Network,
-  Headphones,
-  Code,
-  Blocks,
-  Users
+  Check, ArrowRight, Phone, Brain, Shield, Sparkles, Users, Zap, Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
+import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+import safesuiteLogo from '@/assets/safesuite-logo.png';
+import vanguardLogo from '@/assets/vanguard-logo.png';
 
 const Pricing = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-12 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-primary/5"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
-          <Badge variant="secondary" className="mb-6">
-            Flexible Solutions
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight mb-6">
-            Pricing That Fits Your Business
+      <section className="pt-32 pb-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-emerald-500/5" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+        
+        <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
+          <Badge className="mb-6 bg-white/10 text-white/80 border-white/20">Simple, Transparent Pricing</Badge>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+            Choose Your Plan
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            From self-serve AI tools to enterprise security solutions—choose what works for you.
+          <p className="text-xl text-white/50 max-w-2xl mx-auto">
+            From personal security tools to enterprise AI platforms—find the perfect fit for your needs.
           </p>
         </div>
       </section>
 
-      {/* AI Studio Pricing - Self-Serve */}
-      <section id="ai-studio" className="py-16 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* SafeSuite Section */}
+      <section id="safesuite" className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4">
-              <Brain className="h-4 w-4 mr-2" />
-              Self-Serve Platform
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">AI Studio™</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Build custom AI assistants for your business. No coding required. Start with a free trial.
+            <div className="inline-flex items-center justify-center px-6 py-3 bg-black rounded-xl shadow-lg shadow-emerald-500/20 mb-6">
+              <img src={safesuiteLogo} alt="SafeSuite" className="h-12 w-auto" />
+            </div>
+            <p className="text-lg text-white/50 max-w-xl mx-auto">
+              Personal & SMB security toolkit with password vault, threat scanning, and dark web monitoring.
             </p>
           </div>
 
-          {/* AI Studio Pricing Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-            {/* Starter GPT Plan */}
-            <Card className="bg-card border-2 border-border hover:border-primary/40 transition-all duration-300">
-              <CardHeader className="text-center pb-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Brain className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-2xl">Starter</CardTitle>
-                <CardDescription className="text-base">Perfect for small teams</CardDescription>
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Free */}
+            <Card className="bg-[#141414] border-white/10 hover:border-emerald-500/30 transition-all">
+              <CardContent className="p-8">
+                <h3 className="text-xl font-bold text-white mb-2">Free</h3>
+                <p className="text-white/50 text-sm mb-6">Get started with essential security</p>
                 
-                <div className="mt-6 space-y-2">
-                  <div className="text-4xl font-bold text-primary">$99</div>
-                  <div className="text-sm text-muted-foreground">per month</div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                    7-day free trial
-                  </Badge>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-white">$0</span>
+                  <span className="text-white/50">/month</span>
                 </div>
-              </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
+                <div className="space-y-3 mb-8">
                   {[
-                    "1 Custom GPT assistant",
-                    "500 queries per month",
-                    "1GB knowledge base storage",
-                    "Up to 3 team seats",
-                    "Basic analytics",
-                    "API access",
-                    "Email support"
+                    "25 password entries",
+                    "5 threat scans/month",
+                    "Basic dark web alerts",
+                    "Browser extension",
+                    "Mobile app access",
                   ].map((feature, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                      <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <span className="text-sm text-white/70">{feature}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
-
-              <CardFooter>
-                <Button className="w-full" variant="outline" asChild>
-                  <Link to="/ai-studio">
-                    Start Free Trial
-                    <ArrowRight className="w-4 h-4 ml-2" />
+              <CardFooter className="p-8 pt-0">
+                <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+                  <Link to="/auth">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardFooter>
             </Card>
 
-            {/* Professional GPT Plan - Most Popular */}
-            <Card className="bg-card border-2 border-primary shadow-lg scale-105 relative">
-              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary">
+            {/* Pro - Popular */}
+            <Card className="bg-[#141414] border-2 border-emerald-500/50 relative scale-105 shadow-xl shadow-emerald-500/10">
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white">
                 Most Popular
               </Badge>
-              
-              <CardHeader className="text-center pb-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center shadow-lg">
-                  <Crown className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-2xl">Professional</CardTitle>
-                <CardDescription className="text-base">For growing businesses</CardDescription>
+              <CardContent className="p-8">
+                <h3 className="text-xl font-bold text-white mb-2">Pro</h3>
+                <p className="text-white/50 text-sm mb-6">For individuals who need more</p>
                 
-                <div className="mt-6 space-y-2">
-                  <div className="text-4xl font-bold text-primary">$499</div>
-                  <div className="text-sm text-muted-foreground">per month</div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                    7-day free trial
-                  </Badge>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-emerald-400">$9.99</span>
+                  <span className="text-white/50">/month</span>
                 </div>
-              </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
+                <div className="space-y-3 mb-8">
                   {[
-                    "5 Custom GPT assistants",
-                    "2,500 queries per month",
-                    "5GB knowledge base storage",
-                    "Up to 10 team seats",
-                    "Advanced analytics",
-                    "White-label deployment",
-                    "Remove UltriumAI branding",
+                    "Unlimited passwords",
+                    "100 threat scans/month",
+                    "5 monitored assets",
+                    "Priority dark web alerts",
+                    "Secure file storage (1GB)",
                     "Priority support",
-                    "Advanced integrations"
                   ].map((feature, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                      <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <span className="text-sm text-white/70">{feature}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
-
-              <CardFooter>
-                <Button className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90" asChild>
-                  <Link to="/ai-studio">
-                    Start Free Trial
-                    <ArrowRight className="w-4 h-4 ml-2" />
+              <CardFooter className="p-8 pt-0">
+                <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white" asChild>
+                  <Link to="/safesuite/billing">
+                    Upgrade to Pro
+                    <Sparkles className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardFooter>
             </Card>
 
-            {/* Enterprise GPT Plan */}
-            <Card className="bg-card border-2 border-border hover:border-primary/40 transition-all duration-300">
-              <CardHeader className="text-center pb-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                  <Building2 className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-2xl">Enterprise</CardTitle>
-                <CardDescription className="text-base">For large-scale deployments</CardDescription>
+            {/* Business */}
+            <Card className="bg-[#141414] border-white/10 hover:border-emerald-500/30 transition-all">
+              <CardContent className="p-8">
+                <h3 className="text-xl font-bold text-white mb-2">Business</h3>
+                <p className="text-white/50 text-sm mb-6">For teams and organizations</p>
                 
-                <div className="mt-6 space-y-2">
-                  <div className="text-4xl font-bold text-primary">Custom</div>
-                  <div className="text-sm text-muted-foreground">Contact for pricing</div>
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-white">$15</span>
+                  <span className="text-white/50">/user/month</span>
                 </div>
-              </CardHeader>
 
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
+                <div className="space-y-3 mb-8">
                   {[
-                    "25+ Custom GPT assistants",
-                    "High-volume query limits",
-                    "25GB+ data storage",
-                    "Unlimited team seats",
-                    "Enterprise security & compliance",
-                    "Dedicated account manager",
-                    "24/7 priority support",
-                    "On-premise deployment",
-                    "Custom training & setup"
+                    "Everything in Pro",
+                    "Unlimited team members",
+                    "Shared password vaults",
+                    "Admin controls & audit logs",
+                    "SSO integration",
+                    "Dedicated support",
                   ].map((feature, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                      <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <span className="text-sm text-white/70">{feature}</span>
                     </div>
                   ))}
                 </div>
               </CardContent>
-
-              <CardFooter>
-                <Button className="w-full" variant="outline" asChild>
-                  <Link to="/contact">
-                    Contact Sales
-                    <ArrowRight className="w-4 h-4 ml-2" />
+              <CardFooter className="p-8 pt-0">
+                <Button variant="outline" className="w-full border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10" asChild>
+                  <Link to="/safesuite/billing">
+                    Start Business Trial
+                    <Users className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardFooter>
@@ -206,57 +161,194 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Ultrium Vanguard - Contact for Pricing */}
-      <section id="vanguard" className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* AI Studio Section */}
+      <section id="ai-studio" className="py-20 px-4 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4">
-              <Shield className="h-4 w-4 mr-2" />
-              Enterprise Security
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ultrium Vanguard™</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              All-in-one AI-powered security operations platform. Enterprise pricing tailored to your needs.
+            <div className="inline-flex items-center justify-center px-6 py-3 bg-black rounded-xl shadow-lg shadow-primary/20 mb-6">
+              <img src={aiStudioLogo} alt="AI Studio" className="h-12 w-auto" />
+            </div>
+            <p className="text-lg text-white/50 max-w-xl mx-auto">
+              Build custom GPT assistants trained on your data. No coding required.
             </p>
           </div>
 
-          <Card className="max-w-4xl mx-auto bg-gradient-to-br from-card to-primary/5 border-2 border-primary/20">
-            <CardContent className="p-8 md:p-12">
-              <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Starter */}
+            <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
+              <CardContent className="p-8">
+                <h3 className="text-xl font-bold text-white mb-2">Starter</h3>
+                <p className="text-white/50 text-sm mb-6">For small teams getting started</p>
+                
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-white">$99</span>
+                  <span className="text-white/50">/month</span>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {[
+                    "1 Custom GPT",
+                    "500 queries/month",
+                    "1GB knowledge base",
+                    "3 team seats",
+                    "API access",
+                    "Email support",
+                  ].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-sm text-white/70">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="p-8 pt-0">
+                <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+                  <Link to="/dashboard">
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Professional */}
+            <Card className="bg-[#141414] border-2 border-primary/50 relative scale-105 shadow-xl shadow-primary/10">
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white">
+                Most Popular
+              </Badge>
+              <CardContent className="p-8">
+                <h3 className="text-xl font-bold text-white mb-2">Professional</h3>
+                <p className="text-white/50 text-sm mb-6">For growing businesses</p>
+                
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-primary">$499</span>
+                  <span className="text-white/50">/month</span>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {[
+                    "5 Custom GPTs",
+                    "2,500 queries/month",
+                    "5GB knowledge base",
+                    "10 team seats",
+                    "White-label deployment",
+                    "Priority support",
+                  ].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-sm text-white/70">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="p-8 pt-0">
+                <Button className="w-full bg-primary hover:bg-primary/90" asChild>
+                  <Link to="/dashboard">
+                    Start Free Trial
+                    <Brain className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Enterprise */}
+            <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
+              <CardContent className="p-8">
+                <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
+                <p className="text-white/50 text-sm mb-6">For large-scale deployments</p>
+                
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-white">Custom</span>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {[
+                    "25+ Custom GPTs",
+                    "Unlimited queries",
+                    "25GB+ storage",
+                    "Unlimited seats",
+                    "On-premise deployment",
+                    "24/7 dedicated support",
+                  ].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                      <span className="text-sm text-white/70">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="p-8 pt-0">
+                <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10" asChild>
+                  <Link to="/contact">
+                    Contact Sales
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Vanguard Section */}
+      <section id="vanguard" className="py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center px-6 py-3 bg-black rounded-xl shadow-lg shadow-cyan-500/20 mb-6">
+              <img src={vanguardLogo} alt="Vanguard" className="h-12 w-auto" />
+            </div>
+            <p className="text-lg text-white/50 max-w-xl mx-auto">
+              Enterprise AI-powered cybersecurity operations platform for MSPs and large organizations.
+            </p>
+          </div>
+
+          <Card className="bg-gradient-to-br from-[#141414] to-cyan-500/5 border-cyan-500/30">
+            <CardContent className="p-10">
+              <div className="grid md:grid-cols-2 gap-10">
                 <div>
-                  <h3 className="text-2xl font-bold mb-6">Complete Security Suite</h3>
-                  <div className="space-y-4">
+                  <Badge className="mb-4 bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Enterprise Security
+                  </Badge>
+                  <h3 className="text-3xl font-bold text-white mb-4">Complete Security Suite</h3>
+                  <p className="text-white/50 mb-6">
+                    Everything you need to protect your organization with AI-powered threat detection and response.
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
                     {[
-                      { icon: Shield, text: "XDR/EDR Threat Detection" },
-                      { icon: Network, text: "Network Scanning & Discovery" },
-                      { icon: Cpu, text: "Penetration Testing Tools" },
-                      { icon: Headphones, text: "AI-Powered Service Desk" },
-                      { icon: Check, text: "Security Compliance Monitoring" },
-                      { icon: Check, text: "Real-time Threat Intelligence" }
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <item.icon className="w-5 h-5 text-primary flex-shrink-0" />
-                        <span>{item.text}</span>
+                      "XDR/EDR Detection",
+                      "SIEM & Log Analysis",
+                      "Compliance Monitoring",
+                      "Vulnerability Scanning",
+                      "AI Security Copilot",
+                      "Managed SOC Services",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-cyan-400 flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                
-                <div className="flex flex-col justify-center items-center text-center bg-background/50 rounded-xl p-8">
-                  <div className="text-4xl font-bold text-primary mb-2">Enterprise Pricing</div>
-                  <p className="text-muted-foreground mb-6">
-                    Tailored to your organization's security needs
+
+                <div className="flex flex-col justify-center items-center text-center bg-black/50 rounded-2xl p-8 border border-cyan-500/20">
+                  <Lock className="h-10 w-10 text-cyan-400 mb-4" />
+                  <h4 className="text-2xl font-bold text-white mb-2">Enterprise Pricing</h4>
+                  <p className="text-white/50 mb-6 text-sm">
+                    Tailored to your organization's security requirements
                   </p>
                   <div className="space-y-3 w-full">
-                    <Button className="w-full" size="lg" asChild>
+                    <Button className="w-full bg-cyan-500 hover:bg-cyan-600 text-white" asChild>
                       <Link to="/contact">
-                        Request Demo & Pricing
-                        <ArrowRight className="w-4 h-4 ml-2" />
+                        Request Demo & Quote
+                        <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
                     </Button>
-                    <Button variant="outline" className="w-full" onClick={() => window.location.href = 'https://vanguard.ultriumai.com'}>
+                    <Button variant="outline" className="w-full border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" asChild>
+                      <a href="https://vanguard.ultriumai.com">
                         Explore Vanguard
-                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </a>
                     </Button>
                   </div>
                 </div>
@@ -266,77 +358,35 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Custom Development Services */}
-      <section id="custom" className="py-16 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <Badge variant="outline" className="mb-4">
-              <Code className="h-4 w-4 mr-2" />
-              We Build It For You
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Custom AI Development</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Need something built specifically for your business? Our team creates custom solutions.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {[
-              { icon: Brain, title: "Custom GPT Training", desc: "AI assistants trained on your data" },
-              { icon: Blocks, title: "API Integrations", desc: "Connect to your existing systems" },
-              { icon: Building2, title: "White-Label Solutions", desc: "Your brand, our technology" },
-              { icon: Users, title: "Dedicated Support", desc: "Hands-on implementation help" }
-            ].map((service, i) => (
-              <Card key={i} className="text-center p-6 hover:border-primary/40 transition-all">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <service.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-semibold mb-2">{service.title}</h3>
-                <p className="text-sm text-muted-foreground">{service.desc}</p>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Button size="lg" asChild>
-              <Link to="/contact">
-                Schedule Free Consultation
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact CTA */}
-      <section className="py-16 bg-gradient-to-br from-primary/10 to-purple-600/10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Not sure which solution is right for you? Let's talk.
+      {/* CTA Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">Not Sure Which Plan?</h2>
+          <p className="text-white/50 mb-8">
+            Let's talk about your needs. We'll help you find the perfect solution.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" variant="outline" className="gap-2" asChild>
-              <a href="tel:804-821-1410">
-                <Phone className="w-5 h-5" />
-                804-821-1410
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10" asChild>
+              <a href="tel:888-884-1410">
+                <Phone className="mr-2 h-5 w-5" />
+                888-884-1410
               </a>
             </Button>
             <Button size="lg" asChild>
               <Link to="/contact">
                 Schedule a Call
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
 
-          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
+          <div className="mt-8 flex items-center justify-center gap-6 text-sm text-white/40">
             <span>🇺🇸 Veteran-Owned</span>
             <span>•</span>
             <span>15+ Years IT Experience</span>
             <span>•</span>
-            <span>Security-First Approach</span>
+            <span>Security-First</span>
           </div>
         </div>
       </section>
