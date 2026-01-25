@@ -3,7 +3,7 @@
  * Persistent chat assistant that stays available across all SafeSuite pages
  */
 
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,11 +12,12 @@ import { X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
 import { useSafeAssist } from '@/hooks/useSafeAssist';
 import { AIMessageContent } from '@/components/apps/safescan/AIMessageContent';
 import { cn } from '@/lib/utils';
+import { useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
 import safeassistLogo from '@/assets/safeassist-logo.png';
 import safeassistHorizontal from '@/assets/safeassist-logo-horizontal.png';
 
 export function FloatingSafeAssist() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, openAssistant, closeAssistant } = useFloatingSafeAssist();
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -58,7 +59,7 @@ export function FloatingSafeAssist() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - shown when closed */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -68,7 +69,7 @@ export function FloatingSafeAssist() {
             className="fixed bottom-6 right-6 z-50"
           >
             <Button
-              onClick={() => setIsOpen(true)}
+              onClick={openAssistant}
               className="h-14 w-14 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 shadow-lg shadow-cyan-500/30 p-0"
             >
               <img src={safeassistLogo} alt="SafeAssist" className="h-9 w-9 object-contain" />
@@ -115,7 +116,7 @@ export function FloatingSafeAssist() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
-                  onClick={() => setIsOpen(false)}
+                  onClick={closeAssistant}
                 >
                   <X className="h-4 w-4" />
                 </Button>
