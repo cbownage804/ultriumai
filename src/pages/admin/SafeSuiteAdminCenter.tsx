@@ -46,7 +46,11 @@ import {
   DollarSign,
   Calendar,
   Mail,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck,
+  ShieldOff,
+  Globe,
+  Clock
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { SAFESUITE_TIERS, type SafeSuiteTier } from '@/config/safeSuiteTiers';
@@ -65,6 +69,10 @@ interface SafeSuiteSubscriber {
   // Joined data
   email?: string;
   full_name?: string;
+  // Security data
+  mfa_enabled?: boolean;
+  last_ip?: string;
+  last_login?: string;
 }
 
 interface AdminStats {
@@ -149,23 +157,55 @@ const SafeSuiteAdminCenter = () => {
       // Get all user IDs to fetch profiles
       const userIds = subscriptions?.map(s => s.user_id) || [];
       
-      // Load profiles for these users - query by user_id, not id
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, user_id, email, full_name')
-        .in('user_id', userIds);
+      // Load profiles, security settings, and last login info in parallel
+      const [profilesResult, securityResult, lastLoginsResult] = await Promise.all([
+        // Profiles
+        supabase
+          .from('profiles')
+          .select('id, user_id, email, full_name')
+          .in('user_id', userIds),
+        // Security settings (MFA status)
+        supabase
+          .from('security_settings')
+          .select('user_id, two_factor_enabled')
+          .in('user_id', userIds),
+        // Audit logs for last login IP and time
+        supabase
+          .from('audit_logs')
+          .select('user_id, ip_address, created_at')
+          .in('user_id', userIds)
+          .eq('action', 'login')
+          .order('created_at', { ascending: false })
+      ]);
 
-      if (profileError) throw profileError;
+      const profiles = profilesResult.data || [];
+      const securitySettings = securityResult.data || [];
+      const lastLogins = lastLoginsResult.data || [];
 
-      // Create profile lookup map keyed by user_id
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      // Create lookup maps
+      const profileMap = new Map(profiles.map(p => [p.user_id, p]));
+      const securityMap = new Map(securitySettings.map(s => [s.user_id, s]));
+      
+      // Get first (most recent) login per user
+      const lastLoginMap = new Map<string, { ip: string; time: string }>();
+      for (const login of lastLogins) {
+        if (!lastLoginMap.has(login.user_id)) {
+          lastLoginMap.set(login.user_id, {
+            ip: String(login.ip_address || 'Unknown'),
+            time: login.created_at
+          });
+        }
+      }
 
-      // Merge subscription data with profile data
+      // Merge subscription data with profile and security data
       const enrichedSubscribers: SafeSuiteSubscriber[] = (subscriptions || []).map(sub => ({
         ...sub,
         tier: sub.tier as SafeSuiteTier,
         email: profileMap.get(sub.user_id)?.email || 'Unknown',
-        full_name: profileMap.get(sub.user_id)?.full_name || ''
+        full_name: profileMap.get(sub.user_id)?.full_name || '',
+        mfa_enabled: securityMap.get(sub.user_id)?.two_factor_enabled || false,
+        last_ip: lastLoginMap.get(sub.user_id)?.ip || undefined,
+        last_login: lastLoginMap.get(sub.user_id)?.time || undefined
       }));
 
       setSubscribers(enrichedSubscribers);
@@ -509,18 +549,19 @@ const SafeSuiteAdminCenter = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>User</TableHead>
+                    <TableHead>MFA</TableHead>
+                    <TableHead>Last Login</TableHead>
                     <TableHead>Tier</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Period End</TableHead>
                     <TableHead>Stripe</TableHead>
-                    <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSubscribers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         No subscribers found
                       </TableCell>
                     </TableRow>
@@ -534,6 +575,37 @@ const SafeSuiteAdminCenter = () => {
                               <div className="text-sm text-muted-foreground">{subscriber.full_name}</div>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {subscriber.mfa_enabled ? (
+                            <Badge className="bg-green-500/20 text-green-700 border-green-500/30">
+                              <ShieldCheck className="h-3 w-3 mr-1" />
+                              Enabled
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-muted-foreground">
+                              <ShieldOff className="h-3 w-3 mr-1" />
+                              Off
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {subscriber.last_login ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                {format(new Date(subscriber.last_login), 'MMM d, HH:mm')}
+                              </div>
+                              {subscriber.last_ip && (
+                                <div className="flex items-center gap-1 text-xs font-mono text-muted-foreground">
+                                  <Globe className="h-3 w-3" />
+                                  {subscriber.last_ip}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">Never</span>
+                          )}
                         </TableCell>
                         <TableCell>{getTierBadge(subscriber.tier)}</TableCell>
                         <TableCell>{getStatusBadge(subscriber.status)}</TableCell>
@@ -558,9 +630,6 @@ const SafeSuiteAdminCenter = () => {
                               Manual
                             </Badge>
                           )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {format(new Date(subscriber.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         <TableCell className="text-right">
                           <Dialog>
