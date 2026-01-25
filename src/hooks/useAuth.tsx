@@ -35,19 +35,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener
+    // Get initial session FIRST before setting up listener
+    // This prevents race conditions where the listener fires before initial session is set
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Fetch user profile
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+          .then(({ data: profileData }) => {
+            setProfile(profileData);
+          });
+      }
+      
+      setLoading(false);
+    });
+
+    // Set up auth state listener AFTER getting initial session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, newSession) => {
+        // Don't set user to null during token refresh - only update if we have a new session
+        // This prevents the ProtectedRoute from redirecting during token refresh
+        if (event === 'TOKEN_REFRESHED' && newSession) {
+          setSession(newSession);
+          setUser(newSession.user);
+          return;
+        }
         
-        if (session?.user) {
-          // Fetch user profile
+        // For sign out or session expiry, properly clear state
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+        
+        // For other events (SIGNED_IN, USER_UPDATED, etc.)
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        if (newSession?.user) {
+          // Fetch user profile - use setTimeout to avoid Supabase deadlock
           setTimeout(async () => {
             const { data: profileData } = await supabase
               .from('profiles')
               .select('*')
-              .eq('user_id', session.user.id)
+              .eq('user_id', newSession.user.id)
               .single();
             
             setProfile(profileData);
@@ -55,17 +93,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           setProfile(null);
         }
-        
-        setLoading(false);
       }
     );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
