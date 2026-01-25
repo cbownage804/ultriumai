@@ -207,12 +207,22 @@ const AuthPage = () => {
 
         <Card>
           <CardHeader>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {/* Vanguard is invite-only - no signup allowed */}
+            {returnProduct === 'vanguard' ? (
+              <div className="text-center">
+                <h2 className="text-lg font-semibold">Sign In</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Vanguard access is by invitation only
+                </p>
+              </div>
+            ) : (
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="signin">Sign In</TabsTrigger>
+                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
           </CardHeader>
 
           <CardContent>
@@ -240,168 +250,230 @@ const AuthPage = () => {
               </Alert>
             )}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              {/* Sign In Tab */}
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+            {/* For Vanguard, only show sign-in (no tabs needed) */}
+            {returnProduct === 'vanguard' ? (
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input
+                    id="signin-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <div className="relative">
                     <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="signin-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <div className="relative">
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? 'Signing In...' : 'Sign In'}
+                </Button>
+                
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <Link to="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+                    Forgot your password?
+                  </Link>
+                </div>
+
+                <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Don't have access?{' '}
+                    <a 
+                      href="https://vanguard.ultriumai.com/auth" 
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Request an invitation
+                    </a>
+                  </p>
+                </div>
+              </form>
+            ) : (
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                {/* Sign In Tab */}
+                <TabsContent value="signin">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">Email</Label>
                       <Input
-                        id="signin-password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        id="signin-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
                     </div>
-                  </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Signing In...' : 'Sign In'}
-                  </Button>
-                  
-                  <div className="flex flex-col items-center gap-2 pt-2">
-                    <Link to="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
-                      Forgot your password?
-                    </Link>
-                    <Link to="/safesuite/auth/mfa-recovery" className="text-sm text-muted-foreground hover:text-primary">
-                      Lost access to your authenticator?
-                    </Link>
-                  </div>
-                </form>
-              </TabsContent>
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password">Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="signin-password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Enter your password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
 
-              {/* Sign Up Tab */}
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                    />
-                  </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Signing In...' : 'Sign In'}
+                    </Button>
+                    
+                    <div className="flex flex-col items-center gap-2 pt-2">
+                      <Link to="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+                        Forgot your password?
+                      </Link>
+                      <Link to="/safesuite/auth/mfa-recovery" className="text-sm text-muted-foreground hover:text-primary">
+                        Lost access to your authenticator?
+                      </Link>
+                    </div>
+                  </form>
+                </TabsContent>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="company-name">Company Name</Label>
-                    <Input
-                      id="company-name"
-                      type="text"
-                      placeholder="Your Company Inc."
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="account-type">Account Type</Label>
-                    <Select value={accountType} onValueChange={setAccountType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select account type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="business">
-                          <div className="flex items-center">
-                            <Building className="h-4 w-4 mr-2" />
-                            Business
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="msp">
-                          <div className="flex items-center">
-                            <Users className="h-4 w-4 mr-2" />
-                            MSP/MSSP
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="individual">
-                          <div className="flex items-center">
-                            <Lock className="h-4 w-4 mr-2" />
-                            Individual
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
+                {/* Sign Up Tab */}
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
                       <Input
-                        id="signup-password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Create a strong password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        id="signup-name"
+                        type="text"
+                        placeholder="John Doe"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         required
                       />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Creating Account...' : 'Create Account'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                    <div className="space-y-2">
+                      <Label htmlFor="company-name">Company Name</Label>
+                      <Input
+                        id="company-name"
+                        type="text"
+                        placeholder="Your Company Inc."
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="account-type">Account Type</Label>
+                      <Select value={accountType} onValueChange={setAccountType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select account type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="business">
+                            <div className="flex items-center">
+                              <Building className="h-4 w-4 mr-2" />
+                              Business
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="msp">
+                            <div className="flex items-center">
+                              <Users className="h-4 w-4 mr-2" />
+                              MSP/MSSP
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="individual">
+                            <div className="flex items-center">
+                              <Lock className="h-4 w-4 mr-2" />
+                              Individual
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="signup-password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Create a strong password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        placeholder="Confirm your password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Creating Account...' : 'Create Account'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
         </Card>
 
