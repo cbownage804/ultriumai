@@ -1,18 +1,22 @@
 /**
  * Floating SafeAssist Chat Widget
- * Persistent chat assistant that stays available across all SafeSuite pages
+ * Persistent chat assistant with voice support and animated orb
  */
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConversation } from '@elevenlabs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Send, Loader2, Minimize2, Maximize2 } from 'lucide-react';
+import { X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
 import { useSafeAssist } from '@/hooks/useSafeAssist';
 import { AIMessageContent } from '@/components/apps/safescan/AIMessageContent';
 import { cn } from '@/lib/utils';
 import { useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
+import { VoiceOrb } from './VoiceOrb';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import safeassistLogo from '@/assets/safeassist-logo.png';
 import safeassistHorizontal from '@/assets/safeassist-logo-horizontal.png';
 
@@ -20,8 +24,11 @@ export function FloatingSafeAssist() {
   const { isOpen, openAssistant, closeAssistant } = useFloatingSafeAssist();
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState('');
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const {
     messages,
@@ -29,19 +36,49 @@ export function FloatingSafeAssist() {
     sendMessage,
   } = useSafeAssist();
 
+  // ElevenLabs voice conversation
+  const conversation = useConversation({
+    onConnect: () => {
+      console.log('Voice connected');
+    },
+    onDisconnect: () => {
+      console.log('Voice disconnected');
+      setIsVoiceMode(false);
+    },
+    onMessage: (message: any) => {
+      // Handle user transcript - add to chat
+      if (message?.user_transcription_event?.user_transcript) {
+        const transcript = message.user_transcription_event.user_transcript;
+        sendMessage(transcript);
+      }
+    },
+    onError: (error) => {
+      console.error('Voice error:', error);
+      toast({
+        title: "Voice Error",
+        description: "Connection issue. Please try again.",
+        variant: "destructive"
+      });
+      setIsVoiceMode(false);
+    },
+  });
+
+  const isVoiceActive = conversation.status === 'connected';
+  const isSpeaking = conversation.isSpeaking;
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messagesEndRef.current && isOpen && !isMinimized) {
+    if (messagesEndRef.current && isOpen && !isMinimized && !isVoiceMode) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isTyping, isOpen, isMinimized]);
+  }, [messages, isTyping, isOpen, isMinimized, isVoiceMode]);
 
   // Focus input when opening
   useEffect(() => {
-    if (isOpen && !isMinimized && inputRef.current) {
+    if (isOpen && !isMinimized && !isVoiceMode && inputRef.current) {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [isOpen, isMinimized]);
+  }, [isOpen, isMinimized, isVoiceMode]);
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;
@@ -56,6 +93,52 @@ export function FloatingSafeAssist() {
       handleSend();
     }
   };
+
+  const startVoiceConversation = useCallback(async () => {
+    setIsConnecting(true);
+    try {
+      // Request microphone permission
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Get conversation token from edge function
+      const { data, error } = await supabase.functions.invoke('elevenlabs-conversation-token');
+
+      if (error || !data?.token) {
+        throw new Error(error?.message || 'Voice not configured');
+      }
+
+      // Start the conversation with WebRTC
+      await conversation.startSession({
+        conversationToken: data.token,
+        connectionType: 'webrtc',
+      });
+      
+      setIsVoiceMode(true);
+    } catch (error: any) {
+      console.error('Failed to start voice:', error);
+      
+      if (error.name === 'NotAllowedError') {
+        toast({
+          title: "Microphone Access Required",
+          description: "Please enable microphone access to use voice.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Voice Unavailable",
+          description: error.message || "Could not start voice conversation.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [conversation, toast]);
+
+  const stopVoiceConversation = useCallback(async () => {
+    await conversation.endSession();
+    setIsVoiceMode(false);
+  }, [conversation]);
 
   return (
     <>
@@ -92,7 +175,7 @@ export function FloatingSafeAssist() {
               opacity: 1, 
               y: 0, 
               scale: 1,
-              height: isMinimized ? 'auto' : 500
+              height: isMinimized ? 'auto' : isVoiceMode ? 320 : 500
             }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             className="fixed bottom-6 right-6 z-50 w-96 bg-[#0a0a0a] border border-cyan-500/30 rounded-2xl shadow-2xl shadow-cyan-500/10 overflow-hidden flex flex-col"
@@ -101,7 +184,14 @@ export function FloatingSafeAssist() {
             <div className="flex items-center justify-between p-3 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-transparent">
               <div className="flex items-center gap-2">
                 <img src={safeassistLogo} alt="SafeAssist" className="h-8 w-8 object-contain" />
-                <span className="font-semibold text-cyan-400">SafeAssist</span>
+                <div>
+                  <span className="font-semibold text-cyan-400">SafeAssist</span>
+                  {isVoiceActive && (
+                    <span className="ml-2 text-xs text-emerald-400 animate-pulse">
+                      {isSpeaking ? '● Speaking' : '● Listening'}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-1">
                 <Button
@@ -116,7 +206,10 @@ export function FloatingSafeAssist() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
-                  onClick={closeAssistant}
+                  onClick={() => {
+                    if (isVoiceActive) stopVoiceConversation();
+                    closeAssistant();
+                  }}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -126,95 +219,140 @@ export function FloatingSafeAssist() {
             {/* Content - Hidden when minimized */}
             {!isMinimized && (
               <>
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.length === 0 && (
-                      <div className="text-center py-8">
-                        <img src={safeassistHorizontal} alt="SafeAssist" className="h-10 mx-auto mb-4 opacity-60" />
-                        <p className="text-white/60 text-sm">
-                          Ask me anything about security or how to use SafeSuite!
-                        </p>
-                      </div>
-                    )}
+                {/* Voice Mode View */}
+                {isVoiceMode ? (
+                  <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-[#0a0a0a] to-[#050510]">
+                    <VoiceOrb 
+                      isActive={isVoiceActive}
+                      isSpeaking={isSpeaking}
+                      isListening={isVoiceActive && !isSpeaking}
+                      size="lg"
+                    />
                     
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          "flex gap-3",
-                          message.role === 'user' ? 'justify-end' : 'justify-start'
+                    <p className="mt-6 text-white/60 text-sm text-center">
+                      {isSpeaking ? 'SafeAssist is speaking...' : 'Listening...'}
+                    </p>
+                    
+                    <Button
+                      onClick={stopVoiceConversation}
+                      variant="outline"
+                      className="mt-4 border-red-500/50 text-red-400 hover:bg-red-500/20 hover:text-red-300"
+                    >
+                      <PhoneOff className="h-4 w-4 mr-2" />
+                      End Call
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Messages */}
+                    <ScrollArea className="flex-1 p-4">
+                      <div className="space-y-4">
+                        {messages.length === 0 && (
+                          <div className="text-center py-8">
+                            <img src={safeassistHorizontal} alt="SafeAssist" className="h-10 mx-auto mb-4 opacity-60" />
+                            <p className="text-white/60 text-sm">
+                              Ask me anything about security or how to use SafeSuite!
+                            </p>
+                          </div>
                         )}
-                      >
-                        {message.role === 'assistant' && (
-                          <div className="flex-shrink-0">
+                        
+                        {messages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={cn(
+                              "flex gap-3",
+                              message.role === 'user' ? 'justify-end' : 'justify-start'
+                            )}
+                          >
+                            {message.role === 'assistant' && (
+                              <div className="flex-shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center border border-cyan-500/30">
+                                  <img src={safeassistLogo} alt="SafeAssist" className="w-5 h-5 object-contain" />
+                                </div>
+                              </div>
+                            )}
+                            <div
+                              className={cn(
+                                "max-w-[80%] rounded-2xl px-4 py-2 text-sm",
+                                message.role === 'user'
+                                  ? 'bg-cyan-500/20 text-white rounded-br-sm'
+                                  : 'bg-[#141414] border border-gray-800 rounded-bl-sm'
+                              )}
+                            >
+                              {message.role === 'assistant' ? (
+                                <AIMessageContent content={message.content} />
+                              ) : (
+                                <p>{message.content}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {isTyping && (
+                          <div className="flex gap-3">
                             <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center border border-cyan-500/30">
                               <img src={safeassistLogo} alt="SafeAssist" className="w-5 h-5 object-contain" />
                             </div>
+                            <div className="bg-[#141414] border border-gray-800 rounded-2xl rounded-bl-sm px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                <span className="h-2 w-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                <span className="h-2 w-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                <span className="h-2 w-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                              </div>
+                            </div>
                           </div>
                         )}
-                        <div
+                        
+                        <div ref={messagesEndRef} />
+                      </div>
+                    </ScrollArea>
+
+                    {/* Input */}
+                    <div className="p-3 border-t border-cyan-500/20 bg-[#0a0a0a]">
+                      <div className="flex gap-2">
+                        {/* Voice Button */}
+                        <Button
+                          onClick={startVoiceConversation}
+                          disabled={isConnecting || isTyping}
+                          variant="outline"
+                          size="icon"
                           className={cn(
-                            "max-w-[80%] rounded-2xl px-4 py-2 text-sm",
-                            message.role === 'user'
-                              ? 'bg-cyan-500/20 text-white rounded-br-sm'
-                              : 'bg-[#141414] border border-gray-800 rounded-bl-sm'
+                            "shrink-0 border-gray-700 hover:border-cyan-500/50 hover:bg-cyan-500/10",
+                            isConnecting && "animate-pulse"
                           )}
                         >
-                          {message.role === 'assistant' ? (
-                            <AIMessageContent content={message.content} />
+                          {isConnecting ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
                           ) : (
-                            <p>{message.content}</p>
+                            <Mic className="h-4 w-4 text-cyan-400" />
                           )}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {isTyping && (
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center border border-cyan-500/30">
-                          <img src={safeassistLogo} alt="SafeAssist" className="w-5 h-5 object-contain" />
-                        </div>
-                        <div className="bg-[#141414] border border-gray-800 rounded-2xl rounded-bl-sm px-4 py-3">
-                          <div className="flex items-center gap-1">
-                            <span className="h-2 w-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="h-2 w-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="h-2 w-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div ref={messagesEndRef} />
-                  </div>
-                </ScrollArea>
+                        </Button>
 
-                {/* Input */}
-                <div className="p-3 border-t border-cyan-500/20 bg-[#0a0a0a]">
-                  <div className="flex gap-2">
-                    <Input
-                      ref={inputRef}
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Ask SafeAssist..."
-                      className="bg-[#141414] border-gray-700 focus:border-cyan-500/50 text-sm"
-                      disabled={isTyping}
-                    />
-                    <Button
-                      onClick={handleSend}
-                      disabled={!input.trim() || isTyping}
-                      className="bg-cyan-500 hover:bg-cyan-400 text-black"
-                      size="icon"
-                    >
-                      {isTyping ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                        <Input
+                          ref={inputRef}
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          placeholder="Ask SafeAssist..."
+                          className="bg-[#141414] border-gray-700 focus:border-cyan-500/50 text-sm"
+                          disabled={isTyping}
+                        />
+                        <Button
+                          onClick={handleSend}
+                          disabled={!input.trim() || isTyping}
+                          className="bg-cyan-500 hover:bg-cyan-400 text-black"
+                          size="icon"
+                        >
+                          {isTyping ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </>
             )}
           </motion.div>
