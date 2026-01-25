@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { Shield, Lock, Building, Users, Eye, EyeOff } from 'lucide-react';
+import { Lock, Building, Users, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AuthBrandHeader } from '@/components/auth/AuthBrandHeader';
 
 const AuthPage = () => {
   const [activeTab, setActiveTab] = useState('signin');
@@ -22,6 +23,10 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Prevent double-submit (can cause a successful signup + a second failing request,
+  // leaving the UI stuck showing "Database error saving new user").
+  const submitLockRef = useRef(false);
 
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -36,8 +41,17 @@ const AuthPage = () => {
     }
   }, [user, navigate, from]);
 
+  useEffect(() => {
+    // Don’t keep sign-up errors visible when switching tabs.
+    setError('');
+  }, [activeTab]);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
     setLoading(true);
     setError('');
 
@@ -62,23 +76,30 @@ const AuthPage = () => {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
+      submitLockRef.current = false;
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+
     setLoading(true);
     setError('');
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
+      submitLockRef.current = false;
       return;
     }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       setLoading(false);
+      submitLockRef.current = false;
       return;
     }
 
@@ -92,6 +113,15 @@ const AuthPage = () => {
       if (error) {
         if (error.message.includes('User already registered')) {
           setError('An account with this email already exists. Please sign in instead.');
+        } else if (
+          error.message.includes('users_email_partial_key') ||
+          error.message.toLowerCase().includes('duplicate key value')
+        ) {
+          setError('An account with this email already exists. Please sign in instead.');
+        } else if (error.message.includes('Database error saving new user')) {
+          setError(
+            'This email may already be registered. Try signing in, or check your inbox/spam for a confirmation email before trying again.'
+          );
         } else {
           setError(error.message);
         }
@@ -106,6 +136,7 @@ const AuthPage = () => {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -113,15 +144,7 @@ const AuthPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center mb-4">
-            <Shield className="h-12 w-12 text-primary mr-2" />
-            <h1 className="text-3xl font-bold text-foreground">SafePass</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Enterprise Password Management Platform
-          </p>
-        </div>
+        <AuthBrandHeader />
 
         <Card>
           <CardHeader>
