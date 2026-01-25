@@ -67,40 +67,54 @@ export default function SafeWebProduct() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroWeb})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/90 via-[#0a0a0a]/70 to-[#0a0a0a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/90 via-[#0a0a0a]/95 to-[#0a0a0a]" />
         
-        <div className="relative z-10 text-center px-4 py-20">
-          <Badge className="mb-6 bg-violet-500/10 text-violet-400 border-violet-500/30">
-            Included with SafeSuite
-          </Badge>
-          <div className="flex justify-center mb-8">
-            <div className="bg-black px-12 py-6 rounded-xl shadow-[0_0_60px_rgba(139,92,246,0.3)] border border-violet-500/20">
+        <div className="relative z-10 flex items-center justify-center px-4 py-20">
+          <div className="text-center max-w-lg p-8 rounded-2xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_0_60px_rgba(139,92,246,0.3)]">
+            {/* Product Logo - Large and prominent */}
+            <div className="mb-8">
               <img 
                 src={safewebLogo} 
-                alt="SafeWeb" 
-                className="h-24 w-auto object-contain"
+                alt="SafeWeb"
+                className="h-24 md:h-28 w-auto mx-auto object-contain drop-shadow-2xl"
               />
             </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Dark Web Intelligence
-          </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-            Continuous monitoring of the dark web for your exposed credentials and data leaks.
-            Know when you've been breached before criminals exploit your data.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth?tab=signup">
-              <Button size="lg" className="bg-violet-500 hover:bg-violet-600 text-white gap-2">
-                Start Free with SafeSuite
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
+
+            {/* Tier badge */}
+            <div className="mb-6">
+              <Badge 
+                variant="outline" 
+                className="text-sm px-4 py-1.5 font-medium border-violet-500/50 text-violet-400 bg-violet-500/10"
+              >
+                Included with SafeSuite
+              </Badge>
+            </div>
+
+            {/* CTA Button */}
+            <div>
+              <Link to="/auth?tab=signup">
+                <Button 
+                  size="lg"
+                  className="gap-2 w-full text-lg py-6 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 font-semibold"
+                >
+                  Start Free with SafeSuite
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+
+              {/* Compare plans link */}
+              <Link 
+                to="/" 
+                className="inline-block mt-4 text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Learn more about SafeSuite
+              </Link>
+            </div>
           </div>
         </div>
       </section>
