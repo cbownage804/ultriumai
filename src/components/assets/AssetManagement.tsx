@@ -1,317 +1,874 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+/**
+ * SafeTrack Asset Management - Enterprise-grade Inventory System
+ * Full hardware tracking with warranty integration
+ */
+
+import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Package, Plus, Search, Filter, BarChart3, Download, QrCode } from "lucide-react";
-import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Package,
+  Plus,
+  Search,
+  BarChart3,
+  Download,
+  RefreshCw,
+  Laptop,
+  Monitor,
+  Server,
+  Wifi,
+  Mouse,
+  Printer,
+  HardDrive,
+  Smartphone,
+  MoreVertical,
+  Trash2,
+  Edit,
+  Shield,
+  MapPin,
+  Building2,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Loader2,
+  ExternalLink
+} from "lucide-react";
+import { useSafeTrackAssets, type Asset, type AssetFormData, type OfficeLocationFormData } from "@/hooks/useSafeTrackAssets";
+import { format } from "date-fns";
+
+// Category icon mapping
+const getCategoryIcon = (iconName: string | null | undefined) => {
+  switch (iconName) {
+    case 'laptop': return Laptop;
+    case 'monitor': return Monitor;
+    case 'server': return Server;
+    case 'network': return Wifi;
+    case 'mouse': return Mouse;
+    case 'printer': return Printer;
+    case 'hard-drive': return HardDrive;
+    case 'smartphone': return Smartphone;
+    default: return Package;
+  }
+};
+
+// Status badge styling
+const getStatusStyle = (status: string) => {
+  switch (status) {
+    case 'active': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+    case 'maintenance': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    case 'retired': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    case 'lost': return 'bg-red-500/20 text-red-400 border-red-500/30';
+    case 'disposed': return 'bg-red-500/20 text-red-400 border-red-500/30';
+    default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  }
+};
+
+// Condition badge styling
+const getConditionStyle = (condition: string) => {
+  switch (condition) {
+    case 'new': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+    case 'excellent': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+    case 'good': return 'bg-green-500/20 text-green-400 border-green-500/30';
+    case 'fair': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    case 'poor': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+    case 'damaged': return 'bg-red-500/20 text-red-400 border-red-500/30';
+    default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+  }
+};
+
+// Warranty status indicator
+const getWarrantyIndicator = (asset: Asset) => {
+  if (!asset.warranty_expiry) return null;
+  
+  const expiry = new Date(asset.warranty_expiry);
+  const now = new Date();
+  const thirtyDays = new Date();
+  thirtyDays.setDate(thirtyDays.getDate() + 30);
+  
+  if (expiry < now) {
+    return { icon: AlertTriangle, color: 'text-red-400', label: 'Expired' };
+  } else if (expiry <= thirtyDays) {
+    return { icon: Clock, color: 'text-amber-400', label: 'Expiring Soon' };
+  } else {
+    return { icon: CheckCircle2, color: 'text-emerald-400', label: 'Active' };
+  }
+};
 
 export const AssetManagement = () => {
+  const {
+    assets,
+    categories,
+    officeLocations,
+    stats,
+    isLoading,
+    createAsset,
+    updateAsset,
+    deleteAsset,
+    createLocation,
+    refreshWarranty,
+    isCreating,
+    isUpdating
+  } = useSafeTrackAssets();
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedLocation, setSelectedLocation] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [showAddAsset, setShowAddAsset] = useState(false);
+  const [showAddLocation, setShowAddLocation] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [refreshingAssetId, setRefreshingAssetId] = useState<string | null>(null);
 
-  // Mock data for demonstration
-  const assets = [
-    {
-      id: "1",
-      name: "Dell OptiPlex 7090",
-      category: "Hardware",
-      status: "active",
-      condition: "good",
-      assignedTo: "John Smith",
-      location: "Office Floor 2",
-      purchaseDate: "2023-01-15",
-      warrantyExpiry: "2026-01-15",
-      serialNumber: "DL789456123",
-      value: "$899.00"
-    },
-    {
-      id: "2", 
-      name: "Microsoft Office 365",
-      category: "Software",
-      status: "active",
-      condition: "excellent",
-      assignedTo: "All Staff",
-      location: "Cloud",
-      purchaseDate: "2023-03-01",
-      warrantyExpiry: "2024-03-01",
-      serialNumber: "MS365-789",
-      value: "$1,200.00"
+  // Form state
+  const [assetForm, setAssetForm] = useState<AssetFormData>({
+    name: '',
+    serial_number: '',
+    manufacturer: '',
+    model: '',
+    category_id: '',
+    office_location_id: '',
+    status: 'active',
+    condition: 'good',
+    assigned_to: '',
+    purchase_price: undefined,
+    purchase_date: '',
+    warranty_expiry: '',
+    notes: ''
+  });
+
+  const [locationForm, setLocationForm] = useState<OfficeLocationFormData>({
+    name: '',
+    address: '',
+    city: '',
+    state: '',
+    country: 'USA',
+    postal_code: '',
+    is_primary: false
+  });
+
+  // Filtered assets
+  const filteredAssets = useMemo(() => {
+    return assets.filter(asset => {
+      const matchesSearch = 
+        asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.assigned_to?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesCategory = selectedCategory === 'all' || asset.category_id === selectedCategory;
+      const matchesLocation = selectedLocation === 'all' || asset.office_location_id === selectedLocation;
+      const matchesStatus = selectedStatus === 'all' || asset.status === selectedStatus;
+
+      return matchesSearch && matchesCategory && matchesLocation && matchesStatus;
+    });
+  }, [assets, searchTerm, selectedCategory, selectedLocation, selectedStatus]);
+
+  // Handle add/edit asset
+  const handleSaveAsset = () => {
+    if (!assetForm.name.trim()) return;
+
+    if (editingAsset) {
+      updateAsset({ id: editingAsset.id, ...assetForm });
+    } else {
+      createAsset(assetForm);
     }
-  ];
 
-  const categories = [
-    { id: "all", name: "All Categories", count: assets.length },
-    { id: "hardware", name: "Hardware", count: 1 },
-    { id: "software", name: "Software", count: 1 },
-    { id: "network", name: "Network", count: 0 },
-    { id: "furniture", name: "Furniture", count: 0 }
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "inactive": return "bg-gray-100 text-gray-800";
-      case "maintenance": return "bg-yellow-100 text-yellow-800";
-      case "disposed": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
+    setShowAddAsset(false);
+    setEditingAsset(null);
+    resetAssetForm();
   };
 
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case "excellent": return "bg-green-100 text-green-800";
-      case "good": return "bg-blue-100 text-blue-800";
-      case "fair": return "bg-yellow-100 text-yellow-800";
-      case "poor": return "bg-orange-100 text-orange-800";
-      case "damaged": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
-    }
+  const resetAssetForm = () => {
+    setAssetForm({
+      name: '',
+      serial_number: '',
+      manufacturer: '',
+      model: '',
+      category_id: '',
+      office_location_id: '',
+      status: 'active',
+      condition: 'good',
+      assigned_to: '',
+      purchase_price: undefined,
+      purchase_date: '',
+      warranty_expiry: '',
+      notes: ''
+    });
   };
 
-  const handleAddAsset = () => {
-    toast.success("Add Asset functionality coming soon!");
+  const openEditAsset = (asset: Asset) => {
+    setAssetForm({
+      name: asset.name,
+      serial_number: asset.serial_number || '',
+      manufacturer: asset.manufacturer || '',
+      model: asset.model || '',
+      category_id: asset.category_id || '',
+      office_location_id: asset.office_location_id || '',
+      status: asset.status,
+      condition: asset.condition,
+      assigned_to: asset.assigned_to || '',
+      purchase_price: asset.purchase_price || undefined,
+      purchase_date: asset.purchase_date || '',
+      warranty_expiry: asset.warranty_expiry || '',
+      notes: asset.notes || ''
+    });
+    setEditingAsset(asset);
+    setShowAddAsset(true);
   };
 
-  const handleGenerateQR = (assetId: string) => {
-    toast.success(`QR Code generated for asset ${assetId}`);
+  const handleAddLocation = () => {
+    if (!locationForm.name.trim()) return;
+    createLocation(locationForm);
+    setShowAddLocation(false);
+    setLocationForm({ name: '', address: '', city: '', state: '', country: 'USA', postal_code: '', is_primary: false });
   };
 
+  const handleRefreshWarranty = async (asset: Asset) => {
+    setRefreshingAssetId(asset.id);
+    await refreshWarranty(asset);
+    setRefreshingAssetId(null);
+  };
+
+  // Export to CSV
   const handleExport = () => {
-    toast.success("Exporting asset data...");
+    const headers = ['Name', 'Serial Number', 'Manufacturer', 'Model', 'Category', 'Status', 'Condition', 'Location', 'Assigned To', 'Purchase Price', 'Warranty Expiry'];
+    const rows = filteredAssets.map(a => [
+      a.name,
+      a.serial_number || '',
+      a.manufacturer || '',
+      a.model || '',
+      a.category?.name || '',
+      a.status,
+      a.condition,
+      a.office_location?.name || a.location || '',
+      a.assigned_to || '',
+      a.purchase_price?.toString() || '',
+      a.warranty_expiry || ''
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `safetrack-assets-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Asset Management</h2>
-          <p className="text-muted-foreground">
-            Track and manage your organization's assets, software licenses, and contracts
+          <h2 className="text-2xl font-bold text-white">Asset Inventory</h2>
+          <p className="text-gray-400 text-sm">
+            Track hardware, warranties, and locations across your organization
           </p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={handleExport} variant="outline">
+          <Button onClick={handleExport} variant="outline" size="sm" className="border-white/10 hover:bg-white/5">
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={handleAddAsset}>
+          <Button onClick={() => setShowAddLocation(true)} variant="outline" size="sm" className="border-white/10 hover:bg-white/5">
+            <Building2 className="h-4 w-4 mr-2" />
+            Add Location
+          </Button>
+          <Button onClick={() => { resetAssetForm(); setEditingAsset(null); setShowAddAsset(true); }} size="sm" className="bg-emerald-500 hover:bg-emerald-600">
             <Plus className="h-4 w-4 mr-2" />
             Add Asset
           </Button>
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-[#141414] border-white/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Total Assets</CardTitle>
+            <Package className="h-4 w-4 text-emerald-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{assets.length}</div>
-            <p className="text-xs text-muted-foreground">
-              +2 from last month
-            </p>
+            <div className="text-2xl font-bold text-white">{stats.total}</div>
+            <p className="text-xs text-gray-500">{stats.active} active</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Assets</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="bg-[#141414] border-white/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Total Value</CardTitle>
+            <DollarSign className="h-4 w-4 text-emerald-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{assets.filter(a => a.status === 'active').length}</div>
-            <p className="text-xs text-muted-foreground">
-              100% operational
-            </p>
+            <div className="text-2xl font-bold text-white">
+              ${stats.totalValue.toLocaleString()}
+            </div>
+            <p className="text-xs text-gray-500">Asset portfolio</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="bg-[#141414] border-white/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Maintenance</CardTitle>
+            <RefreshCw className="h-4 w-4 text-amber-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$2,099</div>
-            <p className="text-xs text-muted-foreground">
-              Asset portfolio value
-            </p>
+            <div className="text-2xl font-bold text-white">{stats.maintenance}</div>
+            <p className="text-xs text-gray-500">Needs attention</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="bg-[#141414] border-white/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-400">Expiring Soon</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1</div>
-            <p className="text-xs text-muted-foreground">
-              Warranty/License expiring
-            </p>
+            <div className="text-2xl font-bold text-white">{stats.expiringSoon}</div>
+            <p className="text-xs text-gray-500">Warranties expiring</p>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="assets" className="w-full">
-        <TabsList>
-          <TabsTrigger value="assets">Assets</TabsTrigger>
-          <TabsTrigger value="software">Software Licenses</TabsTrigger>
-          <TabsTrigger value="contracts">Contracts</TabsTrigger>
-          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-        </TabsList>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="Search by name, serial number, or assigned user..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 bg-[#141414] border-white/10"
+          />
+        </div>
 
-        <TabsContent value="assets">
-          <Card>
-            <CardHeader>
-              <CardTitle>Asset Inventory</CardTitle>
-              <CardDescription>
-                Manage your physical and digital assets
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Search and Filter */}
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex gap-2 flex-1 max-w-md">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search assets..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Button variant="outline" size="icon">
-                    <Filter className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[180px] bg-[#141414] border-white/10">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map(cat => (
+              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-              {/* Category Filter */}
-              <div className="flex gap-2 mb-6 overflow-x-auto">
-                {categories.map((category) => (
-                  <Badge
-                    key={category.id}
-                    variant={selectedCategory === category.id ? "default" : "outline"}
-                    className="cursor-pointer whitespace-nowrap"
-                    onClick={() => setSelectedCategory(category.id)}
-                  >
-                    {category.name} ({category.count})
-                  </Badge>
-                ))}
-              </div>
+        <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+          <SelectTrigger className="w-[180px] bg-[#141414] border-white/10">
+            <SelectValue placeholder="Location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {officeLocations.map(loc => (
+              <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-              {/* Assets Table */}
-              <div className="rounded-md border">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="h-12 px-4 text-left align-middle font-medium">Asset</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Status</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Condition</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Assigned To</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Location</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Value</th>
-                        <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {assets.map((asset) => (
-                        <tr key={asset.id} className="border-b hover:bg-muted/50">
-                          <td className="p-4">
-                            <div>
-                              <div className="font-medium">{asset.name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                SN: {asset.serialNumber}
-                              </div>
+        <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+          <SelectTrigger className="w-[150px] bg-[#141414] border-white/10">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value="retired">Retired</SelectItem>
+            <SelectItem value="lost">Lost</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Category Pills */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={selectedCategory === 'all' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setSelectedCategory('all')}
+          className={selectedCategory === 'all' ? 'bg-emerald-500 hover:bg-emerald-600' : 'border-white/10 hover:bg-white/5'}
+        >
+          All ({stats.total})
+        </Button>
+        {stats.byCategory.filter(c => c.count > 0).map(cat => {
+          const Icon = getCategoryIcon(cat.icon);
+          return (
+            <Button
+              key={cat.id}
+              variant={selectedCategory === cat.id ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedCategory(cat.id)}
+              className={selectedCategory === cat.id ? 'bg-emerald-500 hover:bg-emerald-600' : 'border-white/10 hover:bg-white/5'}
+            >
+              <Icon className="h-3.5 w-3.5 mr-1.5" />
+              {cat.name} ({cat.count})
+            </Button>
+          );
+        })}
+      </div>
+
+      {/* Assets Table */}
+      <Card className="bg-[#141414] border-white/5">
+        <ScrollArea className="h-[500px]">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-[#141414] z-10">
+              <tr className="border-b border-white/5">
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Asset</th>
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Category</th>
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Condition</th>
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">Assigned To</th>
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider hidden lg:table-cell">Location</th>
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider hidden xl:table-cell">Warranty</th>
+                <th className="h-12 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Value</th>
+                <th className="h-12 px-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {filteredAssets.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-12 text-center">
+                      <Package className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                      <p className="text-gray-400">No assets found</p>
+                      <p className="text-gray-500 text-sm">Add your first asset to get started</p>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredAssets.map((asset, index) => {
+                    const Icon = getCategoryIcon(asset.category?.icon);
+                    const warrantyStatus = getWarrantyIndicator(asset);
+
+                    return (
+                      <motion.tr
+                        key={asset.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ delay: index * 0.02 }}
+                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                      >
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-emerald-500/10">
+                              <Icon className="h-4 w-4 text-emerald-400" />
                             </div>
-                          </td>
-                          <td className="p-4">{asset.category}</td>
-                          <td className="p-4">
-                            <Badge className={getStatusColor(asset.status)}>
-                              {asset.status}
-                            </Badge>
-                          </td>
-                          <td className="p-4">
-                            <Badge className={getConditionColor(asset.condition)}>
-                              {asset.condition}
-                            </Badge>
-                          </td>
-                          <td className="p-4">{asset.assignedTo}</td>
-                          <td className="p-4">{asset.location}</td>
-                          <td className="p-4 font-medium">{asset.value}</td>
-                          <td className="p-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleGenerateQR(asset.id)}
-                            >
-                              <QrCode className="h-4 w-4" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            <div>
+                              <p className="font-medium text-white">{asset.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {asset.serial_number ? `S/N: ${asset.serial_number}` : asset.manufacturer}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 hidden md:table-cell">
+                          <span className="text-sm text-gray-300">{asset.category?.name || '-'}</span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <Badge variant="outline" className={getStatusStyle(asset.status)}>
+                            {asset.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4 hidden lg:table-cell">
+                          <Badge variant="outline" className={getConditionStyle(asset.condition)}>
+                            {asset.condition}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-4 hidden md:table-cell">
+                          <span className="text-sm text-gray-300">{asset.assigned_to || '-'}</span>
+                        </td>
+                        <td className="px-4 py-4 hidden lg:table-cell">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="h-3 w-3 text-gray-500" />
+                            <span className="text-sm text-gray-300">
+                              {asset.office_location?.name || asset.location || '-'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 hidden xl:table-cell">
+                          {warrantyStatus ? (
+                            <div className="flex items-center gap-1.5">
+                              <warrantyStatus.icon className={`h-3.5 w-3.5 ${warrantyStatus.color}`} />
+                              <span className={`text-xs ${warrantyStatus.color}`}>
+                                {asset.warranty_expiry ? format(new Date(asset.warranty_expiry), 'MMM yyyy') : warrantyStatus.label}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-500">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className="text-sm font-medium text-white">
+                            ${(asset.current_value || asset.purchase_price || 0).toLocaleString()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10">
+                              <DropdownMenuItem onClick={() => openEditAsset(asset)} className="text-gray-300 focus:text-white focus:bg-white/10">
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                              {asset.serial_number && (
+                                <DropdownMenuItem 
+                                  onClick={() => handleRefreshWarranty(asset)}
+                                  disabled={refreshingAssetId === asset.id}
+                                  className="text-gray-300 focus:text-white focus:bg-white/10"
+                                >
+                                  {refreshingAssetId === asset.id ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Shield className="h-4 w-4 mr-2" />
+                                  )}
+                                  Check Warranty
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator className="bg-white/10" />
+                              <DropdownMenuItem 
+                                onClick={() => deleteAsset(asset.id)}
+                                className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </motion.tr>
+                    );
+                  })
+                )}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </ScrollArea>
+      </Card>
+
+      {/* Add/Edit Asset Dialog */}
+      <Dialog open={showAddAsset} onOpenChange={setShowAddAsset}>
+        <DialogContent className="max-w-2xl bg-[#0a0a0a] border-emerald-500/20">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              {editingAsset ? 'Edit Asset' : 'Add New Asset'}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Enter the details for this hardware asset
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Asset Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Dell OptiPlex 7090"
+                  value={assetForm.name}
+                  onChange={(e) => setAssetForm({ ...assetForm, name: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <div className="space-y-2">
+                <Label htmlFor="serial">Serial Number</Label>
+                <Input
+                  id="serial"
+                  placeholder="e.g., DL789456123"
+                  value={assetForm.serial_number}
+                  onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+            </div>
 
-        <TabsContent value="software">
-          <Card>
-            <CardHeader>
-              <CardTitle>Software Licenses</CardTitle>
-              <CardDescription>
-                Track software licenses and compliance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground py-8">
-                Software license management coming soon!
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="manufacturer">Manufacturer</Label>
+                <Input
+                  id="manufacturer"
+                  placeholder="e.g., Dell, HP, Lenovo"
+                  value={assetForm.manufacturer}
+                  onChange={(e) => setAssetForm({ ...assetForm, manufacturer: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="model">Model</Label>
+                <Input
+                  id="model"
+                  placeholder="e.g., Latitude 5520"
+                  value={assetForm.model}
+                  onChange={(e) => setAssetForm({ ...assetForm, model: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+            </div>
 
-        <TabsContent value="contracts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Contracts & Warranties</CardTitle>
-              <CardDescription>
-                Manage vendor contracts and warranty information
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground py-8">
-                Contract management coming soon!
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Select
+                  value={assetForm.category_id || ''}
+                  onValueChange={(value) => setAssetForm({ ...assetForm, category_id: value })}
+                >
+                  <SelectTrigger className="bg-[#141414] border-white/10">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Office Location</Label>
+                <Select
+                  value={assetForm.office_location_id || ''}
+                  onValueChange={(value) => setAssetForm({ ...assetForm, office_location_id: value })}
+                >
+                  <SelectTrigger className="bg-[#141414] border-white/10">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {officeLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-        <TabsContent value="maintenance">
-          <Card>
-            <CardHeader>
-              <CardTitle>Maintenance Schedule</CardTitle>
-              <CardDescription>
-                Track asset maintenance and service records
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-muted-foreground py-8">
-                Maintenance scheduling coming soon!
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={assetForm.status || 'active'}
+                  onValueChange={(value) => setAssetForm({ ...assetForm, status: value })}
+                >
+                  <SelectTrigger className="bg-[#141414] border-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="retired">Retired</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
+                    <SelectItem value="disposed">Disposed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Condition</Label>
+                <Select
+                  value={assetForm.condition || 'good'}
+                  onValueChange={(value) => setAssetForm({ ...assetForm, condition: value })}
+                >
+                  <SelectTrigger className="bg-[#141414] border-white/10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="excellent">Excellent</SelectItem>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="fair">Fair</SelectItem>
+                    <SelectItem value="poor">Poor</SelectItem>
+                    <SelectItem value="damaged">Damaged</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="assigned">Assigned To</Label>
+                <Input
+                  id="assigned"
+                  placeholder="e.g., John Smith"
+                  value={assetForm.assigned_to}
+                  onChange={(e) => setAssetForm({ ...assetForm, assigned_to: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="price">Purchase Price</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="0.00"
+                  value={assetForm.purchase_price || ''}
+                  onChange={(e) => setAssetForm({ ...assetForm, purchase_price: parseFloat(e.target.value) || undefined })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="purchase_date">Purchase Date</Label>
+                <Input
+                  id="purchase_date"
+                  type="date"
+                  value={assetForm.purchase_date}
+                  onChange={(e) => setAssetForm({ ...assetForm, purchase_date: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="warranty_expiry">Warranty Expiry</Label>
+                <Input
+                  id="warranty_expiry"
+                  type="date"
+                  value={assetForm.warranty_expiry}
+                  onChange={(e) => setAssetForm({ ...assetForm, warranty_expiry: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="Additional notes about this asset..."
+                value={assetForm.notes}
+                onChange={(e) => setAssetForm({ ...assetForm, notes: e.target.value })}
+                className="bg-[#141414] border-white/10"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddAsset(false)} className="border-white/10">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveAsset} 
+              disabled={!assetForm.name.trim() || isCreating || isUpdating}
+              className="bg-emerald-500 hover:bg-emerald-600"
+            >
+              {(isCreating || isUpdating) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingAsset ? 'Update Asset' : 'Add Asset'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Location Dialog */}
+      <Dialog open={showAddLocation} onOpenChange={setShowAddLocation}>
+        <DialogContent className="bg-[#0a0a0a] border-emerald-500/20">
+          <DialogHeader>
+            <DialogTitle className="text-white">Add Office Location</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Add a new office or site for multi-location tracking
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="loc_name">Location Name *</Label>
+              <Input
+                id="loc_name"
+                placeholder="e.g., Main Office, Branch Office"
+                value={locationForm.name}
+                onChange={(e) => setLocationForm({ ...locationForm, name: e.target.value })}
+                className="bg-[#141414] border-white/10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                placeholder="Street address"
+                value={locationForm.address}
+                onChange={(e) => setLocationForm({ ...locationForm, address: e.target.value })}
+                className="bg-[#141414] border-white/10"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  placeholder="City"
+                  value={locationForm.city}
+                  onChange={(e) => setLocationForm({ ...locationForm, city: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="state">State</Label>
+                <Input
+                  id="state"
+                  placeholder="State"
+                  value={locationForm.state}
+                  onChange={(e) => setLocationForm({ ...locationForm, state: e.target.value })}
+                  className="bg-[#141414] border-white/10"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddLocation(false)} className="border-white/10">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddLocation} 
+              disabled={!locationForm.name.trim()}
+              className="bg-emerald-500 hover:bg-emerald-600"
+            >
+              Add Location
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
