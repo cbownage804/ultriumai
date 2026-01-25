@@ -1,105 +1,93 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import {
-  Shield, Users, Award, TrendingUp, Globe, Heart,
-  Target, Lightbulb, Zap, Brain, Eye, Lock,
-  Building, Clock, Star, ArrowRight, CheckCircle
+  Shield, Award, Heart, Target, Lightbulb, Zap, Brain, Lock,
+  ArrowRight, CheckCircle, Flag, Code, Cpu
 } from 'lucide-react';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import heroSecurity from "@/assets/hero-security.jpg";
 
 const About = () => {
-  const stats = [
-    { label: "Businesses Protected", value: "50,000+", icon: Shield },
-    { label: "Threats Detected", value: "10M+", icon: Eye },
-    { label: "Countries Served", value: "150+", icon: Globe },
-    { label: "Uptime Guarantee", value: "99.9%", icon: Clock }
-  ];
-
   const values = [
     {
       icon: Shield,
       title: "Security First",
-      description: "Every decision we make prioritizes the security and privacy of our customers' data and operations."
+      description: "Every product we build prioritizes the security and privacy of our customers. Zero-knowledge architecture, end-to-end encryption, and transparent practices."
     },
     {
       icon: Brain,
       title: "AI Innovation",
-      description: "We leverage cutting-edge artificial intelligence to stay ahead of evolving cyber threats."
+      description: "We leverage cutting-edge artificial intelligence to solve real problems—from custom GPT assistants to automated threat detection."
     },
     {
-      icon: Users,
-      title: "Customer Success",
-      description: "Our customers' success drives everything we do, from product development to support."
+      icon: Flag,
+      title: "Veteran Values",
+      description: "Founded by a U.S. military veteran with 15+ years in IT and cybersecurity. Integrity, discipline, and mission-focused execution."
     },
     {
       icon: Heart,
-      title: "Transparency",
-      description: "We believe in open communication and transparent practices in all our business relationships."
+      title: "Customer Success",
+      description: "We build tools that actually work for real businesses. No bloatware, no unnecessary complexity—just solutions that deliver value."
     }
   ];
 
-  const team = [
+  const products = [
     {
-      name: "Sarah Chen",
-      role: "CEO & Co-Founder",
-      bio: "Former CISO at Fortune 500 companies with 15+ years in cybersecurity",
-      expertise: ["Strategic Leadership", "Enterprise Security", "Risk Management"]
+      name: "AI Studio",
+      description: "Build custom GPT assistants trained on your data. Deploy via API, widget, or white-label solutions.",
+      icon: Brain,
+      color: "text-primary"
     },
     {
-      name: "Marcus Rodriguez",
-      role: "CTO & Co-Founder",
-      bio: "AI/ML expert and former security researcher with 20+ patents",
-      expertise: ["AI Development", "Security Research", "Platform Architecture"]
+      name: "SafeSuite",
+      description: "Personal and SMB security toolkit featuring password vault, dark web monitoring, email/link scanning, and asset management.",
+      icon: Lock,
+      color: "text-emerald-500"
     },
     {
-      name: "Dr. Emily Watson",
-      role: "Chief Security Officer",
-      bio: "PhD in Computer Security, former NSA cybersecurity analyst",
-      expertise: ["Threat Intelligence", "Incident Response", "Compliance"]
-    },
-    {
-      name: "James Kim",
-      role: "VP of Engineering",
-      bio: "Former lead engineer at major cloud security platforms",
-      expertise: ["Scalable Systems", "DevSecOps", "Cloud Security"]
+      name: "Vanguard",
+      description: "Enterprise-grade cybersecurity operations platform for MSPs. XDR/EDR, compliance monitoring, SIEM, and managed SOC services.",
+      icon: Shield,
+      color: "text-cyan-500"
     }
   ];
 
   const milestones = [
     {
-      year: "2021",
+      year: "2024",
       title: "Company Founded",
-      description: "UltriumAI was founded with a vision to democratize enterprise-grade cybersecurity",
+      description: "UltriumAI launched with a focus on making AI and cybersecurity accessible to businesses of all sizes",
       icon: Lightbulb
     },
     {
-      year: "2022",
-      title: "First AI Model",
-      description: "Launched our first AI-powered threat detection engine",
+      year: "2024",
+      title: "AI Studio Launch",
+      description: "Released our custom GPT builder platform enabling businesses to create AI assistants without coding",
       icon: Brain
     },
     {
-      year: "2023",
-      title: "Platform Launch",
-      description: "Released the unified UltriumAI security platform",
-      icon: Zap
+      year: "2025",
+      title: "SafeSuite Release",
+      description: "Launched the SafeSuite security bundle including SafePass, SafeScan, SafeWeb, and SafeTrack",
+      icon: Lock
     },
     {
-      year: "2024",
-      title: "Global Expansion",
-      description: "Expanded to serve customers across 150+ countries worldwide",
-      icon: Globe
+      year: "2025",
+      title: "Vanguard Platform",
+      description: "Introduced Vanguard, our enterprise MSP security operations platform with AI-powered threat detection",
+      icon: Zap
     }
   ];
 
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
+      
       {/* Hero Section */}
-      <section className="relative py-20 px-4 overflow-hidden">
+      <section className="relative pt-32 pb-20 px-4 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
@@ -112,43 +100,53 @@ const About = () => {
         </div>
         <div className="relative z-10 container mx-auto text-center max-w-4xl">
           <Badge className="mb-6" variant="secondary">
-            About UltriumAI
+            <Flag className="h-3 w-3 mr-1" />
+            Veteran-Owned Business
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Securing the Future with 
+            AI Development & 
             <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              {" "}AI Innovation
+              {" "}Cybersecurity Agency
             </span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            We're on a mission to make enterprise-grade cybersecurity accessible to businesses of all sizes 
-            through the power of artificial intelligence and innovative platform design.
+            UltriumAI is a veteran-owned technology company building AI-powered tools and cybersecurity 
+            solutions for businesses of all sizes. We combine 15+ years of IT and security expertise 
+            with cutting-edge artificial intelligence.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
+            <Link to="/hub">
               <Button size="lg" className="w-full sm:w-auto">
-                Join Our Mission <ArrowRight className="ml-2 h-5 w-5" />
+                Explore Our Products <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/contact">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                Contact Leadership
+                Get In Touch
               </Button>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* What We Do */}
       <section className="py-16 px-4">
         <div className="container mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <Card key={index} className="text-center">
-                <CardContent className="pt-6">
-                  <stat.icon className="h-8 w-8 mx-auto mb-3 text-primary" />
-                  <div className="text-3xl font-bold text-primary mb-1">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">What We Build</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Three flagship products designed to solve real problems for businesses
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {products.map((product, index) => (
+              <Card key={index} className="h-full hover:border-primary/30 transition-colors">
+                <CardHeader>
+                  <product.icon className={`h-10 w-10 mb-4 ${product.color}`} />
+                  <CardTitle>{product.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">{product.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -156,44 +154,56 @@ const About = () => {
         </div>
       </section>
 
-      {/* Mission & Vision */}
+      {/* Mission & Story */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
+              <Badge className="mb-4" variant="outline">Our Story</Badge>
+              <h2 className="text-3xl font-bold mb-6">Built by Someone Who Gets It</h2>
               <p className="text-lg text-muted-foreground mb-6">
-                To democratize enterprise-grade cybersecurity by making advanced AI-powered security 
-                tools accessible, affordable, and easy to use for businesses of all sizes.
+                UltriumAI was founded by a U.S. military veteran with over 15 years of hands-on experience 
+                in IT infrastructure and cybersecurity. After seeing too many businesses struggle with 
+                overpriced, overcomplicated security tools—or worse, no protection at all—we set out to 
+                build something better.
+              </p>
+              <p className="text-lg text-muted-foreground mb-6">
+                Our approach is simple: take enterprise-grade technology and make it accessible. Whether 
+                you're a solo entrepreneur who needs a secure password manager or an MSP managing security 
+                for hundreds of clients, we've got you covered.
               </p>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Reduce the cybersecurity skills gap</span>
+                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                  <span>15+ years IT & cybersecurity experience</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Provide 24/7 AI-powered protection</span>
+                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                  <span>U.S. veteran-owned and operated</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <span>Simplify complex security operations</span>
+                  <CheckCircle className="h-5 w-5 text-emerald-500" />
+                  <span>Based in Virginia, USA</span>
                 </div>
               </div>
             </div>
             <div>
-              <h2 className="text-3xl font-bold mb-6">Our Vision</h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                A world where every business, regardless of size or technical expertise, has access 
-                to world-class cybersecurity protection powered by artificial intelligence.
-              </p>
               <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
                 <CardContent className="pt-6">
-                  <Target className="h-8 w-8 text-primary mb-3" />
-                  <h3 className="font-semibold mb-2">2030 Goal</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Protect 1 million businesses worldwide with our AI-powered security platform
+                  <Target className="h-8 w-8 text-primary mb-4" />
+                  <h3 className="text-xl font-semibold mb-3">Our Mission</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Make enterprise-grade AI and cybersecurity tools accessible to every business—without 
+                    the enterprise price tag or complexity.
                   </p>
+                  <div className="border-t border-border pt-4">
+                    <h4 className="font-medium mb-2">We believe:</h4>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li>• Security shouldn't require a PhD to configure</li>
+                      <li>• AI should work for you, not the other way around</li>
+                      <li>• Small businesses deserve big-business protection</li>
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -205,9 +215,9 @@ const About = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Our Core Values</h2>
+            <h2 className="text-3xl font-bold mb-4">How We Work</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              These principles guide every decision we make and every product we build
+              The principles that guide everything we build
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -226,51 +236,13 @@ const About = () => {
         </div>
       </section>
 
-      {/* Leadership Team */}
+      {/* Timeline */}
       <section className="py-20 px-4 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Leadership Team</h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Meet the experienced leaders driving innovation in cybersecurity and AI
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {team.map((member, index) => (
-              <Card key={index} className="h-full">
-                <CardHeader>
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="h-8 w-8 text-primary" />
-                  </div>
-                  <CardTitle className="text-center">{member.name}</CardTitle>
-                  <CardDescription className="text-center">{member.role}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{member.bio}</p>
-                  <div className="space-y-1">
-                    <h4 className="text-sm font-medium">Expertise:</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {member.expertise.map((skill, skillIndex) => (
-                        <Badge key={skillIndex} variant="secondary" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Company Timeline */}
-      <section className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Our Journey</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Key milestones in building the future of cybersecurity
+              Building the future of AI and cybersecurity, one product at a time
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -297,21 +269,21 @@ const About = () => {
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Join Our Mission</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Be part of the cybersecurity revolution. Whether you're looking to protect your business 
-            or join our team, we'd love to hear from you.
+            Whether you need a custom AI assistant, a secure password vault, or enterprise-grade 
+            security operations—we're here to help.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
+            <Link to="/hub">
               <Button size="lg" className="w-full sm:w-auto">
-                Start Your Security Journey
+                Explore Products
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/careers">
+            <Link to="/contact">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                View Open Positions
+                Contact Us
               </Button>
             </Link>
           </div>
