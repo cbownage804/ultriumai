@@ -2,6 +2,7 @@ import safepassLogo from "@/assets/safepass-logo.png";
 import safescanLogo from "@/assets/safescan-logo.png";
 import safewebLogo from "@/assets/safeweb-logo.png";
 import safetrackLogo from "@/assets/safetrack-logo.png";
+import safeassistLogo from "@/assets/safeassist-logo.png";
 import safesuiteLogo from "@/assets/safesuite-logo.png";
 
 export { safesuiteLogo };
@@ -30,6 +31,12 @@ export const safeSuiteProducts = {
     logo: safetrackLogo,
     description: "IT asset lifecycle management with QR tracking and depreciation calculations",
     features: ["Hardware & software inventory", "Maintenance scheduling", "Compliance audit trails"],
+  },
+  safeassist: {
+    name: "SafeAssist",
+    logo: safeassistLogo,
+    description: "AI-powered security assistant for plain-language guidance and threat analysis",
+    features: ["ChatGPT-style interface", "File & email analysis", "Personalized security advice"],
   },
 } as const;
 

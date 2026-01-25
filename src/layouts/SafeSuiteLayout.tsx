@@ -123,6 +123,15 @@ const getNavItems = () => [
       { label: 'Assets', path: getSafeSuitePath('/track') },
       { label: 'Settings', path: getSafeSuitePath('/track/settings') }
     ]
+  },
+  {
+    id: 'safeassist',
+    label: 'SafeAssist',
+    path: getSafeSuitePath('/assist'),
+    icon: null,
+    productLogo: safeSuiteProducts.safeassist?.logo,
+    feature: 'safepass' as const, // Using safepass for now since safeassist is new
+    subItems: []
   }
 ];
 

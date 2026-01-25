@@ -32,6 +32,7 @@ import SafeSuiteWeb from '@/pages/safesuite/SafeSuiteWeb';
 import SafeWebSettings from '@/pages/safesuite/SafeWebSettings';
 import SafeSuiteTrack from '@/pages/safesuite/SafeSuiteTrack';
 import SafeTrackSettings from '@/pages/safesuite/SafeTrackSettings';
+import SafeSuiteAssist from '@/pages/safesuite/SafeSuiteAssist';
 import AssetManagementPage from '@/pages/AssetManagementPage';
 import ForgotPasswordPage from '@/pages/safesuite/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/safesuite/ResetPasswordPage';
@@ -93,6 +94,7 @@ export const SafeSuiteSubdomainRoutes = () => {
         <Route path="/web/settings" element={<SafeWebSettings />} />
         <Route path="/track" element={<SafeSuiteTrack />} />
         <Route path="/track/settings" element={<SafeTrackSettings />} />
+        <Route path="/assist" element={<SafeSuiteAssist />} />
         <Route path="/asset-management" element={<AssetManagementPage />} />
         <Route path="/billing" element={<SafeSuiteBilling />} />
         <Route path="/settings" element={<SafeSuiteSettings />} />

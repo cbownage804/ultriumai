@@ -177,3 +177,6 @@ verify_jwt = false
 
 [functions.safetrack-warranty-lookup]
 verify_jwt = true
+
+[functions.safeassist-ai]
+verify_jwt = true
