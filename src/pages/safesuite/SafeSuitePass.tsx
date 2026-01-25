@@ -11,6 +11,7 @@ import { MFARecommendationBanner } from '@/components/safepass/MFARecommendation
 import { SecurityTipsModal } from '@/components/safepass/SecurityTipsModal';
 import { SecurityArchitectureBadge } from '@/components/safepass/SecurityArchitectureBadge';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
+import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CheckCircle2, X, Lock, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +23,7 @@ export default function SafeSuitePass() {
   const [showExtensionBanner, setShowExtensionBanner] = useState(false);
   const [showMasterPasswordSetup, setShowMasterPasswordSetup] = useState(false);
   const [isSettingUp, setIsSettingUp] = useState(false);
+  const { toast } = useToast();
 
   const {
     isUnlocked,
@@ -50,14 +52,34 @@ export default function SafeSuitePass() {
 
   const handleMasterPasswordSet = async (password: string) => {
     if (isSettingUp) {
-      const success = await setMasterPassword(password);
-      if (success) {
+      const result = await setMasterPassword(password);
+      if (result.success) {
         setShowMasterPasswordSetup(false);
+        toast({
+          title: "Master password set",
+          description: "Your vault is now protected and unlocked.",
+        });
+      } else {
+        toast({
+          title: "Setup failed",
+          description: result.errors?.join('. ') || "Failed to set master password",
+          variant: "destructive",
+        });
       }
     } else {
       const result = await unlockWithPassword(password);
       if (result.success) {
         setShowMasterPasswordSetup(false);
+        toast({
+          title: "Vault unlocked",
+          description: "You can now access your passwords.",
+        });
+      } else {
+        toast({
+          title: "Unlock failed",
+          description: result.error || "Incorrect master password",
+          variant: "destructive",
+        });
       }
     }
   };
