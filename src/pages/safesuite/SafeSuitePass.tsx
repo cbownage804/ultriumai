@@ -8,6 +8,7 @@ import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
 import { MFARecommendationBanner } from '@/components/safepass/MFARecommendationBanner';
+import { MFAEnforcementGate } from '@/components/safesuite/MFAEnforcementGate';
 import { SecurityTipsModal } from '@/components/safepass/SecurityTipsModal';
 import { SecurityArchitectureBadge } from '@/components/safepass/SecurityArchitectureBadge';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
@@ -90,6 +91,7 @@ export default function SafeSuitePass() {
   };
 
   return (
+    <MFAEnforcementGate featureName="the Password Vault">
     <FeatureGate feature="safepass">
       <div 
         className="min-h-screen space-y-6 p-6 -m-6 relative"
@@ -208,5 +210,6 @@ export default function SafeSuitePass() {
         </div>
       </div>
     </FeatureGate>
+    </MFAEnforcementGate>
   );
 }

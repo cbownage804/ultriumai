@@ -39,6 +39,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { UsageSummary } from '@/components/safesuite/UsageMeter';
+import { MFAEnforcementGate } from '@/components/safesuite/MFAEnforcementGate';
 
 export default function SafeSuiteBilling() {
   const { subscription, tier, tierConfig, loading: subLoading } = useSafeSuiteSubscription();
@@ -87,6 +88,7 @@ export default function SafeSuiteBilling() {
   const tiers = Object.values(SAFESUITE_TIERS);
 
   return (
+    <MFAEnforcementGate featureName="Billing & Subscription">
     <div className="space-y-8 max-w-5xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -409,5 +411,6 @@ export default function SafeSuiteBilling() {
         </DialogContent>
       </Dialog>
     </div>
+    </MFAEnforcementGate>
   );
 }
