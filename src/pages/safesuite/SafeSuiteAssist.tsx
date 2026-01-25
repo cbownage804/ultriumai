@@ -22,8 +22,8 @@ import { useSafeAssist, SafeAssistMessage, SafeAssistConversation } from "@/hook
 import { AIMessageContent } from "@/components/apps/safescan/AIMessageContent";
 import { VoiceButton } from "@/components/safeassist/VoiceButton";
 import { cn } from "@/lib/utils";
-import safeassistLogo from '@/assets/safeassist-logo.png';
-import safeassistIcon from '@/assets/safeassist-icon.png';
+import safeassistLogo from '@/assets/safeassist-logo-horizontal.png';
+import safeassistIcon from '@/assets/safeassist-logo.png';
 import heroSafeassistBg from '@/assets/hero-safeassist-bg.jpg';
 
 const QUICK_ACTIONS = [
