@@ -4,7 +4,6 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { VanguardUpsell } from '@/components/products/VanguardUpsell';
 import { 
   MessageSquare, Bot, Users, Clock, Zap, 
   ArrowRight, Check, Brain, BarChart3,
@@ -58,21 +57,31 @@ const stats = [
   { label: 'First Response', value: '<5min', icon: Zap }
 ];
 
-const pricing = [
+const vanguardTiers = [
   {
-    name: 'SafeDesk',
-    price: 29,
-    description: 'AI-powered helpdesk with full automation',
-    features: ['Unlimited tickets', 'AI responses', 'Smart routing', 'Knowledge base', 'Email integration', 'API access'],
-    cta: 'Start Free Trial',
-    popular: true
+    name: 'Vanguard Starter',
+    price: 15,
+    description: 'Core security with basic ticketing',
+    features: ['Basic ticket management', 'Email integration', 'SLA tracking', 'Up to 50 tickets/mo'],
+    cta: 'Get Started',
+    tier: 'starter'
   },
   {
-    name: 'SafeDesk Enterprise',
-    price: null,
-    description: 'Full platform with custom workflows',
-    features: ['Everything included', 'Custom workflows', 'SSO/SAML', 'Dedicated support', 'Unlimited agents'],
-    cta: 'Contact Sales'
+    name: 'Vanguard Professional',
+    price: 25,
+    description: 'Full SafeDesk AI capabilities',
+    features: ['Everything in Starter', 'AI-powered responses', 'Smart routing', 'Knowledge base', 'Unlimited tickets'],
+    cta: 'Get Started',
+    popular: true,
+    tier: 'professional'
+  },
+  {
+    name: 'Vanguard Enterprise',
+    price: 40,
+    description: 'Complete MSP platform',
+    features: ['Everything in Professional', 'Custom workflows', 'Multi-tenant support', 'White-label portal', 'Priority support'],
+    cta: 'Contact Sales',
+    tier: 'enterprise'
   }
 ];
 
@@ -100,7 +109,7 @@ export default function HelpdeskPage() {
             <div className="text-center">
               <Badge className="mb-4 bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
                 <MessageSquare className="h-3 w-3 mr-1" />
-                AI-Powered Support
+                Included with Vanguard Suite
               </Badge>
               <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
                 Intelligent ticketing with AI-powered responses, smart routing, and automated resolution. 
@@ -109,7 +118,7 @@ export default function HelpdeskPage() {
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link to="/vanguard/auth">
                   <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600">
-                    Start Free Trial
+                    Get Started with Vanguard
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -173,74 +182,66 @@ export default function HelpdeskPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="py-20 bg-muted/30 border-y">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Per-Agent Pricing</h2>
-            <p className="text-muted-foreground">Simple pricing that scales with your team.</p>
+        {/* Access via Vanguard */}
+        <section className="py-20 bg-muted/30 border-y">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <Badge className="mb-4 bg-red-500/10 text-red-400 border-red-500/20">
+                Part of Vanguard Suite
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Access SafeDesk via Vanguard</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                SafeDesk is included in all Vanguard Suite tiers. Choose the plan that fits your MSP needs.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {vanguardTiers.map((plan, i) => (
+                <Card key={i} className={`relative ${plan.popular ? 'border-red-500 shadow-lg shadow-red-500/10' : ''}`}>
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-red-500">Recommended</Badge>
+                    </div>
+                  )}
+                  <CardHeader>
+                    <CardTitle>{plan.name}</CardTitle>
+                    <CardDescription>{plan.description}</CardDescription>
+                    <div className="mt-4">
+                      <span className="text-4xl font-bold">${plan.price}</span>
+                      <span className="text-muted-foreground">/user/mo</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <ul className="space-y-2">
+                      {plan.features.map((feature, j) => (
+                        <li key={j} className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-cyan-500" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link to={plan.tier === 'enterprise' ? '/contact' : '/vanguard/auth'} className="block">
+                      <Button className={`w-full ${plan.popular ? 'bg-red-500 hover:bg-red-600' : ''}`}>
+                        {plan.cta}
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {pricing.map((plan, i) => (
-              <Card key={i} className={`relative ${plan.popular ? 'border-cyan-500 shadow-lg' : ''}`}>
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-cyan-500">Most Popular</Badge>
-                  </div>
-                )}
-                <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
-                  <div className="mt-4">
-                    {plan.price ? (
-                      <>
-                        <span className="text-4xl font-bold">${plan.price}</span>
-                        <span className="text-muted-foreground">/agent/mo</span>
-                      </>
-                    ) : (
-                      <span className="text-2xl font-bold">Custom Pricing</span>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-2">
-                    {plan.features.map((feature, j) => (
-                      <li key={j} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-cyan-500" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link to={plan.price ? '/vanguard/auth' : '/contact'} className="block">
-                    <Button className={`w-full ${plan.popular ? 'bg-cyan-500 hover:bg-cyan-600' : ''}`}>
-                      {plan.cta}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-        {/* Vanguard Upsell */}
-        <VanguardUpsell 
-          currentProduct="SafeDesk™" 
-          currentProductPrice="$29/agent/mo"
-          competitorComparison="47% cheaper than Zendesk, plus get full RMM in Vanguard Enterprise"
-        />
+        </section>
 
         {/* CTA */}
         <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Transform Your IT Support</h2>
           <p className="text-muted-foreground mb-8">
-            Start your free 14-day trial. No credit card required.
+            Start your free 14-day trial with Vanguard Suite. No credit card required.
           </p>
           <div className="flex justify-center gap-4">
             <Link to="/vanguard/auth">
-              <Button size="lg" className="bg-gradient-to-r from-cyan-500 to-blue-500">
-                Start Free Trial
+              <Button size="lg" className="bg-gradient-to-r from-red-500 to-orange-500">
+                Get Started with Vanguard
               </Button>
             </Link>
             <Link to="/vanguard/suite">

@@ -4,11 +4,10 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { VanguardUpsell } from '@/components/products/VanguardUpsell';
 import { 
-  Monitor, Wrench, Shield, Clock, Zap, 
+  Monitor, Shield, Clock, Zap, 
   ArrowRight, Check, Terminal, HardDrive, Cpu,
-  Download, RefreshCw, Settings, Activity
+  Download, Settings, Activity
 } from 'lucide-react';
 import logoSafeops from '@/assets/logos/logo-safeops.png';
 
@@ -58,21 +57,31 @@ const stats = [
   { label: 'Scripts in Library', value: '200+', icon: Terminal }
 ];
 
-const pricing = [
+const vanguardTiers = [
   {
-    name: 'SafeOps',
-    price: 3,
-    description: 'Full RMM suite with monitoring and automation',
-    features: ['Real-time monitoring', 'Remote desktop', 'Patch management', 'Advanced scripting', 'Custom dashboards', 'API access'],
-    cta: 'Start Free Trial',
-    popular: true
+    name: 'Vanguard Starter',
+    price: 15,
+    description: 'Core security with basic RMM',
+    features: ['Basic endpoint monitoring', 'Alert notifications', 'Asset inventory', 'Up to 50 endpoints'],
+    cta: 'Get Started',
+    tier: 'starter'
   },
   {
-    name: 'SafeOps Enterprise',
-    price: null,
-    description: 'White-label with custom integrations',
-    features: ['Everything included', 'White-label branding', 'Custom integrations', 'Dedicated support', 'On-prem option'],
-    cta: 'Contact Sales'
+    name: 'Vanguard Professional',
+    price: 25,
+    description: 'Full SafeOps RMM capabilities',
+    features: ['Everything in Starter', 'Remote access & scripting', 'Patch management', 'SafeDesk helpdesk', 'Up to 250 endpoints'],
+    cta: 'Get Started',
+    popular: true,
+    tier: 'professional'
+  },
+  {
+    name: 'Vanguard Enterprise',
+    price: 40,
+    description: 'Complete MSP platform',
+    features: ['Everything in Professional', 'AI-powered automation', 'Custom integrations', 'White-label options', 'Unlimited endpoints'],
+    cta: 'Contact Sales',
+    tier: 'enterprise'
   }
 ];
 
@@ -100,16 +109,16 @@ export default function RMMPage() {
             <div className="text-center">
               <Badge className="mb-4 bg-green-500/20 text-green-400 border-green-500/30">
                 <Monitor className="h-3 w-3 mr-1" />
-                Remote Monitoring & Management
+                Included with Vanguard Suite
               </Badge>
               <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
-                Enterprise endpoint management at $3/endpoint. Monitor, patch, and automate 
+                Enterprise endpoint management included with Vanguard Suite. Monitor, patch, and automate 
                 across your entire fleet with a single unified platform.
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link to="/vanguard/auth">
                   <Button size="lg" className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
-                    Start Free Trial
+                    Get Started with Vanguard
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -173,33 +182,32 @@ export default function RMMPage() {
           </div>
         </section>
 
-        {/* Pricing */}
+        {/* Access via Vanguard */}
         <section className="py-20 bg-muted/30 border-y">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Per-Endpoint Pricing</h2>
-              <p className="text-muted-foreground">Simple, transparent pricing. No hidden fees.</p>
+              <Badge className="mb-4 bg-red-500/10 text-red-400 border-red-500/20">
+                Part of Vanguard Suite
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Access SafeOps via Vanguard</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                SafeOps is included in all Vanguard Suite tiers. Choose the plan that fits your MSP needs.
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {pricing.map((plan, i) => (
-                <Card key={i} className={`relative ${plan.popular ? 'border-green-500 shadow-lg' : ''}`}>
+              {vanguardTiers.map((plan, i) => (
+                <Card key={i} className={`relative ${plan.popular ? 'border-red-500 shadow-lg shadow-red-500/10' : ''}`}>
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-green-500">Most Popular</Badge>
+                      <Badge className="bg-red-500">Recommended</Badge>
                     </div>
                   )}
                   <CardHeader>
                     <CardTitle>{plan.name}</CardTitle>
                     <CardDescription>{plan.description}</CardDescription>
                     <div className="mt-4">
-                      {plan.price ? (
-                        <>
-                          <span className="text-4xl font-bold">${plan.price}</span>
-                          <span className="text-muted-foreground">/endpoint/mo</span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold">Custom Pricing</span>
-                      )}
+                      <span className="text-4xl font-bold">${plan.price}</span>
+                      <span className="text-muted-foreground">/user/mo</span>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -211,8 +219,8 @@ export default function RMMPage() {
                         </li>
                       ))}
                     </ul>
-                    <Link to={plan.price ? '/vanguard/auth' : '/contact'} className="block">
-                      <Button className={`w-full ${plan.popular ? 'bg-green-500 hover:bg-green-600' : ''}`}>
+                    <Link to={plan.tier === 'enterprise' ? '/contact' : '/vanguard/auth'} className="block">
+                      <Button className={`w-full ${plan.popular ? 'bg-red-500 hover:bg-red-600' : ''}`}>
                         {plan.cta}
                       </Button>
                     </Link>
@@ -223,29 +231,22 @@ export default function RMMPage() {
           </div>
         </section>
 
-        {/* Vanguard Upsell */}
-        <VanguardUpsell 
-          currentProduct="SafeOps™" 
-          currentProductPrice="$3/endpoint/mo"
-          competitorComparison="Compete with Atera & NinjaOne at a fraction of the cost in Vanguard Enterprise"
-        />
-
         {/* CTA */}
         <section className="py-20">
           <div className="max-w-4xl mx-auto px-4 text-center">
             <h2 className="text-3xl font-bold mb-4">Get Started in Minutes</h2>
             <p className="text-muted-foreground mb-8">
-              Deploy agents and start monitoring endpoints in under 5 minutes.
+              Deploy agents and start monitoring endpoints in under 5 minutes with Vanguard Suite.
             </p>
             <div className="flex justify-center gap-4">
               <Link to="/vanguard/auth">
-                <Button size="lg" className="bg-gradient-to-r from-green-500 to-emerald-500">
-                  Start Free Trial
+                <Button size="lg" className="bg-gradient-to-r from-red-500 to-orange-500">
+                  Get Started with Vanguard
                 </Button>
               </Link>
               <Link to="/vanguard/suite">
                 <Button size="lg" variant="outline">
-                  View Vanguard Suite
+                  View Full Suite
                 </Button>
               </Link>
             </div>
