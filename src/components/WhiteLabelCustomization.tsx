@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useWhiteLabelConfig } from "@/hooks/useWhiteLabelConfig";
 import { useSafeSuiteSubscription } from "@/hooks/useSafeSuite";
 import { WhiteLabelBranding } from "./whiteLabel/WhiteLabelBranding";
@@ -10,8 +11,63 @@ import { WhiteLabelColors } from "./whiteLabel/WhiteLabelColors";
 import { WhiteLabelDomain } from "./whiteLabel/WhiteLabelDomain";
 import { WhiteLabelAdvanced } from "./whiteLabel/WhiteLabelAdvanced";
 import { WhiteLabelPreview } from "./whiteLabel/WhiteLabelPreview";
-import { Lock, Crown } from "lucide-react";
+import { TeaserLock } from "@/components/safesuite/TeaserLock";
+import { Lock, Crown, Palette, Globe, Layers } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+// Teaser showing whitelabeling features
+function WhiteLabelTeaser() {
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h2 className="text-2xl font-bold">White-label Customization</h2>
+        <p className="text-muted-foreground">Customize branding for your deployment</p>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Palette className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">Custom Branding</p>
+                <p className="text-sm text-muted-foreground">Your logo & colors</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">Custom Domain</p>
+                <p className="text-sm text-muted-foreground">Your own URL</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Layers className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium">Full Control</p>
+                <p className="text-sm text-muted-foreground">Complete customization</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
 
 const WhiteLabelCustomization = () => {
   const { config, setConfig, loading, saveConfig, uploadFile } = useWhiteLabelConfig();
@@ -22,21 +78,13 @@ const WhiteLabelCustomization = () => {
   // Gate: Only Business tier can access whitelabeling
   if (!subLoading && !isBusiness) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="p-4 bg-amber-100 rounded-full mb-4">
-          <Lock className="h-10 w-10 text-amber-600" />
-        </div>
-        <h3 className="text-xl font-semibold mb-2">Whitelabeling is a Business Feature</h3>
-        <p className="text-muted-foreground max-w-md mb-6">
-          Custom branding with your logo, colors, and domain is only available on the Business plan.
-          {tier === 'free' && " Upgrade to unlock this and other premium features."}
-          {tier === 'pro' && " Upgrade from Pro to Business to unlock whitelabeling."}
-        </p>
-        <Button onClick={() => navigate('/safesuite/billing')} className="gap-2">
-          <Crown className="h-4 w-4" />
-          Upgrade to Business
-        </Button>
-      </div>
+      <TeaserLock 
+        feature="whitelabeling" 
+        message="Custom branding with your logo, colors, and domain"
+        teaserContent={<WhiteLabelTeaser />}
+      >
+        <div />
+      </TeaserLock>
     );
   }
 
