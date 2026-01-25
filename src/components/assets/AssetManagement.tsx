@@ -1,6 +1,6 @@
 /**
  * SafeTrack Asset Management - Enterprise-grade Inventory System
- * Full hardware tracking with warranty integration
+ * Full hardware tracking with warranty integration and AI-powered serial lookup
  */
 
 import { useState, useMemo } from "react";
@@ -61,10 +61,14 @@ import {
   Clock,
   DollarSign,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Wand2
 } from "lucide-react";
 import { useSafeTrackAssets, type Asset, type AssetFormData, type OfficeLocationFormData } from "@/hooks/useSafeTrackAssets";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Category icon mapping
 const getCategoryIcon = (iconName: string | null | undefined) => {
@@ -148,6 +152,13 @@ export const AssetManagement = () => {
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [refreshingAssetId, setRefreshingAssetId] = useState<string | null>(null);
+  const [isAiLookupLoading, setIsAiLookupLoading] = useState(false);
+  const [aiLookupResult, setAiLookupResult] = useState<{
+    manufacturer: string;
+    model: string;
+    category: string;
+    notes?: string;
+  } | null>(null);
 
   // Form state
   const [assetForm, setAssetForm] = useState<AssetFormData>({
@@ -206,7 +217,64 @@ export const AssetManagement = () => {
 
     setShowAddAsset(false);
     setEditingAsset(null);
+    setAiLookupResult(null);
     resetAssetForm();
+  };
+
+  // AI Serial Number Lookup
+  const handleAiLookup = async () => {
+    const serialNumber = assetForm.serial_number?.trim();
+    if (!serialNumber || serialNumber.length < 3) {
+      toast.error("Enter a serial number (min 3 characters) to use AI lookup");
+      return;
+    }
+
+    setIsAiLookupLoading(true);
+    setAiLookupResult(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('safetrack-ai-lookup', {
+        body: { serialNumber }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.data) {
+        const result = data.data;
+        setAiLookupResult({
+          manufacturer: result.manufacturer,
+          model: result.model,
+          category: result.category,
+          notes: result.notes
+        });
+        
+        // Pre-fill editable fields (user can modify before saving)
+        setAssetForm(prev => ({
+          ...prev,
+          manufacturer: result.manufacturer || prev.manufacturer,
+          model: result.model || prev.model,
+          // Try to match category by name
+          notes: result.notes ? `${prev.notes ? prev.notes + '\n' : ''}AI detected: ${result.notes}` : prev.notes
+        }));
+        
+        // Find matching category
+        const matchedCategory = categories.find(
+          c => c.name.toLowerCase().includes(result.category?.toLowerCase() || '')
+        );
+        if (matchedCategory) {
+          setAssetForm(prev => ({ ...prev, category_id: matchedCategory.id }));
+        }
+
+        toast.success("AI identified device info - review and edit before saving");
+      } else {
+        toast.error(data?.error || "Could not identify device from serial number");
+      }
+    } catch (err) {
+      console.error("AI lookup error:", err);
+      toast.error("AI lookup failed. Try again later.");
+    } finally {
+      setIsAiLookupLoading(false);
+    }
   };
 
   const resetAssetForm = () => {
@@ -601,6 +669,55 @@ export const AssetManagement = () => {
           </DialogHeader>
 
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            {/* AI Lookup Section */}
+            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/20">
+                  <Wand2 className="h-5 w-5 text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-white mb-1">AI-Powered Serial Lookup</h4>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Enter a serial number below and click "Identify" to auto-fill manufacturer and model info. You can edit all fields before saving.
+                  </p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter serial number..."
+                      value={assetForm.serial_number}
+                      onChange={(e) => setAssetForm({ ...assetForm, serial_number: e.target.value })}
+                      className="bg-[#0a0a0a] border-white/10 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAiLookup}
+                      disabled={isAiLookupLoading || !assetForm.serial_number?.trim()}
+                      className="bg-emerald-500 hover:bg-emerald-600"
+                    >
+                      {isAiLookupLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-1" />
+                          Identify
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {aiLookupResult && (
+                    <div className="mt-3 p-2 rounded bg-[#0a0a0a] border border-white/10">
+                      <p className="text-xs text-emerald-400 mb-1">
+                        <CheckCircle2 className="h-3 w-3 inline mr-1" />
+                        AI identified: <span className="font-medium">{aiLookupResult.manufacturer} {aiLookupResult.model}</span>
+                      </p>
+                      {aiLookupResult.notes && (
+                        <p className="text-xs text-gray-500">{aiLookupResult.notes}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Asset Name *</Label>
@@ -626,7 +743,10 @@ export const AssetManagement = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="manufacturer">Manufacturer</Label>
+                <Label htmlFor="manufacturer">
+                  Manufacturer
+                  {aiLookupResult && <Badge variant="outline" className="ml-2 text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">AI Filled</Badge>}
+                </Label>
                 <Input
                   id="manufacturer"
                   placeholder="e.g., Dell, HP, Lenovo"
@@ -636,7 +756,10 @@ export const AssetManagement = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="model">Model</Label>
+                <Label htmlFor="model">
+                  Model
+                  {aiLookupResult && <Badge variant="outline" className="ml-2 text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">AI Filled</Badge>}
+                </Label>
                 <Input
                   id="model"
                   placeholder="e.g., Latitude 5520"
@@ -649,7 +772,10 @@ export const AssetManagement = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label>
+                  Category
+                  {aiLookupResult && <Badge variant="outline" className="ml-2 text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">AI Suggested</Badge>}
+                </Label>
                 <Select
                   value={assetForm.category_id || ''}
                   onValueChange={(value) => setAssetForm({ ...assetForm, category_id: value })}
