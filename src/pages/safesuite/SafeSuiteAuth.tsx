@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,7 +80,7 @@ export default function SafeSuiteAuth() {
     }
 
     try {
-      const { error } = await signUp(signupEmail, signupPassword);
+      const { error } = await signUp(signupEmail, signupPassword, { full_name: signupName });
       if (error) {
         if (error.message.includes('User already registered') || 
             error.message.includes('users_email_partial_key') ||
@@ -92,6 +93,22 @@ export default function SafeSuiteAuth() {
         }
         return;
       }
+      
+      // Send branded confirmation email via Resend
+      try {
+        await supabase.functions.invoke('send-auth-email', {
+          body: {
+            type: 'confirmation',
+            email: signupEmail,
+            name: signupName || undefined,
+            redirectUrl: `${window.location.origin}/dashboard`,
+          },
+        });
+      } catch (emailErr) {
+        console.error('Failed to send branded confirmation email:', emailErr);
+        // Don't block signup if email fails - Supabase will send default email
+      }
+      
       setSignupSuccess(true);
       setActiveTab('login');
     } catch (err) {
