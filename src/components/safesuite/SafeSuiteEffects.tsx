@@ -47,6 +47,15 @@ export const SAFESUITE_THEMES = {
     bg: 'bg-emerald-500/10',
     buttonGradient: 'from-emerald-500 to-teal-500'
   },
+  safeassist: {
+    primary: 'cyan',
+    gradient: 'from-cyan-500/20 via-teal-500/10 to-cyan-500/20',
+    glow: 'shadow-[0_0_60px_rgba(6,182,212,0.15)]',
+    border: 'border-cyan-500/20',
+    text: 'text-cyan-400',
+    bg: 'bg-cyan-500/10',
+    buttonGradient: 'from-cyan-500 to-teal-500'
+  },
   safeops: {
     primary: 'green',
     gradient: 'from-green-500/20 via-emerald-500/10 to-lime-500/20',
