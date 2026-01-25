@@ -92,7 +92,7 @@ const Navigation = () => {
             </button>
             
             <button 
-              onClick={() => handleExternalLink('https://safesuite.ultriumai.com')}
+              onClick={() => handleNavigation('/safesuite')}
               className="transition-transform duration-200 hover:scale-105"
               title="SafeSuite™"
             >
@@ -227,7 +227,7 @@ const Navigation = () => {
               </button>
               
               <button 
-                onClick={() => handleExternalLink('https://safesuite.ultriumai.com')} 
+                onClick={() => handleNavigationWithMenuClose('/safesuite')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
