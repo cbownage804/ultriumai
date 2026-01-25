@@ -65,25 +65,18 @@ const Auth = () => {
           setError(error.message);
         }
       } else if (data?.user) {
-        // Send welcome email via Resend
+        // Send branded confirmation email via our custom edge function
         try {
-          console.log('Attempting to send welcome email to:', data.user.email);
-          const emailResult = await supabase.functions.invoke('send-welcome-email', {
+          await supabase.functions.invoke('send-auth-email', {
             body: {
+              type: 'confirmation',
               email: data.user.email,
-              name: fullName,
-              userId: data.user.id
-            }
+              name: fullName || undefined,
+              redirectUrl: `${window.location.origin}/dashboard`,
+            },
           });
-          console.log('Welcome email result:', emailResult);
-          
-          if (emailResult.error) {
-            console.error('Welcome email error:', emailResult.error);
-          } else {
-            console.log('Welcome email sent successfully');
-          }
         } catch (emailError) {
-          console.error('Welcome email exception:', emailError);
+          console.error('Auth email exception:', emailError);
           // Don't fail the signup if email fails
         }
 
