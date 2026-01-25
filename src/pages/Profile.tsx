@@ -7,15 +7,37 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "next-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   User, Mail, Building, Calendar, Settings, Shield, 
   CreditCard, Bell, Globe, Moon, Sun, Smartphone,
   Upload, Save, RefreshCw
 } from 'lucide-react';
+
+// Common timezone options
+const TIMEZONE_OPTIONS = [
+  { value: 'UTC', label: 'UTC (Coordinated Universal Time)' },
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Paris', label: 'Central European Time (CET)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
+  { value: 'Asia/Tokyo', label: 'Japan Standard Time (JST)' },
+  { value: 'Asia/Shanghai', label: 'China Standard Time (CST)' },
+  { value: 'Asia/Dubai', label: 'Gulf Standard Time (GST)' },
+  { value: 'Asia/Singapore', label: 'Singapore Time (SGT)' },
+  { value: 'Australia/Sydney', label: 'Australian Eastern Time (AET)' },
+  { value: 'Pacific/Auckland', label: 'New Zealand Time (NZT)' },
+];
 
 interface UserProfile {
   full_name: string;
@@ -33,6 +55,7 @@ const Profile = () => {
   const { user } = useAuth();
   const { subscription, checkSubscription, openCustomerPortal } = useSubscription();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<UserProfile>({
@@ -236,12 +259,21 @@ const Profile = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
-                  <Input
-                    id="timezone"
+                  <Select
                     value={profile.timezone}
-                    onChange={(e) => setProfile(prev => ({ ...prev, timezone: e.target.value }))}
-                    placeholder="UTC"
-                  />
+                    onValueChange={(value) => setProfile(prev => ({ ...prev, timezone: value }))}
+                  >
+                    <SelectTrigger id="timezone">
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {TIMEZONE_OPTIONS.map((tz) => (
+                        <SelectItem key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -285,16 +317,25 @@ const Profile = () => {
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>SMS Notifications</Label>
+                  <Label className="flex items-center gap-2">
+                    SMS Notifications
+                    <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                  </Label>
                   <p className="text-sm text-muted-foreground">
                     Receive alerts via SMS
                   </p>
                 </div>
                 <Switch
                   checked={profile.notifications_sms}
-                  onCheckedChange={(checked) => 
-                    setProfile(prev => ({ ...prev, notifications_sms: checked }))
-                  }
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      toast({
+                        title: "SMS Notifications",
+                        description: "SMS notifications will be available soon. We'll notify you when this feature launches!",
+                      });
+                    }
+                    setProfile(prev => ({ ...prev, notifications_sms: checked }));
+                  }}
                 />
               </div>
             </CardContent>
@@ -321,23 +362,23 @@ const Profile = () => {
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    variant={profile.theme === 'light' ? 'default' : 'outline'}
+                    variant={theme === 'light' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setProfile(prev => ({ ...prev, theme: 'light' }))}
+                    onClick={() => setTheme('light')}
                   >
                     <Sun className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={profile.theme === 'dark' ? 'default' : 'outline'}
+                    variant={theme === 'dark' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setProfile(prev => ({ ...prev, theme: 'dark' }))}
+                    onClick={() => setTheme('dark')}
                   >
                     <Moon className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant={profile.theme === 'system' ? 'default' : 'outline'}
+                    variant={theme === 'system' ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => setProfile(prev => ({ ...prev, theme: 'system' }))}
+                    onClick={() => setTheme('system')}
                   >
                     <Smartphone className="h-4 w-4" />
                   </Button>
