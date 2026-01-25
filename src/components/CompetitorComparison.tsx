@@ -84,10 +84,10 @@ const comparisonData: ComparisonFeature[] = [
   // Pricing
   { 
     feature: 'Starting Price (per user/month)', 
-    ultrium: '$5', 
-    competitor1: '$12', 
-    competitor2: '$8', 
-    competitor3: '$15',
+    ultrium: '$15', 
+    competitor1: '$25', 
+    competitor2: '$18', 
+    competitor3: '$30',
     category: 'pricing'
   },
   { 

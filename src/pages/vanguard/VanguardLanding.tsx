@@ -384,7 +384,7 @@ export default function VanguardLanding() {
               <CardHeader className="text-center pb-8">
                 <CardTitle className="text-2xl mb-2 text-white">Starter</CardTitle>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">$5</span>
+                  <span className="text-4xl font-bold text-white">$15</span>
                   <span className="text-white/60">/user/mo</span>
                 </div>
                 <CardDescription className="text-white/60">Essential security for small teams</CardDescription>
@@ -415,7 +415,7 @@ export default function VanguardLanding() {
               <CardHeader className="text-center pb-8">
                 <CardTitle className="text-2xl mb-2 text-white">Professional</CardTitle>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">$12</span>
+                  <span className="text-4xl font-bold text-white">$25</span>
                   <span className="text-white/60">/user/mo</span>
                 </div>
                 <CardDescription className="text-white/60">Complete security & operations suite</CardDescription>
@@ -442,7 +442,7 @@ export default function VanguardLanding() {
               <CardHeader className="text-center pb-8">
                 <CardTitle className="text-2xl mb-2 text-white">Enterprise</CardTitle>
                 <div className="mb-4">
-                  <span className="text-4xl font-bold text-white">$20</span>
+                  <span className="text-4xl font-bold text-white">$40</span>
                   <span className="text-white/60">/user/mo</span>
                 </div>
                 <CardDescription className="text-white/60">Full platform with AI capabilities</CardDescription>

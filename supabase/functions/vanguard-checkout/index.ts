@@ -13,19 +13,19 @@ const TIERS = {
     price_id: "price_1SpDm3H1u6E0bsJT05izDSCy",
     product_id: "prod_TmnMFXO0ehpZ9s",
     name: "Starter",
-    per_user_cents: 500,
+    per_user_cents: 1500,
   },
   professional: {
     price_id: "price_1SpDmBH1u6E0bsJTjxIOisHL",
     product_id: "prod_TmnM7MufzeuNPz",
     name: "Professional",
-    per_user_cents: 1200,
+    per_user_cents: 2500,
   },
   enterprise: {
     price_id: "price_1SpDmEH1u6E0bsJTvmKz9udK",
     product_id: "prod_TmnMhsqHnaL1ZQ",
     name: "Enterprise",
-    per_user_cents: 2000,
+    per_user_cents: 4000,
   },
 };
 
