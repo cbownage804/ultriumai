@@ -122,8 +122,8 @@ const About = () => {
             {products.map((product, index) => (
               <Card key={index} className="h-full hover:border-primary/30 transition-colors bg-card/50">
                 <CardHeader className="flex flex-col items-center">
-                  <div className={`px-6 py-4 bg-black rounded-xl ${product.shadowColor} shadow-lg mb-4 flex items-center justify-center min-w-[160px]`}>
-                    <img src={product.logo} alt={product.name} className="h-12 w-auto object-contain" />
+                  <div className={`px-4 py-3 bg-black rounded-xl ${product.shadowColor} shadow-lg mb-4 flex items-center justify-center min-w-[180px] min-h-[80px]`}>
+                    <img src={product.logo} alt={product.name} className="h-14 w-auto object-contain scale-150" />
                   </div>
                 </CardHeader>
                 <CardContent>

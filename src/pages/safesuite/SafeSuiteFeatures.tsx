@@ -18,6 +18,10 @@ import {
 } from "lucide-react";
 import heroSafesuite from "@/assets/hero-safesuite.jpg";
 import safesuiteLogo from "@/assets/safesuite-logo.png";
+import safepassLogo from "@/assets/safepass-logo.png";
+import safescanLogo from "@/assets/safescan-logo.png";
+import safewebLogo from "@/assets/safeweb-logo.png";
+import safetrackLogo from "@/assets/safetrack-logo.png";
 
 const tools = [
   {
@@ -26,8 +30,11 @@ const tools = [
     tagline: "Enterprise Password Management",
     description: "Military-grade encryption for all your credentials with zero-knowledge architecture.",
     icon: Key,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
+    logo: safepassLogo,
+    color: "text-amber-500",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/30",
+    shadowColor: "shadow-amber-500/20",
     features: [
       { icon: Lock, title: "Zero-Knowledge Encryption", description: "Your master password never leaves your device" },
       { icon: Users, title: "Secure Sharing", description: "Share credentials with team members safely" },
@@ -43,8 +50,11 @@ const tools = [
     tagline: "AI-Powered Threat Scanner",
     description: "Unified scanning for emails, documents, and URLs with real-time AI threat detection.",
     icon: Scan,
+    logo: safescanLogo,
     color: "text-red-500",
     bgColor: "bg-red-500/10",
+    borderColor: "border-red-500/30",
+    shadowColor: "shadow-red-500/20",
     features: [
       { icon: Mail, title: "Email Scanner", description: "Detect phishing, spoofing, and malicious attachments" },
       { icon: FileText, title: "Document Scanner", description: "Analyze PDFs and Office files for hidden threats" },
@@ -60,8 +70,11 @@ const tools = [
     tagline: "Dark Web Intelligence",
     description: "Continuous monitoring of the dark web for your exposed credentials and data leaks.",
     icon: Globe,
+    logo: safewebLogo,
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
+    borderColor: "border-purple-500/30",
+    shadowColor: "shadow-purple-500/20",
     features: [
       { icon: Search, title: "Dark Web Monitoring", description: "24/7 scanning of hacker forums and marketplaces" },
       { icon: AlertTriangle, title: "Breach Alerts", description: "Instant notification when your data appears" },
@@ -77,8 +90,11 @@ const tools = [
     tagline: "Asset Lifecycle Management",
     description: "Complete IT asset tracking with depreciation, maintenance, and compliance reporting.",
     icon: Package,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
+    logo: safetrackLogo,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/30",
+    shadowColor: "shadow-emerald-500/20",
     features: [
       { icon: Brain, title: "AI Warranty Lookup", description: "Instant warranty status by serial number using AI" },
       { icon: Laptop, title: "Hardware Inventory", description: "Track all physical IT assets and equipment" },
@@ -134,15 +150,16 @@ export default function SafeSuiteFeatures() {
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <Tabs defaultValue="safepass" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-2 bg-transparent p-0 mb-12">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-4 bg-transparent p-0 mb-12">
               {tools.map((tool) => (
                 <TabsTrigger
                   key={tool.id}
                   value={tool.id}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-lg border data-[state=active]:border-primary data-[state=active]:bg-primary/5 hover:bg-muted/50 transition-all`}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-xl border ${tool.borderColor} data-[state=active]:border-2 data-[state=active]:${tool.borderColor} data-[state=active]:bg-black hover:bg-black/50 transition-all`}
                 >
-                  <tool.icon className={`h-6 w-6 ${tool.color}`} />
-                  <span className="font-semibold">{tool.name}</span>
+                  <div className={`bg-black rounded-lg p-2 ${tool.shadowColor} shadow-lg flex items-center justify-center min-w-[100px] min-h-[50px]`}>
+                    <img src={tool.logo} alt={tool.name} className="h-8 w-auto object-contain" />
+                  </div>
                 </TabsTrigger>
               ))}
             </TabsList>

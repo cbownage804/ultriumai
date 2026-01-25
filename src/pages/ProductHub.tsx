@@ -61,8 +61,8 @@ const ProductCard = ({
       <CardHeader className="relative z-10 pb-2">
         {/* Centered Horizontal Logo */}
         <div className="flex flex-col items-center mb-4">
-          <div className={`px-10 py-6 bg-black rounded-xl ${getShadowClass()} shadow-lg mb-3 flex items-center justify-center min-w-[220px] min-h-[100px]`}>
-            <img src={logo} alt={name} className="h-16 w-auto object-contain max-w-[180px]" />
+          <div className={`px-6 py-4 bg-black rounded-xl ${getShadowClass()} shadow-lg mb-3 flex items-center justify-center min-w-[240px] min-h-[100px]`}>
+            <img src={logo} alt={name} className="h-20 w-auto object-contain max-w-[200px] scale-125" />
           </div>
           <div className="flex items-center gap-2">
             {accessLevel && (
