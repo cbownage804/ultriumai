@@ -57,7 +57,7 @@ const stats = [
 const vanguardTiers = [
   {
     name: 'Vanguard Starter',
-    price: 15,
+    price: 30,
     description: 'Essential operations tools',
     features: ['Basic monitoring', 'Asset inventory', 'Alert notifications', 'Up to 50 endpoints'],
     cta: 'Get Started',
@@ -65,7 +65,7 @@ const vanguardTiers = [
   },
   {
     name: 'Vanguard Professional',
-    price: 25,
+    price: 50,
     description: 'Complete operations suite',
     features: ['Everything in Starter', 'Patch management', 'Backup monitoring', 'Network topology', 'Up to 250 endpoints'],
     cta: 'Get Started',
@@ -74,7 +74,7 @@ const vanguardTiers = [
   },
   {
     name: 'Vanguard Enterprise',
-    price: 40,
+    price: 80,
     description: 'Full platform with customizations',
     features: ['Everything in Professional', 'Executive dashboard', 'Custom reports', 'API access', 'Unlimited endpoints'],
     cta: 'Contact Sales',

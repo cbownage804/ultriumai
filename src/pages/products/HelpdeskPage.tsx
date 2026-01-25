@@ -60,7 +60,7 @@ const stats = [
 const vanguardTiers = [
   {
     name: 'Vanguard Starter',
-    price: 15,
+    price: 30,
     description: 'Core security with basic ticketing',
     features: ['Basic ticket management', 'Email integration', 'SLA tracking', 'Up to 50 tickets/mo'],
     cta: 'Get Started',
@@ -68,7 +68,7 @@ const vanguardTiers = [
   },
   {
     name: 'Vanguard Professional',
-    price: 25,
+    price: 50,
     description: 'Full SafeDesk AI capabilities',
     features: ['Everything in Starter', 'AI-powered responses', 'Smart routing', 'Knowledge base', 'Unlimited tickets'],
     cta: 'Get Started',
@@ -77,7 +77,7 @@ const vanguardTiers = [
   },
   {
     name: 'Vanguard Enterprise',
-    price: 40,
+    price: 80,
     description: 'Complete MSP platform',
     features: ['Everything in Professional', 'Custom workflows', 'Multi-tenant support', 'White-label portal', 'Priority support'],
     cta: 'Contact Sales',

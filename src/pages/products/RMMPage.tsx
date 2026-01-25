@@ -60,7 +60,7 @@ const stats = [
 const vanguardTiers = [
   {
     name: 'Vanguard Starter',
-    price: 15,
+    price: 30,
     description: 'Core security with basic RMM',
     features: ['Basic endpoint monitoring', 'Alert notifications', 'Asset inventory', 'Up to 50 endpoints'],
     cta: 'Get Started',
@@ -68,7 +68,7 @@ const vanguardTiers = [
   },
   {
     name: 'Vanguard Professional',
-    price: 25,
+    price: 50,
     description: 'Full SafeOps RMM capabilities',
     features: ['Everything in Starter', 'Remote access & scripting', 'Patch management', 'SafeDesk helpdesk', 'Up to 250 endpoints'],
     cta: 'Get Started',
@@ -77,7 +77,7 @@ const vanguardTiers = [
   },
   {
     name: 'Vanguard Enterprise',
-    price: 40,
+    price: 80,
     description: 'Complete MSP platform',
     features: ['Everything in Professional', 'AI-powered automation', 'Custom integrations', 'White-label options', 'Unlimited endpoints'],
     cta: 'Contact Sales',

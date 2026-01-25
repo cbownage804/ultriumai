@@ -147,12 +147,12 @@ serve(async (req) => {
         const price = await stripe.prices.retrieve(priceId);
         const amount = price.unit_amount || 0;
         
-        // Map amounts to our pricing tiers (per user amounts)
-        if (amount >= 4000) { // $40+ = Enterprise
+        // Map amounts to our pricing tiers (per user amounts - doubled pricing)
+        if (amount >= 8000) { // $80+ = Enterprise
           subscriptionTier = "enterprise";
-        } else if (amount >= 2500) { // $25+ = Professional
+        } else if (amount >= 5000) { // $50+ = Professional
           subscriptionTier = "professional";
-        } else if (amount >= 1500) { // $15+ = Starter
+        } else if (amount >= 3000) { // $30+ = Starter
           subscriptionTier = "starter";
         } else {
           subscriptionTier = "free";
