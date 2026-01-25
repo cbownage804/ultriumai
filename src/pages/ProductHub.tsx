@@ -210,10 +210,10 @@ export default function ProductHub() {
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
           <span className="font-semibold text-lg">UltriumAI</span>
-          </div>
+        </a>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
               Profile
