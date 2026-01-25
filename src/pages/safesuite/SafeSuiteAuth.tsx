@@ -25,6 +25,7 @@ export default function SafeSuiteAuth() {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -80,10 +81,18 @@ export default function SafeSuiteAuth() {
     try {
       const { error } = await signUp(signupEmail, signupPassword);
       if (error) {
-        setError(error.message);
+        if (error.message.includes('User already registered') || 
+            error.message.includes('users_email_partial_key') ||
+            error.message.toLowerCase().includes('duplicate key value')) {
+          setError('An account with this email already exists. Please sign in instead.');
+        } else if (error.message.includes('Database error saving new user')) {
+          setError('This email may already be registered. Check your inbox or spam folder for a confirmation email, or try signing in.');
+        } else {
+          setError(error.message);
+        }
         return;
       }
-      toast.success('Account created! Please check your email to verify.');
+      setSignupSuccess(true);
       setActiveTab('login');
     } catch (err) {
       setError('An unexpected error occurred');
@@ -123,9 +132,27 @@ export default function SafeSuiteAuth() {
                     <CardDescription>Sign in to access your security dashboard</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {signupSuccess && (
+                      <Alert className="border-green-500/50 bg-green-500/10">
+                        <Mail className="h-4 w-4 text-green-500" />
+                        <AlertDescription className="text-green-400">
+                          <strong>Account created!</strong> We've sent a confirmation email. 
+                          <span className="block mt-1 text-muted-foreground">
+                            Can't find it? <strong>Check your spam or junk folder</strong> – emails sometimes end up there.
+                          </span>
+                        </AlertDescription>
+                      </Alert>
+                    )}
                     {error && (
                       <Alert variant="destructive">
-                        <AlertDescription>{error}</AlertDescription>
+                        <AlertDescription>
+                          {error}
+                          {error.toLowerCase().includes('email not confirmed') && (
+                            <span className="block mt-1 text-muted-foreground">
+                              Can't find the confirmation email? <strong>Check your spam or junk folder.</strong>
+                            </span>
+                          )}
+                        </AlertDescription>
                       </Alert>
                     )}
                     <div className="space-y-2">

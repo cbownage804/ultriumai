@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock, Building, Users, Eye, EyeOff } from 'lucide-react';
+import { Lock, Building, Users, Eye, EyeOff, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AuthBrandHeader } from '@/components/auth/AuthBrandHeader';
 
@@ -23,6 +23,7 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   // Prevent double-submit (can cause a successful signup + a second failing request,
   // leaving the UI stuck showing "Database error saving new user").
@@ -126,10 +127,7 @@ const AuthPage = () => {
           setError(error.message);
         }
       } else {
-        toast({
-          title: "Account created!",
-          description: "Please check your email to confirm your account.",
-        });
+        setSignupSuccess(true);
         setActiveTab('signin');
       }
     } catch (err) {
@@ -157,9 +155,27 @@ const AuthPage = () => {
           </CardHeader>
 
           <CardContent>
+            {signupSuccess && (
+              <Alert className="mb-4 border-green-500/50 bg-green-500/10">
+                <Mail className="h-4 w-4 text-green-500" />
+                <AlertDescription className="text-green-400">
+                  <strong>Account created!</strong> We've sent a confirmation email. 
+                  <span className="block mt-1 text-muted-foreground">
+                    Can't find it? <strong>Check your spam or junk folder</strong> – emails sometimes end up there.
+                  </span>
+                </AlertDescription>
+              </Alert>
+            )}
             {error && (
               <Alert className="mb-4 border-destructive/50 text-destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {error}
+                  {error.toLowerCase().includes('email not confirmed') && (
+                    <span className="block mt-1 text-muted-foreground">
+                      Can't find the confirmation email? <strong>Check your spam or junk folder.</strong>
+                    </span>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
 
