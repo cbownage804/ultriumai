@@ -61,6 +61,7 @@ export default function SafeSuiteAssist() {
     isSpeaking,
     isListening,
     isConnecting,
+    voiceCredits,
     startVoice,
     stopVoice,
     setOnVoiceTranscript
@@ -318,11 +319,22 @@ export default function SafeSuiteAssist() {
             
             {/* Credits */}
             <div className="flex items-center gap-3">
+              {/* Text Credits */}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#141414] border border-cyan-500/20">
                 <Coins className="h-4 w-4 text-cyan-400" />
                 <span className="text-sm font-medium text-white">{credits.remaining}</span>
-                <span className="text-xs text-gray-500">/ {credits.total}</span>
+                <span className="text-xs text-gray-500">msgs</span>
               </div>
+              
+              {/* Voice Credits */}
+              {voiceCredits.enabled && (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#141414] border border-cyan-500/20">
+                  <Mic className="h-4 w-4 text-emerald-400" />
+                  <span className="text-sm font-medium text-white">{voiceCredits.remaining}</span>
+                  <span className="text-xs text-gray-500">min</span>
+                </div>
+              )}
+              
               <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white">
                 <Plus className="h-4 w-4 mr-1" />
                 Buy Credits
@@ -530,19 +542,26 @@ export default function SafeSuiteAssist() {
                 {/* Voice Button */}
                 <Button
                   onClick={handleStartVoice}
-                  disabled={!isConnected || credits.remaining <= 0 || isConnecting || isVoiceActive}
+                  disabled={!isConnected || credits.remaining <= 0 || isConnecting || isVoiceActive || !voiceCredits.enabled || voiceCredits.remaining <= 0}
                   variant="outline"
                   className={cn(
-                    "shrink-0 h-12 w-12 rounded-xl border-gray-700 hover:border-cyan-500/50 hover:bg-cyan-500/10",
+                    "shrink-0 h-12 w-12 rounded-xl border-gray-700 hover:border-cyan-500/50 hover:bg-cyan-500/10 relative",
                     isConnecting && "animate-pulse",
-                    isVoiceActive && "border-cyan-500 bg-cyan-500/20"
+                    isVoiceActive && "border-cyan-500 bg-cyan-500/20",
+                    !voiceCredits.enabled && "opacity-50"
                   )}
-                  title="Start voice conversation"
+                  title={!voiceCredits.enabled 
+                    ? "Upgrade to Pro for voice conversations" 
+                    : voiceCredits.remaining <= 0 
+                      ? "No voice minutes remaining this month" 
+                      : `${voiceCredits.remaining} voice minutes remaining`}
                 >
                   {isConnecting ? (
                     <Loader2 className="h-5 w-5 animate-spin text-cyan-400" />
+                  ) : !voiceCredits.enabled ? (
+                    <Lock className="h-5 w-5 text-gray-500" />
                   ) : (
-                    <Mic className={cn("h-5 w-5", isVoiceActive ? "text-cyan-400" : "text-gray-400")} />
+                    <Mic className={cn("h-5 w-5", isVoiceActive ? "text-cyan-400" : voiceCredits.remaining <= 0 ? "text-gray-500" : "text-gray-400")} />
                   )}
                 </Button>
                 

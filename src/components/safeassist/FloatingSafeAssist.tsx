@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Send, Loader2, Minimize2, Maximize2, Mic, PhoneOff } from 'lucide-react';
+import { X, Send, Loader2, Minimize2, Maximize2, Mic, PhoneOff, Lock } from 'lucide-react';
 import { useSafeAssist } from '@/hooks/useSafeAssist';
 import { AIMessageContent } from '@/components/apps/safescan/AIMessageContent';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,7 @@ export function FloatingSafeAssist() {
     isSpeaking,
     isListening,
     isConnecting,
+    voiceCredits,
     startVoice,
     stopVoice,
     setOnVoiceTranscript
@@ -283,16 +284,24 @@ export function FloatingSafeAssist() {
                         {/* Voice Button */}
                         <Button
                           onClick={handleStartVoice}
-                          disabled={isConnecting || isTyping}
+                          disabled={isConnecting || isTyping || !voiceCredits.enabled || voiceCredits.remaining <= 0}
                           variant="outline"
                           size="icon"
                           className={cn(
-                            "shrink-0 border-gray-700 hover:border-cyan-500/50 hover:bg-cyan-500/10",
-                            isConnecting && "animate-pulse"
+                            "shrink-0 border-gray-700 hover:border-cyan-500/50 hover:bg-cyan-500/10 relative",
+                            isConnecting && "animate-pulse",
+                            !voiceCredits.enabled && "opacity-50"
                           )}
+                          title={!voiceCredits.enabled 
+                            ? "Upgrade to Pro for voice" 
+                            : voiceCredits.remaining <= 0 
+                              ? "No voice minutes remaining" 
+                              : `${voiceCredits.remaining} min remaining`}
                         >
                           {isConnecting ? (
                             <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
+                          ) : !voiceCredits.enabled ? (
+                            <Lock className="h-4 w-4 text-gray-500" />
                           ) : (
                             <Mic className="h-4 w-4 text-cyan-400" />
                           )}
