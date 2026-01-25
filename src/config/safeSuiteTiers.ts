@@ -72,7 +72,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
       safetrack: { enabled: false, limit: 0 },
       safeassist: { enabled: true, limit: 100 },   // 100 AI messages/month
-      safeassist_voice: { enabled: true, limit: 10 }, // 10 voice minutes/month
+      safeassist_voice: { enabled: true, limit: 2 }, // 2 voice minutes/month (conservative)
       whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -94,7 +94,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
       safetrack: { enabled: true, limit: -1 },             // Unlimited tracked assets
       safeassist: { enabled: true, limit: -1 },            // Unlimited AI messages
-      safeassist_voice: { enabled: true, limit: 30 },      // 30 voice minutes/month
+      safeassist_voice: { enabled: true, limit: 5 },       // 5 voice minutes/month (conservative)
       whitelabeling: { enabled: true, limit: -1 },         // Full whitelabeling (Business only)
       team: { enabled: true, limit: -1 }                   // Team/User management (Business only)
     }
