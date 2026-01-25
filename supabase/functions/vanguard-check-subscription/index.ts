@@ -8,9 +8,9 @@ const corsHeaders = {
 };
 
 const PRODUCT_TO_TIER: Record<string, string> = {
-  "prod_TmnMFXO0ehpZ9s": "starter",
-  "prod_TmnM7MufzeuNPz": "professional",
-  "prod_TmnMhsqHnaL1ZQ": "enterprise",
+  "prod_TrHsD4Lf3avsrU": "starter",
+  "prod_TrHshPxz3EaRf5": "professional",
+  "prod_TrHszdaeRbnVFP": "enterprise",
 };
 
 const logStep = (step: string, details?: any) => {
