@@ -17,6 +17,7 @@ import { CheckCircle2, X, Lock, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnimatedHeader, GlowContainer, SAFESUITE_THEMES } from '@/components/safesuite/SafeSuiteEffects';
 import safepassLogo from '@/assets/safepass-logo.png';
+import heroSafepassBg from '@/assets/hero-safepass-bg.jpg';
 
 export default function SafeSuitePass() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -90,7 +91,20 @@ export default function SafeSuitePass() {
 
   return (
     <FeatureGate feature="safepass">
-      <div className="min-h-screen bg-[#0a0a0a] space-y-6 p-6 -m-6">
+      <div 
+        className="min-h-screen space-y-6 p-6 -m-6 relative"
+        style={{
+          backgroundImage: `url(${heroSafepassBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+        
+        {/* Content wrapper */}
+        <div className="relative z-10 space-y-6">
         <AnimatePresence>
           {showExtensionBanner && (
             <motion.div
@@ -191,6 +205,7 @@ export default function SafeSuitePass() {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </FeatureGate>
   );
