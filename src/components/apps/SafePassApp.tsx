@@ -257,6 +257,15 @@ export const SafePassApp = ({ isWhiteLabeled = false, brandColor = '#3b82f6', br
   const sharedEntries = 0; // Not implemented in current schema
   const categories = Array.from(new Set(entries.map(e => e.category)));
 
+  // Wait for master password loading state before deciding setup vs unlock
+  if (masterPassword.isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   // Show master password setup if not set
   if (!masterPassword.hasUserSetMasterPassword()) {
     return (

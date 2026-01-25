@@ -36,6 +36,7 @@ export default function SafePassDashboard() {
   const {
     isUnlocked,
     isLocked,
+    isLoading: isMasterPasswordLoading,
     hasUserSetMasterPassword,
     setMasterPassword,
     unlockWithPassword,
@@ -46,7 +47,9 @@ export default function SafePassDashboard() {
   const [isSettingUp, setIsSettingUp] = useState(false);
 
   useEffect(() => {
-    // Check if user needs to set up master password
+    // Wait until master password state is loaded before deciding setup vs unlock
+    if (isMasterPasswordLoading) return;
+    
     if (!hasUserSetMasterPassword()) {
       setShowMasterPasswordSetup(true);
       setIsSettingUp(true);
@@ -54,7 +57,7 @@ export default function SafePassDashboard() {
       setShowMasterPasswordSetup(true);
       setIsSettingUp(false);
     }
-  }, [hasUserSetMasterPassword, isUnlocked]);
+  }, [hasUserSetMasterPassword, isUnlocked, isMasterPasswordLoading]);
 
   const handleMasterPasswordSet = async (password: string) => {
     if (isSettingUp) {
