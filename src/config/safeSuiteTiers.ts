@@ -93,7 +93,7 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
       safescan: { enabled: true, limit: -1 },              // Unlimited scans
       safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
       safetrack: { enabled: true, limit: -1 },             // Unlimited tracked assets
-      safeassist: { enabled: true, limit: -1 },            // Unlimited AI messages
+      safeassist: { enabled: true, limit: 250 },            // 250 AI messages/month
       safeassist_voice: { enabled: true, limit: 5 },       // 5 voice minutes/month (conservative)
       whitelabeling: { enabled: true, limit: -1 },         // Full whitelabeling (Business only)
       team: { enabled: true, limit: -1 }                   // Team/User management (Business only)
