@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertTriangle, Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Loader2, AlertTriangle, Lock, Eye, EyeOff, CheckCircle, Shield, Smartphone } from 'lucide-react';
 import safepassLogo from '@/assets/safepass-logo.png';
 
 export default function SafePassResetMasterPassword() {
@@ -16,8 +17,10 @@ export default function SafePassResetMasterPassword() {
   const { toast } = useToast();
   const token = searchParams.get('token');
 
-  const [step, setStep] = useState<'request' | 'verify' | 'reset' | 'success'>('request');
+  const [step, setStep] = useState<'email' | 'mfa' | 'verify' | 'reset' | 'success'>('email');
   const [email, setEmail] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaEnabled, setMfaEnabled] = useState<boolean | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +47,7 @@ export default function SafePassResetMasterPassword() {
           description: data?.error || "This reset link is invalid or has expired.",
           variant: "destructive",
         });
-        setStep('request');
+        setStep('email');
       } else {
         setTokenValid(true);
         setStep('reset');
@@ -55,13 +58,13 @@ export default function SafePassResetMasterPassword() {
         description: "Failed to verify reset link.",
         variant: "destructive",
       });
-      setStep('request');
+      setStep('email');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRequestReset = async () => {
+  const handleCheckEmail = async () => {
     if (!email) {
       toast({ title: "Email required", description: "Please enter your email address.", variant: "destructive" });
       return;
@@ -70,20 +73,58 @@ export default function SafePassResetMasterPassword() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('safepass-reset-master-password', {
-        body: { action: 'request', email }
+        body: { action: 'check_mfa', email }
       });
 
       if (error) throw error;
 
+      setMfaEnabled(data.mfaEnabled);
+      
+      if (!data.mfaEnabled) {
+        toast({
+          title: "MFA Required",
+          description: "You must have MFA enabled to reset your master password. Please contact support.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setStep('mfa');
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to check account.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestReset = async () => {
+    if (!email || !mfaCode || mfaCode.length !== 6) {
+      toast({ title: "MFA Code Required", description: "Please enter your 6-digit MFA code.", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('safepass-reset-master-password', {
+        body: { action: 'request', email, mfaCode }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
       toast({
         title: "Check your email",
-        description: "If an account exists, a reset link has been sent.",
+        description: "Reset link sent. Check your inbox.",
       });
       setStep('verify');
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to send reset email.",
+        title: "Verification Failed",
+        description: error.message || "Invalid MFA code or failed to send reset email.",
         variant: "destructive",
       });
     } finally {
@@ -135,7 +176,8 @@ export default function SafePassResetMasterPassword() {
           </div>
           <CardTitle>Reset Master Password</CardTitle>
           <CardDescription>
-            {step === 'request' && "Enter your email to receive a reset link"}
+            {step === 'email' && "Enter your email to start the reset process"}
+            {step === 'mfa' && "Enter your MFA code to verify your identity"}
             {step === 'verify' && "Check your email for the reset link"}
             {step === 'reset' && "Create a new master password"}
             {step === 'success' && "Your password has been reset"}
@@ -143,13 +185,22 @@ export default function SafePassResetMasterPassword() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {step === 'request' && (
+          {/* Email Step */}
+          {step === 'email' && (
             <>
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Warning: Data Loss</AlertTitle>
                 <AlertDescription>
                   Resetting your master password will permanently delete all encrypted vault data. This cannot be undone.
+                </AlertDescription>
+              </Alert>
+
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertTitle>MFA Required</AlertTitle>
+                <AlertDescription>
+                  For security, you must verify with your authenticator app to reset your master password.
                 </AlertDescription>
               </Alert>
 
@@ -161,17 +212,17 @@ export default function SafePassResetMasterPassword() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  onKeyDown={(e) => e.key === 'Enter' && handleRequestReset()}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCheckEmail()}
                 />
               </div>
 
               <Button 
                 className="w-full bg-amber-500 hover:bg-amber-600" 
-                onClick={handleRequestReset}
+                onClick={handleCheckEmail}
                 disabled={loading}
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Send Reset Link
+                Continue
               </Button>
 
               <Button 
@@ -184,10 +235,61 @@ export default function SafePassResetMasterPassword() {
             </>
           )}
 
+          {/* MFA Verification Step */}
+          {step === 'mfa' && (
+            <>
+              <div className="text-center py-4">
+                <Smartphone className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Open your authenticator app and enter the 6-digit code for <strong>UltriumGPT</strong>
+                </p>
+              </div>
+
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={(value) => setMfaCode(value)}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <Button 
+                className="w-full bg-amber-500 hover:bg-amber-600" 
+                onClick={handleRequestReset}
+                disabled={loading || mfaCode.length !== 6}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Shield className="h-4 w-4 mr-2" />}
+                Verify & Send Reset Email
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => { setStep('email'); setMfaCode(''); }}
+              >
+                Use Different Email
+              </Button>
+            </>
+          )}
+
+          {/* Email Sent Step */}
           {step === 'verify' && (
             <>
               <div className="text-center py-8">
                 <Lock className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+                <div className="flex items-center justify-center gap-2 text-green-600 mb-4">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-sm font-medium">MFA Verified</span>
+                </div>
                 <p className="text-muted-foreground">
                   We've sent a reset link to <strong>{email}</strong>. Check your inbox and click the link to continue.
                 </p>
@@ -196,13 +298,14 @@ export default function SafePassResetMasterPassword() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => setStep('request')}
+                onClick={() => { setStep('email'); setMfaCode(''); }}
               >
                 Use Different Email
               </Button>
             </>
           )}
 
+          {/* Reset Password Step */}
           {step === 'reset' && tokenValid && (
             <>
               <Alert variant="destructive">
@@ -258,6 +361,7 @@ export default function SafePassResetMasterPassword() {
             </>
           )}
 
+          {/* Success Step */}
           {step === 'success' && (
             <>
               <div className="text-center py-8">
@@ -276,6 +380,7 @@ export default function SafePassResetMasterPassword() {
             </>
           )}
 
+          {/* Loading State */}
           {loading && step === 'reset' && !tokenValid && (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-500" />
