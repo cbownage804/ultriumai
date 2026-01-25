@@ -1,34 +1,43 @@
 /**
  * Floating SafeAssist Chat Widget
  * Persistent chat assistant with voice support and animated orb
+ * Auto-opens when navigating away from SafeAssist full page
  */
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useConversation } from '@elevenlabs/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Send, Loader2, Minimize2, Maximize2, Mic, MicOff, Phone, PhoneOff } from 'lucide-react';
+import { X, Send, Loader2, Minimize2, Maximize2, Mic, PhoneOff } from 'lucide-react';
 import { useSafeAssist } from '@/hooks/useSafeAssist';
 import { AIMessageContent } from '@/components/apps/safescan/AIMessageContent';
 import { cn } from '@/lib/utils';
 import { useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
 import { VoiceOrb } from './VoiceOrb';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import safeassistLogo from '@/assets/safeassist-logo.png';
 import safeassistHorizontal from '@/assets/safeassist-logo-horizontal.png';
 
 export function FloatingSafeAssist() {
-  const { isOpen, openAssistant, closeAssistant } = useFloatingSafeAssist();
+  const { 
+    isOpen, 
+    isOnAssistPage,
+    closeAssistant, 
+    openAssistant,
+    isVoiceActive,
+    isSpeaking,
+    isListening,
+    isConnecting,
+    startVoice,
+    stopVoice,
+    setOnVoiceTranscript
+  } = useFloatingSafeAssist();
+  
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState('');
   const [isVoiceMode, setIsVoiceMode] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
   const {
     messages,
@@ -36,35 +45,28 @@ export function FloatingSafeAssist() {
     sendMessage,
   } = useSafeAssist();
 
-  // ElevenLabs voice conversation
-  const conversation = useConversation({
-    onConnect: () => {
-      console.log('Voice connected');
-    },
-    onDisconnect: () => {
-      console.log('Voice disconnected');
-      setIsVoiceMode(false);
-    },
-    onMessage: (message: any) => {
-      // Handle user transcript - add to chat
-      if (message?.user_transcription_event?.user_transcript) {
-        const transcript = message.user_transcription_event.user_transcript;
-        sendMessage(transcript);
-      }
-    },
-    onError: (error) => {
-      console.error('Voice error:', error);
-      toast({
-        title: "Voice Error",
-        description: "Connection issue. Please try again.",
-        variant: "destructive"
+  // Register transcript handler
+  useEffect(() => {
+    if (isOpen && !isOnAssistPage) {
+      setOnVoiceTranscript((text: string) => {
+        sendMessage(text);
       });
-      setIsVoiceMode(false);
-    },
-  });
+    }
+    return () => {
+      if (!isOnAssistPage) {
+        setOnVoiceTranscript(undefined);
+      }
+    };
+  }, [isOpen, isOnAssistPage, sendMessage, setOnVoiceTranscript]);
 
-  const isVoiceActive = conversation.status === 'connected';
-  const isSpeaking = conversation.isSpeaking;
+  // Sync voice mode with voice active state
+  useEffect(() => {
+    if (isVoiceActive) {
+      setIsVoiceMode(true);
+    } else {
+      setIsVoiceMode(false);
+    }
+  }, [isVoiceActive]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -94,51 +96,19 @@ export function FloatingSafeAssist() {
     }
   };
 
-  const startVoiceConversation = useCallback(async () => {
-    setIsConnecting(true);
-    try {
-      // Request microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+  const handleStartVoice = useCallback(async () => {
+    await startVoice();
+  }, [startVoice]);
 
-      // Get conversation token from edge function
-      const { data, error } = await supabase.functions.invoke('elevenlabs-conversation-token');
-
-      if (error || !data?.token) {
-        throw new Error(error?.message || 'Voice not configured');
-      }
-
-      // Start the conversation with WebRTC
-      await conversation.startSession({
-        conversationToken: data.token,
-        connectionType: 'webrtc',
-      });
-      
-      setIsVoiceMode(true);
-    } catch (error: any) {
-      console.error('Failed to start voice:', error);
-      
-      if (error.name === 'NotAllowedError') {
-        toast({
-          title: "Microphone Access Required",
-          description: "Please enable microphone access to use voice.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Voice Unavailable",
-          description: error.message || "Could not start voice conversation.",
-          variant: "destructive"
-        });
-      }
-    } finally {
-      setIsConnecting(false);
-    }
-  }, [conversation, toast]);
-
-  const stopVoiceConversation = useCallback(async () => {
-    await conversation.endSession();
+  const handleStopVoice = useCallback(async () => {
+    await stopVoice();
     setIsVoiceMode(false);
-  }, [conversation]);
+  }, [stopVoice]);
+
+  // Don't render if on full page
+  if (isOnAssistPage) {
+    return null;
+  }
 
   return (
     <>
@@ -207,7 +177,7 @@ export function FloatingSafeAssist() {
                   size="icon"
                   className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
                   onClick={() => {
-                    if (isVoiceActive) stopVoiceConversation();
+                    if (isVoiceActive) handleStopVoice();
                     closeAssistant();
                   }}
                 >
@@ -225,7 +195,7 @@ export function FloatingSafeAssist() {
                     <VoiceOrb 
                       isActive={isVoiceActive}
                       isSpeaking={isSpeaking}
-                      isListening={isVoiceActive && !isSpeaking}
+                      isListening={isListening}
                       size="lg"
                     />
                     
@@ -234,7 +204,7 @@ export function FloatingSafeAssist() {
                     </p>
                     
                     <Button
-                      onClick={stopVoiceConversation}
+                      onClick={handleStopVoice}
                       variant="outline"
                       className="mt-4 border-red-500/50 text-red-400 hover:bg-red-500/20 hover:text-red-300"
                     >
@@ -312,7 +282,7 @@ export function FloatingSafeAssist() {
                       <div className="flex gap-2">
                         {/* Voice Button */}
                         <Button
-                          onClick={startVoiceConversation}
+                          onClick={handleStartVoice}
                           disabled={isConnecting || isTyping}
                           variant="outline"
                           size="icon"
