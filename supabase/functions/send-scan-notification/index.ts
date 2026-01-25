@@ -163,7 +163,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { subject, html } = getEmailContent();
 
     const emailResponse = await resend.emails.send({
-      from: "SafeScan Security <security@your-domain.com>",
+      from: "SafeScan Security <support@ultriumai.com>",
       to: [userEmail],
       subject,
       html,

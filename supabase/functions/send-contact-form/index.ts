@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const emailResponse = await resend.emails.send({
-      from: "UltriumAI Contact Form <noreply@ultriumai.com>",  
+      from: "UltriumAI <support@ultriumai.com>",
       to: ["info@ultriumai.com"],
       replyTo: formData.email,
       subject: `🚀 New Contact Form: ${formData.firstName} ${formData.lastName} - ${formData.businessType === 'service-provider' ? 'Service Provider' : 'Business'} Inquiry`,

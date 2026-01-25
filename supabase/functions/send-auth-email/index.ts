@@ -268,7 +268,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Sending ${type} email to ${email}`);
 
     const emailResponse = await resend.emails.send({
-      from: "UltriumAI <noreply@ultriumai.com>",
+      from: "UltriumAI Security <support@ultriumai.com>",
       to: [email],
       subject: template.subject,
       html: template.html,
