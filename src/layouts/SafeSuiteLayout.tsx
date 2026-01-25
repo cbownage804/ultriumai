@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
+import { FloatingSafeAssistProvider, useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
 
 /**
  * Get the correct path for SafeSuite routes based on subdomain
@@ -181,7 +182,8 @@ function NavLink({
   currentPath,
   onClick,
   isExpanded,
-  onToggle
+  onToggle,
+  onCustomClick
 }: {
   item: NavItem;
   isActive: boolean;
@@ -190,6 +192,7 @@ function NavLink({
   onClick?: () => void;
   isExpanded: boolean;
   onToggle: () => void;
+  onCustomClick?: () => void;
 }) {
   const Icon = item.icon;
   const hasSubItems = Boolean(item.subItems?.length);
@@ -201,33 +204,68 @@ function NavLink({
     }
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onCustomClick) {
+      e.preventDefault();
+      onCustomClick();
+      onClick?.();
+      return;
+    }
+    onClick?.();
+  };
+
   return (
     <div className="space-y-1">
       <div className="flex items-center">
-        <Link
-          to={item.path}
-          onClick={onClick}
-          className={cn(
-            'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1',
-            'hover:bg-accent hover:text-accent-foreground',
-            isActive && 'bg-primary/10',
-            isLocked && 'opacity-60'
-          )}
-        >
-          {item.productLogo ? (
-            <img 
-              src={item.productLogo} 
-              alt={item.label} 
-              className="h-20 w-auto object-contain" 
-            />
-          ) : Icon ? (
-            <>
-              <Icon className="h-5 w-5" />
-              <span className="flex-1">{item.label}</span>
-            </>
-          ) : null}
-          {isLocked && <Lock className="h-4 w-4 text-muted-foreground ml-auto" />}
-        </Link>
+        {onCustomClick ? (
+          <button
+            onClick={handleClick}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1 text-left',
+              'hover:bg-accent hover:text-accent-foreground',
+              isActive && 'bg-primary/10',
+              isLocked && 'opacity-60'
+            )}
+          >
+            {item.productLogo ? (
+              <img 
+                src={item.productLogo} 
+                alt={item.label} 
+                className="h-20 w-auto object-contain" 
+              />
+            ) : Icon ? (
+              <>
+                <Icon className="h-5 w-5" />
+                <span className="flex-1">{item.label}</span>
+              </>
+            ) : null}
+            {isLocked && <Lock className="h-4 w-4 text-muted-foreground ml-auto" />}
+          </button>
+        ) : (
+          <Link
+            to={item.path}
+            onClick={handleClick}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 flex-1',
+              'hover:bg-accent hover:text-accent-foreground',
+              isActive && 'bg-primary/10',
+              isLocked && 'opacity-60'
+            )}
+          >
+            {item.productLogo ? (
+              <img 
+                src={item.productLogo} 
+                alt={item.label} 
+                className="h-20 w-auto object-contain" 
+              />
+            ) : Icon ? (
+              <>
+                <Icon className="h-5 w-5" />
+                <span className="flex-1">{item.label}</span>
+              </>
+            ) : null}
+          </Link>
+        )}
         {hasSubItems && (
           <button
             onClick={handleToggle}
@@ -272,6 +310,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   const location = useLocation();
   const { tier, tierConfig } = useSafeSuiteSubscription();
   const { user } = useAuth();
+  const { openAssistant } = useFloatingSafeAssist();
   const navItems = getNavItems();
   const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
   
@@ -360,6 +399,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
               onClick={onItemClick}
               isExpanded={expandedItems.has(item.id)}
               onToggle={() => toggleExpanded(item.id)}
+              onCustomClick={item.id === 'safeassist' ? openAssistant : undefined}
             />
           );
         })}
@@ -407,7 +447,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
   );
 }
 
-export default function SafeSuiteLayout() {
+function SafeSuiteLayoutInner() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -495,5 +535,13 @@ export default function SafeSuiteLayout() {
       {/* Floating SafeAssist Chat - available on all pages */}
       <FloatingSafeAssist />
     </div>
+  );
+}
+
+export default function SafeSuiteLayout() {
+  return (
+    <FloatingSafeAssistProvider>
+      <SafeSuiteLayoutInner />
+    </FloatingSafeAssistProvider>
   );
 }
