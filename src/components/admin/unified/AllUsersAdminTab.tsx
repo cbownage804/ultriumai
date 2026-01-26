@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -134,45 +135,15 @@ export const AllUsersAdminTab = () => {
     ));
   };
 
-  const getAccountTypeLabel = (type: string) => {
+  const getAccountTypeBadge = (type: string) => {
     switch (type) {
-      case 'msp': return 'MSP Partner';
-      case 'mssp': return 'MSSP Partner';
-      default: return 'Individual';
+      case 'msp':
+        return <Badge variant="outline" className="text-blue-500 border-blue-500/50">MSP Partner</Badge>;
+      case 'mssp':
+        return <Badge variant="outline" className="text-purple-500 border-purple-500/50">MSSP Partner</Badge>;
+      default:
+        return <Badge variant="outline" className="text-muted-foreground">Individual</Badge>;
     }
-  };
-
-  const getProductBadges = (products: UnifiedUser['products']) => {
-    const badges = [];
-    
-    if (products.ai_studio) {
-      badges.push(
-        <Badge key="ai" variant="outline" className="text-purple-500 border-purple-500/50 text-xs">
-          <Sparkles className="h-3 w-3 mr-1" />
-          AI Studio
-        </Badge>
-      );
-    }
-    
-    if (products.safesuite) {
-      badges.push(
-        <Badge key="ss" variant="outline" className="text-emerald-500 border-emerald-500/50 text-xs">
-          <Shield className="h-3 w-3 mr-1" />
-          SafeSuite
-        </Badge>
-      );
-    }
-    
-    if (products.vanguard) {
-      badges.push(
-        <Badge key="vg" variant="outline" className="text-amber-500 border-amber-500/50 text-xs">
-          <Zap className="h-3 w-3 mr-1" />
-          Vanguard
-        </Badge>
-      );
-    }
-
-    return badges.length > 0 ? badges : <span className="text-muted-foreground text-xs">No active products</span>;
   };
 
   if (loading) {
@@ -267,14 +238,31 @@ export const AllUsersAdminTab = () => {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Account Type</TableHead>
-                  <TableHead>Products</TableHead>
+                  <TableHead className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                      AI Studio
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Shield className="h-3.5 w-3.5 text-emerald-500" />
+                      SafeSuite
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Zap className="h-3.5 w-3.5 text-amber-500" />
+                      Vanguard
+                    </div>
+                  </TableHead>
                   <TableHead>Joined</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -290,14 +278,28 @@ export const AllUsersAdminTab = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-emerald-600 border-emerald-600">
-                          {getAccountTypeLabel(user.account_type)}
-                        </Badge>
+                        {getAccountTypeBadge(user.account_type)}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {getProductBadges(user.products)}
-                        </div>
+                      <TableCell className="text-center">
+                        <Checkbox 
+                          checked={!!user.products.ai_studio} 
+                          disabled 
+                          className="data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Checkbox 
+                          checked={!!user.products.safesuite} 
+                          disabled 
+                          className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Checkbox 
+                          checked={!!user.products.vanguard} 
+                          disabled 
+                          className="data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
+                        />
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(user.created_at), 'MMM d, yyyy')}
