@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,15 +13,14 @@ import {
   Users,
   Zap,
   Brain,
-  Calendar,
   Download,
   RefreshCw,
   Sparkles,
-  Target,
-  Award
+  Target
 } from "lucide-react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
 import { motion } from "framer-motion";
+import { useGPTAnalytics, AnalyticsData, AnalyticsStats } from "@/hooks/useGPTAnalytics";
 
 interface GPTAnalyticsProps {
   gptId?: string;
@@ -29,20 +28,7 @@ interface GPTAnalyticsProps {
   themeColor?: string;
 }
 
-// Empty initial state - will be populated from real analytics_aggregates table
-const getEmptyData = () => {
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return days.map((day) => ({
-    day,
-    messages: 0,
-    tokens: 0,
-    responseTime: 0,
-    sessions: 0,
-  }));
-};
-
 const topPrompts: { prompt: string; count: number; category: string }[] = [];
-
 const categoryDistribution: { name: string; value: number; color: string }[] = [];
 
 export function GPTAnalyticsDashboard({ 
@@ -52,27 +38,36 @@ export function GPTAnalyticsDashboard({
 }: GPTAnalyticsProps) {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
-  const data = useMemo(() => getEmptyData(), [timeRange]);
-  
-  const stats = useMemo(() => {
-    const totalMessages = data.reduce((acc, d) => acc + d.messages, 0);
-    const avgResponseTime = totalMessages > 0 ? Math.round(data.reduce((acc, d) => acc + d.responseTime, 0) / data.length) : 0;
-    return {
-      totalMessages,
-      avgResponseTime,
-      totalTokens: data.reduce((acc, d) => acc + d.tokens, 0),
-      totalSessions: data.reduce((acc, d) => acc + d.sessions, 0),
-      messageGrowth: 0,
-      responseTimeChange: 0,
-    };
-  }, [data]);
+  const [data, setData] = useState<AnalyticsData[]>([]);
+  const [stats, setStats] = useState<AnalyticsStats>({
+    totalMessages: 0,
+    avgResponseTime: 0,
+    totalTokens: 0,
+    totalSessions: 0,
+    messageGrowth: 0,
+    responseTimeChange: 0
+  });
+
+  const { fetchAnalytics, isLoading } = useGPTAnalytics(gptId);
+
+  const loadAnalytics = async () => {
+    const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+    const result = await fetchAnalytics(days);
+    setData(result.data);
+    setStats(result.stats);
+  };
+
+  useEffect(() => {
+    if (gptId) {
+      loadAnalytics();
+    }
+  }, [gptId, timeRange]);
 
   const hasData = stats.totalMessages > 0;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await new Promise(r => setTimeout(r, 1000));
+    await loadAnalytics();
     setIsRefreshing(false);
   };
 
