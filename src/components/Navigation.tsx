@@ -41,19 +41,20 @@ const Navigation = () => {
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) {
+    // Clear local storage even if server returns error (e.g., session already expired)
+    if (error && error.message !== 'Session not found') {
       toast({
         title: "Error",
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out.",
-      });
-      handleNavigation('/');
+      return;
     }
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out.",
+    });
+    handleNavigation('/');
   };
 
   return (
