@@ -153,7 +153,7 @@ export const EmergencyAccess = () => {
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="bg-amber-500 hover:bg-amber-600 text-black">
               <UserPlus className="w-4 h-4 mr-2" />
               Add Trusted Contact
             </Button>
@@ -197,7 +197,7 @@ export const EmergencyAccess = () => {
                   Time to deny the request before access is granted
                 </p>
               </div>
-              <Button onClick={handleAddContact} disabled={isAdding} className="w-full">
+              <Button onClick={handleAddContact} disabled={isAdding} className="w-full bg-amber-500 hover:bg-amber-600 text-black">
                 {isAdding ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Adding...</>
                 ) : (

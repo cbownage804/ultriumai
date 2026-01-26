@@ -258,6 +258,7 @@ export const BreachMonitor = () => {
         <Button 
           onClick={runBreachScan} 
           disabled={isScanning}
+          className="bg-amber-500 hover:bg-amber-600 text-black"
         >
           {isScanning ? (
             <>
