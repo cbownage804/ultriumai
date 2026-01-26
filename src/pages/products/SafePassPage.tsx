@@ -49,25 +49,25 @@ const SafePassPage = () => {
                 Enterprise Password Security
               </Badge>
               <div className="flex justify-center mb-8">
-                <div className="px-8 py-4 bg-black rounded-2xl shadow-2xl shadow-amber-500/20 animate-fade-in">
+                <div className="px-6 py-3 sm:px-8 sm:py-4 bg-black rounded-2xl shadow-2xl shadow-amber-500/20 animate-fade-in">
                   <img 
                     src={safeSuiteProducts.safepass.logo} 
                     alt="SafePass" 
-                    className="h-24 w-auto object-contain"
+                    className="h-16 sm:h-20 md:h-24 w-auto object-contain"
                   />
                 </div>
               </div>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8">
+              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-8 px-2">
                 Enterprise password management and security platform. Secure, generate, and manage passwords across your organization with advanced breach monitoring.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/vanguard/auth">
-                  <Button size="lg" className="bg-amber-500 hover:bg-amber-600">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-2">
+                <Link to="/vanguard/auth" className="w-full sm:w-auto">
+                  <Button size="lg" className="bg-amber-500 hover:bg-amber-600 w-full sm:w-auto">
                     Start Free Trial
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Button variant="outline" size="lg" onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
+                <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })}>
                   <Play className="mr-2 h-5 w-5" />
                   Try Live Demo
                 </Button>

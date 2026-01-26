@@ -178,15 +178,15 @@ const AIStudio = () => {
             <div className="space-y-6">
               {/* Logo */}
               <div className="flex justify-center">
-                <div className="px-12 py-6 bg-black rounded-2xl shadow-2xl shadow-primary/30 animate-fade-in">
-                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-28 w-auto object-contain" />
+                <div className="px-6 py-4 sm:px-12 sm:py-6 bg-black rounded-2xl shadow-2xl shadow-primary/30 animate-fade-in">
+                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-16 sm:h-20 md:h-28 w-auto object-contain" />
                 </div>
               </div>
               
-              <h2 className="text-2xl md:text-3xl font-semibold text-muted-foreground">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-muted-foreground">
                 Custom GPT Builder Platform
               </h2>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2">
                 Build intelligent AI assistants in minutes, not months. Deploy custom GPTs trained on YOUR data, 
                 YOUR processes, YOUR way—whether you're an MSP scaling services or a business automating operations.
               </p>
@@ -203,18 +203,18 @@ const AIStudio = () => {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto btn-glow" onClick={() => window.location.href = '/ultrium-gpt'}>
-                <Play className="mr-2 h-5 w-5" />
-                Launch AI Studio
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center flex-wrap px-2">
+              <Button size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto btn-glow w-full sm:w-auto" onClick={() => window.location.href = '/ultrium-gpt'}>
+                <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="truncate">Launch AI Studio</span>
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
-                <Play className="mr-2 h-5 w-5" />
-                View Demo
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto w-full sm:w-auto" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
+                <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="truncate">View Demo</span>
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6 h-auto" onClick={() => window.location.href = '/contact'}>
-                <Calendar className="mr-2 h-5 w-5" />
-                Schedule Consultation
+              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto w-full sm:w-auto" onClick={() => window.location.href = '/contact'}>
+                <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                <span className="truncate">Schedule Consultation</span>
               </Button>
             </div>
           </div>
@@ -225,10 +225,10 @@ const AIStudio = () => {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-foreground">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-foreground">
               Choose Your GPT Creation Path
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
               Two distinct approaches to get you the custom GPT your business needs—both designed to deliver professional, 
               security-focused results that integrate seamlessly with your operations.
             </p>

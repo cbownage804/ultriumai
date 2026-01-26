@@ -241,14 +241,14 @@ export const AIStudioAdminTab = () => {
           </div>
 
           {/* Table */}
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Account Type</TableHead>
-                  <TableHead>Tier</TableHead>
-                  <TableHead>Joined</TableHead>
+                  <TableHead className="min-w-[200px]">User</TableHead>
+                  <TableHead className="min-w-[120px]">Account Type</TableHead>
+                  <TableHead className="min-w-[100px]">Tier</TableHead>
+                  <TableHead className="min-w-[100px]">Joined</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -262,20 +262,20 @@ export const AIStudioAdminTab = () => {
                   filteredUsers.slice(0, 50).map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">{user.email}</div>
+                        <div className="max-w-[200px]">
+                          <div className="font-medium truncate">{user.email}</div>
                           {user.full_name && (
-                            <div className="text-sm text-muted-foreground">{user.full_name}</div>
+                            <div className="text-sm text-muted-foreground truncate">{user.full_name}</div>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                        <Badge variant="outline" className="text-emerald-600 border-emerald-600 whitespace-nowrap">
                           {getAccountTypeLabel(user.account_type)}
                         </Badge>
                       </TableCell>
                       <TableCell>{getTierBadge(user.subscription_tier)}</TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
                         {format(new Date(user.created_at), 'MMM d, yyyy')}
                       </TableCell>
                     </TableRow>

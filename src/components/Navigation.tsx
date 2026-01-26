@@ -110,7 +110,7 @@ const Navigation = () => {
               <DropdownMenuContent 
                 align="center" 
                 sideOffset={12}
-                className="w-[520px] p-0 bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden"
+                className="w-[90vw] max-w-[520px] p-0 bg-background/95 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/20 rounded-2xl overflow-hidden"
               >
                 {/* Header */}
                 <div className="px-5 py-4 bg-gradient-to-r from-primary/10 via-transparent to-cyan-500/10 border-b border-border/30">
