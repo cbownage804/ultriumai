@@ -31,17 +31,25 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('contact_messages')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            subject: formData.subject,
-            message: `Company: ${formData.company || 'Not provided'}\nPhone: ${formData.phone || 'Not provided'}\nInquiry Type: ${formData.inquiryType || 'General'}\n\nMessage:\n${formData.message}`,
-            status: 'new'
-          }
-        ]);
+      // Use edge function to send email (bypasses RLS and sends to info@ultriumai.com)
+      const { error } = await supabase.functions.invoke('send-contact-form', {
+        body: {
+          firstName: formData.name.split(' ')[0] || formData.name,
+          lastName: formData.name.split(' ').slice(1).join(' ') || '',
+          email: formData.email,
+          phone: formData.phone || '',
+          company: formData.company || '',
+          businessType: 'business',
+          serviceProviderType: '',
+          businessSize: '',
+          industry: '',
+          projectType: formData.inquiryType || 'general',
+          productType: 'prebuilt',
+          whiteLabeled: 'no',
+          message: formData.message,
+          productInterests: formData.inquiryType ? [formData.inquiryType] : []
+        }
+      });
 
       if (error) throw error;
 
