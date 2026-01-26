@@ -41,10 +41,28 @@ const ProductCard = ({
   const hasAccess = accessLevel !== null;
 
   const handleClick = () => {
-    if (isSubdomain) {
+    // Only use subdomain redirects on actual production (ultriumai.com)
+    const isProduction = window.location.hostname.endsWith('.ultriumai.com') || 
+                        window.location.hostname === 'ultriumai.com';
+    
+    if (isSubdomain && isProduction) {
+      // Production cross-domain redirect
       window.location.href = href;
     } else {
-      navigate(href);
+      // Local navigation for Lovable published/preview or main domain
+      if (isSubdomain && !isProduction) {
+        // On Lovable domains, use prefixed routes
+        if (product === 'safesuite') {
+          navigate('/safesuite/dashboard');
+        } else if (product === 'vanguard') {
+          navigate('/vanguard/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
+      } else {
+        // Regular local navigation
+        navigate(href);
+      }
     }
   };
 
