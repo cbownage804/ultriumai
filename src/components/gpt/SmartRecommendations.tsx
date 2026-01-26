@@ -62,26 +62,26 @@ export function SmartRecommendations({
       categoryMatches.forEach(template => {
         results.push({
           template,
-          reason: `Popular in ${template.category}`,
+          reason: `Matches your interests`,
           icon: TrendingUp,
-          score: template.use_count + (template.rating * 100)
+          score: 150
         });
       });
     }
     
-    // 2. Highly rated you haven't tried
-    const highRated = templates
-      .filter(t => !usedIds.has(t.id) && t.rating >= 4.5)
-      .sort((a, b) => b.rating - a.rating)
+    // 2. Feature-rich templates you haven't tried
+    const featureRich = templates
+      .filter(t => !usedIds.has(t.id) && t.features.length >= 4)
+      .sort((a, b) => b.features.length - a.features.length)
       .slice(0, 2);
     
-    highRated.forEach(template => {
+    featureRich.forEach(template => {
       if (!results.find(r => r.template.id === template.id)) {
         results.push({
           template,
-          reason: `Top rated (${template.rating}★)`,
+          reason: `${template.features.length} features`,
           icon: Sparkles,
-          score: template.rating * 200
+          score: template.features.length * 100
         });
       }
     });
@@ -105,19 +105,19 @@ export function SmartRecommendations({
       });
     }
     
-    // 4. Quick wins - templates with high feature count
-    const featureRich = templates
-      .filter(t => !usedIds.has(t.id) && t.features.length >= 5)
-      .sort((a, b) => b.features.length - a.features.length)
+    // 4. New templates
+    const newTemplates = templates
+      .filter(t => !usedIds.has(t.id))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 2);
     
-    featureRich.forEach(template => {
+    newTemplates.forEach(template => {
       if (!results.find(r => r.template.id === template.id)) {
         results.push({
           template,
-          reason: `${template.features.length} powerful features`,
+          reason: "Recently added",
           icon: Zap,
-          score: template.features.length * 50
+          score: 80
         });
       }
     });
@@ -187,7 +187,7 @@ export function SmartRecommendations({
                       {rec.template.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                      <h4 className="font-semibold text-sm whitespace-normal break-words group-hover:text-primary transition-colors">
                         {rec.template.name}
                       </h4>
                       <Badge 
@@ -200,7 +200,7 @@ export function SmartRecommendations({
                     </div>
                   </div>
                   
-                  <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                  <p className="text-xs text-muted-foreground whitespace-normal break-words mb-3">
                     {rec.template.description}
                   </p>
                   
