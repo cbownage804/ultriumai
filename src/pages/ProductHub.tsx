@@ -158,8 +158,7 @@ export default function ProductHub() {
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     
-    // Always clear local storage - session might already be expired on server
-    // The 'session_not_found' error means session is already gone, which is fine
+   // Always clear local storage - session might already be expired on server
     const isSessionGone = !error || 
       error.message?.toLowerCase().includes('session') || 
       (error as any)?.code === 'session_not_found';
@@ -170,14 +169,15 @@ export default function ProductHub() {
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
-      // Still navigate away to clear the UI state
+   } else {
+     toast({
+       title: "Signed out",
+       description: "You have been successfully signed out.",
+     });
     }
     
-    toast({
-      title: "Signed out",
-      description: "You have been successfully signed out.",
-    });
-    navigate('/auth');
+   // Don't navigate - let ProtectedRoute handle redirect when user state clears
+   // This prevents race condition where navigation happens before auth state updates
   };
 
   // Show loading state while auth or access is being determined

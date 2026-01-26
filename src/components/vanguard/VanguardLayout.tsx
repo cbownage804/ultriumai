@@ -28,13 +28,14 @@ export function VanguardLayout() {
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
+   } else {
+     toast({
+       title: "Signed out",
+       description: "You have been successfully signed out.",
+     });
     }
     
-    toast({
-      title: "Signed out",
-      description: "You have been successfully signed out.",
-    });
-    navigate('/auth');
+   // Don't navigate - let ProtectedRoute handle redirect when user state clears
   };
 
   return (
