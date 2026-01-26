@@ -16,15 +16,20 @@ export function VanguardLayout() {
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
-    // Clear local storage even if server returns error (e.g., session already expired)
-    if (error && error.message !== 'Session not found') {
+    
+    // Always proceed with sign out - session might already be expired on server
+    const isSessionGone = !error || 
+      error.message?.toLowerCase().includes('session') || 
+      (error as any)?.code === 'session_not_found';
+    
+    if (!isSessionGone) {
       toast({
         title: "Error",
         description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
-      return;
     }
+    
     toast({
       title: "Signed out",
       description: "You have been successfully signed out.",
