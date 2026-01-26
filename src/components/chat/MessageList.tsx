@@ -9,9 +9,10 @@ interface MessageListProps {
   isLoading: boolean;
   copiedMessageId: string | null;
   onCopyMessage: (content: string, messageId: string) => void;
+  gptName?: string;
 }
 
-export const MessageList = ({ messages, isLoading, copiedMessageId, onCopyMessage }: MessageListProps) => {
+export const MessageList = ({ messages, isLoading, copiedMessageId, onCopyMessage, gptName }: MessageListProps) => {
   return (
     <ScrollArea className="flex-1 p-4 min-h-0">
       <div className="space-y-4 pb-4">
@@ -21,6 +22,8 @@ export const MessageList = ({ messages, isLoading, copiedMessageId, onCopyMessag
             message={message}
             copiedMessageId={copiedMessageId}
             onCopyMessage={onCopyMessage}
+            gptName={gptName}
+            showExport={true}
           />
         ))}
         

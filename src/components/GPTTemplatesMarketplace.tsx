@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight } from "lucide-react";
+import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,6 +15,7 @@ import { gptTemplates } from "@/data/gptTemplates";
 import { GPTTemplate } from "@/types/templates";
 
 const GPTTemplatesMarketplace = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { createGPT, canCreateMore, gpts, limits } = useCustomGPTs();
   const { subscription, createCheckout } = useSubscription();
@@ -79,9 +81,12 @@ const GPTTemplatesMarketplace = () => {
       if (result) {
         toast({
           title: "Template installed!",
-          description: `${template.name} has been added to your Custom GPTs.`,
+          description: `${template.name} is ready to use. Redirecting to chat...`,
         });
         setSelectedTemplate(null);
+        
+        // Instant chat - redirect directly to the GPT chat
+        navigate(`/ai-studio/chat/${result.id}`);
       }
     } catch (error) {
       console.error('Template installation error:', error);
@@ -367,10 +372,15 @@ const GPTTemplatesMarketplace = () => {
                         <Lock className="w-3 h-3 mr-1" />
                         Locked
                       </>
+                    ) : isInstalling ? (
+                      <>
+                        <Play className="w-3 h-3 mr-1 animate-pulse" />
+                        Starting...
+                      </>
                     ) : (
                       <>
-                        <Download className="w-3 h-3 mr-1" />
-                        Install
+                        <Play className="w-3 h-3 mr-1" />
+                        Use Now
                       </>
                     )}
                   </Button>

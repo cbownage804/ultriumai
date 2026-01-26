@@ -2,14 +2,20 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bot, User, Copy, Check, Clock, AlertTriangle } from "lucide-react";
 import { ChatMessage } from "@/types/chat";
+import DocumentExportActions from "@/components/gpt/DocumentExportActions";
 
 interface MessageBubbleProps {
   message: ChatMessage;
   copiedMessageId: string | null;
   onCopyMessage: (content: string, messageId: string) => void;
+  gptName?: string;
+  showExport?: boolean;
 }
 
-export const MessageBubble = ({ message, copiedMessageId, onCopyMessage }: MessageBubbleProps) => {
+export const MessageBubble = ({ message, copiedMessageId, onCopyMessage, gptName = "AI Assistant", showExport = true }: MessageBubbleProps) => {
+  // Determine if this is a "document-like" response (longer content from assistant)
+  const isDocumentResponse = message.role === 'assistant' && message.content.length > 200;
+
   return (
     <div
       key={message.id}
@@ -31,7 +37,7 @@ export const MessageBubble = ({ message, copiedMessageId, onCopyMessage }: Messa
           : 'bg-muted'
       }`}>
         <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-between mt-2 gap-2">
           <div className="flex items-center gap-2">
             <p className="text-xs opacity-70">
               {message.timestamp.toLocaleTimeString()}
@@ -44,18 +50,28 @@ export const MessageBubble = ({ message, copiedMessageId, onCopyMessage }: Messa
               </div>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
-            onClick={() => onCopyMessage(message.content, message.id)}
-          >
-            {copiedMessageId === message.id ? (
-              <Check className="h-3 w-3" />
-            ) : (
-              <Copy className="h-3 w-3" />
+          <div className="flex items-center gap-1">
+            {/* Show export button for document-like assistant responses */}
+            {showExport && isDocumentResponse && (
+              <DocumentExportActions
+                content={message.content}
+                title="Generated Document"
+                gptName={gptName}
+              />
             )}
-          </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+              onClick={() => onCopyMessage(message.content, message.id)}
+            >
+              {copiedMessageId === message.id ? (
+                <Check className="h-3 w-3" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
       
