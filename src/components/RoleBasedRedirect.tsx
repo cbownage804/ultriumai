@@ -1,7 +1,7 @@
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 
 // Product subdomain URLs
 const PRODUCT_URLS: Record<string, string> = {
@@ -34,16 +34,10 @@ export const RoleBasedRedirect = () => {
   }, [returnProduct, returnPath, loading, redirecting]);
 
   if (loading || redirecting) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">
-            {redirecting ? 'Redirecting to your product...' : 'Loading...'}
-          </p>
-        </div>
-      </div>
-    );
+    return <AuthLoadingScreen 
+      message={redirecting ? 'Redirecting to your product' : 'Loading your dashboard'}
+      showProgress={redirecting}
+    />;
   }
 
   if (shouldRedirectToRole()) {

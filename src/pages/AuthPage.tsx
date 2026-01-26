@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/useAuth';
 import { Lock, Building, Users, Eye, EyeOff, Mail, Shield, User, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
@@ -73,14 +74,10 @@ const AuthPage = () => {
 
   // Show loading state while redirecting to subdomain
   if (redirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Redirecting to your product...</p>
-        </div>
-      </div>
-    );
+    return <AuthLoadingScreen 
+      message="Redirecting to your product"
+      showProgress={true}
+    />;
   }
 
   useEffect(() => {

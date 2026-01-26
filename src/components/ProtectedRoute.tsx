@@ -1,12 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
-import { Loader2, Mail, RefreshCw } from 'lucide-react';
+import { Mail, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -18,34 +19,39 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { toast } = useToast();
   const [resending, setResending] = useState(false);
   const [sessionCheckComplete, setSessionCheckComplete] = useState(false);
+  const [forceChecking, setForceChecking] = useState(false);
   
   const isOnSubdomain = isSafeSuiteDomain() || isVanguardDomain();
   
-  // On subdomains, give extra time for session to be restored from cookies
-  // This prevents redirect loops when landing on subdomain after main domain login
+  // On subdomains, explicitly force session check
   useEffect(() => {
-    if (isOnSubdomain && !loading && !user) {
-      // Wait longer (1.5 seconds) for session to be restored from cross-domain cookie
+    if (isOnSubdomain && !user && !loading) {
+      setForceChecking(true);
+      supabase.auth.getSession().then(() => {
+        setTimeout(() => {
+          setSessionCheckComplete(true);
+          setForceChecking(false);
+        }, 2000);
+      }).catch(() => {
+        setSessionCheckComplete(true);
+        setForceChecking(false);
+      });
       const timer = setTimeout(() => {
         setSessionCheckComplete(true);
-      }, 1500);
+        setForceChecking(false);
+      }, 3500);
       return () => clearTimeout(timer);
     } else {
       setSessionCheckComplete(true);
+      setForceChecking(false);
     }
-  }, [isOnSubdomain, loading, user]);
+  }, [isOnSubdomain, user, loading]);
 
-  if (loading || (isOnSubdomain && !user && !sessionCheckComplete)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            {isOnSubdomain && !user ? 'Restoring your session...' : 'Loading...'}
-          </p>
-        </div>
-      </div>
-    );
+  if (loading || forceChecking || (isOnSubdomain && !user && !sessionCheckComplete)) {
+    return <AuthLoadingScreen 
+      message={isOnSubdomain && !user ? 'Restoring your session' : 'Loading your dashboard'}
+      showProgress={isOnSubdomain && !user}
+    />;
   }
 
   if (!user) {
