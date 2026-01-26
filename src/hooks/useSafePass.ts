@@ -295,7 +295,18 @@ export const useSafePass = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Handle server-side limit enforcement error
+        if (error.message?.includes('Usage limit exceeded')) {
+          toast({
+            title: "Limit Reached",
+            description: "You've reached your password limit. Please upgrade to add more.",
+            variant: "destructive",
+          });
+          return null;
+        }
+        throw error;
+      }
 
       // Update cache and state
       const currentEntries = cache.entries.get(entryData.vault_id) || [];
