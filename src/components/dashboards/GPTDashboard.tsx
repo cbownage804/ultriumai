@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2 } from "lucide-react";
+import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2, Sliders } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -227,6 +227,10 @@ export const GPTDashboard = () => {
                     <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/gpt/build?edit=${gpt.id}`)}>
                       <Settings className="h-4 w-4 mr-1" />
                       Edit
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}>
+                      <Sliders className="h-4 w-4 mr-1" />
+                      Settings
                     </Button>
                     <Button 
                       variant="outline" 
