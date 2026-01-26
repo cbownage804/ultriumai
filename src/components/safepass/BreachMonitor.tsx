@@ -5,6 +5,7 @@ import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
 import { BreachCheckService, EmailBreachResult } from '@/services/breachCheckService';
 import { BreachRecommendationDialog, BreachFindingDetails } from './BreachRecommendationDialog';
+import { ScanHistory } from './ScanHistory';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,11 +60,12 @@ export const BreachMonitor = () => {
   const [scanStage, setScanStage] = useState('');
   const [allEntries, setAllEntries] = useState<any[]>([]);
   const [lastScan, setLastScan] = useState<BreachScan | null>(null);
+  const [allScans, setAllScans] = useState<BreachScan[]>([]);
   const [currentResults, setCurrentResults] = useState<ScanResult[]>([]);
   const [selectedFinding, setSelectedFinding] = useState<BreachFindingDetails | null>(null);
   const [showRecommendation, setShowRecommendation] = useState(false);
 
-  const loadLastScan = useCallback(async () => {
+  const loadScans = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -72,26 +74,41 @@ export const BreachMonitor = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('completed_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(20);
 
       if (error) throw error;
 
-      if (data) {
-        setLastScan(data);
-        const scanResults = data.scan_results as { results?: ScanResult[] } | null;
+      if (data && data.length > 0) {
+        setAllScans(data as BreachScan[]);
+        const latest = data[0];
+        setLastScan(latest as BreachScan);
+        const scanResults = latest.scan_results as { results?: ScanResult[] } | null;
         if (scanResults?.results) {
           setCurrentResults(scanResults.results);
         }
+      } else {
+        setAllScans([]);
+        setLastScan(null);
+        setCurrentResults([]);
       }
     } catch (error) {
-      console.error('Failed to load last scan');
+      console.error('Failed to load scans');
     }
   }, [user]);
 
+  const handleScanSelect = (scan: BreachScan) => {
+    setLastScan(scan);
+    const scanResults = scan.scan_results as { results?: ScanResult[] } | null;
+    if (scanResults?.results) {
+      setCurrentResults(scanResults.results);
+    } else {
+      setCurrentResults([]);
+    }
+  };
+
   useEffect(() => {
-    loadLastScan();
-  }, [loadLastScan]);
+    loadScans();
+  }, [loadScans]);
 
   // Load all entries on mount
   useEffect(() => {
@@ -283,7 +300,7 @@ export const BreachMonitor = () => {
 
       setCurrentResults(results);
       toast.success('Security scan complete');
-      loadLastScan();
+      loadScans();
     } catch (error) {
       console.error('Scan failed');
       toast.error('Scan failed');
@@ -477,7 +494,7 @@ export const BreachMonitor = () => {
       {/* Last Scan Info */}
       {lastScan && (
         <div className="text-center text-sm text-muted-foreground">
-          Last scanned {formatDistanceToNow(new Date(lastScan.completed_at), { addSuffix: true })} • {lastScan.total_entries_scanned} passwords checked
+          Viewing scan from {formatDistanceToNow(new Date(lastScan.completed_at), { addSuffix: true })} • {lastScan.total_entries_scanned} passwords checked
         </div>
       )}
 
@@ -490,6 +507,15 @@ export const BreachMonitor = () => {
             No security issues detected in your passwords
           </p>
         </Card>
+      )}
+
+      {/* Scan History */}
+      {allScans.length > 0 && (
+        <ScanHistory 
+          scans={allScans} 
+          onScanDeleted={loadScans}
+          onScanSelect={handleScanSelect}
+        />
       )}
 
       {/* AI Recommendations Dialog */}
