@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,38 +20,23 @@ import {
   Key,
   Code2,
   Webhook,
-  Link2,
   Copy,
   Check,
   Eye,
   EyeOff,
   Plus,
   Trash2,
-  RefreshCw,
-  ExternalLink,
-  Play,
   Zap,
-  Settings,
-  MessageSquare,
+  Play,
   Globe,
-  Shield,
-  Clock
+  MessageSquare
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useApiKeys } from "@/hooks/useApiKeys";
 
-interface ApiKey {
-  id: string;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  lastUsed?: string;
-  permissions: string[];
-  isActive: boolean;
-}
-
-interface Webhook {
+interface WebhookConfig {
   id: string;
   name: string;
   url: string;
@@ -65,20 +50,10 @@ interface GPTIntegrationsProps {
   gptName: string;
   apiEnabled?: boolean;
   embedEnabled?: boolean;
-  apiKeys?: ApiKey[];
-  webhooks?: Webhook[];
   onToggleApi?: (enabled: boolean) => void;
   onToggleEmbed?: (enabled: boolean) => void;
-  onCreateApiKey?: (name: string) => void;
-  onDeleteApiKey?: (keyId: string) => void;
-  onCreateWebhook?: (name: string, url: string, events: string[]) => void;
-  onDeleteWebhook?: (webhookId: string) => void;
   themeColor?: string;
 }
-
-// Empty defaults - will be populated from database
-const defaultApiKeys: ApiKey[] = [];
-const defaultWebhooks: Webhook[] = [];
 
 const webhookEvents = [
   { id: 'message.created', label: 'Message Created', description: 'When a new message is sent' },
@@ -92,17 +67,13 @@ export function GPTIntegrations({
   gptName,
   apiEnabled = false,
   embedEnabled = false,
-  apiKeys = defaultApiKeys,
-  webhooks = defaultWebhooks,
   onToggleApi,
   onToggleEmbed,
-  onCreateApiKey,
-  onDeleteApiKey,
-  onCreateWebhook,
-  onDeleteWebhook,
   themeColor = "#3b82f6"
 }: GPTIntegrationsProps) {
   const { toast } = useToast();
+  const { apiKeys, createApiKey, deleteApiKey, loading: keysLoading } = useApiKeys();
+  const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
   const [showKey, setShowKey] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
@@ -111,6 +82,10 @@ export function GPTIntegrations({
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [keyDialogOpen, setKeyDialogOpen] = useState(false);
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+  const [newKeyResult, setNewKeyResult] = useState<string | null>(null);
+
+  // Filter API keys for this GPT
+  const gptApiKeys = apiKeys.filter(key => key.gpt_id === gptId || !key.gpt_id);
 
   // Use actual domain for API base URL
   const baseUrl = `${window.location.origin}/api/v1/gpt/${gptId}`;
@@ -127,22 +102,43 @@ export function GPTIntegrations({
     }
   };
 
-  const handleCreateKey = () => {
+  const handleCreateKey = async () => {
     if (!newKeyName.trim()) return;
-    onCreateApiKey?.(newKeyName);
-    toast({ title: "API key created", description: `Key "${newKeyName}" has been created` });
+    const result = await createApiKey({ 
+      name: newKeyName,
+      gpt_id: gptId,
+      permissions: { chat: true, analytics: true }
+    });
+    if (result.success && result.key) {
+      setNewKeyResult(result.key);
+    }
     setNewKeyName("");
-    setKeyDialogOpen(false);
+  };
+
+  const handleDeleteKey = async (keyId: string) => {
+    await deleteApiKey(keyId);
   };
 
   const handleCreateWebhook = () => {
     if (!newWebhookName.trim() || !newWebhookUrl.trim()) return;
-    onCreateWebhook?.(newWebhookName, newWebhookUrl, selectedEvents);
+    const newWebhook: WebhookConfig = {
+      id: Date.now().toString(),
+      name: newWebhookName,
+      url: newWebhookUrl,
+      events: selectedEvents,
+      isActive: true
+    };
+    setWebhooks(prev => [...prev, newWebhook]);
     toast({ title: "Webhook created", description: `Webhook "${newWebhookName}" has been created` });
     setNewWebhookName("");
     setNewWebhookUrl("");
     setSelectedEvents([]);
     setWebhookDialogOpen(false);
+  };
+
+  const handleDeleteWebhook = (webhookId: string) => {
+    setWebhooks(prev => prev.filter(w => w.id !== webhookId));
+    toast({ title: "Webhook deleted" });
   };
 
   return (
@@ -257,13 +253,13 @@ export function GPTIntegrations({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-medium">{key.name}</p>
-                              <Badge variant={key.isActive ? "default" : "secondary"} className="text-[10px] h-4">
-                                {key.isActive ? 'Active' : 'Inactive'}
+                              <Badge variant={key.is_active ? "default" : "secondary"} className="text-[10px] h-4">
+                                {key.is_active ? 'Active' : 'Inactive'}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <code className="font-mono">
-                                {showKey === key.id ? 'sk-abc123...xyz789' : key.prefix}
+                                {showKey === key.id ? 'sk-abc123...xyz789' : key.key_prefix}
                               </code>
                               <button 
                                 onClick={() => setShowKey(showKey === key.id ? null : key.id)}
@@ -278,7 +274,7 @@ export function GPTIntegrations({
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
-                              onClick={() => handleCopy(key.prefix, key.id)}
+                              onClick={() => handleCopy(key.key_prefix, key.id)}
                             >
                               {copied === key.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                             </Button>
@@ -286,7 +282,7 @@ export function GPTIntegrations({
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                              onClick={() => onDeleteApiKey?.(key.id)}
+                              onClick={() => handleDeleteKey(key.id)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -433,7 +429,7 @@ export function GPTIntegrations({
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0 text-destructive"
-                            onClick={() => onDeleteWebhook?.(webhook.id)}
+                            onClick={() => handleDeleteWebhook(webhook.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
