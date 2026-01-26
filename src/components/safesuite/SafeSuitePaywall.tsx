@@ -19,6 +19,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TeaserLock } from './TeaserLock';
 
 interface SafeSuitePaywallProps {
   feature: keyof TierFeatures;
@@ -158,7 +159,15 @@ export function FeatureGate({ feature, children, fallback }: FeatureGateProps) {
     return <>{fallback}</>;
   }
 
-  return <SafeSuitePaywall feature={feature} />;
+  // Use beautiful TeaserLock instead of plain paywall
+  return (
+    <TeaserLock 
+      feature={feature} 
+      className="min-h-[80vh]"
+    >
+      <div />
+    </TeaserLock>
+  );
 }
 
 interface TierComparisonProps {
