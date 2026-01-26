@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { useProductAccess } from '@/hooks/useProductAccess';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Shield, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,15 +10,13 @@ interface VanguardAccessGateProps {
 }
 
 /**
- * VanguardAccessGate - Enforces admin-approved access to Vanguard
+ * VanguardAccessGate - Restricts Vanguard to UltriumAI employees only
  * 
- * Vanguard requires manual approval - users cannot self-register.
- * Only users with explicit Vanguard access in user_product_access table can enter.
- * This is different from SafeSuite which has a free tier.
+ * Vanguard is currently internal-only and requires an @ultriumai.com email.
+ * This will be expanded to MSP customers in the future.
  */
 export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
-  const { user } = useAuth();
-  const { access, loading, hasAccess } = useProductAccess();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -32,11 +29,11 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
     );
   }
 
-  // Check if user has ANY Vanguard access (must be explicitly granted by admin)
-  const vanguardAccess = access.find(a => a.product === 'vanguard');
-  const hasVanguardAccess = vanguardAccess && hasAccess('vanguard', 'free');
+  // Only allow @ultriumai.com emails
+  const isUltriumEmployee = user?.email?.toLowerCase().endsWith('@ultriumai.com') || 
+                            user?.email?.toLowerCase().endsWith('@ultriumllc.com');
 
-  if (!hasVanguardAccess) {
+  if (!isUltriumEmployee) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f] p-4">
         <Card className="w-full max-w-md border-white/10 bg-white/5 backdrop-blur-sm">
@@ -45,10 +42,10 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
               <Lock className="h-8 w-8 text-red-400" />
             </div>
             <CardTitle className="text-xl text-white">
-              Access Restricted
+              Internal Access Only
             </CardTitle>
             <CardDescription className="text-white/60">
-              <span className="text-cyan-400">Vanguard</span> requires administrator approval
+              <span className="text-cyan-400">Vanguard</span> is currently available to UltriumAI employees only
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -57,7 +54,7 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
                 <Shield className="h-5 w-5 text-cyan-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-white/70">
                   <p className="font-medium text-white mb-1">Enterprise Security Platform</p>
-                  <p>Vanguard is designed for MSPs and enterprise security teams. Access is granted on a case-by-case basis after verification.</p>
+                  <p>Vanguard is our MSP and enterprise security operations platform. It will be available to customers soon.</p>
                 </div>
               </div>
             </div>
@@ -73,7 +70,7 @@ export function VanguardAccessGate({ children }: VanguardAccessGateProps) {
               >
                 <Link to="/contact">
                   <Mail className="mr-2 h-4 w-4" />
-                  Request Access
+                  Contact Us for Early Access
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full text-white/60 hover:text-white hover:bg-white/5" asChild>
