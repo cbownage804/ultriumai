@@ -165,19 +165,6 @@ const SafePassUsers = () => {
   const { isBusiness, loading: subLoading, tier } = useSafeSuiteSubscription();
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Business tier gate - show teaser content
-  if (!subLoading && !isBusiness) {
-    return (
-      <TeaserLock 
-        feature="team" 
-        message="Invite and manage team members with their own secure vaults"
-        teaserContent={<UsersTeaserContent />}
-      >
-        <div />
-      </TeaserLock>
-    );
-  }
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [actionDialog, setActionDialog] = useState<ActionDialogState>({
@@ -193,10 +180,6 @@ const SafePassUsers = () => {
   const [newUserName, setNewUserName] = useState("");
   const [newUserRole, setNewUserRole] = useState("user");
   const [addingUser, setAddingUser] = useState(false);
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
 
   const loadUsers = async () => {
     try {
@@ -232,6 +215,25 @@ const SafePassUsers = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isBusiness) {
+      loadUsers();
+    }
+  }, [isBusiness]);
+
+  // Business tier gate - show teaser content
+  if (!subLoading && !isBusiness) {
+    return (
+      <TeaserLock 
+        feature="team" 
+        message="Invite and manage team members with their own secure vaults"
+        teaserContent={<UsersTeaserContent />}
+      >
+        <div />
+      </TeaserLock>
+    );
+  }
 
   const handlePasswordReset = async () => {
     if (!actionDialog.user) return;
