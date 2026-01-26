@@ -162,6 +162,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setSession(null);
       setProfile(null);
+      
+      // Force a full page reload to clear all in-memory state
+      // This ensures cookies and storage are fully cleared
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 100);
+      
       return { error };
     } catch (error) {
       console.error('Sign out error:', error);
@@ -169,6 +176,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(null);
       setSession(null);
       setProfile(null);
+      
+      // Force reload even on error
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 100);
+      
       return { error };
     }
   };

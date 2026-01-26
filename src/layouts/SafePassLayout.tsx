@@ -42,8 +42,7 @@ export function SafePassLayout() {
 
   const handleSignOut = async () => {
     await signOut();
-    // Small delay to ensure auth state clears, then navigate
-    setTimeout(() => navigate('/auth', { replace: true }), 100);
+    // signOut now handles navigation with full page reload
   };
 
   const userInitials = profile?.full_name

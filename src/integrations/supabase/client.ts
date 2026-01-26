@@ -134,10 +134,17 @@ const cookieStorage = {
       return;
     }
     
-    // Remove from cookie (production only)
-    let cookieString = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    cookieString += `; domain=${rootDomain}`;
-    document.cookie = cookieString;
+    // Remove from cookie (production only) - try multiple variations to ensure cleanup
+    const expireDate = 'Thu, 01 Jan 1970 00:00:00 GMT';
+    
+    // Remove with domain
+    document.cookie = `${key}=; expires=${expireDate}; path=/; domain=${rootDomain}`;
+    
+    // Remove without domain (in case it was set without)
+    document.cookie = `${key}=; expires=${expireDate}; path=/`;
+    
+    // Remove with subdomain
+    document.cookie = `${key}=; expires=${expireDate}; path=/; domain=.${rootDomain}`;
   },
 };
 
