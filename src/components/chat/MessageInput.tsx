@@ -197,13 +197,10 @@ const MessageInput = ({ input, setInput, onSendMessage, isLoading, conversationI
                   <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
                   <SelectItem value="o1-preview">o1-preview</SelectItem>
                   <SelectItem value="o1-mini">o1-mini</SelectItem>
+                  <SelectItem value="o3-mini">o3-mini</SelectItem>
                   <SelectItem value="claude-opus-4-20250514">Claude Opus 4</SelectItem>
                   <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4</SelectItem>
                   <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
-                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-                  <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                  <SelectItem value="llama-3.3-70b">Llama 3.3 70B</SelectItem>
-                  <SelectItem value="mistral-large">Mistral Large</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -989,19 +989,11 @@ const CustomGPTPersonalize = () => {
                   <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Efficient)</SelectItem>
                   <SelectItem value="o1-preview">o1-preview (Advanced Reasoning)</SelectItem>
                   <SelectItem value="o1-mini">o1-mini (Fast Reasoning)</SelectItem>
+                  <SelectItem value="o3-mini">o3-mini (Next-Gen Reasoning)</SelectItem>
                   {/* Anthropic Models */}
                   <SelectItem value="claude-opus-4-20250514">Claude Opus 4 (Superior Reasoning)</SelectItem>
                   <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 (High Performance)</SelectItem>
                   <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fastest)</SelectItem>
-                  {/* Google Models */}
-                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (Google's Flagship)</SelectItem>
-                  <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (Fast & Capable)</SelectItem>
-                  {/* Meta Models */}
-                  <SelectItem value="llama-3.3-70b">Llama 3.3 70B (Open Source)</SelectItem>
-                  <SelectItem value="llama-3.1-405b">Llama 3.1 405B (Largest Open Model)</SelectItem>
-                  {/* Mistral Models */}
-                  <SelectItem value="mistral-large">Mistral Large (Enterprise)</SelectItem>
-                  <SelectItem value="mixtral-8x22b">Mixtral 8x22B (MoE)</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>
