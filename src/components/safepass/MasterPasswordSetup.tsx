@@ -90,11 +90,11 @@ export const MasterPasswordSetup = ({
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full max-w-md mx-auto border-amber-500/20">
       <CardHeader className="text-center">
         <div className="flex justify-center mb-4">
-          <div className="p-3 rounded-full bg-primary/10">
-            <Lock className="h-8 w-8 text-primary" />
+          <div className="p-3 rounded-full bg-amber-500/10">
+            <Lock className="h-8 w-8 text-amber-500" />
           </div>
         </div>
         <CardTitle className="text-2xl">
@@ -136,7 +136,7 @@ export const MasterPasswordSetup = ({
                   }
                 }}
                 placeholder="Enter your master password"
-                className="pr-10"
+                className="pr-10 border-amber-500/30 focus-visible:ring-amber-500/50"
                 autoFocus
               />
               <Button
@@ -260,11 +260,11 @@ export const MasterPasswordSetup = ({
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit || isLoading}
-            className="w-full"
+            className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold"
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
                 Processing...
               </div>
             ) : (
@@ -312,7 +312,7 @@ export const MasterPasswordSetup = ({
             href="/products/safepass/security" 
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 mt-3 text-xs text-primary hover:underline"
+            className="inline-flex items-center gap-1 mt-3 text-xs text-amber-500 hover:underline"
           >
             Learn more about our security
             <Info className="h-3 w-3" />
