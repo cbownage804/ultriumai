@@ -163,11 +163,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(null);
       setProfile(null);
       
-      // Force a full page reload to clear all in-memory state
-      // This ensures cookies and storage are fully cleared
+      // Set a flag to prevent redirect loops
+      sessionStorage.setItem('signing-out', 'true');
+      
+      // Clear all auth cookies manually before reload
+      const authKey = 'sb-nsyobmjpdpvesjwdphlh-auth-token';
+      const expireDate = 'Thu, 01 Jan 1970 00:00:00 GMT';
+      
+      // Try all cookie deletion variations
+      document.cookie = `${authKey}=; expires=${expireDate}; path=/`;
+      document.cookie = `${authKey}=; expires=${expireDate}; path=/; domain=ultriumai.com`;
+      document.cookie = `${authKey}=; expires=${expireDate}; path=/; domain=.ultriumai.com`;
+      
+      // Clear localStorage
+      try {
+        localStorage.removeItem(authKey);
+        localStorage.clear();
+      } catch (e) {
+        console.warn('Could not clear localStorage:', e);
+      }
+      
+      // Wait for storage clearing to complete, then reload
       setTimeout(() => {
         window.location.href = '/auth';
-      }, 100);
+      }, 200);
       
       return { error };
     } catch (error) {
@@ -177,10 +196,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(null);
       setProfile(null);
       
-      // Force reload even on error
+      // Clear cookies even on error
+      const authKey = 'sb-nsyobmjpdpvesjwdphlh-auth-token';
+      const expireDate = 'Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = `${authKey}=; expires=${expireDate}; path=/`;
+      document.cookie = `${authKey}=; expires=${expireDate}; path=/; domain=ultriumai.com`;
+      document.cookie = `${authKey}=; expires=${expireDate}; path=/; domain=.ultriumai.com`;
+      
+      try {
+        localStorage.clear();
+      } catch (e) {
+        console.warn('Could not clear localStorage:', e);
+      }
+      
       setTimeout(() => {
         window.location.href = '/auth';
-      }, 100);
+      }, 200);
       
       return { error };
     }
