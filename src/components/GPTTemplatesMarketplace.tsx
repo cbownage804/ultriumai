@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb } from "lucide-react";
+import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb, TestTube } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
@@ -122,28 +122,41 @@ const GPTTemplatesMarketplace = () => {
         </div>
         
         {/* Subscription Status */}
-        <div className="text-right">
-          <div className="flex items-center gap-2 mb-2">
-            <Badge variant={subscription.subscription_tier === 'free' ? 'secondary' : 'default'} className="capitalize">
-              {subscription.subscription_tier === 'free' ? (
-                <>
-                  <Lock className="h-3 w-3 mr-1" />
-                  Free Plan
-                </>
-              ) : (
-                <>
-                  <Crown className="h-3 w-3 mr-1" />
-                  {subscription.subscription_tier} Plan
-                </>
+        <div className="text-right flex items-center gap-3">
+          {/* Admin Test Suite Link */}
+          {(user?.email?.endsWith('@ultriumai.com') || subscription.subscription_tier === 'enterprise') && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => navigate('/ai-studio/test-suite')}
+            >
+              <TestTube className="h-4 w-4 mr-2" />
+              Test Suite
+            </Button>
+          )}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant={subscription.subscription_tier === 'free' ? 'secondary' : 'default'} className="capitalize">
+                {subscription.subscription_tier === 'free' ? (
+                  <>
+                    <Lock className="h-3 w-3 mr-1" />
+                    Free Plan
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-3 w-3 mr-1" />
+                    {subscription.subscription_tier} Plan
+                  </>
+                )}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              GPTs: {gpts.length}/{limits.maxGPTs === -1 ? '∞' : limits.maxGPTs}
+              {!canCreateMore && (
+                <span className="text-destructive font-medium ml-2">Limit reached</span>
               )}
-            </Badge>
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            GPTs: {gpts.length}/{limits.maxGPTs === -1 ? '∞' : limits.maxGPTs}
-            {!canCreateMore && (
-              <span className="text-destructive font-medium ml-2">Limit reached</span>
-            )}
-          </p>
         </div>
       </div>
 
