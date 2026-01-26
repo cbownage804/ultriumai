@@ -11681,6 +11681,864 @@ export type Database = {
           },
         ]
       }
+      safedoc_access_group_members: {
+        Row: {
+          access_group_id: string
+          added_by: string | null
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["safedoc_role"] | null
+          user_id: string
+        }
+        Insert: {
+          access_group_id: string
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["safedoc_role"] | null
+          user_id: string
+        }
+        Update: {
+          access_group_id?: string
+          added_by?: string | null
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["safedoc_role"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_access_group_members_access_group_id_fkey"
+            columns: ["access_group_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_access_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_access_groups: {
+        Row: {
+          created_at: string
+          default_role: Database["public"]["Enums"]["safedoc_role"] | null
+          description: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_role?: Database["public"]["Enums"]["safedoc_role"] | null
+          description?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_role?: Database["public"]["Enums"]["safedoc_role"] | null
+          description?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safedoc_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string
+          entity_name: string | null
+          entity_type: string
+          id: string
+          ip_address: unknown
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id: string
+          entity_name?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: unknown
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string
+          entity_name?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: unknown
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_activity_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_configurations: {
+        Row: {
+          asset_id: string | null
+          configuration_data: Json | null
+          configuration_type: string
+          created_at: string
+          hostname: string | null
+          id: string
+          is_active: boolean | null
+          last_audit_date: string | null
+          location: string | null
+          mac_address: string | null
+          manufacturer: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          operating_system: string | null
+          organization_id: string | null
+          os_version: string | null
+          primary_ip: string | null
+          secondary_ips: string[] | null
+          serial_number: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          configuration_data?: Json | null
+          configuration_type: string
+          created_at?: string
+          hostname?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_audit_date?: string | null
+          location?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          operating_system?: string | null
+          organization_id?: string | null
+          os_version?: string | null
+          primary_ip?: string | null
+          secondary_ips?: string[] | null
+          serial_number?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          configuration_data?: Json | null
+          configuration_type?: string
+          created_at?: string
+          hostname?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_audit_date?: string | null
+          location?: string | null
+          mac_address?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          operating_system?: string | null
+          organization_id?: string | null
+          os_version?: string | null
+          primary_ip?: string | null
+          secondary_ips?: string[] | null
+          serial_number?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_configurations_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_configurations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_document_access: {
+        Row: {
+          access_group_id: string | null
+          created_at: string
+          document_id: string
+          id: string
+          role: Database["public"]["Enums"]["safedoc_role"]
+          user_id: string | null
+        }
+        Insert: {
+          access_group_id?: string | null
+          created_at?: string
+          document_id: string
+          id?: string
+          role?: Database["public"]["Enums"]["safedoc_role"]
+          user_id?: string | null
+        }
+        Update: {
+          access_group_id?: string | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          role?: Database["public"]["Enums"]["safedoc_role"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_document_access_access_group_id_fkey"
+            columns: ["access_group_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_access_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_document_access_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_document_versions: {
+        Row: {
+          change_summary: string | null
+          content: string | null
+          content_format: string | null
+          created_at: string
+          document_id: string
+          id: string
+          title: string
+          user_id: string
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          content?: string | null
+          content_format?: string | null
+          created_at?: string
+          document_id: string
+          id?: string
+          title: string
+          user_id: string
+          version_number: number
+        }
+        Update: {
+          change_summary?: string | null
+          content?: string | null
+          content_format?: string | null
+          created_at?: string
+          document_id?: string
+          id?: string
+          title?: string
+          user_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_documents: {
+        Row: {
+          content: string | null
+          content_format: string | null
+          created_at: string
+          document_type: string | null
+          excerpt: string | null
+          folder_id: string | null
+          id: string
+          is_favorite: boolean | null
+          is_pinned: boolean | null
+          last_viewed_at: string | null
+          last_viewed_by: string | null
+          metadata: Json | null
+          organization_id: string | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          content?: string | null
+          content_format?: string | null
+          created_at?: string
+          document_type?: string | null
+          excerpt?: string | null
+          folder_id?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          is_pinned?: boolean | null
+          last_viewed_at?: string | null
+          last_viewed_by?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          content?: string | null
+          content_format?: string | null
+          created_at?: string
+          document_type?: string | null
+          excerpt?: string | null
+          folder_id?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          is_pinned?: boolean | null
+          last_viewed_at?: string | null
+          last_viewed_by?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_documents_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_expirations: {
+        Row: {
+          alert_days_before: number | null
+          alert_sent: boolean | null
+          alert_sent_at: string | null
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          expires_at: string
+          id: string
+          is_recurring: boolean | null
+          item_id: string | null
+          item_name: string
+          item_type: string
+          notes: string | null
+          organization_id: string | null
+          recurrence_interval: string | null
+          renewal_cost: number | null
+          renewal_url: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_days_before?: number | null
+          alert_sent?: boolean | null
+          alert_sent_at?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          expires_at: string
+          id?: string
+          is_recurring?: boolean | null
+          item_id?: string | null
+          item_name: string
+          item_type: string
+          notes?: string | null
+          organization_id?: string | null
+          recurrence_interval?: string | null
+          renewal_cost?: number | null
+          renewal_url?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_days_before?: number | null
+          alert_sent?: boolean | null
+          alert_sent_at?: string | null
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          expires_at?: string
+          id?: string
+          is_recurring?: boolean | null
+          item_id?: string | null
+          item_name?: string
+          item_type?: string
+          notes?: string | null
+          organization_id?: string | null
+          recurrence_interval?: string | null
+          renewal_cost?: number | null
+          renewal_url?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_expirations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          organization_id: string | null
+          parent_id: string | null
+          sort_order: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          organization_id?: string | null
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          organization_id?: string | null
+          parent_id?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_folders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_knowledge_base: {
+        Row: {
+          category: string | null
+          content: string
+          content_format: string | null
+          created_at: string
+          helpful_count: number | null
+          id: string
+          is_featured: boolean | null
+          is_public: boolean | null
+          status: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          content_format?: string | null
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          content_format?: string | null
+          created_at?: string
+          helpful_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_public?: boolean | null
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      safedoc_organization_access: {
+        Row: {
+          access_group_id: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["safedoc_role"]
+          user_id: string | null
+        }
+        Insert: {
+          access_group_id?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["safedoc_role"]
+          user_id?: string | null
+        }
+        Update: {
+          access_group_id?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["safedoc_role"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_organization_access_access_group_id_fkey"
+            columns: ["access_group_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_access_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_organization_access_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_organizations: {
+        Row: {
+          address: Json | null
+          alert_message: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          msp_client_id: string | null
+          name: string
+          notes: string | null
+          primary_contact_email: string | null
+          primary_contact_name: string | null
+          primary_contact_phone: string | null
+          quick_notes: string | null
+          short_name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: Json | null
+          alert_message?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          msp_client_id?: string | null
+          name: string
+          notes?: string | null
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
+          primary_contact_phone?: string | null
+          quick_notes?: string | null
+          short_name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: Json | null
+          alert_message?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          msp_client_id?: string | null
+          name?: string
+          notes?: string | null
+          primary_contact_email?: string | null
+          primary_contact_name?: string | null
+          primary_contact_phone?: string | null
+          quick_notes?: string | null
+          short_name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_organizations_msp_client_id_fkey"
+            columns: ["msp_client_id"]
+            isOneToOne: false
+            referencedRelation: "msp_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_password_access: {
+        Row: {
+          access_group_id: string | null
+          created_at: string
+          id: string
+          password_id: string
+          role: Database["public"]["Enums"]["safedoc_role"]
+          user_id: string | null
+        }
+        Insert: {
+          access_group_id?: string | null
+          created_at?: string
+          id?: string
+          password_id: string
+          role?: Database["public"]["Enums"]["safedoc_role"]
+          user_id?: string | null
+        }
+        Update: {
+          access_group_id?: string | null
+          created_at?: string
+          id?: string
+          password_id?: string
+          role?: Database["public"]["Enums"]["safedoc_role"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_password_access_access_group_id_fkey"
+            columns: ["access_group_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_access_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_password_access_password_id_fkey"
+            columns: ["password_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_passwords"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_password_access_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: unknown
+          password_id: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          password_id: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          password_id?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_password_access_log_password_id_fkey"
+            columns: ["password_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_passwords"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_passwords: {
+        Row: {
+          access_instructions: string | null
+          access_url: string | null
+          auto_rotate: boolean | null
+          created_at: string
+          encrypted_password: string
+          expires_at: string | null
+          folder_id: string | null
+          id: string
+          is_archived: boolean | null
+          last_used_at: string | null
+          name: string
+          notes: string | null
+          organization_id: string | null
+          otp_secret: string | null
+          password_type: string | null
+          password_updated_at: string | null
+          resource_id: string | null
+          resource_type: string | null
+          rotation_interval_days: number | null
+          tags: string[] | null
+          updated_at: string
+          url: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          access_instructions?: string | null
+          access_url?: string | null
+          auto_rotate?: boolean | null
+          created_at?: string
+          encrypted_password: string
+          expires_at?: string | null
+          folder_id?: string | null
+          id?: string
+          is_archived?: boolean | null
+          last_used_at?: string | null
+          name: string
+          notes?: string | null
+          organization_id?: string | null
+          otp_secret?: string | null
+          password_type?: string | null
+          password_updated_at?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          rotation_interval_days?: number | null
+          tags?: string[] | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          access_instructions?: string | null
+          access_url?: string | null
+          auto_rotate?: boolean | null
+          created_at?: string
+          encrypted_password?: string
+          expires_at?: string | null
+          folder_id?: string | null
+          id?: string
+          is_archived?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          notes?: string | null
+          organization_id?: string | null
+          otp_secret?: string | null
+          password_type?: string | null
+          password_updated_at?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          rotation_interval_days?: number | null
+          tags?: string[] | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_passwords_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_passwords_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       safedoc_quarantine: {
         Row: {
           device_id: string
@@ -11716,6 +12574,183 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      safedoc_related_items: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          relationship_type: string | null
+          source_id: string
+          source_type: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_type?: string | null
+          source_id: string
+          source_type: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          relationship_type?: string | null
+          source_id?: string
+          source_type?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      safedoc_runbook_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_step: number | null
+          id: string
+          notes: string | null
+          organization_id: string | null
+          runbook_id: string
+          started_at: string
+          status: string
+          step_results: Json | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          runbook_id: string
+          started_at?: string
+          status: string
+          step_results?: Json | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          notes?: string | null
+          organization_id?: string | null
+          runbook_id?: string
+          started_at?: string
+          status?: string
+          step_results?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_runbook_executions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_runbook_executions_runbook_id_fkey"
+            columns: ["runbook_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_runbooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_runbooks: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          difficulty_level: string | null
+          estimated_time_minutes: number | null
+          execution_count: number | null
+          folder_id: string | null
+          id: string
+          is_published: boolean | null
+          last_executed_at: string | null
+          organization_id: string | null
+          prerequisites: string | null
+          related_configurations: string[] | null
+          related_documents: string[] | null
+          steps: Json | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          version: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_time_minutes?: number | null
+          execution_count?: number | null
+          folder_id?: string | null
+          id?: string
+          is_published?: boolean | null
+          last_executed_at?: string | null
+          organization_id?: string | null
+          prerequisites?: string | null
+          related_configurations?: string[] | null
+          related_documents?: string[] | null
+          steps?: Json | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_time_minutes?: number | null
+          execution_count?: number | null
+          folder_id?: string | null
+          id?: string
+          is_published?: boolean | null
+          last_executed_at?: string | null
+          organization_id?: string | null
+          prerequisites?: string | null
+          related_configurations?: string[] | null
+          related_documents?: string[] | null
+          steps?: Json | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_runbooks_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "safedoc_runbooks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       safedoc_scan_results: {
         Row: {
@@ -11835,6 +12870,193 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safedoc_ssl_certificates: {
+        Row: {
+          alert_days_before: number | null
+          auto_renew: boolean | null
+          certificate_pem: string | null
+          certificate_type: string | null
+          chain_valid: boolean | null
+          common_name: string | null
+          cost: number | null
+          created_at: string
+          domain: string
+          fingerprint: string | null
+          fingerprint_sha256: string | null
+          id: string
+          issuer: string | null
+          issuer_organization: string | null
+          key_algorithm: string | null
+          key_size: number | null
+          last_check_status: string | null
+          last_checked_at: string | null
+          monitoring_enabled: boolean | null
+          notes: string | null
+          organization_id: string | null
+          private_key_location: string | null
+          provider: string | null
+          purchase_date: string | null
+          renewal_url: string | null
+          serial_number: string | null
+          signature_algorithm: string | null
+          subject_alt_names: string[] | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          alert_days_before?: number | null
+          auto_renew?: boolean | null
+          certificate_pem?: string | null
+          certificate_type?: string | null
+          chain_valid?: boolean | null
+          common_name?: string | null
+          cost?: number | null
+          created_at?: string
+          domain: string
+          fingerprint?: string | null
+          fingerprint_sha256?: string | null
+          id?: string
+          issuer?: string | null
+          issuer_organization?: string | null
+          key_algorithm?: string | null
+          key_size?: number | null
+          last_check_status?: string | null
+          last_checked_at?: string | null
+          monitoring_enabled?: boolean | null
+          notes?: string | null
+          organization_id?: string | null
+          private_key_location?: string | null
+          provider?: string | null
+          purchase_date?: string | null
+          renewal_url?: string | null
+          serial_number?: string | null
+          signature_algorithm?: string | null
+          subject_alt_names?: string[] | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          alert_days_before?: number | null
+          auto_renew?: boolean | null
+          certificate_pem?: string | null
+          certificate_type?: string | null
+          chain_valid?: boolean | null
+          common_name?: string | null
+          cost?: number | null
+          created_at?: string
+          domain?: string
+          fingerprint?: string | null
+          fingerprint_sha256?: string | null
+          id?: string
+          issuer?: string | null
+          issuer_organization?: string | null
+          key_algorithm?: string | null
+          key_size?: number | null
+          last_check_status?: string | null
+          last_checked_at?: string | null
+          monitoring_enabled?: boolean | null
+          notes?: string | null
+          organization_id?: string | null
+          private_key_location?: string | null
+          provider?: string | null
+          purchase_date?: string | null
+          renewal_url?: string | null
+          serial_number?: string | null
+          signature_algorithm?: string | null
+          subject_alt_names?: string[] | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_ssl_certificates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_ssl_check_history: {
+        Row: {
+          certificate_id: string
+          chain_status: string | null
+          check_status: string
+          checked_at: string
+          days_until_expiry: number | null
+          error_message: string | null
+          id: string
+          response_time_ms: number | null
+        }
+        Insert: {
+          certificate_id: string
+          chain_status?: string | null
+          check_status: string
+          checked_at?: string
+          days_until_expiry?: number | null
+          error_message?: string | null
+          id?: string
+          response_time_ms?: number | null
+        }
+        Update: {
+          certificate_id?: string
+          chain_status?: string | null
+          check_status?: string
+          checked_at?: string
+          days_until_expiry?: number | null
+          error_message?: string | null
+          id?: string
+          response_time_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "safedoc_ssl_check_history_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: false
+            referencedRelation: "safedoc_ssl_certificates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      safedoc_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       safemail_domains: {
         Row: {
@@ -18632,6 +19854,7 @@ export type Database = {
       command_status: "queued" | "running" | "done" | "error" | "expired"
       device_status: "online" | "offline" | "stale" | "unknown"
       helpdesk_role: "msp_admin" | "msp_staff" | "client_admin" | "client_staff"
+      safedoc_role: "admin" | "editor" | "viewer" | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -18771,6 +19994,7 @@ export const Constants = {
       command_status: ["queued", "running", "done", "error", "expired"],
       device_status: ["online", "offline", "stale", "unknown"],
       helpdesk_role: ["msp_admin", "msp_staff", "client_admin", "client_staff"],
+      safedoc_role: ["admin", "editor", "viewer", "none"],
     },
   },
 } as const
