@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb, TestTube, Heart, Star } from "lucide-react";
+import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb, TestTube, Heart, Star, Scale, Wand2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +22,10 @@ import { RecentAndFavoritesSection } from "@/components/gpt/RecentAndFavoritesSe
 import { TemplateCard } from "@/components/gpt/TemplateCard";
 import { TemplateRatingStars } from "@/components/gpt/TemplateRatingStars";
 import { TemplateRatingDialog } from "@/components/gpt/TemplateRatingDialog";
+import { TemplatePreviewDemo } from "@/components/gpt/TemplatePreviewDemo";
+import { TemplateComparisonTool } from "@/components/gpt/TemplateComparisonTool";
+import { SmartRecommendations } from "@/components/gpt/SmartRecommendations";
+import { GPTCreationWizard } from "@/components/gpt/GPTCreationWizard";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +45,9 @@ const GPTTemplatesMarketplace = () => {
   const [isInstalling, setIsInstalling] = useState(false);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [templateToRate, setTemplateToRate] = useState<GPTTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<GPTTemplate | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const categories = [
     "all",
@@ -156,7 +163,19 @@ const GPTTemplatesMarketplace = () => {
         </div>
         
         {/* Subscription Status */}
-        <div className="text-right flex items-center gap-3">
+        <div className="flex items-center gap-3">
+          {/* Create from Scratch */}
+          <Button onClick={() => setWizardOpen(true)} variant="outline">
+            <Wand2 className="h-4 w-4 mr-2" />
+            Create Custom
+          </Button>
+          
+          {/* Compare Templates */}
+          <Button onClick={() => setComparisonOpen(true)} variant="outline">
+            <Scale className="h-4 w-4 mr-2" />
+            Compare
+          </Button>
+          
           {/* Admin Test Suite Link */}
           {(user?.email?.endsWith('@ultriumai.com') || subscription.subscription_tier === 'enterprise') && (
             <Button 
@@ -168,7 +187,7 @@ const GPTTemplatesMarketplace = () => {
               Test Suite
             </Button>
           )}
-          <div>
+          <div className="text-right">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant={subscription.subscription_tier === 'free' ? 'secondary' : 'default'} className="capitalize">
                 {subscription.subscription_tier === 'free' ? (
@@ -236,6 +255,17 @@ const GPTTemplatesMarketplace = () => {
         allTemplates={gptTemplates}
         onInstall={handleInstallTemplate}
         onToggleFavorite={toggleFavorite}
+        isInstalling={isInstalling}
+        canInstall={canCreateMore}
+      />
+
+      {/* Smart Recommendations */}
+      <SmartRecommendations
+        templates={gptTemplates}
+        recentTemplateIds={getRecentTemplateIds()}
+        favoriteIds={favorites}
+        onInstall={handleInstallTemplate}
+        onViewDetails={setSelectedTemplate}
         isInstalling={isInstalling}
         canInstall={canCreateMore}
       />
@@ -324,6 +354,7 @@ const GPTTemplatesMarketplace = () => {
               onInstall={() => handleInstallTemplate(template)}
               onToggleFavorite={() => toggleFavorite(template.id)}
               onRate={() => handleRateTemplate(template)}
+              onPreview={() => setPreviewTemplate(template)}
               isFavorite={isFavorite(template.id)}
               userRating={getUserRating(template.id)?.rating}
               isInstalling={isInstalling}
@@ -524,6 +555,30 @@ const GPTTemplatesMarketplace = () => {
         onSubmit={handleSubmitRating}
         existingRating={templateToRate ? getUserRating(templateToRate.id)?.rating : undefined}
         existingReview={templateToRate ? getUserRating(templateToRate.id)?.review : undefined}
+      />
+
+      {/* Preview Demo Dialog */}
+      <TemplatePreviewDemo
+        template={previewTemplate}
+        open={!!previewTemplate}
+        onOpenChange={(open) => !open && setPreviewTemplate(null)}
+        onInstall={handleInstallTemplate}
+        isInstalling={isInstalling}
+        canInstall={canCreateMore}
+      />
+
+      {/* Comparison Tool */}
+      <TemplateComparisonTool
+        templates={gptTemplates}
+        open={comparisonOpen}
+        onOpenChange={setComparisonOpen}
+        onInstall={handleInstallTemplate}
+      />
+
+      {/* Creation Wizard */}
+      <GPTCreationWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
       />
     </div>
   );
