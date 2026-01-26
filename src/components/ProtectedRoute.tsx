@@ -57,12 +57,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!user) {
     const returnPath = location.pathname;
     
-    console.log('[ProtectedRoute] No user found, determining redirect...', { 
-      isOnSubdomain, 
-      returnPath, 
-      hostname: window.location.hostname 
-    });
-    
     // Determine product context for return routing
     let returnProduct = '';
     if (isSafeSuiteDomain()) {

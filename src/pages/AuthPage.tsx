@@ -55,23 +55,18 @@ const AuthPage = () => {
   // Handle post-login redirect based on return params - with delay for subdomain redirects
   useEffect(() => {
     if (user && !redirecting) {
-      console.log('[AuthPage] User authenticated, checking return params:', { returnProduct, returnPath, from });
-      
       // If returning to a specific product, redirect to its subdomain
       if (returnProduct && PRODUCT_URLS[returnProduct]) {
-        console.log('[AuthPage] Found return product, will redirect to:', PRODUCT_URLS[returnProduct] + returnPath);
         setRedirecting(true);
         
         // Wait 1 second to ensure session cookie is fully written before redirecting
         const timer = setTimeout(() => {
           const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
-          console.log('[AuthPage] Executing redirect to:', targetUrl);
           window.location.href = targetUrl;
         }, 1000);
         
         return () => clearTimeout(timer);
       }
-      console.log('[AuthPage] No return product, navigating to:', from === '/' ? '/hub' : from);
       // Otherwise navigate to the Product Hub (or original location)
       navigate(from === '/' ? '/hub' : from, { replace: true });
     }

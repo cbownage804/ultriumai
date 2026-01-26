@@ -15,16 +15,15 @@ const AUTH_STORAGE_KEY = 'sb-nsyobmjpdpvesjwdphlh-auth-token';
 const getRootDomain = (): string => {
   const hostname = window.location.hostname;
   
-  // Localhost - no domain sharing possible
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+  // ONLY enable cookie sharing for production ultriumai.com domains
+  // Lovable preview/published domains should use localStorage (default Supabase behavior)
+  if (!hostname.endsWith('.ultriumai.com') && hostname !== 'ultriumai.com') {
     return '';
   }
   
-  // Handle preview/production domains
+  // For ultriumai.com domains, return root domain for cookie sharing
   const parts = hostname.split('.');
   if (parts.length >= 2) {
-    // Return last two parts (e.g., "ultriumai.com" from "safesuite.ultriumai.com")
-    // For lovable.app domains, return last two parts
     return '.' + parts.slice(-2).join('.');
   }
   
@@ -34,68 +33,85 @@ const getRootDomain = (): string => {
 // Check if we're on a subdomain (not the main domain)
 const isSubdomain = (): boolean => {
   const hostname = window.location.hostname;
-  if (hostname === 'localhost' || hostname === '127.0.0.1') return false;
+  
+  // Only relevant for ultriumai.com domains
+  if (!hostname.endsWith('.ultriumai.com') && hostname !== 'ultriumai.com') {
+    return false;
+  }
   
   const parts = hostname.split('.');
-  // Main domains: ultriumai.com (2 parts), ultriumai.lovable.app (3 parts but pattern specific)
-  // Subdomains: safesuite.ultriumai.com (3 parts), id-preview--xxx.lovable.app
-  return parts.length > 2 || hostname.includes('preview--');
+  // safesuite.ultriumai.com = subdomain (3 parts)
+  // ultriumai.com = main domain (2 parts)
+  return parts.length > 2;
 };
 
 // Cookie-based storage for cross-subdomain session sharing
+// ONLY used for production ultriumai.com domains
 const cookieStorage = {
   getItem: (key: string): string | null => {
     if (typeof document === 'undefined') return null;
     
-    // On subdomains, prioritize cookie over localStorage
-    // because localStorage is per-origin and won't have the session after redirect
+    const rootDomain = getRootDomain();
+    
+    // If not on production domain, use localStorage only (default Supabase)
+    if (!rootDomain) {
+      try {
+        return localStorage.getItem(key);
+      } catch (e) {
+        return null;
+      }
+    }
+    
+    // On production subdomains, prioritize cookie for cross-domain sharing
     const onSubdomain = isSubdomain();
     
-    // Try cookie first on subdomains (cross-domain session sharing)
     if (onSubdomain) {
       const cookieValue = getCookieValue(key);
       if (cookieValue) {
-        // Sync to localStorage for future reads
         try {
           localStorage.setItem(key, cookieValue);
         } catch (e) {
-          // localStorage might be unavailable
+          console.warn('[Supabase] Could not sync cookie to localStorage:', e);
         }
         return cookieValue;
       }
     }
     
-    // Try localStorage (faster for same-origin)
+    // Try localStorage
     try {
       const localValue = localStorage.getItem(key);
       if (localValue) return localValue;
     } catch (e) {
-      // localStorage might be unavailable
+      console.warn('[Supabase] Could not read from localStorage:', e);
     }
     
-    // Fallback to cookie for main domain
+    // Fallback to cookie
     return getCookieValue(key);
   },
   
   setItem: (key: string, value: string): void => {
     if (typeof document === 'undefined') return;
     
-    // Always store in localStorage for fast access
+    const rootDomain = getRootDomain();
+    
+    // Always store in localStorage first
     try {
       localStorage.setItem(key, value);
     } catch (e) {
-      // localStorage might be unavailable
+      console.error('[Supabase] Could not write to localStorage:', e);
     }
     
-    // Also store in cookie for cross-subdomain sharing
-    const rootDomain = getRootDomain();
+    // Only set cookies for production ultriumai.com domains
+    if (!rootDomain) {
+      return; // Skip cookie storage for non-production
+    }
+    
+    // Store in cookie for cross-subdomain sharing (production only)
     const expires = new Date();
     expires.setTime(expires.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year
     
     let cookieString = `${key}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax; Secure`;
-    if (rootDomain) {
-      cookieString += `; domain=${rootDomain}`;
-    }
+    cookieString += `; domain=${rootDomain}`;
     
     document.cookie = cookieString;
   },
@@ -103,19 +119,23 @@ const cookieStorage = {
   removeItem: (key: string): void => {
     if (typeof document === 'undefined') return;
     
-    // Remove from localStorage
+    const rootDomain = getRootDomain();
+    
+    // Always remove from localStorage
     try {
       localStorage.removeItem(key);
     } catch (e) {
-      // localStorage might be unavailable
+      console.warn('[Supabase] Could not remove from localStorage:', e);
     }
     
-    // Remove from cookie
-    const rootDomain = getRootDomain();
-    let cookieString = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    if (rootDomain) {
-      cookieString += `; domain=${rootDomain}`;
+    // Only remove cookie for production domains
+    if (!rootDomain) {
+      return;
     }
+    
+    // Remove from cookie (production only)
+    let cookieString = `${key}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    cookieString += `; domain=${rootDomain}`;
     document.cookie = cookieString;
   },
 };

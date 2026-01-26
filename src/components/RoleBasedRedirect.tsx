@@ -55,7 +55,6 @@ export const RoleBasedRedirect = () => {
       // Wait for session cookie to be written before redirecting
       const timer = setTimeout(() => {
         const targetUrl = `${productUrl}${returnPath}`;
-        console.log('[RoleBasedRedirect] Cross-domain redirect to:', targetUrl);
         window.location.href = targetUrl;
       }, 1000);
       
@@ -73,7 +72,6 @@ export const RoleBasedRedirect = () => {
   // Priority 2: Preview/localhost with return product - use local navigation
   const PRODUCT_URLS = getProductUrls();
   if (returnProduct && PRODUCT_URLS[returnProduct] === '') {
-    console.log('[RoleBasedRedirect] Preview mode - navigating to:', returnPath);
     return <Navigate to={returnPath} replace />;
   }
 
