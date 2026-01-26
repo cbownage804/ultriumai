@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       // Always clear local state - even if server returns error (session may already be expired)
       // This prevents loops where local state thinks user is logged in but server disagrees
       setUser(null);
