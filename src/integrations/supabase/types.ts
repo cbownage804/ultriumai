@@ -14701,6 +14701,7 @@ export type Database = {
           last_used_at: string | null
           name: string
           public_key: string
+          use_count: number | null
           user_id: string
         }
         Insert: {
@@ -14713,6 +14714,7 @@ export type Database = {
           last_used_at?: string | null
           name?: string
           public_key: string
+          use_count?: number | null
           user_id: string
         }
         Update: {
@@ -14725,6 +14727,7 @@ export type Database = {
           last_used_at?: string | null
           name?: string
           public_key?: string
+          use_count?: number | null
           user_id?: string
         }
         Relationships: []
