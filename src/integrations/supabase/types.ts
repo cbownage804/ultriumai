@@ -2922,6 +2922,27 @@ export type Database = {
           },
         ]
       }
+      contact_form_rate_limits: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+          submitted_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+          submitted_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+          submitted_at?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string

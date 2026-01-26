@@ -18,6 +18,29 @@ export const ContactFormFields = ({
 }: ContactFormFieldsProps) => {
   return (
     <>
+      {/* Honeypot field - hidden from users, bots will fill it */}
+      <div 
+        aria-hidden="true" 
+        style={{ 
+          position: 'absolute', 
+          left: '-9999px', 
+          top: '-9999px',
+          opacity: 0,
+          pointerEvents: 'none'
+        }}
+      >
+        <label htmlFor="website_url">Website</label>
+        <input
+          type="text"
+          id="website_url"
+          name="website_url"
+          tabIndex={-1}
+          autoComplete="off"
+          value={formData._honeypot || ''}
+          onChange={(e) => onInputChange('_honeypot', e.target.value)}
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">First Name *</Label>

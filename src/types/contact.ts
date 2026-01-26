@@ -13,6 +13,9 @@ export interface ContactFormData {
   whiteLabeled: string;
   message: string;
   productInterests: string[];
+  // Anti-spam fields (not shown to users)
+  _honeypot?: string; // Should always be empty
+  _formLoadedAt?: number; // Timestamp when form loaded
 }
 
 export interface Product {
@@ -45,5 +48,7 @@ export const INITIAL_FORM_DATA: ContactFormData = {
   productType: '',
   whiteLabeled: '',
   message: '',
-  productInterests: []
+  productInterests: [],
+  _honeypot: '',
+  _formLoadedAt: Date.now()
 };
