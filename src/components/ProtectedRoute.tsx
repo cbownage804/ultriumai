@@ -5,7 +5,7 @@ import { Loader2, Mail, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProtectedRouteProps {
@@ -17,8 +17,25 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
   const { toast } = useToast();
   const [resending, setResending] = useState(false);
+  const [sessionCheckComplete, setSessionCheckComplete] = useState(false);
+  
+  const isOnSubdomain = isSafeSuiteDomain() || isVanguardDomain();
+  
+  // On subdomains, give extra time for session to be restored from cookies
+  // This prevents redirect loops when landing on subdomain after main domain login
+  useEffect(() => {
+    if (isOnSubdomain && !loading && !user) {
+      // Wait a bit for session to be restored from cross-domain cookie
+      const timer = setTimeout(() => {
+        setSessionCheckComplete(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setSessionCheckComplete(true);
+    }
+  }, [isOnSubdomain, loading, user]);
 
-  if (loading) {
+  if (loading || (isOnSubdomain && !user && !sessionCheckComplete)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -30,9 +47,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!user) {
-    // Unified auth: Always redirect to main domain /auth with return param
-    const mainDomain = 'https://ultriumai.com';
-    const currentOrigin = window.location.origin;
     const returnPath = location.pathname;
     
     // Determine product context for return routing
@@ -47,18 +61,28 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       returnProduct = 'vanguard';
     }
     
-    // If already on main domain, just go to /auth
-    if (!isSafeSuiteDomain() && !isVanguardDomain()) {
+    // If on main domain or preview, use local navigation
+    if (!isOnSubdomain) {
       const authUrl = returnProduct 
         ? `/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`
         : '/auth';
       return <Navigate to={authUrl} state={{ from: location }} replace />;
     }
     
-    // On subdomain: redirect to main domain auth
-    const authUrl = `${mainDomain}/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
-    window.location.href = authUrl;
-    return null;
+    // On production subdomain: redirect to main domain auth
+    const hostname = window.location.hostname;
+    const isProductionSubdomain = hostname.endsWith('.ultriumai.com');
+    
+    if (isProductionSubdomain) {
+      const mainDomain = 'https://ultriumai.com';
+      const authUrl = `${mainDomain}/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
+      window.location.href = authUrl;
+      return null;
+    }
+    
+    // On preview subdomain: use local auth
+    const authUrl = `/auth?return=${returnProduct}&path=${encodeURIComponent(returnPath)}`;
+    return <Navigate to={authUrl} state={{ from: location }} replace />;
   }
 
   // Check if email is confirmed
