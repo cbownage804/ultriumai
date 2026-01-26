@@ -33,7 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { GPTVoiceControls } from "@/components/voice/GPTVoiceControls";
-import { BackToHubButton } from "@/components/shared/BackToHubButton";
+
 import { AIProviderKeyManager } from "@/components/settings/AIProviderKeyManager";
 import { useUserAIProviders } from "@/hooks/useUserAIProviders";
 import { AI_PROVIDERS } from "@/types/aiProviders";
@@ -391,16 +391,13 @@ const CustomGPTPersonalize = () => {
     <div className="space-y-8 p-6 bg-gradient-to-br from-background via-background to-primary/5 min-h-screen">
       <div className="max-w-7xl mx-auto">
         {/* Header with Back to Hub at top */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-              Personalize Your AI Assistant
-            </h1>
-            <p className="text-muted-foreground">
-              Craft the perfect AI experience with advanced customization options
-            </p>
-          </div>
-          <BackToHubButton />
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+            Personalize Your AI Assistant
+          </h1>
+          <p className="text-muted-foreground">
+            Craft the perfect AI experience with advanced customization options
+          </p>
         </div>
 
         <Tabs defaultValue="general" className="space-y-8">

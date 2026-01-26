@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAccountType } from "@/hooks/useAccountType";
 import { supabase } from "@/integrations/supabase/client";
-import { BackToHubButton } from "@/components/shared/BackToHubButton";
+
 
 interface Action {
   id: string;
@@ -240,14 +240,11 @@ const CustomGPTActions = () => {
   if (!selectedGPT && gpts.length === 0) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-start flex-wrap gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Actions</h1>
-            <p className="text-muted-foreground mt-2">
-              Add powerful capabilities to your Custom GPT
-            </p>
-          </div>
-          <BackToHubButton />
+        <div>
+          <h1 className="text-3xl font-bold">Actions</h1>
+          <p className="text-muted-foreground mt-2">
+            Add powerful capabilities to your Custom GPT
+          </p>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
@@ -309,7 +306,6 @@ const CustomGPTActions = () => {
         </div>
         
         <div className="flex gap-2 flex-wrap">
-          <BackToHubButton />
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center gap-2">
