@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -9,18 +8,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface AuthEmailRequest {
-  type: "confirmation" | "password_reset" | "magic_link" | "email_change" | "welcome";
-  email: string;
-  name?: string;
-  redirectUrl?: string;
-  token?: string;
-  newEmail?: string;
-}
+// Map Supabase Auth Hook email types to our types
+const mapEmailType = (supabaseType: string): string => {
+  const typeMap: Record<string, string> = {
+    'signup': 'confirmation',
+    'recovery': 'password_reset',
+    'magiclink': 'magic_link',
+    'email_change': 'email_change',
+    'invite': 'welcome',
+  };
+  return typeMap[supabaseType] || supabaseType;
+};
 
 const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string; newEmail?: string }) => {
   const year = new Date().getFullYear();
-  // UltriumAI parent brand logo
   const logoUrl = "https://ultriumai.lovable.app/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
   const baseStyles = `
     <style>
@@ -40,11 +41,6 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
       .highlight { color: #8b5cf6; }
       .warning { background: #422006; border: 1px solid #854d0e; border-radius: 8px; padding: 16px; margin: 16px 0; }
       .warning p { color: #fbbf24; margin: 0; font-size: 14px; }
-      .products { margin-top: 8px; }
-      .products span { display: inline-block; padding: 4px 10px; margin: 2px; border-radius: 4px; font-size: 11px; font-weight: 500; }
-      .product-ai { background: #3b82f620; color: #60a5fa; }
-      .product-safe { background: #8b5cf620; color: #a78bfa; }
-      .product-vanguard { background: #10b98120; color: #34d399; }
     </style>
   `;
 
@@ -191,17 +187,17 @@ const getEmailTemplate = (type: string, data: { name?: string; actionUrl: string
               </div>
               <h1>Welcome${data.name ? `, ${data.name}` : ''}!</h1>
               <p>Your UltriumAI account is now active. You have access to our complete product suite:</p>
-              <div class="products" style="margin: 20px 0;">
+              <div style="margin: 20px 0;">
                 <div style="margin-bottom: 12px;">
-                  <span class="product-ai">AI Studio</span>
+                  <span style="background: #3b82f620; color: #60a5fa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">AI Studio</span>
                   <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Build custom GPTs and AI agents</span>
                 </div>
                 <div style="margin-bottom: 12px;">
-                  <span class="product-safe">SafeSuite</span>
+                  <span style="background: #8b5cf620; color: #a78bfa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">SafeSuite</span>
                   <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Enterprise security tools & password vault</span>
                 </div>
                 <div style="margin-bottom: 12px;">
-                  <span class="product-vanguard">Vanguard</span>
+                  <span style="background: #10b98120; color: #34d399; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500;">Vanguard</span>
                   <span style="color: #a1a1aa; font-size: 14px; margin-left: 8px;">Endpoint security & compliance monitoring</span>
                 </div>
               </div>
@@ -229,43 +225,50 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, email, name, redirectUrl, token, newEmail }: AuthEmailRequest = await req.json();
+    const payload = await req.json();
+    console.log("Received payload:", JSON.stringify(payload, null, 2));
 
-    if (!email || !type) {
-      throw new Error("Missing required fields: email and type");
-    }
+    let email: string;
+    let emailType: string;
+    let actionUrl: string;
+    let userName: string | undefined;
+    let newEmail: string | undefined;
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
-
-    let actionUrl = redirectUrl || "https://safesuite.ultriumai.com/dashboard";
-
-    // For confirmation and password reset, generate proper auth links
-    if (type === "confirmation" || type === "password_reset" || type === "magic_link") {
-      const linkType = type === "confirmation" ? "signup" : type === "password_reset" ? "recovery" : "magiclink";
-      const redirect = redirectUrl || "https://safesuite.ultriumai.com/dashboard";
+    // Check if this is a Supabase Auth Hook payload
+    if (payload.user && payload.email_data) {
+      // Auth Hook format from Supabase
+      const { user, email_data } = payload;
       
-      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: linkType,
-        email: email,
-        options: { redirectTo: redirect },
-      });
+      email = user.email;
+      emailType = mapEmailType(email_data.email_action_type);
+      userName = user.user_metadata?.full_name || user.user_metadata?.name;
+      newEmail = user.new_email;
 
-      if (linkError) {
-        console.error("Error generating auth link:", linkError);
-        // Fall back to a generic URL if link generation fails
-        actionUrl = redirect;
-      } else if (linkData?.properties?.action_link) {
-        actionUrl = linkData.properties.action_link;
+      // Build the confirmation URL using the token_hash
+      const baseUrl = email_data.redirect_to || "https://safesuite.ultriumai.com/dashboard";
+      const tokenHash = email_data.token_hash;
+      const type = email_data.email_action_type;
+      
+      // Construct the proper Supabase verification URL
+      actionUrl = `https://nsyobmjpdpvesjwdphlh.supabase.co/auth/v1/verify?token=${tokenHash}&type=${type}&redirect_to=${encodeURIComponent(baseUrl)}`;
+      
+      console.log("Auth Hook - Email type:", emailType, "Email:", email, "Action URL:", actionUrl);
+    } else {
+      // Direct API call format (legacy)
+      email = payload.email;
+      emailType = payload.type;
+      actionUrl = payload.redirectUrl || "https://safesuite.ultriumai.com/dashboard";
+      userName = payload.name;
+      newEmail = payload.newEmail;
+
+      if (!email || !emailType) {
+        throw new Error("Missing required fields: email and type");
       }
     }
 
-    const template = getEmailTemplate(type, { name, actionUrl, newEmail });
+    const template = getEmailTemplate(emailType, { name: userName, actionUrl, newEmail });
 
-    console.log(`Sending ${type} email to ${email}`);
+    console.log(`Sending ${emailType} email to ${email} from UltriumAI Security <security@send.ultriumai.com>`);
 
     const emailResponse = await resend.emails.send({
       from: "UltriumAI Security <security@send.ultriumai.com>",
