@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Send, Bot, User, Loader2, Volume2, VolumeX } from 'lucide-react';
 import VoiceControls from './VoiceControls';
 import { useAuth } from '@/hooks/useAuth';
-
+import { CleanMarkdownRenderer } from '@/components/chat/CleanMarkdownRenderer';
 interface Message {
   id: string;
   content: string;
@@ -356,12 +356,16 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
                   </Avatar>
                 )}
                 
-                <div className={`max-w-[85%] rounded-lg p-3 break-words ${
+                <div className={`max-w-[85%] rounded-lg p-4 break-words ${
                   message.role === 'user' 
                     ? 'bg-primary text-primary-foreground ml-auto' 
                     : 'bg-muted mr-auto'
                 }`}>
-                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  {message.role === 'assistant' ? (
+                    <CleanMarkdownRenderer content={message.content} />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                  )}
                   <div className="flex items-center gap-2 mt-2 text-xs opacity-70">
                     {message.role === 'user' ? (
                       <User className="h-3 w-3 flex-shrink-0" />
