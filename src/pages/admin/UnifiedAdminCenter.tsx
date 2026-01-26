@@ -5,15 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft,
-  Home,
   LayoutDashboard,
   Sparkles,
   Shield,
   Zap,
-  Settings
+  Settings,
+  Users
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { AdminOverviewTab } from '@/components/admin/unified/AdminOverviewTab';
+import { AllUsersAdminTab } from '@/components/admin/unified/AllUsersAdminTab';
 import { AIStudioAdminTab } from '@/components/admin/unified/AIStudioAdminTab';
 import { SafeSuiteAdminTab } from '@/components/admin/unified/SafeSuiteAdminTab';
 import { VanguardAdminTab } from '@/components/admin/unified/VanguardAdminTab';
@@ -80,6 +81,10 @@ const UnifiedAdminCenter = () => {
               <LayoutDashboard className="h-4 w-4" />
               Overview
             </TabsTrigger>
+            <TabsTrigger value="all-users" className="gap-2 data-[state=active]:bg-background">
+              <Users className="h-4 w-4" />
+              All Users
+            </TabsTrigger>
             <TabsTrigger value="ai-studio" className="gap-2 data-[state=active]:bg-background">
               <Sparkles className="h-4 w-4" />
               AI Studio
@@ -95,7 +100,11 @@ const UnifiedAdminCenter = () => {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
-            <AdminOverviewTab />
+            <AdminOverviewTab onNavigateToTab={setActiveTab} />
+          </TabsContent>
+
+          <TabsContent value="all-users" className="mt-6">
+            <AllUsersAdminTab />
           </TabsContent>
 
           <TabsContent value="ai-studio" className="mt-6">
