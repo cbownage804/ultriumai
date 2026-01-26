@@ -26,6 +26,7 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ 
+  product,
   name, 
   description, 
   logo, 
