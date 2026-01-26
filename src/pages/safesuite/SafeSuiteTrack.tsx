@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { FeatureGate, UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { Package, BarChart3, Shield, Laptop, Server, FileSearch } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,7 +55,7 @@ export default function SafeSuiteTrack() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <UsageLimitBanner feature="safetrack" />
+          <TierLimitInfo feature="safetrack" />
         </motion.div>
 
         {/* Tabs Navigation */}
