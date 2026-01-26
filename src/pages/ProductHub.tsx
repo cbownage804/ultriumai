@@ -82,7 +82,7 @@ const ProductCard = ({
       <CardHeader className="relative z-10 pb-2">
         {/* Centered Horizontal Logo */}
         <div className="flex flex-col items-center mb-4">
-          <div className={`px-6 py-4 bg-black rounded-xl ${getShadowClass()} shadow-lg mb-3 flex items-center justify-center min-w-[240px] min-h-[100px]`}>
+          <div className={`px-4 py-3 md:px-6 md:py-4 bg-black rounded-xl ${getShadowClass()} shadow-lg mb-3 flex items-center justify-center min-w-[200px] md:min-w-[240px] min-h-[80px] md:min-h-[100px]`}>
             <img 
               src={logo} 
               alt={name} 

@@ -118,8 +118,8 @@ const Navigation = () => {
                   <p className="text-xs text-muted-foreground">AI-powered security & operations tools</p>
                 </div>
                 
-                {/* Products Grid */}
-                <div className="p-4 grid grid-cols-2 gap-3">
+                {/* Products Grid - responsive columns */}
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
                   {/* SafeSuite */}
                   <button
                     onClick={() => handleNavigation('/safesuite/features')}

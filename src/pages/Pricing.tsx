@@ -19,7 +19,7 @@ const Pricing = () => {
       {/* Hero Section */}
       <section className="pt-32 pb-16 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-emerald-500/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] lg:w-[800px] lg:h-[800px] bg-primary/5 rounded-full blur-3xl" />
         
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
           <Badge className="mb-6 bg-white/10 text-white/80 border-white/20">Simple, Transparent Pricing</Badge>

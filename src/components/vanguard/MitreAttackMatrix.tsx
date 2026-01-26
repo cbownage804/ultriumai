@@ -133,9 +133,9 @@ export function MitreAttackMatrix() {
             <div className="text-center py-12 text-muted-foreground">Loading matrix...</div>
           ) : (
             <ScrollArea className="w-full">
-              <div className="flex gap-2 min-w-[1200px] pb-4">
+              <div className="flex gap-2 min-w-[800px] md:min-w-[1000px] lg:min-w-[1200px] pb-4">
                 {mappingsByTactic.map((tactic) => (
-                  <div key={tactic.id} className="flex-1 min-w-[120px]">
+                  <div key={tactic.id} className="flex-1 min-w-[100px] md:min-w-[120px]">
                     {/* Tactic Header */}
                     <div className={`${tactic.color} text-white text-xs font-medium px-2 py-2 rounded-t text-center`}>
                       {tactic.name}
