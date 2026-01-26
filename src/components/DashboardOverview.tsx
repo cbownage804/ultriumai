@@ -268,25 +268,25 @@ export const DashboardOverview = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
                 variant="outline"
-                className={`h-auto p-4 flex flex-col items-center justify-start space-y-2 hover-scale hover-glow transition-all duration-300 animate-fade-in min-w-0 ${
+                className={`h-auto min-h-[100px] p-4 flex flex-col items-center justify-center gap-2 hover-scale hover-glow transition-all duration-300 animate-fade-in ${
                   action.featured ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5 animate-pulse-glow' : ''
                 }`}
                 style={{ animationDelay: `${index * 0.1}s` }}
                 onClick={action.action}
               >
-                <div className={`p-2 rounded-full ${action.color} animate-float shrink-0`}>
+                <div className={`p-2 rounded-full ${action.color} animate-float`}>
                   <action.icon className="h-4 w-4 text-white" />
                 </div>
-                <div className="text-center w-full min-w-0">
-                  <div className={`font-medium text-sm truncate ${action.featured ? 'text-primary animate-glow' : ''}`}>
+                <div className="text-center">
+                  <div className={`font-medium text-sm whitespace-normal ${action.featured ? 'text-primary animate-glow' : ''}`}>
                     {action.title}
                   </div>
-                  <div className="text-xs text-muted-foreground line-clamp-2 leading-tight mt-1">
+                  <div className="text-xs text-muted-foreground whitespace-normal mt-1">
                     {action.description}
                   </div>
                 </div>
