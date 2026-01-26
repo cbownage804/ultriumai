@@ -1,15 +1,27 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3 } from "lucide-react";
+import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BackToHubButton } from "@/components/shared/BackToHubButton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const GPTDashboard = () => {
   const navigate = useNavigate();
-  const { gpts: customGPTs, isLoading } = useCustomGPTs();
+  const { gpts: customGPTs, isLoading, deleteGPT } = useCustomGPTs();
+  const [gptToDelete, setGptToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const stats = {
     totalGPTs: customGPTs.length,
@@ -216,6 +228,14 @@ export const GPTDashboard = () => {
                       <Settings className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => setGptToDelete({ id: gpt.id, name: gpt.name })}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -228,6 +248,32 @@ export const GPTDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!gptToDelete} onOpenChange={(open) => !open && setGptToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete GPT?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{gptToDelete?.name}"? This action cannot be undone and will remove all associated conversation history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (gptToDelete) {
+                  await deleteGPT(gptToDelete.id);
+                  setGptToDelete(null);
+                }
+              }}
+            >
+              Delete GPT
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
