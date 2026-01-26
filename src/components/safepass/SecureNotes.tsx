@@ -310,7 +310,7 @@ export const SecureNotes = () => {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => {
+            <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
               setEditingNote(null);
               setNewNote({ title: '', content: '', tags: '' });
             }}>
@@ -358,7 +358,7 @@ export const SecureNotes = () => {
               </div>
               
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleSaveNote} className="flex-1">
+                <Button onClick={handleSaveNote} className="flex-1 bg-amber-500 hover:bg-amber-600 text-black">
                   {editingNote ? 'Update' : 'Save'} Note
                 </Button>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -391,7 +391,7 @@ export const SecureNotes = () => {
           <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No Secure Notes</h3>
           <p className="text-muted-foreground mb-4">Create your first encrypted note</p>
-          <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Add Note
           </Button>

@@ -388,6 +388,7 @@ export const ExpirationReminders = () => {
                       <Button 
                         size="sm" 
                         onClick={() => markAsRotated(entry.id)}
+                        className="bg-amber-500 hover:bg-amber-600 text-black"
                       >
                         <RefreshCw className="h-3 w-3 mr-1" />
                         Mark as Rotated
