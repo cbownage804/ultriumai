@@ -213,7 +213,7 @@ export default function ProductHub() {
       name: 'Vanguard',
       description: 'Enterprise AI-powered cybersecurity operations platform for MSPs',
       logo: vanguardLogo,
-      href: 'https://vanguard.ultriumai.com/app',
+      href: 'https://vanguard.ultriumai.com/dashboard',
       isSubdomain: true,
       accessLevel: getAccessLevel('vanguard'),
       color: 'cyan-500',

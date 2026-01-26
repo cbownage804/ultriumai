@@ -2,6 +2,7 @@ import { Navigate, useSearchParams } from 'react-router-dom';
 import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
 import { useEffect, useState } from 'react';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
+import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
 
 // Product subdomain URLs
 const PRODUCT_URLS: Record<string, string> = {
@@ -45,7 +46,17 @@ export const RoleBasedRedirect = () => {
     return <Navigate to={redirectPath} replace />;
   }
 
-  // Default redirect to Product Hub - user is authenticated at this point
-  // (This component is only rendered when user exists - see App.tsx)
+  // Default redirect based on subdomain
+  // SafeSuite and Vanguard subdomains stay on their own dashboards
+  // Main domain users go to Product Hub
+  if (isSafeSuiteDomain()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  if (isVanguardDomain()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Main domain - redirect to Product Hub
   return <Navigate to="/hub" replace />;
 };
