@@ -50,14 +50,20 @@ const TemplateTestSuite = () => {
     const startTime = Date.now();
     
     try {
-      const { data, error } = await supabase.functions.invoke('chat-with-gpt', {
+      // Use the chat-completion edge function with proper format
+      const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
-          message: testQuestion,
-          systemPrompt: template.system_prompt,
-          conversationHistory: [],
+          messages: [
+            { role: 'user', content: testQuestion }
+          ],
+          customGPT: {
+            id: template.id,
+            system_prompt: template.system_prompt,
+            name: template.name
+          },
           modelParams: {
             model: template.config.preferred_model || 'gpt-4o',
-            temperature: template.config.temperature || 0.7,
+            temperature: 0.7,
             max_tokens: 500 // Limit for testing
           }
         }
@@ -76,8 +82,8 @@ const TemplateTestSuite = () => {
         };
       }
 
-      // Check if response is meaningful
-      const response = data?.response || data?.content || '';
+      // Check if response is meaningful - handle different response formats
+      const response = data?.generatedText || data?.choices?.[0]?.message?.content || data?.response || data?.content || '';
       const isPassed = response.length > 50 && !response.toLowerCase().includes('error');
 
       return {
