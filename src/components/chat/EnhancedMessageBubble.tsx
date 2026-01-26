@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { ChatMessage } from "@/types/chat";
 import EnhancedDocumentExport from "@/components/gpt/EnhancedDocumentExport";
-import ReactMarkdown from "react-markdown";
+import { CleanMarkdownRenderer } from "./CleanMarkdownRenderer";
 import { motion } from "framer-motion";
 
 interface EnhancedMessageBubbleProps {
@@ -44,12 +44,6 @@ export const EnhancedMessageBubble = ({
   
   // Determine if this is a "document-like" response (longer content from assistant)
   const isDocumentResponse = message.role === 'assistant' && message.content.length > 200;
-  
-  // Detect if content contains code blocks or structured content
-  const hasCodeBlocks = message.content.includes('```');
-  const hasLists = message.content.includes('\n-') || message.content.includes('\n1.');
-  const hasHeadings = message.content.includes('\n#') || message.content.includes('\n##');
-  const isStructured = hasCodeBlocks || hasLists || hasHeadings;
 
   const handleFeedback = (type: 'positive' | 'negative') => {
     setFeedbackGiven(type);
@@ -77,91 +71,9 @@ export const EnhancedMessageBubble = ({
           ? 'bg-primary text-primary-foreground p-3' 
           : 'bg-muted p-4'
       }`}>
-        {/* Content */}
-        {message.role === 'assistant' && isStructured ? (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown
-              components={{
-                code({ node, className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || '');
-                  const isInline = !match;
-                  
-                  if (isInline) {
-                    return (
-                      <code className="bg-background/50 px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
-                        {children}
-                      </code>
-                    );
-                  }
-                  
-                  return (
-                    <div className="relative my-3">
-                      <div className="flex items-center justify-between bg-background/80 px-3 py-1.5 rounded-t border border-b-0 text-xs">
-                        <span className="text-muted-foreground font-medium">{match[1]}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 px-2 text-xs"
-                          onClick={() => onCopyMessage(String(children), `${message.id}-code`)}
-                        >
-                          <Copy className="h-3 w-3 mr-1" />
-                          Copy
-                        </Button>
-                      </div>
-                      <pre className="bg-background/50 p-3 rounded-b border overflow-x-auto">
-                        <code className={`${className} text-sm`} {...props}>
-                          {children}
-                        </code>
-                      </pre>
-                    </div>
-                  );
-                },
-                h1: ({ children }) => (
-                  <h1 className="text-lg font-bold mt-4 mb-2 flex items-center gap-2">
-                    {children}
-                  </h1>
-                ),
-                h2: ({ children }) => (
-                  <h2 className="text-base font-semibold mt-3 mb-2 flex items-center gap-2 border-b pb-1">
-                    {children}
-                  </h2>
-                ),
-                h3: ({ children }) => (
-                  <h3 className="text-sm font-semibold mt-2 mb-1">{children}</h3>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc pl-4 space-y-1 my-2">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal pl-4 space-y-1 my-2">{children}</ol>
-                ),
-                li: ({ children }) => (
-                  <li className="text-sm">{children}</li>
-                ),
-                table: ({ children }) => (
-                  <div className="overflow-x-auto my-3">
-                    <table className="min-w-full border text-sm">{children}</table>
-                  </div>
-                ),
-                th: ({ children }) => (
-                  <th className="border px-3 py-2 bg-muted/50 text-left font-medium">{children}</th>
-                ),
-                td: ({ children }) => (
-                  <td className="border px-3 py-2">{children}</td>
-                ),
-                blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-primary/50 pl-4 my-2 italic text-muted-foreground">
-                    {children}
-                  </blockquote>
-                ),
-                strong: ({ children }) => (
-                  <strong className="font-semibold text-foreground">{children}</strong>
-                ),
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
-          </div>
+        {/* Content - Use clean markdown for assistant, plain text for user */}
+        {message.role === 'assistant' ? (
+          <CleanMarkdownRenderer content={message.content} />
         ) : (
           <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
         )}
