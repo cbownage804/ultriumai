@@ -537,9 +537,9 @@ export const PasswordVault = () => {
                 Add Password
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md border-amber-500/30">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-amber-400">
                 {editingEntry ? 'Edit Password Entry' : 'Add New Password'}
               </DialogTitle>
               <DialogDescription>
@@ -549,22 +549,23 @@ export const PasswordVault = () => {
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-amber-200/80">Title *</Label>
                 <Input
                   id="title"
                   value={newEntry.title}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, title: e.target.value }))}
                   placeholder="e.g., Gmail Account"
+                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
                 />
               </div>
 
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-amber-200/80">Category</Label>
                 <Select
                   value={newEntry.category}
                   onValueChange={(value) => setNewEntry(prev => ({ ...prev, category: value }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -578,33 +579,36 @@ export const PasswordVault = () => {
               </div>
 
               <div>
-                <Label htmlFor="website">Website</Label>
+                <Label htmlFor="website" className="text-amber-200/80">Website</Label>
                 <Input
                   id="website"
                   value={newEntry.website}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, website: e.target.value }))}
                   placeholder="https://example.com"
+                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
                 />
               </div>
 
               <div>
-                <Label htmlFor="username">Username/Email</Label>
+                <Label htmlFor="username" className="text-amber-200/80">Username/Email</Label>
                 <Input
                   id="username"
                   value={newEntry.username}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, username: e.target.value }))}
                   placeholder="your@email.com"
+                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password *</Label>
+                  <Label htmlFor="password" className="text-amber-200/80">Password *</Label>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleGeneratePassword}
+                    className="border-amber-500/30 hover:bg-amber-500/10 hover:text-amber-400"
                   >
                     <RefreshCw className="w-3 h-3 mr-1" />
                     Generate
@@ -617,13 +621,13 @@ export const PasswordVault = () => {
                     value={newEntry.password}
                     onChange={(e) => setNewEntry(prev => ({ ...prev, password: e.target.value }))}
                     placeholder="Enter or generate password"
-                    className="pr-10"
+                    className="pr-10 border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:text-amber-400"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
                     {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -639,13 +643,14 @@ export const PasswordVault = () => {
               </div>
 
               <div>
-                <Label htmlFor="notes">Notes</Label>
+                <Label htmlFor="notes" className="text-amber-200/80">Notes</Label>
                 <Textarea
                   id="notes"
                   value={newEntry.notes}
                   onChange={(e) => setNewEntry(prev => ({ ...prev, notes: e.target.value }))}
                   placeholder="Additional notes..."
                   rows={3}
+                  className="border-amber-500/30 focus:border-amber-500 focus:ring-amber-500/20"
                 />
               </div>
 
@@ -653,7 +658,7 @@ export const PasswordVault = () => {
                 <Button 
                   onClick={handleSaveEntry}
                   disabled={!newEntry.title || !newEntry.password || !isUnlocked || isSaving}
-                  className="flex-1"
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-black"
                 >
                   {isSaving ? (
                     <>
@@ -669,7 +674,7 @@ export const PasswordVault = () => {
                     <>{editingEntry ? 'Update' : 'Save'} Password</>
                   )}
                 </Button>
-                <Button 
+                <Button
                   variant="outline" 
                   onClick={() => {
                     setIsAddDialogOpen(false);
