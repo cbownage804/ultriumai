@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -65,16 +65,16 @@ export const UserSubscriptionDialog = ({
   const [saving, setSaving] = useState(false);
   const [aiStudioTier, setAiStudioTier] = useState(user?.products.ai_studio?.tier || 'free');
   const [safesuiteTier, setSafesuiteTier] = useState(user?.products.safesuite?.tier || 'free');
-  const [vanguardTier, setVanguardTier] = useState(user?.products.vanguard?.tier || '');
+  const [vanguardTier, setVanguardTier] = useState(user?.products.vanguard?.tier || 'none');
 
   // Reset state when user changes
-  useState(() => {
+  useEffect(() => {
     if (user) {
       setAiStudioTier(user.products.ai_studio?.tier || 'free');
       setSafesuiteTier(user.products.safesuite?.tier || 'free');
-      setVanguardTier(user.products.vanguard?.tier || '');
+      setVanguardTier(user.products.vanguard?.tier || 'none');
     }
-  });
+  }, [user]);
 
   const isStripeManaged = (stripeId: string | null | undefined) => !!stripeId;
 
@@ -109,7 +109,7 @@ export const UserSubscriptionDialog = ({
       if (ssError) throw ssError;
 
       // Update or create Vanguard subscription if tier is set
-      if (vanguardTier) {
+      if (vanguardTier && vanguardTier !== 'none') {
         const { error: vgError } = await supabase
           .from('vanguard_subscriptions')
           .upsert({
@@ -259,7 +259,7 @@ export const UserSubscriptionDialog = ({
                 <SelectValue placeholder="No subscription" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No subscription</SelectItem>
+                <SelectItem value="none">No subscription</SelectItem>
                 {VANGUARD_TIERS.map(tier => (
                   <SelectItem key={tier} value={tier}>
                     {tier.charAt(0).toUpperCase() + tier.slice(1)}
