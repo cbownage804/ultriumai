@@ -6281,6 +6281,39 @@ export type Database = {
           },
         ]
       }
+      mfa_trusted_devices: {
+        Row: {
+          created_at: string
+          device_fingerprint: string
+          expires_at: string
+          id: string
+          ip_address: unknown
+          trusted_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          trusted_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          trusted_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       mitre_attack_mappings: {
         Row: {
           confidence: number | null
