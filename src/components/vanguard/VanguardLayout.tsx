@@ -10,32 +10,18 @@ import { useNavigate } from 'react-router-dom';
 import { VanguardAIChat } from './VanguardAIChat';
 
 export function VanguardLayout() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-    // Always proceed with sign out - session might already be expired on server
-    const isSessionGone = !error || 
-      error.message?.toLowerCase().includes('session') || 
-      (error as any)?.code === 'session_not_found';
-    
-    if (!isSessionGone) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
-      });
-   } else {
-     toast({
-       title: "Signed out",
-       description: "You have been successfully signed out.",
-     });
-    }
-    
-   // Don't navigate - let ProtectedRoute handle redirect when user state clears
+   await signOut();
+   toast({
+     title: "Signed out",
+     description: "You have been successfully signed out.",
+   });
+   // Small delay to ensure auth state clears, then navigate
+   setTimeout(() => navigate('/auth', { replace: true }), 100);
   };
 
   return (
