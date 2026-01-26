@@ -4,24 +4,21 @@
 
 import { useState } from 'react';
 import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
-import { Package, BarChart3, Shield, Laptop, Server, FileSearch } from 'lucide-react';
+import { Package, FileSearch, Package2, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AnimatedHeader, AnimatedStatsCard } from '@/components/safesuite/SafeSuiteEffects';
+import { AnimatedHeader } from '@/components/safesuite/SafeSuiteEffects';
+import { TeaserLock } from '@/components/safesuite/TeaserLock';
+import { useSafeSuiteSubscription } from '@/hooks/useSafeSuite';
 import safetrackLogo from '@/assets/safetrack-logo.png';
 import heroSafetrackBg from '@/assets/hero-safetrack-bg.jpg';
 import WarrantyLookup from '@/components/safetrack/WarrantyLookup';
 import { AssetManagement } from '@/components/assets/AssetManagement';
+import { SoftwareLicenses } from '@/components/safetrack/SoftwareLicenses';
 
 export default function SafeSuiteTrack() {
   const [activeTab, setActiveTab] = useState('assets');
-
-  const features = [
-    { icon: <Laptop className="h-5 w-5" />, label: 'Hardware Tracking', desc: 'Monitor all devices' },
-    { icon: <Server className="h-5 w-5" />, label: 'Software Licenses', desc: 'Track subscriptions' },
-    { icon: <BarChart3 className="h-5 w-5" />, label: 'Depreciation', desc: 'Calculate asset value' },
-    { icon: <Shield className="h-5 w-5" />, label: 'Warranty Alerts', desc: 'Never miss renewals' },
-  ];
+  const { isBusiness, loading: subLoading } = useSafeSuiteSubscription();
 
   return (
     <FeatureGate feature="safetrack">
@@ -69,9 +66,16 @@ export default function SafeSuiteTrack() {
               <FileSearch className="h-4 w-4 mr-2" />
               Warranty Lookup
             </TabsTrigger>
+            <TabsTrigger value="software" className="data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-400">
+              <Package2 className="h-4 w-4 mr-2" />
+              Software Licenses
+              {!isBusiness && !subLoading && (
+                <Lock className="h-3 w-3 ml-1 text-amber-400" />
+              )}
+            </TabsTrigger>
           </TabsList>
 
-          {/* Asset Management Tab - Now embedded directly */}
+          {/* Asset Management Tab */}
           <TabsContent value="assets" className="mt-6">
             <AssetManagement />
           </TabsContent>
@@ -79,6 +83,20 @@ export default function SafeSuiteTrack() {
           {/* Warranty Lookup Tab */}
           <TabsContent value="warranty" className="mt-6">
             <WarrantyLookup />
+          </TabsContent>
+
+          {/* Software Licenses Tab - Business Only */}
+          <TabsContent value="software" className="mt-6">
+            {!subLoading && !isBusiness ? (
+              <TeaserLock
+                feature="team"
+                message="Track all your software licenses, subscriptions, and seat usage in one place. Get alerts before renewals and never overpay for unused licenses."
+              >
+                <div />
+              </TeaserLock>
+            ) : (
+              <SoftwareLicenses />
+            )}
           </TabsContent>
         </Tabs>
         </div>
