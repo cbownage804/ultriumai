@@ -3303,6 +3303,7 @@ export type Database = {
           avatar_url: string | null
           background_color: string | null
           background_type: string | null
+          category: string | null
           chat_count: number
           conversation_duration: string | null
           conversation_exporting: boolean | null
@@ -3315,6 +3316,7 @@ export type Database = {
           embed_enabled: boolean
           enable_web_search: boolean | null
           error_message: string | null
+          features: Json | null
           generate_responses_from: string | null
           id: string
           integration_settings: Json | null
@@ -3341,6 +3343,7 @@ export type Database = {
           starter_questions_header: string | null
           system_prompt: string
           team_id: string | null
+          template_id: string | null
           terms_of_service: string | null
           theme_color: string | null
           title_color: string | null
@@ -3364,6 +3367,7 @@ export type Database = {
           avatar_url?: string | null
           background_color?: string | null
           background_type?: string | null
+          category?: string | null
           chat_count?: number
           conversation_duration?: string | null
           conversation_exporting?: boolean | null
@@ -3376,6 +3380,7 @@ export type Database = {
           embed_enabled?: boolean
           enable_web_search?: boolean | null
           error_message?: string | null
+          features?: Json | null
           generate_responses_from?: string | null
           id?: string
           integration_settings?: Json | null
@@ -3402,6 +3407,7 @@ export type Database = {
           starter_questions_header?: string | null
           system_prompt: string
           team_id?: string | null
+          template_id?: string | null
           terms_of_service?: string | null
           theme_color?: string | null
           title_color?: string | null
@@ -3425,6 +3431,7 @@ export type Database = {
           avatar_url?: string | null
           background_color?: string | null
           background_type?: string | null
+          category?: string | null
           chat_count?: number
           conversation_duration?: string | null
           conversation_exporting?: boolean | null
@@ -3437,6 +3444,7 @@ export type Database = {
           embed_enabled?: boolean
           enable_web_search?: boolean | null
           error_message?: string | null
+          features?: Json | null
           generate_responses_from?: string | null
           id?: string
           integration_settings?: Json | null
@@ -3463,6 +3471,7 @@ export type Database = {
           starter_questions_header?: string | null
           system_prompt?: string
           team_id?: string | null
+          template_id?: string | null
           terms_of_service?: string | null
           theme_color?: string | null
           title_color?: string | null

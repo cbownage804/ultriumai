@@ -75,7 +75,10 @@ const GPTTemplatesMarketplace = () => {
         preferred_model: template.config.preferred_model || "gpt-4o-mini",
         enable_web_search: template.config.enable_web_search || false,
         theme_color: template.config.theme_color || "#3b82f6",
-        placeholder_prompt: template.config.placeholder_prompt || `Chat with ${template.name}...`
+        placeholder_prompt: template.config.placeholder_prompt || `Chat with ${template.name}...`,
+        category: template.category,
+        template_id: template.id,
+        features: template.features || []
       };
 
       const result = await createGPT(newGPT);

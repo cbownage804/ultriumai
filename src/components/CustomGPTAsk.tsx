@@ -208,12 +208,15 @@ const CustomGPTAsk = () => {
             onCopyMessage={copyMessage}
             gptName={currentGPT.name}
             gptDescription={currentGPT.description}
+            features={(currentGPT.features as string[]) || []}
             starterQuestions={currentGPT.starter_questions as string[] || []}
             themeColor={currentGPT.theme_color || '#3b82f6'}
+            category={currentGPT.category || undefined}
             onQuestionSelect={(question) => setInputMessage(question)}
           />
           
           <QuickActionToolbar
+            category={currentGPT.category || undefined}
             onAction={(prompt) => {
               setInputMessage(prompt);
             }}
