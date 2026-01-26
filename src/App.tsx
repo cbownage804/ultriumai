@@ -166,6 +166,7 @@ import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import AIStudio from '@/pages/AIStudio';
 import TemplateTestSuite from '@/components/gpt/TemplateTestSuite';
+import GPTSettings from '@/pages/GPTSettings';
 import SafeTrackPage from '@/pages/SafeTrackPage';
 import BusinessBillingPage from '@/pages/BusinessBillingPage';
 import BusinessBilling from '@/pages/BusinessBilling';
@@ -552,6 +553,11 @@ function AppRouter() {
             <div className="min-h-screen bg-background p-6">
               <TemplateTestSuite />
             </div>
+          </ProtectedRoute>
+        } />
+        <Route path="/ai-studio/settings/:gptId" element={
+          <ProtectedRoute>
+            <GPTSettings />
           </ProtectedRoute>
         } />
         <Route path="/safetrack" element={
