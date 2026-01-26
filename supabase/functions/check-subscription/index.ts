@@ -36,20 +36,17 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     
-    // Use getClaims for JWT validation - doesn't require session to exist
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      throw new Error(`Authentication error: ${claimsError?.message || 'Invalid token'}`);
+    // Use getUser for JWT validation
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !userData?.user) {
+      throw new Error(`Authentication error: ${userError?.message || 'Invalid token'}`);
     }
     
-    const userId = claimsData.claims.sub;
-    const userEmail = claimsData.claims.email as string;
+    const user = userData.user;
     
-    if (!userId || !userEmail) {
+    if (!user.id || !user.email) {
       throw new Error("User not authenticated or email not available");
     }
-    
-    const user = { id: userId, email: userEmail };
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Give all UltriumAI employees enterprise status - check this FIRST before cache
