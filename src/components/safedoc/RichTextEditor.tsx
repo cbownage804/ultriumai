@@ -196,9 +196,3 @@ export function RichTextEditor({
     </div>
   );
 }
-      
-      {/* Editor Content */}
-      <EditorContent editor={editor} />
-    </div>
-  );
-}

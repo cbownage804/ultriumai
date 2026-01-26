@@ -1,10 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, Plus, AlertTriangle } from 'lucide-react';
-import { useSafeDoc } from '@/hooks/useSafeDoc';
+import { useSafeDocIT } from '@/hooks/useSafeDocIT';
 
 export function SafeDocExpirations({ organizationId }: { organizationId?: string }) {
-  const { expirations } = useSafeDoc(organizationId);
+  const { expirations } = useSafeDocIT(organizationId);
   
   return (
     <div className="space-y-4">
