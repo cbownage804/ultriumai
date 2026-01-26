@@ -28,7 +28,7 @@ import {
   ShieldCheck,
   ShieldOff
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { UserSubscriptionDialog } from './UserSubscriptionDialog';
 
 // Pricing constants (monthly in cents)
@@ -59,6 +59,7 @@ interface UnifiedUser {
   account_type: string;
   created_at: string;
   mfa_enabled: boolean;
+  last_login?: { time: string; ip: string } | null;
   products: {
     ai_studio: { tier: string; subscribed: boolean; stripe_subscription_id?: string | null } | null;
     safesuite: { tier: string; status: string; stripe_subscription_id?: string | null } | null;
@@ -121,11 +122,30 @@ export const AllUsersAdminTab = () => {
         .select('user_id, two_factor_enabled')
         .in('user_id', userIds);
 
+      // Get last login from audit_logs
+      const { data: loginLogs } = await supabase
+        .from('audit_logs')
+        .select('user_id, ip_address, created_at')
+        .in('user_id', userIds)
+        .eq('action', 'login')
+        .order('created_at', { ascending: false });
+
       // Create lookup maps keyed by user_id
       const aiStudioMap = new Map(aiStudioSubs?.map(s => [s.user_id, s]) || []);
       const safeSuiteMap = new Map(safeSuiteSubs?.map(s => [s.user_id, s]) || []);
       const vanguardMap = new Map(vanguardSubs?.map(s => [s.user_id, s]) || []);
       const mfaMap = new Map(securitySettings?.map((s: any) => [s.user_id, s.two_factor_enabled]) || []);
+      
+      // Build last login map (first entry per user is most recent)
+      const lastLoginMap = new Map<string, { time: string; ip: string }>();
+      for (const login of (loginLogs || [])) {
+        if (!lastLoginMap.has(login.user_id)) {
+          lastLoginMap.set(login.user_id, {
+            time: login.created_at,
+            ip: String(login.ip_address || 'Unknown')
+          });
+        }
+      }
 
       // Build unified user list
       const unifiedUsers: UnifiedUser[] = (profiles || []).map(profile => {
@@ -141,6 +161,7 @@ export const AllUsersAdminTab = () => {
           account_type: profile.account_type || 'individual',
           created_at: profile.created_at,
           mfa_enabled: mfaMap.get(profile.user_id) || false,
+          last_login: lastLoginMap.get(profile.user_id) || null,
           products: {
             ai_studio: aiSub ? { 
               tier: aiSub.subscription_tier || 'free', 
@@ -408,13 +429,14 @@ export const AllUsersAdminTab = () => {
                     </div>
                   </TableHead>
                   <TableHead className="text-center">MFA</TableHead>
+                  <TableHead>Last Login</TableHead>
                   <TableHead>Joined</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -471,6 +493,20 @@ export const AllUsersAdminTab = () => {
                           <ShieldCheck className="h-4 w-4 text-green-500 mx-auto" />
                         ) : (
                           <ShieldOff className="h-4 w-4 text-muted-foreground mx-auto" />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {user.last_login ? (
+                          <div>
+                            <div className="text-muted-foreground">
+                              {formatDistanceToNow(new Date(user.last_login.time), { addSuffix: true })}
+                            </div>
+                            <div className="text-muted-foreground/60 font-mono text-[10px]">
+                              {user.last_login.ip}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Never</span>
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
