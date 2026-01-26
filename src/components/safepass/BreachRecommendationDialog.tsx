@@ -110,18 +110,25 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
     return parseRecommendation(recommendation);
   }, [recommendation]);
 
-  const fetchRecommendation = async () => {
+  const fetchRecommendation = async (retryCount = 0) => {
     if (!finding) return;
     
     setIsLoading(true);
-    setRecommendation(null);
+    if (retryCount === 0) setRecommendation(null);
     
     try {
       const { data, error } = await supabase.functions.invoke('safepass-breach-recommendations', {
         body: { finding }
       });
       
-      if (error) throw error;
+      if (error) {
+        // Auto-retry once on initial failure (cold start issues)
+        if (retryCount === 0) {
+          console.log('First attempt failed, retrying...');
+          return fetchRecommendation(1);
+        }
+        throw error;
+      }
       setRecommendation(data.recommendation);
     } catch (error: any) {
       console.error('Failed to get recommendations:', error);
@@ -130,10 +137,17 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       } else if (error.message?.includes('402')) {
         toast.error('AI credits exhausted. Please add credits.');
       } else {
+        // Auto-retry once on any failure (cold start issues)
+        if (retryCount === 0) {
+          console.log('First attempt failed, retrying...');
+          return fetchRecommendation(1);
+        }
         toast.error('Failed to generate recommendations');
       }
     } finally {
-      setIsLoading(false);
+      if (retryCount > 0 || !isLoading) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -249,7 +263,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
                 </div>
                 {recommendation && (
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={fetchRecommendation} className="h-7 px-2 text-xs">
+                    <Button variant="ghost" size="sm" onClick={() => fetchRecommendation()} className="h-7 px-2 text-xs">
                       <RefreshCw className="h-3 w-3 mr-1" /> Refresh
                     </Button>
                     <Button variant="ghost" size="sm" onClick={copyRecommendation} className="h-7 px-2">
@@ -397,7 +411,7 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
                 <div className="text-center py-8">
                   <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm text-muted-foreground mb-3">Failed to load recommendations</p>
-                  <Button variant="outline" size="sm" onClick={fetchRecommendation}>Try Again</Button>
+                  <Button variant="outline" size="sm" onClick={() => fetchRecommendation()}>Try Again</Button>
                 </div>
               )}
             </div>
