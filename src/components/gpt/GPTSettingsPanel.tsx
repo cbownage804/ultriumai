@@ -9,11 +9,13 @@ import {
   Users,
   Link2,
   ArrowLeft,
-  Bot
+  Bot,
+  Sliders
 } from "lucide-react";
 import { GPTAnalyticsDashboard } from "./GPTAnalyticsDashboard";
 import { GPTTeamSharing } from "./GPTTeamSharing";
 import { GPTIntegrations } from "./GPTIntegrations";
+import { GPTConfiguration } from "./GPTConfiguration";
 import { motion } from "framer-motion";
 
 interface GPTSettingsPanelProps {
@@ -29,7 +31,7 @@ interface GPTSettingsPanelProps {
 }
 
 export function GPTSettingsPanel({ gpt, onBack }: GPTSettingsPanelProps) {
-  const [activeTab, setActiveTab] = useState("analytics");
+  const [activeTab, setActiveTab] = useState("configuration");
   const themeColor = gpt.theme_color || "#3b82f6";
 
   return (
@@ -66,7 +68,11 @@ export function GPTSettingsPanel({ gpt, onBack }: GPTSettingsPanelProps) {
 
       {/* Settings Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 w-full max-w-lg">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsTrigger value="configuration" className="flex items-center gap-2">
+            <Sliders className="h-4 w-4" />
+            Configuration
+          </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Analytics
@@ -88,6 +94,14 @@ export function GPTSettingsPanel({ gpt, onBack }: GPTSettingsPanelProps) {
           transition={{ duration: 0.2 }}
           className="mt-6"
         >
+          <TabsContent value="configuration" className="m-0">
+            <GPTConfiguration
+              gptId={gpt.id}
+              gptName={gpt.name}
+              themeColor={themeColor}
+            />
+          </TabsContent>
+
           <TabsContent value="analytics" className="m-0">
             <GPTAnalyticsDashboard 
               gptId={gpt.id}
