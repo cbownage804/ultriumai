@@ -1,0 +1,64 @@
+/**
+ * SafeDoc IT Documentation Hook
+ * For the Vanguard IT documentation system (ITGlue replica)
+ */
+
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+
+interface SafeDocOrganization {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface SafeDocStats {
+  organizations: number;
+  documents: number;
+  passwords: number;
+  sslCertificates: number;
+  configurations: number;
+  runbooks: number;
+  expiringItems: number;
+  sslExpiring: number;
+}
+
+export const useSafeDocIT = (organizationId?: string) => {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [organizations, setOrganizations] = useState<SafeDocOrganization[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [passwords, setPasswords] = useState<any[]>([]);
+  const [sslCertificates, setSslCertificates] = useState<any[]>([]);
+  const [configurations, setConfigurations] = useState<any[]>([]);
+  const [runbooks, setRunbooks] = useState<any[]>([]);
+  const [expirations, setExpirations] = useState<any[]>([]);
+
+  const stats: SafeDocStats = {
+    organizations: organizations.length,
+    documents: documents.length,
+    passwords: passwords.length,
+    sslCertificates: sslCertificates.length,
+    configurations: configurations.length,
+    runbooks: runbooks.length,
+    expiringItems: expirations.filter(e => e.daysUntilExpiry <= 30).length,
+    sslExpiring: sslCertificates.filter(c => c.daysUntilExpiry <= 30).length,
+  };
+
+  useEffect(() => {
+    // TODO: Load data from Supabase when tables are ready
+    setIsLoading(false);
+  }, [user, organizationId]);
+
+  return {
+    isLoading,
+    organizations,
+    documents,
+    passwords,
+    sslCertificates,
+    configurations,
+    runbooks,
+    expirations,
+    stats,
+  };
+};

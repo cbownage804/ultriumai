@@ -79,6 +79,7 @@ export default function SafeScanSettings() {
               </p>
             </div>
             <Switch
+              variant="safescan"
               checked={settings.autoScanEmails}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, autoScanEmails: checked }))
@@ -97,6 +98,7 @@ export default function SafeScanSettings() {
               </p>
             </div>
             <Switch
+              variant="safescan"
               checked={settings.autoScanLinks}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, autoScanLinks: checked }))
@@ -115,6 +117,7 @@ export default function SafeScanSettings() {
               </p>
             </div>
             <Switch
+              variant="safescan"
               checked={settings.autoScanDownloads}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, autoScanDownloads: checked }))
@@ -168,6 +171,7 @@ export default function SafeScanSettings() {
               </p>
             </div>
             <Switch
+              variant="safescan"
               checked={settings.realTimeProtection}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, realTimeProtection: checked }))
@@ -197,6 +201,7 @@ export default function SafeScanSettings() {
               </p>
             </div>
             <Switch
+              variant="safescan"
               checked={settings.notifications.threatDetected}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -215,6 +220,7 @@ export default function SafeScanSettings() {
               </p>
             </div>
             <Switch
+              variant="safescan"
               checked={settings.notifications.scanComplete}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -233,6 +239,7 @@ export default function SafeScanSettings() {
               </p>
             </div>
             <Switch
+              variant="safescan"
               checked={settings.notifications.weeklyReport}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -245,9 +252,12 @@ export default function SafeScanSettings() {
         </CardContent>
       </Card>
 
-      {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} disabled={loading}>
+        <Button 
+          onClick={handleSaveSettings} 
+          disabled={loading}
+          className="bg-red-500 hover:bg-red-600 text-white"
+        >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -3,7 +3,7 @@
  * Defines feature access and limits for each tier
  */
 
-export type SafeSuiteTier = 'free' | 'pro' | 'business';
+export type SafeSuiteTier = 'free' | 'pro' | 'business' | 'enterprise';
 
 export interface FeatureLimit {
   enabled: boolean;
@@ -67,12 +67,12 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
     badge: 'Most Popular',
     popular: true,
     features: {
-      safepass: { enabled: true, limit: -1 },      // Unlimited
+      safepass: { enabled: true, limit: 100 },     // 100 passwords
       safescan: { enabled: true, limit: 100 },     // 100 scans/month
       safeweb: { enabled: true, limit: 5 },        // 5 monitored assets
       safetrack: { enabled: false, limit: 0 },
       safeassist: { enabled: true, limit: 100 },   // 100 AI messages/month
-      safeassist_voice: { enabled: true, limit: 2 }, // 2 voice minutes/month (conservative)
+      safeassist_voice: { enabled: true, limit: 2 }, // 2 voice minutes/month
       whitelabeling: { enabled: false, limit: 0 }, // Not available on pro
       team: { enabled: false, limit: 0 }           // Team management not available
     }
@@ -89,14 +89,36 @@ export const SAFESUITE_TIERS: Record<SafeSuiteTier, TierConfig> = {
     perUser: true,
     priceLabel: '/user/mo',
     features: {
-      safepass: { enabled: true, limit: -1, team: true },  // Unlimited + Team sharing
-      safescan: { enabled: true, limit: -1 },              // Unlimited scans
-      safeweb: { enabled: true, limit: -1 },               // Unlimited monitoring
-      safetrack: { enabled: true, limit: -1 },             // Unlimited tracked assets
+      safepass: { enabled: true, limit: 500, team: true },  // 500 passwords + Team sharing
+      safescan: { enabled: true, limit: 500 },              // 500 scans/month
+      safeweb: { enabled: true, limit: 50 },                // 50 monitored assets
+      safetrack: { enabled: true, limit: 500 },             // 500 tracked assets
       safeassist: { enabled: true, limit: 250 },            // 250 AI messages/month
-      safeassist_voice: { enabled: true, limit: 5 },       // 5 voice minutes/month (conservative)
-      whitelabeling: { enabled: true, limit: -1 },         // Full whitelabeling (Business only)
-      team: { enabled: true, limit: -1 }                   // Team/User management (Business only)
+      safeassist_voice: { enabled: true, limit: 5 },        // 5 voice minutes/month
+      whitelabeling: { enabled: true, limit: 1 },           // 1 brand (Business)
+      team: { enabled: true, limit: 20 }                    // Up to 20 team members
+    }
+  },
+  enterprise: {
+    id: 'enterprise',
+    name: 'Enterprise',
+    description: 'Maximum security for large organizations',
+    price: 4500,  // $45/user/mo
+    yearlyPrice: 43200, // $432/year per user (~$36/user/mo)
+    stripePriceId: 'price_enterprise_monthly',
+    stripeYearlyPriceId: 'price_enterprise_yearly',
+    badge: 'Enterprise',
+    perUser: true,
+    priceLabel: '/user/mo',
+    features: {
+      safepass: { enabled: true, limit: 1500, team: true }, // 1500 passwords + Team sharing
+      safescan: { enabled: true, limit: 1500 },             // 1500 scans/month
+      safeweb: { enabled: true, limit: 150 },               // 150 monitored assets
+      safetrack: { enabled: true, limit: 1500 },            // 1500 tracked assets
+      safeassist: { enabled: true, limit: 750 },            // 750 AI messages/month
+      safeassist_voice: { enabled: true, limit: 15 },       // 15 voice minutes/month
+      whitelabeling: { enabled: true, limit: -1 },          // Unlimited brands
+      team: { enabled: true, limit: 60 }                    // Up to 60 team members
     }
   }
 };

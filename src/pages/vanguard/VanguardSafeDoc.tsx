@@ -14,7 +14,7 @@ import {
   FileText, Key, Shield, Server, BookOpen, Clock, Building2,
   Plus, Search, FolderOpen, AlertTriangle, CheckCircle2, Settings
 } from 'lucide-react';
-import { useSafeDoc } from '@/hooks/useSafeDoc';
+import { useSafeDocIT } from '@/hooks/useSafeDocIT';
 import { SafeDocOrganizations } from '@/components/safedoc/SafeDocOrganizations';
 import { SafeDocDocuments } from '@/components/safedoc/SafeDocDocuments';
 import { SafeDocPasswords } from '@/components/safedoc/SafeDocPasswords';
@@ -26,7 +26,7 @@ import { SafeDocExpirations } from '@/components/safedoc/SafeDocExpirations';
 export default function VanguardSafeDoc() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedOrg, setSelectedOrg] = useState<string | undefined>();
-  const { stats, organizations, isLoading } = useSafeDoc(selectedOrg);
+  const { stats, organizations, isLoading } = useSafeDocIT(selectedOrg);
 
   const statCards = [
     { label: 'Organizations', value: stats.organizations, icon: Building2, color: 'text-blue-400', bg: 'bg-blue-500/10' },
