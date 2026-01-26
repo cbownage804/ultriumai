@@ -52,6 +52,7 @@ import AuthPage from '@/pages/AuthPage';
 import Dashboard from '@/pages/Dashboard';
 import ProductHub from '@/pages/ProductHub';
 import GPTChat from '@/pages/GPTChat';
+import PublicGPTEmbed from '@/pages/PublicGPTEmbed';
 import NotFound from '@/pages/NotFound';
 import ProfilePage from '@/pages/ProfilePage';
 
@@ -604,6 +605,10 @@ function AppRouter() {
         {/* Payment Success/Cancel Routes */}
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
+        
+        {/* Public GPT Embed Routes - No auth required */}
+        <Route path="/gpt/:gptId" element={<PublicGPTEmbed />} />
+        <Route path="/gpt/:gptId/embed" element={<PublicGPTEmbed />} />
         
         {/* Customer Portal Routes */}
         <Route path="/client-login" element={<ClientLogin />} />

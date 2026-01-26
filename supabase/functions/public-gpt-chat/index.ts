@@ -21,9 +21,14 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY')!;
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    if (!supabaseUrl || !supabaseServiceKey || !openAIApiKey) {
+    // Use Lovable AI Gateway if available, fallback to OpenAI
+    const useGateway = !!lovableApiKey;
+    const apiKey = lovableApiKey || openAIApiKey;
+
+    if (!supabaseUrl || !supabaseServiceKey || !apiKey) {
       throw new Error('Missing required environment variables');
     }
 
@@ -121,15 +126,35 @@ serve(async (req) => {
       systemPrompt += `\n\nAdditional capabilities: ${gpt.agent_capability}`;
     }
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Determine API endpoint and model
+    const apiUrl = useGateway 
+      ? 'https://ai.gateway.lovable.dev/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions';
+    
+    // Map model selection - use Gemini for gateway, OpenAI for direct
+    const preferredModel = gpt.preferred_model || gpt.ai_model;
+    let model = 'google/gemini-3-flash-preview'; // Default for gateway
+    
+    if (useGateway) {
+      // Map common model names to gateway models
+      if (preferredModel?.includes('gpt-4')) {
+        model = 'google/gemini-2.5-pro';
+      } else if (preferredModel?.includes('gpt-3.5') || preferredModel?.includes('mini')) {
+        model = 'google/gemini-2.5-flash';
+      }
+    } else {
+      model = preferredModel || 'gpt-4o-mini';
+    }
+
+    // Call AI API
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: gpt.ai_model || 'gpt-4o-mini',
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           ...messageHistory
@@ -141,7 +166,28 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      // Handle rate limiting
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Service temporarily unavailable. Please try again later.' }),
+          { 
+            status: 402, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      const errorText = await response.text();
+      console.error('AI API error:', response.status, errorText);
+      throw new Error(`AI API error: ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -159,7 +205,7 @@ serve(async (req) => {
     // Update GPT chat count
     await supabase
       .from('custom_gpts')
-      .update({ chat_count: gpt.chat_count + 1 })
+      .update({ chat_count: (gpt.chat_count || 0) + 1 })
       .eq('id', gpt_id);
 
     return new Response(
