@@ -44,7 +44,7 @@ const Pricing = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Free */}
             <Card className="bg-[#141414] border-white/10 hover:border-emerald-500/30 transition-all">
               <CardContent className="p-8">
@@ -153,6 +153,45 @@ const Pricing = () => {
                   <Link to="/safesuite/billing">
                     Start Business Trial
                     <Users className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Enterprise */}
+            <Card className="bg-[#141414] border-white/10 hover:border-emerald-500/30 transition-all">
+              <CardContent className="p-8">
+                <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
+                <p className="text-white/50 text-sm mb-6">For large organizations</p>
+                
+                <div className="mb-8">
+                  <span className="text-4xl font-bold text-white">$45</span>
+                  <span className="text-white/50">/user/month</span>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {[
+                    "Everything in Business",
+                    "1,500 password entries",
+                    "1,500 threat scans/month",
+                    "150 monitored assets",
+                    "Up to 60 team members",
+                    "Custom integrations",
+                    "Dedicated account manager",
+                    "SLA guarantee",
+                  ].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <span className="text-sm text-white/70">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+              <CardFooter className="p-8 pt-0">
+                <Button variant="outline" className="w-full border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10" asChild>
+                  <Link to="/contact">
+                    Contact Sales
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </CardFooter>
