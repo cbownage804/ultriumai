@@ -1,10 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Server, Plus } from 'lucide-react';
-import { useSafeDoc } from '@/hooks/useSafeDoc';
+import { useSafeDocIT } from '@/hooks/useSafeDocIT';
 
 export function SafeDocConfigurations({ organizationId }: { organizationId?: string }) {
-  const { configurations } = useSafeDoc(organizationId);
+  const { configurations } = useSafeDocIT(organizationId);
   
   return (
     <div className="space-y-4">
