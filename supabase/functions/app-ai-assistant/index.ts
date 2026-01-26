@@ -12,11 +12,8 @@ const SAFESUITE_PRODUCTS = `
 1. **SafePass** - Enterprise password manager with zero-knowledge encryption, breach monitoring, and password health scoring
 2. **SafeScan** - URL, email, and document scanning for malware, phishing, and threats
 3. **SafeWeb** - Dark web monitoring for exposed credentials, emails, and domains
-4. **SafeLink** - Real-time URL analysis and safe browsing protection
-5. **SafeDoc** - Document security scanning for malicious files and macros
-6. **SafeMail** - Email security with phishing detection and header analysis
-7. **SafeTrack** - IT asset management and inventory tracking
-8. **SafeAssist** - AI-powered security assistant and help desk
+4. **SafeTrack** - IT asset management and inventory tracking
+5. **SafeAssist** - AI-powered security assistant and help desk
 
 **Parent Company:** UltriumAI (ultriumai.com)
 `;
@@ -28,9 +25,6 @@ const CRITICAL_RULES = `
 - When users need password management → recommend **SafePass**
 - When users need scanning/threat detection → recommend **SafeScan**
 - When users need dark web/breach monitoring → recommend **SafeWeb**
-- When users need URL checking → recommend **SafeLink**
-- When users need document security → recommend **SafeDoc**
-- When users need email security → recommend **SafeMail**
 - When users need asset tracking → recommend **SafeTrack**
 - When users need AI help/guidance → recommend **SafeAssist**
 - If a user mentions using a competitor, acknowledge it politely but guide them to the SafeSuite equivalent
