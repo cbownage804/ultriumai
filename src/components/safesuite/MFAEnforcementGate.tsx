@@ -1,11 +1,14 @@
 /**
  * MFA Enforcement Gate for SafeSuite Sensitive Features
- * Blocks access to vault, billing, and settings until MFA is enabled
+ * Requires MFA verification on each login session (unless device is trusted for 24h)
+ * Also blocks access if MFA is not enabled at all
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useMFAStatus } from '@/hooks/useMFAStatus';
+import { useTrustedDevice } from '@/hooks/useTrustedDevice';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +23,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { isSafeSuiteDomain } from '@/utils/subdomain';
+import { MFALoginChallenge } from './MFALoginChallenge';
 
 // Product logos
 import safesuiteLogo from '@/assets/safesuite-logo.png';
@@ -28,6 +32,8 @@ interface MFAEnforcementGateProps {
   children: ReactNode;
   /** Feature name for display purposes */
   featureName?: string;
+  /** If true, require MFA verification even if device is trusted */
+  requireStepUp?: boolean;
 }
 
 const MFA_BENEFITS = [
@@ -37,13 +43,79 @@ const MFA_BENEFITS = [
   "Industry-standard security for sensitive data"
 ];
 
-export function MFAEnforcementGate({ children, featureName = 'this feature' }: MFAEnforcementGateProps) {
-  const { loading, hasMFA } = useMFAStatus();
+// Session key for MFA verification (cleared on tab close)
+const getMfaSessionKey = (userId: string) => `mfa_verified_session_${userId}`;
+
+export function MFAEnforcementGate({ 
+  children, 
+  featureName = 'this feature',
+  requireStepUp = false 
+}: MFAEnforcementGateProps) {
+  const { user, session } = useAuth();
+  const { loading: mfaLoading, hasMFA } = useMFAStatus();
+  const { loading: trustLoading, isTrusted, checkTrustedDevice } = useTrustedDevice();
+  
+  const [mfaVerified, setMfaVerified] = useState(false);
+  const [showChallenge, setShowChallenge] = useState(false);
   
   const settingsPath = isSafeSuiteDomain() ? '/settings' : '/safesuite/settings';
 
+  // Check if this session has already verified MFA
+  useEffect(() => {
+    if (!user || !hasMFA) return;
+    
+    const sessionKey = getMfaSessionKey(user.id);
+    const verified = sessionStorage.getItem(sessionKey);
+    
+    if (verified === 'true') {
+      setMfaVerified(true);
+    }
+  }, [user, hasMFA]);
+
+  // Determine if MFA challenge is needed
+  useEffect(() => {
+    if (mfaLoading || trustLoading || !user) return;
+    
+    // MFA not enabled - don't show challenge (show setup prompt instead)
+    if (!hasMFA) {
+      setShowChallenge(false);
+      return;
+    }
+    
+    // Already verified this session
+    if (mfaVerified) {
+      setShowChallenge(false);
+      return;
+    }
+    
+    // Step-up auth required - always challenge
+    if (requireStepUp) {
+      setShowChallenge(true);
+      return;
+    }
+    
+    // Device is trusted - skip challenge
+    if (isTrusted) {
+      setMfaVerified(true);
+      setShowChallenge(false);
+      return;
+    }
+    
+    // Need to verify MFA
+    setShowChallenge(true);
+  }, [mfaLoading, trustLoading, hasMFA, mfaVerified, isTrusted, requireStepUp, user]);
+
+  const handleMfaSuccess = () => {
+    if (user) {
+      const sessionKey = getMfaSessionKey(user.id);
+      sessionStorage.setItem(sessionKey, 'true');
+    }
+    setMfaVerified(true);
+    setShowChallenge(false);
+  };
+
   // Loading state
-  if (loading) {
+  if (mfaLoading || trustLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
@@ -54,8 +126,17 @@ export function MFAEnforcementGate({ children, featureName = 'this feature' }: M
     );
   }
 
-  // MFA is enabled - render children
-  if (hasMFA) {
+  // Show MFA verification challenge
+  if (showChallenge && hasMFA) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4 md:p-8">
+        <MFALoginChallenge onSuccess={handleMfaSuccess} />
+      </div>
+    );
+  }
+
+  // MFA enabled and verified (or trusted device) - render children
+  if (hasMFA && (mfaVerified || isTrusted)) {
     return <>{children}</>;
   }
 
