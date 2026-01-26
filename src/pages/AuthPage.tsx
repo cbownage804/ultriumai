@@ -212,9 +212,8 @@ const AuthPage = () => {
       <div className="w-full max-w-md space-y-6">
         {/* Header - Dynamic Branding */}
         <div className="text-center">
-          <div className="flex items-center justify-center gap-3 mb-2">
+          <div className="flex justify-center mb-2">
             <img src={branding.logo} alt={branding.name} className="h-14 w-auto" />
-            <span className="text-2xl font-bold text-foreground">{branding.name}</span>
           </div>
           <p className="text-sm text-muted-foreground">{branding.tagline}</p>
           {returnProduct && (
