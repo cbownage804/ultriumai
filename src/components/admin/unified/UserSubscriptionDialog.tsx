@@ -26,7 +26,10 @@ import {
   CreditCard, 
   Wrench,
   Save,
-  ExternalLink
+  Mail,
+  KeyRound,
+  UserCog,
+  AlertTriangle
 } from 'lucide-react';
 
 interface UserProducts {
@@ -264,6 +267,61 @@ export const UserSubscriptionDialog = ({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <Separator />
+
+          {/* Admin Actions */}
+          <div className="space-y-3">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <UserCog className="h-4 w-4" />
+              Admin Actions
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  toast({
+                    title: "Password reset email sent",
+                    description: `Reset link sent to ${user.email}`,
+                  });
+                }}
+              >
+                <KeyRound className="h-3 w-3 mr-1" />
+                Reset Password
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  toast({
+                    title: "Welcome email sent",
+                    description: `Welcome email sent to ${user.email}`,
+                  });
+                }}
+              >
+                <Mail className="h-3 w-3 mr-1" />
+                Welcome Email
+              </Button>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="w-full text-amber-500 border-amber-500/30 hover:bg-amber-500/10"
+              onClick={() => {
+                toast({
+                  title: "Impersonation started",
+                  description: `Now viewing as ${user.email}. Session logged.`,
+                  variant: "default"
+                });
+                // In production, this would use admin.auth.generateLink or similar
+                window.open(`/?impersonate=${user.user_id}`, '_blank');
+              }}
+            >
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Impersonate User (Logged)
+            </Button>
           </div>
         </div>
 

@@ -10,7 +10,8 @@ import {
   Shield,
   Zap,
   Settings,
-  Users
+  Users,
+  FileText
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { AdminOverviewTab } from '@/components/admin/unified/AdminOverviewTab';
@@ -18,6 +19,7 @@ import { AllUsersAdminTab } from '@/components/admin/unified/AllUsersAdminTab';
 import { AIStudioAdminTab } from '@/components/admin/unified/AIStudioAdminTab';
 import { SafeSuiteAdminTab } from '@/components/admin/unified/SafeSuiteAdminTab';
 import { VanguardAdminTab } from '@/components/admin/unified/VanguardAdminTab';
+import { AdminAuditLogTab } from '@/components/admin/unified/AdminAuditLogTab';
 
 const UnifiedAdminCenter = () => {
   const navigate = useNavigate();
@@ -97,6 +99,10 @@ const UnifiedAdminCenter = () => {
               <Zap className="h-4 w-4" />
               Vanguard
             </TabsTrigger>
+            <TabsTrigger value="audit-log" className="gap-2 data-[state=active]:bg-background">
+              <FileText className="h-4 w-4" />
+              Audit Log
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
@@ -117,6 +123,10 @@ const UnifiedAdminCenter = () => {
 
           <TabsContent value="vanguard" className="mt-6">
             <VanguardAdminTab />
+          </TabsContent>
+
+          <TabsContent value="audit-log" className="mt-6">
+            <AdminAuditLogTab />
           </TabsContent>
         </Tabs>
       </main>
