@@ -488,6 +488,11 @@ function AppRouter() {
             <GPTChat />
           </ProtectedRoute>
         } />
+        <Route path="/ai-studio/chat/:gptId" element={
+          <ProtectedRoute>
+            <GPTChat />
+          </ProtectedRoute>
+        } />
         <Route path="/profile" element={
           <ProtectedRoute>
             <Profile />
