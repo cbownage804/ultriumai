@@ -181,7 +181,7 @@ export function SecurityArchitectureBadge({ className = '', variant = 'badge' }:
           <div className="pt-4 border-t border-white/10">
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Server className="h-4 w-4" />
-              <span>Built on the same security principles as 1Password, Bitwarden, and enterprise password managers.</span>
+              <span>Enterprise-grade security architecture with zero-knowledge encryption and hardware-backed key management.</span>
             </div>
           </div>
         </div>

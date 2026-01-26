@@ -38,7 +38,7 @@ const features = [
   {
     icon: Upload,
     title: 'Easy Import',
-    description: 'Import from Chrome, Firefox, 1Password, LastPass, and more in seconds.'
+    description: 'Import from Chrome, Firefox, and other password managers in seconds.'
   },
   {
     icon: Users,

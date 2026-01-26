@@ -418,10 +418,12 @@ export default function SafeSuiteDashboard() {
           .eq('resource_type', 'scan')
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
         
+        // SafeWeb: Query safeweb_assets table for accurate count
         const monitorsResult = await supabase
-          .from('dark_web_monitors')
+          .from('safeweb_assets')
           .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .eq('status', 'active');
         
         const assetsResult = await supabase
           .from('assets')
