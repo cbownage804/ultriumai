@@ -76,6 +76,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.autoTagging}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, autoTagging: checked }))
@@ -94,6 +95,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.locationTracking}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, locationTracking: checked }))
@@ -109,6 +111,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.depreciationTracking}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, depreciationTracking: checked }))
@@ -141,6 +144,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.warrantyAlerts}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, warrantyAlerts: checked }))
@@ -183,6 +187,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.maintenanceReminders}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, maintenanceReminders: checked }))
@@ -212,6 +217,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.notifications.warrantyExpiring}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -230,6 +236,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.notifications.maintenanceDue}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -248,6 +255,7 @@ export default function SafeTrackSettings() {
               </p>
             </div>
             <Switch
+              variant="safetrack"
               checked={settings.notifications.assetChanges}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 

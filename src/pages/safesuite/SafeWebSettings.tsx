@@ -103,6 +103,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.uptimeMonitoring}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, uptimeMonitoring: checked }))
@@ -132,6 +133,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.sslMonitoring}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, sslMonitoring: checked }))
@@ -147,6 +149,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.domainExpiry}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, domainExpiry: checked }))
@@ -165,6 +168,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.malwareScanning}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ ...prev, malwareScanning: checked }))
@@ -194,6 +198,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.notifications.siteDown}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -212,6 +217,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.notifications.sslExpiring}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -230,6 +236,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.notifications.securityIssue}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 
@@ -248,6 +255,7 @@ export default function SafeWebSettings() {
               </p>
             </div>
             <Switch
+              variant="safeweb"
               checked={settings.notifications.dailyReport}
               onCheckedChange={(checked) => 
                 setSettings(prev => ({ 

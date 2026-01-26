@@ -106,6 +106,7 @@ export default function SafePassSettings() {
                 </p>
               </div>
               <Switch
+                variant="safepass"
                 checked={settings.biometricUnlock}
                 onCheckedChange={(checked) => 
                   setSettings(prev => ({ ...prev, biometricUnlock: checked }))
@@ -158,12 +159,13 @@ export default function SafePassSettings() {
                 Display passwords without clicking reveal
               </p>
             </div>
-            <Switch
-              checked={settings.showPasswords}
-              onCheckedChange={(checked) => 
-                setSettings(prev => ({ ...prev, showPasswords: checked }))
-              }
-            />
+              <Switch
+                variant="safepass"
+                checked={settings.showPasswords}
+                onCheckedChange={(checked) => 
+                  setSettings(prev => ({ ...prev, showPasswords: checked }))
+                }
+              />
           </div>
           <Separator />
           <div className="flex items-center justify-between">
@@ -173,12 +175,13 @@ export default function SafePassSettings() {
                 Automatically fill login forms in browser extension
               </p>
             </div>
-            <Switch
-              checked={settings.autoFill}
-              onCheckedChange={(checked) => 
-                setSettings(prev => ({ ...prev, autoFill: checked }))
-              }
-            />
+              <Switch
+                variant="safepass"
+                checked={settings.autoFill}
+                onCheckedChange={(checked) => 
+                  setSettings(prev => ({ ...prev, autoFill: checked }))
+                }
+              />
           </div>
         </CardContent>
       </Card>
@@ -216,6 +219,7 @@ export default function SafePassSettings() {
               <div className="flex items-center justify-between">
                 <Label>Include Numbers (0-9)</Label>
                 <Switch
+                  variant="safepass"
                   checked={settings.passwordGenerator.includeNumbers}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 
@@ -228,6 +232,7 @@ export default function SafePassSettings() {
               <div className="flex items-center justify-between">
                 <Label>Include Symbols (!@#$...)</Label>
                 <Switch
+                  variant="safepass"
                   checked={settings.passwordGenerator.includeSymbols}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 
@@ -240,6 +245,7 @@ export default function SafePassSettings() {
               <div className="flex items-center justify-between">
                 <Label>Include Uppercase (A-Z)</Label>
                 <Switch
+                  variant="safepass"
                   checked={settings.passwordGenerator.includeUppercase}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 
@@ -252,6 +258,7 @@ export default function SafePassSettings() {
               <div className="flex items-center justify-between">
                 <Label>Exclude Ambiguous (0, O, l, 1, etc.)</Label>
                 <Switch
+                  variant="safepass"
                   checked={settings.passwordGenerator.excludeAmbiguous}
                   onCheckedChange={(checked) => 
                     setSettings(prev => ({ 

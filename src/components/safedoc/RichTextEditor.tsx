@@ -191,20 +191,11 @@ export function RichTextEditor({
         </div>
       )}
       
-      {/* Bubble Menu for selected text */}
-      {editor && editable && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="flex items-center gap-1 bg-popover border border-border rounded-lg p-1 shadow-lg">
-          <Toggle size="sm" pressed={editor.isActive('bold')} onPressedChange={() => editor.chain().focus().toggleBold().run()}>
-            <Bold className="h-3 w-3" />
-          </Toggle>
-          <Toggle size="sm" pressed={editor.isActive('italic')} onPressedChange={() => editor.chain().focus().toggleItalic().run()}>
-            <Italic className="h-3 w-3" />
-          </Toggle>
-          <Toggle size="sm" pressed={editor.isActive('link')} onPressedChange={setLink}>
-            <LinkIcon className="h-3 w-3" />
-          </Toggle>
-        </BubbleMenu>
-      )}
+      {/* Editor Content */}
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
       
       {/* Editor Content */}
       <EditorContent editor={editor} />
