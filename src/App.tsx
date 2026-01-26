@@ -160,7 +160,7 @@ import SafeWebDashboard from '@/pages/SafeWebDashboard';
 import SafeWebMSPDashboard from '@/pages/SafeWebMSPDashboard';
 import SafeShield from '@/pages/SafeShield';
 import { SafeShieldDashboard } from '@/components/shield/SafeShieldDashboard';
-import AdminDashboard from '@/pages/AdminDashboard';
+
 import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import AIStudio from '@/pages/AIStudio';
