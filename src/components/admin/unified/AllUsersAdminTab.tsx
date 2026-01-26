@@ -20,20 +20,46 @@ import {
   Sparkles,
   Shield,
   Zap,
-  Crown
+  Crown,
+  DollarSign,
+  CreditCard,
+  Wrench,
+  Settings2
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { UserSubscriptionDialog } from './UserSubscriptionDialog';
+
+// Pricing constants (monthly in cents)
+const PRICING = {
+  ai_studio: {
+    free: 0,
+    starter: 9900,      // $99/mo
+    professional: 49900, // $499/mo
+    enterprise: 99900    // $999/mo (custom, estimate)
+  },
+  safesuite: {
+    free: 0,
+    pro: 999,           // $9.99/mo
+    business: 1500      // $15/user/mo
+  },
+  vanguard: {
+    starter: 3000,      // $30/user/mo
+    professional: 5000, // $50/user/mo
+    enterprise: 8000    // $80/user/mo
+  }
+};
 
 interface UnifiedUser {
   id: string;
+  user_id: string;
   email: string;
   full_name: string | null;
   account_type: string;
   created_at: string;
   products: {
-    ai_studio: { tier: string; subscribed: boolean } | null;
-    safesuite: { tier: string; status: string } | null;
-    vanguard: { tier: string; status: string } | null;
+    ai_studio: { tier: string; subscribed: boolean; stripe_subscription_id?: string | null } | null;
+    safesuite: { tier: string; status: string; stripe_subscription_id?: string | null } | null;
+    vanguard: { tier: string; status: string; stripe_subscription_id?: string | null } | null;
   };
 }
 
@@ -43,6 +69,8 @@ export const AllUsersAdminTab = () => {
   const [filteredUsers, setFilteredUsers] = useState<UnifiedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState<UnifiedUser | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     loadAllUsers();
@@ -56,7 +84,7 @@ export const AllUsersAdminTab = () => {
     try {
       setLoading(true);
       
-      // Get all profiles (single source of truth for users) - use user_id for joins
+      // Get all profiles (single source of truth for users)
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, user_id, email, full_name, account_type, created_at')
@@ -64,25 +92,24 @@ export const AllUsersAdminTab = () => {
 
       if (profileError) throw profileError;
 
-      // Use user_id for subscription lookups since that's what links to auth.users
       const userIds = profiles?.map(p => p.user_id) || [];
 
-      // Get AI Studio subscriptions
+      // Get AI Studio subscriptions with Stripe info
       const { data: aiStudioSubs } = await supabase
         .from('subscribers')
-        .select('user_id, subscription_tier, subscribed')
+        .select('user_id, subscription_tier, subscribed, subscription_id')
         .in('user_id', userIds);
 
-      // Get SafeSuite subscriptions
+      // Get SafeSuite subscriptions with Stripe info
       const { data: safeSuiteSubs } = await supabase
         .from('safesuite_subscriptions')
-        .select('user_id, tier, status')
+        .select('user_id, tier, status, stripe_subscription_id')
         .in('user_id', userIds);
 
-      // Get Vanguard subscriptions
+      // Get Vanguard subscriptions with Stripe info
       const { data: vanguardSubs } = await supabase
         .from('vanguard_subscriptions')
-        .select('user_id, tier, status')
+        .select('user_id, tier, status, stripe_subscription_id')
         .in('user_id', userIds);
 
       // Create lookup maps keyed by user_id
@@ -90,7 +117,7 @@ export const AllUsersAdminTab = () => {
       const safeSuiteMap = new Map(safeSuiteSubs?.map(s => [s.user_id, s]) || []);
       const vanguardMap = new Map(vanguardSubs?.map(s => [s.user_id, s]) || []);
 
-      // Build unified user list - no duplicates, profiles is the source of truth
+      // Build unified user list
       const unifiedUsers: UnifiedUser[] = (profiles || []).map(profile => {
         const aiSub = aiStudioMap.get(profile.user_id);
         const safeSub = safeSuiteMap.get(profile.user_id);
@@ -98,14 +125,27 @@ export const AllUsersAdminTab = () => {
 
         return {
           id: profile.id,
+          user_id: profile.user_id,
           email: profile.email || 'Unknown',
           full_name: profile.full_name,
           account_type: profile.account_type || 'individual',
           created_at: profile.created_at,
           products: {
-            ai_studio: aiSub ? { tier: aiSub.subscription_tier || 'free', subscribed: aiSub.subscribed } : null,
-            safesuite: safeSub ? { tier: safeSub.tier || 'free', status: safeSub.status } : null,
-            vanguard: vangSub ? { tier: vangSub.tier || 'free', status: vangSub.status } : null,
+            ai_studio: aiSub ? { 
+              tier: aiSub.subscription_tier || 'free', 
+              subscribed: aiSub.subscribed,
+              stripe_subscription_id: aiSub.subscription_id 
+            } : null,
+            safesuite: safeSub ? { 
+              tier: safeSub.tier || 'free', 
+              status: safeSub.status,
+              stripe_subscription_id: safeSub.stripe_subscription_id 
+            } : null,
+            vanguard: vangSub ? { 
+              tier: vangSub.tier || 'free', 
+              status: vangSub.status,
+              stripe_subscription_id: vangSub.stripe_subscription_id 
+            } : null,
           }
         };
       });
@@ -136,6 +176,33 @@ export const AllUsersAdminTab = () => {
     ));
   };
 
+  // Calculate MRR
+  const calculateMRR = () => {
+    let totalMRR = 0;
+    
+    users.forEach(user => {
+      // AI Studio MRR
+      if (user.products.ai_studio) {
+        const tier = user.products.ai_studio.tier?.toLowerCase() || 'free';
+        totalMRR += PRICING.ai_studio[tier as keyof typeof PRICING.ai_studio] || 0;
+      }
+      
+      // SafeSuite MRR
+      if (user.products.safesuite) {
+        const tier = user.products.safesuite.tier?.toLowerCase() || 'free';
+        totalMRR += PRICING.safesuite[tier as keyof typeof PRICING.safesuite] || 0;
+      }
+      
+      // Vanguard MRR
+      if (user.products.vanguard) {
+        const tier = user.products.vanguard.tier?.toLowerCase() || 'starter';
+        totalMRR += PRICING.vanguard[tier as keyof typeof PRICING.vanguard] || 0;
+      }
+    });
+    
+    return totalMRR / 100; // Convert cents to dollars
+  };
+
   const getAccountTypeBadge = (type: string) => {
     switch (type) {
       case 'msp':
@@ -147,24 +214,36 @@ export const AllUsersAdminTab = () => {
     }
   };
 
-  const getTierBadge = (tier: string | undefined, productColor: string) => {
+  const getTierBadge = (tier: string | undefined, productColor: string, stripeId?: string | null) => {
     const t = tier?.toLowerCase() || 'free';
-    const colorMap: Record<string, string> = {
-      'free': 'text-muted-foreground border-muted-foreground/30 bg-muted/30',
-      'pro': `text-${productColor}-500 border-${productColor}-500/50 bg-${productColor}-500/10`,
-      'business': `text-${productColor}-500 border-${productColor}-500/50 bg-${productColor}-500/10`,
-      'enterprise': `text-${productColor}-500 border-${productColor}-500/50 bg-${productColor}-500/10`,
-    };
-    
     const isPaid = t !== 'free';
+    const isStripe = !!stripeId;
     const label = t.charAt(0).toUpperCase() + t.slice(1);
     
+    const colorClasses = isPaid 
+      ? `text-${productColor}-500 border-${productColor}-500/50 bg-${productColor}-500/10`
+      : 'text-muted-foreground border-muted-foreground/30 bg-muted/30';
+    
     return (
-      <Badge variant="outline" className={`text-xs ${isPaid ? colorMap[t] || colorMap['pro'] : colorMap['free']}`}>
-        {isPaid && <Crown className="h-3 w-3 mr-1" />}
-        {label}
-      </Badge>
+      <div className="flex items-center gap-1.5">
+        <Badge variant="outline" className={`text-xs ${colorClasses}`}>
+          {isPaid && <Crown className="h-3 w-3 mr-1" />}
+          {label}
+        </Badge>
+        {isPaid && (
+          isStripe ? (
+            <span title="Stripe subscription"><CreditCard className="h-3 w-3 text-blue-400" /></span>
+          ) : (
+            <span title="Manually set"><Wrench className="h-3 w-3 text-amber-400" /></span>
+          )
+        )}
+      </div>
     );
+  };
+
+  const handleUserClick = (user: UnifiedUser) => {
+    setSelectedUser(user);
+    setDialogOpen(true);
   };
 
   if (loading) {
@@ -175,10 +254,25 @@ export const AllUsersAdminTab = () => {
     );
   }
 
+  const mrr = calculateMRR();
+
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
+        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <DollarSign className="h-4 w-4 text-green-500" />
+              Est. MRR
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-500">
+              ${mrr.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -226,6 +320,22 @@ export const AllUsersAdminTab = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-6 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <CreditCard className="h-3 w-3 text-blue-400" />
+          Stripe subscription
+        </span>
+        <span className="flex items-center gap-1">
+          <Wrench className="h-3 w-3 text-amber-400" />
+          Manually set
+        </span>
+        <span className="flex items-center gap-1">
+          <Settings2 className="h-3 w-3" />
+          Click row to edit
+        </span>
       </div>
 
       {/* Users Table */}
@@ -298,7 +408,11 @@ export const AllUsersAdminTab = () => {
                   </TableRow>
                 ) : (
                   filteredUsers.slice(0, 100).map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow 
+                      key={user.id} 
+                      className="cursor-pointer hover:bg-muted/80"
+                      onClick={() => handleUserClick(user)}
+                    >
                       <TableCell>
                         <div>
                           <div className="font-medium">{user.email}</div>
@@ -311,16 +425,34 @@ export const AllUsersAdminTab = () => {
                         {getAccountTypeBadge(user.account_type)}
                       </TableCell>
                       <TableCell className="text-center">
-                        {getTierBadge(user.products.ai_studio?.tier, 'purple')}
+                        <div className="flex justify-center">
+                          {getTierBadge(
+                            user.products.ai_studio?.tier, 
+                            'purple',
+                            user.products.ai_studio?.stripe_subscription_id
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {getTierBadge(user.products.safesuite?.tier, 'emerald')}
+                        <div className="flex justify-center">
+                          {getTierBadge(
+                            user.products.safesuite?.tier, 
+                            'emerald',
+                            user.products.safesuite?.stripe_subscription_id
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        {user.products.vanguard 
-                          ? getTierBadge(user.products.vanguard.tier, 'amber')
-                          : <span className="text-muted-foreground text-xs">—</span>
-                        }
+                        <div className="flex justify-center">
+                          {user.products.vanguard 
+                            ? getTierBadge(
+                                user.products.vanguard.tier, 
+                                'amber',
+                                user.products.vanguard.stripe_subscription_id
+                              )
+                            : <span className="text-muted-foreground text-xs">—</span>
+                          }
+                        </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(user.created_at), 'MMM d, yyyy')}
@@ -339,6 +471,14 @@ export const AllUsersAdminTab = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <UserSubscriptionDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        user={selectedUser}
+        onUpdate={loadAllUsers}
+      />
     </div>
   );
 };
