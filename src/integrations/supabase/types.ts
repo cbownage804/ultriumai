@@ -17778,6 +17778,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_ai_provider_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_valid: boolean | null
+          key_hash: string
+          key_prefix: string
+          key_suffix: string
+          last_validated_at: string | null
+          provider: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_valid?: boolean | null
+          key_hash: string
+          key_prefix: string
+          key_suffix: string
+          last_validated_at?: string | null
+          provider: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_valid?: boolean | null
+          key_hash?: string
+          key_prefix?: string
+          key_suffix?: string
+          last_validated_at?: string | null
+          provider?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_credits: {
         Row: {
           created_at: string

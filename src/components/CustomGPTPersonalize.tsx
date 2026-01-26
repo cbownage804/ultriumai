@@ -25,7 +25,8 @@ import {
   Edit2,
   Trash2,
   Crown,
-  Volume2
+  Volume2,
+  Key
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { GPTVoiceControls } from "@/components/voice/GPTVoiceControls";
 import { BackToHubButton } from "@/components/shared/BackToHubButton";
+import { AIProviderKeyManager } from "@/components/settings/AIProviderKeyManager";
+import { useUserAIProviders } from "@/hooks/useUserAIProviders";
+import { AI_PROVIDERS } from "@/types/aiProviders";
 
 interface GPTData {
   id?: string;
@@ -135,6 +139,7 @@ const CustomGPTPersonalize = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const { subscription } = useSubscription();
+  const { getAvailableModels, hasProviderKey } = useUserAIProviders();
 
   // Load existing GPT data
   useEffect(() => {
@@ -970,7 +975,7 @@ const CustomGPTPersonalize = () => {
                 )}
               </CardTitle>
               <CardDescription>
-                Select the underlying AI model that powers your assistant's responses.
+                Select the underlying AI model. Add your own API keys in the "API Keys" tab to unlock more models.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -983,21 +988,52 @@ const CustomGPTPersonalize = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* OpenAI Models */}
-                  <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Latest & Most Advanced)</SelectItem>
-                  <SelectItem value="gpt-4o">GPT-4o (Advanced with Vision)</SelectItem>
-                  <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Efficient)</SelectItem>
-                  <SelectItem value="o1-preview">o1-preview (Advanced Reasoning)</SelectItem>
+                  {/* OpenAI Models - Always available */}
+                  <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Latest)</SelectItem>
+                  <SelectItem value="gpt-4o">GPT-4o (Vision)</SelectItem>
+                  <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast)</SelectItem>
+                  <SelectItem value="o1-preview">o1-preview (Reasoning)</SelectItem>
                   <SelectItem value="o1-mini">o1-mini (Fast Reasoning)</SelectItem>
-                  <SelectItem value="o3-mini">o3-mini (Next-Gen Reasoning)</SelectItem>
+                  <SelectItem value="o3-mini">o3-mini (Next-Gen)</SelectItem>
                   {/* Anthropic Models */}
-                  <SelectItem value="claude-opus-4-20250514">Claude Opus 4 (Superior Reasoning)</SelectItem>
-                  <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 (High Performance)</SelectItem>
-                  <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fastest)</SelectItem>
+                  {hasProviderKey('anthropic') && (
+                    <>
+                      <SelectItem value="claude-opus-4-20250514">Claude Opus 4</SelectItem>
+                      <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4</SelectItem>
+                      <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</SelectItem>
+                    </>
+                  )}
+                  {/* Google Models */}
+                  {hasProviderKey('google') && (
+                    <>
+                      <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (1M context)</SelectItem>
+                      <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                    </>
+                  )}
+                  {/* Mistral Models */}
+                  {hasProviderKey('mistral') && (
+                    <>
+                      <SelectItem value="mistral-large-latest">Mistral Large</SelectItem>
+                      <SelectItem value="mixtral-8x22b">Mixtral 8x22B</SelectItem>
+                    </>
+                  )}
+                  {/* Together AI / Llama Models */}
+                  {hasProviderKey('together') && (
+                    <>
+                      <SelectItem value="meta-llama/Llama-3.3-70B-Instruct-Turbo">Llama 3.3 70B</SelectItem>
+                      <SelectItem value="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo">Llama 3.1 405B</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
+              <p className="text-sm text-muted-foreground mt-2">
+                Add API keys in the "API Keys" tab to unlock Gemini, Llama, Mistral & more models.
+              </p>
             </CardContent>
           </Card>
+
+          {/* API Keys Section */}
+          <AIProviderKeyManager />
         </TabsContent>
 
         <TabsContent value="advanced" className="space-y-6">
