@@ -1,21 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Send, Loader2, ArrowLeft, Bot, User, Brain, FileText, Image, File, Settings2, Sparkles } from "lucide-react";
+import { Send, Loader2, ArrowLeft, Bot, User, Brain, FileText, Image, File, Settings2, Sparkles, History, PanelLeftClose, PanelLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsTracking } from "@/hooks/useAnalyticsTracking";
+import { useGPTConversations } from "@/hooks/useGPTConversations";
+import { useGPTAnalytics } from "@/hooks/useGPTAnalytics";
 import { KnowledgeSearchService } from "@/services/KnowledgeSearchService";
 import ChatFileUploader from "./ChatFileUploader";
 import { CleanMarkdownRenderer } from "./CleanMarkdownRenderer";
+import ConversationSidebar from "./ConversationSidebar";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AttachedFile {
@@ -45,49 +47,99 @@ export const GPTChatInterface = () => {
   const { gpts } = useCustomGPTs();
   const { toast } = useToast();
   const { trackMessageExchange, startSession } = useAnalyticsTracking();
+  const { trackMessage } = useGPTAnalytics(gptId);
+  
+  const {
+    conversations,
+    currentConversation,
+    createConversation,
+    selectConversation,
+    saveMessage,
+    updateConversationTitle,
+    deleteConversation,
+    loadMessages,
+    isLoading: isLoadingConversations
+  } = useGPTConversations(gptId);
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [showHistory, setShowHistory] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const gpt = gpts.find(g => g.id === gptId);
 
+  // Initialize session
   useEffect(() => {
     if (!gpt || !user) return;
-
-    // Initialize session and welcome message
-    const initializeChat = async () => {
+    
+    const initSession = async () => {
       const session = await startSession(gpt.id);
       setSessionId(session);
+    };
+    
+    initSession();
+  }, [gpt, user, startSession]);
 
-      // Add welcome message
-      const welcomeMessage: Message = {
-        id: Date.now().toString(),
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (currentConversation) {
+      loadMessages(currentConversation.id).then((dbMessages) => {
+        const formattedMessages: Message[] = dbMessages.map(m => ({
+          id: m.id,
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          timestamp: new Date(m.created_at)
+        }));
+        setMessages(formattedMessages);
+      });
+    } else if (gpt) {
+      // No conversation selected - show welcome
+      setMessages([{
+        id: 'welcome',
         role: 'assistant',
         content: `Hello! I'm ${gpt.name}. ${gpt.description ? gpt.description + ' ' : ''}How can I help you today?`,
         timestamp: new Date()
-      };
-      setMessages([welcomeMessage]);
-    };
-
-    initializeChat();
-  }, [gpt, user, startSession]);
+      }]);
+    }
+  }, [currentConversation, gpt, loadMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleNewConversation = useCallback(async () => {
+    if (!gpt) return;
+    await createConversation();
+    setMessages([{
+      id: 'welcome',
+      role: 'assistant',
+      content: `Hello! I'm ${gpt.name}. ${gpt.description ? gpt.description + ' ' : ''}How can I help you today?`,
+      timestamp: new Date()
+    }]);
+  }, [gpt, createConversation]);
+
+  const handleSelectConversation = useCallback(async (conversation: any) => {
+    await selectConversation(conversation);
+  }, [selectConversation]);
+
   const sendMessage = async () => {
     if ((!inputMessage.trim() && attachedFiles.length === 0) || !gpt || !user || isLoading) return;
+
+    // Create conversation if none exists
+    let conversationId = currentConversation?.id;
+    if (!conversationId) {
+      const newConv = await createConversation(inputMessage.slice(0, 50));
+      if (!newConv) return;
+      conversationId = newConv.id;
+    }
 
     // Build message content with file context
     let messageContent = inputMessage.trim();
     const messageAttachments = [...attachedFiles];
     
-    // Add file context to message if files are attached
     if (attachedFiles.length > 0) {
       const fileContext = attachedFiles
         .map(file => {
@@ -128,7 +180,10 @@ export const GPTChatInterface = () => {
     const startTime = Date.now();
 
     try {
-      // Search knowledge base if the query suggests it would be helpful
+      // Save user message to database
+      await saveMessage(conversationId, userMessage.content, 'user');
+
+      // Search knowledge base
       let knowledgeContext = '';
       if (KnowledgeSearchService.shouldUseKnowledgeSearch(inputMessage.trim())) {
         const searchResult = await KnowledgeSearchService.searchKnowledge({
@@ -147,9 +202,9 @@ export const GPTChatInterface = () => {
       const { data, error } = await supabase.functions.invoke('chat-completion', {
         body: {
           gptId: gpt.id,
-          messages: [...messages, { 
+          messages: [...messages.filter(m => !m.loading), { 
             role: userMessage.role, 
-            content: enhancedContent  // Use enhanced content with file context and knowledge
+            content: enhancedContent
           }].map(m => ({
             role: m.role,
             content: m.content
@@ -173,9 +228,20 @@ export const GPTChatInterface = () => {
 
       setMessages(prev => prev.slice(0, -1).concat(assistantMessage));
 
+      // Save assistant message to database
+      await saveMessage(conversationId, data.message, 'assistant', data.tokensUsed, responseTime);
+
       // Track analytics
+      await trackMessage(data.tokensUsed, responseTime);
+      
       if (sessionId) {
         await trackMessageExchange(gpt.id, responseTime, data.tokensUsed, sessionId);
+      }
+
+      // Auto-update conversation title from first user message
+      if (messages.length <= 2 && inputMessage.trim()) {
+        const title = inputMessage.trim().slice(0, 60) + (inputMessage.length > 60 ? '...' : '');
+        await updateConversationTitle(conversationId, title);
       }
 
     } catch (error) {
@@ -211,14 +277,11 @@ export const GPTChatInterface = () => {
     setAttachedFiles(prev => {
       const existingIndex = prev.findIndex(f => f.id === file.id);
       if (existingIndex >= 0) {
-        // Update existing file
         const updated = [...prev];
         updated[existingIndex] = file;
         return updated;
-      } else {
-        // Add new file
-        return [...prev, file];
       }
+      return [...prev, file];
     });
   };
 
@@ -262,7 +325,45 @@ export const GPTChatInterface = () => {
 
   return (
     <div className="flex h-screen max-h-screen overflow-hidden bg-background">
-      {/* Sidebar with GPT Info */}
+      {/* Conversation History Sidebar */}
+      <AnimatePresence mode="wait">
+        {showHistory && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 280, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="border-r bg-muted/20 flex flex-col overflow-hidden"
+          >
+            <div className="p-3 border-b flex items-center justify-between bg-background/50">
+              <div className="flex items-center gap-2">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium text-sm">Chat History</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setShowHistory(false)}
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </Button>
+            </div>
+            <ConversationSidebar
+              conversations={conversations}
+              currentConversationId={currentConversation?.id || null}
+              onSelectConversation={handleSelectConversation}
+              onNewConversation={handleNewConversation}
+              onDeleteConversation={deleteConversation}
+              onRenameConversation={updateConversationTitle}
+              isLoading={isLoadingConversations}
+              themeColor={gpt.theme_color || '#3b82f6'}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* GPT Info Sidebar */}
       <motion.div 
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -270,15 +371,27 @@ export const GPTChatInterface = () => {
         className="w-80 border-r bg-muted/30 flex flex-col backdrop-blur-sm"
       >
         <div className="p-4 border-b bg-background/50">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/dashboard')}
-            className="mb-4 hover:bg-primary/10 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to GPTs
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/dashboard')}
+              className="hover:bg-primary/10 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            {!showHistory && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setShowHistory(true)}
+              >
+                <PanelLeft className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
           
           <div className="flex items-center gap-3">
             <Avatar className="w-14 h-14 ring-2 ring-offset-2 ring-offset-background transition-transform hover:scale-105"
@@ -305,7 +418,6 @@ export const GPTChatInterface = () => {
             </div>
           </div>
           
-          {/* Edit GPT Button */}
           <Button
             variant="outline"
             size="sm"
@@ -416,7 +528,9 @@ export const GPTChatInterface = () => {
                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
                 <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
               </div>
-              <h1 className="text-lg font-bold">Chat with {gpt.name}</h1>
+              <h1 className="text-lg font-bold">
+                {currentConversation?.title || `Chat with ${gpt.name}`}
+              </h1>
             </div>
             <Badge variant="secondary" className="text-xs font-medium">
               {messages.filter(m => m.role === 'user').length} messages
