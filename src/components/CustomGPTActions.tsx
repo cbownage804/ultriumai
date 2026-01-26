@@ -13,6 +13,7 @@ import { FileText, Code, Globe, Database, Plus, Settings, Trash2, Play, Eye } fr
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
+import { useAccountType } from "@/hooks/useAccountType";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Action {
@@ -31,6 +32,7 @@ interface Action {
 const CustomGPTActions = () => {
   const { user } = useAuth();
   const { gpts } = useCustomGPTs();
+  const { isUltriumEmployee } = useAccountType();
   const { toast } = useToast();
   
   const [actions, setActions] = useState<Action[]>([]);
@@ -621,48 +623,58 @@ const CustomGPTActions = () => {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {[
-                  {
-                    name: 'Ultrium SafeLink™ Scanner',
-                    description: 'Advanced link security scanning and threat detection',
-                    action_type: 'security' as const,
-                    icon: Settings
-                  },
-                  {
-                    name: 'Ultrium SafeMail™ Scanner',
-                    description: 'Email header analysis and reputation checking',
-                    action_type: 'security' as const,
-                    icon: Settings
-                  },
-                  {
-                    name: 'Ultrium SafeDoc™ Scanner',
-                    description: 'File hash analysis and malware detection',
-                    action_type: 'security' as const,
-                    icon: Settings
-                  },
+                  // Ultrium-branded templates - only visible to Ultrium employees
+                  ...(isUltriumEmployee ? [
+                    {
+                      name: 'Ultrium SafeLink™ Scanner',
+                      description: 'Advanced link security scanning and threat detection',
+                      action_type: 'security' as const,
+                      icon: Settings,
+                      isInternal: true
+                    },
+                    {
+                      name: 'Ultrium SafeMail™ Scanner',
+                      description: 'Email header analysis and reputation checking',
+                      action_type: 'security' as const,
+                      icon: Settings,
+                      isInternal: true
+                    },
+                    {
+                      name: 'Ultrium SafeDoc™ Scanner',
+                      description: 'File hash analysis and malware detection',
+                      action_type: 'security' as const,
+                      icon: Settings,
+                      isInternal: true
+                    }
+                  ] : []),
+                  // Public templates - visible to everyone
                   {
                     name: 'Autotask Ticket Creator',
                     description: 'Automatically create tickets in Autotask PSA',
                     action_type: 'api' as const,
-                    icon: Globe
+                    icon: Globe,
+                    isInternal: false
                   },
                   {
                     name: 'Email Sender',
                     description: 'Send emails through SMTP or email service APIs',
                     action_type: 'api' as const,
-                    icon: Globe
+                    icon: Globe,
+                    isInternal: false
                   },
                   {
                     name: 'Slack Notifier',
                     description: 'Send messages to Slack channels',
                     action_type: 'webhook' as const,
-                    icon: Code
+                    icon: Code,
+                    isInternal: false
                   }
                 ].map((template, index) => {
                   const Icon = template.icon;
                   return (
                     <Card 
                       key={index} 
-                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      className={`cursor-pointer hover:shadow-md transition-shadow ${template.isInternal ? 'border-primary/30' : ''}`}
                       onClick={() => {
                         useTemplate(template);
                         setIsDialogOpen(true);
@@ -670,11 +682,16 @@ const CustomGPTActions = () => {
                     >
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="p-2 rounded bg-muted">
-                            <Icon className="h-4 w-4" />
+                          <div className={`p-2 rounded ${template.isInternal ? 'bg-primary/10' : 'bg-muted'}`}>
+                            <Icon className={`h-4 w-4 ${template.isInternal ? 'text-primary' : ''}`} />
                           </div>
                           <div>
-                            <h4 className="font-medium text-sm">{template.name}</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-sm">{template.name}</h4>
+                              {template.isInternal && (
+                                <Badge variant="outline" className="text-xs text-primary border-primary/30">Internal</Badge>
+                              )}
+                            </div>
                             <p className="text-xs text-muted-foreground mt-1">
                               {template.description}
                             </p>

@@ -204,11 +204,11 @@ export const GPTDashboard = () => {
                     <Badge variant="outline">
                       {gpt.chat_count || 0} chats
                     </Badge>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/chat/${gpt.id}`)}>
                       <Eye className="h-4 w-4 mr-1" />
                       View
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/gpt/build?edit=${gpt.id}`)}>
                       <Settings className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
