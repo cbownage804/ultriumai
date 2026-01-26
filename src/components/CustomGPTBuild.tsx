@@ -9,6 +9,7 @@ import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
 import { WebCrawler } from "@/components/knowledge/WebCrawler";
 import { DocumentProcessor } from "@/components/knowledge/DocumentProcessor";
+import { BackToHubButton } from "@/components/shared/BackToHubButton";
 
 const CustomGPTBuild = () => {
   const { user } = useAuth();
@@ -61,16 +62,19 @@ const CustomGPTBuild = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-primary/10">
-          <Brain className="h-6 w-6 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Brain className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold">Build Knowledge Base</h1>
+            <p className="text-muted-foreground mt-1">
+              Add documents and crawl websites to train your Custom GPT with specialized knowledge
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold">Build Knowledge Base</h1>
-          <p className="text-muted-foreground mt-1">
-            Add documents and crawl websites to train your Custom GPT with specialized knowledge
-          </p>
-        </div>
+        <BackToHubButton />
       </div>
 
       {/* GPT Selection */}

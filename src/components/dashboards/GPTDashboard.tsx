@@ -5,6 +5,7 @@ import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3 }
 import { useNavigate } from "react-router-dom";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BackToHubButton } from "@/components/shared/BackToHubButton";
 
 export const GPTDashboard = () => {
   const navigate = useNavigate();
@@ -47,10 +48,13 @@ export const GPTDashboard = () => {
             Manage and monitor your custom AI assistants
           </p>
         </div>
-        <Button onClick={() => navigate('/dashboard/gpt/build')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create New GPT
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <BackToHubButton />
+          <Button onClick={() => navigate('/dashboard/gpt/build')}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New GPT
+          </Button>
+        </div>
       </div>
 
       {/* Stats Overview */}

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, MessageSquare, Users, Clock, Download, Calendar } from "lucide-react";
+import { BackToHubButton } from "@/components/shared/BackToHubButton";
 
 const CustomGPTAnalyze = () => {
   // Mock data for charts
@@ -36,14 +37,15 @@ const CustomGPTAnalyze = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
           <p className="text-muted-foreground mt-2">
             Monitor your Custom GPT's performance and usage
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <BackToHubButton />
           <Button variant="outline" size="sm">
             <Calendar className="h-4 w-4 mr-2" />
             Last 30 Days
