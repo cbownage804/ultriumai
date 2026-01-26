@@ -1,10 +1,9 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Heart, ArrowRight, Zap } from 'lucide-react';
 import { GPTTemplate } from '@/types/templates';
 import { motion } from 'framer-motion';
-import { TemplateRatingStars } from './TemplateRatingStars';
 
 interface RecentAndFavoritesSectionProps {
   recentTemplateIds: string[];
@@ -87,8 +86,7 @@ export function RecentAndFavoritesSection({
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between mt-3">
-                      <TemplateRatingStars rating={template.rating} size="sm" showCount={false} />
+                    <div className="flex items-center justify-end mt-3">
                       <Button 
                         size="sm" 
                         className="h-7 text-xs gap-1"

@@ -33,6 +33,11 @@ export function TemplateRatingStars({
     }
   };
 
+  // Don't render if no rating and not interactive
+  if (!interactive && rating === 0 && totalReviews === 0) {
+    return null;
+  }
+
   return (
     <div className="flex items-center gap-1">
       <div className="flex items-center">
@@ -68,7 +73,7 @@ export function TemplateRatingStars({
           );
         })}
       </div>
-      {showCount && (
+      {showCount && rating > 0 && (
         <span className="text-xs text-muted-foreground ml-1">
           {rating.toFixed(1)} {totalReviews > 0 && `(${totalReviews})`}
         </span>

@@ -1,10 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, ArrowRight, Crown, TrendingUp, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, Crown, Zap } from 'lucide-react';
 import { GPTTemplate } from '@/types/templates';
 import { motion } from 'framer-motion';
-import { TemplateRatingStars } from './TemplateRatingStars';
 
 interface FeaturedTemplatesSectionProps {
   templates: GPTTemplate[];
@@ -75,9 +74,13 @@ export function FeaturedTemplatesSection({
                   </div>
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-base leading-tight">{template.name}</CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <TemplateRatingStars rating={template.rating} totalReviews={template.use_count} />
-                    </div>
+                    <Badge 
+                      variant="outline" 
+                      className="text-[10px] mt-1"
+                      style={{ borderColor: template.config.theme_color, color: template.config.theme_color }}
+                    >
+                      {template.category}
+                    </Badge>
                   </div>
                 </div>
               </CardHeader>
@@ -87,19 +90,12 @@ export function FeaturedTemplatesSection({
                   {template.description}
                 </CardDescription>
 
-                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3" />
-                    {template.use_count.toLocaleString()} uses
-                  </div>
-                  <span>•</span>
-                  <Badge 
-                    variant="outline" 
-                    className="text-[10px]"
-                    style={{ borderColor: template.config.theme_color, color: template.config.theme_color }}
-                  >
-                    {template.category}
-                  </Badge>
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {template.features.slice(0, 3).map((feature) => (
+                    <Badge key={feature} variant="secondary" className="text-[10px]">
+                      {feature}
+                    </Badge>
+                  ))}
                 </div>
 
                 <div className="flex gap-2">
