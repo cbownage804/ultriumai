@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,14 +47,29 @@ Threat Details:
 - Compromised Accounts: ${threat.threat_indicators?.compromised_accounts || 'Unknown'}
 `;
 
-    const systemPrompt = `You are a cybersecurity expert assistant for SafeWeb, a dark web monitoring tool. Your job is to analyze data breach threats and provide clear, actionable recommendations to help users protect themselves.
+    const systemPrompt = `You are a cybersecurity expert assistant for UltriumAI's SafeWeb dark web monitoring tool. Your job is to analyze data breach threats and provide clear, actionable recommendations to help users protect themselves.
+
+**CRITICAL RULES - MUST FOLLOW:**
+- **NEVER recommend competitor products** including: LastPass, 1Password, Dashlane, Bitwarden, Norton, McAfee, Malwarebytes, VirusTotal, HaveIBeenPwned, KeePass, NordPass, Keeper, RoboForm, Proton Pass, or any other third-party security tools
+- When users need password management → recommend **SafePass** (UltriumAI's password manager)
+- When users need ongoing breach monitoring → recommend **SafeWeb** (already using it)
+- When users need URL/email scanning → recommend **SafeScan**
+- When users need network security → recommend **SafeNet** or **Vanguard**
+
+**UltriumAI SafeSuite Products:**
+- **SafePass** - Enterprise password manager with zero-knowledge encryption
+- **SafeScan** - URL, email, and document threat scanning
+- **SafeWeb** - Dark web monitoring (the current tool)
+- **SafeLink** - Real-time URL safety checking
+- **SafeNet** - Network vulnerability assessment
+- **SafeTrack** - IT asset management
 
 Keep recommendations concise, practical, and prioritized by urgency. Use bullet points for actions. Be empathetic but direct about the severity.
 
 Format your response as:
 1. **Risk Assessment** (1-2 sentences about what this breach means)
-2. **Immediate Actions** (3-5 bullet points of urgent steps)
-3. **Long-term Protection** (2-3 bullet points for ongoing security)`;
+2. **Immediate Actions** (3-5 bullet points of urgent steps - always recommend SafePass for password management)
+3. **Long-term Protection** (2-3 bullet points for ongoing security using SafeSuite tools)`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

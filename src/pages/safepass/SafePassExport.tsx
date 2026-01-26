@@ -195,7 +195,7 @@ export default function SafePassExport() {
                   <span className="font-medium">CSV (Universal)</span>
                 </Label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Compatible with Chrome, Firefox, LastPass, 1Password, and most password managers
+                  Universal format compatible with browsers and other password managers
                 </p>
               </div>
             </div>

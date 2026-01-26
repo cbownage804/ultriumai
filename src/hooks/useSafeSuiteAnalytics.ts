@@ -173,15 +173,17 @@ export const useSafeSuiteAnalytics = (timeRange: string = '7_days') => {
   const loadDarkWebMetrics = useCallback(async () => {
     if (!user?.id) return { monitored: 0, exposures: 0, lastScan: null };
 
+    // Query safeweb_assets for accurate count
     const { data: monitors } = await supabase
-      .from('dark_web_monitors')
-      .select('id, breach_count, last_checked')
+      .from('safeweb_assets')
+      .select('id, threats_found, last_scan_at')
       .eq('user_id', user.id)
-      .order('last_checked', { ascending: false });
+      .eq('status', 'active')
+      .order('last_scan_at', { ascending: false });
 
     const monitored = monitors?.length || 0;
-    const exposures = monitors?.reduce((acc, m) => acc + (m.breach_count || 0), 0) || 0;
-    const lastScan = monitors?.[0]?.last_checked || null;
+    const exposures = monitors?.reduce((acc, m) => acc + (m.threats_found || 0), 0) || 0;
+    const lastScan = monitors?.[0]?.last_scan_at || null;
 
     return { monitored, exposures, lastScan };
   }, [user?.id]);
