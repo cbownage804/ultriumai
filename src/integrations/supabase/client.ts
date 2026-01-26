@@ -31,35 +31,61 @@ const getRootDomain = (): string => {
   return '';
 };
 
+// Check if we're on a subdomain (not the main domain)
+const isSubdomain = (): boolean => {
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return false;
+  
+  const parts = hostname.split('.');
+  // Main domains: ultriumai.com (2 parts), ultriumai.lovable.app (3 parts but pattern specific)
+  // Subdomains: safesuite.ultriumai.com (3 parts), id-preview--xxx.lovable.app
+  return parts.length > 2 || hostname.includes('preview--');
+};
+
 // Cookie-based storage for cross-subdomain session sharing
 const cookieStorage = {
   getItem: (key: string): string | null => {
     if (typeof document === 'undefined') return null;
     
-    // First try localStorage (faster)
-    const localValue = localStorage.getItem(key);
-    if (localValue) return localValue;
+    // On subdomains, prioritize cookie over localStorage
+    // because localStorage is per-origin and won't have the session after redirect
+    const onSubdomain = isSubdomain();
     
-    // Fallback to cookie
-    const cookies = document.cookie.split(';');
-    for (const cookie of cookies) {
-      const [cookieName, cookieValue] = cookie.trim().split('=');
-      if (cookieName === key) {
+    // Try cookie first on subdomains (cross-domain session sharing)
+    if (onSubdomain) {
+      const cookieValue = getCookieValue(key);
+      if (cookieValue) {
+        // Sync to localStorage for future reads
         try {
-          return decodeURIComponent(cookieValue);
-        } catch {
-          return cookieValue;
+          localStorage.setItem(key, cookieValue);
+        } catch (e) {
+          // localStorage might be unavailable
         }
+        return cookieValue;
       }
     }
-    return null;
+    
+    // Try localStorage (faster for same-origin)
+    try {
+      const localValue = localStorage.getItem(key);
+      if (localValue) return localValue;
+    } catch (e) {
+      // localStorage might be unavailable
+    }
+    
+    // Fallback to cookie for main domain
+    return getCookieValue(key);
   },
   
   setItem: (key: string, value: string): void => {
     if (typeof document === 'undefined') return;
     
     // Always store in localStorage for fast access
-    localStorage.setItem(key, value);
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // localStorage might be unavailable
+    }
     
     // Also store in cookie for cross-subdomain sharing
     const rootDomain = getRootDomain();
@@ -78,7 +104,11 @@ const cookieStorage = {
     if (typeof document === 'undefined') return;
     
     // Remove from localStorage
-    localStorage.removeItem(key);
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      // localStorage might be unavailable
+    }
     
     // Remove from cookie
     const rootDomain = getRootDomain();
@@ -89,6 +119,23 @@ const cookieStorage = {
     document.cookie = cookieString;
   },
 };
+
+// Helper function to get cookie value
+function getCookieValue(key: string): string | null {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [cookieName, ...cookieValueParts] = cookie.trim().split('=');
+    if (cookieName === key) {
+      const cookieValue = cookieValueParts.join('='); // Handle values with = in them
+      try {
+        return decodeURIComponent(cookieValue);
+      } catch {
+        return cookieValue;
+      }
+    }
+  }
+  return null;
+}
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

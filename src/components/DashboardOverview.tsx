@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { SubscriptionTestSuite } from "@/components/SubscriptionTestSuite";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { useUserCredits } from "@/hooks/useUserCredits";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   TrendingUp, 
   CheckCircle, 
@@ -22,17 +24,94 @@ import {
   Code,
   Palette,
   Shield,
-  ExternalLink
+  ExternalLink,
+  Inbox
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+interface GPTStats {
+  totalGPTs: number;
+  activeGPTs: number;
+  totalConversations: number;
+  avgSatisfaction: number;
+}
 
 export const DashboardOverview = () => {
   const { user } = useAuth();
   const { profile, credits, subscription, loading } = useUserProfile();
   const { remainingCredits, usagePercentage } = useUserCredits();
   const navigate = useNavigate();
+  
+  const [gptStats, setGptStats] = useState<GPTStats>({
+    totalGPTs: 0,
+    activeGPTs: 0,
+    totalConversations: 0,
+    avgSatisfaction: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
-  if (loading) {
+  // Fetch real GPT stats from database
+  useEffect(() => {
+    const fetchGPTStats = async () => {
+      if (!user) {
+        setStatsLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch total GPTs
+        const gptResult = await supabase
+          .from('custom_gpts')
+          .select('id')
+          .eq('user_id', user.id);
+
+        const totalGPTs = gptResult.data?.length || 0;
+        const activeGPTs = totalGPTs; // All GPTs considered active
+
+        // Fetch total conversations this month
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        
+        const convResult = await supabase
+          .from('conversations')
+          .select('id')
+          .eq('user_id', user.id)
+          .gte('created_at', startOfMonth.toISOString());
+        
+        const totalConversations = convResult.data?.length || 0;
+
+        // Calculate average satisfaction from feedback (using client_feedback as proxy)
+        const { data: feedbackData } = await supabase
+          .from('client_feedback')
+          .select('rating');
+        
+        let avgSatisfaction = 0;
+        if (feedbackData && feedbackData.length > 0) {
+          const validRatings = feedbackData.filter((item: { rating: number | null }) => item.rating !== null);
+          if (validRatings.length > 0) {
+            const total = validRatings.reduce((sum: number, item: { rating: number | null }) => sum + (item.rating || 0), 0);
+            avgSatisfaction = Math.round((total / validRatings.length) * 10) / 10;
+          }
+        }
+
+        setGptStats({
+          totalGPTs: totalGPTs || 0,
+          activeGPTs: activeGPTs || 0,
+          totalConversations: totalConversations || 0,
+          avgSatisfaction: avgSatisfaction,
+        });
+      } catch (error) {
+        console.error('Error fetching GPT stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchGPTStats();
+  }, [user]);
+
+  if (loading || statsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -94,12 +173,8 @@ export const DashboardOverview = () => {
     },
   ];
 
-  const gptStats = {
-    totalGPTs: 3,
-    activeGPTs: 2,
-    totalConversations: 156,
-    avgSatisfaction: 4.8,
-  };
+  // Check if user has no data yet
+  const hasNoData = gptStats.totalGPTs === 0 && gptStats.totalConversations === 0;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
