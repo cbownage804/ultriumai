@@ -165,13 +165,13 @@ export const BreachMonitor = () => {
       setScanProgress(45);
       setScanStage('Checking email accounts for breaches...');
       
-      // Check emails/usernames against breach database
+      // Check emails/usernames against breach database (HIBP + Dehashed)
       const emailsToCheck = passwordsToCheck
         .filter(p => p.username && p.username.includes('@'))
         .map(p => ({ id: p.id, email: p.username }));
       
       const emailBreachResults = emailsToCheck.length > 0 
-        ? await BreachCheckService.checkEmails(emailsToCheck)
+        ? await BreachCheckService.checkEmails(emailsToCheck, user.id)
         : new Map();
       
       setScanProgress(75);

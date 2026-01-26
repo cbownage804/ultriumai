@@ -1,11 +1,24 @@
 /**
  * Breach Check Service
- * Uses HaveIBeenPwned APIs to check passwords and emails against breaches
+ * Uses HaveIBeenPwned APIs and Dehashed via edge function to check passwords and emails against breaches
  */
+
+import { supabase } from '@/integrations/supabase/client';
 
 export interface PasswordBreachResult {
   breached: boolean;
   count: number;
+}
+
+export interface LeakedCredential {
+  database_name: string;
+  email?: string;
+  username?: string;
+  password?: string;
+  hashed_password?: string;
+  name?: string;
+  phone?: string;
+  address?: string;
 }
 
 export interface EmailBreachResult {
@@ -16,6 +29,8 @@ export interface EmailBreachResult {
     breachDate: string;
     dataClasses: string[];
   }[];
+  leakedData?: LeakedCredential[];
+  dehashedTotal?: number;
 }
 
 export class BreachCheckService {
@@ -68,39 +83,37 @@ export class BreachCheckService {
 
   /**
    * Check if an email has been exposed in data breaches
-   * Uses HIBP breached account API (free for unverified searches)
+   * Uses dark-web-monitor edge function for HIBP + Dehashed data
    */
-  static async checkEmail(email: string): Promise<EmailBreachResult> {
+  static async checkEmail(email: string, userId?: string): Promise<EmailBreachResult> {
     try {
-      // Use the public breach search endpoint
-      const response = await fetch(
-        `https://haveibeenpwned.com/unifiedsearch/${encodeURIComponent(email)}`,
-        {
-          headers: {
-            'User-Agent': 'SafePass-BreachMonitor',
-          }
+      // Use edge function for comprehensive breach check (HIBP + Dehashed)
+      const { data, error } = await supabase.functions.invoke('dark-web-monitor', {
+        body: { 
+          action: 'check_email', 
+          email,
+          user_id: userId
         }
-      );
+      });
       
-      if (response.status === 404) {
-        // No breaches found
+      if (error) {
+        console.error('Dark web monitor error:', error);
         return { breached: false, breaches: [] };
       }
       
-      if (!response.ok) {
-        console.error('HIBP email check error:', response.status);
-        return { breached: false, breaches: [] };
-      }
-      
-      const data = await response.json();
-      const breaches = (data.Breaches || []).map((b: any) => ({
-        name: b.Name,
-        domain: b.Domain,
-        breachDate: b.BreachDate,
-        dataClasses: b.DataClasses || []
+      const breaches = (data.breaches || []).map((b: any) => ({
+        name: b.name || b.Name,
+        domain: b.domain || b.Domain,
+        breachDate: b.breach_date || b.BreachDate,
+        dataClasses: b.data_classes || b.DataClasses || []
       }));
       
-      return { breached: breaches.length > 0, breaches };
+      return { 
+        breached: breaches.length > 0 || (data.leakedData?.length || 0) > 0, 
+        breaches,
+        leakedData: data.leakedData || [],
+        dehashedTotal: data.dehashedTotal || 0
+      };
     } catch (error) {
       console.error('Email breach check failed:', error);
       return { breached: false, breaches: [] };
@@ -136,23 +149,29 @@ export class BreachCheckService {
   }
 
   /**
-   * Batch check multiple emails
+   * Batch check multiple emails - uses edge function with auto-retry
    */
-  static async checkEmails(emails: { id: string; email: string }[]): Promise<Map<string, EmailBreachResult>> {
+  static async checkEmails(emails: { id: string; email: string }[], userId?: string): Promise<Map<string, EmailBreachResult>> {
     const results = new Map<string, EmailBreachResult>();
     
-    // Rate limit: 1 request per 1.5 seconds for HIBP
     for (const { id, email } of emails) {
       if (!email || !email.includes('@')) {
         results.set(id, { breached: false, breaches: [] });
         continue;
       }
       
-      const result = await this.checkEmail(email);
+      // Try with auto-retry on first failure (handles cold start)
+      let result = await this.checkEmail(email, userId);
+      if (!result.breached && result.breaches.length === 0) {
+        // Retry once in case of cold start failure
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        result = await this.checkEmail(email, userId);
+      }
+      
       results.set(id, result);
       
-      // Respect rate limits
-      await new Promise(resolve => setTimeout(resolve, 1600));
+      // Rate limit between requests
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
     
     return results;
