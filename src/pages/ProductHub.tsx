@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useProductAccess, Product, AccessLevel } from '@/hooks/useProductAccess';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -155,6 +155,8 @@ export default function ProductHub() {
     navigate('/');
   };
 
+  // Show loading state while auth or access is being determined
+  // This prevents the race condition where user is briefly null during hydration
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -166,9 +168,10 @@ export default function ProductHub() {
     );
   }
 
+  // ProtectedRoute already handles unauthenticated users - this is just a safety fallback
+  // Use Navigate component instead of imperative navigate() to avoid double-redirects
   if (!user) {
-    navigate('/auth');
-    return null;
+    return <Navigate to="/auth" replace />;
   }
 
   const products: ProductCardProps[] = [
