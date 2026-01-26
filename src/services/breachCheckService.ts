@@ -1,15 +1,29 @@
 /**
  * Breach Check Service
- * Uses HaveIBeenPwned's k-anonymity API to check if passwords appear in breaches
- * without exposing the actual password
+ * Uses HaveIBeenPwned APIs to check passwords and emails against breaches
  */
+
+export interface PasswordBreachResult {
+  breached: boolean;
+  count: number;
+}
+
+export interface EmailBreachResult {
+  breached: boolean;
+  breaches: {
+    name: string;
+    domain: string;
+    breachDate: string;
+    dataClasses: string[];
+  }[];
+}
 
 export class BreachCheckService {
   /**
    * Check if a password has been exposed in data breaches
    * Uses SHA-1 hash with k-anonymity (only sends first 5 chars of hash)
    */
-  static async checkPassword(password: string): Promise<{ breached: boolean; count: number }> {
+  static async checkPassword(password: string): Promise<PasswordBreachResult> {
     try {
       // Generate SHA-1 hash of password
       const encoder = new TextEncoder();
@@ -25,7 +39,7 @@ export class BreachCheckService {
       // Query HIBP Pwned Passwords API
       const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
         headers: {
-          'Add-Padding': 'true', // Adds padding to prevent timing attacks
+          'Add-Padding': 'true',
         }
       });
       
@@ -37,7 +51,6 @@ export class BreachCheckService {
       const text = await response.text();
       const lines = text.split('\n');
       
-      // Check if our hash suffix is in the response
       for (const line of lines) {
         const [hashSuffix, countStr] = line.split(':');
         if (hashSuffix?.trim() === suffix) {
@@ -52,14 +65,54 @@ export class BreachCheckService {
       return { breached: false, count: 0 };
     }
   }
+
+  /**
+   * Check if an email has been exposed in data breaches
+   * Uses HIBP breached account API (free for unverified searches)
+   */
+  static async checkEmail(email: string): Promise<EmailBreachResult> {
+    try {
+      // Use the public breach search endpoint
+      const response = await fetch(
+        `https://haveibeenpwned.com/unifiedsearch/${encodeURIComponent(email)}`,
+        {
+          headers: {
+            'User-Agent': 'SafePass-BreachMonitor',
+          }
+        }
+      );
+      
+      if (response.status === 404) {
+        // No breaches found
+        return { breached: false, breaches: [] };
+      }
+      
+      if (!response.ok) {
+        console.error('HIBP email check error:', response.status);
+        return { breached: false, breaches: [] };
+      }
+      
+      const data = await response.json();
+      const breaches = (data.Breaches || []).map((b: any) => ({
+        name: b.Name,
+        domain: b.Domain,
+        breachDate: b.BreachDate,
+        dataClasses: b.DataClasses || []
+      }));
+      
+      return { breached: breaches.length > 0, breaches };
+    } catch (error) {
+      console.error('Email breach check failed:', error);
+      return { breached: false, breaches: [] };
+    }
+  }
   
   /**
    * Batch check multiple passwords
    */
-  static async checkPasswords(passwords: { id: string; password: string }[]): Promise<Map<string, { breached: boolean; count: number }>> {
-    const results = new Map<string, { breached: boolean; count: number }>();
+  static async checkPasswords(passwords: { id: string; password: string }[]): Promise<Map<string, PasswordBreachResult>> {
+    const results = new Map<string, PasswordBreachResult>();
     
-    // Process in parallel with rate limiting (max 5 concurrent)
     const batchSize = 5;
     for (let i = 0; i < passwords.length; i += batchSize) {
       const batch = passwords.slice(i, i + batchSize);
@@ -74,10 +127,32 @@ export class BreachCheckService {
         results.set(id, result);
       }
       
-      // Small delay between batches to respect rate limits
       if (i + batchSize < passwords.length) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
+    }
+    
+    return results;
+  }
+
+  /**
+   * Batch check multiple emails
+   */
+  static async checkEmails(emails: { id: string; email: string }[]): Promise<Map<string, EmailBreachResult>> {
+    const results = new Map<string, EmailBreachResult>();
+    
+    // Rate limit: 1 request per 1.5 seconds for HIBP
+    for (const { id, email } of emails) {
+      if (!email || !email.includes('@')) {
+        results.set(id, { breached: false, breaches: [] });
+        continue;
+      }
+      
+      const result = await this.checkEmail(email);
+      results.set(id, result);
+      
+      // Respect rate limits
+      await new Promise(resolve => setTimeout(resolve, 1600));
     }
     
     return results;
