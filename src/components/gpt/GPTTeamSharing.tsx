@@ -67,40 +67,8 @@ interface GPTTeamSharingProps {
   themeColor?: string;
 }
 
-const mockTeamMembers: TeamMember[] = [
-  { 
-    id: '1', 
-    email: 'owner@company.com', 
-    name: 'John Owner', 
-    role: 'owner', 
-    joinedAt: '2024-01-01', 
-    status: 'active' 
-  },
-  { 
-    id: '2', 
-    email: 'editor@company.com', 
-    name: 'Sarah Editor', 
-    role: 'editor', 
-    joinedAt: '2024-01-15', 
-    status: 'active' 
-  },
-  { 
-    id: '3', 
-    email: 'viewer@company.com', 
-    name: 'Mike Viewer', 
-    role: 'viewer', 
-    joinedAt: '2024-02-01', 
-    status: 'active' 
-  },
-  { 
-    id: '4', 
-    email: 'pending@company.com', 
-    name: 'Pending User', 
-    role: 'viewer', 
-    joinedAt: '2024-02-10', 
-    status: 'pending' 
-  },
-];
+// Empty team members - will be populated from database
+const defaultTeamMembers: TeamMember[] = [];
 
 const roleIcons = {
   owner: Crown,
@@ -118,8 +86,8 @@ export function GPTTeamSharing({
   gptId,
   gptName,
   isPublic = false,
-  shareUrl = `https://app.example.com/gpt/${gptId}`,
-  teamMembers = mockTeamMembers,
+  shareUrl,
+  teamMembers = defaultTeamMembers,
   onVisibilityChange,
   onInvite,
   onRemoveMember,
@@ -133,6 +101,9 @@ export function GPTTeamSharing({
   const [searchQuery, setSearchQuery] = useState("");
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
 
+  // Generate proper share URL based on actual domain
+  const actualShareUrl = shareUrl || `${window.location.origin}/ai-studio/chat/${gptId}`;
+
   const filteredMembers = teamMembers.filter(member => 
     member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     member.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -140,7 +111,7 @@ export function GPTTeamSharing({
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(actualShareUrl);
       setCopied(true);
       toast({ title: "Link copied!", description: "Share link copied to clipboard" });
       setTimeout(() => setCopied(false), 2000);
@@ -197,7 +168,7 @@ export function GPTTeamSharing({
               <Label className="text-xs text-muted-foreground">Share Link</Label>
               <div className="flex gap-2">
                 <Input 
-                  value={shareUrl} 
+                  value={actualShareUrl} 
                   readOnly 
                   className="text-sm bg-muted"
                 />
@@ -318,10 +289,17 @@ export function GPTTeamSharing({
 
           {/* Members List */}
           <ScrollArea className="h-[300px]">
-            <AnimatePresence>
-              <div className="space-y-2">
-                {filteredMembers.map((member, index) => {
-                  const RoleIcon = roleIcons[member.role];
+            {filteredMembers.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Users className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm font-medium">No team members yet</p>
+                <p className="text-xs mt-1">Invite team members to collaborate on this GPT</p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                <div className="space-y-2">
+                  {filteredMembers.map((member, index) => {
+                    const RoleIcon = roleIcons[member.role];
                   
                   return (
                     <motion.div
@@ -401,6 +379,7 @@ export function GPTTeamSharing({
                 })}
               </div>
             </AnimatePresence>
+            )}
           </ScrollArea>
         </CardContent>
       </Card>
