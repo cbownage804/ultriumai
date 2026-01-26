@@ -14,7 +14,7 @@
     "@11labs/react": "^0.1.4",
     "@capacitor/android": "^7.4.1",
     "@capacitor/camera": "^7.0.1",
-    "@capacitor/cli": "^7.4.1",
+    "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^7.4.1",
     "@capacitor/device": "^7.0.1",
     "@capacitor/geolocation": "^7.1.3",
