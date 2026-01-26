@@ -13,6 +13,10 @@ import {
   Zap
 } from 'lucide-react';
 
+interface AdminOverviewTabProps {
+  onNavigateToTab?: (tab: string) => void;
+}
+
 interface OverviewStats {
   totalUsers: number;
   aiStudioUsers: number;
@@ -22,7 +26,7 @@ interface OverviewStats {
   activeSubscriptions: number;
 }
 
-export const AdminOverviewTab = () => {
+export const AdminOverviewTab = ({ onNavigateToTab }: AdminOverviewTabProps) => {
   const [stats, setStats] = useState<OverviewStats>({
     totalUsers: 0,
     aiStudioUsers: 0,
@@ -178,7 +182,10 @@ export const AdminOverviewTab = () => {
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+            <div 
+              onClick={() => onNavigateToTab?.('all-users')}
+              className="p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
               <div className="flex items-center gap-2 font-medium">
                 <Users className="h-4 w-4" />
                 View All Users
@@ -187,7 +194,10 @@ export const AdminOverviewTab = () => {
                 Manage user accounts across products
               </p>
             </div>
-            <div className="p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+            <div 
+              onClick={() => onNavigateToTab?.('ai-studio')}
+              className="p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
               <div className="flex items-center gap-2 font-medium">
                 <CreditCard className="h-4 w-4" />
                 Subscription Reports
@@ -196,7 +206,10 @@ export const AdminOverviewTab = () => {
                 View revenue and subscription metrics
               </p>
             </div>
-            <div className="p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+            <div 
+              onClick={() => onNavigateToTab?.('vanguard')}
+              className="p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            >
               <div className="flex items-center gap-2 font-medium">
                 <Building2 className="h-4 w-4" />
                 MSP Management
