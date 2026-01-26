@@ -7,7 +7,7 @@ import UnifiedAuthRedirect from '@/components/auth/UnifiedAuthRedirect';
 
 // SafeSuite imports
 import SafeSuiteLayout from '@/layouts/SafeSuiteLayout';
-import SafeSuiteAdminCenter from '@/pages/admin/SafeSuiteAdminCenter';
+import UnifiedAdminCenter from '@/pages/admin/UnifiedAdminCenter';
 import SafeSuiteLanding from '@/pages/safesuite/SafeSuiteLanding';
 import SafeSuiteDashboard from '@/pages/safesuite/SafeSuiteDashboard';
 import SafeSuiteBilling from '@/pages/safesuite/SafeSuiteBilling';
@@ -99,7 +99,7 @@ export const SafeSuiteSubdomainRoutes = () => {
         <Route path="/asset-management" element={<AssetManagementPage />} />
         <Route path="/billing" element={<SafeSuiteBilling />} />
         <Route path="/settings" element={<SafeSuiteSettings />} />
-        <Route path="/admin/safesuite" element={<SafeSuiteAdminCenter />} />
+        <Route path="/admin/*" element={<UnifiedAdminCenter />} />
       </Route>
       
       {/* Redirect old /safesuite/* paths to clean URLs (including nested routes) */}
