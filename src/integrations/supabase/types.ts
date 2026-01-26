@@ -19875,6 +19875,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_user: { Args: never; Returns: boolean }
       is_current_user_admin: { Args: never; Returns: boolean }
       is_msp_or_mssp: { Args: { _user_id: string }; Returns: boolean }
       is_msp_user: { Args: { check_user_id: string }; Returns: boolean }
