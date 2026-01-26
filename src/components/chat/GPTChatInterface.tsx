@@ -66,8 +66,27 @@ export const GPTChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-  const [showHistory, setShowHistory] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showGptInfo, setShowGptInfo] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setShowHistory(false);
+        setShowGptInfo(false);
+      } else {
+        setShowGptInfo(true);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const gpt = gpts.find(g => g.id === gptId);
 
@@ -324,16 +343,32 @@ export const GPTChatInterface = () => {
   }
 
   return (
-    <div className="flex h-screen max-h-screen overflow-hidden bg-background">
+    <div className="flex h-screen max-h-screen overflow-hidden bg-background relative">
+      {/* Mobile Overlay Backdrop */}
+      <AnimatePresence>
+        {isMobile && (showHistory || showGptInfo) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => {
+              setShowHistory(false);
+              setShowGptInfo(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Conversation History Sidebar */}
       <AnimatePresence mode="wait">
         {showHistory && (
           <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
+            initial={isMobile ? { x: -280, opacity: 0 } : { width: 0, opacity: 0 }}
+            animate={isMobile ? { x: 0, opacity: 1 } : { width: 280, opacity: 1 }}
+            exit={isMobile ? { x: -280, opacity: 0 } : { width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="border-r bg-muted/20 flex flex-col overflow-hidden"
+            className={`${isMobile ? 'fixed left-0 top-0 bottom-0 w-[280px] z-50' : 'relative'} border-r bg-background flex flex-col overflow-hidden`}
           >
             <div className="p-3 border-b flex items-center justify-between bg-background/50">
               <div className="flex items-center gap-2">
@@ -352,8 +387,14 @@ export const GPTChatInterface = () => {
             <ConversationSidebar
               conversations={conversations}
               currentConversationId={currentConversation?.id || null}
-              onSelectConversation={handleSelectConversation}
-              onNewConversation={handleNewConversation}
+              onSelectConversation={(conv) => {
+                handleSelectConversation(conv);
+                if (isMobile) setShowHistory(false);
+              }}
+              onNewConversation={() => {
+                handleNewConversation();
+                if (isMobile) setShowHistory(false);
+              }}
               onDeleteConversation={deleteConversation}
               onRenameConversation={updateConversationTitle}
               isLoading={isLoadingConversations}
@@ -363,35 +404,50 @@ export const GPTChatInterface = () => {
         )}
       </AnimatePresence>
 
-      {/* GPT Info Sidebar */}
-      <motion.div 
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="w-80 border-r bg-muted/30 flex flex-col backdrop-blur-sm"
-      >
-        <div className="p-4 border-b bg-background/50">
-          <div className="flex items-center justify-between mb-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/dashboard')}
-              className="hover:bg-primary/10 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            {!showHistory && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setShowHistory(true)}
-              >
-                <PanelLeft className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+      {/* GPT Info Sidebar - Hidden on mobile, shown as overlay when toggled */}
+      <AnimatePresence>
+        {showGptInfo && (
+          <motion.div 
+            initial={isMobile ? { x: -320, opacity: 0 } : { x: -20, opacity: 0 }}
+            animate={isMobile ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+            exit={isMobile ? { x: -320, opacity: 0 } : { x: -20, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className={`${isMobile ? 'fixed left-0 top-0 bottom-0 z-50' : 'relative'} w-80 border-r bg-background flex flex-col backdrop-blur-sm`}
+          >
+            <div className="p-4 border-b bg-background/50">
+              <div className="flex items-center justify-between mb-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate('/dashboard')}
+                  className="hover:bg-primary/10 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <div className="flex items-center gap-1">
+                  {!showHistory && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setShowHistory(true)}
+                    >
+                      <PanelLeft className="w-4 h-4" />
+                    </Button>
+                  )}
+                  {isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setShowGptInfo(false)}
+                    >
+                      <PanelLeftClose className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
           
           <div className="flex items-center gap-3">
             <Avatar className="w-14 h-14 ring-2 ring-offset-2 ring-offset-background transition-transform hover:scale-105"
@@ -512,27 +568,49 @@ export const GPTChatInterface = () => {
             )}
           </div>
         </ScrollArea>
-      </motion.div>
-
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-gradient-to-b from-background to-muted/20">
+      <div className="flex-1 flex flex-col bg-gradient-to-b from-background to-muted/20 min-w-0">
         {/* Chat Header */}
         <motion.div 
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="border-b p-4 bg-background/95 backdrop-blur-sm"
+          className="border-b p-3 md:p-4 bg-background/95 backdrop-blur-sm"
         >
-          <div className="flex items-center justify-between max-w-4xl mx-auto">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-                <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
+          <div className="flex items-center justify-between max-w-4xl mx-auto gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+              {/* Mobile menu buttons */}
+              {isMobile && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setShowGptInfo(true)}
+                  >
+                    <Bot className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setShowHistory(true)}
+                  >
+                    <History className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+              <div className="relative flex-shrink-0">
+                <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-emerald-500 rounded-full"></div>
+                <div className="absolute inset-0 w-2 h-2 md:w-2.5 md:h-2.5 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
               </div>
-              <h1 className="text-lg font-bold">
+              <h1 className="text-sm md:text-lg font-bold truncate">
                 {currentConversation?.title || `Chat with ${gpt.name}`}
               </h1>
             </div>
-            <Badge variant="secondary" className="text-xs font-medium">
+            <Badge variant="secondary" className="text-xs font-medium flex-shrink-0 hidden sm:flex">
               {messages.filter(m => m.role === 'user').length} messages
             </Badge>
           </div>
@@ -572,7 +650,7 @@ export const GPTChatInterface = () => {
                     </Avatar>
                   )}
                   
-                  <div className={`max-w-[75%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                  <div className={`max-w-[85%] md:max-w-[75%] ${message.role === 'user' ? 'order-1' : ''}`}>
                     <div
                       className={`rounded-2xl shadow-sm ${
                         message.role === 'user'
@@ -641,7 +719,7 @@ export const GPTChatInterface = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="border-t p-4 bg-background/95 backdrop-blur-sm"
+          className="border-t p-3 md:p-4 bg-background/95 backdrop-blur-sm"
         >
           <div className="max-w-4xl mx-auto">
             {/* Show attached files */}
@@ -671,7 +749,7 @@ export const GPTChatInterface = () => {
               </motion.div>
             )}
             
-            <div className="flex gap-3 items-end">
+            <div className="flex gap-2 md:gap-3 items-end">
               <ChatFileUploader
                 sessionId={sessionId}
                 gptId={gpt.id}
@@ -684,26 +762,26 @@ export const GPTChatInterface = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={gpt.placeholder_prompt || `Describe your IT issue and I'll provide step-by-step troubleshooting...`}
+                  placeholder={isMobile ? "Type a message..." : (gpt.placeholder_prompt || `Describe your IT issue and I'll provide step-by-step troubleshooting...`)}
                   disabled={isLoading}
-                  className="pr-14 py-6 rounded-xl border-2 focus:border-primary/50 transition-all text-base"
+                  className="pr-12 md:pr-14 py-5 md:py-6 rounded-xl border-2 focus:border-primary/50 transition-all text-sm md:text-base"
                 />
                 <Button
                   onClick={sendMessage}
                   disabled={(!inputMessage.trim() && attachedFiles.length === 0) || isLoading}
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg shadow-md hover:shadow-lg transition-all"
+                  className="absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 h-8 w-8 md:h-10 md:w-10 rounded-lg shadow-md hover:shadow-lg transition-all"
                   style={{ backgroundColor: gpt.theme_color || undefined }}
                 >
                   {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin" />
                   ) : (
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 md:w-5 md:h-5" />
                   )}
                 </Button>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-3 text-center">
+            <p className="text-xs text-muted-foreground mt-2 md:mt-3 text-center hidden sm:block">
               Press Enter to send, Shift+Enter for new line • Attach files up to 10MB
             </p>
           </div>
