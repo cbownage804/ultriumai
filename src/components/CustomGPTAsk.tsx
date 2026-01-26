@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Bot, Send, Settings } from "lucide-react";
+import { BackToHubButton } from "@/components/shared/BackToHubButton";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { supabase } from "@/integrations/supabase/client";
 import { useMessageOperations } from "@/hooks/useMessageOperations";
@@ -144,7 +145,8 @@ const CustomGPTAsk = () => {
           </p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <BackToHubButton />
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm">

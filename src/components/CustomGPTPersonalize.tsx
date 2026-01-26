@@ -32,6 +32,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { GPTVoiceControls } from "@/components/voice/GPTVoiceControls";
+import { BackToHubButton } from "@/components/shared/BackToHubButton";
 
 interface GPTData {
   id?: string;
@@ -384,6 +385,9 @@ const CustomGPTPersonalize = () => {
   return (
     <div className="space-y-8 p-6 bg-gradient-to-br from-background via-background to-primary/5 min-h-screen">
       <div className="max-w-7xl mx-auto">
+        <div className="flex justify-end mb-4">
+          <BackToHubButton />
+        </div>
         <div className="text-center space-y-4 mb-8">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
             <Settings className="h-4 w-4 mr-2" />
@@ -979,12 +983,25 @@ const CustomGPTPersonalize = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* OpenAI Models */}
                   <SelectItem value="gpt-4.1-2025-04-14">GPT-4.1 (Latest & Most Advanced)</SelectItem>
                   <SelectItem value="gpt-4o">GPT-4o (Advanced with Vision)</SelectItem>
                   <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast & Efficient)</SelectItem>
+                  <SelectItem value="o1-preview">o1-preview (Advanced Reasoning)</SelectItem>
+                  <SelectItem value="o1-mini">o1-mini (Fast Reasoning)</SelectItem>
+                  {/* Anthropic Models */}
                   <SelectItem value="claude-opus-4-20250514">Claude Opus 4 (Superior Reasoning)</SelectItem>
                   <SelectItem value="claude-sonnet-4-20250514">Claude Sonnet 4 (High Performance)</SelectItem>
                   <SelectItem value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Fastest)</SelectItem>
+                  {/* Google Models */}
+                  <SelectItem value="gemini-2.5-pro">Gemini 2.5 Pro (Google's Flagship)</SelectItem>
+                  <SelectItem value="gemini-2.5-flash">Gemini 2.5 Flash (Fast & Capable)</SelectItem>
+                  {/* Meta Models */}
+                  <SelectItem value="llama-3.3-70b">Llama 3.3 70B (Open Source)</SelectItem>
+                  <SelectItem value="llama-3.1-405b">Llama 3.1 405B (Largest Open Model)</SelectItem>
+                  {/* Mistral Models */}
+                  <SelectItem value="mistral-large">Mistral Large (Enterprise)</SelectItem>
+                  <SelectItem value="mixtral-8x22b">Mixtral 8x22B (MoE)</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>

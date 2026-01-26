@@ -26,6 +26,7 @@ interface ModelConfig {
 }
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  // OpenAI Models
   'gpt-4.1-2025-04-14': {
     name: 'GPT-4.1 (Latest)',
     maxTokens: 4096,
@@ -56,6 +57,27 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     icon: Zap,
     category: 'fast'
   },
+  'o1-preview': {
+    name: 'o1-preview',
+    maxTokens: 32768,
+    inputCostPer1kTokens: 0.015,
+    outputCostPer1kTokens: 0.06,
+    contextWindow: 128000,
+    description: 'Advanced reasoning with chain-of-thought',
+    icon: Brain,
+    category: 'reasoning'
+  },
+  'o1-mini': {
+    name: 'o1-mini',
+    maxTokens: 65536,
+    inputCostPer1kTokens: 0.003,
+    outputCostPer1kTokens: 0.012,
+    contextWindow: 128000,
+    description: 'Fast reasoning model',
+    icon: Gauge,
+    category: 'reasoning'
+  },
+  // Anthropic Models
   'claude-opus-4-20250514': {
     name: 'Claude Opus 4',
     maxTokens: 4096,
@@ -85,6 +107,69 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     description: 'Fast and efficient Claude model',
     icon: Gauge,
     category: 'fast'
+  },
+  // Google Models
+  'gemini-2.5-pro': {
+    name: 'Gemini 2.5 Pro',
+    maxTokens: 8192,
+    inputCostPer1kTokens: 0.00125,
+    outputCostPer1kTokens: 0.005,
+    contextWindow: 1000000,
+    description: 'Google flagship with 1M context window',
+    icon: Brain,
+    category: 'flagship'
+  },
+  'gemini-2.5-flash': {
+    name: 'Gemini 2.5 Flash',
+    maxTokens: 8192,
+    inputCostPer1kTokens: 0.000075,
+    outputCostPer1kTokens: 0.0003,
+    contextWindow: 1000000,
+    description: 'Fast and cost-effective Google model',
+    icon: Zap,
+    category: 'fast'
+  },
+  // Meta Models
+  'llama-3.3-70b': {
+    name: 'Llama 3.3 70B',
+    maxTokens: 8192,
+    inputCostPer1kTokens: 0.0008,
+    outputCostPer1kTokens: 0.0008,
+    contextWindow: 128000,
+    description: 'Open-source powerhouse from Meta',
+    icon: Brain,
+    category: 'standard'
+  },
+  'llama-3.1-405b': {
+    name: 'Llama 3.1 405B',
+    maxTokens: 4096,
+    inputCostPer1kTokens: 0.003,
+    outputCostPer1kTokens: 0.003,
+    contextWindow: 128000,
+    description: 'Largest open-source model available',
+    icon: Brain,
+    category: 'flagship'
+  },
+  // Mistral Models
+  'mistral-large': {
+    name: 'Mistral Large',
+    maxTokens: 4096,
+    inputCostPer1kTokens: 0.002,
+    outputCostPer1kTokens: 0.006,
+    contextWindow: 128000,
+    description: 'Enterprise-grade from Mistral AI',
+    icon: Brain,
+    category: 'flagship'
+  },
+  'mixtral-8x22b': {
+    name: 'Mixtral 8x22B',
+    maxTokens: 4096,
+    inputCostPer1kTokens: 0.0006,
+    outputCostPer1kTokens: 0.0006,
+    contextWindow: 64000,
+    description: 'Mixture of Experts architecture',
+    icon: Gauge,
+    category: 'standard'
   }
 };
 

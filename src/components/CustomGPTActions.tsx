@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAccountType } from "@/hooks/useAccountType";
 import { supabase } from "@/integrations/supabase/client";
+import { BackToHubButton } from "@/components/shared/BackToHubButton";
 
 interface Action {
   id: string;
@@ -239,11 +240,14 @@ const CustomGPTActions = () => {
   if (!selectedGPT && gpts.length === 0) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Actions</h1>
-          <p className="text-muted-foreground mt-2">
-            Add powerful capabilities to your Custom GPT
-          </p>
+        <div className="flex justify-between items-start flex-wrap gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Actions</h1>
+            <p className="text-muted-foreground mt-2">
+              Add powerful capabilities to your Custom GPT
+            </p>
+          </div>
+          <BackToHubButton />
         </div>
         <Card>
           <CardContent className="p-12 text-center">
@@ -291,7 +295,7 @@ const CustomGPTActions = () => {
         </Card>
       )}
 
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Actions</h1>
           <p className="text-muted-foreground mt-2">
@@ -304,13 +308,15 @@ const CustomGPTActions = () => {
           </div>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Action
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2 flex-wrap">
+          <BackToHubButton />
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Action
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create New Action</DialogTitle>
@@ -516,6 +522,7 @@ const CustomGPTActions = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {isLoading ? (

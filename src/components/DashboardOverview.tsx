@@ -22,6 +22,7 @@ import {
   Palette
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { BackToHubButton } from "@/components/shared/BackToHubButton";
 
 interface GPTStats {
   totalGPTs: number;
