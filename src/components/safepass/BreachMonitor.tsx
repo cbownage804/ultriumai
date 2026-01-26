@@ -3,7 +3,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSafePass } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
-import { BreachCheckService } from '@/services/breachCheckService';
+import { BreachCheckService, EmailBreachResult } from '@/services/breachCheckService';
+import { BreachRecommendationDialog, BreachFindingDetails } from './BreachRecommendationDialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +21,8 @@ import {
   Search,
   Lock,
   XCircle,
-  ShieldAlert
+  ShieldAlert,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -40,8 +42,11 @@ interface BreachScan {
 interface ScanResult {
   entryId: string;
   title: string;
+  username?: string;
   issues: string[];
   severity: 'critical' | 'high' | 'medium' | 'low';
+  emailBreaches?: EmailBreachResult['breaches'];
+  passwordBreachCount?: number;
 }
 
 export const BreachMonitor = () => {
@@ -51,9 +56,12 @@ export const BreachMonitor = () => {
   
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
+  const [scanStage, setScanStage] = useState('');
   const [allEntries, setAllEntries] = useState<any[]>([]);
   const [lastScan, setLastScan] = useState<BreachScan | null>(null);
   const [currentResults, setCurrentResults] = useState<ScanResult[]>([]);
+  const [selectedFinding, setSelectedFinding] = useState<BreachFindingDetails | null>(null);
+  const [showRecommendation, setShowRecommendation] = useState(false);
 
   const loadLastScan = useCallback(async () => {
     if (!user) return;
@@ -123,42 +131,76 @@ export const BreachMonitor = () => {
 
     setIsScanning(true);
     setScanProgress(0);
+    setScanStage('Decrypting passwords...');
     const results: ScanResult[] = [];
     const passwordMap = new Map<string, string[]>();
 
     try {
-      // First pass: collect all passwords for breach checking
-      const passwordsToCheck: { id: string; password: string; entry: any }[] = [];
+      // First pass: collect all passwords and usernames for breach checking
+      const passwordsToCheck: { id: string; password: string; username: string; entry: any }[] = [];
       
       for (const entry of entries) {
         const password = await getEntryPassword(entry);
         if (password !== '[Locked]' && password !== '[Decryption Error]') {
-          passwordsToCheck.push({ id: entry.id, password, entry });
+          // Username/email is in encrypted_data after decryption or in the entry itself
+          const encryptedData = entry.encrypted_data || {};
+          const username = encryptedData.username || encryptedData.email || entry.url || '';
+          passwordsToCheck.push({ 
+            id: entry.id, 
+            password, 
+            username,
+            entry 
+          });
         }
       }
       
-      setScanProgress(20);
+      setScanProgress(15);
+      setScanStage('Checking passwords against breach databases...');
       
       // Check all passwords against breach database (HIBP)
-      const breachResults = await BreachCheckService.checkPasswords(
+      const passwordBreachResults = await BreachCheckService.checkPasswords(
         passwordsToCheck.map(p => ({ id: p.id, password: p.password }))
       );
       
-      setScanProgress(60);
+      setScanProgress(45);
+      setScanStage('Checking email accounts for breaches...');
       
-      // Analyze each password
+      // Check emails/usernames against breach database
+      const emailsToCheck = passwordsToCheck
+        .filter(p => p.username && p.username.includes('@'))
+        .map(p => ({ id: p.id, email: p.username }));
+      
+      const emailBreachResults = emailsToCheck.length > 0 
+        ? await BreachCheckService.checkEmails(emailsToCheck)
+        : new Map();
+      
+      setScanProgress(75);
+      setScanStage('Analyzing security risks...');
+      
+      // Analyze each entry
       for (let i = 0; i < passwordsToCheck.length; i++) {
-        const { id, password, entry } = passwordsToCheck[i];
-        setScanProgress(60 + Math.round(((i + 1) / passwordsToCheck.length) * 40));
+        const { id, password, username, entry } = passwordsToCheck[i];
+        setScanProgress(75 + Math.round(((i + 1) / passwordsToCheck.length) * 25));
 
         const issues: string[] = [];
         let severity: 'critical' | 'high' | 'medium' | 'low' = 'low';
+        let passwordBreachCount = 0;
+        let emailBreaches: EmailBreachResult['breaches'] = [];
 
         // Check if password was found in breach database
-        const breachResult = breachResults.get(id);
-        if (breachResult?.breached) {
-          issues.push(`Found in ${breachResult.count.toLocaleString()} data breaches`);
+        const passwordBreachResult = passwordBreachResults.get(id);
+        if (passwordBreachResult?.breached) {
+          issues.push(`Password found in ${passwordBreachResult.count.toLocaleString()} data breaches`);
+          passwordBreachCount = passwordBreachResult.count;
           severity = 'critical';
+        }
+
+        // Check if email was found in breaches
+        const emailBreachResult = emailBreachResults.get(id);
+        if (emailBreachResult?.breached) {
+          issues.push(`Account email found in ${emailBreachResult.breaches.length} breach${emailBreachResult.breaches.length > 1 ? 'es' : ''}`);
+          emailBreaches = emailBreachResult.breaches;
+          if (severity !== 'critical') severity = 'high';
         }
 
         // Check password strength
@@ -199,12 +241,14 @@ export const BreachMonitor = () => {
           results.push({
             entryId: entry.id,
             title: entry.title,
+            username,
             issues,
-            severity
+            severity,
+            emailBreaches,
+            passwordBreachCount
           });
         }
       }
-
       // Calculate statistics
       const breachedCount = results.filter(r => r.issues.some(i => i.includes('data breaches'))).length;
       const compromisedCount = results.filter(r => r.severity === 'critical').length;
@@ -382,19 +426,34 @@ export const BreachMonitor = () => {
               Security Issues ({currentResults.length})
             </CardTitle>
             <CardDescription>
-              Passwords that need attention
+              Click on an issue to get AI-powered recommendations
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[300px]">
               <div className="space-y-3">
                 {currentResults.map((result) => (
-                  <div 
+                  <button 
                     key={result.entryId}
-                    className="p-4 border rounded-lg"
+                    onClick={() => {
+                      setSelectedFinding({
+                        entryId: result.entryId,
+                        title: result.title,
+                        username: result.username,
+                        issues: result.issues,
+                        severity: result.severity,
+                        emailBreaches: result.emailBreaches,
+                        passwordBreachCount: result.passwordBreachCount
+                      });
+                      setShowRecommendation(true);
+                    }}
+                    className="w-full text-left p-4 border rounded-lg hover:bg-muted/50 transition-colors group"
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium">{result.title}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{result.title}</h4>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                       <Badge className={getSeverityColor(result.severity)}>
                         {result.severity}
                       </Badge>
@@ -407,7 +466,7 @@ export const BreachMonitor = () => {
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </button>
                 ))}
               </div>
             </ScrollArea>
@@ -432,6 +491,13 @@ export const BreachMonitor = () => {
           </p>
         </Card>
       )}
+
+      {/* AI Recommendations Dialog */}
+      <BreachRecommendationDialog
+        finding={selectedFinding}
+        open={showRecommendation}
+        onOpenChange={setShowRecommendation}
+      />
     </div>
   );
 };
