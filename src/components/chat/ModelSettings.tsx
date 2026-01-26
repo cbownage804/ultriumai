@@ -77,6 +77,16 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     icon: Gauge,
     category: 'reasoning'
   },
+  'o3-mini': {
+    name: 'o3-mini',
+    maxTokens: 100000,
+    inputCostPer1kTokens: 0.0011,
+    outputCostPer1kTokens: 0.0044,
+    contextWindow: 200000,
+    description: 'Next-gen reasoning with improved efficiency',
+    icon: Brain,
+    category: 'reasoning'
+  },
   // Anthropic Models
   'claude-opus-4-20250514': {
     name: 'Claude Opus 4',
@@ -107,69 +117,6 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     description: 'Fast and efficient Claude model',
     icon: Gauge,
     category: 'fast'
-  },
-  // Google Models
-  'gemini-2.5-pro': {
-    name: 'Gemini 2.5 Pro',
-    maxTokens: 8192,
-    inputCostPer1kTokens: 0.00125,
-    outputCostPer1kTokens: 0.005,
-    contextWindow: 1000000,
-    description: 'Google flagship with 1M context window',
-    icon: Brain,
-    category: 'flagship'
-  },
-  'gemini-2.5-flash': {
-    name: 'Gemini 2.5 Flash',
-    maxTokens: 8192,
-    inputCostPer1kTokens: 0.000075,
-    outputCostPer1kTokens: 0.0003,
-    contextWindow: 1000000,
-    description: 'Fast and cost-effective Google model',
-    icon: Zap,
-    category: 'fast'
-  },
-  // Meta Models
-  'llama-3.3-70b': {
-    name: 'Llama 3.3 70B',
-    maxTokens: 8192,
-    inputCostPer1kTokens: 0.0008,
-    outputCostPer1kTokens: 0.0008,
-    contextWindow: 128000,
-    description: 'Open-source powerhouse from Meta',
-    icon: Brain,
-    category: 'standard'
-  },
-  'llama-3.1-405b': {
-    name: 'Llama 3.1 405B',
-    maxTokens: 4096,
-    inputCostPer1kTokens: 0.003,
-    outputCostPer1kTokens: 0.003,
-    contextWindow: 128000,
-    description: 'Largest open-source model available',
-    icon: Brain,
-    category: 'flagship'
-  },
-  // Mistral Models
-  'mistral-large': {
-    name: 'Mistral Large',
-    maxTokens: 4096,
-    inputCostPer1kTokens: 0.002,
-    outputCostPer1kTokens: 0.006,
-    contextWindow: 128000,
-    description: 'Enterprise-grade from Mistral AI',
-    icon: Brain,
-    category: 'flagship'
-  },
-  'mixtral-8x22b': {
-    name: 'Mixtral 8x22B',
-    maxTokens: 4096,
-    inputCostPer1kTokens: 0.0006,
-    outputCostPer1kTokens: 0.0006,
-    contextWindow: 64000,
-    description: 'Mixture of Experts architecture',
-    icon: Gauge,
-    category: 'standard'
   }
 };
 
