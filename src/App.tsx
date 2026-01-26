@@ -64,6 +64,8 @@ import LiveDemos from '@/pages/LiveDemos';
 
 import ProductsPage from '@/pages/ProductsPage';
 import Docs from '@/pages/Docs';
+import SafeSuiteKnowledgeBase from '@/pages/docs/SafeSuiteKnowledgeBase';
+import AIStudioKnowledgeBase from '@/pages/docs/AIStudioKnowledgeBase';
 import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
 import Security from '@/pages/Security';
@@ -376,6 +378,16 @@ function AppRouter() {
         <Route path="/docs" element={
           <ProtectedRoute>
             <Docs />
+          </ProtectedRoute>
+        } />
+        <Route path="/docs/safesuite" element={
+          <ProtectedRoute>
+            <SafeSuiteKnowledgeBase />
+          </ProtectedRoute>
+        } />
+        <Route path="/docs/ai-studio" element={
+          <ProtectedRoute>
+            <AIStudioKnowledgeBase />
           </ProtectedRoute>
         } />
         <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
