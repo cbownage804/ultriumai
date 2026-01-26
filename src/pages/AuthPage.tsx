@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock, Building, Users, Eye, EyeOff, Mail, Shield, User } from 'lucide-react';
+import { Lock, Building, Users, Eye, EyeOff, Mail, Shield, User, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 import safesuiteLogo from '@/assets/safesuite-logo.png';
@@ -33,6 +33,7 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   // Prevent double-submit (can cause a successful signup + a second failing request,
   // leaving the UI stuck showing "Database error saving new user").
@@ -50,19 +51,37 @@ const AuthPage = () => {
 
   const from = location.state?.from?.pathname || '/hub';
 
-  // Handle post-login redirect based on return params
+  // Handle post-login redirect based on return params - with delay for subdomain redirects
   useEffect(() => {
-    if (user) {
+    if (user && !redirecting) {
       // If returning to a specific product, redirect to its subdomain
       if (returnProduct && PRODUCT_URLS[returnProduct]) {
-        const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
-        window.location.href = targetUrl;
+        setRedirecting(true);
+        
+        // Wait 1 second to ensure session cookie is fully written before redirecting
+        const timer = setTimeout(() => {
+          const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
+          window.location.href = targetUrl;
+        }, 1000);
+        
         return;
       }
       // Otherwise navigate to the Product Hub (or original location)
       navigate(from === '/' ? '/hub' : from, { replace: true });
     }
-  }, [user, navigate, from, returnProduct, returnPath]);
+  }, [user, navigate, from, returnProduct, returnPath, redirecting]);
+
+  // Show loading state while redirecting to subdomain
+  if (redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Redirecting to your product...</p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     // Don’t keep sign-up errors visible when switching tabs.

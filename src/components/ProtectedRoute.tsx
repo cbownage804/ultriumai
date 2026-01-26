@@ -25,10 +25,10 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   // This prevents redirect loops when landing on subdomain after main domain login
   useEffect(() => {
     if (isOnSubdomain && !loading && !user) {
-      // Wait a bit for session to be restored from cross-domain cookie
+      // Wait longer (1.5 seconds) for session to be restored from cross-domain cookie
       const timer = setTimeout(() => {
         setSessionCheckComplete(true);
-      }, 500);
+      }, 1500);
       return () => clearTimeout(timer);
     } else {
       setSessionCheckComplete(true);
@@ -40,7 +40,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">
+            {isOnSubdomain && !user ? 'Restoring your session...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );

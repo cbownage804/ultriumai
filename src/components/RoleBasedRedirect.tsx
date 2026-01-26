@@ -1,5 +1,7 @@
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { useRoleBasedRedirect } from '@/hooks/useRoleBasedRedirect';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 // Product subdomain URLs
 const PRODUCT_URLS: Record<string, string> = {
@@ -10,24 +12,38 @@ const PRODUCT_URLS: Record<string, string> = {
 export const RoleBasedRedirect = () => {
   const { getRedirectPath, shouldRedirectToRole, loading, profile } = useRoleBasedRedirect();
   const [searchParams] = useSearchParams();
+  const [redirecting, setRedirecting] = useState(false);
   
   // Check if redirecting to a specific product
   const returnProduct = searchParams.get('return');
   const returnPath = searchParams.get('path') || '/dashboard';
 
-  if (loading) {
+  // Handle subdomain redirect with delay to ensure cookie is written
+  useEffect(() => {
+    if (returnProduct && PRODUCT_URLS[returnProduct] && !loading && !redirecting) {
+      setRedirecting(true);
+      
+      // Wait 1 second to ensure session cookie is fully written before redirecting
+      const timer = setTimeout(() => {
+        const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
+        window.location.href = targetUrl;
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [returnProduct, returnPath, loading, redirecting]);
+
+  if (loading || redirecting) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">
+            {redirecting ? 'Redirecting to your product...' : 'Loading...'}
+          </p>
+        </div>
       </div>
     );
-  }
-
-  // If returning to a specific product subdomain, redirect there
-  if (returnProduct && PRODUCT_URLS[returnProduct]) {
-    const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
-    window.location.href = targetUrl;
-    return null;
   }
 
   if (shouldRedirectToRole()) {
