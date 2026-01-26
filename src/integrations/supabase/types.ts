@@ -15201,6 +15201,75 @@ export type Database = {
         }
         Relationships: []
       }
+      software_licenses: {
+        Row: {
+          auto_renew: boolean | null
+          billing_cycle: string | null
+          category: string | null
+          cost_per_seat: number | null
+          created_at: string
+          expiry_date: string | null
+          id: string
+          license_key: string | null
+          license_type: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          renewal_date: string | null
+          seats_total: number | null
+          seats_used: number | null
+          status: string | null
+          updated_at: string
+          user_id: string
+          vendor: string | null
+          version: string | null
+        }
+        Insert: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          category?: string | null
+          cost_per_seat?: number | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          license_key?: string | null
+          license_type?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          renewal_date?: string | null
+          seats_total?: number | null
+          seats_used?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+          vendor?: string | null
+          version?: string | null
+        }
+        Update: {
+          auto_renew?: boolean | null
+          billing_cycle?: string | null
+          category?: string | null
+          cost_per_seat?: number | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          license_key?: string | null
+          license_type?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          renewal_date?: string | null
+          seats_total?: number | null
+          seats_used?: number | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+          vendor?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
       subscribers: {
         Row: {
           cancel_at_period_end: boolean | null
