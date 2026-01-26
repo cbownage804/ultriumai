@@ -197,7 +197,7 @@ const AuthPage = () => {
     return {
       logo: ultraiumAiLogo,
       name: 'UltriumAI',
-      tagline: 'AI Development Agency',
+      tagline: 'UltriumAI',
       bgClass: 'from-primary/5 via-background to-secondary/5',
     };
   };
