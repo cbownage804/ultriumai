@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.3";
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -8,6 +9,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MINUTES = 15;
+const MAX_SUBMISSIONS_PER_WINDOW = 3;
+const MIN_FORM_FILL_TIME_MS = 3000; // 3 seconds minimum to fill form
 
 interface ContactFormData {
   firstName: string;
@@ -24,7 +30,27 @@ interface ContactFormData {
   whiteLabeled: string;
   message?: string;
   productInterests: string[];
+  // Anti-spam fields
+  _honeypot?: string;
+  _formLoadedAt?: number;
 }
+
+const getClientIP = (req: Request): string => {
+  // Check common headers for real IP (behind proxies/CDNs)
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    return forwardedFor.split(",")[0].trim();
+  }
+  const realIP = req.headers.get("x-real-ip");
+  if (realIP) {
+    return realIP;
+  }
+  const cfConnectingIP = req.headers.get("cf-connecting-ip");
+  if (cfConnectingIP) {
+    return cfConnectingIP;
+  }
+  return "unknown";
+};
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -41,40 +67,144 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const formData: ContactFormData = await req.json();
+    const clientIP = getClientIP(req);
     
-    console.log("Received contact form submission:", formData);
+    console.log("Received contact form submission from IP:", clientIP);
+
+    // === ANTI-SPAM CHECK 1: Honeypot field ===
+    if (formData._honeypot && formData._honeypot.length > 0) {
+      console.log("Honeypot triggered - rejecting submission");
+      // Return success to not tip off bots, but don't send email
+      return new Response(
+        JSON.stringify({ success: true, message: "Thank you for your submission" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // === ANTI-SPAM CHECK 2: Timing check ===
+    if (formData._formLoadedAt) {
+      const timeTaken = Date.now() - formData._formLoadedAt;
+      if (timeTaken < MIN_FORM_FILL_TIME_MS) {
+        console.log(`Form filled too fast (${timeTaken}ms) - rejecting submission`);
+        return new Response(
+          JSON.stringify({ success: true, message: "Thank you for your submission" }),
+          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
+    }
+
+    // === ANTI-SPAM CHECK 3: Rate limiting ===
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Check recent submissions from this IP
+    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MINUTES * 60 * 1000).toISOString();
+    
+    const { count, error: countError } = await supabase
+      .from("contact_form_rate_limits")
+      .select("*", { count: "exact", head: true })
+      .eq("ip_address", clientIP)
+      .gte("submitted_at", windowStart);
+
+    if (countError) {
+      console.error("Rate limit check error:", countError);
+      // Continue anyway - don't block legitimate users due to DB issues
+    } else if (count !== null && count >= MAX_SUBMISSIONS_PER_WINDOW) {
+      console.log(`Rate limit exceeded for IP ${clientIP}: ${count} submissions in ${RATE_LIMIT_WINDOW_MINUTES} minutes`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Too many submissions. Please try again in a few minutes." 
+        }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Record this submission for rate limiting
+    const { error: insertError } = await supabase
+      .from("contact_form_rate_limits")
+      .insert({ ip_address: clientIP });
+
+    if (insertError) {
+      console.error("Failed to record rate limit:", insertError);
+      // Continue anyway
+    }
+
+    // === INPUT VALIDATION ===
+    if (!formData.firstName?.trim() || !formData.lastName?.trim() || !formData.email?.trim()) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Name and email are required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid email address" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // === SANITIZE INPUTS ===
+    const sanitize = (str: string | undefined): string => {
+      if (!str) return "";
+      return str
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+        .replace(/javascript:/gi, "")
+        .replace(/on\w+\s*=/gi, "")
+        .trim()
+        .substring(0, 1000); // Limit length
+    };
+
+    const sanitizedData = {
+      firstName: sanitize(formData.firstName),
+      lastName: sanitize(formData.lastName),
+      email: formData.email.trim().toLowerCase().substring(0, 255),
+      phone: sanitize(formData.phone),
+      company: sanitize(formData.company),
+      businessType: sanitize(formData.businessType),
+      serviceProviderType: sanitize(formData.serviceProviderType),
+      businessSize: sanitize(formData.businessSize),
+      industry: sanitize(formData.industry),
+      projectType: sanitize(formData.projectType),
+      productType: sanitize(formData.productType),
+      whiteLabeled: sanitize(formData.whiteLabeled),
+      message: sanitize(formData.message)?.substring(0, 5000),
+      productInterests: Array.isArray(formData.productInterests) 
+        ? formData.productInterests.filter(id => typeof id === "string").slice(0, 20)
+        : []
+    };
+
+    console.log("Sanitized contact form data for:", sanitizedData.email);
 
     // Format the business type details
-    let businessTypeDetails = `Business Type: ${formData.businessType}`;
-    if (formData.businessType === 'service-provider' && formData.serviceProviderType) {
-      businessTypeDetails += ` (${formData.serviceProviderType === 'msp' ? 'MSP - Managed Service Provider' : 'MSSP - Managed Security Service Provider'})`;
-    } else if (formData.businessType === 'business' && formData.businessSize) {
-      const sizeMap = {
-        'small': 'Small Business',
-        'medium': 'Medium Business', 
-        'enterprise': 'Enterprise'
+    let businessTypeDetails = `Business Type: ${sanitizedData.businessType}`;
+    if (sanitizedData.businessType === "service-provider" && sanitizedData.serviceProviderType) {
+      businessTypeDetails += ` (${sanitizedData.serviceProviderType === "msp" ? "MSP - Managed Service Provider" : "MSSP - Managed Security Service Provider"})`;
+    } else if (sanitizedData.businessType === "business" && sanitizedData.businessSize) {
+      const sizeMap: Record<string, string> = {
+        "small": "Small Business",
+        "medium": "Medium Business", 
+        "enterprise": "Enterprise"
       };
-      businessTypeDetails += ` (${sizeMap[formData.businessSize as keyof typeof sizeMap] || formData.businessSize})`;
+      businessTypeDetails += ` (${sizeMap[sanitizedData.businessSize] || sanitizedData.businessSize})`;
     }
 
     // Format product interests
     const productNames = [
-      { id: 'ultriumgpt', name: 'UltriumGPT Platform' },
-      { id: 'safeemail', name: 'SafeEmail™' },
-      { id: 'safelink', name: 'SafeLink™' },
-      { id: 'safedoc', name: 'SafeDoc™' },
-      { id: 'safepass', name: 'SafePass™' },
-      { id: 'safenet', name: 'SafeNet™' },
-      { id: 'safecomp', name: 'SafeComp™' },
-      { id: 'safeweb', name: 'SafeWeb™' }
+      { id: "ultriumgpt", name: "UltriumGPT Platform" },
+      { id: "safeemail", name: "SafeEmail™" },
+      { id: "safelink", name: "SafeLink™" },
+      { id: "safedoc", name: "SafeDoc™" },
+      { id: "safepass", name: "SafePass™" },
+      { id: "safenet", name: "SafeNet™" },
+      { id: "safecomp", name: "SafeComp™" },
+      { id: "safeweb", name: "SafeWeb™" }
     ];
-
-    const selectedProducts = formData.productInterests.length > 0 
-      ? productNames
-          .filter(p => formData.productInterests.includes(p.id))
-          .map(p => p.name)
-          .join(', ')
-      : 'No specific products selected';
 
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -84,53 +214,56 @@ const handler = async (req: Request): Promise<Response> => {
         
         <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #1f2937; margin-top: 0;">Contact Information</h3>
-          <p><strong>Name:</strong> ${formData.firstName} ${formData.lastName}</p>
-          <p><strong>Email:</strong> <a href="mailto:${formData.email}">${formData.email}</a></p>
-          ${formData.phone ? `<p><strong>Phone:</strong> <a href="tel:${formData.phone}">${formData.phone}</a></p>` : ''}
-          ${formData.company ? `<p><strong>Company:</strong> ${formData.company}</p>` : ''}
+          <p><strong>Name:</strong> ${sanitizedData.firstName} ${sanitizedData.lastName}</p>
+          <p><strong>Email:</strong> <a href="mailto:${sanitizedData.email}">${sanitizedData.email}</a></p>
+          ${sanitizedData.phone ? `<p><strong>Phone:</strong> <a href="tel:${sanitizedData.phone}">${sanitizedData.phone}</a></p>` : ""}
+          ${sanitizedData.company ? `<p><strong>Company:</strong> ${sanitizedData.company}</p>` : ""}
         </div>
 
         <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #1f2937; margin-top: 0;">Business Details</h3>
           <p><strong>${businessTypeDetails}</strong></p>
-          ${formData.industry ? `<p><strong>Industry:</strong> ${formData.industry}</p>` : ''}
-          ${formData.projectType ? `<p><strong>Project Interest:</strong> ${formData.projectType}</p>` : ''}
+          ${sanitizedData.industry ? `<p><strong>Industry:</strong> ${sanitizedData.industry}</p>` : ""}
+          ${sanitizedData.projectType ? `<p><strong>Project Interest:</strong> ${sanitizedData.projectType}</p>` : ""}
         </div>
 
         <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #1f2937; margin-top: 0;">Solution Preferences</h3>
-          <p><strong>Product Type:</strong> ${formData.productType === 'custom' ? 'Custom Solution' : 'Prebuilt Solution'}</p>
-          <p><strong>White Labeling:</strong> ${formData.whiteLabeled === 'yes' ? 'Yes, wants white-labeled solution' : 'No, UltriumAI branding is fine'}</p>
+          <p><strong>Product Type:</strong> ${sanitizedData.productType === "custom" ? "Custom Solution" : "Prebuilt Solution"}</p>
+          <p><strong>White Labeling:</strong> ${sanitizedData.whiteLabeled === "yes" ? "Yes, wants white-labeled solution" : "No, UltriumAI branding is fine"}</p>
           <p><strong>Product Interests:</strong></p>
           <ul style="margin-left: 20px;">
-            ${formData.productInterests.length > 0 
+            ${sanitizedData.productInterests.length > 0 
               ? productNames
-                  .filter(p => formData.productInterests.includes(p.id))
+                  .filter(p => sanitizedData.productInterests.includes(p.id))
                   .map(p => `<li>${p.name}</li>`)
-                  .join('')
-              : '<li><em>No specific products selected</em></li>'
+                  .join("")
+              : "<li><em>No specific products selected</em></li>"
             }
           </ul>
         </div>
 
-        ${formData.message ? `
+        ${sanitizedData.message ? `
         <div style="background-color: #fefce8; padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h3 style="color: #1f2937; margin-top: 0;">Message</h3>
-          <p style="white-space: pre-wrap;">${formData.message}</p>
+          <p style="white-space: pre-wrap;">${sanitizedData.message}</p>
         </div>
-        ` : ''}
+        ` : ""}
 
         <div style="background-color: #e5e7eb; padding: 15px; border-radius: 8px; margin-top: 30px; text-align: center;">
           <p style="margin: 0; color: #6b7280; font-size: 14px;">
-            📅 Submitted on ${new Date().toLocaleString('en-US', { 
-              timeZone: 'America/New_York',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZoneName: 'short'
+            📅 Submitted on ${new Date().toLocaleString("en-US", { 
+              timeZone: "America/New_York",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZoneName: "short"
             })}
+          </p>
+          <p style="margin: 5px 0 0 0; color: #9ca3af; font-size: 12px;">
+            IP: ${clientIP}
           </p>
         </div>
       </div>
@@ -139,14 +272,14 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "UltriumAI Support <support@send.ultriumai.com>",
       to: ["support@ultriumai.com"],
-      replyTo: formData.email,
-      subject: `🚀 New Contact Form: ${formData.firstName} ${formData.lastName} - ${formData.businessType === 'service-provider' ? 'Service Provider' : 'Business'} Inquiry`,
+      replyTo: sanitizedData.email,
+      subject: `🚀 New Contact Form: ${sanitizedData.firstName} ${sanitizedData.lastName} - ${sanitizedData.businessType === "service-provider" ? "Service Provider" : "Business"} Inquiry`,
       html: emailHtml,
     });
 
     console.log("Email send response:", JSON.stringify(emailResponse, null, 2));
 
-    // Check if Resend returned an error (e.g., 403 domain not authorized)
+    // Check if Resend returned an error
     if (emailResponse.error) {
       console.error("Resend API error:", emailResponse.error);
       return new Response(
@@ -156,10 +289,7 @@ const handler = async (req: Request): Promise<Response> => {
         }),
         {
           status: emailResponse.error.statusCode || 500,
-          headers: { 
-            "Content-Type": "application/json", 
-            ...corsHeaders 
-          },
+          headers: { "Content-Type": "application/json", ...corsHeaders },
         }
       );
     }
@@ -172,10 +302,7 @@ const handler = async (req: Request): Promise<Response> => {
       }), 
       {
         status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   } catch (error: any) {
@@ -187,10 +314,7 @@ const handler = async (req: Request): Promise<Response> => {
       }),
       {
         status: 500,
-        headers: { 
-          "Content-Type": "application/json", 
-          ...corsHeaders 
-        },
+        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }

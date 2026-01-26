@@ -4,7 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { ContactFormData, INITIAL_FORM_DATA, PRODUCTS } from "@/types/contact";
 
 export const useContactForm = () => {
-  const [formData, setFormData] = useState<ContactFormData>(INITIAL_FORM_DATA);
+  // Initialize with fresh timestamp each time form loads
+  const [formData, setFormData] = useState<ContactFormData>({
+    ...INITIAL_FORM_DATA,
+    _formLoadedAt: Date.now()
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -58,15 +62,27 @@ export const useContactForm = () => {
         description: "Thank you for your interest. We'll get back to you within 24 hours.",
       });
       
-      // Reset form
-      setFormData(INITIAL_FORM_DATA);
-    } catch (error) {
-      console.error('Error submitting contact form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send message. Please try again or call us directly.",
-        variant: "destructive",
+      // Reset form with fresh timestamp
+      setFormData({
+        ...INITIAL_FORM_DATA,
+        _formLoadedAt: Date.now()
       });
+    } catch (error: any) {
+      // Handle rate limiting specifically
+      if (error?.message?.includes('Too many submissions')) {
+        toast({
+          title: "Please slow down",
+          description: "Too many submissions. Please wait a few minutes before trying again.",
+          variant: "destructive",
+        });
+      } else {
+        console.error('Error submitting contact form:', error);
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again or call us directly.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
