@@ -80,36 +80,19 @@ const AuthPage = () => {
     />;
   }
 
-  useEffect(() => {
-    // Don’t keep sign-up errors visible when switching tabs.
-    setError('');
-  }, [activeTab]);
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (submitLockRef.current) return;
     submitLockRef.current = true;
-
+    
     setLoading(true);
     setError('');
 
     try {
       const { error } = await signIn(email, password);
-      
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please check your credentials and try again.');
-        } else if (error.message.includes('Email not confirmed')) {
-          setError('Please check your email and click the confirmation link before signing in.');
-        } else {
-          setError(error.message);
-        }
-      } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
+        setError(mapAuthError(error));
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -121,52 +104,42 @@ const AuthPage = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (submitLockRef.current) return;
     submitLockRef.current = true;
 
-    setLoading(true);
-    setError('');
-
     if (password !== confirmPassword) {
       setError('Passwords do not match');
-      setLoading(false);
       submitLockRef.current = false;
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setLoading(false);
+      setError('Password must be at least 6 characters');
       submitLockRef.current = false;
       return;
     }
 
+    setLoading(true);
+    setError('');
+
     try {
-      const { error } = await signUp(email, password, {
+      const metadata = {
         full_name: fullName,
         company_name: companyName,
         account_type: accountType,
-      });
+      };
 
+      const { error } = await signUp(email, password, metadata);
       if (error) {
-        if (error.message.includes('User already registered')) {
-          setError('An account with this email already exists. Please sign in instead.');
-        } else if (
-          error.message.includes('users_email_partial_key') ||
-          error.message.toLowerCase().includes('duplicate key value')
-        ) {
-          setError('An account with this email already exists. Please sign in instead.');
-        } else if (error.message.includes('Database error saving new user')) {
-          setError(
-            'This email may already be registered. Try signing in, or check your inbox/spam for a confirmation email before trying again.'
-          );
-        } else {
-          setError(error.message);
-        }
+        setError(mapAuthError(error));
       } else {
         setSignupSuccess(true);
         setActiveTab('signin');
+        toast({
+          title: "Account created!",
+          description: "Please check your email to verify your account.",
+        });
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -176,22 +149,58 @@ const AuthPage = () => {
     }
   };
 
+  const mapAuthError = (error: any): string => {
+    const message = error?.message?.toLowerCase() || '';
+    
+    if (message.includes('invalid login credentials')) {
+      return 'Invalid email or password. Please check your credentials and try again.';
+    }
+    if (message.includes('email not confirmed')) {
+      return 'Please verify your email address before signing in. Check your inbox for the confirmation link.';
+    }
+    if (message.includes('user already registered') || message.includes('already been registered')) {
+      return 'An account with this email already exists. Please sign in instead.';
+    }
+    if (message.includes('password')) {
+      return 'Password must be at least 6 characters long.';
+    }
+    if (message.includes('rate limit')) {
+      return 'Too many attempts. Please wait a moment and try again.';
+    }
+    if (message.includes('network') || message.includes('fetch')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    
+    return error?.message || 'An error occurred. Please try again.';
+  };
+
+  const getAccountTypeIcon = () => {
+    switch (accountType) {
+      case 'business':
+        return <Building className="h-4 w-4" />;
+      case 'msp':
+        return <Users className="h-4 w-4" />;
+      default:
+        return <User className="h-4 w-4" />;
+    }
+  };
+
   // Determine branding based on return product
   const getBranding = () => {
     if (returnProduct === 'safesuite') {
       return {
         logo: safesuiteLogo,
         name: 'SafeSuite',
-        tagline: 'Personal Security Suite',
-        bgClass: 'from-emerald-500/5 via-background to-emerald-900/5',
+        tagline: 'Personal & Business Security',
+        bgClass: 'from-emerald-500/5 via-background to-emerald-500/5',
       };
     }
     if (returnProduct === 'vanguard') {
       return {
         logo: vanguardLogo,
         name: 'Vanguard',
-        tagline: 'Enterprise Security Platform',
-        bgClass: 'from-cyan-500/5 via-background to-purple-600/5',
+        tagline: 'Enterprise Security Operations',
+        bgClass: 'from-cyan-500/5 via-background to-purple-500/5',
       };
     }
     return {
@@ -210,7 +219,9 @@ const AuthPage = () => {
         {/* Header - Dynamic Branding */}
         <div className="text-center">
           <div className="flex justify-center mb-2">
-            <img src={branding.logo} alt={branding.name} className="h-14 w-auto" />
+            <Link to="/">
+              <img src={branding.logo} alt={branding.name} className="h-14 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
+            </Link>
           </div>
           <p className="text-sm text-muted-foreground">{branding.tagline}</p>
           {returnProduct && (
@@ -252,50 +263,46 @@ const AuthPage = () => {
                 </AlertDescription>
               </Alert>
             )}
+
             {error && (
-              <Alert className="mb-4 border-destructive/50 text-destructive">
-                <AlertDescription>
-                  {error}
-                  {error.toLowerCase().includes('email not confirmed') && (
-                    <span className="block mt-1 text-muted-foreground">
-                      Can't find the confirmation email? <strong>Check your spam or junk folder.</strong>
-                    </span>
-                  )}
-                </AlertDescription>
+              <Alert className="mb-4 border-destructive/50 bg-destructive/10">
+                <AlertDescription className="text-destructive">{error}</AlertDescription>
               </Alert>
             )}
 
-            {/* For Vanguard, only show sign-in (no tabs needed) */}
-            {returnProduct === 'vanguard' ? (
+            {/* Sign In Form - Always shown for Vanguard, or when signin tab is active */}
+            {(returnProduct === 'vanguard' || activeTab === 'signin') && (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="signin-email"
+                    id="email"
                     type="email"
                     placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={loading}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <Label htmlFor="password">Password</Label>
                   <div className="relative">
                     <Input
-                      id="signin-password"
+                      id="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                     <Button
                       type="button"
                       variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -304,206 +311,171 @@ const AuthPage = () => {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing In...' : 'Sign In'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
                 </Button>
-                
-                <div className="flex flex-col items-center gap-2 pt-2">
-                  <Link to="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+
+                <div className="text-center space-y-2">
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-sm text-primary hover:underline block"
+                  >
                     Forgot your password?
                   </Link>
-                </div>
-
-                <div className="mt-4 p-4 rounded-lg bg-muted/50 border border-border text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Don't have access?{' '}
-                    <a 
-                      href="https://vanguard.ultriumai.com/auth" 
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Request an invitation
-                    </a>
-                  </p>
+                  <Link 
+                    to="/mfa-recovery" 
+                    className="text-sm text-muted-foreground hover:text-primary hover:underline block"
+                  >
+                    Lost access to your authenticator?
+                  </Link>
                 </div>
               </form>
-            ) : (
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* Sign In Tab */}
-                <TabsContent value="signin">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-email">Email</Label>
-                      <Input
-                        id="signin-email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
+            )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="signin-password">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="signin-password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Enter your password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
+            {/* Sign Up Form - Hidden for Vanguard */}
+            {returnProduct !== 'vanguard' && activeTab === 'signup' && (
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-fullname">Full Name</Label>
+                  <Input
+                    id="signup-fullname"
+                    type="text"
+                    placeholder="John Doe"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="account-type">Account Type</Label>
+                  <Select value={accountType} onValueChange={setAccountType}>
+                    <SelectTrigger>
+                      <div className="flex items-center gap-2">
+                        {getAccountTypeIcon()}
+                        <SelectValue placeholder="Select account type" />
                       </div>
-                    </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="individual">
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Individual
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="business">
+                        <div className="flex items-center gap-2">
+                          <Building className="h-4 w-4" />
+                          Business
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="msp">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          MSP / IT Provider
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Signing In...' : 'Sign In'}
+                {(accountType === 'business' || accountType === 'msp') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="company-name">Company Name</Label>
+                    <Input
+                      id="company-name"
+                      type="text"
+                      placeholder="Your Company"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create a password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
-                    
-                    <div className="flex flex-col items-center gap-2 pt-2">
-                      <Link to="/safesuite/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
-                        Forgot your password?
-                      </Link>
-                      <Link to="/safesuite/auth/mfa-recovery" className="text-sm text-muted-foreground hover:text-primary">
-                        Lost access to your authenticator?
-                      </Link>
-                    </div>
-                  </form>
-                </TabsContent>
+                  </div>
+                </div>
 
-                {/* Sign Up Tab */}
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name">Full Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="company-name">Company Name</Label>
-                      <Input
-                        id="company-name"
-                        type="text"
-                        placeholder="Your Company Inc."
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="account-type">Account Type</Label>
-                      <Select value={accountType} onValueChange={setAccountType}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select account type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="individual">
-                            <div className="flex items-center">
-                              <User className="h-4 w-4 mr-2" />
-                              Individual
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="business">
-                            <div className="flex items-center">
-                              <Building className="h-4 w-4 mr-2" />
-                              Business
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="msp">
-                            <div className="flex items-center">
-                              <Users className="h-4 w-4 mr-2" />
-                              MSP/MSSP Partner
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="signup-password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Create a strong password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirm Password</Label>
-                      <Input
-                        id="confirm-password"
-                        type="password"
-                        placeholder="Confirm your password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? 'Creating Account...' : 'Create Account'}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="mr-2 h-4 w-4" />
+                      Create Account
+                    </>
+                  )}
+                </Button>
+              </form>
             )}
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-muted-foreground">
-          <p>
-            By continuing, you agree to our{' '}
-            <a href="#" className="text-primary hover:underline">
-              Terms of Service
-            </a>{' '}
-            and{' '}
-            <a href="#" className="text-primary hover:underline">
-              Privacy Policy
-            </a>
-          </p>
-        </div>
+        {/* Footer */}
+        <p className="text-center text-xs text-muted-foreground">
+          By continuing, you agree to our{' '}
+          <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+          {' '}and{' '}
+          <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+        </p>
       </div>
     </div>
   );
