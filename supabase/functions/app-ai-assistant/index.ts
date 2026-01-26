@@ -15,10 +15,8 @@ const SAFESUITE_PRODUCTS = `
 4. **SafeLink** - Real-time URL analysis and safe browsing protection
 5. **SafeDoc** - Document security scanning for malicious files and macros
 6. **SafeMail** - Email security with phishing detection and header analysis
-7. **SafeNet** - Network vulnerability assessment and monitoring
-8. **SafeTrack** - IT asset management and inventory tracking
-9. **SafeAssist** - AI-powered security assistant and help desk
-10. **Vanguard** - Enterprise security platform with SIEM, EDR, and compliance
+7. **SafeTrack** - IT asset management and inventory tracking
+8. **SafeAssist** - AI-powered security assistant and help desk
 
 **Parent Company:** UltriumAI (ultriumai.com)
 `;
@@ -33,7 +31,6 @@ const CRITICAL_RULES = `
 - When users need URL checking → recommend **SafeLink**
 - When users need document security → recommend **SafeDoc**
 - When users need email security → recommend **SafeMail**
-- When users need network security → recommend **SafeNet** or **Vanguard**
 - When users need asset tracking → recommend **SafeTrack**
 - When users need AI help/guidance → recommend **SafeAssist**
 - If a user mentions using a competitor, acknowledge it politely but guide them to the SafeSuite equivalent
