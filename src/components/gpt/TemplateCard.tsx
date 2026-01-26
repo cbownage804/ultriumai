@@ -8,6 +8,7 @@ import {
   Sparkles,
   Heart,
   Star,
+  Eye,
 } from 'lucide-react';
 import { GPTTemplate } from '@/types/templates';
 import { TemplateRatingStars } from './TemplateRatingStars';
@@ -19,6 +20,7 @@ interface TemplateCardProps {
   onInstall: () => void;
   onToggleFavorite: () => void;
   onRate: () => void;
+  onPreview?: () => void;
   isFavorite: boolean;
   userRating?: number;
   isInstalling: boolean;
@@ -31,6 +33,7 @@ export function TemplateCard({
   onInstall,
   onToggleFavorite,
   onRate,
+  onPreview,
   isFavorite,
   userRating,
   isInstalling,
@@ -152,6 +155,18 @@ export function TemplateCard({
           >
             Details
           </Button>
+          {onPreview && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview();
+              }}
+            >
+              <Eye className="h-3 w-3" />
+            </Button>
+          )}
           <Button 
             size="sm" 
             className="flex-1"
