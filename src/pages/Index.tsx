@@ -23,6 +23,13 @@ const Index = () => {
 
   // Redirect authenticated users to the Product Hub
   useEffect(() => {
+    // Check if we're in a sign-out flow (indicated by sessionStorage flag)
+    const signingOut = sessionStorage.getItem('signing-out');
+    if (signingOut) {
+      sessionStorage.removeItem('signing-out');
+      return; // Don't redirect during sign-out
+    }
+    
     if (!loading && user) {
       navigate('/hub', { replace: true });
     }
