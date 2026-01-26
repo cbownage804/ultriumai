@@ -70,25 +70,45 @@ serve(async (req) => {
       }
       logStep("SafePass entries counted", { count: usage.safepass });
 
-      // SafeScan: Count scans this billing period (incremental)
-      const { count: safescanCount, error: safescanError } = await supabaseClient
-        .from('safescan_results')
+      // SafeScan: Aggregate counts from multiple scan tables this billing period
+      let totalScans = 0;
+      
+      // Document scans
+      const { count: docScanCount } = await supabaseClient
+        .from('document_scans')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .gte('created_at', periodStart.toISOString())
         .lt('created_at', periodEnd.toISOString());
+      if (docScanCount) totalScans += docScanCount;
       
-      if (!safescanError && safescanCount !== null) {
-        usage.safescan = safescanCount;
-      }
-      logStep("SafeScan scans counted", { count: usage.safescan });
+      // Email scans
+      const { count: emailScanCount } = await supabaseClient
+        .from('email_scans')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', periodStart.toISOString())
+        .lt('created_at', periodEnd.toISOString());
+      if (emailScanCount) totalScans += emailScanCount;
+      
+      // Security scans (URL scans)
+      const { count: secScanCount } = await supabaseClient
+        .from('security_scans')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', periodStart.toISOString())
+        .lt('created_at', periodEnd.toISOString());
+      if (secScanCount) totalScans += secScanCount;
+      
+      usage.safescan = totalScans;
+      logStep("SafeScan scans counted", { count: usage.safescan, docScanCount, emailScanCount, secScanCount });
 
-      // SafeWeb: Count monitored assets
+      // SafeWeb: Count monitored assets (status = 'active', not is_active column)
       const { count: safewebCount, error: safewebError } = await supabaseClient
         .from('safeweb_assets')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .eq('is_active', true);
+        .eq('status', 'active');
       
       if (!safewebError && safewebCount !== null) {
         usage.safeweb = safewebCount;
