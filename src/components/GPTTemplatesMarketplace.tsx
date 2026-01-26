@@ -176,8 +176,8 @@ const GPTTemplatesMarketplace = () => {
             Compare
           </Button>
           
-          {/* Admin Test Suite Link */}
-          {(user?.email?.endsWith('@ultriumai.com') || subscription.subscription_tier === 'enterprise') && (
+          {/* Admin Test Suite Link - UltriumAI employees only */}
+          {user?.email?.endsWith('@ultriumai.com') && (
             <Button 
               variant="outline" 
               size="sm"

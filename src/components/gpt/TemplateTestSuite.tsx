@@ -13,13 +13,15 @@ import {
   ChevronDown,
   ChevronRight,
   Copy,
-  RefreshCw
+  RefreshCw,
+  ShieldAlert
 } from "lucide-react";
 import { gptTemplates } from "@/data/gptTemplates";
 import { GPTTemplate } from "@/types/templates";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TemplateTestResult {
   templateId: string;
@@ -33,9 +35,25 @@ interface TemplateTestResult {
 
 const TemplateTestSuite = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [testResults, setTestResults] = useState<TemplateTestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set());
+
+  // Restrict access to UltriumAI employees only
+  const isEmployee = user?.email?.endsWith('@ultriumai.com');
+  
+  if (!isEmployee) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Access Restricted</h2>
+        <p className="text-muted-foreground max-w-md">
+          The Template Test Suite is an internal tool available only to UltriumAI employees.
+        </p>
+      </div>
+    );
+  }
 
   const initializeTests = () => {
     return gptTemplates.map(template => ({
@@ -82,9 +100,9 @@ const TemplateTestSuite = () => {
         };
       }
 
-      // Check if response is meaningful - handle different response formats
+      // Check if response is meaningful - just check length, don't flag "error" as that's common in technical responses
       const response = data?.message || data?.generatedText || data?.choices?.[0]?.message?.content || data?.response || data?.content || '';
-      const isPassed = response.length > 50 && !response.toLowerCase().includes('error');
+      const isPassed = response.length > 50;
 
       return {
         templateId: template.id,
