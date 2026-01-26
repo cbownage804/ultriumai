@@ -30,13 +30,26 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new Error("No authorization header provided");
+    }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
+    
+    // Use getClaims for JWT validation - doesn't require session to exist
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      throw new Error(`Authentication error: ${claimsError?.message || 'Invalid token'}`);
+    }
+    
+    const userId = claimsData.claims.sub;
+    const userEmail = claimsData.claims.email as string;
+    
+    if (!userId || !userEmail) {
+      throw new Error("User not authenticated or email not available");
+    }
+    
+    const user = { id: userId, email: userEmail };
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Give all UltriumAI employees enterprise status - check this FIRST before cache
