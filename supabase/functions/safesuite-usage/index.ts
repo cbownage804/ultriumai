@@ -51,16 +51,7 @@ serve(async (req) => {
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     // If no product specified and action is 'get', return all usage
     if (action === 'get' && !product) {
-      const { data: usageData, error: usageError } = await supabaseClient
-        .from('safesuite_usage')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('period_start', periodStart.toISOString())
-        .lt('period_end', periodEnd.toISOString());
-
-      if (usageError) throw usageError;
-
-      // Transform to expected format
+      // Initialize usage object
       const usage = {
         safepass: 0,
         safescan: 0,
@@ -68,11 +59,52 @@ serve(async (req) => {
         safetrack: 0
       };
 
-      for (const record of usageData || []) {
-        if (record.product in usage) {
-          usage[record.product as keyof typeof usage] = record.usage_count;
-        }
+      // SafePass: Count actual password entries (not incremental tracking)
+      const { count: safepassCount, error: safepassError } = await supabaseClient
+        .from('safepass_entries')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      if (!safepassError && safepassCount !== null) {
+        usage.safepass = safepassCount;
       }
+      logStep("SafePass entries counted", { count: usage.safepass });
+
+      // SafeScan: Count scans this billing period (incremental)
+      const { count: safescanCount, error: safescanError } = await supabaseClient
+        .from('safescan_results')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('created_at', periodStart.toISOString())
+        .lt('created_at', periodEnd.toISOString());
+      
+      if (!safescanError && safescanCount !== null) {
+        usage.safescan = safescanCount;
+      }
+      logStep("SafeScan scans counted", { count: usage.safescan });
+
+      // SafeWeb: Count monitored assets
+      const { count: safewebCount, error: safewebError } = await supabaseClient
+        .from('safeweb_assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+      
+      if (!safewebError && safewebCount !== null) {
+        usage.safeweb = safewebCount;
+      }
+      logStep("SafeWeb assets counted", { count: usage.safeweb });
+
+      // SafeTrack: Count tracked assets
+      const { count: safetrackCount, error: safetrackError } = await supabaseClient
+        .from('assets')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      
+      if (!safetrackError && safetrackCount !== null) {
+        usage.safetrack = safetrackCount;
+      }
+      logStep("SafeTrack assets counted", { count: usage.safetrack });
 
       logStep("All usage retrieved", usage);
 
