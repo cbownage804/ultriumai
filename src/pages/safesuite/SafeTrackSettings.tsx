@@ -54,7 +54,6 @@ export default function SafeTrackSettings() {
         <p className="text-muted-foreground">
           Configure your asset tracking preferences
         </p>
-        </p>
       </div>
 
       {/* Asset Management */}
