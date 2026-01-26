@@ -441,7 +441,7 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
         {/* Admin link - only visible to verified UltriumAI employees */}
         {isAdmin && (
           <Link
-            to={isSafeSuiteDomain() ? '/admin/safesuite' : '/safesuite/admin'}
+            to="/admin"
             className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-orange-500 hover:text-orange-400 transition-colors"
             onClick={() => onItemClick?.()}
           >
