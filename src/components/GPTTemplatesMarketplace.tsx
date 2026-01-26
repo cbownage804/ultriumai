@@ -6,15 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb, TestTube } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb, TestTube, Heart, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useTemplateFavorites } from "@/hooks/useTemplateFavorites";
+import { useTemplateRatings } from "@/hooks/useTemplateRatings";
 import { gptTemplates } from "@/data/gptTemplates";
 import { GPTTemplate } from "@/types/templates";
 import { TemplateFeatureBadges } from "@/components/chat/TemplateFeatureBadges";
+import { FeaturedTemplatesSection } from "@/components/gpt/FeaturedTemplatesSection";
+import { RecentAndFavoritesSection } from "@/components/gpt/RecentAndFavoritesSection";
+import { TemplateCard } from "@/components/gpt/TemplateCard";
+import { TemplateRatingStars } from "@/components/gpt/TemplateRatingStars";
+import { TemplateRatingDialog } from "@/components/gpt/TemplateRatingDialog";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 const GPTTemplatesMarketplace = () => {
   const navigate = useNavigate();
@@ -22,12 +31,16 @@ const GPTTemplatesMarketplace = () => {
   const { createGPT, canCreateMore, gpts, limits } = useCustomGPTs();
   const { subscription, createCheckout } = useSubscription();
   const { toast } = useToast();
+  const { favorites, toggleFavorite, trackUsage, isFavorite, getRecentTemplateIds } = useTemplateFavorites();
+  const { rateTemplate, getUserRating, getAggregatedRating } = useTemplateRatings();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
   const [selectedTemplate, setSelectedTemplate] = useState<GPTTemplate | null>(null);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [templateToRate, setTemplateToRate] = useState<GPTTemplate | null>(null);
 
   const categories = [
     "all",
@@ -45,10 +58,17 @@ const GPTTemplatesMarketplace = () => {
     .sort((a, b) => {
       switch (sortBy) {
         case "popular":
+          return b.use_count - a.use_count;
+        case "rating":
+          return b.rating - a.rating;
         case "newest":
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case "name":
           return a.name.localeCompare(b.name);
+        case "favorites":
+          const aFav = isFavorite(a.id) ? 1 : 0;
+          const bFav = isFavorite(b.id) ? 1 : 0;
+          return bFav - aFav;
         default:
           return 0;
       }
@@ -84,6 +104,9 @@ const GPTTemplatesMarketplace = () => {
       const result = await createGPT(newGPT);
       
       if (result) {
+        // Track usage
+        trackUsage(template.id);
+        
         toast({
           title: "Template installed!",
           description: `${template.name} is ready to use. Redirecting to chat...`,
@@ -103,6 +126,17 @@ const GPTTemplatesMarketplace = () => {
     } finally {
       setIsInstalling(false);
     }
+  };
+
+  const handleRateTemplate = (template: GPTTemplate) => {
+    setTemplateToRate(template);
+    setRatingDialogOpen(true);
+  };
+
+  const handleSubmitRating = (templateId: string, rating: number, review?: string) => {
+    rateTemplate(templateId, rating, review);
+    setRatingDialogOpen(false);
+    setTemplateToRate(null);
   };
 
   return (
@@ -186,6 +220,28 @@ const GPTTemplatesMarketplace = () => {
         </Card>
       )}
 
+      {/* Featured Templates Section */}
+      <FeaturedTemplatesSection
+        templates={gptTemplates}
+        onInstall={handleInstallTemplate}
+        onViewDetails={setSelectedTemplate}
+        isInstalling={isInstalling}
+        canInstall={canCreateMore}
+      />
+
+      {/* Recent & Favorites Section */}
+      <RecentAndFavoritesSection
+        recentTemplateIds={getRecentTemplateIds()}
+        favoriteTemplateIds={favorites}
+        allTemplates={gptTemplates}
+        onInstall={handleInstallTemplate}
+        onToggleFavorite={toggleFavorite}
+        isInstalling={isInstalling}
+        canInstall={canCreateMore}
+      />
+
+      <Separator />
+
       {/* Filters & Search */}
       <div className="flex gap-4 items-center flex-wrap">
         <div className="relative flex-1 min-w-64">
@@ -216,7 +272,9 @@ const GPTTemplatesMarketplace = () => {
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="popular">Popular</SelectItem>
+            <SelectItem value="popular">Most Popular</SelectItem>
+            <SelectItem value="rating">Highest Rated</SelectItem>
+            <SelectItem value="favorites">My Favorites</SelectItem>
             <SelectItem value="newest">Newest</SelectItem>
             <SelectItem value="name">A-Z</SelectItem>
           </SelectContent>
@@ -224,7 +282,7 @@ const GPTTemplatesMarketplace = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-primary">{gptTemplates.length}</div>
@@ -237,6 +295,18 @@ const GPTTemplatesMarketplace = () => {
             <div className="text-sm text-muted-foreground">Categories</div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-red-500">{favorites.length}</div>
+            <div className="text-sm text-muted-foreground">Your Favorites</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-500">{getRecentTemplateIds().length}</div>
+            <div className="text-sm text-muted-foreground">Recently Used</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Templates Grid */}
@@ -246,233 +316,19 @@ const GPTTemplatesMarketplace = () => {
             key={template.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
+            transition={{ delay: index * 0.03 }}
           >
-            <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group h-full flex flex-col border-2 hover:border-primary/30">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: `${template.config.theme_color}15` }}
-                    >
-                      {template.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg leading-tight break-words">{template.name}</CardTitle>
-                      <Badge 
-                        variant="outline" 
-                        className="text-[10px] mt-1"
-                        style={{ borderColor: template.config.theme_color, color: template.config.theme_color }}
-                      >
-                        {template.category}
-                      </Badge>
-                    </div>
-                  </div>
-                  {template.config.enable_web_search && (
-                    <Badge variant="secondary" className="text-[10px] gap-1 shrink-0">
-                      <Globe className="h-3 w-3" />
-                    </Badge>
-                  )}
-                </div>
-                <CardDescription className="mt-2 text-sm">
-                  {template.description}
-                </CardDescription>
-              </CardHeader>
-              
-              <CardContent className="pt-0 flex-1 flex flex-col justify-between">
-                <div className="space-y-4">
-                  {/* Features Preview */}
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      Key Capabilities
-                    </p>
-                    <div className="grid grid-cols-1 gap-1.5">
-                      {template.features.slice(0, 3).map((feature, idx) => (
-                        <div key={idx} className="flex items-start gap-2 text-xs text-muted-foreground">
-                          <CheckCircle2 className="h-3 w-3 text-primary shrink-0 mt-0.5" />
-                          <span>{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Starter Questions Preview */}
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                      <Lightbulb className="h-3 w-3" />
-                      Try asking
-                    </p>
-                    <div className="text-[11px] text-muted-foreground bg-muted/50 rounded-md p-2 italic">
-                      "{template.starter_questions[0]}"
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2 mt-4 pt-4 border-t">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        Details
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <div className="flex items-center gap-3">
-                          <div 
-                            className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl"
-                            style={{ backgroundColor: `${template.config.theme_color}15` }}
-                          >
-                            {template.icon}
-                          </div>
-                          <div>
-                            <DialogTitle className="text-xl">{template.name}</DialogTitle>
-                            <Badge 
-                              variant="outline" 
-                              className="text-xs mt-1"
-                              style={{ borderColor: template.config.theme_color, color: template.config.theme_color }}
-                            >
-                              {template.category}
-                            </Badge>
-                          </div>
-                        </div>
-                        <DialogDescription className="mt-2">
-                          {template.description}
-                        </DialogDescription>
-                      </DialogHeader>
-                      
-                      <div className="space-y-6 mt-4">
-                        {/* Features */}
-                        <div>
-                          <h4 className="font-medium mb-3 flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                            What You Get
-                          </h4>
-                          <div className="grid grid-cols-2 gap-3">
-                            {template.features.map((feature, index) => (
-                              <div 
-                                key={index} 
-                                className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm"
-                              >
-                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                                {feature}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {/* Starter Questions */}
-                        <div>
-                          <h4 className="font-medium mb-3 flex items-center gap-2">
-                            <Lightbulb className="h-4 w-4 text-primary" />
-                            Example Prompts
-                          </h4>
-                          <div className="space-y-2">
-                            {template.starter_questions.map((question, index) => (
-                              <div 
-                                key={index} 
-                                className="text-sm bg-muted/50 p-3 rounded-lg border-l-2"
-                                style={{ borderColor: template.config.theme_color }}
-                              >
-                                "{question}"
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Tags */}
-                        <div>
-                          <h4 className="font-medium mb-2">Tags</h4>
-                          <div className="flex flex-wrap gap-2">
-                            {template.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {/* Install Section */}
-                        <div className="space-y-3 pt-4 border-t">
-                          {!canCreateMore && (
-                            <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
-                              <div className="flex items-center gap-2 text-warning mb-2">
-                                <Lock className="h-4 w-4" />
-                                <span className="font-medium text-sm">Premium Feature</span>
-                              </div>
-                              <p className="text-xs text-muted-foreground mb-3">
-                                You've reached your {subscription.subscription_tier} plan limit. 
-                                Upgrade to install templates and create unlimited GPTs.
-                              </p>
-                              <Button 
-                                onClick={() => createCheckout('premium', 'monthly')}
-                                size="sm"
-                                className="w-full"
-                              >
-                                <Crown className="h-3 w-3 mr-1" />
-                                Upgrade to Premium
-                              </Button>
-                            </div>
-                          )}
-                          <Button 
-                            onClick={() => handleInstallTemplate(template)}
-                            disabled={!canCreateMore || isInstalling}
-                            className="w-full h-11"
-                            variant={!canCreateMore ? "secondary" : "default"}
-                            style={canCreateMore ? { backgroundColor: template.config.theme_color } : {}}
-                          >
-                            {!canCreateMore ? (
-                              <>
-                                <Lock className="h-4 w-4 mr-2" />
-                                Upgrade to Use
-                              </>
-                            ) : isInstalling ? (
-                              <>
-                                <Play className="h-4 w-4 mr-2 animate-pulse" />
-                                Starting Chat...
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-4 w-4 mr-2" />
-                                Use Now - Start Chatting
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  
-                  <Button 
-                    size="sm" 
-                    className="flex-1 gap-1"
-                    onClick={() => handleInstallTemplate(template)}
-                    disabled={!canCreateMore || isInstalling}
-                    variant={!canCreateMore ? "secondary" : "default"}
-                    style={canCreateMore && !isInstalling ? { backgroundColor: template.config.theme_color } : {}}
-                  >
-                    {!canCreateMore ? (
-                      <>
-                        <Lock className="w-3 h-3" />
-                        <span className="hidden sm:inline">Locked</span>
-                      </>
-                    ) : isInstalling ? (
-                      <>
-                        <Play className="w-3 h-3 animate-pulse" />
-                        <span>Starting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play className="w-3 h-3" />
-                        <span>Use Now</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <TemplateCard
+              template={template}
+              onDetails={() => setSelectedTemplate(template)}
+              onInstall={() => handleInstallTemplate(template)}
+              onToggleFavorite={() => toggleFavorite(template.id)}
+              onRate={() => handleRateTemplate(template)}
+              isFavorite={isFavorite(template.id)}
+              userRating={getUserRating(template.id)?.rating}
+              isInstalling={isInstalling}
+              canInstall={canCreateMore}
+            />
           </motion.div>
         ))}
       </div>
@@ -486,6 +342,189 @@ const GPTTemplatesMarketplace = () => {
           </p>
         </div>
       )}
+
+      {/* Template Details Dialog */}
+      <Dialog open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedTemplate && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl"
+                    style={{ backgroundColor: `${selectedTemplate.config.theme_color}15` }}
+                  >
+                    {selectedTemplate.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <DialogTitle className="text-xl">{selectedTemplate.name}</DialogTitle>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => toggleFavorite(selectedTemplate.id)}
+                      >
+                        <Heart 
+                          className={cn(
+                            "h-4 w-4",
+                            isFavorite(selectedTemplate.id) ? "text-red-500 fill-red-500" : "text-muted-foreground"
+                          )} 
+                        />
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs"
+                        style={{ borderColor: selectedTemplate.config.theme_color, color: selectedTemplate.config.theme_color }}
+                      >
+                        {selectedTemplate.category}
+                      </Badge>
+                      <TemplateRatingStars 
+                        rating={selectedTemplate.rating} 
+                        totalReviews={selectedTemplate.use_count}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <DialogDescription className="mt-2">
+                  {selectedTemplate.description}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-6 mt-4">
+                {/* Features */}
+                <div>
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    What You Get
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedTemplate.features.map((feature, index) => (
+                      <div 
+                        key={index} 
+                        className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Starter Questions */}
+                <div>
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-primary" />
+                    Example Prompts
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedTemplate.starter_questions.map((question, index) => (
+                      <div 
+                        key={index} 
+                        className="text-sm bg-muted/50 p-3 rounded-lg border-l-2"
+                        style={{ borderColor: selectedTemplate.config.theme_color }}
+                      >
+                        "{question}"
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tags */}
+                <div>
+                  <h4 className="font-medium mb-2">Tags</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTemplate.tags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Rating Section */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium">Rate this template</p>
+                    <p className="text-xs text-muted-foreground">Help others find great templates</p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleRateTemplate(selectedTemplate)}
+                  >
+                    <Star className={cn(
+                      "h-4 w-4 mr-2",
+                      getUserRating(selectedTemplate.id) ? "text-yellow-400 fill-yellow-400" : ""
+                    )} />
+                    {getUserRating(selectedTemplate.id) ? 'Update Rating' : 'Rate Template'}
+                  </Button>
+                </div>
+                
+                {/* Install Section */}
+                <div className="space-y-3 pt-4 border-t">
+                  {!canCreateMore && (
+                    <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
+                      <div className="flex items-center gap-2 text-warning mb-2">
+                        <Lock className="h-4 w-4" />
+                        <span className="font-medium text-sm">Premium Feature</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        You've reached your {subscription.subscription_tier} plan limit. 
+                        Upgrade to install templates and create unlimited GPTs.
+                      </p>
+                      <Button 
+                        onClick={() => createCheckout('premium', 'monthly')}
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Crown className="h-3 w-3 mr-1" />
+                        Upgrade to Premium
+                      </Button>
+                    </div>
+                  )}
+                  <Button 
+                    onClick={() => handleInstallTemplate(selectedTemplate)}
+                    disabled={!canCreateMore || isInstalling}
+                    className="w-full h-11"
+                    variant={!canCreateMore ? "secondary" : "default"}
+                    style={canCreateMore ? { backgroundColor: selectedTemplate.config.theme_color } : {}}
+                  >
+                    {!canCreateMore ? (
+                      <>
+                        <Lock className="h-4 w-4 mr-2" />
+                        Upgrade to Use
+                      </>
+                    ) : isInstalling ? (
+                      <>
+                        <Play className="h-4 w-4 mr-2 animate-pulse" />
+                        Starting Chat...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Use Now - Start Chatting
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Rating Dialog */}
+      <TemplateRatingDialog
+        template={templateToRate}
+        open={ratingDialogOpen}
+        onOpenChange={setRatingDialogOpen}
+        onSubmit={handleSubmitRating}
+        existingRating={templateToRate ? getUserRating(templateToRate.id)?.rating : undefined}
+        existingReview={templateToRate ? getUserRating(templateToRate.id)?.review : undefined}
+      />
     </div>
   );
 };
