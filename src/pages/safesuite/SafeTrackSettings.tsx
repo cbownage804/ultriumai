@@ -48,11 +48,12 @@ export default function SafeTrackSettings() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Package className="h-6 w-6 text-primary" />
-          SafeTrack Settings
+          <Package className="h-6 w-6 text-emerald-500" />
+          <span className="text-emerald-500">SafeTrack</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your asset tracking preferences
+        </p>
         </p>
       </div>
 

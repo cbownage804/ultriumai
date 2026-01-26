@@ -48,8 +48,8 @@ export default function SafeWebSettings() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Globe className="h-6 w-6 text-primary" />
-          SafeWeb Settings
+          <Globe className="h-6 w-6 text-violet-500" />
+          <span className="text-violet-500">SafeWeb</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your website monitoring preferences
@@ -262,7 +262,11 @@ export default function SafeWebSettings() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} disabled={loading}>
+        <Button 
+          onClick={handleSaveSettings} 
+          disabled={loading}
+          className="bg-violet-500 hover:bg-violet-600 text-white"
+        >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
