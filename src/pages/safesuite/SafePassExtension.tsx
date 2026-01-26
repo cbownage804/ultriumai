@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +72,7 @@ const SafePassExtension = () => {
   ];
 
   return (
+    <FeatureGate feature="safepass">
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-3">
@@ -182,6 +184,7 @@ const SafePassExtension = () => {
         </CardContent>
       </Card>
     </div>
+    </FeatureGate>
   );
 };
 
