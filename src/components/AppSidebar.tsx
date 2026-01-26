@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, ChevronDown, ChevronRight, Brain, Mic, Eye } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,12 +37,6 @@ const gptItems = [
   { title: "Deploy", url: "/dashboard/gpt/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
 ];
 
-const aiItems = [
-  { title: "AI Intelligence Hub", url: "/dashboard/ai/intelligence", icon: Brain, tooltip: "Advanced AI analysis and automation" },
-  { title: "AI Voice Interface", url: "/dashboard/ai/voice", icon: Mic, tooltip: "Voice-to-text and text-to-speech AI" },
-  { title: "AI Vision Analyzer", url: "/dashboard/ai/vision", icon: Eye, tooltip: "Computer vision and image analysis" },
-];
-
 const managementItems = [
   { title: "API Management", url: "/dashboard/api-management", icon: Key, tooltip: "Manage API keys, usage limits, and access permissions" },
   { title: "White-label", url: "/dashboard/white-label", icon: Palette, tooltip: "Customize branding and white-label your solutions" },
@@ -71,7 +65,6 @@ export function AppSidebar() {
   
   const [openSections, setOpenSections] = useState({
     gpt: true,
-    ai: true,
     management: false
   });
   
@@ -187,38 +180,6 @@ export function AppSidebar() {
           </SidebarGroup>
         </Collapsible>
 
-        {/* AI Features Section */}
-        <Collapsible open={openSections.ai} onOpenChange={() => toggleSection('ai')}>
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
-                <span className="flex items-center gap-2">
-                  <Brain className="h-4 w-4" />
-                  {!isCollapsed && "AI Features"}
-                </span>
-                {!isCollapsed && (
-                  openSections.ai ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {aiItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild tooltip={item.tooltip}>
-                        <NavLink to={item.url} className={getNavClass}>
-                          <item.icon className="h-4 w-4" />
-                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
 
         {/* Management & Analytics Section */}
         <Collapsible open={openSections.management} onOpenChange={() => toggleSection('management')}>
