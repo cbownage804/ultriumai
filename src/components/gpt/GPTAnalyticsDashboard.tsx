@@ -29,33 +29,21 @@ interface GPTAnalyticsProps {
   themeColor?: string;
 }
 
-// Mock data - in production, fetch from analytics_aggregates table
-const generateMockData = () => {
+// Empty initial state - will be populated from real analytics_aggregates table
+const getEmptyData = () => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  return days.map((day, i) => ({
+  return days.map((day) => ({
     day,
-    messages: Math.floor(Math.random() * 100) + 20,
-    tokens: Math.floor(Math.random() * 5000) + 1000,
-    responseTime: Math.floor(Math.random() * 3000) + 500,
-    sessions: Math.floor(Math.random() * 20) + 5,
+    messages: 0,
+    tokens: 0,
+    responseTime: 0,
+    sessions: 0,
   }));
 };
 
-const topPrompts = [
-  { prompt: "Analyze this security report", count: 45, category: "Analysis" },
-  { prompt: "Generate compliance documentation", count: 38, category: "Documents" },
-  { prompt: "Review code for vulnerabilities", count: 32, category: "Security" },
-  { prompt: "Create incident response plan", count: 28, category: "Planning" },
-  { prompt: "Summarize threat intelligence", count: 25, category: "Intelligence" },
-];
+const topPrompts: { prompt: string; count: number; category: string }[] = [];
 
-const categoryDistribution = [
-  { name: 'Analysis', value: 35, color: '#3b82f6' },
-  { name: 'Documents', value: 25, color: '#10b981' },
-  { name: 'Security', value: 20, color: '#f59e0b' },
-  { name: 'Planning', value: 12, color: '#8b5cf6' },
-  { name: 'Other', value: 8, color: '#6b7280' },
-];
+const categoryDistribution: { name: string; value: number; color: string }[] = [];
 
 export function GPTAnalyticsDashboard({ 
   gptId, 
@@ -65,16 +53,22 @@ export function GPTAnalyticsDashboard({
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  const data = useMemo(() => generateMockData(), [timeRange]);
+  const data = useMemo(() => getEmptyData(), [timeRange]);
   
-  const stats = useMemo(() => ({
-    totalMessages: data.reduce((acc, d) => acc + d.messages, 0),
-    avgResponseTime: Math.round(data.reduce((acc, d) => acc + d.responseTime, 0) / data.length),
-    totalTokens: data.reduce((acc, d) => acc + d.tokens, 0),
-    totalSessions: data.reduce((acc, d) => acc + d.sessions, 0),
-    messageGrowth: 12.5,
-    responseTimeChange: -8.3,
-  }), [data]);
+  const stats = useMemo(() => {
+    const totalMessages = data.reduce((acc, d) => acc + d.messages, 0);
+    const avgResponseTime = totalMessages > 0 ? Math.round(data.reduce((acc, d) => acc + d.responseTime, 0) / data.length) : 0;
+    return {
+      totalMessages,
+      avgResponseTime,
+      totalTokens: data.reduce((acc, d) => acc + d.tokens, 0),
+      totalSessions: data.reduce((acc, d) => acc + d.sessions, 0),
+      messageGrowth: 0,
+      responseTimeChange: 0,
+    };
+  }, [data]);
+
+  const hasData = stats.totalMessages > 0;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -287,43 +281,51 @@ export function GPTAnalyticsDashboard({
               <CardDescription>Most frequently used prompts</CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[300px]">
-                <div className="space-y-3">
-                  {topPrompts.map((item, index) => (
-                    <motion.div
-                      key={item.prompt}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-                        <span className="text-sm font-bold" style={{ color: themeColor }}>
-                          {index + 1}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{item.prompt}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">{item.category}</Badge>
-                          <span className="text-xs text-muted-foreground">{item.count} uses</span>
-                        </div>
-                      </div>
-                      <div className="w-24">
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full rounded-full" 
-                            style={{ 
-                              width: `${(item.count / topPrompts[0].count) * 100}%`,
-                              backgroundColor: themeColor 
-                            }} 
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
+              {topPrompts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Brain className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm font-medium">No prompt data yet</p>
+                  <p className="text-xs mt-1">Start chatting to see your most used prompts here</p>
                 </div>
-              </ScrollArea>
+              ) : (
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-3">
+                    {topPrompts.map((item, index) => (
+                      <motion.div
+                        key={item.prompt}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                      >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
+                          <span className="text-sm font-bold" style={{ color: themeColor }}>
+                            {index + 1}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{item.prompt}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">{item.category}</Badge>
+                            <span className="text-xs text-muted-foreground">{item.count} uses</span>
+                          </div>
+                        </div>
+                        <div className="w-24">
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full" 
+                              style={{ 
+                                width: `${(item.count / topPrompts[0].count) * 100}%`,
+                                backgroundColor: themeColor 
+                              }} 
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

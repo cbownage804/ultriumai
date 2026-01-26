@@ -76,36 +76,9 @@ interface GPTIntegrationsProps {
   themeColor?: string;
 }
 
-const mockApiKeys: ApiKey[] = [
-  {
-    id: '1',
-    name: 'Production Key',
-    prefix: 'sk-...abc123',
-    createdAt: '2024-01-15',
-    lastUsed: '2024-02-10',
-    permissions: ['read', 'write'],
-    isActive: true,
-  },
-  {
-    id: '2',
-    name: 'Development Key',
-    prefix: 'sk-...def456',
-    createdAt: '2024-02-01',
-    permissions: ['read'],
-    isActive: true,
-  },
-];
-
-const mockWebhooks: Webhook[] = [
-  {
-    id: '1',
-    name: 'Slack Notifications',
-    url: 'https://hooks.slack.com/services/xxx',
-    events: ['message.created', 'session.started'],
-    isActive: true,
-    lastTriggered: '2024-02-10',
-  },
-];
+// Empty defaults - will be populated from database
+const defaultApiKeys: ApiKey[] = [];
+const defaultWebhooks: Webhook[] = [];
 
 const webhookEvents = [
   { id: 'message.created', label: 'Message Created', description: 'When a new message is sent' },
@@ -119,8 +92,8 @@ export function GPTIntegrations({
   gptName,
   apiEnabled = false,
   embedEnabled = false,
-  apiKeys = mockApiKeys,
-  webhooks = mockWebhooks,
+  apiKeys = defaultApiKeys,
+  webhooks = defaultWebhooks,
   onToggleApi,
   onToggleEmbed,
   onCreateApiKey,
@@ -139,8 +112,9 @@ export function GPTIntegrations({
   const [keyDialogOpen, setKeyDialogOpen] = useState(false);
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
 
-  const baseUrl = `https://api.example.com/v1/gpt/${gptId}`;
-  const embedCode = `<script src="https://embed.example.com/widget.js" data-gpt-id="${gptId}"></script>`;
+  // Use actual domain for API base URL
+  const baseUrl = `${window.location.origin}/api/v1/gpt/${gptId}`;
+  const embedCode = `<script src="${window.location.origin}/embed/widget.js" data-gpt-id="${gptId}"></script>`;
 
   const handleCopy = async (text: string, id: string) => {
     try {
@@ -264,8 +238,15 @@ export function GPTIntegrations({
                   </div>
 
                   <ScrollArea className="h-[200px]">
-                    <div className="space-y-2">
-                      {apiKeys.map((key) => (
+                    {apiKeys.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Key className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                        <p className="text-sm">No API keys created</p>
+                        <p className="text-xs mt-1">Create a key to access this GPT programmatically</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {apiKeys.map((key) => (
                         <motion.div
                           key={key.id}
                           initial={{ opacity: 0 }}
@@ -313,6 +294,7 @@ export function GPTIntegrations({
                         </motion.div>
                       ))}
                     </div>
+                    )}
                   </ScrollArea>
                 </div>
 
