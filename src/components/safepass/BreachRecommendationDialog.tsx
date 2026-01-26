@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +12,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Loader2, ShieldAlert, AlertTriangle, Shield, Sparkles, Copy, Check, 
-  Zap, ChevronDown, ChevronUp, KeyRound, RefreshCw, CheckCircle2
+  Zap, ChevronDown, ChevronUp, KeyRound, RefreshCw, CheckCircle2, ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { isSafeSuiteDomain } from '@/utils/subdomain';
 
 export interface BreachFindingDetails {
   entryId: string;
@@ -97,6 +99,7 @@ interface BreachRecommendationDialogProps {
 }
 
 export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: BreachRecommendationDialogProps) => {
+  const navigate = useNavigate();
   const [recommendation, setRecommendation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -402,15 +405,26 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
         </ScrollArea>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-amber-500/10 bg-gradient-to-t from-amber-500/5 to-transparent flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
-          <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
-            onOpenChange(false);
-            toast.info('Navigate to your vault to update this password');
-          }}>
-            <KeyRound className="h-4 w-4 mr-2" />
-            Update Password
-          </Button>
+        <div className="px-6 py-4 border-t border-amber-500/10 bg-gradient-to-t from-amber-500/5 to-transparent space-y-3">
+          {/* Important reminder */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <ExternalLink className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-200/80">
+              <span className="font-medium text-amber-400">Important:</span> After updating here, remember to change the password on <span className="font-semibold">{finding.title}</span>'s actual website too. SafePass stores your passwords but doesn't change them automatically.
+            </p>
+          </div>
+          
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+            <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
+              onOpenChange(false);
+              const vaultPath = isSafeSuiteDomain() ? '/pass' : '/safesuite/pass';
+              navigate(vaultPath, { state: { editEntryId: finding.entryId } });
+            }}>
+              <KeyRound className="h-4 w-4 mr-2" />
+              Update Password
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

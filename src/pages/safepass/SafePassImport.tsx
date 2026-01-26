@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { useSafePass } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -262,6 +263,7 @@ export default function SafePassImport() {
   const weakCount = importedPasswords.filter(p => p.selected && p.strength < 60).length;
 
   return (
+    <FeatureGate feature="safepass">
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Import Passwords</h1>
@@ -479,5 +481,6 @@ export default function SafePassImport() {
         </CardContent>
       </Card>
     </div>
+    </FeatureGate>
   );
 }

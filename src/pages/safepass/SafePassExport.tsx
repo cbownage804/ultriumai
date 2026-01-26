@@ -2,6 +2,7 @@
  * SafePass Export - Export passwords to CSV/JSON
  */
 import { useState } from 'react';
+import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
 import { useSafePass } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -159,6 +160,7 @@ export default function SafePassExport() {
   }
 
   return (
+    <FeatureGate feature="safepass">
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Export Passwords</h1>
@@ -262,5 +264,6 @@ export default function SafePassExport() {
         </CardContent>
       </Card>
     </div>
+    </FeatureGate>
   );
 }

@@ -262,7 +262,11 @@ export default function SafeTrackSettings() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} disabled={loading}>
+        <Button 
+          onClick={handleSaveSettings} 
+          disabled={loading}
+          className="bg-emerald-500 hover:bg-emerald-600 text-black"
+        >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
