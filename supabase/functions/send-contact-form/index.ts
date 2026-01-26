@@ -139,12 +139,30 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "UltriumAI Support <support@send.ultriumai.com>",
       to: ["support@ultriumai.com"],
-      reply_to: formData.email,
+      replyTo: formData.email,
       subject: `🚀 New Contact Form: ${formData.firstName} ${formData.lastName} - ${formData.businessType === 'service-provider' ? 'Service Provider' : 'Business'} Inquiry`,
       html: emailHtml,
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Email send response:", JSON.stringify(emailResponse, null, 2));
+
+    // Check if Resend returned an error (e.g., 403 domain not authorized)
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: emailResponse.error.message || "Failed to send email via Resend"
+        }),
+        {
+          status: emailResponse.error.statusCode || 500,
+          headers: { 
+            "Content-Type": "application/json", 
+            ...corsHeaders 
+          },
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({ 
