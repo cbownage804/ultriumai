@@ -53,10 +53,9 @@ export const BreachMonitor = () => {
   const [scanProgress, setScanProgress] = useState(0);
   const [allEntries, setAllEntries] = useState<any[]>([]);
   const [lastScan, setLastScan] = useState<BreachScan | null>(null);
-  const [scanHistory, setScanHistory] = useState<BreachScan[]>([]);
   const [currentResults, setCurrentResults] = useState<ScanResult[]>([]);
 
-  const loadScanHistory = useCallback(async () => {
+  const loadLastScan = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -65,26 +64,26 @@ export const BreachMonitor = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('completed_at', { ascending: false })
-        .limit(10);
+        .limit(1)
+        .maybeSingle();
 
       if (error) throw error;
 
-      setScanHistory(data || []);
-      if (data && data.length > 0) {
-        setLastScan(data[0]);
-        const scanResults = data[0].scan_results as { results?: ScanResult[] } | null;
+      if (data) {
+        setLastScan(data);
+        const scanResults = data.scan_results as { results?: ScanResult[] } | null;
         if (scanResults?.results) {
           setCurrentResults(scanResults.results);
         }
       }
     } catch (error) {
-      console.error('Failed to load scan history');
+      console.error('Failed to load last scan');
     }
   }, [user]);
 
   useEffect(() => {
-    loadScanHistory();
-  }, [loadScanHistory]);
+    loadLastScan();
+  }, [loadLastScan]);
 
   // Load all entries on mount
   useEffect(() => {
@@ -233,7 +232,7 @@ export const BreachMonitor = () => {
 
       setCurrentResults(results);
       toast.success('Security scan complete');
-      loadScanHistory();
+      loadLastScan();
     } catch (error) {
       console.error('Scan failed');
       toast.error('Scan failed');
@@ -409,51 +408,11 @@ export const BreachMonitor = () => {
         </Card>
       )}
 
-      {/* Scan History */}
-      {scanHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              Scan History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {scanHistory.slice(0, 5).map((scan) => (
-                <div 
-                  key={scan.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      scan.overall_score >= 80 ? 'bg-green-100 text-green-700' :
-                      scan.overall_score >= 60 ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {scan.overall_score >= 80 ? (
-                        <CheckCircle className="h-5 w-5" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">
-                        Score: {scan.overall_score}%
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {scan.total_entries_scanned} passwords scanned
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(scan.completed_at), { addSuffix: true })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Last Scan Info */}
+      {lastScan && (
+        <div className="text-center text-sm text-muted-foreground">
+          Last scanned {formatDistanceToNow(new Date(lastScan.completed_at), { addSuffix: true })} • {lastScan.total_entries_scanned} passwords checked
+        </div>
       )}
 
       {/* No Issues State */}
