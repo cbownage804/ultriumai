@@ -9,6 +9,7 @@ import EmbedWidgetConfig from "./EmbedWidgetConfig";
 import APIAccessConfig from "./APIAccessConfig";
 import ShareLinkConfig from "./ShareLinkConfig";
 import DeploymentAnalytics from "./DeploymentAnalytics";
+import TeamsIntegrationConfig from "./TeamsIntegrationConfig";
 
 const GPTDeployment = () => {
   const { gpts: customGPTs, updateGPT } = useCustomGPTs();
@@ -35,30 +36,20 @@ const GPTDeployment = () => {
     }
   }, [selectedGPTData]);
 
-  const publicUrl = selectedGPTData ? `https://gpt.ultriumai.com/${selectedGPTData.id}` : "";
+  const baseUrl = window.location.origin;
+  const publicUrl = selectedGPTData ? `${baseUrl}/gpt/${selectedGPTData.id}` : "";
+  const embedUrl = selectedGPTData ? `${baseUrl}/gpt/${selectedGPTData.id}/embed?embed=true` : "";
   const apiEndpoint = selectedGPTData ? `https://api.ultriumai.com/v1/gpt/${selectedGPTData.id}/chat` : "";
 
   const embedCode = `<!-- UltriumGPT Embed Widget -->
-<div id="ultrium-gpt-widget"></div>
-<script>
-  (function() {
-    var script = document.createElement('script');
-    script.src = 'https://cdn.ultriumai.com/widget.js';
-    script.onload = function() {
-      UltriumGPT.init({
-        gptId: '${selectedGPT}',
-        width: '${embedSettings.width}px',
-        height: '${embedSettings.height}px',
-        theme: '${embedSettings.theme}',
-        position: '${embedSettings.position}',
-        allowFullscreen: ${embedSettings.allowFullscreen},
-        showBranding: ${embedSettings.showBranding},
-        customDomain: '${embedSettings.customDomain}'
-      });
-    };
-    document.head.appendChild(script);
-  })();
-</script>`;
+<iframe
+  src="${embedUrl}"
+  width="${embedSettings.width}px"
+  height="${embedSettings.height}px"
+  frameborder="0"
+  style="border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"
+  allow="clipboard-write"
+></iframe>`;
 
   const apiExample = `// Example API call
 fetch('${apiEndpoint}', {
@@ -98,7 +89,7 @@ fetch('${apiEndpoint}', {
       toast({
         title: isPublic ? "GPT Published!" : "GPT Made Private",
         description: isPublic 
-          ? `${selectedGPTData.name} is now live and accessible at ${publicUrl}`
+          ? `${selectedGPTData.name} is now live and accessible`
           : `${selectedGPTData.name} is now private`,
       });
     } catch (error) {
@@ -129,8 +120,11 @@ fetch('${apiEndpoint}', {
       />
 
       {selectedGPTData && isPublic && (
-        <Tabs defaultValue="embed" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="teams" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="teams">
+              Teams
+            </TabsTrigger>
             <TabsTrigger value="embed" className="relative">
               Embed Widget
               {isPremiumFeature('embed') && <Crown className="h-3 w-3 ml-1 text-yellow-500" />}
@@ -142,6 +136,14 @@ fetch('${apiEndpoint}', {
             <TabsTrigger value="share">Share Link</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="teams">
+            <TeamsIntegrationConfig
+              gptId={selectedGPTData.id}
+              gptName={selectedGPTData.name}
+              copyToClipboard={copyToClipboard}
+            />
+          </TabsContent>
 
           <TabsContent value="embed">
             <EmbedWidgetConfig
