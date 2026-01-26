@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSafePass } from '@/hooks/useSafePass';
 import { useMasterPassword } from '@/hooks/useMasterPassword';
 import { supabase } from '@/integrations/supabase/client';
+import { BreachCheckService } from '@/services/breachCheckService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +19,8 @@ import {
   Loader2,
   Search,
   Lock,
-  XCircle
+  XCircle,
+  ShieldAlert
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -126,25 +128,48 @@ export const BreachMonitor = () => {
     const passwordMap = new Map<string, string[]>();
 
     try {
-      // Analyze each password
-      for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i];
-        setScanProgress(Math.round(((i + 1) / entries.length) * 100));
-
+      // First pass: collect all passwords for breach checking
+      const passwordsToCheck: { id: string; password: string; entry: any }[] = [];
+      
+      for (const entry of entries) {
         const password = await getEntryPassword(entry);
-        if (password === '[Locked]' || password === '[Decryption Error]') continue;
+        if (password !== '[Locked]' && password !== '[Decryption Error]') {
+          passwordsToCheck.push({ id: entry.id, password, entry });
+        }
+      }
+      
+      setScanProgress(20);
+      
+      // Check all passwords against breach database (HIBP)
+      const breachResults = await BreachCheckService.checkPasswords(
+        passwordsToCheck.map(p => ({ id: p.id, password: p.password }))
+      );
+      
+      setScanProgress(60);
+      
+      // Analyze each password
+      for (let i = 0; i < passwordsToCheck.length; i++) {
+        const { id, password, entry } = passwordsToCheck[i];
+        setScanProgress(60 + Math.round(((i + 1) / passwordsToCheck.length) * 40));
 
         const issues: string[] = [];
         let severity: 'critical' | 'high' | 'medium' | 'low' = 'low';
+
+        // Check if password was found in breach database
+        const breachResult = breachResults.get(id);
+        if (breachResult?.breached) {
+          issues.push(`Found in ${breachResult.count.toLocaleString()} data breaches`);
+          severity = 'critical';
+        }
 
         // Check password strength
         const strength = entry.password_strength_score;
         if (strength < 40) {
           issues.push('Very weak password');
-          severity = 'critical';
+          if (severity !== 'critical') severity = 'critical';
         } else if (strength < 60) {
           issues.push('Weak password');
-          severity = severity === 'low' ? 'high' : severity;
+          if (severity === 'low') severity = 'high';
         }
 
         // Check for password reuse
@@ -157,7 +182,7 @@ export const BreachMonitor = () => {
           passwordMap.set(password, [entry.title]);
         }
 
-        // Check password age (simulated - would need actual change date)
+        // Check password age
         const createdAt = new Date(entry.created_at);
         const daysSinceCreated = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
         if (daysSinceCreated > 180) {
@@ -182,11 +207,12 @@ export const BreachMonitor = () => {
       }
 
       // Calculate statistics
+      const breachedCount = results.filter(r => r.issues.some(i => i.includes('data breaches'))).length;
       const compromisedCount = results.filter(r => r.severity === 'critical').length;
-      const weakCount = results.filter(r => r.issues.some(i => i.includes('weak'))).length;
+      const weakCount = results.filter(r => r.issues.some(i => i.toLowerCase().includes('weak'))).length;
       const reusedCount = results.filter(r => r.issues.some(i => i.includes('Reused'))).length;
       const overallScore = entries.length > 0 
-        ? Math.max(0, 100 - Math.round((results.length / entries.length) * 100))
+        ? Math.max(0, 100 - Math.round(((compromisedCount * 2 + weakCount + reusedCount) / entries.length) * 50))
         : 100;
 
       // Save scan results
@@ -280,7 +306,11 @@ export const BreachMonitor = () => {
           <CardContent className="p-6">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Analyzing passwords...</span>
+                <span>
+                  {scanProgress < 20 ? 'Decrypting passwords...' :
+                   scanProgress < 60 ? 'Checking against breach databases...' :
+                   'Analyzing password security...'}
+                </span>
                 <span>{scanProgress}%</span>
               </div>
               <Progress value={scanProgress} />
@@ -303,10 +333,10 @@ export const BreachMonitor = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <XCircle className="h-8 w-8 text-red-500" />
+              <ShieldAlert className="h-8 w-8 text-red-500" />
               <div>
                 <div className="text-2xl font-bold">{lastScan?.compromised_count || 0}</div>
-                <p className="text-sm text-muted-foreground">Critical Issues</p>
+                <p className="text-sm text-muted-foreground">Breached</p>
               </div>
             </div>
           </CardContent>
