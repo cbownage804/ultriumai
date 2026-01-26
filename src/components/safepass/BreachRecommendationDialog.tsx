@@ -124,12 +124,24 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       if (error) {
         // Auto-retry once on initial failure (cold start issues)
         if (retryCount === 0) {
-          console.log('First attempt failed, retrying...');
+          console.log('First attempt failed, retrying after delay...');
+          await new Promise(resolve => setTimeout(resolve, 1500));
           return fetchRecommendation(1);
         }
         throw error;
       }
+      
+      if (data?.error) {
+        if (retryCount === 0) {
+          console.log('First attempt returned error, retrying after delay...');
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return fetchRecommendation(1);
+        }
+        throw new Error(data.error);
+      }
+      
       setRecommendation(data.recommendation);
+      setIsLoading(false);
     } catch (error: any) {
       console.error('Failed to get recommendations:', error);
       if (error.message?.includes('429')) {
@@ -139,15 +151,13 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       } else {
         // Auto-retry once on any failure (cold start issues)
         if (retryCount === 0) {
-          console.log('First attempt failed, retrying...');
+          console.log('First attempt failed, retrying after delay...');
+          await new Promise(resolve => setTimeout(resolve, 1500));
           return fetchRecommendation(1);
         }
         toast.error('Failed to generate recommendations');
       }
-    } finally {
-      if (retryCount > 0 || !isLoading) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
