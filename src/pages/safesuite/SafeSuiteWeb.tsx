@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { useAuth } from '@/hooks/useAuth';
-import { useFeatureAccess } from '@/hooks/useSafeSuite';
+import { useFeatureAccess, useSafeSuiteUsage } from '@/hooks/useSafeSuite';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,6 +74,7 @@ export default function SafeSuiteWeb() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { checkFeatureAccess } = useFeatureAccess();
+  const { refreshUsage } = useSafeSuiteUsage();
   
   const [assets, setAssets] = useState<MonitoredAsset[]>([]);
   const [threats, setThreats] = useState<Record<string, ThreatDetails[]>>({});
@@ -274,6 +275,9 @@ export default function SafeSuiteWeb() {
       setAssets([data, ...assets]);
       setNewAsset('');
       
+      // Refresh usage count for tier limit display
+      refreshUsage();
+      
       toast({
         title: "Asset added",
         description: "Starting initial scan..."
@@ -301,6 +305,10 @@ export default function SafeSuiteWeb() {
       if (error) throw error;
 
       setAssets(assets.filter(a => a.id !== assetId));
+      
+      // Refresh usage count for tier limit display
+      refreshUsage();
+      
       toast({ title: "Asset removed from monitoring" });
     } catch (error) {
       console.error('Error deleting asset:', error);

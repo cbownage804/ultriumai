@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useSafeWebData, SafeWebAsset } from "@/hooks/useSafeWebData";
+import { useSafeSuiteUsage } from "@/hooks/useSafeSuite";
 import { 
   Plus, 
   Search, 
@@ -32,6 +33,7 @@ interface Props {
 export const SafeWebAssetManager = ({ clientId, showAddForm = true }: Props) => {
   const { assets, loading, addAsset, updateAsset, deleteAsset, triggerScan, fetchAssets } = useSafeWebData();
   const { toast } = useToast();
+  const { refreshUsage } = useSafeSuiteUsage();
   
   const [isAddingAsset, setIsAddingAsset] = useState(false);
   const [newAsset, setNewAsset] = useState({
@@ -65,6 +67,9 @@ export const SafeWebAssetManager = ({ clientId, showAddForm = true }: Props) => 
     });
 
     if (result.success) {
+      // Refresh usage count for tier limit display
+      refreshUsage();
+      
       toast({
         title: "Success",
         description: "Asset added and scan initiated"
@@ -127,6 +132,9 @@ export const SafeWebAssetManager = ({ clientId, showAddForm = true }: Props) => 
     const result = await deleteAsset(assetId);
     
     if (result.success) {
+      // Refresh usage count for tier limit display
+      refreshUsage();
+      
       toast({
         title: "Success",
         description: "Asset deleted successfully"

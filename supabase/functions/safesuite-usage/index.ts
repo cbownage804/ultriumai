@@ -103,7 +103,7 @@ serve(async (req) => {
       usage.safescan = totalScans;
       logStep("SafeScan scans counted", { count: usage.safescan, docScanCount, emailScanCount, secScanCount });
 
-      // SafeWeb: Count monitored assets (status = 'active', not is_active column)
+      // SafeWeb: Count monitored assets (status = 'active')
       const { count: safewebCount, error: safewebError } = await supabaseClient
         .from('safeweb_assets')
         .select('*', { count: 'exact', head: true })
