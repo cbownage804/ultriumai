@@ -377,10 +377,10 @@ export function AIRecommendationCard({ content, theme, onRegenerate, isLoading }
               size="sm"
               onClick={onRegenerate}
               disabled={isLoading}
-              className={cn('gap-1', colors.text, 'hover:' + colors.bg)}
+              className={cn('gap-1 min-h-[44px] min-w-[44px] px-3', colors.text, 'hover:' + colors.bg)}
             >
-              <RefreshCw className={cn('h-3 w-3', isLoading && 'animate-spin')} />
-              Regenerate
+              <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+              <span className="hidden sm:inline">Regenerate</span>
             </Button>
           )}
         </div>
