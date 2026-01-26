@@ -184,7 +184,7 @@ async function sendEmailAlert(alert: any): Promise<boolean> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'SafeSIEM <support@ultriumai.com>',
+        from: 'SafeSIEM <alerts@send.ultriumai.com>',
         to: [alert.recipient],
         subject: subject,
         html: htmlContent,
