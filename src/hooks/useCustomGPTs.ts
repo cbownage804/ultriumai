@@ -60,6 +60,14 @@ export const useCustomGPTs = () => {
     description: string;
     system_prompt: string;
     avatar_url?: string;
+    starter_questions?: string[];
+    preferred_model?: string;
+    enable_web_search?: boolean;
+    theme_color?: string;
+    placeholder_prompt?: string;
+    category?: string;
+    template_id?: string;
+    features?: string[];
   }) => {
     if (!user) return null;
 
@@ -92,7 +100,15 @@ export const useCustomGPTs = () => {
           name: gptData.name,
           description: gptData.description,
           system_prompt: gptData.system_prompt,
-          avatar_url: gptData.avatar_url
+          avatar_url: gptData.avatar_url,
+          starter_questions: gptData.starter_questions,
+          preferred_model: gptData.preferred_model,
+          enable_web_search: gptData.enable_web_search,
+          theme_color: gptData.theme_color,
+          placeholder_prompt: gptData.placeholder_prompt,
+          category: gptData.category,
+          template_id: gptData.template_id,
+          features: gptData.features
         })
         .select()
         .single();

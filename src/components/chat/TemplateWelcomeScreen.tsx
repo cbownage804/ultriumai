@@ -80,6 +80,33 @@ const categoryCapabilities: Record<string, { icon: React.ReactNode; tips: string
     ],
     capabilities: ["Production-ready code", "Best practices", "Complete configurations"]
   },
+  "Infrastructure": {
+    icon: <Zap className="h-5 w-5" />,
+    tips: [
+      "Specify device vendors (Cisco, Juniper, etc.)",
+      "Include network size and topology requirements",
+      "Request verification commands for configs"
+    ],
+    capabilities: ["Complete configurations", "Troubleshooting guides", "Security best practices"]
+  },
+  "Cloud": {
+    icon: <Target className="h-5 w-5" />,
+    tips: [
+      "Specify cloud provider (AWS, Azure, GCP)",
+      "Include budget and compliance requirements",
+      "Request cost estimates with architecture"
+    ],
+    capabilities: ["Architecture designs", "Cost optimization", "Migration planning"]
+  },
+  "Database": {
+    icon: <Zap className="h-5 w-5" />,
+    tips: [
+      "Share your query or schema for analysis",
+      "Include database type and version",
+      "Specify performance requirements"
+    ],
+    capabilities: ["Query optimization", "Schema design", "Backup strategies"]
+  },
   "Insurance": {
     icon: <FileText className="h-5 w-5" />,
     tips: [
@@ -97,6 +124,87 @@ const categoryCapabilities: Record<string, { icon: React.ReactNode; tips: string
       "Request specific formats as needed"
     ],
     capabilities: ["SOPs", "Knowledge base articles", "Runbooks"]
+  },
+  "MSP Operations": {
+    icon: <Target className="h-5 w-5" />,
+    tips: [
+      "Specify your PSA/RMM tools",
+      "Include SLA requirements",
+      "Describe your escalation needs"
+    ],
+    capabilities: ["SLA templates", "Escalation procedures", "Client communications"]
+  },
+  "Compliance": {
+    icon: <Target className="h-5 w-5" />,
+    tips: [
+      "Specify the framework (SOC2, HIPAA, PCI-DSS)",
+      "Include your current control status",
+      "Note any audit deadlines"
+    ],
+    capabilities: ["Gap analysis", "Policy documents", "Audit preparation"]
+  },
+  "Asset Management": {
+    icon: <Zap className="h-5 w-5" />,
+    tips: [
+      "Include asset categories and quantities",
+      "Specify lifecycle requirements",
+      "Note any compliance needs"
+    ],
+    capabilities: ["Inventory tracking", "License management", "Budget projections"]
+  },
+  "Business Continuity": {
+    icon: <Target className="h-5 w-5" />,
+    tips: [
+      "Identify critical systems and data",
+      "Specify RTO/RPO requirements",
+      "Include compliance requirements"
+    ],
+    capabilities: ["Backup strategies", "DR runbooks", "Test procedures"]
+  },
+  "Management": {
+    icon: <Target className="h-5 w-5" />,
+    tips: [
+      "Describe project scope and timeline",
+      "Include stakeholder information",
+      "Specify any constraints or risks"
+    ],
+    capabilities: ["Project planning", "Risk assessment", "Resource planning"]
+  },
+  "Real Estate": {
+    icon: <FileText className="h-5 w-5" />,
+    tips: [
+      "Include property details and unique features",
+      "Specify target buyer/seller profile",
+      "Note local market conditions"
+    ],
+    capabilities: ["Listing descriptions", "Offer letters", "Market analysis"]
+  },
+  "Human Resources": {
+    icon: <Target className="h-5 w-5" />,
+    tips: [
+      "Specify role level and department",
+      "Include company culture details",
+      "Note any compliance requirements"
+    ],
+    capabilities: ["Job descriptions", "Interview guides", "HR policies"]
+  },
+  "Marketing": {
+    icon: <Zap className="h-5 w-5" />,
+    tips: [
+      "Describe your target audience",
+      "Include brand voice and tone",
+      "Specify conversion goals"
+    ],
+    capabilities: ["Landing pages", "Email sequences", "Ad copy"]
+  },
+  "Customer Success": {
+    icon: <Target className="h-5 w-5" />,
+    tips: [
+      "Describe your product and customer base",
+      "Include key metrics and goals",
+      "Specify touchpoint cadence"
+    ],
+    capabilities: ["Onboarding playbooks", "Health scoring", "QBR templates"]
   }
 };
 
