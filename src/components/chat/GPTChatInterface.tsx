@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Send, Loader2, ArrowLeft, Bot, User, Brain, FileText, Image, File } from "lucide-react";
+import { Send, Loader2, ArrowLeft, Bot, User, Brain, FileText, Image, File, Settings2, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsTracking } from "@/hooks/useAnalyticsTracking";
 import { KnowledgeSearchService } from "@/services/KnowledgeSearchService";
 import ChatFileUploader from "./ChatFileUploader";
+import { CleanMarkdownRenderer } from "./CleanMarkdownRenderer";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AttachedFile {
   id: string;
@@ -259,27 +261,34 @@ export const GPTChatInterface = () => {
   }
 
   return (
-    <div className="flex h-screen max-h-screen overflow-hidden">
+    <div className="flex h-screen max-h-screen overflow-hidden bg-background">
       {/* Sidebar with GPT Info */}
-      <div className="w-80 border-r bg-muted/30 flex flex-col">
-        <div className="p-4 border-b">
+      <motion.div 
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="w-80 border-r bg-muted/30 flex flex-col backdrop-blur-sm"
+      >
+        <div className="p-4 border-b bg-background/50">
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={() => navigate('/dashboard')}
-            className="mb-4"
+            className="mb-4 hover:bg-primary/10 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to GPTs
           </Button>
           
           <div className="flex items-center gap-3">
-            <Avatar className="w-12 h-12">
+            <Avatar className="w-14 h-14 ring-2 ring-offset-2 ring-offset-background transition-transform hover:scale-105"
+              style={{ '--tw-ring-color': gpt.theme_color || '#3b82f6' } as any}
+            >
               {gpt.logo_url ? (
                 <AvatarImage src={gpt.logo_url} alt={gpt.name} />
               ) : (
                 <AvatarFallback 
-                  className="text-white text-lg font-medium"
+                  className="text-white text-xl font-semibold"
                   style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}
                 >
                   {gpt.name.charAt(0)}
@@ -287,184 +296,268 @@ export const GPTChatInterface = () => {
               )}
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h2 className="font-semibold truncate">{gpt.name}</h2>
+              <h2 className="font-bold text-lg truncate">{gpt.name}</h2>
               {gpt.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                   {gpt.description}
                 </p>
               )}
             </div>
           </div>
+          
+          {/* Edit GPT Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}
+            className="w-full mt-4 gap-2 hover:bg-primary hover:text-primary-foreground transition-all"
+          >
+            <Settings2 className="w-4 h-4" />
+            Edit GPT Settings
+          </Button>
         </div>
 
-        <div className="flex-1 p-4 space-y-4">
-          <div>
-            <h3 className="font-medium mb-2 flex items-center gap-2">
-              <Brain className="w-4 h-4" />
-              Instructions
-            </h3>
-            <div className="text-sm text-muted-foreground bg-background/50 p-3 rounded-lg">
-              <p className="line-clamp-6">{gpt.system_prompt}</p>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-medium mb-2">Features</h3>
-            <div className="flex flex-wrap gap-1">
-              {gpt.enable_web_search && (
-                <Badge variant="outline" className="text-xs">Web Search</Badge>
-              )}
-              {gpt.api_enabled && (
-                <Badge variant="outline" className="text-xs">API Access</Badge>
-              )}
-              {gpt.embed_enabled && (
-                <Badge variant="outline" className="text-xs">Embeddable</Badge>
-              )}
-              <Badge variant="outline" className="text-xs">
-                {gpt.preferred_model || 'GPT-4o-mini'}
-              </Badge>
-            </div>
-          </div>
-
-          {gpt.starter_questions && Array.isArray(gpt.starter_questions) && gpt.starter_questions.length > 0 && (
-            <div>
-              <h3 className="font-medium mb-2">Starter Questions</h3>
-              <div className="space-y-2">
-                {gpt.starter_questions.slice(0, 3).map((question: string, index: number) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start text-left h-auto p-2 text-xs"
-                    onClick={() => setInputMessage(question)}
-                  >
-                    {question}
-                  </Button>
-                ))}
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-5">
+            {/* Instructions Section */}
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-sm uppercase tracking-wide text-muted-foreground">
+                <Brain className="w-4 h-4" />
+                Instructions
+              </h3>
+              <div className="text-sm text-foreground bg-background/80 p-4 rounded-xl border shadow-sm">
+                <p className="line-clamp-8 leading-relaxed whitespace-pre-wrap break-words">
+                  {gpt.system_prompt}
+                </p>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
+            </motion.div>
+
+            {/* Features Section */}
+            <motion.div
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15 }}
+            >
+              <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide text-muted-foreground">Features</h3>
+              <div className="flex flex-wrap gap-2">
+                {gpt.enable_web_search && (
+                  <Badge variant="secondary" className="text-xs px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    Web Search
+                  </Badge>
+                )}
+                {gpt.api_enabled && (
+                  <Badge variant="secondary" className="text-xs px-3 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
+                    API Access
+                  </Badge>
+                )}
+                {gpt.embed_enabled && (
+                  <Badge variant="secondary" className="text-xs px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
+                    Embeddable
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs px-3 py-1 font-medium">
+                  {gpt.preferred_model || 'gpt-4o'}
+                </Badge>
+              </div>
+            </motion.div>
+
+            {/* Starter Questions Section */}
+            {gpt.starter_questions && Array.isArray(gpt.starter_questions) && gpt.starter_questions.length > 0 && (
+              <motion.div
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h3 className="font-semibold mb-3 text-sm uppercase tracking-wide text-muted-foreground">
+                  Starter Questions
+                </h3>
+                <div className="space-y-2">
+                  {gpt.starter_questions.slice(0, 4).map((question: string, index: number) => (
+                    <motion.div
+                      key={index}
+                      initial={{ x: -10, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.25 + index * 0.05 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start text-left h-auto py-3 px-4 text-sm bg-background/60 hover:bg-primary/10 border border-transparent hover:border-primary/20 rounded-xl transition-all leading-relaxed whitespace-normal"
+                        onClick={() => setInputMessage(question)}
+                      >
+                        <span className="text-primary mr-2">→</span>
+                        <span className="break-words">{question}</span>
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
+        </ScrollArea>
+      </motion.div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-gradient-to-b from-background to-muted/20">
         {/* Chat Header */}
-        <div className="border-b p-4 bg-background/95 backdrop-blur">
-          <div className="flex items-center justify-between">
+        <motion.div 
+          initial={{ y: -10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="border-b p-4 bg-background/95 backdrop-blur-sm"
+        >
+          <div className="flex items-center justify-between max-w-4xl mx-auto">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <h1 className="text-lg font-semibold">Chat with {gpt.name}</h1>
+              <div className="relative">
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
+                <div className="absolute inset-0 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping opacity-75"></div>
+              </div>
+              <h1 className="text-lg font-bold">Chat with {gpt.name}</h1>
             </div>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="secondary" className="text-xs font-medium">
               {messages.filter(m => m.role === 'user').length} messages
             </Badge>
           </div>
-        </div>
+        </motion.div>
 
         {/* Messages */}
         <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4 max-w-4xl mx-auto">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {message.role === 'assistant' && (
-                  <Avatar className="w-8 h-8 flex-shrink-0">
-                    {gpt.logo_url ? (
-                      <AvatarImage src={gpt.logo_url} alt={gpt.name} />
-                    ) : (
-                      <AvatarFallback 
-                        className="text-white text-sm"
-                        style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}
-                      >
-                        {gpt.name.charAt(0)}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                )}
-                
-                <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
-                  <div
-                    className={`rounded-lg px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground ml-auto'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    {message.loading ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Thinking...</span>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        {message.attachments && message.attachments.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {message.attachments.map((file) => {
-                              const IconComponent = getFileIcon(file.type);
-                              return (
-                                <div key={file.id} className="flex items-center gap-2 text-xs bg-background/50 rounded p-2">
-                                  <IconComponent className="w-3 h-3" />
-                                  <span className="truncate">{file.name}</span>
-                                  <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
-                                </div>
-                              );
-                            })}
+          <div className="space-y-6 max-w-4xl mx-auto pb-4">
+            <AnimatePresence mode="popLayout">
+              {messages.map((message, index) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ 
+                    duration: 0.3, 
+                    delay: index === messages.length - 1 ? 0 : 0,
+                    ease: "easeOut"
+                  }}
+                  className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  {message.role === 'assistant' && (
+                    <Avatar className="w-9 h-9 flex-shrink-0 ring-2 ring-offset-2 ring-offset-background shadow-md"
+                      style={{ '--tw-ring-color': gpt.theme_color || '#3b82f6' } as any}
+                    >
+                      {gpt.logo_url ? (
+                        <AvatarImage src={gpt.logo_url} alt={gpt.name} />
+                      ) : (
+                        <AvatarFallback 
+                          className="text-white text-sm font-semibold"
+                          style={{ backgroundColor: gpt.theme_color || '#3b82f6' }}
+                        >
+                          {gpt.name.charAt(0)}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                  )}
+                  
+                  <div className={`max-w-[75%] ${message.role === 'user' ? 'order-1' : ''}`}>
+                    <div
+                      className={`rounded-2xl shadow-sm ${
+                        message.role === 'user'
+                          ? 'bg-primary text-primary-foreground px-5 py-3'
+                          : 'bg-card border px-5 py-4'
+                      }`}
+                    >
+                      {message.loading ? (
+                        <div className="flex items-center gap-3 py-1">
+                          <div className="flex gap-1">
+                            <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                           </div>
-                        )}
-                      </>
-                    )}
+                          <span className="text-sm text-muted-foreground">Thinking...</span>
+                        </div>
+                      ) : (
+                        <>
+                          {message.role === 'assistant' ? (
+                            <CleanMarkdownRenderer content={message.content} className="text-foreground" />
+                          ) : (
+                            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                              {message.content}
+                            </p>
+                          )}
+                          {message.attachments && message.attachments.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                              {message.attachments.map((file) => {
+                                const IconComponent = getFileIcon(file.type);
+                                return (
+                                  <div key={file.id} className="flex items-center gap-2 text-xs bg-background/50 rounded-lg p-2">
+                                    <IconComponent className="w-4 h-4 text-primary" />
+                                    <span className="truncate font-medium">{file.name}</span>
+                                    <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <div className={`text-xs text-muted-foreground mt-2 px-1 ${
+                      message.role === 'user' ? 'text-right' : 'text-left'
+                    }`}>
+                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div className={`text-xs text-muted-foreground mt-1 ${
-                    message.role === 'user' ? 'text-right' : 'text-left'
-                  }`}>
-                    {message.timestamp.toLocaleTimeString()}
-                  </div>
-                </div>
 
-                {message.role === 'user' && (
-                  <Avatar className="w-8 h-8 flex-shrink-0">
-                    <AvatarFallback className="bg-secondary">
-                      <User className="w-4 h-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
+                  {message.role === 'user' && (
+                    <Avatar className="w-9 h-9 flex-shrink-0 ring-2 ring-primary/20 ring-offset-2 ring-offset-background shadow-md">
+                      <AvatarFallback className="bg-secondary">
+                        <User className="w-4 h-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
 
         {/* Input Area */}
-        <div className="border-t p-4 bg-background/95 backdrop-blur">
+        <motion.div 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="border-t p-4 bg-background/95 backdrop-blur-sm"
+        >
           <div className="max-w-4xl mx-auto">
             {/* Show attached files */}
             {attachedFiles.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-2">
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                className="mb-3 flex flex-wrap gap-2"
+              >
                 {attachedFiles.map((file) => {
                   const IconComponent = getFileIcon(file.type);
                   return (
-                    <div key={file.id} className="flex items-center gap-2 bg-muted rounded-lg px-2 py-1 text-xs">
-                      <IconComponent className="w-3 h-3" />
-                      <span className="truncate max-w-24">{file.name}</span>
+                    <div key={file.id} className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-3 py-1.5 text-xs">
+                      <IconComponent className="w-3.5 h-3.5 text-primary" />
+                      <span className="truncate max-w-32 font-medium">{file.name}</span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleFileRemoved(file.id)}
-                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        className="h-5 w-5 p-0 hover:bg-destructive hover:text-destructive-foreground rounded-full"
                       >
                         ×
                       </Button>
                     </div>
                   );
                 })}
-              </div>
+              </motion.div>
             )}
             
-            <div className="flex gap-2 items-end">
+            <div className="flex gap-3 items-end">
               <ChatFileUploader
                 sessionId={sessionId}
                 gptId={gpt.id}
@@ -477,29 +570,30 @@ export const GPTChatInterface = () => {
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={gpt.placeholder_prompt || `Message ${gpt.name}...`}
+                  placeholder={gpt.placeholder_prompt || `Describe your IT issue and I'll provide step-by-step troubleshooting...`}
                   disabled={isLoading}
-                  className="pr-12"
+                  className="pr-14 py-6 rounded-xl border-2 focus:border-primary/50 transition-all text-base"
                 />
                 <Button
                   onClick={sendMessage}
                   disabled={(!inputMessage.trim() && attachedFiles.length === 0) || isLoading}
                   size="icon"
-                  className="absolute right-1 top-1 h-8 w-8"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-lg shadow-md hover:shadow-lg transition-all"
+                  style={{ backgroundColor: gpt.theme_color || undefined }}
                 >
                   {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
-                    <Send className="w-4 h-4" />
+                    <Send className="w-5 h-5" />
                   )}
                 </Button>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-2 text-center">
+            <p className="text-xs text-muted-foreground mt-3 text-center">
               Press Enter to send, Shift+Enter for new line • Attach files up to 10MB
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
