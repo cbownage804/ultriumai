@@ -34,7 +34,7 @@ export function VanguardLayout() {
       title: "Signed out",
       description: "You have been successfully signed out.",
     });
-    navigate('/');
+    navigate('/auth');
   };
 
   return (

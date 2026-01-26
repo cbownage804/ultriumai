@@ -458,11 +458,12 @@ function SafeSuiteLayoutInner() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const landingPath = isSafeSuiteDomain() ? '/' : '/safesuite';
+  const authPath = isSafeSuiteDomain() ? '/auth' : '/auth';
 
   const handleSignOut = async () => {
     await signOut();
-    navigate(landingPath);
+    // Navigate to auth page instead of landing to ensure clean logout
+    navigate(authPath);
   };
 
   const userInitials = user?.email

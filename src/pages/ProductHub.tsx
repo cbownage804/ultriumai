@@ -177,7 +177,7 @@ export default function ProductHub() {
       title: "Signed out",
       description: "You have been successfully signed out.",
     });
-    navigate('/');
+    navigate('/auth');
   };
 
   // Show loading state while auth or access is being determined
