@@ -338,10 +338,10 @@ const LiveDemos = () => {
                 <Zap className="h-4 w-4 mr-2" />
                 Revolutionary AI Platform
               </Badge>
-              <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight">
+              <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold bg-gradient-to-r from-primary via-purple-600 to-blue-600 bg-clip-text text-transparent leading-tight px-2">
                 Custom GPT Builder™
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2">
                 Experience the world's most advanced no-code platform for building custom AI assistants. 
                 See how you can create enterprise AI in minutes, not months.
               </p>
