@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut } from 'lucide-react';
+import { Loader2, Sparkles, Lock, ArrowRight, Zap, LogOut, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
@@ -226,6 +226,9 @@ export default function ProductHub() {
 
   // Get user's name for greeting
   const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'there';
+  
+  // Check if user is admin (UltriumAI employee with confirmed email)
+  const isAdmin = user.email?.endsWith('@ultriumai.com') && user.email_confirmed_at != null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -237,6 +240,12 @@ export default function ProductHub() {
             <span className="font-semibold text-lg">UltriumAI</span>
           </div>
           <div className="flex items-center gap-4">
+            {isAdmin && (
+              <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="text-amber-500 hover:text-amber-400">
+                <Settings className="h-4 w-4 mr-2" />
+                Admin
+              </Button>
+            )}
             <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
               Profile
             </Button>
