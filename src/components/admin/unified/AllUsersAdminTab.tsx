@@ -24,7 +24,9 @@ import {
   DollarSign,
   CreditCard,
   Wrench,
-  Settings2
+  Settings2,
+  ShieldCheck,
+  ShieldOff
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { UserSubscriptionDialog } from './UserSubscriptionDialog';
@@ -56,6 +58,7 @@ interface UnifiedUser {
   full_name: string | null;
   account_type: string;
   created_at: string;
+  mfa_enabled: boolean;
   products: {
     ai_studio: { tier: string; subscribed: boolean; stripe_subscription_id?: string | null } | null;
     safesuite: { tier: string; status: string; stripe_subscription_id?: string | null } | null;
@@ -112,10 +115,17 @@ export const AllUsersAdminTab = () => {
         .select('user_id, tier, status, stripe_subscription_id')
         .in('user_id', userIds);
 
+      // Get MFA status from security_settings
+      const { data: securitySettings } = await supabase
+        .from('security_settings')
+        .select('user_id, two_factor_enabled')
+        .in('user_id', userIds);
+
       // Create lookup maps keyed by user_id
       const aiStudioMap = new Map(aiStudioSubs?.map(s => [s.user_id, s]) || []);
       const safeSuiteMap = new Map(safeSuiteSubs?.map(s => [s.user_id, s]) || []);
       const vanguardMap = new Map(vanguardSubs?.map(s => [s.user_id, s]) || []);
+      const mfaMap = new Map(securitySettings?.map((s: any) => [s.user_id, s.two_factor_enabled]) || []);
 
       // Build unified user list
       const unifiedUsers: UnifiedUser[] = (profiles || []).map(profile => {
@@ -130,6 +140,7 @@ export const AllUsersAdminTab = () => {
           full_name: profile.full_name,
           account_type: profile.account_type || 'individual',
           created_at: profile.created_at,
+          mfa_enabled: mfaMap.get(profile.user_id) || false,
           products: {
             ai_studio: aiSub ? { 
               tier: aiSub.subscription_tier || 'free', 
@@ -396,13 +407,14 @@ export const AllUsersAdminTab = () => {
                       Vanguard
                     </div>
                   </TableHead>
+                  <TableHead className="text-center">MFA</TableHead>
                   <TableHead>Joined</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -453,6 +465,13 @@ export const AllUsersAdminTab = () => {
                             : <span className="text-muted-foreground text-xs">—</span>
                           }
                         </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {user.mfa_enabled ? (
+                          <ShieldCheck className="h-4 w-4 text-green-500 mx-auto" />
+                        ) : (
+                          <ShieldOff className="h-4 w-4 text-muted-foreground mx-auto" />
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(user.created_at), 'MMM d, yyyy')}
