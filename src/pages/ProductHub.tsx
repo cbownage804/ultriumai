@@ -148,7 +148,7 @@ const ProductCard = ({
 };
 
 export default function ProductHub() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { access, loading: accessLoading, getAccessLevel } = useProductAccess();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -156,28 +156,13 @@ export default function ProductHub() {
   const loading = authLoading || accessLoading;
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    
-   // Always clear local storage - session might already be expired on server
-    const isSessionGone = !error || 
-      error.message?.toLowerCase().includes('session') || 
-      (error as any)?.code === 'session_not_found';
-    
-    if (!isSessionGone) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
-      });
-   } else {
-     toast({
-       title: "Signed out",
-       description: "You have been successfully signed out.",
-     });
-    }
-    
-   // Don't navigate - let ProtectedRoute handle redirect when user state clears
-   // This prevents race condition where navigation happens before auth state updates
+   await signOut();
+   toast({
+     title: "Signed out",
+     description: "You have been successfully signed out.",
+   });
+   // Small delay to ensure auth state clears, then navigate
+   setTimeout(() => navigate('/auth', { replace: true }), 100);
   };
 
   // Show loading state while auth or access is being determined
