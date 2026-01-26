@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { useAuth } from '@/hooks/useAuth';
+import { useFeatureAccess } from '@/hooks/useSafeSuite';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,7 @@ interface ThreatDetails {
 export default function SafeSuiteWeb() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { checkFeatureAccess } = useFeatureAccess();
   
   const [assets, setAssets] = useState<MonitoredAsset[]>([]);
   const [threats, setThreats] = useState<Record<string, ThreatDetails[]>>({});
@@ -232,6 +234,17 @@ export default function SafeSuiteWeb() {
   const addAsset = async () => {
     if (!newAsset.trim()) return;
 
+    // Check limit before attempting to add
+    const access = checkFeatureAccess('safeweb', 'use');
+    if (!access.allowed) {
+      toast({
+        title: "Limit Reached",
+        description: access.reason || "Please upgrade your plan to add more assets.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('safeweb_assets')
@@ -245,7 +258,18 @@ export default function SafeSuiteWeb() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Handle server-side limit enforcement error
+        if (error.message?.includes('Usage limit exceeded')) {
+          toast({
+            title: "Limit Reached",
+            description: "You've reached your SafeWeb asset limit. Please upgrade to add more.",
+            variant: "destructive"
+          });
+          return;
+        }
+        throw error;
+      }
 
       setAssets([data, ...assets]);
       setNewAsset('');
