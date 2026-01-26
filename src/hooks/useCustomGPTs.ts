@@ -15,15 +15,19 @@ export const useCustomGPTs = () => {
   const { subscription } = useSubscription();
 
   const getGPTLimits = () => {
-    switch (subscription.subscription_tier) {
+    const tier = subscription.subscription_tier?.toLowerCase() || 'free';
+    switch (tier) {
       case "free":
-        return { maxGPTs: 1, maxPromptLength: 500 };
+        return { maxGPTs: 1, maxPromptLength: 500, exportFormats: ['copy'] as const };
+      case "starter":
+        return { maxGPTs: 3, maxPromptLength: 1500, exportFormats: ['copy', 'pdf'] as const };
       case "premium":
-        return { maxGPTs: 5, maxPromptLength: 2000 };
+      case "professional":
+        return { maxGPTs: 10, maxPromptLength: 3000, exportFormats: ['copy', 'pdf', 'docx', 'email'] as const };
       case "enterprise":
-        return { maxGPTs: -1, maxPromptLength: 5000 }; // unlimited
+        return { maxGPTs: -1, maxPromptLength: 10000, exportFormats: ['copy', 'pdf', 'docx', 'email'] as const }; // unlimited
       default:
-        return { maxGPTs: 1, maxPromptLength: 500 };
+        return { maxGPTs: 1, maxPromptLength: 500, exportFormats: ['copy'] as const };
     }
   };
 

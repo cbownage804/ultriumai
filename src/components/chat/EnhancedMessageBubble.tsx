@@ -15,7 +15,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { ChatMessage } from "@/types/chat";
-import DocumentExportActions from "@/components/gpt/DocumentExportActions";
+import EnhancedDocumentExport from "@/components/gpt/EnhancedDocumentExport";
 import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
 
@@ -235,7 +235,7 @@ export const EnhancedMessageBubble = ({
             
             {/* Export button for document-like assistant responses */}
             {showExport && isDocumentResponse && message.role === 'assistant' && (
-              <DocumentExportActions
+              <EnhancedDocumentExport
                 content={message.content}
                 title="Generated Document"
                 gptName={gptName}

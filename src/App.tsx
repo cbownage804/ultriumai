@@ -165,6 +165,7 @@ import { SafeShieldDashboard } from '@/components/shield/SafeShieldDashboard';
 import TechnicianMobile from '@/pages/TechnicianMobile';
 import SecurityAI from '@/pages/SecurityAI';
 import AIStudio from '@/pages/AIStudio';
+import TemplateTestSuite from '@/components/gpt/TemplateTestSuite';
 import SafeTrackPage from '@/pages/SafeTrackPage';
 import BusinessBillingPage from '@/pages/BusinessBillingPage';
 import BusinessBilling from '@/pages/BusinessBilling';
@@ -544,6 +545,13 @@ function AppRouter() {
         <Route path="/ai-studio" element={
           <ProtectedRoute>
             <AIStudio />
+          </ProtectedRoute>
+        } />
+        <Route path="/ai-studio/test-suite" element={
+          <ProtectedRoute>
+            <div className="min-h-screen bg-background p-6">
+              <TemplateTestSuite />
+            </div>
           </ProtectedRoute>
         } />
         <Route path="/safetrack" element={
