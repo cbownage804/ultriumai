@@ -1,12 +1,21 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+/**
+ * Breach Recommendation Dialog
+ * Beautiful, user-friendly AI recommendations for breach findings
+ */
+
+import { useState, useMemo } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, ShieldAlert, AlertTriangle, CheckCircle, Sparkles, Copy, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Loader2, ShieldAlert, AlertTriangle, Shield, Sparkles, Copy, Check, 
+  Zap, ChevronDown, ChevronUp, KeyRound, RefreshCw, CheckCircle2
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import ReactMarkdown from 'react-markdown';
+import { cn } from '@/lib/utils';
 
 export interface BreachFindingDetails {
   entryId: string;
@@ -22,6 +31,65 @@ export interface BreachFindingDetails {
   passwordBreachCount?: number;
 }
 
+interface ParsedRecommendation {
+  riskLevel: 'critical' | 'high' | 'medium' | 'low';
+  riskSummary: string;
+  immediateActions: string[];
+  passwordTip?: string;
+  additionalProtection: string[];
+}
+
+function parseRecommendation(raw: string): ParsedRecommendation {
+  const result: ParsedRecommendation = {
+    riskLevel: 'medium',
+    riskSummary: '',
+    immediateActions: [],
+    additionalProtection: []
+  };
+
+  const sections = raw.split(/\n\n+/);
+  let currentSection: 'risk' | 'immediate' | 'password' | 'additional' | null = null;
+
+  for (const section of sections) {
+    const clean = section.replace(/\*\*/g, '').trim();
+    const lower = clean.toLowerCase();
+
+    if (lower.includes('risk assessment') || lower.includes('severity')) {
+      currentSection = 'risk';
+      if (lower.includes('critical') || lower.includes('severe')) result.riskLevel = 'critical';
+      else if (lower.includes('high')) result.riskLevel = 'high';
+      else if (lower.includes('low')) result.riskLevel = 'low';
+      
+      const lines = clean.split('\n').slice(1);
+      result.riskSummary = lines.map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(l => l.length > 10).join(' ');
+    } else if (lower.includes('immediate action') || lower.includes('right now') || lower.includes('first step')) {
+      currentSection = 'immediate';
+      const lines = clean.split('\n');
+      for (const line of lines) {
+        const trimmed = line.replace(/^[-•*0-9.]\s*/, '').trim();
+        if (trimmed.length > 10 && !trimmed.toLowerCase().includes('immediate action')) {
+          result.immediateActions.push(trimmed);
+        }
+      }
+    } else if (lower.includes('password recommendation') || lower.includes('strong password')) {
+      currentSection = 'password';
+      const lines = clean.split('\n').slice(1);
+      result.passwordTip = lines.map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(l => l.length > 10).join(' ');
+    } else if (lower.includes('additional') || lower.includes('protection') || lower.includes('2fa') || lower.includes('monitoring')) {
+      currentSection = 'additional';
+      const lines = clean.split('\n');
+      for (const line of lines) {
+        const trimmed = line.replace(/^[-•*0-9.]\s*/, '').trim();
+        if (trimmed.length > 10 && !trimmed.toLowerCase().includes('additional')) {
+          result.additionalProtection.push(trimmed);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
 interface BreachRecommendationDialogProps {
   finding: BreachFindingDetails | null;
   open: boolean;
@@ -32,6 +100,12 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
   const [recommendation, setRecommendation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['risk', 'immediate', 'additional']));
+
+  const parsed = useMemo(() => {
+    if (!recommendation) return null;
+    return parseRecommendation(recommendation);
+  }, [recommendation]);
 
   const fetchRecommendation = async () => {
     if (!finding) return;
@@ -45,7 +119,6 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
       });
       
       if (error) throw error;
-      
       setRecommendation(data.recommendation);
     } catch (error: any) {
       console.error('Failed to get recommendations:', error);
@@ -61,7 +134,6 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
     }
   };
 
-  // Fetch recommendation when dialog opens
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen && finding && !recommendation) {
       fetchRecommendation();
@@ -72,20 +144,21 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
     onOpenChange(newOpen);
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
-      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-      default: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    }
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
   };
 
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'critical': return <ShieldAlert className="h-5 w-5 text-red-500" />;
-      case 'high': return <AlertTriangle className="h-5 w-5 text-orange-500" />;
-      default: return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+  const getRiskStyles = (level: string) => {
+    switch (level) {
+      case 'critical': return { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', badge: 'bg-red-500/20 text-red-300' };
+      case 'high': return { bg: 'bg-orange-500/10', border: 'border-orange-500/30', text: 'text-orange-400', badge: 'bg-orange-500/20 text-orange-300' };
+      case 'low': return { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-400', badge: 'bg-green-500/20 text-green-300' };
+      default: return { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', badge: 'bg-amber-500/20 text-amber-300' };
     }
   };
 
@@ -99,108 +172,245 @@ export const BreachRecommendationDialog = ({ finding, open, onOpenChange }: Brea
 
   if (!finding) return null;
 
+  const severityStyles = getRiskStyles(finding.severity);
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {getSeverityIcon(finding.severity)}
-            Security Analysis: {finding.title}
-          </DialogTitle>
-          <DialogDescription>
-            AI-powered recommendations based on detected vulnerabilities
-          </DialogDescription>
+      <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden bg-background border-amber-500/20">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-amber-500/10 bg-gradient-to-b from-amber-500/5 to-transparent">
+          <div className="flex items-start gap-4">
+            <div className={cn("p-3 rounded-xl", severityStyles.bg, severityStyles.border, "border")}>
+              <ShieldAlert className={cn("h-6 w-6", severityStyles.text)} />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-lg font-semibold flex items-center gap-2">
+                {finding.title}
+              </DialogTitle>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className={cn("uppercase text-xs font-medium", severityStyles.badge)}>
+                  {finding.severity} Risk
+                </Badge>
+                {finding.passwordBreachCount && finding.passwordBreachCount > 0 && (
+                  <Badge variant="outline" className="text-xs text-red-400 border-red-500/30">
+                    Password in {finding.passwordBreachCount.toLocaleString()} breaches
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Issues Summary */}
-          <div className="p-4 bg-muted/50 rounded-lg space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Detected Issues</span>
-              <Badge className={getSeverityColor(finding.severity)}>
-                {finding.severity}
-              </Badge>
+        <ScrollArea className="flex-1 max-h-[60vh]">
+          <div className="p-6 space-y-4">
+            {/* Issues Summary */}
+            <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+              <h4 className="text-sm font-medium text-amber-400 mb-3 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Security Issues Detected
+              </h4>
+              <ul className="space-y-2">
+                {finding.issues.map((issue, idx) => (
+                  <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5 shrink-0" />
+                    {issue}
+                  </li>
+                ))}
+              </ul>
+              
+              {finding.emailBreaches && finding.emailBreaches.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <span className="text-xs text-muted-foreground">Account found in:</span>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {finding.emailBreaches.slice(0, 5).map((breach, idx) => (
+                      <Badge key={idx} variant="outline" className="text-xs bg-red-500/5 border-red-500/20 text-red-300">
+                        {breach.name}
+                      </Badge>
+                    ))}
+                    {finding.emailBreaches.length > 5 && (
+                      <Badge variant="outline" className="text-xs">+{finding.emailBreaches.length - 5} more</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <ul className="space-y-1">
-              {finding.issues.map((issue, idx) => (
-                <li key={idx} className="text-sm text-muted-foreground flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  {issue}
-                </li>
-              ))}
-            </ul>
-            
-            {/* Email Breaches Detail */}
-            {finding.emailBreaches && finding.emailBreaches.length > 0 && (
-              <div className="mt-3 pt-3 border-t">
-                <span className="text-sm font-medium">Account found in breaches:</span>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {finding.emailBreaches.slice(0, 5).map((breach, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {breach.name} ({breach.breachDate})
-                    </Badge>
+
+            {/* AI Recommendations */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-amber-500/20">
+                    <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                  </div>
+                  <span className="text-sm font-medium text-amber-400">AI Security Advisor</span>
+                </div>
+                {recommendation && (
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={fetchRecommendation} className="h-7 px-2 text-xs">
+                      <RefreshCw className="h-3 w-3 mr-1" /> Refresh
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={copyRecommendation} className="h-7 px-2">
+                      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 animate-pulse">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-amber-500/20" />
+                        <div className="h-4 bg-amber-500/20 rounded w-32" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-amber-500/10 rounded w-full" />
+                        <div className="h-3 bg-amber-500/10 rounded w-3/4" />
+                      </div>
+                    </div>
                   ))}
-                  {finding.emailBreaches.length > 5 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{finding.emailBreaches.length - 5} more
-                    </Badge>
+                  <p className="text-xs text-center text-muted-foreground flex items-center justify-center gap-2">
+                    <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
+                    Analyzing security risks...
+                  </p>
+                </div>
+              ) : parsed ? (
+                <div className="space-y-3">
+                  {/* Risk Assessment */}
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
+                    className={cn("rounded-xl overflow-hidden border", getRiskStyles(parsed.riskLevel).bg, getRiskStyles(parsed.riskLevel).border)}>
+                    <button onClick={() => toggleSection('risk')} 
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("p-2 rounded-lg", getRiskStyles(parsed.riskLevel).bg)}>
+                          <AlertTriangle className={cn("h-4 w-4", getRiskStyles(parsed.riskLevel).text)} />
+                        </div>
+                        <div className="text-left">
+                          <h4 className="text-sm font-semibold">Risk Assessment</h4>
+                          <Badge className={cn("text-xs uppercase mt-1", getRiskStyles(parsed.riskLevel).badge)}>
+                            {parsed.riskLevel} Risk
+                          </Badge>
+                        </div>
+                      </div>
+                      {expandedSections.has('risk') ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    </button>
+                    <AnimatePresence>
+                      {expandedSections.has('risk') && parsed.riskSummary && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                          <p className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">{parsed.riskSummary}</p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {/* Immediate Actions */}
+                  {parsed.immediateActions.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                      className="rounded-xl overflow-hidden border bg-red-500/10 border-red-500/20">
+                      <button onClick={() => toggleSection('immediate')} 
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-red-500/20">
+                            <Zap className="h-4 w-4 text-red-400" />
+                          </div>
+                          <div className="text-left">
+                            <h4 className="text-sm font-semibold">What To Do Now</h4>
+                            <span className="text-xs text-red-400/80">{parsed.immediateActions.length} action{parsed.immediateActions.length > 1 ? 's' : ''} required</span>
+                          </div>
+                        </div>
+                        {expandedSections.has('immediate') ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('immediate') && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                            <div className="px-4 pb-4 space-y-2">
+                              {parsed.immediateActions.map((action, i) => (
+                                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-border/30">
+                                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-red-500/20 text-red-400 text-xs font-bold shrink-0 mt-0.5">
+                                    {i + 1}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground leading-relaxed">{action}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+
+                  {/* Password Tip */}
+                  {parsed.passwordTip && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                      className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-lg bg-amber-500/20">
+                          <KeyRound className="h-4 w-4 text-amber-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold mb-1">Password Tip</h4>
+                          <p className="text-sm text-muted-foreground leading-relaxed">{parsed.passwordTip}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Additional Protection */}
+                  {parsed.additionalProtection.length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                      className="rounded-xl overflow-hidden border bg-emerald-500/10 border-emerald-500/20">
+                      <button onClick={() => toggleSection('additional')} 
+                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-emerald-500/20">
+                            <Shield className="h-4 w-4 text-emerald-400" />
+                          </div>
+                          <div className="text-left">
+                            <h4 className="text-sm font-semibold">Extra Protection</h4>
+                            <span className="text-xs text-emerald-400/80">Recommended security steps</span>
+                          </div>
+                        </div>
+                        {expandedSections.has('additional') ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                      </button>
+                      <AnimatePresence>
+                        {expandedSections.has('additional') && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                            <div className="px-4 pb-4 space-y-2">
+                              {parsed.additionalProtection.map((item, i) => (
+                                <div key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+                                  <span>{item}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
                   )}
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* AI Recommendations */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-amber-500" />
-                <span className="text-sm font-medium">AI Recommendations</span>
-              </div>
-              {recommendation && (
-                <Button variant="ghost" size="sm" onClick={copyRecommendation}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground mb-3">Failed to load recommendations</p>
+                  <Button variant="outline" size="sm" onClick={fetchRecommendation}>Try Again</Button>
+                </div>
               )}
             </div>
-            
-            <ScrollArea className="h-[300px] border rounded-lg p-4">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-                  <p className="text-sm text-muted-foreground">Analyzing security risks...</p>
-                </div>
-              ) : recommendation ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown>{recommendation}</ReactMarkdown>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-3">
-                  <AlertTriangle className="h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">Failed to load recommendations</p>
-                  <Button variant="outline" size="sm" onClick={fetchRecommendation}>
-                    Try Again
-                  </Button>
-                </div>
-              )}
-            </ScrollArea>
           </div>
+        </ScrollArea>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Close
-            </Button>
-            <Button 
-              className="bg-amber-500 hover:bg-amber-600 text-black"
-              onClick={() => {
-                onOpenChange(false);
-                toast.info('Navigate to your vault to update this password');
-              }}
-            >
-              Update Password
-            </Button>
-          </div>
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-amber-500/10 bg-gradient-to-t from-amber-500/5 to-transparent flex justify-end gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => {
+            onOpenChange(false);
+            toast.info('Navigate to your vault to update this password');
+          }}>
+            <KeyRound className="h-4 w-4 mr-2" />
+            Update Password
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

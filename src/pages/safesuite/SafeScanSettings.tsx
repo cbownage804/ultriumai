@@ -48,8 +48,8 @@ export default function SafeScanSettings() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <ScanSearch className="h-6 w-6 text-primary" />
-          SafeScan Settings
+          <ScanSearch className="h-6 w-6 text-red-500" />
+          <span className="text-red-500">SafeScan</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your security scanning preferences

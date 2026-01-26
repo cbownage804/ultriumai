@@ -54,8 +54,8 @@ export default function SafePassSettings() {
     <div className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <KeyRound className="h-6 w-6 text-primary" />
-          SafePass Settings
+          <KeyRound className="h-6 w-6 text-amber-500" />
+          <span className="text-amber-500">SafePass</span> Settings
         </h1>
         <p className="text-muted-foreground">
           Configure your password vault preferences
@@ -268,7 +268,11 @@ export default function SafePassSettings() {
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} disabled={loading}>
+        <Button 
+          onClick={handleSaveSettings} 
+          disabled={loading}
+          className="bg-amber-500 hover:bg-amber-600 text-black"
+        >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
