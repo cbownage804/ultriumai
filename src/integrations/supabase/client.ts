@@ -24,7 +24,8 @@ const getRootDomain = (): string => {
   // For ultriumai.com domains, return root domain for cookie sharing
   const parts = hostname.split('.');
   if (parts.length >= 2) {
-    return '.' + parts.slice(-2).join('.');
+    // Return without leading dot for modern browser compatibility
+    return parts.slice(-2).join('.');
   }
   
   return '';
