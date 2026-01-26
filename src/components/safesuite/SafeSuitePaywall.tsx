@@ -91,6 +91,101 @@ export function SafeSuitePaywall({
   );
 }
 
+/**
+ * TierLimitInfo - Always shows current tier limits to encourage upselling
+ * Unlike UsageLimitBanner, this shows at any usage level
+ */
+interface TierLimitInfoProps {
+  feature: keyof TierFeatures;
+  className?: string;
+}
+
+export function TierLimitInfo({ feature, className }: TierLimitInfoProps) {
+  const { checkFeatureAccess, getRequiredTier } = useFeatureAccess();
+  const { tier } = useSafeSuiteSubscription();
+  const access = checkFeatureAccess(feature);
+  const featureInfo = FEATURE_DESCRIPTIONS[feature];
+
+  // Don't show if unlimited or feature is disabled
+  if (!access.allowed) return null;
+  if (access.limit === -1) return null;
+
+  const usedPercentage = access.limit ? ((access.used || 0) / access.limit) * 100 : 0;
+  const isNearLimit = usedPercentage >= 80;
+  const isAtLimit = usedPercentage >= 100;
+  
+  const currentTierConfig = SAFESUITE_TIERS[tier];
+  const nextTier = tier === 'free' ? 'pro' : tier === 'pro' ? 'business' : null;
+  const nextTierConfig = nextTier ? SAFESUITE_TIERS[nextTier] : null;
+  const nextTierLimit = nextTierConfig?.features[feature]?.limit;
+
+  return (
+    <Card className={cn(
+      'border bg-card/50 backdrop-blur-sm',
+      isAtLimit && 'border-destructive/50 bg-destructive/5',
+      isNearLimit && !isAtLimit && 'border-amber-500/50 bg-amber-500/5',
+      !isNearLimit && 'border-border/50',
+      className
+    )}>
+      <CardContent className="flex items-center gap-4 py-3 px-4">
+        <div className={cn(
+          'h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0',
+          isAtLimit && 'bg-destructive/20',
+          isNearLimit && !isAtLimit && 'bg-amber-500/20',
+          !isNearLimit && 'bg-primary/10'
+        )}>
+          {isAtLimit ? (
+            <AlertCircle className="h-5 w-5 text-destructive" />
+          ) : isNearLimit ? (
+            <AlertCircle className="h-5 w-5 text-amber-500" />
+          ) : (
+            <Sparkles className="h-5 w-5 text-primary" />
+          )}
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-sm font-medium truncate">
+              {featureInfo.name} • <span className="text-muted-foreground">{currentTierConfig.name} Plan</span>
+            </span>
+            <span className={cn(
+              'text-sm font-semibold whitespace-nowrap',
+              isAtLimit && 'text-destructive',
+              isNearLimit && !isAtLimit && 'text-amber-500'
+            )}>
+              {access.used || 0} / {access.limit} {featureInfo.limitUnitPlural}
+            </span>
+          </div>
+          <Progress 
+            value={Math.min(usedPercentage, 100)} 
+            className={cn(
+              'h-2',
+              isAtLimit && '[&>div]:bg-destructive',
+              isNearLimit && !isAtLimit && '[&>div]:bg-amber-500'
+            )}
+          />
+        </div>
+        
+        {nextTierConfig && (
+          <Link to="/safesuite/billing" className="flex-shrink-0">
+            <Button 
+              size="sm" 
+              variant={isAtLimit ? 'default' : 'outline'}
+              className="gap-1.5"
+            >
+              <Crown className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">
+                {nextTierLimit === -1 ? 'Unlimited' : `${nextTierLimit}+`}
+              </span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 interface UsageLimitBannerProps {
   feature: keyof TierFeatures;
   className?: string;

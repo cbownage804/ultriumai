@@ -2,7 +2,7 @@
  * SafeSuite Scan - Security Scanner within SafeSuite
  */
 
-import { FeatureGate, UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { SafeScanApp } from '@/components/apps/SafeScanApp';
 import { motion } from 'framer-motion';
 import { AnimatedHeader, GlowContainer } from '@/components/safesuite/SafeSuiteEffects';
@@ -42,7 +42,7 @@ export default function SafeSuiteScan() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <UsageLimitBanner feature="safescan" />
+          <TierLimitInfo feature="safescan" />
         </motion.div>
         
         <motion.div

@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FeatureGate } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { PasswordVault } from '@/components/safepass/PasswordVault';
 import { MasterPasswordSetup } from '@/components/safepass/MasterPasswordSetup';
 import { MFARecommendationBanner } from '@/components/safepass/MFARecommendationBanner';
@@ -191,6 +191,9 @@ export default function SafeSuitePass() {
                 theme="safepass"
                 badge="Encrypted"
               />
+              
+              {/* Tier Limit Info - Always visible for upselling */}
+              <TierLimitInfo feature="safepass" />
               
               {/* Security Badge - shows architecture on click */}
               <div className="flex justify-center">

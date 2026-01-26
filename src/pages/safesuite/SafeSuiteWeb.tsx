@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { FeatureGate, UsageLimitBanner } from '@/components/safesuite/SafeSuitePaywall';
+import { FeatureGate, UsageLimitBanner, TierLimitInfo } from '@/components/safesuite/SafeSuitePaywall';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -367,7 +367,7 @@ export default function SafeSuiteWeb() {
           </Button>
         </div>
 
-        <UsageLimitBanner feature="safeweb" />
+        <TierLimitInfo feature="safeweb" />
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
