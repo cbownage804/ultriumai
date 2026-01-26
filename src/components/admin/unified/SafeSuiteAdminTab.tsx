@@ -84,12 +84,12 @@ export const SafeSuiteAdminTab = () => {
 
       if (subError) throw subError;
 
-      // Get profile data for all subscription users
+      // Get profile data for all subscription users - join on user_id, not id
       const userIds = subscriptions?.map(s => s.user_id) || [];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, email, full_name, account_type')
-        .in('id', userIds);
+        .select('user_id, email, full_name, account_type')
+        .in('user_id', userIds);
 
       // Get security settings for MFA status
       const { data: securitySettings } = await supabase
@@ -97,7 +97,7 @@ export const SafeSuiteAdminTab = () => {
         .select('user_id, two_factor_enabled')
         .in('user_id', userIds);
 
-      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
       const securityMap = new Map(securitySettings?.map((s: any) => [s.user_id, s]) || []);
 
       const enriched = (subscriptions || []).map(sub => ({
