@@ -56,15 +56,16 @@ export const AllUsersAdminTab = () => {
     try {
       setLoading(true);
       
-      // Get all profiles (single source of truth for users)
+      // Get all profiles (single source of truth for users) - use user_id for joins
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email, full_name, account_type, created_at')
+        .select('id, user_id, email, full_name, account_type, created_at')
         .order('created_at', { ascending: false });
 
       if (profileError) throw profileError;
 
-      const userIds = profiles?.map(p => p.id) || [];
+      // Use user_id for subscription lookups since that's what links to auth.users
+      const userIds = profiles?.map(p => p.user_id) || [];
 
       // Get AI Studio subscriptions
       const { data: aiStudioSubs } = await supabase
@@ -84,16 +85,16 @@ export const AllUsersAdminTab = () => {
         .select('user_id, tier, status')
         .in('user_id', userIds);
 
-      // Create lookup maps
+      // Create lookup maps keyed by user_id
       const aiStudioMap = new Map(aiStudioSubs?.map(s => [s.user_id, s]) || []);
       const safeSuiteMap = new Map(safeSuiteSubs?.map(s => [s.user_id, s]) || []);
       const vanguardMap = new Map(vanguardSubs?.map(s => [s.user_id, s]) || []);
 
       // Build unified user list - no duplicates, profiles is the source of truth
       const unifiedUsers: UnifiedUser[] = (profiles || []).map(profile => {
-        const aiSub = aiStudioMap.get(profile.id);
-        const safeSub = safeSuiteMap.get(profile.id);
-        const vangSub = vanguardMap.get(profile.id);
+        const aiSub = aiStudioMap.get(profile.user_id);
+        const safeSub = safeSuiteMap.get(profile.user_id);
+        const vangSub = vanguardMap.get(profile.user_id);
 
         return {
           id: profile.id,
