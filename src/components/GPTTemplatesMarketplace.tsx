@@ -6,13 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play } from "lucide-react";
+import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { gptTemplates } from "@/data/gptTemplates";
 import { GPTTemplate } from "@/types/templates";
+import { TemplateFeatureBadges } from "@/components/chat/TemplateFeatureBadges";
+import { motion } from "framer-motion";
 
 const GPTTemplatesMarketplace = () => {
   const navigate = useNavigate();
@@ -223,109 +225,169 @@ const GPTTemplatesMarketplace = () => {
 
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredTemplates.map((template) => (
-          <Card key={template.id} className="hover:shadow-lg transition-shadow cursor-pointer group">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">{template.icon}</div>
-                  <div>
-                    <CardTitle className="text-lg">{template.name}</CardTitle>
-                    <Badge variant="outline" className="text-xs mt-1">
-                      {template.category}
-                    </Badge>
+        {filteredTemplates.map((template, index) => (
+          <motion.div
+            key={template.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+          >
+            <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group h-full flex flex-col border-2 hover:border-primary/30">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm transition-transform group-hover:scale-110"
+                      style={{ backgroundColor: `${template.config.theme_color}15` }}
+                    >
+                      {template.icon}
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg leading-tight">{template.name}</CardTitle>
+                      <Badge 
+                        variant="outline" 
+                        className="text-[10px] mt-1"
+                        style={{ borderColor: template.config.theme_color, color: template.config.theme_color }}
+                      >
+                        {template.category}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <CardDescription className="line-clamp-2">
-                {template.description}
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="pt-0">
-              <div className="space-y-4">
-                {/* Category Badge */}
-                <div className="flex items-center justify-between text-sm">
-                  <Badge variant="secondary" className="text-xs">
-                    {template.category}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    By {template.created_by}
-                  </span>
-                </div>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1">
-                  {template.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {template.tags.length > 3 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{template.tags.length - 3}
+                  {template.config.enable_web_search && (
+                    <Badge variant="secondary" className="text-[10px] gap-1 shrink-0">
+                      <Globe className="h-3 w-3" />
                     </Badge>
                   )}
                 </div>
+                <CardDescription className="line-clamp-2 mt-2 text-sm">
+                  {template.description}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="pt-0 flex-1 flex flex-col justify-between">
+                <div className="space-y-4">
+                  {/* Features Preview */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Key Capabilities
+                    </p>
+                    <div className="grid grid-cols-1 gap-1">
+                      {template.features.slice(0, 3).map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
+                          <span className="truncate">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-                {/* Features */}
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">Features:</p>
-                  <div className="text-xs text-muted-foreground">
-                    {template.features.slice(0, 2).join(" • ")}
-                    {template.features.length > 2 && " • ..."}
+                  {/* Starter Questions Preview */}
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                      <Lightbulb className="h-3 w-3" />
+                      Try asking
+                    </p>
+                    <div className="text-[11px] text-muted-foreground bg-muted/50 rounded-md p-2 line-clamp-2 italic">
+                      "{template.starter_questions[0]}"
+                    </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-4 pt-4 border-t">
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm" className="flex-1">
-                        Preview
+                        Details
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                          <span className="text-xl">{template.icon}</span>
-                          {template.name}
-                        </DialogTitle>
-                        <DialogDescription>
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl"
+                            style={{ backgroundColor: `${template.config.theme_color}15` }}
+                          >
+                            {template.icon}
+                          </div>
+                          <div>
+                            <DialogTitle className="text-xl">{template.name}</DialogTitle>
+                            <Badge 
+                              variant="outline" 
+                              className="text-xs mt-1"
+                              style={{ borderColor: template.config.theme_color, color: template.config.theme_color }}
+                            >
+                              {template.category}
+                            </Badge>
+                          </div>
+                        </div>
+                        <DialogDescription className="mt-2">
                           {template.description}
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4">
+                      
+                      <div className="space-y-6 mt-4">
+                        {/* Features */}
                         <div>
-                          <h4 className="font-medium mb-2">Starter Questions:</h4>
-                          <div className="space-y-1">
-                            {template.starter_questions.map((question, index) => (
-                              <div key={index} className="text-sm bg-muted p-2 rounded">
-                                "{question}"
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="font-medium mb-2">Features:</h4>
-                          <div className="grid grid-cols-2 gap-2">
+                          <h4 className="font-medium mb-3 flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            What You Get
+                          </h4>
+                          <div className="grid grid-cols-2 gap-3">
                             {template.features.map((feature, index) => (
-                              <div key={index} className="text-sm flex items-center gap-2">
-                                <Zap className="w-3 h-3 text-primary" />
+                              <div 
+                                key={index} 
+                                className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm"
+                              >
+                                <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
                                 {feature}
                               </div>
                             ))}
                           </div>
                         </div>
-                        <div className="space-y-3">
+                        
+                        {/* Starter Questions */}
+                        <div>
+                          <h4 className="font-medium mb-3 flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4 text-primary" />
+                            Example Prompts
+                          </h4>
+                          <div className="space-y-2">
+                            {template.starter_questions.map((question, index) => (
+                              <div 
+                                key={index} 
+                                className="text-sm bg-muted/50 p-3 rounded-lg border-l-2"
+                                style={{ borderColor: template.config.theme_color }}
+                              >
+                                "{question}"
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Tags */}
+                        <div>
+                          <h4 className="font-medium mb-2">Tags</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {template.tags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        {/* Install Section */}
+                        <div className="space-y-3 pt-4 border-t">
                           {!canCreateMore && (
-                            <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+                            <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
                               <div className="flex items-center gap-2 text-warning mb-2">
                                 <Lock className="h-4 w-4" />
                                 <span className="font-medium text-sm">Premium Feature</span>
                               </div>
-                              <p className="text-xs text-muted-foreground mb-2">
-                                You've reached your {subscription.subscription_tier} plan limit of {limits.maxGPTs} GPT{limits.maxGPTs > 1 ? 's' : ''}. 
+                              <p className="text-xs text-muted-foreground mb-3">
+                                You've reached your {subscription.subscription_tier} plan limit. 
                                 Upgrade to install templates and create unlimited GPTs.
                               </p>
                               <Button 
@@ -341,18 +403,25 @@ const GPTTemplatesMarketplace = () => {
                           <Button 
                             onClick={() => handleInstallTemplate(template)}
                             disabled={!canCreateMore || isInstalling}
-                            className="w-full"
+                            className="w-full h-11"
                             variant={!canCreateMore ? "secondary" : "default"}
+                            style={canCreateMore ? { backgroundColor: template.config.theme_color } : {}}
                           >
                             {!canCreateMore ? (
                               <>
                                 <Lock className="h-4 w-4 mr-2" />
-                                Locked - Upgrade Required
+                                Upgrade to Use
                               </>
                             ) : isInstalling ? (
-                              "Installing..."
+                              <>
+                                <Play className="h-4 w-4 mr-2 animate-pulse" />
+                                Starting Chat...
+                              </>
                             ) : (
-                              "Install Template"
+                              <>
+                                <Play className="h-4 w-4 mr-2" />
+                                Use Now - Start Chatting
+                              </>
                             )}
                           </Button>
                         </div>
@@ -362,32 +431,33 @@ const GPTTemplatesMarketplace = () => {
                   
                   <Button 
                     size="sm" 
-                    className="flex-1"
+                    className="flex-1 gap-1"
                     onClick={() => handleInstallTemplate(template)}
                     disabled={!canCreateMore || isInstalling}
                     variant={!canCreateMore ? "secondary" : "default"}
+                    style={canCreateMore && !isInstalling ? { backgroundColor: template.config.theme_color } : {}}
                   >
                     {!canCreateMore ? (
                       <>
-                        <Lock className="w-3 h-3 mr-1" />
-                        Locked
+                        <Lock className="w-3 h-3" />
+                        <span className="hidden sm:inline">Locked</span>
                       </>
                     ) : isInstalling ? (
                       <>
-                        <Play className="w-3 h-3 mr-1 animate-pulse" />
-                        Starting...
+                        <Play className="w-3 h-3 animate-pulse" />
+                        <span>Starting...</span>
                       </>
                     ) : (
                       <>
-                        <Play className="w-3 h-3 mr-1" />
-                        Use Now
+                        <Play className="w-3 h-3" />
+                        <span>Use Now</span>
                       </>
                     )}
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
 

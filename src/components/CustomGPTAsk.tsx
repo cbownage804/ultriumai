@@ -8,7 +8,9 @@ import { BackToHubButton } from "@/components/shared/BackToHubButton";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { supabase } from "@/integrations/supabase/client";
 import { useMessageOperations } from "@/hooks/useMessageOperations";
-import { MessageList } from "@/components/chat/MessageList";
+import { EnhancedMessageList } from "@/components/chat/EnhancedMessageList";
+import { QuickActionToolbar } from "@/components/chat/QuickActionToolbar";
+import { TemplateFeatureBadges } from "@/components/chat/TemplateFeatureBadges";
 import { ChatStats } from "@/components/chat/ChatStats";
 import { ModelSettings, ModelParams } from "@/components/chat/ModelSettings";
 import { UsageDisplay } from "@/components/chat/UsageDisplay";
@@ -174,33 +176,59 @@ const CustomGPTAsk = () => {
         </div>
       </div>
 
-      <Card className="h-[600px] flex flex-col">
+      <Card className="h-[650px] flex flex-col">
         <CardHeader className="border-b flex-shrink-0">
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5" />
-            {currentGPT.name || 'My Custom GPT'}
-          </CardTitle>
-          <CardDescription>
-            {currentGPT.description || 'Chat with your Custom GPT to test its responses'}
-          </CardDescription>
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2">
+                <div 
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                  style={{ backgroundColor: currentGPT.theme_color || '#3b82f6' }}
+                >
+                  {(currentGPT.name || 'G').charAt(0)}
+                </div>
+                {currentGPT.name || 'My Custom GPT'}
+              </CardTitle>
+              <CardDescription>
+                {currentGPT.description || 'Chat with your Custom GPT to test its responses'}
+              </CardDescription>
+            </div>
+            <TemplateFeatureBadges 
+              enableWebSearch={currentGPT.enable_web_search}
+              compact
+            />
+          </div>
         </CardHeader>
         
         <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-          <MessageList 
+          <EnhancedMessageList 
             messages={messages}
             isLoading={isLoading}
             copiedMessageId={copiedMessageId}
             onCopyMessage={copyMessage}
+            gptName={currentGPT.name}
+            gptDescription={currentGPT.description}
+            starterQuestions={currentGPT.starter_questions as string[] || []}
+            themeColor={currentGPT.theme_color || '#3b82f6'}
+            onQuestionSelect={(question) => setInputMessage(question)}
+          />
+          
+          <QuickActionToolbar
+            onAction={(prompt) => {
+              setInputMessage(prompt);
+            }}
+            disabled={isLoading}
           />
           
           <div className="p-4 border-t flex-shrink-0 bg-card">
             <div className="flex gap-2">
               <Input
-                placeholder="Ask your Custom GPT anything..."
+                placeholder={currentGPT.placeholder_prompt || "Ask your Custom GPT anything..."}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isLoading}
+                className="text-sm"
               />
               <Button onClick={handleSendMessage} disabled={isLoading || !inputMessage.trim()}>
                 <Send className="h-4 w-4" />
