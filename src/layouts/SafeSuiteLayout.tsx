@@ -458,12 +458,11 @@ function SafeSuiteLayoutInner() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const authPath = isSafeSuiteDomain() ? '/auth' : '/auth';
 
   const handleSignOut = async () => {
     await signOut();
-    // Navigate to auth page instead of landing to ensure clean logout
-    navigate(authPath);
+    // Don't navigate - let ProtectedRoute handle redirect when auth state clears
+    // This prevents race condition with auth state updates
   };
 
   const userInitials = user?.email

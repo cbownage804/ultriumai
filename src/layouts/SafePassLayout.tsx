@@ -42,7 +42,7 @@ export function SafePassLayout() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/safepass');
+    // Don't navigate - let ProtectedRoute handle redirect when auth state clears
   };
 
   const userInitials = profile?.full_name
