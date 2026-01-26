@@ -106,10 +106,10 @@
            <p className="text-xs text-muted-foreground pt-4">
              Having trouble? Try refreshing the page or{' '}
              <button 
-               onClick={() => window.location.href = '/auth'}
+                onClick={() => window.location.href = '/hub'}
                className="text-primary hover:underline"
              >
-               sign in again
+                go back to hub
              </button>
            </p>
          </div>
