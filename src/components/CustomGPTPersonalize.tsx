@@ -390,20 +390,17 @@ const CustomGPTPersonalize = () => {
   return (
     <div className="space-y-8 p-6 bg-gradient-to-br from-background via-background to-primary/5 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-end mb-4">
-          <BackToHubButton />
-        </div>
-        <div className="text-center space-y-4 mb-8">
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-            <Settings className="h-4 w-4 mr-2" />
-            UltriumGPT Configuration
+        {/* Header with Back to Hub at top */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+              Personalize Your AI Assistant
+            </h1>
+            <p className="text-muted-foreground">
+              Craft the perfect AI experience with advanced customization options
+            </p>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-            Personalize Your AI Assistant
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Craft the perfect AI experience with advanced customization options that reflect your brand and workflow.
-          </p>
+          <BackToHubButton />
         </div>
 
         <Tabs defaultValue="general" className="space-y-8">
