@@ -1,4 +1,4 @@
-import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, ChevronDown, ChevronRight, Brain, Mic, Eye, ExternalLink } from "lucide-react";
+import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, ChevronDown, ChevronRight, Brain, Mic, Eye } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
-import vanguardLogo from "@/assets/vanguard-logo.png";
+
 
 import {
   Sidebar,
@@ -253,35 +253,6 @@ export function AppSidebar() {
           </SidebarGroup>
         </Collapsible>
 
-        {/* Vanguard Link */}
-        {!isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <Card className="mx-2 mb-2 border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
-                <CardHeader className="p-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <img src={vanguardLogo} alt="Vanguard" className="h-6 w-6 rounded object-contain bg-black" />
-                    Vanguard
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    AI-powered cybersecurity platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-3 pt-0">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full text-xs"
-                    onClick={() => window.location.href = 'https://vanguard.ultriumai.com'}
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Open Vanguard
-                  </Button>
-                </CardContent>
-              </Card>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
 
         {/* Premium Upgrade Section */}
         {subscription.subscription_tier === "free" && !isCollapsed && (

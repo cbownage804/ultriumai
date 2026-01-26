@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock, Building, Users, Eye, EyeOff, Mail, Shield } from 'lucide-react';
+import { Lock, Building, Users, Eye, EyeOff, Mail, Shield, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
 import safesuiteLogo from '@/assets/safesuite-logo.png';
@@ -28,7 +28,7 @@ const AuthPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [accountType, setAccountType] = useState('business');
+  const [accountType, setAccountType] = useState('individual');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -410,6 +410,12 @@ const AuthPage = () => {
                           <SelectValue placeholder="Select account type" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="individual">
+                            <div className="flex items-center">
+                              <User className="h-4 w-4 mr-2" />
+                              Individual
+                            </div>
+                          </SelectItem>
                           <SelectItem value="business">
                             <div className="flex items-center">
                               <Building className="h-4 w-4 mr-2" />
@@ -419,13 +425,7 @@ const AuthPage = () => {
                           <SelectItem value="msp">
                             <div className="flex items-center">
                               <Users className="h-4 w-4 mr-2" />
-                              MSP/MSSP
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="individual">
-                            <div className="flex items-center">
-                              <Lock className="h-4 w-4 mr-2" />
-                              Individual
+                              MSP/MSSP Partner
                             </div>
                           </SelectItem>
                         </SelectContent>

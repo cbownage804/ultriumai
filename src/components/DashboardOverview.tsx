@@ -22,10 +22,7 @@ import {
   Eye,
   Sparkles,
   Code,
-  Palette,
-  Shield,
-  ExternalLink,
-  Inbox
+  Palette
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -347,45 +344,46 @@ export const DashboardOverview = () => {
           </CardContent>
         </Card>
 
-        {/* Vanguard CTA */}
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
+        {/* Pro Tips */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Shield className="h-5 w-5 text-primary" />
-              <span>Ultrium Vanguard</span>
+              <Sparkles className="h-5 w-5 text-primary" />
+              <span>Pro Tips</span>
             </CardTitle>
             <CardDescription>
-              Enterprise cybersecurity platform
+              Get the most out of AI Studio
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Our all-in-one AI-powered cybersecurity operations platform with:
+              Build smarter AI solutions with these best practices:
             </p>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                XDR/EDR threat detection
+                Train GPTs on your specific domain knowledge
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                AI-powered service desk with ticketing
+                Use templates as starting points
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                Network scanning & penetration testing
+                Connect external APIs for dynamic responses
               </li>
               <li className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                Compliance monitoring & reporting
+                White-label to match your brand
               </li>
             </ul>
             <Button 
               className="w-full mt-4"
-              onClick={() => window.location.href = 'https://vanguard.ultriumai.com'}
+              variant="outline"
+              onClick={() => navigate('/dashboard/gpt/templates')}
             >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Explore Vanguard
+              <Star className="h-4 w-4 mr-2" />
+              Explore Templates
             </Button>
           </CardContent>
         </Card>
