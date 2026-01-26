@@ -20,7 +20,8 @@ import {
   Loader2,
   Key,
   Globe,
-  Trash2
+  Trash2,
+  Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -378,6 +379,12 @@ export default function SafePassImport() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
+                {!isUnlocked && (
+                  <div className="flex items-center gap-2 text-amber-500 text-sm mr-2">
+                    <Lock className="h-4 w-4" />
+                    <span>Unlock your vault first</span>
+                  </div>
+                )}
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -388,6 +395,7 @@ export default function SafePassImport() {
                 <Button 
                   onClick={handleImport} 
                   disabled={isImporting || selectedCount === 0 || !isUnlocked}
+                  title={!isUnlocked ? 'Please unlock your vault to import passwords' : undefined}
                 >
                   {isImporting ? (
                     <>
