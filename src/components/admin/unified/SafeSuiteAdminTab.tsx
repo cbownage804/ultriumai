@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 
-interface SafeSuiteSubscriber {
+interface SafeSuiteUser {
   id: string;
   user_id: string;
   tier: string;
@@ -40,6 +40,7 @@ interface SafeSuiteSubscriber {
   created_at: string;
   email?: string;
   full_name?: string;
+  account_type?: string;
   mfa_enabled?: boolean;
 }
 
@@ -51,8 +52,8 @@ const TIERS = [
 
 export const SafeSuiteAdminTab = () => {
   const { toast } = useToast();
-  const [subscribers, setSubscribers] = useState<SafeSuiteSubscriber[]>([]);
-  const [filteredSubscribers, setFilteredSubscribers] = useState<SafeSuiteSubscriber[]>([]);
+  const [users, setUsers] = useState<SafeSuiteUser[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<SafeSuiteUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [tierFilter, setTierFilter] = useState('all');
@@ -64,14 +65,14 @@ export const SafeSuiteAdminTab = () => {
   });
 
   useEffect(() => {
-    loadSubscribers();
+    loadUsers();
   }, []);
 
   useEffect(() => {
-    filterSubscribers();
-  }, [subscribers, searchTerm, tierFilter]);
+    filterUsers();
+  }, [users, searchTerm, tierFilter]);
 
-  const loadSubscribers = async () => {
+  const loadUsers = async () => {
     try {
       setLoading(true);
       
@@ -83,11 +84,11 @@ export const SafeSuiteAdminTab = () => {
 
       if (subError) throw subError;
 
-      // Get profile data
+      // Get profile data for all subscription users
       const userIds = subscriptions?.map(s => s.user_id) || [];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, email, full_name')
+        .select('id, email, full_name, account_type')
         .in('id', userIds);
 
       // Get security settings for MFA status
@@ -103,10 +104,11 @@ export const SafeSuiteAdminTab = () => {
         ...sub,
         email: profileMap.get(sub.user_id)?.email || 'Unknown',
         full_name: profileMap.get(sub.user_id)?.full_name,
+        account_type: profileMap.get(sub.user_id)?.account_type || 'individual',
         mfa_enabled: securityMap.get(sub.user_id)?.two_factor_enabled || false
       }));
 
-      setSubscribers(enriched);
+      setUsers(enriched);
 
       // Calculate stats
       const tierCounts = { free: 0, pro: 0, business: 0 };
@@ -122,10 +124,10 @@ export const SafeSuiteAdminTab = () => {
         ...tierCounts
       });
     } catch (error) {
-      console.error('Error loading subscribers:', error);
+      console.error('Error loading users:', error);
       toast({
-        title: "Error loading subscribers",
-        description: "Could not load SafeSuite subscribers",
+        title: "Error loading users",
+        description: "Could not load SafeSuite users",
         variant: "destructive"
       });
     } finally {
@@ -133,22 +135,30 @@ export const SafeSuiteAdminTab = () => {
     }
   };
 
-  const filterSubscribers = () => {
-    let filtered = [...subscribers];
+  const filterUsers = () => {
+    let filtered = [...users];
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(s => 
-        s.email?.toLowerCase().includes(term) ||
-        s.full_name?.toLowerCase().includes(term)
+      filtered = filtered.filter(u => 
+        u.email?.toLowerCase().includes(term) ||
+        u.full_name?.toLowerCase().includes(term)
       );
     }
 
     if (tierFilter !== 'all') {
-      filtered = filtered.filter(s => s.tier === tierFilter);
+      filtered = filtered.filter(u => u.tier === tierFilter);
     }
 
-    setFilteredSubscribers(filtered);
+    setFilteredUsers(filtered);
+  };
+
+  const getAccountTypeLabel = (type: string) => {
+    switch (type) {
+      case 'msp': return 'MSP Partner';
+      case 'mssp': return 'MSSP Partner';
+      default: return 'Individual';
+    }
   };
 
   const getTierBadge = (tier: string) => {
@@ -205,20 +215,20 @@ export const SafeSuiteAdminTab = () => {
         ))}
       </div>
 
-      {/* Subscribers Table */}
+      {/* Users Table */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-emerald-500" />
-                SafeSuite Subscribers
+                SafeSuite Users
               </CardTitle>
               <CardDescription>
-                Manage SafeSuite subscriptions and security settings
+                Manage SafeSuite users, subscriptions, and security settings
               </CardDescription>
             </div>
-            <Button variant="outline" size="sm" onClick={loadSubscribers}>
+            <Button variant="outline" size="sm" onClick={loadUsers}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
@@ -257,41 +267,47 @@ export const SafeSuiteAdminTab = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>Account Type</TableHead>
                   <TableHead>Tier</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>MFA</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead>Joined</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSubscribers.length === 0 ? (
+                {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                      No subscribers found
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      No users found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredSubscribers.slice(0, 50).map((sub) => (
-                    <TableRow key={sub.id}>
+                  filteredUsers.slice(0, 50).map((user) => (
+                    <TableRow key={user.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{sub.email}</div>
-                          {sub.full_name && (
-                            <div className="text-sm text-muted-foreground">{sub.full_name}</div>
+                          <div className="font-medium">{user.email}</div>
+                          {user.full_name && (
+                            <div className="text-sm text-muted-foreground">{user.full_name}</div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>{getTierBadge(sub.tier)}</TableCell>
-                      <TableCell>{getStatusBadge(sub.status)}</TableCell>
                       <TableCell>
-                        {sub.mfa_enabled ? (
+                        <Badge variant="outline" className="text-emerald-600 border-emerald-600">
+                          {getAccountTypeLabel(user.account_type || 'individual')}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{getTierBadge(user.tier)}</TableCell>
+                      <TableCell>{getStatusBadge(user.status)}</TableCell>
+                      <TableCell>
+                        {user.mfa_enabled ? (
                           <ShieldCheck className="h-5 w-5 text-green-500" />
                         ) : (
                           <ShieldOff className="h-5 w-5 text-muted-foreground" />
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {format(new Date(sub.created_at), 'MMM d, yyyy')}
+                        {format(new Date(user.created_at), 'MMM d, yyyy')}
                       </TableCell>
                     </TableRow>
                   ))
@@ -300,9 +316,9 @@ export const SafeSuiteAdminTab = () => {
             </Table>
           </div>
           
-          {filteredSubscribers.length > 50 && (
+          {filteredUsers.length > 50 && (
             <p className="text-sm text-muted-foreground mt-4 text-center">
-              Showing 50 of {filteredSubscribers.length} subscribers
+              Showing 50 of {filteredUsers.length} users
             </p>
           )}
         </CardContent>
