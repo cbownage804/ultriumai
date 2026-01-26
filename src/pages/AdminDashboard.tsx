@@ -213,9 +213,9 @@ const AdminDashboard = () => {
         id: user.id,
         email: user.email,
         created_at: user.created_at,
-        last_sign_in_at: user.created_at, // Using created_at as fallback
+        last_sign_in_at: user.created_at,
         account_type: user.account_type || 'business',
-        is_active: true // TODO: Add real active status
+        is_active: true
       })) || [];
 
       // Calculate stats
@@ -640,27 +640,48 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {users.slice(0, 20).map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <div className="font-medium">{user.email}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Account Type: {user.account_type}
+                  {users.slice(0, 20).map((user) => {
+                    // Display friendly account type labels
+                    const getAccountTypeLabel = (type: string) => {
+                      switch (type) {
+                        case 'msp': return 'MSP Partner';
+                        case 'mssp': return 'MSSP Partner';
+                        default: return 'Individual';
+                      }
+                    };
+                    
+                    const getAccountTypeBadgeColor = (type: string) => {
+                      switch (type) {
+                        case 'msp': return 'bg-blue-500/10 text-blue-600 border-blue-500/30';
+                        case 'mssp': return 'bg-purple-500/10 text-purple-600 border-purple-500/30';
+                        default: return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30';
+                      }
+                    };
+                    
+                    return (
+                      <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
+                        <div className="flex-1">
+                          <div className="font-medium">{user.email}</div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className={`text-xs ${getAccountTypeBadgeColor(user.account_type)}`}>
+                              {getAccountTypeLabel(user.account_type)}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Joined: {new Date(user.created_at).toLocaleDateString()}
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                        <div className="flex items-center gap-2">
+                          <Badge variant={user.is_active ? 'default' : 'secondary'}>
+                            {user.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                          <Button variant="outline" size="sm">
+                            View
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                          {user.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          View
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
