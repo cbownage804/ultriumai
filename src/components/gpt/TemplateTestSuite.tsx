@@ -83,7 +83,7 @@ const TemplateTestSuite = () => {
       }
 
       // Check if response is meaningful - handle different response formats
-      const response = data?.generatedText || data?.choices?.[0]?.message?.content || data?.response || data?.content || '';
+      const response = data?.message || data?.generatedText || data?.choices?.[0]?.message?.content || data?.response || data?.content || '';
       const isPassed = response.length > 50 && !response.toLowerCase().includes('error');
 
       return {
