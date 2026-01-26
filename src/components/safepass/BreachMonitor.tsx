@@ -210,9 +210,16 @@ export const BreachMonitor = () => {
       const compromisedCount = results.filter(r => r.severity === 'critical').length;
       const weakCount = results.filter(r => r.issues.some(i => i.toLowerCase().includes('weak'))).length;
       const reusedCount = results.filter(r => r.issues.some(i => i.includes('Reused'))).length;
-      const overallScore = entries.length > 0 
-        ? Math.max(0, 100 - Math.round(((compromisedCount * 2 + weakCount + reusedCount) / entries.length) * 50))
-        : 100;
+      
+      // Score calculation: breached passwords heavily penalize the score
+      let overallScore = 100;
+      if (entries.length > 0) {
+        // Each breached password: -30 points
+        // Each weak password: -15 points  
+        // Each reused password: -10 points
+        const penalty = (breachedCount * 30) + (weakCount * 15) + (reusedCount * 10);
+        overallScore = Math.max(0, 100 - penalty);
+      }
 
       // Save scan results
       const { error } = await supabase
