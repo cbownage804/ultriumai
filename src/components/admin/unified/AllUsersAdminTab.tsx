@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -20,7 +19,8 @@ import {
   Users,
   Sparkles,
   Shield,
-  Zap
+  Zap,
+  Crown
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -146,6 +146,26 @@ export const AllUsersAdminTab = () => {
     }
   };
 
+  const getTierBadge = (tier: string | undefined, productColor: string) => {
+    const t = tier?.toLowerCase() || 'free';
+    const colorMap: Record<string, string> = {
+      'free': 'text-muted-foreground border-muted-foreground/30 bg-muted/30',
+      'pro': `text-${productColor}-500 border-${productColor}-500/50 bg-${productColor}-500/10`,
+      'business': `text-${productColor}-500 border-${productColor}-500/50 bg-${productColor}-500/10`,
+      'enterprise': `text-${productColor}-500 border-${productColor}-500/50 bg-${productColor}-500/10`,
+    };
+    
+    const isPaid = t !== 'free';
+    const label = t.charAt(0).toUpperCase() + t.slice(1);
+    
+    return (
+      <Badge variant="outline" className={`text-xs ${isPaid ? colorMap[t] || colorMap['pro'] : colorMap['free']}`}>
+        {isPaid && <Crown className="h-3 w-3 mr-1" />}
+        {label}
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -168,30 +188,39 @@ export const AllUsersAdminTab = () => {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">With AI Studio</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <Sparkles className="h-4 w-4 text-purple-500" />
+              AI Studio Paid
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.filter(u => u.products.ai_studio).length}
+            <div className="text-2xl font-bold text-purple-500">
+              {users.filter(u => u.products.ai_studio && u.products.ai_studio.tier !== 'free').length}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">With SafeSuite</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <Shield className="h-4 w-4 text-emerald-500" />
+              SafeSuite Paid
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {users.filter(u => u.products.safesuite).length}
+            <div className="text-2xl font-bold text-emerald-500">
+              {users.filter(u => u.products.safesuite && u.products.safesuite.tier !== 'free').length}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">With Vanguard</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center gap-1">
+              <Zap className="h-4 w-4 text-amber-500" />
+              Vanguard Users
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-amber-500">
               {users.filter(u => u.products.vanguard).length}
             </div>
           </CardContent>
@@ -281,25 +310,16 @@ export const AllUsersAdminTab = () => {
                         {getAccountTypeBadge(user.account_type)}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Checkbox 
-                          checked={!!user.products.ai_studio} 
-                          disabled 
-                          className="data-[state=checked]:bg-purple-500 data-[state=checked]:border-purple-500"
-                        />
+                        {getTierBadge(user.products.ai_studio?.tier, 'purple')}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Checkbox 
-                          checked={!!user.products.safesuite} 
-                          disabled 
-                          className="data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
-                        />
+                        {getTierBadge(user.products.safesuite?.tier, 'emerald')}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Checkbox 
-                          checked={!!user.products.vanguard} 
-                          disabled 
-                          className="data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500"
-                        />
+                        {user.products.vanguard 
+                          ? getTierBadge(user.products.vanguard.tier, 'amber')
+                          : <span className="text-muted-foreground text-xs">—</span>
+                        }
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(user.created_at), 'MMM d, yyyy')}
