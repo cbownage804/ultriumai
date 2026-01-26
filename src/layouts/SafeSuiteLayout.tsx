@@ -42,6 +42,7 @@ import {
 import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
 import { FloatingSafeAssistProvider, useFloatingSafeAssist } from '@/contexts/FloatingSafeAssistContext';
+import { MFAOnboardingGate } from '@/components/safesuite/MFAOnboardingGate';
 
 /**
  * Get the correct path for SafeSuite routes based on subdomain
@@ -546,8 +547,10 @@ function SafeSuiteLayoutInner() {
 
 export default function SafeSuiteLayout() {
   return (
-    <FloatingSafeAssistProvider>
-      <SafeSuiteLayoutInner />
-    </FloatingSafeAssistProvider>
+    <MFAOnboardingGate>
+      <FloatingSafeAssistProvider>
+        <SafeSuiteLayoutInner />
+      </FloatingSafeAssistProvider>
+    </MFAOnboardingGate>
   );
 }
