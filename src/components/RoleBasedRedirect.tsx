@@ -4,10 +4,34 @@ import { useEffect, useState } from 'react';
 import { AuthLoadingScreen } from '@/components/auth/AuthLoadingScreen';
 import { isSafeSuiteDomain, isVanguardDomain } from '@/utils/subdomain';
 
-// Product subdomain URLs
-const PRODUCT_URLS: Record<string, string> = {
-  safesuite: 'https://safesuite.ultriumai.com',
-  vanguard: 'https://vanguard.ultriumai.com',
+/**
+ * Get product URLs dynamically based on current environment
+ */
+const getProductUrls = (): Record<string, string> => {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  // Production environment
+  if (hostname === 'ultriumai.com' || hostname === 'www.ultriumai.com') {
+    return {
+      safesuite: 'https://safesuite.ultriumai.com',
+      vanguard: 'https://vanguard.ultriumai.com',
+    };
+  }
+  
+  // Already on a subdomain in production
+  if (hostname.endsWith('.ultriumai.com')) {
+    return {
+      safesuite: 'https://safesuite.ultriumai.com',
+      vanguard: 'https://vanguard.ultriumai.com',
+    };
+  }
+  
+  // Preview/localhost - stay on same domain, just navigate
+  return {
+    safesuite: '', // Empty means use local navigation
+    vanguard: '',
+  };
 };
 
 export const RoleBasedRedirect = () => {
@@ -19,15 +43,19 @@ export const RoleBasedRedirect = () => {
   const returnProduct = searchParams.get('return');
   const returnPath = searchParams.get('path') || '/dashboard';
 
-  // Priority 1: Handle cross-domain product redirects FIRST (before role-based logic)
-  // Handle subdomain redirect with delay to ensure cookie is written
+  // Priority 1: Handle cross-domain product redirects (PRODUCTION ONLY)
   useEffect(() => {
-    if (returnProduct && PRODUCT_URLS[returnProduct] && !loading && !redirecting) {
+    const PRODUCT_URLS = getProductUrls();
+    const productUrl = PRODUCT_URLS[returnProduct || ''];
+    
+    // Only do cross-domain redirect if we have a valid external URL
+    if (returnProduct && productUrl && !loading && !redirecting) {
       setRedirecting(true);
       
-      // Wait 1 second to ensure session cookie is fully written before redirecting
+      // Wait for session cookie to be written before redirecting
       const timer = setTimeout(() => {
-        const targetUrl = `${PRODUCT_URLS[returnProduct]}${returnPath}`;
+        const targetUrl = `${productUrl}${returnPath}`;
+        console.log('[RoleBasedRedirect] Cross-domain redirect to:', targetUrl);
         window.location.href = targetUrl;
       }, 1000);
       
@@ -42,15 +70,20 @@ export const RoleBasedRedirect = () => {
     />;
   }
 
-  // Priority 2: Check for role-based redirects (MSP/Admin)
-  // Only apply role-based redirects if NOT returning from a product auth flow
+  // Priority 2: Preview/localhost with return product - use local navigation
+  const PRODUCT_URLS = getProductUrls();
+  if (returnProduct && PRODUCT_URLS[returnProduct] === '') {
+    console.log('[RoleBasedRedirect] Preview mode - navigating to:', returnPath);
+    return <Navigate to={returnPath} replace />;
+  }
+
+  // Priority 3: Check for role-based redirects (MSP/Admin) - only if NOT returning from product
   if (shouldRedirectToRole() && !returnProduct) {
     const redirectPath = getRedirectPath();
     return <Navigate to={redirectPath} replace />;
   }
 
-  // Priority 3: Already on subdomain - stay there
-  // SafeSuite and Vanguard subdomains stay on their own dashboards
+  // Priority 4: Already on subdomain - stay there
   if (isSafeSuiteDomain()) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -59,6 +92,6 @@ export const RoleBasedRedirect = () => {
     return <Navigate to="/dashboard" replace />;
   }
   
-  // Priority 4: Main domain fallback - redirect to Product Hub
+  // Priority 5: Main domain fallback - redirect to Product Hub
   return <Navigate to="/hub" replace />;
 };
