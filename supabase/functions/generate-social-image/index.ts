@@ -58,14 +58,38 @@ const VISUAL_STYLES: Record<string, string> = {
   compliance_update: 'Official, structured visuals with documents, checklists, certification badges, or regulatory symbols. Clean and trustworthy.',
   success_story: 'Positive, achievement-oriented imagery with upward graphs, trophy elements, handshakes, or celebrating team silhouettes. Warm, optimistic colors.',
   
+  // UltriumAI Product Promos
+  safepass_promo: 'Premium password vault imagery with golden amber accents, secure key icons, digital vault doors, biometric authentication, master passwords. Luxurious security aesthetic with dark backgrounds and warm amber/gold glows. Trustworthy, secure, premium.',
+  safescan_promo: 'Threat detection imagery with red warning accents, email scanning visualizations, URL analysis, document inspection, shield barriers catching malware. Alert-focused aesthetic with dark backgrounds and crimson red glows. Vigilant, protective, proactive.',
+  safeweb_promo: 'Dark web monitoring imagery with cyan/teal accents, deep web visualizations, breach detection alerts, credential monitoring dashboards, hidden threat discovery. Mysterious yet protective aesthetic with dark backgrounds and cyan glows. Watchful, comprehensive, revealing.',
+  safetrack_promo: 'IT asset management imagery with emerald green accents, inventory dashboards, device tracking maps, asset lifecycle visualizations, organized equipment grids. Organized and efficient aesthetic with dark backgrounds and green accents. Orderly, efficient, complete.',
+  safeassist_promo: 'AI assistant imagery with blue accents, chatbot interfaces, helpful robot assistants, conversation bubbles with security icons, friendly AI faces. Approachable tech aesthetic with dark backgrounds and blue glows. Helpful, intelligent, accessible.',
+  vanguard_promo: 'Enterprise RMM imagery with cyan accents, endpoint management dashboards, network monitoring visualizations, remote access connections, security agent deployment. Command center aesthetic with dark backgrounds and cyan highlights. Powerful, comprehensive, enterprise-grade.',
+  
   // General
   security_tip: 'Clean, helpful visual with lock icons, checkmarks, protective shields, or secure connections. Bright, approachable colors like blues and greens.',
   awareness_campaign: 'Educational cybersecurity visuals with protective symbols, awareness ribbons, or community-focused security imagery. Accessible and inclusive.',
   custom_topic: 'Professional technology and cybersecurity themed imagery with modern digital aesthetics.',
 };
 
+// Map content types to forced product watermarks
+const CONTENT_TYPE_TO_PRODUCT: Record<string, string> = {
+  safepass_promo: 'safepass',
+  safescan_promo: 'safescan',
+  safeweb_promo: 'safeweb',
+  safetrack_promo: 'safetrack',
+  safeassist_promo: 'safeassist',
+  vanguard_promo: 'vanguard',
+  ai_studio: 'aistudio',
+};
+
 // Detect which product is mentioned in the content
-function detectProduct(text: string): string | null {
+function detectProduct(text: string, contentType?: string): string | null {
+  // If content type maps to a product, use that
+  if (contentType && CONTENT_TYPE_TO_PRODUCT[contentType]) {
+    return CONTENT_TYPE_TO_PRODUCT[contentType];
+  }
+  
   const lowerText = text.toLowerCase();
   for (const [product, keywords] of Object.entries(PRODUCT_KEYWORDS)) {
     for (const keyword of keywords) {
@@ -93,9 +117,9 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Detect product from prompt or post content
-    const detectedProduct = detectProduct(prompt) || (postContent ? detectProduct(postContent) : null);
-    console.log('Detected product:', detectedProduct || 'none');
+    // Detect product from content type first, then prompt, then post content
+    const detectedProduct = detectProduct(prompt, contentType) || (postContent ? detectProduct(postContent) : null);
+    console.log('Detected product:', detectedProduct || 'none', 'from contentType:', contentType);
 
     // Get visual style based on content type
     const visualStyle = contentType && VISUAL_STYLES[contentType] 
