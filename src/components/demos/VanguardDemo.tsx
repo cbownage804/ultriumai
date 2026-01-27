@@ -1,892 +1,329 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/components/ui/use-toast";
-import { useVanguardData } from "@/hooks/useVanguardData";
 import { 
   Shield, 
   AlertTriangle, 
   Eye, 
   Activity, 
-  Network, 
-  Search,
-  Lock,
-  Zap,
+  Monitor,
   Target,
+  FileCheck,
+  BarChart3,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Wifi,
+  WifiOff,
+  ArrowRight,
+  TrendingUp,
   Users,
   Server,
-  Globe,
-  Brain,
-  ShieldCheck,
+  HardDrive,
   Cpu,
-  Database,
-  FileX,
-  Crosshair,
-  TrendingUp,
-  Clock,
-  Layers,
-  Microscope,
-  Bot,
-  Radar,
-  Workflow,
-  PlayCircle
+  RefreshCw
 } from "lucide-react";
+import vanguardLogo from '@/assets/vanguard-logo.png';
+
+// Mock data for the demo
+const mockDevices = [
+  { id: 1, name: "PROD-WEB-01", type: "Server", os: "Ubuntu 22.04", status: "online", lastSeen: "Just now", threats: 0 },
+  { id: 2, name: "DC-PRIMARY", type: "Domain Controller", os: "Windows Server 2022", status: "online", lastSeen: "2m ago", threats: 1 },
+  { id: 3, name: "EXEC-LAPTOP-01", type: "Workstation", os: "Windows 11", status: "online", lastSeen: "5m ago", threats: 0 },
+  { id: 4, name: "DEV-MAC-03", type: "Workstation", os: "macOS Sonoma", status: "offline", lastSeen: "2h ago", threats: 0 },
+  { id: 5, name: "FILE-SERVER-01", type: "Server", os: "Windows Server 2019", status: "online", lastSeen: "1m ago", threats: 2 },
+];
+
+const mockThreats = [
+  { id: 1, title: "Suspicious PowerShell Execution", severity: "critical", device: "DC-PRIMARY", time: "5m ago", status: "investigating" },
+  { id: 2, title: "Unauthorized File Access Attempt", severity: "high", device: "FILE-SERVER-01", time: "12m ago", status: "investigating" },
+  { id: 3, title: "Unusual Network Traffic Pattern", severity: "medium", device: "FILE-SERVER-01", time: "1h ago", status: "resolved" },
+  { id: 4, title: "Failed Login Attempts (Brute Force)", severity: "high", device: "PROD-WEB-01", time: "3h ago", status: "resolved" },
+];
+
+const mockCompliance = [
+  { framework: "SOC 2 Type II", score: 94, status: "compliant", controls: { passed: 47, failed: 3, total: 50 } },
+  { framework: "HIPAA", score: 88, status: "at_risk", controls: { passed: 42, failed: 6, total: 48 } },
+  { framework: "PCI-DSS", score: 96, status: "compliant", controls: { passed: 24, failed: 1, total: 25 } },
+  { framework: "ISO 27001", score: 91, status: "compliant", controls: { passed: 89, failed: 9, total: 98 } },
+];
 
 export const VanguardDemo = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const { toast } = useToast();
-  const { 
-    metrics, 
-    threats, 
-    capabilities, 
-    isLoading,
-    triggerThreatDetection,
-    triggerBehavioralAnalysis,
-    triggerAutonomousResponse,
-    refreshData
-  } = useVanguardData();
-
-  const securityMetrics = [
-    { label: "XDR Security Score", value: metrics.securityScore, icon: ShieldCheck, color: "text-emerald-500" },
-    { label: "Zero-Day Detection", value: metrics.behavioralAlerts, icon: Brain, color: "text-purple-500" },
-    { label: "Endpoints Protected", value: metrics.endpointsProtected, icon: Cpu, color: "text-blue-500" },
-    { label: "Threats Stopped Today", value: metrics.realTimeThreats, icon: Target, color: "text-red-500" }
-  ];
-
-  // Use real threats from the hook, fallback to demo data if empty
-  const advancedThreats = threats.length > 0 ? threats : [
-    { 
-      id: "demo-1", 
-      type: "Living-off-the-Land Attack", 
-      severity: "Critical", 
-      target: "Domain Controller", 
-      time: "37s ago", 
-      status: "Auto-Quarantined",
-      mitre: "T1055.012",
-      confidence: 97,
-      technique: "Process Hollowing"
-    },
-    { 
-      id: "demo-2", 
-      type: "AI-Detected Anomaly", 
-      severity: "High", 
-      target: "CEO Workstation", 
-      time: "2 min ago", 
-      status: "Under Analysis",
-      mitre: "T1071.001",
-      confidence: 94,
-      technique: "Web Protocols C2"
-    },
-    { 
-      id: "demo-3", 
-      type: "Zero-Day Exploit", 
-      severity: "Critical", 
-      target: "Exchange Server", 
-      time: "8 min ago", 
-      status: "Contained",
-      mitre: "T1190",
-      confidence: 99,
-      technique: "Exploit Public-Facing Application"
-    }
-  ];
-
-  // Use real capabilities from the hook
-  const xdrCapabilities = capabilities.map(cap => ({
-    ...cap,
-    icon: getCapabilityIcon(cap.name)
-  }));
-
-  function getCapabilityIcon(name: string) {
-    switch (name) {
-      case "Behavioral AI Engine": return Brain;
-      case "Quantum-Safe Encryption": return Lock;
-      case "Autonomous Response": return Bot;
-      case "Threat Intelligence Fusion": return Radar;
-      default: return Shield;
-    }
-  }
-
-  // Demo action handlers
-  const handleThreatDemo = async () => {
-    try {
-      toast({ title: "🧠 Vanguard AI", description: "Initiating advanced threat detection..." });
-      
-      const result = await triggerThreatDetection({
-        endpoint: "DEMO-WORKSTATION-01",
-        file_hash: "a1b2c3d4e5f6...",
-        network_activity: [{ destination: "suspicious-c2.com", port: 443 }],
-        process_data: { name: "powershell.exe", args: ["-enc", "encoded_payload"] },
-        scan_type: "behavioral_analysis"
-      });
-
-      if (result?.analysis?.threat_detected) {
-        toast({ 
-          title: "🚨 Threat Detected", 
-          description: `${result.analysis.threat_type}: ${result.analysis.title}`,
-          variant: "destructive"
-        });
-      } else {
-        toast({ 
-          title: "✅ System Secure", 
-          description: "No threats detected - Vanguard protection active"
-        });
-      }
-    } catch (error) {
-      toast({ 
-        title: "⚠️ Analysis Error", 
-        description: "Failed to complete threat analysis",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleBehavioralDemo = async () => {
-    try {
-      toast({ title: "🔬 Behavioral AI", description: "Running advanced behavioral analysis..." });
-      
-      const result = await triggerBehavioralAnalysis({
-        endpoint_data: {
-          hostname: "CEO-WORKSTATION",
-          user: "john.doe",
-          processes: [
-            { name: "outlook.exe", memory_usage: 150000, network_connections: 5 },
-            { name: "chrome.exe", memory_usage: 800000, network_connections: 23 }
-          ],
-          network_activity: [
-            { destination: "mail.company.com", bytes: 45000, protocol: "HTTPS" }
-          ],
-          file_activity: [
-            { path: "C:\\temp\\suspicious.exe", action: "created", size: 2048000 }
-          ]
-        },
-        analysis_type: "realtime"
-      });
-
-      if (result?.behavioral_analysis?.anomaly_score > 70) {
-        toast({ 
-          title: "🧠 Behavioral Anomaly", 
-          description: `${result.behavioral_analysis.behavior_type} detected`,
-          variant: "destructive"
-        });
-      } else {
-        toast({ 
-          title: "📊 Normal Behavior", 
-          description: "No behavioral anomalies detected"
-        });
-      }
-    } catch (error) {
-      toast({ 
-        title: "⚠️ Analysis Error", 
-        description: "Behavioral analysis failed",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleAutonomousDemo = async () => {
-    try {
-      toast({ title: "🤖 Autonomous Response", description: "Activating self-healing response system..." });
-      
-      const result = await triggerAutonomousResponse({
-        threat_type: "Advanced Persistent Threat",
-        severity: "high",
-        affected_assets: ["WORKSTATION-01", "SERVER-02"],
-        auto_remediation_enabled: true,
-        response_mode: "containment"
-      });
-
-      if (result?.executed_actions?.length > 0) {
-        toast({ 
-          title: "🛡️ Autonomous Response Executed", 
-          description: `${result.executed_actions.length} actions completed automatically`
-        });
-      } else {
-        toast({ 
-          title: "📋 Response Plan Generated", 
-          description: "Autonomous response plan created - awaiting approval"
-        });
-      }
-    } catch (error) {
-      toast({ 
-        title: "⚠️ Response Error", 
-        description: "Autonomous response system unavailable",
-        variant: "destructive"
-      });
-    }
-  };
+  const [activeTab, setActiveTab] = useState("dashboard");
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case "Critical": return "bg-red-100 text-red-800 border-red-200";
-      case "High": return "bg-orange-100 text-orange-800 border-orange-200";
-      case "Medium": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      default: return "bg-green-100 text-green-800 border-green-200";
+      case "critical": return "bg-red-500/20 text-red-400 border-red-500/30";
+      case "high": return "bg-orange-500/20 text-orange-400 border-orange-500/30";
+      case "medium": return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "low": return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      default: return "bg-muted text-muted-foreground";
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case "Secure": return "text-green-600";
-      case "Vulnerable": return "text-red-600";
-      case "Patched": return "text-blue-600";
-      default: return "text-gray-600";
+      case "online": return <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><Wifi className="h-3 w-3 mr-1" />Online</Badge>;
+      case "offline": return <Badge className="bg-muted text-muted-foreground"><WifiOff className="h-3 w-3 mr-1" />Offline</Badge>;
+      default: return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-6 py-12 bg-gradient-to-b from-background via-primary/5 to-background rounded-2xl">
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="relative">
-            <Shield className="h-12 w-12 text-primary animate-pulse" />
-            <div className="absolute -top-1 -right-1 h-4 w-4 bg-green-500 rounded-full animate-ping" />
-          </div>
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
-            Ultrium Vanguard
-          </h1>
-        </div>
-        <p className="text-2xl text-muted-foreground max-w-4xl mx-auto font-medium">
-          Next-Generation XDR Platform - Beyond SentinelOne, Beyond CrowdStrike
-        </p>
-        <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-          AI-native cybersecurity with autonomous threat response, behavioral analytics, 
-          and zero-trust architecture. Protecting 50,000+ endpoints worldwide.
-        </p>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 max-w-4xl mx-auto">
-          <Badge variant="outline" className="px-4 py-3 text-center justify-center">
-            <Brain className="h-4 w-4 mr-2" />
-            AI-Native Detection
-          </Badge>
-          <Badge variant="outline" className="px-4 py-3 text-center justify-center">
-            <Zap className="h-4 w-4 mr-2" />
-            0.1s Response Time
-          </Badge>
-          <Badge variant="outline" className="px-4 py-3 text-center justify-center">
-            <Target className="h-4 w-4 mr-2" />
-            99.97% Detection Rate
-          </Badge>
-          <Badge variant="outline" className="px-4 py-3 text-center justify-center">
-            <ShieldCheck className="h-4 w-4 mr-2" />
-            Zero False Positives
-          </Badge>
-        </div>
-
-        <div className="pt-6 space-y-4">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500/10 to-emerald-500/10 px-6 py-3 rounded-full border border-green-500/20">
-            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-green-700 font-medium">Live Threat Detection Active</span>
-          </div>
-          
-          <div className="flex flex-wrap justify-center gap-3 pt-4">
-            <Button onClick={handleThreatDemo} className="bg-red-600 hover:bg-red-700">
-              <PlayCircle className="h-4 w-4 mr-2" />
-              Demo Threat Detection
-            </Button>
-            <Button onClick={handleBehavioralDemo} className="bg-purple-600 hover:bg-purple-700">
-              <Brain className="h-4 w-4 mr-2" />
-              Demo Behavioral AI
-            </Button>
-            <Button onClick={handleAutonomousDemo} className="bg-blue-600 hover:bg-blue-700">
-              <Bot className="h-4 w-4 mr-2" />
-              Demo Autonomous Response
-            </Button>
-          </div>
-        </div>
+    <div className="p-4 space-y-4">
+      {/* Header with Vanguard branding */}
+      <div className="flex justify-center mb-4">
+        <img src={vanguardLogo} alt="Vanguard" className="h-28 w-auto" />
       </div>
 
-      {/* Security Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {securityMetrics.map((metric, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{metric.label}</p>
-                  <p className="text-3xl font-bold">{metric.value}</p>
-                </div>
-                <metric.icon className={`h-8 w-8 ${metric.color}`} />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Advanced XDR Dashboard */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">XDR Overview</TabsTrigger>
-          <TabsTrigger value="threats">AI Detection</TabsTrigger>
-          <TabsTrigger value="behavioral">Behavioral Analytics</TabsTrigger>
-          <TabsTrigger value="forensics">Digital Forensics</TabsTrigger>
-          <TabsTrigger value="automation">Autonomous Response</TabsTrigger>
+      {/* Module Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4 bg-muted/50">
+          <TabsTrigger value="dashboard" className="text-xs sm:text-sm data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+            <BarChart3 className="h-4 w-4 mr-1 hidden sm:block" />
+            Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="devices" className="text-xs sm:text-sm data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+            <Monitor className="h-4 w-4 mr-1 hidden sm:block" />
+            Devices
+          </TabsTrigger>
+          <TabsTrigger value="threats" className="text-xs sm:text-sm data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+            <Target className="h-4 w-4 mr-1 hidden sm:block" />
+            Threats
+          </TabsTrigger>
+          <TabsTrigger value="compliance" className="text-xs sm:text-sm data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+            <FileCheck className="h-4 w-4 mr-1 hidden sm:block" />
+            Compliance
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Advanced Threat Detection */}
-            <Card className="border-red-200 bg-gradient-to-br from-red-50/50 to-background">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-red-500" />
-                  AI-Powered Threat Detection
-                  <Badge className="bg-red-100 text-red-700 text-xs">LIVE</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {advancedThreats.map((threat) => (
-                  <div key={threat.id} className="p-4 bg-background/80 rounded-lg border border-red-100">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Badge className={getSeverityColor(threat.severity)}>
-                            {threat.severity}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700">
-                            {threat.mitre}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {threat.confidence}% AI Confidence
-                          </Badge>
-                        </div>
-                        <h4 className="font-medium text-sm">{threat.type}</h4>
-                        <p className="text-xs text-muted-foreground">{threat.technique}</p>
-                        <p className="text-xs text-muted-foreground">Target: {threat.target}</p>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <p className="text-xs text-muted-foreground">{threat.time}</p>
-                        <Badge variant="outline" className="text-xs bg-green-100 text-green-700">
-                          {threat.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="text-xs h-7">
-                        <Microscope className="h-3 w-3 mr-1" />
-                        Investigate
-                      </Button>
-                      <Button size="sm" className="text-xs h-7">
-                        <ShieldCheck className="h-3 w-3 mr-1" />
-                        Auto-Remediate
-                      </Button>
-                    </div>
+        {/* Dashboard Tab */}
+        <TabsContent value="dashboard" className="space-y-4">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <Card className="bg-card/50 border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-cyan-500/10">
+                    <Monitor className="h-5 w-5 text-cyan-400" />
                   </div>
-                ))}
+                  <div>
+                    <p className="text-2xl font-bold">24</p>
+                    <p className="text-xs text-muted-foreground">Active Devices</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-
-            {/* XDR Performance Dashboard */}
-            <Card className="border-green-200 bg-gradient-to-br from-green-50/50 to-background">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-green-500" />
-                  XDR Performance Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-lg">
-                    <Clock className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-green-700">0.1s</p>
-                    <p className="text-xs text-green-600">Mean Time to Detection</p>
+            <Card className="bg-card/50 border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/10">
+                    <AlertTriangle className="h-5 w-5 text-red-400" />
                   </div>
-                  <div className="text-center p-4 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-lg">
-                    <Zap className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-blue-700">0.3s</p>
-                    <p className="text-xs text-blue-600">Mean Time to Response</p>
+                  <div>
+                    <p className="text-2xl font-bold">3</p>
+                    <p className="text-xs text-muted-foreground">Active Threats</p>
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="flex items-center gap-2">
-                        <Target className="h-4 w-4" />
-                        Threat Detection Accuracy
-                      </span>
-                      <span className="font-bold text-green-600">{metrics.detectionRate}%</span>
-                    </div>
-                    <Progress value={metrics.detectionRate} className="h-3" />
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50 border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10">
+                    <Shield className="h-5 w-5 text-emerald-400" />
                   </div>
-                  
                   <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="flex items-center gap-2">
-                        <FileX className="h-4 w-4" />
-                        False Positive Rate
-                      </span>
-                      <span className="font-bold text-green-600">0.01%</span>
-                    </div>
-                    <Progress value={0.01} className="h-3" />
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="flex items-center gap-2">
-                        <Bot className="h-4 w-4" />
-                        Autonomous Remediation
-                      </span>
-                      <span className="font-bold text-blue-600">94.3%</span>
-                    </div>
-                    <Progress value={94.3} className="h-3" />
+                    <p className="text-2xl font-bold">94%</p>
+                    <p className="text-xs text-muted-foreground">Security Score</p>
                   </div>
                 </div>
-                
-                <div className="pt-4 border-t bg-gradient-to-r from-purple-50/50 to-blue-50/50 p-4 rounded-lg">
-                  <div className="grid grid-cols-2 gap-4 text-center">
-                    <div>
-                      <p className="text-xl font-bold text-purple-600">{metrics.realTimeThreats}</p>
-                      <p className="text-xs text-muted-foreground">Threats Neutralized Today</p>
-                    </div>
-                    <div>
-                      <p className="text-xl font-bold text-indigo-600">{metrics.endpointsProtected}</p>
-                      <p className="text-xs text-muted-foreground">Endpoints Protected</p>
-                    </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card/50 border-border/50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-amber-500/10">
+                    <Activity className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">12</p>
+                    <p className="text-xs text-muted-foreground">Alerts Today</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
 
-        <TabsContent value="threats" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-purple-500" />
-                  Neural Threat Detection Engine
-                  <Badge variant="outline" className="bg-purple-100 text-purple-700">GPT-4 Powered</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-gradient-to-br from-red-500/10 to-red-600/5 rounded-xl border border-red-200">
-                    <AlertTriangle className="h-8 w-8 text-red-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-red-700">{metrics.behavioralAlerts}</p>
-                    <p className="text-sm text-red-600">Zero-Day Attempts</p>
+          {/* Module Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { icon: Eye, title: "SOC Operations", desc: "24/7 monitoring", color: "from-purple-500 to-purple-600" },
+              { icon: Target, title: "Threat Detection", desc: "AI-powered analysis", color: "from-red-500 to-red-600" },
+              { icon: Shield, title: "Pen Testing", desc: "Automated scans", color: "from-orange-500 to-orange-600" },
+              { icon: FileCheck, title: "Compliance", desc: "Multi-framework", color: "from-green-500 to-green-600" },
+              { icon: Users, title: "User Behavior", desc: "Anomaly detection", color: "from-violet-500 to-violet-600" },
+              { icon: Server, title: "Asset Inventory", desc: "Complete tracking", color: "from-cyan-500 to-cyan-600" },
+            ].map((module, i) => (
+              <Card key={i} className="bg-card/50 border-border/50 hover:border-cyan-500/30 transition-colors cursor-pointer group">
+                <CardContent className="p-4">
+                  <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${module.color} mb-2`}>
+                    <module.icon className="h-4 w-4 text-white" />
                   </div>
-                  <div className="text-center p-4 bg-gradient-to-br from-orange-500/10 to-orange-600/5 rounded-xl border border-orange-200">
-                    <Crosshair className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-orange-700">47</p>
-                    <p className="text-sm text-orange-600">APT Campaigns</p>
-                  </div>
-                  <div className="text-center p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-xl border border-green-200">
-                    <ShieldCheck className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-green-700">99.97%</p>
-                    <p className="text-sm text-green-600">Detection Rate</p>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <Radar className="h-4 w-4" />
-                    Real-Time AI Analysis
+                  <h4 className="font-medium text-sm flex items-center justify-between">
+                    {module.title}
+                    <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-cyan-400" />
                   </h4>
-                  <div className="bg-gradient-to-r from-purple-500/5 to-blue-500/5 p-6 rounded-xl border border-purple-200">
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <div className="h-2 w-2 bg-red-500 rounded-full mt-2 animate-pulse" />
-                        <div>
-                          <p className="text-sm font-medium">🧠 <strong>AI Behavioral Analysis:</strong></p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Sophisticated living-off-the-land technique detected on DESKTOP-CEO01. 
-                            PowerShell execution pattern matches APT29 with 97% neural network confidence.
-                            MITRE ATT&CK: T1055.012 - Process Hollowing detected via ML behavioral analysis.
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start gap-3">
-                        <div className="h-2 w-2 bg-orange-500 rounded-full mt-2" />
-                        <div>
-                          <p className="text-sm font-medium">🔬 <strong>Quantum-Resistant Crypto Analysis:</strong></p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Post-quantum cryptographic signature verification completed. 
-                            C2 communications using quantum-safe lattice-based encryption detected and decrypted.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 mt-6">
-                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                        <Bot className="h-3 w-3 mr-1" />
-                        Auto-Investigate
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Microscope className="h-3 w-3 mr-1" />
-                        Deep Analysis
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Workflow className="h-3 w-3 mr-1" />
-                        Playbook Response
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Layers className="h-4 w-4 text-blue-500" />
-                  MITRE ATT&CK Coverage
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {[
-                    { tactic: "Initial Access", coverage: 100, color: "green" },
-                    { tactic: "Execution", coverage: 98, color: "green" },
-                    { tactic: "Persistence", coverage: 96, color: "green" },
-                    { tactic: "Privilege Escalation", coverage: 94, color: "blue" },
-                    { tactic: "Defense Evasion", coverage: 92, color: "blue" },
-                    { tactic: "Lateral Movement", coverage: 89, color: "yellow" }
-                  ].map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-medium">{item.tactic}</span>
-                        <span className={`font-bold ${
-                          item.color === 'green' ? 'text-green-600' : 
-                          item.color === 'blue' ? 'text-blue-600' : 'text-yellow-600'
-                        }`}>
-                          {item.coverage}%
-                        </span>
-                      </div>
-                      <Progress value={item.coverage} className="h-2" />
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="pt-4 border-t">
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-primary">314/324</p>
-                    <p className="text-xs text-muted-foreground">Techniques Covered</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-muted-foreground">{module.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="behavioral" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-purple-500" />
-                Advanced Behavioral Analytics
-                <Badge className="bg-purple-100 text-purple-700">ML-Powered</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-semibold">XDR Capabilities</h4>
-                  {xdrCapabilities.map((capability, index) => (
-                    <div key={index} className="p-4 bg-gradient-to-r from-background to-primary/5 rounded-lg border">
-                      <div className="flex items-start gap-3">
-                        <capability.icon className="h-6 w-6 text-primary mt-1" />
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium">{capability.name}</p>
-                            <Badge className={`text-xs ${
-                              capability.status === 'Active' ? 'bg-green-100 text-green-700' :
-                              capability.status === 'Enabled' ? 'bg-blue-100 text-blue-700' :
-                              'bg-orange-100 text-orange-700'
-                            }`}>
-                              {capability.status}
+        {/* Devices Tab */}
+        <TabsContent value="devices" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">4 Online</Badge>
+              <Badge className="bg-muted text-muted-foreground">1 Offline</Badge>
+            </div>
+            <Button size="sm" variant="outline" className="text-xs">
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Refresh
+            </Button>
+          </div>
+
+          <div className="space-y-2">
+            {mockDevices.map((device) => (
+              <Card key={device.id} className="bg-card/50 border-border/50">
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${device.status === 'online' ? 'bg-cyan-500/10' : 'bg-muted'}`}>
+                        {device.type === 'Server' ? <Server className={`h-4 w-4 ${device.status === 'online' ? 'text-cyan-400' : 'text-muted-foreground'}`} /> :
+                         device.type === 'Domain Controller' ? <HardDrive className={`h-4 w-4 ${device.status === 'online' ? 'text-cyan-400' : 'text-muted-foreground'}`} /> :
+                         <Cpu className={`h-4 w-4 ${device.status === 'online' ? 'text-cyan-400' : 'text-muted-foreground'}`} />}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{device.name}</span>
+                          {device.threats > 0 && (
+                            <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                              {device.threats} threat{device.threats > 1 ? 's' : ''}
                             </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{capability.description}</p>
-                          <div className="flex items-center gap-2">
-                            <Progress value={capability.score} className="flex-1 h-2" />
-                            <span className="text-xs font-medium">{capability.score}%</span>
-                          </div>
+                          )}
                         </div>
+                        <p className="text-xs text-muted-foreground">{device.os} • {device.type}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Real-Time Process Analysis</h4>
-                  <div className="bg-gradient-to-br from-red-500/5 to-orange-500/5 p-4 rounded-lg border border-red-200">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Suspicious Process: powershell.exe</span>
-                        <Badge className="bg-red-100 text-red-700 text-xs">CRITICAL</Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>• Parent: winlogon.exe (Anomalous)</p>
-                        <p>• Command: Encoded base64 payload</p>
-                        <p>• Network: C2 beacon detected</p>
-                        <p>• ML Confidence: 99.7%</p>
-                      </div>
-                      <Button size="sm" className="w-full bg-red-600 hover:bg-red-700 text-xs">
-                        <ShieldCheck className="h-3 w-3 mr-1" />
-                        Terminate & Isolate
-                      </Button>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground hidden sm:block">{device.lastSeen}</span>
+                      {getStatusBadge(device.status)}
                     </div>
                   </div>
-                  
-                  <div className="bg-gradient-to-br from-green-500/5 to-emerald-500/5 p-4 rounded-lg border border-green-200">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Normal Process: chrome.exe</span>
-                        <Badge className="bg-green-100 text-green-700 text-xs">SAFE</Badge>
-                      </div>
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>• Parent: explorer.exe (Expected)</p>
-                        <p>• Network: HTTPS to google.com</p>
-                        <p>• Behavior: Standard web browsing</p>
-                        <p>• ML Confidence: 100%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
-        
-        <TabsContent value="forensics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Microscope className="h-5 w-5 text-indigo-500" />
-                Digital Forensics & Investigation
-                <Badge className="bg-indigo-100 text-indigo-700">Enterprise</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Timeline Reconstruction</h4>
-                  <div className="space-y-3">
-                    {[
-                      { time: "14:23:47", event: "Initial compromise via email attachment", severity: "Critical" },
-                      { time: "14:24:12", event: "Payload executed in memory", severity: "High" },
-                      { time: "14:24:45", event: "Privilege escalation attempt", severity: "High" },
-                      { time: "14:25:01", event: "Lateral movement to DC01", severity: "Critical" },
-                      { time: "14:25:18", event: "Data exfiltration initiated", severity: "Critical" },
-                      { time: "14:25:23", event: "AI auto-response triggered", severity: "Info" }
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                        <div className="text-xs text-muted-foreground w-16">{item.time}</div>
-                        <div className="flex-1">
-                          <p className="text-sm">{item.event}</p>
-                        </div>
-                        <Badge className={getSeverityColor(item.severity)} variant="outline">
-                          {item.severity}
-                        </Badge>
+
+        {/* Threats Tab */}
+        <TabsContent value="threats" className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="bg-red-500/5 border-red-500/20">
+              <CardContent className="p-3 text-center">
+                <p className="text-xl font-bold text-red-400">1</p>
+                <p className="text-xs text-muted-foreground">Critical</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-orange-500/5 border-orange-500/20">
+              <CardContent className="p-3 text-center">
+                <p className="text-xl font-bold text-orange-400">2</p>
+                <p className="text-xs text-muted-foreground">High</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-yellow-500/5 border-yellow-500/20">
+              <CardContent className="p-3 text-center">
+                <p className="text-xl font-bold text-yellow-400">1</p>
+                <p className="text-xs text-muted-foreground">Medium</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-2">
+            {mockThreats.map((threat) => (
+              <Card key={threat.id} className={`bg-card/50 ${threat.status === 'investigating' ? 'border-l-4 border-l-red-500' : ''} border-border/50`}>
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={getSeverityColor(threat.severity)}>{threat.severity}</Badge>
+                        <span className="font-medium text-sm">{threat.title}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-semibold">Evidence Collection</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-blue-50 rounded-lg text-center">
-                      <Database className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-                      <p className="text-sm font-medium">Memory Dumps</p>
-                      <p className="text-xs text-muted-foreground">3 captures</p>
-                    </div>
-                    <div className="p-3 bg-green-50 rounded-lg text-center">
-                      <FileX className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                      <p className="text-sm font-medium">Disk Images</p>
-                      <p className="text-xs text-muted-foreground">5 systems</p>
-                    </div>
-                    <div className="p-3 bg-purple-50 rounded-lg text-center">
-                      <Network className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-                      <p className="text-sm font-medium">Network Flows</p>
-                      <p className="text-xs text-muted-foreground">247 sessions</p>
-                    </div>
-                    <div className="p-3 bg-orange-50 rounded-lg text-center">
-                      <Activity className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-                      <p className="text-sm font-medium">Log Events</p>
-                      <p className="text-xs text-muted-foreground">12.5k entries</p>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg">
-                    <h5 className="font-medium mb-2">Chain of Custody</h5>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Cryptographically signed evidence with blockchain immutability
-                    </p>
-                    <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
-                      <Lock className="h-3 w-3 mr-1" />
-                      Generate Report
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="automation" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="h-5 w-5 text-green-500" />
-                Autonomous Security Operations
-                <Badge className="bg-green-100 text-green-700">AI-Native</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-4">
-                  <h4 className="font-semibold">Automated Response Playbooks</h4>
-                  <div className="space-y-3">
-                    {[
-                      { 
-                        name: "Ransomware Auto-Containment", 
-                        status: "Active", 
-                        triggers: "47 today",
-                        success: "100%",
-                        description: "Instant isolation + backup restoration"
-                      },
-                      { 
-                        name: "APT Lateral Movement Block", 
-                        status: "Active", 
-                        triggers: "12 today",
-                        success: "98%",
-                        description: "Network segmentation + credential rotation"
-                      },
-                      { 
-                        name: "Phishing Auto-Response", 
-                        status: "Learning", 
-                        triggers: "156 today",
-                        success: "94%",
-                        description: "Email recall + user notification + retraining"
-                      }
-                    ].map((playbook, index) => (
-                      <div key={index} className="p-4 bg-gradient-to-r from-background to-green-500/5 rounded-lg border border-green-200">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h5 className="font-medium">{playbook.name}</h5>
-                            <p className="text-sm text-muted-foreground">{playbook.description}</p>
-                          </div>
-                          <Badge className={`${
-                            playbook.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                          }`}>
-                            {playbook.status}
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Triggers: </span>
-                            <span className="font-medium">{playbook.triggers}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Success: </span>
-                            <span className="font-medium text-green-600">{playbook.success}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <h4 className="font-semibold">AI Learning Status</h4>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-purple-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Brain className="h-4 w-4 text-purple-600" />
-                        <span className="text-sm font-medium">Neural Network</span>
-                      </div>
-                      <Progress value={96} className="mb-2" />
-                      <p className="text-xs text-muted-foreground">Training on 2.3M security events</p>
-                    </div>
-                    
-                    <div className="p-3 bg-blue-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Workflow className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium">Playbook Evolution</span>
-                      </div>
-                      <Progress value={89} className="mb-2" />
-                      <p className="text-xs text-muted-foreground">Self-optimizing response times</p>
-                    </div>
-                    
-                    <div className="p-3 bg-green-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Target className="h-4 w-4 text-green-600" />
-                        <span className="text-sm font-medium">Threat Prediction</span>
-                      </div>
-                      <Progress value={94} className="mb-2" />
-                      <p className="text-xs text-muted-foreground">24hr attack forecasting active</p>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg border border-green-200">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-700">0.1s</p>
-                      <p className="text-sm text-green-600">Average Response Time</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Faster than human reaction time
+                      <p className="text-xs text-muted-foreground">
+                        <span className="text-cyan-400">{threat.device}</span> • {threat.time}
                       </p>
                     </div>
+                    <Badge variant={threat.status === 'investigating' ? 'secondary' : 'outline'} className="text-xs shrink-0">
+                      {threat.status === 'investigating' ? <Clock className="h-3 w-3 mr-1" /> : <CheckCircle className="h-3 w-3 mr-1" />}
+                      {threat.status}
+                    </Badge>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
+        {/* Compliance Tab */}
+        <TabsContent value="compliance" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {mockCompliance.map((item, i) => (
+              <Card key={i} className="bg-card/50 border-border/50">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">{item.framework}</h4>
+                    <Badge className={item.status === 'compliant' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}>
+                      {item.status === 'compliant' ? <CheckCircle className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+                      {item.status === 'compliant' ? 'Compliant' : 'At Risk'}
+                    </Badge>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Compliance Score</span>
+                      <span className="font-bold">{item.score}%</span>
+                    </div>
+                    <Progress value={item.score} className="h-2" />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="text-emerald-400">{item.controls.passed} passed</span>
+                    <span className="text-red-400">{item.controls.failed} failed</span>
+                    <span>{item.controls.total} total controls</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
       </Tabs>
 
-      {/* Enterprise CTA Section */}
-      <Card className="bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border-primary/30 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent" />
-        <CardContent className="p-12 text-center relative">
-          <div className="max-w-4xl mx-auto space-y-6">
-            <h3 className="text-4xl font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
-              The Future of Cybersecurity is Here
-            </h3>
-            <p className="text-xl text-muted-foreground">
-              Join Fortune 500 companies protecting their digital assets with Ultrium Vanguard's 
-              AI-native XDR platform. Beyond detection. Beyond response. Beyond human capability.
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-8">
-              <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-green-600">99.97%</div>
-                <div className="text-sm text-muted-foreground">Detection Accuracy</div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-blue-600">0.1s</div>
-                <div className="text-sm text-muted-foreground">Response Time</div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-purple-600">$2.4M</div>
-                <div className="text-sm text-muted-foreground">Avg. Breach Cost Prevented</div>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-center gap-6 pt-4">
-              <Button size="lg" className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 px-8">
-                <ShieldCheck className="h-5 w-5 mr-2" />
-                Deploy Enterprise Trial
-              </Button>
-              <Button size="lg" variant="outline" className="px-8">
-                <Users className="h-5 w-5 mr-2" />
-                Executive Briefing
-              </Button>
-            </div>
-            
-            <p className="text-sm text-muted-foreground">
-              Trusted by 50,000+ endpoints • SOC 2 Type II Certified • Zero-trust ready
-            </p>
+      {/* CTA with cyan branding */}
+      <Card className="border-cyan-500/20 bg-cyan-500/5">
+        <CardContent className="p-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <img src={vanguardLogo} alt="Vanguard" className="h-16 w-auto" />
           </div>
+          <h4 className="text-lg font-bold mb-1">Unified Security Operations</h4>
+          <p className="text-muted-foreground text-sm mb-3">
+            Deploy Vanguard agents and get complete visibility across your infrastructure
+          </p>
+          <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white">
+            Launch Platform
+          </Button>
         </CardContent>
       </Card>
     </div>
