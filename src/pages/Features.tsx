@@ -79,11 +79,11 @@ const Features = () => {
     },
     {
       icon: Eye,
-      title: "SafeIntel",
+      title: "SafeWeb",
       description: "Dark web monitoring and threat intelligence",
       features: ["Data breach alerts", "Credential monitoring", "Threat feeds", "Intelligence reports"],
       tier: "enterprise",
-      demo: "/demos/safeintel"
+      demo: "/demos/darkweb"
     }
   ];
 

@@ -71,10 +71,10 @@ const MSPDemos = () => {
       color: 'blue'
     },
     {
-      id: 'safeintel-monitoring',
-      name: '🕵️ SafeIntel™ Elite Threat Intelligence',
-      description: 'Dark web monitoring so advanced, hackers fear being exposed before they strike',
-      demoUrl: '/demos/safeintel',
+      id: 'safeweb-monitoring',
+      name: '🕵️ SafeWeb™ Dark Web Monitoring',
+      description: 'Monitor the dark web for compromised credentials and data breaches',
+      demoUrl: '/demos/darkweb',
       features: [
         'Deep & Dark web credential breach monitoring',
         'Advanced persistent threat (APT) tracking',
@@ -369,10 +369,9 @@ const MSPDemos = () => {
                   <TabsContent value="demo" className="space-y-4">
                     {selectedDemo === 'safeshield-platform' && <VanguardDemo />}
                     {selectedDemo === 'safescan-suite' && <SafeScanDemo />}
-                    {selectedDemo === 'safeintel-monitoring' && (
+                    {selectedDemo === 'safeweb-monitoring' && (
                       <div className="space-y-6">
                         <DarkWebDemo />
-                        <SafeScoreDemo />
                       </div>
                     )}
                     {selectedDemo === 'safecenter-platform' && <RMMDemo />}
