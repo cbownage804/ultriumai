@@ -40,15 +40,15 @@ export function SocialMediaManager() {
         <p className="text-muted-foreground">Create, schedule, and manage social media posts with AI assistance</p>
       </div>
 
-      <Tabs defaultValue="create" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="create" className="gap-2">
-            <Sparkles className="h-4 w-4" />
-            Create
-          </TabsTrigger>
+      <Tabs defaultValue="ai-generator" className="space-y-6">
+        <TabsList className="flex-wrap">
           <TabsTrigger value="compose" className="gap-2">
             <Send className="h-4 w-4" />
             Compose
+          </TabsTrigger>
+          <TabsTrigger value="ai-generator" className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            AI Generator
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="h-4 w-4" />
@@ -56,7 +56,7 @@ export function SocialMediaManager() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="create">
+        <TabsContent value="ai-generator">
           <div className="grid lg:grid-cols-2 gap-6">
             <AIPostGenerator onUseContent={handleUseContent} />
             <SocialPostComposer 
@@ -67,7 +67,7 @@ export function SocialMediaManager() {
         </TabsContent>
 
         <TabsContent value="compose">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto">
             <SocialPostComposer 
               initialContent={composerContent} 
               initialImageUrl={composerImage} 

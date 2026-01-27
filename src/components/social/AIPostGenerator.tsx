@@ -1,21 +1,22 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, Sparkles, Image as ImageIcon, Wand2, Copy, Check } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, Lightbulb, Building2, Newspaper, FileCheck, Trophy, Shield, Pencil, Download } from 'lucide-react';
 import { useSocialPosts } from '@/hooks/useSocialPosts';
+import { cn } from '@/lib/utils';
 
-const TOPIC_PRESETS = [
-  { id: 'threat_alert', label: '🚨 Threat Alert', description: 'Recent cybersecurity threat or vulnerability' },
-  { id: 'security_tip', label: '💡 Security Tip', description: 'Actionable security advice for users' },
-  { id: 'product_update', label: '🚀 Product Update', description: 'New feature or product announcement' },
-  { id: 'industry_news', label: '📰 Industry News', description: 'Cybersecurity news and trends' },
-  { id: 'thought_leadership', label: '🧠 Thought Leadership', description: 'Expert insights and opinions' },
-  { id: 'customer_success', label: '⭐ Customer Success', description: 'Success stories and testimonials' },
+const CONTENT_TYPES = [
+  { id: 'threat_alert', label: 'Threat Alert', description: 'New security threat or vulnerability', icon: AlertTriangle, color: 'text-red-400' },
+  { id: 'security_tip', label: 'Security Tip', description: 'Quick actionable security advice', icon: Lightbulb, color: 'text-yellow-400' },
+  { id: 'service_highlight', label: 'Service Highlight', description: 'Showcase UltriumAI MSP services', icon: Building2, color: 'text-blue-400' },
+  { id: 'industry_news', label: 'Industry News', description: 'Comment on cybersecurity news', icon: Newspaper, color: 'text-purple-400' },
+  { id: 'compliance_update', label: 'Compliance Update', description: 'Regulatory and compliance information', icon: FileCheck, color: 'text-emerald-400' },
+  { id: 'success_story', label: 'Success Story', description: 'Client success or use case', icon: Trophy, color: 'text-amber-400' },
+  { id: 'awareness_campaign', label: 'Awareness Campaign', description: 'Cybersecurity awareness content', icon: Shield, color: 'text-cyan-400' },
+  { id: 'custom_topic', label: 'Custom Topic', description: 'Write your own topic', icon: Pencil, color: 'text-muted-foreground' },
 ];
 
 const TONE_OPTIONS = [
@@ -33,111 +34,77 @@ interface AIPostGeneratorProps {
 export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
   const { generatePost, generateImage, bundleAccounts } = useSocialPosts();
   
-  const [topic, setTopic] = useState('');
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [tone, setTone] = useState('professional');
   const [additionalContext, setAdditionalContext] = useState('');
-  const [generatedContent, setGeneratedContent] = useState('');
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const platformTypes = [...new Set(bundleAccounts?.map(a => a.platform) || [])];
 
-  const handleGenerate = async () => {
-    const finalTopic = selectedPreset 
-      ? `${TOPIC_PRESETS.find(p => p.id === selectedPreset)?.description}: ${topic}`
-      : topic;
-
-    const result = await generatePost.mutateAsync({
-      topic: finalTopic,
-      tone,
-      platforms: platformTypes,
-      additionalContext,
-    });
-    
-    setGeneratedContent(result);
-  };
-
-  const handleGenerateImage = async () => {
-    const imagePrompt = topic || generatedContent.substring(0, 100);
-    const result = await generateImage.mutateAsync({
-      prompt: imagePrompt,
-      aspectRatio: '16:9',
-    });
-    setGeneratedImage(result);
-  };
-
   const handleGenerateBoth = async () => {
-    // Generate both in parallel
-    const finalTopic = selectedPreset 
-      ? `${TOPIC_PRESETS.find(p => p.id === selectedPreset)?.description}: ${topic}`
-      : topic;
+    const contentType = CONTENT_TYPES.find(t => t.id === selectedType);
+    const topic = contentType 
+      ? `${contentType.description}${additionalContext ? `: ${additionalContext}` : ''}`
+      : additionalContext || 'Professional cybersecurity content';
 
-    const [textResult] = await Promise.all([
+    // Generate both in parallel
+    const [textResult, imageResult] = await Promise.all([
       generatePost.mutateAsync({
-        topic: finalTopic,
+        topic,
         tone,
         platforms: platformTypes,
         additionalContext,
       }),
-      // Start image generation with topic
       generateImage.mutateAsync({
-        prompt: topic || 'Professional cybersecurity technology concept',
+        prompt: topic,
         aspectRatio: '16:9',
-      }).then(url => setGeneratedImage(url)),
+      }),
     ]);
     
-    setGeneratedContent(textResult);
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generatedContent);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleUseInComposer = () => {
-    onUseContent(generatedContent, generatedImage || undefined);
+    // Send to composer
+    onUseContent(textResult, imageResult);
   };
 
   const isGenerating = generatePost.isPending || generateImage.isPending;
 
   return (
     <Card className="bg-card/50 border-border/50">
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           AI Post Generator
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Generate cybersecurity posts with auto-matching images (watermarked with UltriumAI logo)
+        </p>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Topic Presets */}
+      <CardContent className="space-y-5">
+        {/* Content Type Grid */}
         <div>
-          <Label className="text-sm text-muted-foreground mb-2 block">Quick Topics</Label>
-          <div className="flex flex-wrap gap-2">
-            {TOPIC_PRESETS.map((preset) => (
-              <Badge
-                key={preset.id}
-                variant={selectedPreset === preset.id ? 'default' : 'outline'}
-                className="cursor-pointer hover:bg-primary/20 transition-colors"
-                onClick={() => setSelectedPreset(selectedPreset === preset.id ? null : preset.id)}
-              >
-                {preset.label}
-              </Badge>
-            ))}
+          <Label className="text-sm mb-3 block">Content Type</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {CONTENT_TYPES.map((type) => {
+              const Icon = type.icon;
+              const isSelected = selectedType === type.id;
+              return (
+                <button
+                  key={type.id}
+                  onClick={() => setSelectedType(isSelected ? null : type.id)}
+                  className={cn(
+                    "flex items-start gap-3 p-3 rounded-lg border text-left transition-all",
+                    isSelected 
+                      ? "border-primary bg-primary/10" 
+                      : "border-border/50 hover:border-border hover:bg-muted/30"
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", type.color)} />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{type.label}</div>
+                    <div className="text-xs text-muted-foreground line-clamp-1">{type.description}</div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        </div>
-
-        {/* Topic Input */}
-        <div>
-          <Label htmlFor="topic">Topic / Subject</Label>
-          <Input
-            id="topic"
-            placeholder="e.g., New ransomware variant affecting healthcare..."
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            className="mt-1"
-          />
         </div>
 
         {/* Tone Selector */}
@@ -162,93 +129,33 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
           <Label htmlFor="context">Additional Context (optional)</Label>
           <Textarea
             id="context"
-            placeholder="Any specific points to include, hashtags, or mentions..."
+            placeholder="Any specific details, statistics, hashtags, or mentions to include..."
             value={additionalContext}
             onChange={(e) => setAdditionalContext(e.target.value)}
             className="mt-1"
-            rows={2}
+            rows={3}
           />
         </div>
 
-        {/* Generate Buttons */}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            onClick={handleGenerate}
-            disabled={!topic || isGenerating}
-          >
-            {generatePost.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Wand2 className="h-4 w-4 mr-2" />
-            )}
-            Generate Text
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleGenerateImage}
-            disabled={!topic || isGenerating}
-          >
-            {generateImage.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <ImageIcon className="h-4 w-4 mr-2" />
-            )}
-            Generate Image
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleGenerateBoth}
-            disabled={!topic || isGenerating}
-          >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Sparkles className="h-4 w-4 mr-2" />
-            )}
-            Generate Both
-          </Button>
+        {/* Watermark Notice */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-2">
+          <Download className="h-4 w-4 shrink-0" />
+          <span>Generated images include UltriumAI watermark automatically</span>
         </div>
 
-        {/* Generated Content Preview */}
-        {generatedContent && (
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Generated Content</Label>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={handleCopy}>
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <div className="p-3 rounded-lg bg-muted/50 border border-border/50">
-              <p className="whitespace-pre-wrap text-sm">{generatedContent}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Generated Image Preview */}
-        {generatedImage && (
-          <div className="mt-4 space-y-2">
-            <Label>Generated Image</Label>
-            <div className="relative rounded-lg overflow-hidden border border-border/50">
-              <img 
-                src={generatedImage} 
-                alt="AI Generated" 
-                className="w-full h-48 object-cover"
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Use in Composer Button */}
-        {generatedContent && (
-          <Button 
-            className="w-full mt-4"
-            onClick={handleUseInComposer}
-          >
-            Use in Composer
-          </Button>
-        )}
+        {/* Generate Button */}
+        <Button
+          className="w-full"
+          onClick={handleGenerateBoth}
+          disabled={!selectedType || isGenerating}
+        >
+          {isGenerating ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Sparkles className="h-4 w-4 mr-2" />
+          )}
+          Generate Post & Image
+        </Button>
       </CardContent>
     </Card>
   );
