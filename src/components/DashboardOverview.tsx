@@ -128,7 +128,6 @@ export const DashboardOverview = () => {
       icon: Bot,
       action: () => navigate("/dashboard/gpt/build"),
       color: "bg-primary",
-      featured: true,
     },
     {
       title: "GPT Templates",
@@ -136,7 +135,6 @@ export const DashboardOverview = () => {
       icon: Star,
       action: () => navigate("/dashboard/gpt/templates"),
       color: "bg-secondary",
-      featured: true,
     },
     {
       title: "Ultrium GPT",
@@ -291,17 +289,16 @@ export const DashboardOverview = () => {
               <Button
                 key={index}
                 variant="outline"
-                className={`h-auto min-h-[120px] p-4 flex flex-col items-center justify-center gap-3 
+                className="h-auto min-h-[120px] p-4 flex flex-col items-center justify-center gap-3 
                   bg-background/50 hover:bg-background border-border/50 hover:border-primary/30
-                  hover:shadow-lg hover:-translate-y-1 transition-all duration-300
-                  ${action.featured ? 'border-primary/30 bg-primary/5 ring-1 ring-primary/10' : ''}`}
+                  hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                 onClick={action.action}
               >
                 <div className={`p-3 rounded-xl ${action.color} shadow-lg`}>
                   <action.icon className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-center">
-                  <div className={`font-medium text-sm ${action.featured ? 'text-primary' : ''}`}>
+                  <div className="font-medium text-sm">
                     {action.title}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
