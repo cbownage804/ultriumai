@@ -18,6 +18,7 @@ import { SafePassDemo } from "@/components/demos/SafePassDemo";
 import { SafeTrackDemo } from "@/components/demos/SafeTrackDemo";
 import { SafeAssistDemo } from "@/components/demos/SafeAssistDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
+import { SafeScanDemo } from "@/components/demos/SafeScanDemo";
 
 const SafeSuiteProductPage = () => {
   const audiences = [
@@ -301,10 +302,14 @@ const SafeSuiteProductPage = () => {
           </div>
 
           <Tabs defaultValue="safepass" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
               <TabsTrigger value="safepass" className="flex items-center gap-2">
                 <img src={safepassLogo} alt="" className="h-4 w-auto" />
                 SafePass
+              </TabsTrigger>
+              <TabsTrigger value="safescan" className="flex items-center gap-2">
+                <img src={safescanLogo} alt="" className="h-4 w-auto" />
+                SafeScan
               </TabsTrigger>
               <TabsTrigger value="safeweb" className="flex items-center gap-2">
                 <img src={safewebLogo} alt="" className="h-4 w-auto" />
@@ -330,6 +335,19 @@ const SafeSuiteProductPage = () => {
                 description="Secure password storage with team sharing and breach monitoring"
               >
                 <SafePassDemo />
+              </ProductDemoWrapper>
+            </TabsContent>
+
+            <TabsContent value="safescan">
+              <ProductDemoWrapper
+                productName="SafeScan Threat Detection"
+                productColor="red"
+                compactMode
+                compactHeight="h-[600px]"
+                fullDemoPath="/demos/safescan"
+                description="AI-powered scanning for documents, emails, URLs, and passwords"
+              >
+                <SafeScanDemo />
               </ProductDemoWrapper>
             </TabsContent>
 

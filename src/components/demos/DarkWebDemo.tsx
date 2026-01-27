@@ -210,7 +210,7 @@ export const DarkWebDemo = () => {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Search className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Ultrium SafeIntel Demo</h1>
+            <h1 className="text-3xl font-bold">SafeWeb Dark Web Monitor</h1>
           </div>
           <p className="text-muted-foreground">
             Monitor the dark web for compromised credentials, data breaches, and emerging threats

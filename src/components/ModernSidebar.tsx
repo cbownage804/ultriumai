@@ -51,7 +51,7 @@ const menuItems = [
     items: [
       { title: "SafeShield", url: "/dashboard/safeshield", icon: Shield },
       { title: "Security Monitoring", url: "/dashboard/security-monitoring", icon: Activity },
-      { title: "Threat Intelligence", url: "/dashboard/safeintel", icon: Eye },
+      { title: "SafeWeb", url: "/dashboard/safeweb", icon: Eye },
       { title: "Vulnerability Scan", url: "/dashboard/safescan", icon: Search },
     ],
   },

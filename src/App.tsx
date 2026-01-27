@@ -390,7 +390,7 @@ function AppRouter() {
         <Route path="/demos/custom-gpt-builder" element={<CustomGPTBuilderDemoPage />} />
         <Route path="/demos/vanguard" element={<VanguardDemoPage />} />
         <Route path="/demos/darkweb" element={<DarkWebDemoPage />} />
-        <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
+        <Route path="/demos/safeintel" element={<Navigate to="/demos/darkweb" replace />} />
         
         {/* Redirect deprecated demo routes to active products */}
         <Route path="/demos/safescore" element={<Navigate to="/products/safesuite" replace />} />
