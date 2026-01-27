@@ -216,7 +216,7 @@ export const DarkWebDemo = () => {
         <Card className="lg:col-span-1 bg-card/50 border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Eye className="h-5 w-5 text-blue-500" />
+              <Eye className="h-5 w-5 text-violet-500" />
               Dark Web Monitor
             </CardTitle>
             <CardDescription className="text-xs">
@@ -258,7 +258,7 @@ export const DarkWebDemo = () => {
             <Button 
               onClick={scanDarkWeb}
               disabled={!query.trim() || isScanning}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-violet-600 hover:bg-violet-700 text-white"
             >
               {isScanning ? (
                 <>
@@ -287,7 +287,7 @@ export const DarkWebDemo = () => {
         <Card className="lg:col-span-2 bg-card/50 border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Shield className="h-5 w-5 text-blue-500" />
+              <Shield className="h-5 w-5 text-violet-500" />
               Scan Results
             </CardTitle>
           </CardHeader>
@@ -348,7 +348,7 @@ export const DarkWebDemo = () => {
                             <CardContent className="p-3">
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                  <IconComponent className="h-4 w-4 text-blue-500" />
+                                  <IconComponent className="h-4 w-4 text-violet-500" />
                                   <span className="font-medium text-sm">{result.title}</span>
                                 </div>
                                 <Badge variant={getSeverityBadge(result.severity)} className="text-xs">
@@ -365,8 +365,8 @@ export const DarkWebDemo = () => {
                 </TabsContent>
 
                 <TabsContent value="recommendations" className="mt-3">
-                  <Alert className="border-blue-500/30 bg-blue-500/10">
-                    <AlertTriangle className="h-4 w-4 text-blue-500" />
+                  <Alert className="border-violet-500/30 bg-violet-500/10">
+                    <AlertTriangle className="h-4 w-4 text-violet-500" />
                     <AlertDescription>
                       <div className="space-y-1">
                         <strong className="text-xs">Immediate Actions:</strong>
@@ -385,8 +385,8 @@ export const DarkWebDemo = () => {
         </Card>
       </div>
 
-      {/* CTA with blue branding */}
-      <Card className="border-blue-500/20 bg-blue-500/5">
+      {/* CTA with violet branding */}
+      <Card className="border-violet-500/20 bg-violet-500/5">
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <img src={safewebLogo} alt="SafeWeb" className="h-16 w-auto" />
@@ -395,7 +395,7 @@ export const DarkWebDemo = () => {
           <p className="text-muted-foreground text-sm mb-3">
             Get instant alerts when your data appears on the dark web
           </p>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button className="bg-violet-600 hover:bg-violet-700 text-white">
             Enable Monitoring
           </Button>
         </CardContent>
