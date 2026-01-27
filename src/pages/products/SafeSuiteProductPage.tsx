@@ -3,7 +3,8 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, User, Building2, Check, Zap, Lock, Heart, Smartphone, Shield, Eye, RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowRight, User, Building2, Check, Zap, Lock, Heart, Smartphone, Shield, Eye, RefreshCw, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
 import safepassLogo from "@/assets/safepass-logo.png";
@@ -12,6 +13,11 @@ import safewebLogo from "@/assets/safeweb-logo.png";
 import safetrackLogo from "@/assets/safetrack-logo.png";
 import safeassistLogo from "@/assets/safeassist-logo-horizontal.png";
 import { SEOHead } from "@/components/SEOHead";
+import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
+import { SafePassDemo } from "@/components/demos/SafePassDemo";
+import { SafeTrackDemo } from "@/components/demos/SafeTrackDemo";
+import { SafeAssistDemo } from "@/components/demos/SafeAssistDemo";
+import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
 
 const SafeSuiteProductPage = () => {
   const audiences = [
@@ -277,6 +283,94 @@ const SafeSuiteProductPage = () => {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Interactive Demos Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+              <Play className="h-3 w-3 mr-1" />
+              Try Before You Buy
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Experience SafeSuite Live</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Explore interactive demos of each SafeSuite tool. No signup required.
+            </p>
+          </div>
+
+          <Tabs defaultValue="safepass" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+              <TabsTrigger value="safepass" className="flex items-center gap-2">
+                <img src={safepassLogo} alt="" className="h-4 w-auto" />
+                SafePass
+              </TabsTrigger>
+              <TabsTrigger value="safeweb" className="flex items-center gap-2">
+                <img src={safewebLogo} alt="" className="h-4 w-auto" />
+                SafeWeb
+              </TabsTrigger>
+              <TabsTrigger value="safetrack" className="flex items-center gap-2">
+                <img src={safetrackLogo} alt="" className="h-4 w-auto" />
+                SafeTrack
+              </TabsTrigger>
+              <TabsTrigger value="safeassist" className="flex items-center gap-2">
+                <img src={safeassistLogo} alt="" className="h-4 w-auto" />
+                SafeAssist
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="safepass">
+              <ProductDemoWrapper
+                productName="SafePass Password Vault"
+                productColor="amber"
+                compactMode
+                compactHeight="h-[600px]"
+                fullDemoPath="/demos/safepass"
+                description="Secure password storage with team sharing and breach monitoring"
+              >
+                <SafePassDemo />
+              </ProductDemoWrapper>
+            </TabsContent>
+
+            <TabsContent value="safeweb">
+              <ProductDemoWrapper
+                productName="SafeWeb Dark Web Monitor"
+                productColor="violet"
+                compactMode
+                compactHeight="h-[600px]"
+                fullDemoPath="/demos/darkweb"
+                description="Monitor for leaked credentials and data breaches"
+              >
+                <DarkWebDemo />
+              </ProductDemoWrapper>
+            </TabsContent>
+
+            <TabsContent value="safetrack">
+              <ProductDemoWrapper
+                productName="SafeTrack Asset Management"
+                productColor="orange"
+                compactMode
+                compactHeight="h-[600px]"
+                fullDemoPath="/vanguard/assets"
+                description="Track hardware, software licenses, and asset lifecycle"
+              >
+                <SafeTrackDemo compactMode />
+              </ProductDemoWrapper>
+            </TabsContent>
+
+            <TabsContent value="safeassist">
+              <ProductDemoWrapper
+                productName="SafeAssist AI Security Advisor"
+                productColor="emerald"
+                compactMode
+                compactHeight="h-[550px]"
+                description="24/7 AI-powered security guidance and threat analysis"
+              >
+                <SafeAssistDemo compactMode />
+              </ProductDemoWrapper>
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 
