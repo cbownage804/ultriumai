@@ -5,6 +5,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ export default function SafeSuiteAssist() {
     setOnVoiceTranscript
   } = useFloatingSafeAssist();
   
+  const navigate = useNavigate();
   const [inputValue, setInputValue] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -335,7 +337,11 @@ export default function SafeSuiteAssist() {
                 </div>
               )}
               
-              <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white">
+              <Button 
+                size="sm" 
+                className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white"
+                onClick={() => navigate('/credits')}
+              >
                 <Plus className="h-4 w-4 mr-1" />
                 Buy Credits
               </Button>
