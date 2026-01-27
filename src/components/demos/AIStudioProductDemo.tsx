@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
 import { 
   Bot, 
   Sparkles, 
@@ -17,11 +18,19 @@ import {
   Zap,
   Check,
   ArrowRight,
+  ArrowLeft,
   Building2,
   Users,
-  Shield
+  Shield,
+  Rocket,
+  Copy,
+  Code,
+  CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 
 interface CompactProps {
   compactMode?: boolean;
@@ -45,32 +54,367 @@ const templates: Template[] = [
   { id: '6', name: 'Knowledge Base Q&A', description: 'Answer questions from your docs', category: 'General', icon: '📚' },
 ];
 
-const builderSteps = [
-  { step: 1, title: 'Name & Purpose', description: 'Define your assistant' },
-  { step: 2, title: 'Knowledge Base', description: 'Upload training data' },
-  { step: 3, title: 'Customize', description: 'Brand & personality' },
-  { step: 4, title: 'Deploy', description: 'Launch your AI' },
-];
+// Pre-filled demo data
+const DEMO_DATA = {
+  name: 'Customer Support AI',
+  description: 'An intelligent assistant trained on your product documentation to handle customer inquiries 24/7',
+  category: 'Support',
+  themeColor: '#2563eb',
+  knowledgeFiles: [
+    { name: 'product-documentation.pdf', size: '2.4 MB', type: 'PDF' },
+    { name: 'faq-database.csv', size: '156 KB', type: 'CSV' },
+  ],
+  websites: [
+    'https://docs.yourcompany.com',
+  ],
+  systemPrompt: `You are a helpful customer support assistant. Your role is to:
+
+1. Answer customer questions about products and services
+2. Help troubleshoot common issues
+3. Guide users through documentation
+
+Always be friendly, professional, and helpful.`,
+  starterQuestions: [
+    'How do I reset my password?',
+    'What are your pricing plans?',
+    'How do I contact support?',
+  ],
+  enableWebSearch: true,
+  welcomeMessage: "Hi! I'm your AI assistant. How can I help you today?",
+  personality: 'Professional',
+};
 
 export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
   const [activeTab, setActiveTab] = useState('builder');
   const [currentStep, setCurrentStep] = useState(1);
-  const [gptName, setGptName] = useState('');
+  const [formData, setFormData] = useState(DEMO_DATA);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [isDeployed, setIsDeployed] = useState(false);
+  const [selectedColor, setSelectedColor] = useState('#2563eb');
+  const { toast } = useToast();
+
+  const builderSteps = [
+    { step: 1, title: 'Identity', icon: Bot },
+    { step: 2, title: 'Knowledge', icon: FileText },
+    { step: 3, title: 'Behavior', icon: Settings },
+    { step: 4, title: 'Deploy', icon: Rocket },
+  ];
+
+  const themeColors = [
+    { value: '#2563eb', name: 'Blue' },
+    { value: '#10b981', name: 'Emerald' },
+    { value: '#8b5cf6', name: 'Violet' },
+    { value: '#f59e0b', name: 'Amber' },
+  ];
+
+  const handleNext = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleDeploy = async () => {
+    setIsDeploying(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    setIsDeploying(false);
+    setIsDeployed(true);
+    toast({
+      title: "🎉 GPT Deployed Successfully!",
+      description: "Your AI assistant is now live and ready to use.",
+    });
+  };
+
+  const copyEmbedCode = () => {
+    const code = `<script src="https://widget.ultriumai.com/v1/widget.js"></script>
+<script>
+  UltriumAI.init({
+    gptId: 'demo-support-ai',
+    theme: { primaryColor: '${selectedColor}' }
+  });
+</script>`;
+    navigator.clipboard.writeText(code);
+    toast({
+      title: "Copied!",
+      description: "Embed code copied to clipboard",
+    });
+  };
+
+  const handleTemplateSelect = (template: Template) => {
+    setFormData({
+      ...formData,
+      name: template.name,
+      description: template.description,
+      category: template.category,
+    });
+    setActiveTab('builder');
+    setCurrentStep(1);
+    toast({
+      title: `Template Selected: ${template.name}`,
+      description: "Customize it in the GPT Builder",
+    });
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="text-sm font-medium mb-2 block">Assistant Name</label>
+              <Input 
+                placeholder="e.g., Customer Support Bot" 
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Purpose</label>
+              <Input 
+                placeholder="e.g., Answer customer questions about our products" 
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+          </motion.div>
+        );
+
+      case 2:
+        return (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Uploaded Documents
+              </label>
+              <div className="space-y-2">
+                {formData.knowledgeFiles.map((file, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="text-sm font-medium">{file.name}</p>
+                        <p className="text-xs text-muted-foreground">{file.size} • {file.type}</p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      <Check className="h-3 w-3 mr-1" />
+                      Processed
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+              <Button variant="outline" className="w-full mt-3" size="sm">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload More Files
+              </Button>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Connected Websites
+              </label>
+              <div className="space-y-2">
+                {formData.websites.map((url, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <Globe className="h-4 w-4 text-primary" />
+                      <span className="text-sm">{url}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      <Check className="h-3 w-3 mr-1" />
+                      Indexed
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        );
+
+      case 3:
+        return (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="text-sm font-medium mb-2 block">System Prompt</label>
+              <Textarea
+                value={formData.systemPrompt}
+                onChange={(e) => setFormData({ ...formData, systemPrompt: e.target.value })}
+                rows={4}
+                className="font-mono text-xs"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Theme Color</label>
+                <div className="flex gap-2">
+                  {themeColors.map((color) => (
+                    <button 
+                      key={color.value} 
+                      className={cn(
+                        'w-8 h-8 rounded-full transition-all',
+                        selectedColor === color.value ? 'ring-2 ring-offset-2 ring-primary' : ''
+                      )}
+                      style={{ backgroundColor: color.value }}
+                      onClick={() => setSelectedColor(color.value)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Web Search
+                  </label>
+                </div>
+                <Switch
+                  checked={formData.enableWebSearch}
+                  onCheckedChange={(checked) => setFormData({ ...formData, enableWebSearch: checked })}
+                />
+              </div>
+            </div>
+          </motion.div>
+        );
+
+      case 4:
+        return (
+          <motion.div
+            key="step4"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            {/* Preview Card */}
+            <div className="p-4 rounded-lg" style={{ backgroundColor: `${selectedColor}15` }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div 
+                  className="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+                  style={{ backgroundColor: `${selectedColor}30` }}
+                >
+                  🤖
+                </div>
+                <div>
+                  <h4 className="font-semibold">{formData.name}</h4>
+                  <p className="text-xs text-muted-foreground">{formData.category} Assistant</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">{formData.description}</p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <Badge variant="outline" className="text-xs">
+                  <FileText className="h-3 w-3 mr-1" />
+                  {formData.knowledgeFiles.length} docs
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  <Globe className="h-3 w-3 mr-1" />
+                  {formData.websites.length} websites
+                </Badge>
+                {formData.enableWebSearch && (
+                  <Badge variant="outline" className="text-xs">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Web Search
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={copyEmbedCode}
+                size="sm"
+              >
+                <Code className="h-4 w-4 mr-2" />
+                Embed
+              </Button>
+              <Button 
+                className="flex-1"
+                style={{ backgroundColor: selectedColor }}
+                onClick={handleDeploy}
+                disabled={isDeploying || isDeployed}
+                size="sm"
+              >
+                {isDeploying ? (
+                  <>
+                    <span className="animate-spin mr-2">⚡</span>
+                    Deploying...
+                  </>
+                ) : isDeployed ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Deployed
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 mr-2" />
+                    Deploy Now
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {isDeployed && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-center"
+              >
+                <div className="flex items-center justify-center gap-2 text-emerald-500 mb-1">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-medium text-sm">Your GPT is Live!</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Sign up to create your own custom GPT
+                </p>
+              </motion.div>
+            )}
+          </motion.div>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className={cn('space-y-4', compactMode ? 'p-4' : 'p-6')}>
+      {/* Header with Logo */}
       {!compactMode && (
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <h3 className="text-2xl font-bold">AI Studio</h3>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img src={aiStudioLogo} alt="AI Studio" className="h-10 w-auto" />
           </div>
-          <p className="text-muted-foreground">Build, deploy, and govern custom AI assistants</p>
+          <p className="text-muted-foreground text-sm">Build, deploy, and govern custom AI assistants</p>
         </div>
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={cn('grid w-full', compactMode ? 'grid-cols-2' : 'grid-cols-3')}>
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="builder">
             <Bot className="h-4 w-4 mr-2" />
             GPT Builder
@@ -79,18 +423,12 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
             <Zap className="h-4 w-4 mr-2" />
             Templates
           </TabsTrigger>
-          {!compactMode && (
-            <TabsTrigger value="preview">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Chat Preview
-            </TabsTrigger>
-          )}
         </TabsList>
 
         {/* GPT Builder Tab */}
         <TabsContent value="builder" className="mt-4">
           <Card>
-            <CardHeader className={compactMode ? 'pb-3' : ''}>
+            <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg">Create Your AI Assistant</CardTitle>
@@ -104,131 +442,57 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
             <CardContent className="space-y-6">
               {/* Progress Steps */}
               <div className="flex items-center justify-between">
-                {builderSteps.map((step, i) => (
-                  <div key={step.step} className="flex items-center">
-                    <div className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors',
-                      currentStep >= step.step 
-                        ? 'bg-primary border-primary text-primary-foreground' 
-                        : 'border-muted-foreground/30 text-muted-foreground'
-                    )}>
-                      {currentStep > step.step ? <Check className="h-4 w-4" /> : step.step}
+                {builderSteps.map((step, i) => {
+                  const StepIcon = step.icon;
+                  return (
+                    <div key={step.step} className="flex items-center">
+                      <button
+                        onClick={() => setCurrentStep(step.step)}
+                        className={cn(
+                          'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 transition-colors',
+                          currentStep >= step.step 
+                            ? 'bg-primary border-primary text-primary-foreground' 
+                            : 'border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/50'
+                        )}
+                      >
+                        {currentStep > step.step ? <Check className="h-4 w-4" /> : step.step}
+                      </button>
+                      {i < builderSteps.length - 1 && (
+                        <div className={cn(
+                          'w-8 md:w-12 h-0.5 mx-1 md:mx-2',
+                          currentStep > step.step ? 'bg-primary' : 'bg-muted-foreground/30'
+                        )} />
+                      )}
                     </div>
-                    {i < builderSteps.length - 1 && (
-                      <div className={cn(
-                        'w-12 h-0.5 mx-2',
-                        currentStep > step.step ? 'bg-primary' : 'bg-muted-foreground/30'
-                      )} />
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Step Content */}
-              {currentStep === 1 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Assistant Name</label>
-                    <Input 
-                      placeholder="e.g., Customer Support Bot" 
-                      value={gptName}
-                      onChange={(e) => setGptName(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Purpose</label>
-                    <Input placeholder="e.g., Answer customer questions about our products" />
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 2 && (
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center">
-                    <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
-                    <p className="text-sm font-medium mb-1">Upload your knowledge base</p>
-                    <p className="text-xs text-muted-foreground mb-3">PDF, DOCX, TXT, or URLs supported</p>
-                    <Button variant="outline" size="sm">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Select Files
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Check className="h-4 w-4 text-emerald-500" />
-                    <span>Secure, private processing — your data never leaves your control</span>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Theme Color</label>
-                      <div className="flex gap-2">
-                        {['bg-primary', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500'].map((color) => (
-                          <button 
-                            key={color} 
-                            className={cn('w-8 h-8 rounded-full', color, 'ring-2 ring-offset-2 ring-transparent hover:ring-primary/50')}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Personality</label>
-                      <select className="w-full border rounded-md px-3 py-2 text-sm">
-                        <option>Professional</option>
-                        <option>Friendly</option>
-                        <option>Concise</option>
-                        <option>Custom...</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Welcome Message</label>
-                    <Input placeholder="Hi! How can I help you today?" />
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 4 && (
-                <div className="space-y-4 text-center">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 flex items-center justify-center">
-                    <Bot className="h-8 w-8 text-emerald-500" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-1">Ready to Deploy!</h4>
-                    <p className="text-sm text-muted-foreground">Your AI assistant is configured and ready</p>
-                  </div>
-                  <div className="flex justify-center gap-3">
-                    <Button variant="outline">
-                      <Globe className="h-4 w-4 mr-2" />
-                      Embed Widget
-                    </Button>
-                    <Button className="bg-primary">
-                      <Zap className="h-4 w-4 mr-2" />
-                      Deploy Now
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <AnimatePresence mode="wait">
+                {renderStepContent()}
+              </AnimatePresence>
 
               {/* Navigation */}
               <div className="flex justify-between pt-4 border-t">
                 <Button 
                   variant="outline" 
-                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+                  onClick={handleBack}
                   disabled={currentStep === 1}
+                  size="sm"
                 >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                <Button 
-                  onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
-                  disabled={currentStep === 4}
-                >
-                  Continue
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
+                {currentStep < 4 && (
+                  <Button 
+                    onClick={handleNext}
+                    size="sm"
+                  >
+                    Continue
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -236,11 +500,12 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
 
         {/* Templates Tab */}
         <TabsContent value="templates" className="mt-4">
-          <div className={cn('grid gap-3', compactMode ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3')}>
-            {templates.slice(0, compactMode ? 4 : 6).map((template) => (
+          <div className="grid gap-3 grid-cols-2">
+            {templates.slice(0, 4).map((template) => (
               <Card 
                 key={template.id} 
                 className="cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => handleTemplateSelect(template)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
@@ -249,91 +514,20 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
                       <Badge variant="secondary" className="text-xs">Popular</Badge>
                     )}
                   </div>
-                  <h4 className="font-medium text-sm mb-1">{template.name}</h4>
+                  <h4 className="font-medium text-primary text-sm mb-1">{template.name}</h4>
                   <p className="text-xs text-muted-foreground">{template.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
           <div className="mt-4 text-center">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               View All Templates
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           </div>
         </TabsContent>
-
-        {/* Chat Preview Tab */}
-        {!compactMode && (
-          <TabsContent value="preview" className="mt-4">
-            <Card className="overflow-hidden">
-              <div className="bg-primary p-4 text-primary-foreground">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                    <Bot className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Customer Support Bot</h4>
-                    <p className="text-xs opacity-80">Powered by AI Studio</p>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-4 space-y-4 bg-muted/30 min-h-[200px]">
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="bg-background rounded-lg p-3 shadow-sm">
-                    <p className="text-sm">Hi! I'm here to help you with any questions about our products. What can I assist you with today?</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 justify-end">
-                  <div className="bg-primary text-primary-foreground rounded-lg p-3">
-                    <p className="text-sm">What are your pricing plans?</p>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="bg-background rounded-lg p-3 shadow-sm">
-                    <p className="text-sm">We offer three plans: Starter ($29/mo), Professional ($79/mo), and Enterprise (custom pricing). Would you like me to explain the features of each?</p>
-                  </div>
-                </div>
-              </CardContent>
-              <div className="p-4 border-t flex gap-2">
-                <Input placeholder="Type a message..." className="flex-1" />
-                <Button>Send</Button>
-              </div>
-            </Card>
-          </TabsContent>
-        )}
       </Tabs>
-
-      {/* Demo Footer */}
-      {!compactMode && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-6">
-            <div className="grid md:grid-cols-3 gap-6 text-center">
-              <div className="flex flex-col items-center">
-                <Building2 className="h-8 w-8 text-primary mb-2" />
-                <h4 className="font-semibold mb-1">Enterprise Ready</h4>
-                <p className="text-xs text-muted-foreground">Multi-tenant, SOC 2 aligned</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <Users className="h-8 w-8 text-primary mb-2" />
-                <h4 className="font-semibold mb-1">White-Label</h4>
-                <p className="text-xs text-muted-foreground">Deploy under your brand</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <Shield className="h-8 w-8 text-primary mb-2" />
-                <h4 className="font-semibold mb-1">Full Governance</h4>
-                <p className="text-xs text-muted-foreground">Complete admin control</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
