@@ -53,6 +53,7 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
         tone,
         platforms: platformTypes,
         additionalContext,
+        contentType: selectedType,
       }),
       generateImage.mutateAsync({
         prompt: topic,

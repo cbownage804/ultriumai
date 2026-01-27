@@ -63,15 +63,17 @@ export function useSocialPosts() {
       topic, 
       tone, 
       platforms, 
-      additionalContext 
+      additionalContext,
+      contentType,
     }: { 
       topic: string; 
       tone?: string; 
       platforms?: string[]; 
       additionalContext?: string;
+      contentType?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke('generate-social-post', {
-        body: { topic, tone, platforms, additionalContext },
+        body: { topic, tone, platforms, additionalContext, contentType },
       });
       if (error) throw error;
       if (data.error) throw new Error(data.error);
