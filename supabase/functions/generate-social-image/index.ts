@@ -16,6 +16,7 @@ const getProductLogoUrl = (product: string): string => {
     safeassist: 'safeassist-logo.png',
     safesuite: 'safesuite-logo.png',
     ultriumgpt: 'ultrium-gpt-logo.png',
+    aistudio: 'ultrium-gpt-logo.png', // AI Studio uses the same logo as UltriumGPT
     vanguard: 'vanguard-logo.png',
   };
   return `https://ultriumai.lovable.app/logos/${logoMap[product] || 'safesuite-logo.png'}`;
@@ -30,6 +31,7 @@ const PRODUCT_KEYWORDS: Record<string, string[]> = {
   safeassist: ['safeassist', 'ai assistant', 'security assistant', 'chatbot'],
   safesuite: ['safesuite', 'security suite', 'all-in-one security'],
   ultriumgpt: ['ultriumgpt', 'custom gpt', 'ai builder', 'custom ai'],
+  aistudio: ['ai studio', 'aistudio', 'gpt builder', 'ai control plane', 'business ai', 'white-label ai', 'msp ai', 'ai capacity', 'custom assistants'],
   vanguard: ['vanguard', 'rmm', 'endpoint management', 'remote monitoring'],
 };
 
@@ -49,6 +51,7 @@ const VISUAL_STYLES: Record<string, string> = {
   network_basics: 'WiFi and network security - protected routers, secure connection symbols, small office network diagrams. Approachable tech imagery. Blue and cyan tones.',
   
   // For MSPs & Enterprise
+  ai_studio: 'Futuristic AI control panel imagery with glowing violet/purple accents, neural network patterns, custom AI assistants, dashboard interfaces, enterprise AI deployment. Premium tech aesthetic with dark backgrounds and neon violet glows. Sophisticated, powerful, innovative.',
   threat_alert: 'Dramatic cybersecurity scene with red/orange warning tones, digital shields, network visualization, hacker silhouettes, or malware patterns. Dark moody atmosphere.',
   service_highlight: 'Professional business technology scene showing servers, dashboards, team collaboration, or enterprise infrastructure. Corporate blue tones.',
   industry_news: 'Modern tech news aesthetic with abstract data visualizations, global networks, or futuristic cityscape elements. Dynamic and current feeling.',
