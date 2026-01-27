@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import vanguardLogo from '@/assets/vanguard-logo.png';
 import safeopsLogo from '@/assets/logos/logo-safeops.png';
 import safedeskLogo from '@/assets/logos/logo-safedesk.png';
+import safedocLogo from '@/assets/logos/logo-safedoc.png';
 import { SEOHead } from "@/components/SEOHead";
 
 const VanguardProductPage = () => {
@@ -44,6 +45,12 @@ const VanguardProductPage = () => {
       logo: safedeskLogo,
       title: "SafeDesk™ Helpdesk",
       description: "AI-powered IT service desk with smart ticket routing, SLA management, automated resolutions, and seamless escalation workflows.",
+      bgColor: "bg-black"
+    },
+    {
+      logo: safedocLogo,
+      title: "SafeDoc™ Documentation",
+      description: "Centralized IT documentation and knowledge base with AI-powered search, runbook automation, and client-facing portals.",
       bgColor: "bg-black"
     },
     {
