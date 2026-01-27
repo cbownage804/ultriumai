@@ -26,11 +26,10 @@ import {
   Key,
   Database
 } from 'lucide-react';
-import { SafeNetDemo } from "@/components/demos/SafeNetDemo";
 import { DarkWebDemo } from "@/components/demos/DarkWebDemo";
 import { SafeScoreDemo } from "@/components/demos/SafeScoreDemo";
 import { CustomGPTBuilderDemo } from "@/components/demos/CustomGPTBuilderDemo";
-import { SafeShieldDemo } from "@/components/demos/SafeShieldDemo";
+import { VanguardDemo } from "@/components/demos/VanguardDemo";
 import { SafeScanDemo } from "@/components/demos/SafeScanDemo";
 import { RMMDemo } from "@/components/demos/RMMDemo";
 import { SafePassDemo } from "@/components/demos/SafePassDemo";
@@ -368,7 +367,7 @@ const MSPDemos = () => {
                   </TabsContent>
 
                   <TabsContent value="demo" className="space-y-4">
-                    {selectedDemo === 'safeshield-platform' && <SafeShieldDemo />}
+                    {selectedDemo === 'safeshield-platform' && <VanguardDemo />}
                     {selectedDemo === 'safescan-suite' && <SafeScanDemo />}
                     {selectedDemo === 'safeintel-monitoring' && (
                       <div className="space-y-6">
