@@ -37,8 +37,10 @@ import {
   Slack,
   Mail,
   Chrome,
-  Workflow
+  Workflow,
+  Wrench
 } from 'lucide-react';
+import { TemplateInteractiveDemo } from './TemplateInteractiveDemo';
 
 export const CustomGPTBuilderDemo = () => {
   const [activeTab, setActiveTab] = useState('builder');
@@ -50,6 +52,8 @@ export const CustomGPTBuilderDemo = () => {
   const [customDomain, setCustomDomain] = useState('support.mycompany.com');
   const [brandColor, setBrandColor] = useState('#2563eb');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<typeof templateGPTs[0] | null>(null);
+  const [showTemplateDemo, setShowTemplateDemo] = useState(false);
 
   const startTraining = () => {
     setIsTraining(true);
@@ -77,7 +81,14 @@ export const CustomGPTBuilderDemo = () => {
       satisfaction: 4.8,
       icon: MessageSquare,
       color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      bgColor: 'bg-blue-100',
+      themeColor: '#2563eb',
+      systemPrompt: 'You are a helpful customer support assistant...',
+      starterQuestions: [
+        'How do I return an item?',
+        'Where is my order?',
+        'I need help with my account'
+      ]
     },
     {
       id: 2,
@@ -88,7 +99,14 @@ export const CustomGPTBuilderDemo = () => {
       satisfaction: 4.6,
       icon: TrendingUp,
       color: 'text-green-600',
-      bgColor: 'bg-green-100'
+      bgColor: 'bg-green-100',
+      themeColor: '#16a34a',
+      systemPrompt: 'You are a sales assistant helping qualify leads...',
+      starterQuestions: [
+        'What are your pricing plans?',
+        'Can I schedule a demo?',
+        'Tell me about your features'
+      ]
     },
     {
       id: 3,
@@ -99,7 +117,14 @@ export const CustomGPTBuilderDemo = () => {
       satisfaction: 4.9,
       icon: Code,
       color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
+      bgColor: 'bg-purple-100',
+      themeColor: '#9333ea',
+      systemPrompt: 'You are a technical documentation assistant...',
+      starterQuestions: [
+        'How do I integrate the API?',
+        'Show me code examples',
+        'Help me troubleshoot an error'
+      ]
     },
     {
       id: 4,
@@ -110,7 +135,50 @@ export const CustomGPTBuilderDemo = () => {
       satisfaction: 4.7,
       icon: Users,
       color: 'text-orange-600',
-      bgColor: 'bg-orange-100'
+      bgColor: 'bg-orange-100',
+      themeColor: '#ea580c',
+      systemPrompt: 'You are an HR assistant helping employees...',
+      starterQuestions: [
+        'How much PTO do I have?',
+        'Tell me about benefits',
+        'What is the dress code policy?'
+      ]
+    },
+    {
+      id: 5,
+      name: 'IT Helpdesk AI',
+      description: 'Technical support and troubleshooting for IT issues',
+      category: 'Technical',
+      deployments: 198,
+      satisfaction: 4.5,
+      icon: Wrench,
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-100',
+      themeColor: '#0891b2',
+      systemPrompt: 'You are an IT helpdesk assistant...',
+      starterQuestions: [
+        'My computer is running slow',
+        'I forgot my password',
+        'How do I connect to VPN?'
+      ]
+    },
+    {
+      id: 6,
+      name: 'Onboarding Guide AI',
+      description: 'Help new employees navigate their first days and weeks',
+      category: 'HR',
+      deployments: 112,
+      satisfaction: 4.8,
+      icon: Star,
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
+      themeColor: '#d97706',
+      systemPrompt: 'You are an onboarding assistant for new employees...',
+      starterQuestions: [
+        'What do I do on my first day?',
+        'Who should I meet with?',
+        'Where can I find the handbook?'
+      ]
     }
   ];
 
@@ -703,40 +771,56 @@ export const CustomGPTBuilderDemo = () => {
           <TabsContent value="templates" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>GPT Templates</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Play className="h-5 w-5 text-primary" />
+                  Interactive GPT Templates
+                </CardTitle>
                 <CardDescription>
-                  Start with pre-built templates optimized for specific use cases
+                  Click any template to try an interactive demo - experience the AI in action!
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {templateGPTs.map((template) => {
                     const Icon = template.icon;
                     return (
-                      <div key={template.id} className="p-4 bg-muted rounded-lg">
+                      <div 
+                        key={template.id} 
+                        className="p-4 bg-muted rounded-lg border border-transparent hover:border-primary/50 transition-all cursor-pointer group"
+                        onClick={() => {
+                          setSelectedTemplate(template);
+                          setShowTemplateDemo(true);
+                        }}
+                      >
                         <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-lg ${template.bgColor}`}>
+                          <div className={`p-2 rounded-lg ${template.bgColor} group-hover:scale-110 transition-transform`}>
                             <Icon className={`h-6 w-6 ${template.color}`} />
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold">{template.name}</h4>
-                              <Badge variant="outline">
-                                {template.category}
-                              </Badge>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-semibold text-sm truncate">{template.name}</h4>
                             </div>
-                            <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>{template.deployments} deployments</span>
-                              <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3 text-warning" />
-                                <span>{template.satisfaction}</span>
-                              </div>
-                            </div>
+                            <Badge variant="outline" className="text-xs mb-2">
+                              {template.category}
+                            </Badge>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{template.description}</p>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" className="w-full mt-3">
-                          Use Template
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t text-xs text-muted-foreground">
+                          <span>{template.deployments} deployments</span>
+                          <div className="flex items-center gap-1">
+                            <Star className="h-3 w-3 text-warning" />
+                            <span>{template.satisfaction}</span>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="w-full mt-3 gap-2"
+                          style={{ backgroundColor: template.themeColor }}
+                        >
+                          <Play className="h-3 w-3" />
+                          Try Demo
                         </Button>
                       </div>
                     );
@@ -796,6 +880,13 @@ export const CustomGPTBuilderDemo = () => {
           </TabsContent>
 
         </Tabs>
+
+        {/* Interactive Template Demo Dialog */}
+        <TemplateInteractiveDemo
+          template={selectedTemplate}
+          open={showTemplateDemo}
+          onOpenChange={setShowTemplateDemo}
+        />
       </div>
     </div>
   );
