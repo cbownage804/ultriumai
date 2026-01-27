@@ -107,7 +107,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, aspectRatio = '16:9', contentType, postContent } = await req.json();
+    const { prompt, aspectRatio = '1.91:1', contentType, postContent } = await req.json();
     if (!prompt) throw new Error('Prompt is required');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
