@@ -37,7 +37,8 @@ import {
   Lock,
   ChevronRight,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  Coins
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FloatingSafeAssist } from '@/components/safeassist/FloatingSafeAssist';
@@ -436,6 +437,13 @@ function Sidebar({ onItemClick }: { onItemClick?: () => void }) {
         >
           <CreditCard className="h-5 w-5" />
           <span>Billing</span>
+        </Link>
+        <Link
+          to="/credits"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Coins className="h-5 w-5" />
+          <span>AI Credits</span>
         </Link>
         
         {/* Admin link - only visible to verified UltriumAI employees */}
