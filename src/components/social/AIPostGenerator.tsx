@@ -49,7 +49,7 @@ const CONTENT_TYPE_GROUPS = [
       { id: 'safescan_promo', label: 'SafeScan', description: 'Email, URL & document scanning', icon: Search, color: 'text-red-400' },
       { id: 'safeweb_promo', label: 'SafeWeb', description: 'Dark web monitoring & breach alerts', icon: Globe, color: 'text-cyan-400' },
       { id: 'safetrack_promo', label: 'SafeTrack', description: 'IT asset management & tracking', icon: Package, color: 'text-emerald-400' },
-      { id: 'safeassist_promo', label: 'SafeAssist', description: 'AI security assistant chatbot', icon: Bot, color: 'text-blue-400' },
+      { id: 'safeassist_promo', label: 'SafeAssist', description: 'AI security advisor for employees - real-time threat guidance & best practices', icon: Bot, color: 'text-emerald-400' },
       { id: 'vanguard_promo', label: 'Vanguard', description: 'RMM & endpoint management', icon: Cpu, color: 'text-cyan-400' },
     ]
   },
