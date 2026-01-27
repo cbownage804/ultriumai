@@ -28,10 +28,10 @@ const SafeCenterDemoPage = () => {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate('/demos')}
+                onClick={() => navigate('/')}
               >
                 <Home className="h-4 w-4 mr-2" />
-                Back to Demos
+                Back to Home
               </Button>
             </div>
           </div>
