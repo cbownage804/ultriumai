@@ -1,8 +1,9 @@
 import { lazy, Suspense } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { DemoSkeleton } from "@/components/demos/shared/DemoSkeleton";
+import { DemoSkeleton, DemoErrorBoundary } from "@/components/demos/shared";
 import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
+import { useWebVitals } from "@/hooks/useWebVitals";
 
 // Lazy load heavy demo component
 const SafePassDemo = lazy(() => 
@@ -12,6 +13,12 @@ const SafePassDemo = lazy(() =>
 );
 
 const SafePassDemoPage = () => {
+  // Monitor Core Web Vitals
+  useWebVitals({ 
+    enableLogging: import.meta.env.DEV,
+    sendToAnalytics: true 
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <ProductJsonLd
@@ -32,9 +39,11 @@ const SafePassDemoPage = () => {
       <Navigation />
       <main className="pt-20" role="main" aria-label="SafePass Demo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Suspense fallback={<DemoSkeleton variant="cards" />}>
-            <SafePassDemo />
-          </Suspense>
+          <DemoErrorBoundary demoName="SafePass">
+            <Suspense fallback={<DemoSkeleton variant="cards" />}>
+              <SafePassDemo />
+            </Suspense>
+          </DemoErrorBoundary>
         </div>
       </main>
       <Footer />

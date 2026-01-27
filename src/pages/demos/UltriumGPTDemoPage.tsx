@@ -1,8 +1,9 @@
 import { lazy, Suspense } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { DemoSkeleton } from "@/components/demos/shared/DemoSkeleton";
+import { DemoSkeleton, DemoErrorBoundary } from "@/components/demos/shared";
 import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
+import { useWebVitals } from "@/hooks/useWebVitals";
 
 // Lazy load heavy demo component
 const UltriumGPTFullDemo = lazy(() => 
@@ -10,6 +11,12 @@ const UltriumGPTFullDemo = lazy(() =>
 );
 
 const UltriumGPTDemoPage = () => {
+  // Monitor Core Web Vitals
+  useWebVitals({ 
+    enableLogging: import.meta.env.DEV,
+    sendToAnalytics: true 
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <ProductJsonLd
@@ -29,9 +36,11 @@ const UltriumGPTDemoPage = () => {
       />
       <Navigation />
       <main className="pt-20" role="main" aria-label="AI Studio Demo">
-        <Suspense fallback={<DemoSkeleton variant="cards" />}>
-          <UltriumGPTFullDemo />
-        </Suspense>
+        <DemoErrorBoundary demoName="AI Studio">
+          <Suspense fallback={<DemoSkeleton variant="cards" />}>
+            <UltriumGPTFullDemo />
+          </Suspense>
+        </DemoErrorBoundary>
       </main>
       <Footer />
     </div>
