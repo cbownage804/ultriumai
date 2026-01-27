@@ -35,30 +35,46 @@ serve(async (req) => {
 
     console.log('Creating Bundle.Social post for channels:', platforms);
 
-    // First, upload image to Bundle.Social if provided
+    // First, upload image to Bundle.Social if provided (requires multipart/form-data)
     let bundleUploadId: string | undefined;
     if (imageUrl && !imageUrl.startsWith('data:')) {
       try {
-        console.log('Uploading image to Bundle.Social...');
-        const uploadResponse = await fetch(`https://api.bundle.social/api/v1/upload/`, {
-          method: 'POST',
-          headers: {
-            'x-api-key': apiKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            teamId: teamId,
-            url: imageUrl,
-          }),
-        });
-
-        if (uploadResponse.ok) {
-          const uploadData = await uploadResponse.json();
-          bundleUploadId = uploadData.id;
-          console.log('Image uploaded to Bundle.Social:', bundleUploadId);
+        console.log('Downloading image from:', imageUrl);
+        
+        // Download the image from Supabase storage
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          console.warn('Failed to download image:', imageResponse.status);
         } else {
-          const uploadError = await uploadResponse.text();
-          console.warn('Failed to upload image to Bundle.Social:', uploadError);
+          const imageBlob = await imageResponse.blob();
+          const contentType = imageResponse.headers.get('content-type') || 'image/png';
+          const extension = contentType.split('/')[1] || 'png';
+          
+          console.log('Image downloaded, size:', imageBlob.size, 'type:', contentType);
+          
+          // Create FormData for multipart upload (Bundle.Social requires this)
+          const formData = new FormData();
+          formData.append('teamId', teamId);
+          formData.append('file', imageBlob, `image.${extension}`);
+          
+          console.log('Uploading image to Bundle.Social via multipart/form-data...');
+          const uploadResponse = await fetch('https://api.bundle.social/api/v1/upload/', {
+            method: 'POST',
+            headers: {
+              'x-api-key': apiKey,
+              // Don't set Content-Type - fetch will set it automatically with boundary for FormData
+            },
+            body: formData,
+          });
+
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            bundleUploadId = uploadData.id;
+            console.log('Image uploaded to Bundle.Social:', bundleUploadId);
+          } else {
+            const uploadError = await uploadResponse.text();
+            console.warn('Failed to upload image to Bundle.Social:', uploadResponse.status, uploadError);
+          }
         }
       } catch (uploadError) {
         console.warn('Image upload error:', uploadError);
