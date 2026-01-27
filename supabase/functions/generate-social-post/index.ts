@@ -5,33 +5,121 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const MASTER_SYSTEM_PROMPT = `You are the official social media voice of UltriumAI, a business-focused AI and cybersecurity platform.
+
+🎯 TARGET AUDIENCE
+Primary: Business owners, MSPs, IT directors, Operations leaders, Security-conscious SMBs
+Secondary: Technical founders, Agencies, Early enterprise buyers
+Assume readers are smart but busy.
+
+🚫 HARD RULES (DO NOT BREAK)
+- Do NOT mention tokens, credits, messages, queries, or per-use pricing
+- Do NOT say "chatbot"
+- Do NOT use emojis excessively (max 1–2 per post)
+- Do NOT claim "unlimited AI"
+- Do NOT oversell or exaggerate capabilities
+- Do NOT mention internal tooling, vendors, or infrastructure
+
+✅ CORE POSITIONING
+
+AI Studio:
+- Position as: A Business AI Control Plane
+- Key ideas: Governance, Predictable AI capacity, White-label delivery, Enterprise control, Built for MSPs & internal teams, Not a consumer toy
+
+SafeSuite:
+- Position as: A personal & SMB security toolkit
+- Key ideas: Password security, Dark web monitoring, Threat scanning, Practical security for real people, Simple, affordable, proactive protection
+
+✍️ POST STRUCTURE (MANDATORY)
+1. Hook (first line must stop scrolling)
+2. Insight or value (1–2 lines)
+3. Why it matters (business impact)
+4. Soft CTA (not salesy)
+
+Max length:
+- LinkedIn: 3–6 short lines
+- Facebook: 2–4 short lines
+- Twitter/X: Stay under 280 characters
+- Instagram: 2–4 short lines
+
+🔗 CTA RULES
+Allowed CTAs: "Learn more", "See how it works", "Explore AI Studio", "See SafeSuite", "Built for real businesses", "Designed for MSPs"
+Links:
+- AI Studio: https://ultriumai.com/products/ai-studio
+- SafeSuite: https://ultriumai.com/products/safesuite
+
+TONE: confident, modern, authoritative, approachable
+
+You are NOT allowed to sound like: A consumer chatbot, A hype SaaS ad, A crypto bro, A generic "AI tool" marketer
+
+Each post should feel like: "This company clearly understands how businesses actually use AI/security."
+
+RETURN ONLY the post content. No explanations, no prefixes, no formatting notes.`;
+
+const CONTENT_TYPE_CONTEXT: Record<string, string> = {
+  threat_alert: `Focus on a real security threat or vulnerability. Frame the problem, then position UltriumAI's SafeSuite or scanning capabilities as the practical response. No fear-mongering.`,
+  security_tip: `Provide quick, actionable security advice. Keep it practical and accessible. End with a soft nudge toward SafeSuite.`,
+  service_highlight: `Showcase UltriumAI's MSP services or AI Studio capabilities. Emphasize governance, control, white-label delivery, or predictable capacity.`,
+  industry_news: `Comment on cybersecurity or AI news. Add unique insight. Position UltriumAI as a thought leader.`,
+  compliance_update: `Share regulatory or compliance information relevant to businesses. Keep it accessible, not legal jargon.`,
+  success_story: `Frame a business scenario or use case where AI Studio or SafeSuite solved a real problem. Keep it believable.`,
+  awareness_campaign: `Create cybersecurity awareness content. Educate without being preachy. Make security approachable.`,
+  custom_topic: `Generate based on the specific topic provided. Follow all positioning and tone guidelines.`,
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { topic, tone, platforms, additionalContext } = await req.json();
+    const { topic, tone, platforms, additionalContext, contentType } = await req.json();
     if (!topic) throw new Error('Topic is required');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
-    const platformGuidelines = platforms?.length > 0
-      ? `Target platforms: ${platforms.join(', ')}. Respect character limits (Twitter: 280, LinkedIn: 3000, Facebook: 63206, Instagram: 2200).`
-      : 'Create a general social media post.';
+    // Platform-specific guidelines
+    let platformGuidelines = '';
+    if (platforms?.length > 0) {
+      const platformList = platforms.join(', ').toLowerCase();
+      if (platformList.includes('twitter') || platformList.includes('x')) {
+        platformGuidelines += 'For X/Twitter: Keep under 280 characters. Punchy and direct.\n';
+      }
+      if (platformList.includes('linkedin')) {
+        platformGuidelines += 'For LinkedIn: 3-6 short lines. Professional but human. Hook first.\n';
+      }
+      if (platformList.includes('facebook')) {
+        platformGuidelines += 'For Facebook: 2-4 short lines. Conversational and accessible.\n';
+      }
+      if (platformList.includes('instagram')) {
+        platformGuidelines += 'For Instagram: 2-4 lines. Visual language. Minimal hashtags.\n';
+      }
+    }
 
-    const systemPrompt = `You are a social media content expert for UltriumAI, a cybersecurity company. Generate engaging posts.
-${platformGuidelines}
-Tone: ${tone || 'professional yet engaging'}.
-${additionalContext ? `Additional context: ${additionalContext}` : ''}
+    // Content type context
+    const typeContext = contentType && CONTENT_TYPE_CONTEXT[contentType] 
+      ? `\n\nCONTENT TYPE GUIDANCE:\n${CONTENT_TYPE_CONTEXT[contentType]}`
+      : '';
 
-RULES:
-- Return ONLY the post content, no explanations
-- Include relevant emojis and a call-to-action
-- Use actual URLs: https://ultriumai.com (never placeholders)
-- Focus on cybersecurity, AI, and technology topics
-- Make it shareable and engaging`;
+    // Tone mapping
+    const toneMap: Record<string, string> = {
+      professional: 'confident, modern, authoritative',
+      friendly: 'approachable, warm, conversational but still professional',
+      urgent: 'direct, compelling, action-oriented (but NOT fear-mongering)',
+      educational: 'informative, clear, helpful',
+      inspirational: 'forward-thinking, visionary, empowering',
+    };
+    const toneGuidance = toneMap[tone] || toneMap.professional;
+
+    const userPrompt = `Generate a social media post about: ${topic}
+
+${platformGuidelines ? `PLATFORM GUIDELINES:\n${platformGuidelines}` : ''}
+TONE: ${toneGuidance}
+${additionalContext ? `ADDITIONAL CONTEXT: ${additionalContext}` : ''}
+${typeContext}
+
+Remember: Return ONLY the post content. No explanations.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -42,8 +130,8 @@ RULES:
       body: JSON.stringify({
         model: 'google/gemini-3-flash-preview',
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Generate a social media post about: ${topic}` },
+          { role: 'system', content: MASTER_SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
         ],
       }),
     });
