@@ -164,7 +164,7 @@ const SafeSuiteProductPage = () => {
             {features.map((feature, i) => (
               <Card key={i} className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
                 <CardContent className="p-6">
-                  <div className="w-14 h-14 rounded-xl bg-black/50 flex items-center justify-center mb-4 p-2">
+                  <div className="w-24 h-24 rounded-xl bg-black/50 flex items-center justify-center mb-4 p-3">
                     <img 
                       src={feature.logo} 
                       alt={feature.title} 
