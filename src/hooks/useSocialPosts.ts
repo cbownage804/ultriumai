@@ -92,13 +92,15 @@ export function useSocialPosts() {
   const generateImage = useMutation({
     mutationFn: async ({ 
       prompt, 
-      aspectRatio 
+      aspectRatio,
+      contentType,
     }: { 
       prompt: string; 
       aspectRatio?: string;
+      contentType?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke('generate-social-image', {
-        body: { prompt, aspectRatio },
+        body: { prompt, aspectRatio, contentType },
       });
       if (error) throw error;
       if (data.error) throw new Error(data.error);
