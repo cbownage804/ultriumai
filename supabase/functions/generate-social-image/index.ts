@@ -6,31 +6,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Content-type specific visual styles for better image matching
+const VISUAL_STYLES: Record<string, string> = {
+  threat_alert: 'Dramatic cybersecurity scene with red/orange warning tones, digital shields, network visualization, hacker silhouettes, or malware patterns. Dark moody atmosphere.',
+  security_tip: 'Clean, helpful visual with lock icons, checkmarks, protective shields, or secure connections. Bright, approachable colors like blues and greens.',
+  service_highlight: 'Professional business technology scene showing servers, dashboards, team collaboration, or enterprise infrastructure. Corporate blue tones.',
+  industry_news: 'Modern tech news aesthetic with abstract data visualizations, global networks, or futuristic cityscape elements. Dynamic and current feeling.',
+  compliance_update: 'Official, structured visuals with documents, checklists, certification badges, or regulatory symbols. Clean and trustworthy.',
+  success_story: 'Positive, achievement-oriented imagery with upward graphs, trophy elements, handshakes, or celebrating team silhouettes. Warm, optimistic colors.',
+  awareness_campaign: 'Educational cybersecurity visuals with protective symbols, awareness ribbons, or community-focused security imagery. Accessible and inclusive.',
+  custom_topic: 'Professional technology and cybersecurity themed imagery with modern digital aesthetics.',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt, aspectRatio = '16:9' } = await req.json();
+    const { prompt, aspectRatio = '16:9', contentType } = await req.json();
     if (!prompt) throw new Error('Prompt is required');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
 
-    // Enhanced prompt that explicitly excludes text/logos to prevent AI artifacts
-    const enhancedPrompt = `Professional technology and cybersecurity themed image: ${prompt}. 
+    // Get visual style based on content type
+    const visualStyle = contentType && VISUAL_STYLES[contentType] 
+      ? VISUAL_STYLES[contentType] 
+      : VISUAL_STYLES.custom_topic;
 
-CRITICAL REQUIREMENTS:
-- DO NOT include any text, words, letters, or typography
-- DO NOT include any logos, brand marks, or watermarks
-- Image must be purely visual with NO text elements
+    // Enhanced prompt for beautiful, text-free images
+    const enhancedPrompt = `Create a stunning, high-quality social media thumbnail image.
 
-Style: Modern, clean, corporate tech aesthetic with cyber/digital elements.
-Aspect ratio: ${aspectRatio}.
-Color palette: Blues, cyans, and dark backgrounds preferred.`;
+TOPIC: ${prompt}
 
-    console.log('Generating image with prompt:', enhancedPrompt.substring(0, 100));
+VISUAL DIRECTION: ${visualStyle}
+
+CRITICAL REQUIREMENTS (MUST FOLLOW):
+- ABSOLUTELY NO text, words, letters, numbers, or typography of any kind
+- ABSOLUTELY NO logos, brand marks, watermarks, or symbols that look like text
+- Image must be 100% visual - purely imagery with zero text elements
+- No UI elements, buttons, or interface components
+
+QUALITY REQUIREMENTS:
+- Ultra high resolution and sharp details
+- Professional composition with strong focal point
+- Cinematic lighting and depth
+- Rich, vibrant colors that pop on social feeds
+- Modern, premium aesthetic suitable for business content
+
+ASPECT RATIO: ${aspectRatio} (optimize composition for this ratio)
+
+COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds preferred for contrast.`;
+
+    console.log('Generating image for content type:', contentType || 'custom');
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

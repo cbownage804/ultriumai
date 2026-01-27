@@ -58,6 +58,7 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
       generateImage.mutateAsync({
         prompt: topic,
         aspectRatio: '16:9',
+        contentType: selectedType,
       }),
     ]);
     
