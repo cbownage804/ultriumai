@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Building2, Shield, Headphones, Monitor, Lock,
-  BarChart3, FileCheck, AlertTriangle, Users, Zap, Check, Brain
+  BarChart3, FileCheck, AlertTriangle, Users, Zap, Check, Brain,
+  Network, Eye, Search, Activity, Server, Workflow
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import vanguardLogo from '@/assets/vanguard-logo.png';
@@ -16,17 +17,17 @@ const VanguardProductPage = () => {
     {
       icon: Building2,
       title: "Managed Service Providers",
-      description: "Unify security and operations tooling into a single platform for your clients."
+      description: "Unify security and operations tooling into a single platform for your clients. Deliver SOC-style protection with MSP-friendly multi-tenancy and billing."
     },
     {
       icon: Users,
-      title: "IT Teams",
-      description: "Streamline endpoint management, helpdesk, and threat detection in one place."
+      title: "IT Operations Teams",
+      description: "Streamline endpoint management, helpdesk, and threat detection in one place. Reduce tool sprawl while increasing operational visibility."
     },
     {
       icon: Shield,
-      title: "Regulated Businesses",
-      description: "Meet compliance requirements with built-in audit trails and security controls."
+      title: "Security-Conscious Organizations",
+      description: "Meet compliance requirements with built-in audit trails, automated evidence collection, and enterprise-grade security controls."
     }
   ];
 
@@ -34,54 +35,104 @@ const VanguardProductPage = () => {
     {
       icon: Monitor,
       title: "SafeOps™ RMM",
-      description: "Remote monitoring and management with real-time endpoint visibility, patching, and automation.",
+      description: "Remote monitoring and management with real-time endpoint visibility, automated patching, and proactive maintenance workflows.",
       color: "text-cyan-500",
       bgColor: "bg-cyan-500/10"
     },
     {
       icon: Headphones,
       title: "SafeDesk™ Helpdesk",
-      description: "AI-powered IT service desk with smart routing, SLA management, and automated resolutions.",
+      description: "AI-powered IT service desk with smart ticket routing, SLA management, automated resolutions, and seamless escalation workflows.",
       color: "text-violet-500",
       bgColor: "bg-violet-500/10"
     },
     {
       icon: AlertTriangle,
-      title: "Threat Detection",
-      description: "AI-driven threat detection and response with real-time alerting and automated remediation.",
+      title: "AI Threat Detection",
+      description: "Machine learning-driven threat detection and response with real-time alerting, automated containment, and forensic analysis.",
       color: "text-red-500",
       bgColor: "bg-red-500/10"
     },
     {
       icon: FileCheck,
-      title: "Compliance Tooling",
-      description: "Built-in frameworks for SOC 2, HIPAA, PCI DSS, and NIST with automated evidence collection.",
+      title: "Compliance Automation",
+      description: "Built-in frameworks for SOC 2, HIPAA, PCI DSS, NIST, and CIS benchmarks with automated evidence collection and reporting.",
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10"
     },
     {
       icon: BarChart3,
       title: "Security Analytics",
-      description: "Comprehensive dashboards and reporting for security posture and operational metrics.",
+      description: "Comprehensive dashboards and reporting for security posture, operational metrics, and executive-level risk visibility.",
       color: "text-amber-500",
       bgColor: "bg-amber-500/10"
     },
     {
       icon: Lock,
-      title: "Endpoint Security",
-      description: "Unified endpoint protection with vulnerability scanning and configuration management.",
+      title: "Endpoint Protection",
+      description: "Unified endpoint security with vulnerability scanning, configuration hardening, and continuous compliance monitoring.",
       color: "text-blue-500",
       bgColor: "bg-blue-500/10"
     }
   ];
 
+  const capabilities = [
+    {
+      icon: Brain,
+      title: "AI-Powered Copilot",
+      description: "Intelligent assistance for threat analysis, ticket triage, and operational decision-making. AI that augments your team, not replaces it."
+    },
+    {
+      icon: Network,
+      title: "Unified Dashboard",
+      description: "Single-pane-of-glass visibility across all security and operations data. No more switching between tools to understand your environment."
+    },
+    {
+      icon: Activity,
+      title: "Real-Time Monitoring",
+      description: "Continuous monitoring of endpoints, networks, and cloud workloads with instant alerting and automated response capabilities."
+    },
+    {
+      icon: Server,
+      title: "Multi-Tenant Architecture",
+      description: "Purpose-built for MSPs and enterprises with tenant isolation, role-based access, and client-level reporting."
+    },
+    {
+      icon: Workflow,
+      title: "Workflow Automation",
+      description: "Automated playbooks for common scenarios — from patch deployment to incident response — reducing manual effort and human error."
+    },
+    {
+      icon: Search,
+      title: "Threat Intelligence",
+      description: "Integrated threat feeds and dark web monitoring to identify risks before they become incidents. Proactive security, not reactive."
+    }
+  ];
+
   const differentiators = [
-    "AI-driven insights across security and operations",
-    "Unified platform — no tool sprawl",
-    "Built for MSPs with multi-tenant architecture",
-    "Real-time threat detection and response",
-    "Integrated compliance and audit tooling",
-    "Predictable pricing for service providers"
+    "AI-driven insights across security and operations — not just dashboards",
+    "Unified platform eliminates tool sprawl and integration headaches",
+    "Built for MSPs with multi-tenant architecture and client billing visibility",
+    "Real-time threat detection with automated response capabilities",
+    "Integrated compliance tooling with automated evidence collection",
+    "Predictable pricing model designed for service providers",
+    "SOC-style security operations without the SOC-level investment",
+    "Veteran-owned with a commitment to protecting American businesses"
+  ];
+
+  const useCases = [
+    {
+      title: "For MSPs Managing Client Environments",
+      description: "Deploy unified security and operations across your entire client base. Get client-level visibility, automated billing metrics, and white-glove service delivery tools."
+    },
+    {
+      title: "For IT Teams in Regulated Industries",
+      description: "Meet HIPAA, PCI DSS, and SOC 2 requirements with built-in compliance frameworks. Automated evidence collection and audit-ready reporting reduce compliance burden."
+    },
+    {
+      title: "For Organizations Without a Dedicated SOC",
+      description: "Get SOC-style security operations with AI-powered threat detection and response. Enterprise security capabilities without enterprise security headcount."
+    }
   ];
 
   return (
@@ -114,9 +165,12 @@ const VanguardProductPage = () => {
             Vanguard — AI-Powered Security & Operations
           </h1>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             A unified platform combining RMM, helpdesk, threat detection, and compliance 
-            tooling — all powered by AI. Built for MSPs, IT teams, and security-conscious organizations.
+            tooling — all powered by AI.
+          </p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+            Built for MSPs, IT teams, and security-conscious organizations.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -128,10 +182,23 @@ const VanguardProductPage = () => {
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link to="/contact">
-                Contact Sales
+                Talk to Sales
               </Link>
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* What is Vanguard */}
+      <section className="py-16 px-4 border-b border-border/50">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">What is Vanguard?</h2>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Vanguard is an <strong className="text-foreground">AI-Powered Security & Operations Platform</strong> that 
+            unifies remote monitoring, helpdesk, threat detection, and compliance into a single solution. It delivers 
+            SOC-style security operations to organizations that don't have dedicated security teams, while providing 
+            MSPs with the multi-tenant architecture and billing visibility they need to deliver managed security services profitably.
+          </p>
         </div>
       </section>
 
@@ -174,7 +241,7 @@ const VanguardProductPage = () => {
             </Badge>
             <h2 className="text-3xl font-bold mb-4">What's Included</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Everything you need to secure and manage IT infrastructure.
+              Everything you need to secure and manage IT infrastructure in one platform.
             </p>
           </div>
 
@@ -193,6 +260,58 @@ const VanguardProductPage = () => {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Core Capabilities */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Core Capabilities</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              AI-driven features that set Vanguard apart.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {capabilities.map((capability, i) => {
+              const IconComponent = capability.icon;
+              return (
+                <Card key={i} className="bg-card/50 border-border/50">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 rounded-lg bg-cyan-500/10 flex items-center justify-center mb-4">
+                      <IconComponent className="h-6 w-6 text-cyan-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">{capability.title}</h3>
+                    <p className="text-muted-foreground text-sm">{capability.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Use Cases */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Common Use Cases</h2>
+            <p className="text-muted-foreground">
+              How organizations deploy Vanguard.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {useCases.map((useCase, i) => (
+              <Card key={i} className="bg-card border-border/50">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-2">{useCase.title}</h3>
+                  <p className="text-muted-foreground">{useCase.description}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -221,6 +340,29 @@ const VanguardProductPage = () => {
         </div>
       </section>
 
+      {/* Part of UltriumAI */}
+      <section className="py-16 px-4 border-y border-border/50 bg-muted/20">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-4">Part of the UltriumAI Platform</h2>
+          <p className="text-muted-foreground mb-6">
+            Vanguard integrates seamlessly with AI Studio for intelligent assistants and SafeSuite 
+            for personal security tools. Build a complete security ecosystem with AI at its core.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link to="/products/ai-studio">
+              <Button variant="outline" size="sm">
+                Learn about AI Studio
+              </Button>
+            </Link>
+            <Link to="/products/safesuite">
+              <Button variant="outline" size="sm">
+                Learn about SafeSuite
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent">
         <div className="max-w-3xl mx-auto">
@@ -244,7 +386,12 @@ const VanguardProductPage = () => {
                 </Button>
                 <Button size="lg" variant="outline" asChild>
                   <Link to="/contact">
-                    Contact Sales
+                    Talk to Sales
+                  </Link>
+                </Button>
+                <Button size="lg" variant="ghost" asChild>
+                  <Link to="/pricing">
+                    View Pricing
                   </Link>
                 </Button>
               </div>

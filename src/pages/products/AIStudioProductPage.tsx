@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Building2, Users, Globe, Shield, BarChart3, 
-  Palette, Lock, Zap, Check, Settings, Bot
+  Palette, Lock, Zap, Check, Settings, Bot, FileText,
+  Eye, Database, Workflow, MessageSquare
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
@@ -16,60 +17,115 @@ const AIStudioProductPage = () => {
     {
       icon: Building2,
       title: "Managed Service Providers",
-      description: "Deliver white-labeled AI assistants to clients with predictable margins and full governance."
+      description: "Deliver white-labeled AI assistants to clients with predictable margins, usage visibility, and full governance. Create new recurring revenue streams with AI-as-a-Service."
     },
     {
       icon: Users,
-      title: "Internal Teams",
-      description: "Deploy AI assistants for HR, IT, sales, and operations with enterprise-grade controls."
+      title: "Internal Business Teams",
+      description: "Deploy AI assistants for HR, IT, sales, and operations without shadow IT. Maintain enterprise-grade controls, audit trails, and centralized oversight."
     },
     {
       icon: Globe,
       title: "Websites & Lead Generation",
-      description: "Embed intelligent chatbots that qualify leads and answer visitor questions 24/7."
+      description: "Embed intelligent chatbots that qualify leads, answer visitor questions, and provide 24/7 support—all governed by your brand guidelines and content policies."
     }
   ];
 
   const capabilities = [
     {
       icon: Bot,
-      title: "Build Custom AI Assistants",
-      description: "Create purpose-built assistants trained on your data, workflows, and brand voice."
+      title: "Custom AI Assistants",
+      description: "Create purpose-built assistants trained on your documentation, workflows, and brand voice. Deploy for customer support, internal Q&A, or lead qualification."
     },
     {
       icon: Shield,
       title: "Enterprise Governance",
-      description: "Centralized policy controls, audit logging, and compliance-ready infrastructure."
+      description: "Centralized policy controls with role-based access, content guardrails, and compliance-ready infrastructure. Every interaction logged and auditable."
     },
     {
       icon: BarChart3,
       title: "Predictable AI Capacity",
-      description: "Monthly capacity allocation with no surprise costs. Know your usage upfront."
+      description: "Monthly capacity allocation with full transparency. Know your costs upfront with no per-message surprises or unpredictable overages."
     },
     {
       icon: Palette,
-      title: "White-Label Branding",
-      description: "Full customization of colors, logos, and messaging to match your brand identity."
+      title: "Complete White-Labeling",
+      description: "Full customization of colors, logos, messaging, and domain. Deliver AI solutions under your brand with no UltriumAI branding visible to end users."
     },
     {
-      icon: Settings,
+      icon: Eye,
       title: "Admin Analytics & Control",
-      description: "Track performance, manage deployments, and control access across your organization."
+      description: "Track usage by client, department, or assistant. Monitor performance, manage deployments, and control access across your entire organization."
     },
     {
       icon: Lock,
-      title: "Secure by Design",
-      description: "SOC 2 aligned controls, encrypted at rest and in transit, with role-based access."
+      title: "Security by Design",
+      description: "SOC 2 aligned controls with encryption at rest and in transit. Role-based access controls, SSO integration, and comprehensive audit logging."
+    }
+  ];
+
+  const useCases = [
+    {
+      icon: MessageSquare,
+      title: "Customer Support Automation",
+      description: "Deploy AI assistants that handle tier-1 support inquiries, reducing ticket volume while maintaining quality and brand consistency."
+    },
+    {
+      icon: Database,
+      title: "Knowledge Base Q&A",
+      description: "Train assistants on internal documentation, policies, and procedures. Enable employees to get instant answers without searching through wikis."
+    },
+    {
+      icon: Workflow,
+      title: "Workflow Automation",
+      description: "Connect AI assistants to business systems via actions and integrations. Automate data lookups, ticket creation, and process handoffs."
+    },
+    {
+      icon: FileText,
+      title: "Document Analysis",
+      description: "Upload documents and enable assistants to answer questions about contracts, policies, technical documentation, and more."
     }
   ];
 
   const differentiators = [
-    "Not a consumer chatbot — built for business governance",
-    "Predictable capacity model — no per-message surprises",
-    "Multi-tenant architecture for MSPs and agencies",
-    "Full administrative oversight and audit trails",
-    "Deploy in days, not months",
-    "Train on your own data and documents"
+    "Not a consumer chatbot — built for business governance and accountability",
+    "Predictable capacity model with no per-message surprises or hidden fees",
+    "Multi-tenant architecture designed for MSPs, agencies, and enterprise teams",
+    "Full administrative oversight with granular usage tracking and audit trails",
+    "Deploy in days, not months — minimal IT involvement required",
+    "Train on your own data and documents with secure, private knowledge bases",
+    "White-label ready — deliver under your brand with custom domains",
+    "API access for custom integrations and workflow automation"
+  ];
+
+  const platformBenefits = [
+    {
+      title: "For MSPs & Agencies",
+      points: [
+        "Create new AI-as-a-Service revenue streams",
+        "Client-level usage tracking and billing visibility",
+        "White-label delivery with your branding",
+        "Predictable margins with capacity-based pricing"
+      ]
+    },
+    {
+      title: "For Internal Teams",
+      points: [
+        "Eliminate shadow IT with governed AI deployment",
+        "Centralized control across all departments",
+        "Compliance-ready with full audit logging",
+        "Reduce support burden on IT and HR"
+      ]
+    },
+    {
+      title: "For Websites & Marketing",
+      points: [
+        "24/7 lead qualification and engagement",
+        "Brand-consistent messaging and guardrails",
+        "Analytics on visitor interactions and intent",
+        "Seamless handoff to sales teams"
+      ]
+    }
   ];
 
   return (
@@ -99,13 +155,15 @@ const AIStudioProductPage = () => {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-foreground via-foreground to-foreground/50 bg-clip-text text-transparent">
-            AI Studio — A Business AI Control Plane
+            AI Studio — Your Business AI Control Plane
           </h1>
           
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-4">
             Build, deploy, and govern AI assistants with predictable cost, 
-            enterprise controls, and full visibility. Not a chatbot toy — 
-            a platform built for business.
+            enterprise controls, and full visibility.
+          </p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+            Not a chatbot toy — a platform built for business accountability.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -117,10 +175,23 @@ const AIStudioProductPage = () => {
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link to="/contact">
-                Talk to Us
+                Talk to Sales
               </Link>
             </Button>
           </div>
+        </div>
+      </section>
+
+      {/* What is AI Studio */}
+      <section className="py-16 px-4 border-b border-border/50">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">What is AI Studio?</h2>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            AI Studio is a <strong className="text-foreground">Business AI Control Plane</strong> that enables 
+            organizations to deploy governed AI assistants at scale. Unlike consumer chatbots, AI Studio provides 
+            the governance, visibility, and predictability that business operations require — from centralized 
+            policy management to detailed usage analytics and white-label delivery.
+          </p>
         </div>
       </section>
 
@@ -153,17 +224,17 @@ const AIStudioProductPage = () => {
         </div>
       </section>
 
-      {/* Capabilities */}
+      {/* Core Capabilities */}
       <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <Badge className="mb-4 bg-violet-500/20 text-violet-400 border-violet-500/30">
               <Settings className="h-3 w-3 mr-1" />
-              Key Capabilities
+              Core Capabilities
             </Badge>
             <h2 className="text-3xl font-bold mb-4">What AI Studio Does</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Everything you need to deploy AI at scale with confidence.
+              Everything you need to deploy AI at scale with confidence and control.
             </p>
           </div>
 
@@ -182,6 +253,67 @@ const AIStudioProductPage = () => {
                 </Card>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Use Cases */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Common Use Cases</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              AI Studio powers a wide range of business applications.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {useCases.map((useCase, i) => {
+              const IconComponent = useCase.icon;
+              return (
+                <Card key={i} className="bg-card/50 border-border/50">
+                  <CardContent className="p-6 flex gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">{useCase.title}</h3>
+                      <p className="text-muted-foreground text-sm">{useCase.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Benefits by Audience */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">How AI Studio Fits Your Organization</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Different organizations, same platform — tailored outcomes.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {platformBenefits.map((benefit, i) => (
+              <Card key={i} className="bg-card border-border/50">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold mb-4">{benefit.title}</h3>
+                  <ul className="space-y-2">
+                    {benefit.points.map((point, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -206,6 +338,31 @@ const AIStudioProductPage = () => {
                 <span className="text-foreground/80">{item}</span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Part of UltriumAI */}
+      <section className="py-16 px-4 border-y border-border/50 bg-muted/20">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-2xl font-bold mb-4">Part of the UltriumAI Platform</h2>
+          <p className="text-muted-foreground mb-6">
+            AI Studio integrates seamlessly with the broader UltriumAI ecosystem, including 
+            Vanguard for security operations and SafeSuite for personal security tools. 
+            Organizations can leverage AI assistants trained on security data, helpdesk content, 
+            and operational documentation.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link to="/products/vanguard">
+              <Button variant="outline" size="sm">
+                Learn about Vanguard
+              </Button>
+            </Link>
+            <Link to="/products/safesuite">
+              <Button variant="outline" size="sm">
+                Learn about SafeSuite
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -241,8 +398,9 @@ const AIStudioProductPage = () => {
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-          <p className="text-muted-foreground mb-8">
-            See how AI Studio can transform your organization with governed, scalable AI.
+          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+            See how AI Studio can transform your organization with governed, scalable AI. 
+            No credit card required to explore pricing options.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
@@ -253,9 +411,22 @@ const AIStudioProductPage = () => {
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link to="/contact">
-                Talk to Us
+                Talk to Sales
               </Link>
             </Button>
+            <Button size="lg" variant="ghost" asChild>
+              <Link to="/auth">
+                Get Started
+              </Link>
+            </Button>
+          </div>
+          
+          <div className="mt-10 flex items-center justify-center gap-6 text-sm text-muted-foreground">
+            <span>🇺🇸 Veteran-Owned</span>
+            <span>•</span>
+            <span>Enterprise-Ready</span>
+            <span>•</span>
+            <span>SOC 2 Aligned</span>
           </div>
         </div>
       </section>
