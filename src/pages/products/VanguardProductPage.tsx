@@ -259,12 +259,12 @@ const VanguardProductPage = () => {
                 <Card key={i} className="bg-card border-border/50 hover:border-cyan-500/30 transition-all">
                   <CardContent className="p-6">
                     {product.logo ? (
-                      <div className={`w-14 h-14 rounded-lg ${product.bgColor} flex items-center justify-center mb-4 p-2`}>
+                      <div className={`w-28 h-16 rounded-lg ${product.bgColor} flex items-center justify-center mb-4 p-3`}>
                         <img src={product.logo} alt={product.title} className="h-full w-full object-contain" />
                       </div>
                     ) : (
-                      <div className={`w-12 h-12 rounded-lg ${product.bgColor} flex items-center justify-center mb-4`}>
-                        {IconComponent && <IconComponent className={`h-6 w-6 ${product.color}`} />}
+                      <div className={`w-14 h-14 rounded-lg ${product.bgColor} flex items-center justify-center mb-4`}>
+                        {IconComponent && <IconComponent className={`h-7 w-7 ${product.color}`} />}
                       </div>
                     )}
                     <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
