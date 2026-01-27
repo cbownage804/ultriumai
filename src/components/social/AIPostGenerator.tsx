@@ -33,6 +33,7 @@ const CONTENT_TYPE_GROUPS = [
   {
     label: 'For MSPs & Enterprise',
     types: [
+      { id: 'ai_studio', label: 'AI Studio', description: 'Promote AI Studio & custom GPT capabilities', icon: Sparkles, color: 'text-violet-400' },
       { id: 'threat_alert', label: 'Threat Alert', description: 'New security threat or vulnerability', icon: AlertTriangle, color: 'text-red-400' },
       { id: 'service_highlight', label: 'Service Highlight', description: 'Showcase UltriumAI MSP services', icon: Building2, color: 'text-blue-400' },
       { id: 'industry_news', label: 'Industry News', description: 'Comment on cybersecurity news', icon: Newspaper, color: 'text-purple-400' },
