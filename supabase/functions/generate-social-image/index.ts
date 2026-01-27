@@ -126,12 +126,18 @@ serve(async (req) => {
       ? VISUAL_STYLES[contentType] 
       : VISUAL_STYLES.custom_topic;
 
-    // Enhanced prompt for beautiful, text-free images
-    const enhancedPrompt = `Create a stunning, high-quality social media thumbnail image.
+    // Enhanced prompt for beautiful, text-free images optimized for social feeds
+    // Facebook requires aspect ratio at most 1.91:1, so we use 1200x628 (1.91:1 exactly)
+    const enhancedPrompt = `Create a stunning, high-quality LANDSCAPE social media image.
 
 TOPIC: ${prompt}
 
 VISUAL DIRECTION: ${visualStyle}
+
+CRITICAL IMAGE DIMENSIONS:
+- MUST be a WIDE LANDSCAPE format (approximately 1200x628 pixels, 1.91:1 ratio)
+- Width must be significantly greater than height (almost 2x wider than tall)
+- This is NOT a square or portrait image - it MUST be a wide horizontal banner
 
 CRITICAL REQUIREMENTS (MUST FOLLOW):
 - ABSOLUTELY NO text, words, letters, numbers, or typography of any kind
@@ -146,8 +152,6 @@ QUALITY REQUIREMENTS:
 - Rich, vibrant colors that pop on social feeds
 - Modern, premium aesthetic suitable for business content
 - IMPORTANT: Leave space in the bottom-right corner for a logo overlay
-
-ASPECT RATIO: ${aspectRatio} (optimize composition for this ratio)
 
 COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds preferred for contrast.`;
 
