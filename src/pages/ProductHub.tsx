@@ -75,45 +75,53 @@ const ProductCard = ({
   };
 
   return (
-    <Card className="relative overflow-hidden border-border/50 hover:border-primary/30 transition-all duration-300 group bg-card/50">
+    <Card className="relative overflow-hidden border-border/30 hover:border-primary/40 transition-all duration-500 group bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-sm hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2">
       {/* Background gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
       
-      <CardHeader className="relative z-10 pb-2">
+      {/* Decorative corner glow */}
+      <div className={`absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br ${bgGradient} rounded-full blur-3xl opacity-0 group-hover:opacity-60 transition-opacity duration-500`} />
+      
+      <CardHeader className="relative z-10 pb-4">
         {/* Centered Horizontal Logo */}
-        <div className="flex flex-col items-center mb-4">
-          <div className={`px-4 py-3 md:px-6 md:py-4 bg-black rounded-xl ${getShadowClass()} shadow-lg mb-3 flex items-center justify-center min-w-[200px] md:min-w-[240px] min-h-[80px] md:min-h-[100px]`}>
+        <div className="flex flex-col items-center mb-6">
+          <div className={`px-6 py-4 md:px-8 md:py-5 bg-black rounded-2xl ${getShadowClass()} shadow-xl mb-4 flex items-center justify-center min-w-[220px] md:min-w-[260px] min-h-[90px] md:min-h-[110px] transition-all duration-300 group-hover:scale-105 group-hover:shadow-2xl`}>
             <img 
               src={logo} 
               alt={name} 
-              className={`w-auto object-contain ${
+              className={`w-auto object-contain transition-transform duration-300 group-hover:scale-110 ${
                 name === 'Vanguard' 
-                  ? 'h-12 max-w-[140px]' 
-                  : 'h-20 max-w-[200px] scale-125'
+                  ? 'h-14 max-w-[160px]' 
+                  : 'h-24 max-w-[220px] scale-125'
               }`} 
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {accessLevel && (
-              <Badge variant="outline" className={`text-${color} border-${color}/30 bg-${color}/10 text-xs`}>
+              <Badge variant="outline" className={`text-${color} border-${color}/30 bg-${color}/10 text-xs px-3 py-1`}>
                 {accessLevel.charAt(0).toUpperCase() + accessLevel.slice(1)} Plan
               </Badge>
             )}
             {hasAccess ? (
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" title="Active" />
+              <div className="relative">
+                <div className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse" title="Active" />
+                <div className="absolute inset-0 h-3 w-3 rounded-full bg-emerald-400 animate-ping opacity-75" />
+              </div>
             ) : (
-              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+              <Lock className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
         </div>
-        <CardDescription className="text-sm text-center">{description}</CardDescription>
+        <CardDescription className="text-sm text-center leading-relaxed">{description}</CardDescription>
       </CardHeader>
       
-      <CardContent className="relative z-10 space-y-4">
-        <ul className="space-y-1.5">
+      <CardContent className="relative z-10 space-y-5">
+        <ul className="space-y-2.5">
           {features.slice(0, 3).map((feature, idx) => (
-            <li key={idx} className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Zap className={`h-3 w-3 text-${color}`} />
+            <li key={idx} className="flex items-center gap-3 text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors">
+              <div className={`h-6 w-6 rounded-lg bg-${color}/10 flex items-center justify-center flex-shrink-0`}>
+                <Zap className={`h-3.5 w-3.5 text-${color}`} />
+              </div>
               {feature}
             </li>
           ))}
@@ -121,9 +129,10 @@ const ProductCard = ({
         
         <Button 
           onClick={handleClick}
-          className="w-full group/btn"
+          className={`w-full group/btn transition-all duration-300 ${hasAccess ? 'shadow-lg hover:shadow-xl' : ''}`}
           variant={hasAccess ? "default" : "outline"}
           disabled={!hasAccess && name === 'Vanguard'}
+          size="lg"
         >
           {hasAccess ? (
             <>
@@ -243,28 +252,28 @@ export default function ProductHub() {
   const isAdmin = user.email?.endsWith('@ultriumai.com') && user.email_confirmed_at != null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
       {/* Header */}
-      <header className="border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-border/30 bg-background/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="https://ultriumai.com" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-8 w-auto" />
-            <span className="font-semibold text-lg">UltriumAI</span>
+          <a href="https://ultriumai.com" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+            <img src={ultraiumAiLogo} alt="UltriumAI" className="h-9 w-auto transition-transform duration-300 group-hover:scale-110" />
+            <span className="font-bold text-xl bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">UltriumAI</span>
           </a>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {isAdmin && (
-              <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="text-amber-500 hover:text-amber-400">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/admin')} className="text-amber-500 hover:text-amber-400 hover:bg-amber-500/10">
                 <Settings className="h-4 w-4 mr-2" />
                 Admin
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/profile')} className="hover:bg-muted">
               Profile
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/pricing')} className="border-primary/30 hover:border-primary hover:bg-primary/5">
               Upgrade
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:text-destructive">
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="hover:text-destructive hover:bg-destructive/10">
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
@@ -273,13 +282,17 @@ export default function ProductHub() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-12">
+      <main className="container mx-auto px-6 py-16">
         {/* Welcome Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, <span className="text-primary">{userName}</span>!
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-6">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Product Hub</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Welcome back, <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">{userName}</span>!
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             Access your UltriumAI products and services from one central hub. 
             Select a product below to get started.
           </p>

@@ -162,7 +162,7 @@ const AIStudio = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative pt-20 pb-16 overflow-hidden">
+      <section className="relative pt-20 pb-20 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
@@ -173,48 +173,59 @@ const AIStudio = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
         </div>
+        
+        {/* Decorative elements */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/15 rounded-full blur-[100px] pointer-events-none" />
+        
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-8">
-            <div className="space-y-6">
+          <div className="text-center space-y-10">
+            <div className="space-y-8">
               {/* Logo */}
               <div className="flex justify-center">
-                <div className="px-6 py-4 sm:px-12 sm:py-6 bg-black rounded-2xl shadow-2xl shadow-primary/30 animate-fade-in">
-                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-16 sm:h-20 md:h-28 w-auto object-contain" />
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-violet-500 rounded-3xl blur-xl opacity-50 group-hover:opacity-70 transition-opacity" />
+                  <div className="relative px-8 py-6 sm:px-14 sm:py-8 bg-black rounded-2xl shadow-2xl shadow-primary/30">
+                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-20 sm:h-24 md:h-32 w-auto object-contain" />
+                  </div>
                 </div>
               </div>
               
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-muted-foreground">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-muted-foreground">
                 Custom GPT Builder Platform
               </h2>
-              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-2">
+              <p className="text-lg sm:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed px-4">
                 Build intelligent AI assistants in minutes, not months. Deploy custom GPTs trained on YOUR data, 
                 YOUR processes, YOUR way—whether you're an MSP scaling services or a business automating operations.
               </p>
             </div>
 
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6 max-w-3xl mx-auto">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Star className="h-5 w-5 text-yellow-500" />
-                <span className="font-semibold text-primary">Two Paths to Success</span>
-                <Star className="h-5 w-5 text-yellow-500" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-violet-500/10 to-primary/20 rounded-2xl blur-sm" />
+              <div className="relative bg-gradient-to-r from-primary/10 via-violet-500/5 to-primary/10 rounded-2xl p-8 max-w-3xl mx-auto border border-primary/20">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Star className="h-5 w-5 text-amber-400" />
+                  <span className="font-semibold text-primary text-lg">Two Paths to Success</span>
+                  <Star className="h-5 w-5 text-amber-400" />
+                </div>
+                <p className="text-lg font-medium text-foreground">
+                  Build it yourself with our platform, or let our experts build it for you. Either way, you get GPTs that know your business inside and out.
+                </p>
               </div>
-              <p className="text-lg font-medium text-foreground">
-                Build it yourself with our platform, or let our experts build it for you. Either way, you get GPTs that know your business inside and out.
-              </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center flex-wrap px-2">
-              <Button size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto btn-glow w-full sm:w-auto" onClick={() => window.location.href = '/ultrium-gpt'}>
-                <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                <span className="truncate">Launch AI Studio</span>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap px-2">
+              <Button size="lg" className="text-lg px-10 py-7 h-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300" onClick={() => window.location.href = '/ultrium-gpt'}>
+                <Play className="mr-2 h-5 w-5" />
+                Launch AI Studio
               </Button>
-              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto w-full sm:w-auto" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
-                <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                <span className="truncate">View Demo</span>
+              <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
+                <Play className="mr-2 h-5 w-5" />
+                View Demo
               </Button>
-              <Button variant="outline" size="lg" className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 h-auto w-full sm:w-auto" onClick={() => window.location.href = '/contact'}>
-                <Calendar className="mr-2 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
-                <span className="truncate">Schedule Consultation</span>
+              <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300" onClick={() => window.location.href = '/contact'}>
+                <Calendar className="mr-2 h-5 w-5" />
+                Schedule Consultation
               </Button>
             </div>
           </div>
@@ -222,13 +233,18 @@ const AIStudio = () => {
       </section>
 
       {/* Creation Paths Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-foreground">
+      <section className="py-24 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/20 via-transparent to-muted/20 pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-6">
+              <Zap className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Choose Your Path</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-foreground">
               Choose Your GPT Creation Path
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
               Two distinct approaches to get you the custom GPT your business needs—both designed to deliver professional, 
               security-focused results that integrate seamlessly with your operations.
             </p>

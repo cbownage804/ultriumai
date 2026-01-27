@@ -65,7 +65,7 @@ const About = () => {
       <Navigation />
       
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 overflow-hidden">
+      <section className="relative pt-32 pb-24 px-4 overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
@@ -76,30 +76,35 @@ const About = () => {
           <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/85 to-background" />
           <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-background/80" />
         </div>
+        
+        {/* Decorative blurs */}
+        <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-primary/15 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/3 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+        
         <div className="relative z-10 container mx-auto text-center max-w-4xl">
-          <Badge className="mb-6" variant="secondary">
-            <Flag className="h-3 w-3 mr-1" />
+          <Badge className="mb-8 px-4 py-2 text-sm" variant="secondary">
+            <Flag className="h-3.5 w-3.5 mr-2" />
             Veteran-Owned Business
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
             AI Development & 
-            <span className="bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              {" "}Cybersecurity Agency
+            <span className="block bg-gradient-to-r from-primary via-primary to-violet-500 bg-clip-text text-transparent">
+              Cybersecurity Agency
             </span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
             UltriumAI is a veteran-owned technology company building AI-powered tools and cybersecurity 
             solutions for businesses of all sizes. We combine 15+ years of IT and security expertise 
             with cutting-edge artificial intelligence.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/hub">
-              <Button size="lg" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto px-8 py-6 text-lg bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25">
                 Explore Our Products <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/contact">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto px-8 py-6 text-lg border-border/50 hover:border-primary/50 hover:bg-primary/5">
                 Get In Touch
               </Button>
             </Link>
