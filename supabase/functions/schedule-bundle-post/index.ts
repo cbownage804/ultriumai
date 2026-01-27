@@ -36,54 +36,80 @@ serve(async (req) => {
     console.log('Creating Bundle.Social post for channels:', platforms);
 
     // First, upload image to Bundle.Social if provided
-    let bundleImageId: string | undefined;
+    let bundleUploadId: string | undefined;
     if (imageUrl && !imageUrl.startsWith('data:')) {
       try {
         console.log('Uploading image to Bundle.Social...');
-        const uploadResponse = await fetch(`https://api.bundle.social/api/v1/team/${teamId}/upload`, {
+        const uploadResponse = await fetch(`https://api.bundle.social/api/v1/upload/`, {
           method: 'POST',
           headers: {
             'x-api-key': apiKey,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            teamId: teamId,
             url: imageUrl,
-            type: 'image',
           }),
         });
 
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
-          bundleImageId = uploadData.id;
-          console.log('Image uploaded to Bundle.Social:', bundleImageId);
+          bundleUploadId = uploadData.id;
+          console.log('Image uploaded to Bundle.Social:', bundleUploadId);
         } else {
-          console.warn('Failed to upload image to Bundle.Social, posting without image');
+          const uploadError = await uploadResponse.text();
+          console.warn('Failed to upload image to Bundle.Social:', uploadError);
         }
       } catch (uploadError) {
         console.warn('Image upload error:', uploadError);
       }
     }
 
-    // Build the post payload for Bundle.Social
-    const postPayload: Record<string, unknown> = {
-      channels: platforms.map(channelId => ({
-        id: channelId,
-        text: content,
-        ...(bundleImageId ? { media: [{ id: bundleImageId }] } : {}),
-      })),
-    };
-
-    // Add scheduling if provided
+    // Determine post status and date
+    let postStatus = 'SCHEDULED';
+    let postDate: string | undefined;
+    
     if (scheduledAt) {
       const scheduleDate = new Date(scheduledAt);
       if (scheduleDate > new Date()) {
-        postPayload.scheduledAt = scheduleDate.toISOString();
-        console.log('Scheduling post for:', postPayload.scheduledAt);
+        postDate = scheduleDate.toISOString();
+        console.log('Scheduling post for:', postDate);
+      } else {
+        postStatus = 'POSTED';
       }
+    } else {
+      postStatus = 'POSTED';
     }
 
-    // Create the post via Bundle.Social API
-    const postResponse = await fetch(`https://api.bundle.social/api/v1/team/${teamId}/post`, {
+    // Build post data for each platform type
+    // platforms array contains social account IDs - we need to determine their types
+    // For now, we'll send as FACEBOOK type since that's what's connected
+    const postData: Record<string, unknown> = {
+      FACEBOOK: {
+        type: 'POST',
+        text: content,
+        ...(bundleUploadId ? { uploadIds: [bundleUploadId] } : {}),
+      },
+    };
+
+    // Build the post payload for Bundle.Social (correct API format)
+    const postPayload: Record<string, unknown> = {
+      teamId: teamId,
+      title: title || content.substring(0, 50),
+      status: postStatus,
+      socialAccountTypes: ['FACEBOOK'],
+      data: postData,
+    };
+
+    // Add post date if scheduling
+    if (postDate) {
+      postPayload.postDate = postDate;
+    }
+
+    console.log('Creating Bundle.Social post with payload:', JSON.stringify(postPayload));
+
+    // Create the post via Bundle.Social API (correct endpoint)
+    const postResponse = await fetch(`https://api.bundle.social/api/v1/post/`, {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
@@ -95,7 +121,7 @@ serve(async (req) => {
     if (!postResponse.ok) {
       const errorText = await postResponse.text();
       console.error('Bundle.Social post error:', postResponse.status, errorText);
-      throw new Error(`Failed to create post: ${postResponse.status}`);
+      throw new Error(`Failed to create post: ${postResponse.status} - ${errorText}`);
     }
 
     const postData = await postResponse.json();
