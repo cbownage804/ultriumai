@@ -104,8 +104,8 @@ const VanguardProductPage = () => {
             AI-Powered Security & Operations
           </Badge>
           
-          <div className="inline-flex items-center justify-center mb-8">
-            <div className="h-28 w-44 rounded-2xl bg-black p-4 flex items-center justify-center shadow-xl shadow-cyan-500/20">
+          <div className="flex items-center justify-center mb-8">
+            <div className="h-48 w-80 rounded-3xl bg-black p-6 flex items-center justify-center shadow-2xl shadow-cyan-500/30 mx-auto">
               <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
             </div>
           </div>
