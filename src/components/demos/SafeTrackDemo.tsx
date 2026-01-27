@@ -130,7 +130,7 @@ export const SafeTrackDemo = ({ compactMode = false }: CompactProps) => {
       {/* Header with SafeTrack branding - centered logo only */}
       {!compactMode && (
         <div className="flex justify-center mb-4">
-          <img src={safetrackLogo} alt="SafeTrack" className="h-10 w-auto" />
+          <img src={safetrackLogo} alt="SafeTrack" className="h-14 w-auto" />
         </div>
       )}
 
@@ -374,7 +374,7 @@ export const SafeTrackDemo = ({ compactMode = false }: CompactProps) => {
         <Card className="border-teal-500/20 bg-teal-500/5">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <img src={safetrackLogo} alt="SafeTrack" className="h-6 w-auto" />
+              <img src={safetrackLogo} alt="SafeTrack" className="h-8 w-auto" />
             </div>
             <h4 className="text-lg font-bold mb-1">Complete Asset Lifecycle Management</h4>
             <p className="text-muted-foreground text-sm mb-3">
