@@ -85,7 +85,7 @@ const SafeSuiteProductPage = () => {
           </Badge>
           
           <div className="inline-flex items-center justify-center mb-8">
-            <div className="h-24 w-24 rounded-2xl bg-black p-2 flex items-center justify-center shadow-xl shadow-emerald-500/20">
+            <div className="h-28 w-44 rounded-2xl bg-black p-4 flex items-center justify-center shadow-xl shadow-emerald-500/20">
               <img src={safesuiteLogo} alt="SafeSuite" className="h-full w-full object-contain" />
             </div>
           </div>
