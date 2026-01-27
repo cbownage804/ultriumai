@@ -24,13 +24,13 @@ import {
   QrCode,
   AlertTriangle,
   CheckCircle,
-  Clock,
   DollarSign,
   Calendar,
   FileText,
   Wrench,
   Filter
 } from 'lucide-react';
+import safetrackLogo from '@/assets/safetrack-logo.png';
 
 interface Asset {
   id: string;
@@ -126,11 +126,11 @@ export const SafeTrackDemo = ({ compactMode = false }: CompactProps) => {
   };
 
   return (
-    <div className={compactMode ? 'p-4' : 'p-6 space-y-6'}>
+    <div className={compactMode ? 'p-4' : 'p-4 space-y-4'}>
+      {/* Header with SafeTrack branding - centered logo only */}
       {!compactMode && (
-        <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-foreground mb-2">📦 SafeTrack Asset Management</h3>
-          <p className="text-muted-foreground">Complete IT asset lifecycle management</p>
+        <div className="flex justify-center mb-4">
+          <img src={safetrackLogo} alt="SafeTrack" className="h-10 w-auto" />
         </div>
       )}
 
@@ -371,15 +371,17 @@ export const SafeTrackDemo = ({ compactMode = false }: CompactProps) => {
 
       {/* Demo Footer */}
       {!compactMode && (
-        <Card className="border-orange-500/20 bg-orange-500/5">
-          <CardContent className="p-6 text-center">
-            <Package className="h-12 w-12 mx-auto mb-4 text-orange-500" />
-            <h4 className="text-xl font-bold mb-2">Complete Asset Lifecycle Management</h4>
-            <p className="text-muted-foreground mb-4">
+        <Card className="border-teal-500/20 bg-teal-500/5">
+          <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <img src={safetrackLogo} alt="SafeTrack" className="h-6 w-auto" />
+            </div>
+            <h4 className="text-lg font-bold mb-1">Complete Asset Lifecycle Management</h4>
+            <p className="text-muted-foreground text-sm mb-3">
               Track hardware, software, and licenses from procurement to retirement
             </p>
             <div className="flex gap-3 justify-center">
-              <Button className="bg-orange-500 hover:bg-orange-600">
+              <Button className="bg-teal-500 hover:bg-teal-600 text-white">
                 Start Free Trial
               </Button>
               <Button variant="outline">
