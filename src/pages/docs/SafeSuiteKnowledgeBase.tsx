@@ -13,8 +13,41 @@ import {
   Search, Key, Shield, Globe, Package, Scan, Mail, FileText, Link as LinkIcon,
   ChevronRight, ArrowLeft, BookOpen, HelpCircle, ListChecks, CheckCircle2,
   AlertTriangle, Lock, Users, Fingerprint, History, Brain, Eye, Clock,
-  BarChart3, QrCode, Laptop, DollarSign, Calendar, Download, Settings
+  BarChart3, QrCode, Laptop, DollarSign, Calendar, Download, Settings, Sparkles
 } from "lucide-react";
+import { safeSuiteProducts, safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
+
+// Product branding config
+const productBranding = {
+  safepass: {
+    gradient: "from-amber-500 to-orange-500",
+    lightBg: "bg-amber-50 dark:bg-amber-950/20",
+    border: "border-amber-200 dark:border-amber-800",
+    text: "text-amber-600 dark:text-amber-400",
+    icon: "bg-amber-500",
+  },
+  safescan: {
+    gradient: "from-red-500 to-rose-500",
+    lightBg: "bg-red-50 dark:bg-red-950/20",
+    border: "border-red-200 dark:border-red-800",
+    text: "text-red-600 dark:text-red-400",
+    icon: "bg-red-500",
+  },
+  safeweb: {
+    gradient: "from-purple-500 to-violet-500",
+    lightBg: "bg-purple-50 dark:bg-purple-950/20",
+    border: "border-purple-200 dark:border-purple-800",
+    text: "text-purple-600 dark:text-purple-400",
+    icon: "bg-purple-500",
+  },
+  safetrack: {
+    gradient: "from-emerald-500 to-teal-500",
+    lightBg: "bg-emerald-50 dark:bg-emerald-950/20",
+    border: "border-emerald-200 dark:border-emerald-800",
+    text: "text-emerald-600 dark:text-emerald-400",
+    icon: "bg-emerald-500",
+  },
+};
 
 // SafeSuite Products Data
 const products = [
@@ -23,8 +56,8 @@ const products = [
     name: "SafePass",
     tagline: "Enterprise Password Management",
     icon: Key,
-    color: "text-amber-500",
-    bgColor: "bg-amber-500/10",
+    logo: safeSuiteProducts.safepass.logo,
+    branding: productBranding.safepass,
     articles: [
       {
         id: "safepass-getting-started",
@@ -171,8 +204,8 @@ Your security score is calculated based on:
     name: "SafeScan",
     tagline: "AI-Powered Threat Scanner",
     icon: Scan,
-    color: "text-red-500",
-    bgColor: "bg-red-500/10",
+    logo: safeSuiteProducts.safescan.logo,
+    branding: productBranding.safescan,
     articles: [
       {
         id: "safescan-email-scanning",
@@ -245,18 +278,6 @@ Scan PDFs, Office files, and other documents for hidden threats.
 2. Click **"Batch Scan"**
 3. View results in the scan history
 4. Export report as PDF or CSV
-
-## API Integration
-\`\`\`javascript
-// Scan a file via API
-const response = await fetch('/api/safescan/document', {
-  method: 'POST',
-  headers: { 'Authorization': 'Bearer YOUR_API_KEY' },
-  body: formData
-});
-const result = await response.json();
-console.log(result.threatLevel); // 'safe' | 'suspicious' | 'malicious'
-\`\`\`
         `
       },
       {
@@ -288,15 +309,6 @@ With the SafeScan browser extension:
 2. Automatic blocking of known malicious sites
 3. Real-time phishing page detection
 4. Warning before entering credentials on suspicious sites
-
-## Bulk URL Checking
-1. Upload a CSV with URLs (one per line)
-2. Click **"Bulk Analyze"**
-3. Download results with threat scores
-4. Filter by risk level
-
-## Integrating with Email
-When SafeScan analyzes emails, all embedded URLs are automatically checked. Malicious links are flagged in the email report.
         `
       }
     ],
@@ -316,10 +328,6 @@ When SafeScan analyzes emails, all embedded URLs are automatically checked. Mali
       {
         q: "Can I integrate SafeScan with my email server?",
         a: "Yes! We support Microsoft 365, Google Workspace, and any IMAP/SMTP server. API integrations are available for custom setups."
-      },
-      {
-        q: "What happens when a threat is detected?",
-        a: "Depending on your settings: quarantine the file/email, send an alert, block access, or just log the event. Configure actions in Settings → Threat Response."
       }
     ]
   },
@@ -328,8 +336,8 @@ When SafeScan analyzes emails, all embedded URLs are automatically checked. Mali
     name: "SafeWeb",
     tagline: "Dark Web Intelligence",
     icon: Globe,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
+    logo: safeSuiteProducts.safeweb.logo,
+    branding: productBranding.safeweb,
     articles: [
       {
         id: "safeweb-monitoring-setup",
@@ -438,8 +446,8 @@ When SafeWeb detects your data on the dark web, follow these steps.
     name: "SafeTrack",
     tagline: "Asset Lifecycle Management",
     icon: Package,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
+    logo: safeSuiteProducts.safetrack.logo,
+    branding: productBranding.safetrack,
     articles: [
       {
         id: "safetrack-adding-assets",
@@ -498,113 +506,93 @@ SafeTrack's AI can instantly check warranty status for most manufacturers.
 ## How to Use Warranty Lookup
 1. Go to **SafeTrack → Warranty Lookup**
 2. Enter the serial number
-3. Select manufacturer (or let AI detect)
+3. Select the manufacturer (or let AI detect it)
 4. Click **"Check Warranty"**
 5. View warranty status and expiration
 
 ## Supported Manufacturers
-- Dell / Dell EMC
-- HP / HPE
-- Lenovo
-- Apple
-- Microsoft Surface
-- Cisco
-- Samsung
-- ASUS
-- Acer
-- And many more...
+- **Computers**: Dell, HP, Lenovo, Apple, ASUS, Acer
+- **Networking**: Cisco, Juniper, Ubiquiti, Netgear
+- **Servers**: Dell EMC, HPE, Supermicro
+- **Printers**: HP, Canon, Epson, Brother
+- **Mobile**: Apple, Samsung, Google
 
-## What You'll See
-- **Warranty Status**: Active, Expired, Unknown
-- **Expiration Date**: When coverage ends
-- **Coverage Type**: Basic, Extended, On-Site
-- **Support Options**: Phone, Chat, On-site service
+## Automatic Warranty Tracking
+1. Enable **"Auto-Check Warranties"** in settings
+2. SafeTrack checks all assets weekly
+3. Receive alerts 30/60/90 days before expiration
+4. Plan renewals before coverage lapses
 
-## Bulk Warranty Check
-1. Export your assets to CSV
-2. Go to **Warranty → Bulk Check**
-3. Upload the CSV with serial numbers
-4. Download results with warranty info
-5. Auto-update asset records
-
-## Setting Warranty Alerts
-1. Go to **Settings → Alerts → Warranty**
-2. Configure reminder timing:
-   - 90 days before expiration
-   - 30 days before expiration
-   - On expiration day
-3. Choose notification method
-4. Optionally auto-generate renewal quotes
+## Warranty Reports
+1. Go to **Reports → Warranty Status**
+2. View all assets by warranty state:
+   - Active (covered)
+   - Expiring Soon
+   - Expired
+   - Unknown
+3. Export for procurement planning
         `
       },
       {
         id: "safetrack-depreciation",
-        title: "Depreciation & Financial Reporting",
+        title: "Asset Depreciation & Reporting",
         type: "guide",
         content: `
-# Depreciation & Financial Reporting
+# Asset Depreciation & Reporting
 
-Track asset value over time for accounting and tax purposes.
-
-## Depreciation Methods
-SafeTrack supports:
-- **Straight-Line**: Equal depreciation each year
-- **Declining Balance**: Higher early depreciation
-- **Sum-of-Years**: Accelerated method for tax
-- **Custom**: Define your own schedule
+Track asset value over time for financial planning.
 
 ## Setting Up Depreciation
-1. Go to **Settings → Financial → Depreciation**
-2. Set default method per category
-3. Define useful life by asset type:
-   - Laptops: 3-5 years
-   - Servers: 5-7 years
-   - Monitors: 5 years
-   - Mobile devices: 2-3 years
-4. Set residual value percentage
+1. Go to **Settings → Depreciation**
+2. Choose your method:
+   - **Straight-Line**: Equal depreciation each year
+   - **Declining Balance**: Higher depreciation early
+   - **Custom**: Define your own schedule
+3. Set default useful life by category
 
-## Viewing Current Values
-1. Go to **Reports → Asset Valuation**
-2. See current book value for all assets
-3. Filter by category, location, or status
-4. Export for accounting software
+## Viewing Asset Value
+1. Open any asset
+2. View the **"Value"** tab
+3. See:
+   - Original purchase price
+   - Current book value
+   - Monthly depreciation
+   - Projected value timeline
 
-## Financial Reports
-Available reports include:
-- **Asset Valuation Report**: Current value of all assets
-- **Depreciation Schedule**: Monthly/yearly depreciation
-- **Capex Report**: Capital expenditure summary
-- **Audit Report**: Complete asset history
-- **Insurance Report**: Replacement values
+## Depreciation Reports
+1. Go to **Reports → Depreciation**
+2. Select date range
+3. Filter by category or location
+4. Export for accounting (CSV, Excel, PDF)
 
-## Integration with Accounting
-1. Go to **Settings → Integrations → Accounting**
-2. Connect to QuickBooks, Xero, or NetSuite
-3. Enable automatic journal entries
-4. Map asset categories to GL accounts
+## Disposal & Write-offs
+1. When retiring an asset, click **"Dispose"**
+2. Enter disposal method:
+   - Sold (enter sale price)
+   - Donated
+   - Recycled
+   - Scrapped
+3. Record final value adjustment
+4. Asset moves to disposal history
         `
       }
     ],
     faqs: [
       {
-        q: "Can I track assets across multiple locations?",
-        a: "Yes! Create locations in Settings → Locations, then assign assets to specific sites, buildings, floors, or rooms. Filter and report by location."
+        q: "Can I track software licenses too?",
+        a: "Yes! SafeTrack supports software licenses, subscriptions, and certificates alongside hardware assets. Track license counts, expiration dates, and compliance."
       },
       {
-        q: "How do I handle asset transfers between employees?",
-        a: "Open the asset → Click 'Reassign' → Select new user → Add transfer notes. The change is logged in the audit trail automatically."
+        q: "How does the QR code scanning work?",
+        a: "Each asset gets a unique QR code you can print. Scan with any smartphone camera to instantly view or update asset details. Great for inventory audits!"
       },
       {
-        q: "Can I create custom fields for assets?",
-        a: "Yes, go to Settings → Custom Fields → Add Field. You can add text, number, date, or dropdown fields to any asset category."
+        q: "Can I set up custom asset fields?",
+        a: "Yes, go to Settings → Custom Fields to add any fields you need (e.g., MAC address, warranty type, department code). These appear on all asset forms."
       },
       {
-        q: "How does the maintenance scheduling work?",
-        a: "Set maintenance intervals (e.g., every 90 days) or specific dates. SafeTrack sends reminders and tracks completion. Link to vendors for service requests."
-      },
-      {
-        q: "Can I import from our current asset tracking system?",
-        a: "Yes! We support imports from ServiceNow, Snipe-IT, Asset Panda, Excel, and CSV. Contact support for migration assistance with other systems."
+        q: "Does SafeTrack integrate with our ticketing system?",
+        a: "Yes! We integrate with ServiceNow, Zendesk, Jira Service Desk, and others. Link assets to tickets for complete incident context."
       }
     ]
   }
@@ -613,213 +601,277 @@ Available reports include:
 const SafeSuiteKnowledgeBase = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
-  const [selectedArticle, setSelectedArticle] = useState<any>(null);
+  const [activeProduct, setActiveProduct] = useState<string | null>(null);
+  const [activeArticle, setActiveArticle] = useState<any | null>(null);
 
-  const filteredProducts = products.filter(product => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
+  const filteredProducts = products.map(product => ({
+    ...product,
+    articles: product.articles.filter(article =>
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.content.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    faqs: product.faqs.filter(faq =>
+      faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      faq.a.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })).filter(product => 
+    product.articles.length > 0 || 
+    product.faqs.length > 0 ||
+    product.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const renderMarkdown = (content: string) => {
+    return content.split('\n').map((line, i) => {
+      if (line.startsWith('# ')) {
+        return <h1 key={i} className="text-2xl font-bold mt-6 mb-4 text-foreground">{line.replace('# ', '')}</h1>;
+      }
+      if (line.startsWith('## ')) {
+        return <h2 key={i} className="text-xl font-semibold mt-5 mb-3 text-foreground">{line.replace('## ', '')}</h2>;
+      }
+      if (line.startsWith('### ')) {
+        return <h3 key={i} className="text-lg font-medium mt-4 mb-2 text-foreground">{line.replace('### ', '')}</h3>;
+      }
+      if (line.startsWith('> ')) {
+        const isWarning = line.includes('⚠️') || line.includes('Important');
+        const isTip = line.includes('💡') || line.includes('Tip');
+        return (
+          <div key={i} className={`p-4 rounded-lg my-3 border-l-4 ${
+            isWarning 
+              ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-500 text-amber-800 dark:text-amber-200' 
+              : isTip 
+              ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-500 text-blue-800 dark:text-blue-200'
+              : 'bg-muted border-primary text-muted-foreground'
+          }`}>
+            {line.replace('> ', '')}
+          </div>
+        );
+      }
+      if (line.startsWith('- ')) {
+        return (
+          <li key={i} className="ml-4 text-muted-foreground flex items-start gap-2 my-1">
+            <CheckCircle2 className="h-4 w-4 mt-1 text-primary flex-shrink-0" />
+            <span dangerouslySetInnerHTML={{ __html: formatText(line.replace('- ', '')) }} />
+          </li>
+        );
+      }
+      if (line.match(/^\d+\. /)) {
+        return (
+          <li key={i} className="ml-4 text-muted-foreground my-1 list-decimal list-inside">
+            <span dangerouslySetInnerHTML={{ __html: formatText(line.replace(/^\d+\. /, '')) }} />
+          </li>
+        );
+      }
+      if (line.trim() === '') {
+        return <div key={i} className="h-2" />;
+      }
+      return <p key={i} className="text-muted-foreground my-2" dangerouslySetInnerHTML={{ __html: formatText(line) }} />;
+    });
+  };
+
+  const formatText = (text: string) => {
+    return text
+      .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+      .replace(/`([^`]+)`/g, '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary">$1</code>');
+  };
+
+  const ProductCard = ({ product }: { product: typeof products[0] }) => {
+    const Icon = product.icon;
     return (
-      product.name.toLowerCase().includes(query) ||
-      product.tagline.toLowerCase().includes(query) ||
-      product.articles.some(a => 
-        a.title.toLowerCase().includes(query) || 
-        a.content.toLowerCase().includes(query)
-      ) ||
-      product.faqs.some(f => 
-        f.q.toLowerCase().includes(query) || 
-        f.a.toLowerCase().includes(query)
-      )
-    );
-  });
-
-  const currentProduct = selectedProduct ? products.find(p => p.id === selectedProduct) : null;
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => {
-            if (selectedArticle) {
-              setSelectedArticle(null);
-            } else if (selectedProduct) {
-              setSelectedProduct(null);
-            } else {
-              navigate('/docs');
-            }
-          }}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Shield className="h-8 w-8 text-primary" />
-              SafeSuite Knowledge Base
-            </h1>
-            <p className="text-muted-foreground">
-              Complete documentation for all SafeSuite security tools
-            </p>
-          </div>
-        </div>
-
-        {/* Search */}
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search articles, guides, and FAQs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 py-6 text-lg"
-          />
-        </div>
-
-        {/* Content */}
-        {!selectedProduct ? (
-          // Product Grid
-          <div className="grid md:grid-cols-2 gap-6">
-            {filteredProducts.map((product) => {
-              const Icon = product.icon;
-              return (
-                <Card 
-                  key={product.id}
-                  className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50"
-                  onClick={() => setSelectedProduct(product.id)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl ${product.bgColor}`}>
-                        <Icon className={`h-6 w-6 ${product.color}`} />
-                      </div>
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          {product.name}
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </CardTitle>
-                        <CardDescription>{product.tagline}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
-                        {product.articles.length} Guides
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <HelpCircle className="h-4 w-4" />
-                        {product.faqs.length} FAQs
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : selectedArticle ? (
-          // Article View
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="secondary">{currentProduct?.name}</Badge>
-                <Badge variant="outline">Guide</Badge>
+      <Card 
+        className={`cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/30 overflow-hidden group ${product.branding.border}`}
+        onClick={() => setActiveProduct(product.id)}
+      >
+        {/* Gradient header */}
+        <div className={`h-2 bg-gradient-to-r ${product.branding.gradient}`} />
+        <CardHeader className={`${product.branding.lightBg}`}>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <img 
+                src={product.logo} 
+                alt={product.name}
+                className="h-14 w-14 object-contain rounded-xl shadow-md group-hover:scale-105 transition-transform"
+              />
+              <div className={`absolute -bottom-1 -right-1 ${product.branding.icon} p-1 rounded-full`}>
+                <Icon className="h-3 w-3 text-white" />
               </div>
-              <CardTitle className="text-2xl">{selectedArticle.title}</CardTitle>
+            </div>
+            <div>
+              <CardTitle className={`text-xl ${product.branding.text}`}>{product.name}</CardTitle>
+              <CardDescription className="text-sm">{product.tagline}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+            <BookOpen className="h-4 w-4" />
+            <span>{product.articles.length} Guides</span>
+            <span className="mx-2">•</span>
+            <HelpCircle className="h-4 w-4" />
+            <span>{product.faqs.length} FAQs</span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {product.articles.slice(0, 2).map(article => (
+              <Badge key={article.id} variant="secondary" className="text-xs">
+                {article.title.length > 25 ? article.title.substring(0, 25) + '...' : article.title}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (activeArticle) {
+    const product = products.find(p => p.articles.some(a => a.id === activeArticle.id));
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <Button 
+            variant="ghost" 
+            className="mb-6"
+            onClick={() => setActiveArticle(null)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to {product?.name || 'Articles'}
+          </Button>
+
+          <Card className="overflow-hidden">
+            {product && (
+              <div className={`h-2 bg-gradient-to-r ${product.branding.gradient}`} />
+            )}
+            <CardHeader className={product ? product.branding.lightBg : ''}>
+              <div className="flex items-center gap-3 mb-2">
+                {product && (
+                  <img src={product.logo} alt={product.name} className="h-8 w-8 object-contain" />
+                )}
+                <Badge variant="outline" className="text-xs uppercase tracking-wider">
+                  {activeArticle.type}
+                </Badge>
+              </div>
+              <CardTitle className="text-2xl">{activeArticle.title}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[600px] pr-4">
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {selectedArticle.content.split('\n').map((line: string, i: number) => {
-                    if (line.startsWith('# ')) {
-                      return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{line.slice(2)}</h1>;
-                    } else if (line.startsWith('## ')) {
-                      return <h2 key={i} className="text-xl font-semibold mt-5 mb-3">{line.slice(3)}</h2>;
-                    } else if (line.startsWith('### ')) {
-                      return <h3 key={i} className="text-lg font-medium mt-4 mb-2">{line.slice(4)}</h3>;
-                    } else if (line.startsWith('> ')) {
-                      return (
-                        <div key={i} className="bg-amber-500/10 border-l-4 border-amber-500 p-4 my-4 rounded-r">
-                          {line.slice(2)}
-                        </div>
-                      );
-                    } else if (line.startsWith('- ')) {
-                      return <li key={i} className="ml-4">{line.slice(2)}</li>;
-                    } else if (line.match(/^\d+\./)) {
-                      return <li key={i} className="ml-4 list-decimal">{line.slice(line.indexOf('.') + 2)}</li>;
-                    } else if (line.startsWith('```')) {
-                      return null; // Handle code blocks separately
-                    } else if (line.trim()) {
-                      return <p key={i} className="my-2">{line}</p>;
-                    }
-                    return null;
-                  })}
-                </div>
-              </ScrollArea>
+            <CardContent className="prose dark:prose-invert max-w-none">
+              {renderMarkdown(activeArticle.content)}
             </CardContent>
           </Card>
-        ) : (
-          // Product Detail View
-          <Tabs defaultValue="guides" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {currentProduct && (
-                  <>
-                    <div className={`p-3 rounded-xl ${currentProduct.bgColor}`}>
-                      <currentProduct.icon className={`h-6 w-6 ${currentProduct.color}`} />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">{currentProduct.name}</h2>
-                      <p className="text-muted-foreground">{currentProduct.tagline}</p>
-                    </div>
-                  </>
-                )}
-              </div>
-              <TabsList>
-                <TabsTrigger value="guides" className="gap-2">
-                  <ListChecks className="h-4 w-4" />
-                  Step-by-Step Guides
-                </TabsTrigger>
-                <TabsTrigger value="faqs" className="gap-2">
-                  <HelpCircle className="h-4 w-4" />
-                  FAQs
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-            <TabsContent value="guides" className="space-y-4">
-              {currentProduct?.articles.map((article) => (
-                <Card 
-                  key={article.id}
-                  className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
-                  onClick={() => setSelectedArticle(article)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                        {article.title}
-                      </CardTitle>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
+  if (activeProduct) {
+    const product = products.find(p => p.id === activeProduct);
+    if (!product) return null;
+
+    const Icon = product.icon;
+
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8">
+          <Button 
+            variant="ghost" 
+            className="mb-6"
+            onClick={() => setActiveProduct(null)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to SafeSuite Knowledge Base
+          </Button>
+
+          {/* Product Header with Branding */}
+          <div className={`rounded-2xl overflow-hidden mb-8 ${product.branding.lightBg} border ${product.branding.border}`}>
+            <div className={`h-2 bg-gradient-to-r ${product.branding.gradient}`} />
+            <div className="p-8">
+              <div className="flex items-center gap-6 mb-4">
+                <img 
+                  src={product.logo} 
+                  alt={product.name}
+                  className="h-20 w-20 object-contain rounded-2xl shadow-lg"
+                />
+                <div>
+                  <h1 className={`text-3xl font-bold ${product.branding.text}`}>{product.name}</h1>
+                  <p className="text-lg text-muted-foreground">{product.tagline}</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {safeSuiteProducts[product.id as keyof typeof safeSuiteProducts]?.description}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-4">
+                <Badge className={`${product.branding.icon} text-white`}>
+                  <BookOpen className="h-3 w-3 mr-1" />
+                  {product.articles.length} Guides
+                </Badge>
+                <Badge variant="outline">
+                  <HelpCircle className="h-3 w-3 mr-1" />
+                  {product.faqs.length} FAQs
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <Tabs defaultValue="guides" className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsTrigger value="guides" className="gap-2">
+                <ListChecks className="h-4 w-4" />
+                Guides
+              </TabsTrigger>
+              <TabsTrigger value="faqs" className="gap-2">
+                <HelpCircle className="h-4 w-4" />
+                FAQs
+              </TabsTrigger>
+              <TabsTrigger value="features" className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Features
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="guides">
+              <div className="grid md:grid-cols-2 gap-4">
+                {product.articles.map((article, index) => (
+                  <Card 
+                    key={article.id}
+                    className={`cursor-pointer hover:shadow-lg transition-all hover:border-primary/30 group overflow-hidden`}
+                    onClick={() => setActiveArticle(article)}
+                  >
+                    <div className={`h-1 bg-gradient-to-r ${product.branding.gradient}`} />
+                    <CardHeader>
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl ${product.branding.lightBg} group-hover:scale-105 transition-transform`}>
+                          <Icon className={`h-6 w-6 ${product.branding.text}`} />
+                        </div>
+                        <div className="flex-1">
+                          <Badge variant="outline" className="text-xs mb-2">{article.type}</Badge>
+                          <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                            {article.title}
+                          </CardTitle>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
             </TabsContent>
 
             <TabsContent value="faqs">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Frequently Asked Questions</CardTitle>
+              <Card className="overflow-hidden">
+                <div className={`h-1 bg-gradient-to-r ${product.branding.gradient}`} />
+                <CardHeader className={product.branding.lightBg}>
+                  <CardTitle className="flex items-center gap-2">
+                    <HelpCircle className={`h-5 w-5 ${product.branding.text}`} />
+                    Frequently Asked Questions
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Accordion type="single" collapsible className="w-full">
-                    {currentProduct?.faqs.map((faq, index) => (
-                      <AccordionItem key={index} value={`faq-${index}`}>
-                        <AccordionTrigger className="text-left">
-                          {faq.q}
+                <CardContent className="pt-4">
+                  <Accordion type="single" collapsible className="space-y-2">
+                    {product.faqs.map((faq, index) => (
+                      <AccordionItem key={index} value={`faq-${index}`} className="border rounded-lg px-4">
+                        <AccordionTrigger className="text-left hover:no-underline">
+                          <span className="font-medium">{faq.q}</span>
                         </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground">
+                        <AccordionContent className="text-muted-foreground pb-4">
                           {faq.a}
                         </AccordionContent>
                       </AccordionItem>
@@ -828,10 +880,107 @@ const SafeSuiteKnowledgeBase = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
-        )}
-      </div>
 
+            <TabsContent value="features">
+              <Card className="overflow-hidden">
+                <div className={`h-1 bg-gradient-to-r ${product.branding.gradient}`} />
+                <CardHeader className={product.branding.lightBg}>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className={`h-5 w-5 ${product.branding.text}`} />
+                    Key Features
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {safeSuiteProducts[product.id as keyof typeof safeSuiteProducts]?.features.map((feature, idx) => (
+                      <div key={idx} className={`p-4 rounded-xl ${product.branding.lightBg} border ${product.branding.border}`}>
+                        <CheckCircle2 className={`h-5 w-5 ${product.branding.text} mb-2`} />
+                        <p className="text-sm font-medium">{feature}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <main className="container mx-auto px-4 py-8">
+        {/* Hero Header with SafeSuite Branding */}
+        <div className="relative rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAzMHYtMkgyNHYyaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+          <div className="relative px-8 py-12 md:py-16">
+            <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
+              <img 
+                src={safesuiteLogo} 
+                alt="SafeSuite"
+                className="h-20 w-auto object-contain"
+              />
+              <div className="text-center md:text-left">
+                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                  SafeSuite Knowledge Base
+                </h1>
+                <p className="text-slate-300 text-lg">
+                  Comprehensive documentation for all SafeSuite security products
+                </p>
+              </div>
+            </div>
+            
+            {/* Search */}
+            <div className="max-w-2xl mx-auto md:mx-0">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <Input
+                  placeholder="Search guides, FAQs, and documentation..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 h-12 bg-white/10 border-white/20 text-white placeholder:text-slate-400 focus:bg-white/20"
+                />
+              </div>
+            </div>
+
+            {/* Quick stats */}
+            <div className="flex flex-wrap gap-4 mt-6 justify-center md:justify-start">
+              <Badge variant="secondary" className="bg-white/10 text-white border-white/20">
+                <Shield className="h-3 w-3 mr-1" />
+                4 Products
+              </Badge>
+              <Badge variant="secondary" className="bg-white/10 text-white border-white/20">
+                <BookOpen className="h-3 w-3 mr-1" />
+                {products.reduce((acc, p) => acc + p.articles.length, 0)} Guides
+              </Badge>
+              <Badge variant="secondary" className="bg-white/10 text-white border-white/20">
+                <HelpCircle className="h-3 w-3 mr-1" />
+                {products.reduce((acc, p) => acc + p.faqs.length, 0)} FAQs
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {(searchQuery ? filteredProducts : products).map(product => (
+            <ProductCard key={product.id} product={product as typeof products[0]} />
+          ))}
+        </div>
+
+        {searchQuery && filteredProducts.length === 0 && (
+          <Card className="p-12 text-center">
+            <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No results found</h3>
+            <p className="text-muted-foreground">
+              Try searching with different keywords or browse the products above.
+            </p>
+          </Card>
+        )}
+      </main>
       <Footer />
     </div>
   );

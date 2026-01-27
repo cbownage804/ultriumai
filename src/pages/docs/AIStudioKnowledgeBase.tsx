@@ -13,8 +13,50 @@ import {
   Search, Bot, Sparkles, MessageSquare, Settings, Palette, Brain, 
   ChevronRight, ArrowLeft, BookOpen, HelpCircle, ListChecks, CheckCircle2,
   Code, BarChart3, Share2, Key, Upload, History, Sliders, Zap, Users,
-  FileText, Globe, Lock, Play, Download, PenTool
+  FileText, Globe, Lock, Play, Download, PenTool, Layers, Wand2
 } from "lucide-react";
+
+// AI Studio logo
+import aiStudioLogo from "@/assets/ai-studio-logo.png";
+
+// Topic branding config
+const topicBranding = {
+  "getting-started": {
+    gradient: "from-blue-500 to-cyan-500",
+    lightBg: "bg-blue-50 dark:bg-blue-950/20",
+    border: "border-blue-200 dark:border-blue-800",
+    text: "text-blue-600 dark:text-blue-400",
+    icon: "bg-blue-500",
+  },
+  "configuration": {
+    gradient: "from-violet-500 to-purple-500",
+    lightBg: "bg-violet-50 dark:bg-violet-950/20",
+    border: "border-violet-200 dark:border-violet-800",
+    text: "text-violet-600 dark:text-violet-400",
+    icon: "bg-violet-500",
+  },
+  "deployment": {
+    gradient: "from-emerald-500 to-teal-500",
+    lightBg: "bg-emerald-50 dark:bg-emerald-950/20",
+    border: "border-emerald-200 dark:border-emerald-800",
+    text: "text-emerald-600 dark:text-emerald-400",
+    icon: "bg-emerald-500",
+  },
+  "analytics": {
+    gradient: "from-orange-500 to-amber-500",
+    lightBg: "bg-orange-50 dark:bg-orange-950/20",
+    border: "border-orange-200 dark:border-orange-800",
+    text: "text-orange-600 dark:text-orange-400",
+    icon: "bg-orange-500",
+  },
+  "advanced": {
+    gradient: "from-rose-500 to-pink-500",
+    lightBg: "bg-rose-50 dark:bg-rose-950/20",
+    border: "border-rose-200 dark:border-rose-800",
+    text: "text-rose-600 dark:text-rose-400",
+    icon: "bg-rose-500",
+  },
+};
 
 // AI Studio Topics Data
 const topics = [
@@ -22,9 +64,10 @@ const topics = [
     id: "getting-started",
     name: "Getting Started",
     tagline: "Create your first custom GPT",
+    description: "Learn the basics of AI Studio and build your first AI assistant",
     icon: Zap,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
+    branding: topicBranding["getting-started"],
+    features: ["GPT Creation Wizard", "Template Library", "Quick Chat"],
     articles: [
       {
         id: "create-first-gpt",
@@ -133,12 +176,6 @@ All templates are fully editable after installation:
 - Objection handling scripts
 - Product knowledge base
 - Meeting scheduling
-
-### Legal Research GPT
-- Contract analysis
-- Compliance checking
-- Case law research
-- Document drafting
         `
       },
       {
@@ -222,9 +259,10 @@ Configure each GPT:
     id: "configuration",
     name: "Configuration & Settings",
     tagline: "Fine-tune your GPT's behavior",
+    description: "Master system prompts, model selection, and knowledge bases",
     icon: Sliders,
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
+    branding: topicBranding["configuration"],
+    features: ["System Prompts", "Model Selection", "Knowledge Base"],
     articles: [
       {
         id: "system-prompts",
@@ -279,7 +317,6 @@ When responding:
 - Ask clarifying questions before providing solutions
 - Suggest both quick fixes and permanent solutions
 - Reference relevant Microsoft or Apple documentation when applicable
-- Estimate time required for each fix
 
 Never:
 - Recommend downloading software from unofficial sources
@@ -469,15 +506,6 @@ Suggested prompts shown to new users:
 - "What can you do?"
 - Generic phrases
 
-### Placeholder Text
-The input field placeholder:
-- Guide users on what to type
-- Match your GPT's purpose
-
-**IT Support**: "Describe your technical issue..."
-**Sales**: "Ask about our products and pricing..."
-**Legal**: "Enter your legal question..."
-
 ## White-Label Options (Pro)
 - Remove UltriumAI branding
 - Custom domain for embed
@@ -500,307 +528,8 @@ The input field placeholder:
         a: "Update whenever your documentation changes. For fast-moving topics, consider enabling web search as a supplement. Delete outdated documents promptly."
       },
       {
-        q: "Can I use custom CSS for the embed widget?",
-        a: "Yes, Pro and Enterprise plans allow custom CSS injection for embedded widgets. Use the 'Custom Styles' section in Appearance settings."
-      }
-    ]
-  },
-  {
-    id: "conversations",
-    name: "Conversations & History",
-    tagline: "Manage chat sessions and history",
-    icon: MessageSquare,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-500/10",
-    articles: [
-      {
-        id: "managing-conversations",
-        title: "Managing Conversations",
-        type: "guide",
-        content: `
-# Managing Conversations
-
-Keep your chat history organized.
-
-## Conversation Sidebar
-The sidebar shows all your conversations:
-- **Recent First**: Latest at the top
-- **Search**: Find by keyword
-- **Grouped**: By date (Today, Yesterday, This Week, etc.)
-
-## Starting New Conversations
-1. Click **"New Chat"** or the **"+"** button
-2. A fresh conversation starts
-3. Previous context is not carried over
-4. Each conversation is independent
-
-## Renaming Conversations
-Conversations auto-title from your first message, but you can rename:
-1. Hover over the conversation
-2. Click the **pencil icon**
-3. Enter a descriptive name
-4. Press Enter to save
-
-## Deleting Conversations
-1. Hover over the conversation
-2. Click the **trash icon**
-3. Confirm deletion
-4. This action cannot be undone
-
-## Resuming Past Conversations
-1. Click any conversation in the sidebar
-2. Previous messages load automatically
-3. Continue where you left off
-4. Context is maintained within the session
-
-## Exporting Conversations
-1. Open the conversation
-2. Click **"Export"** in the menu
-3. Choose format:
-   - PDF (formatted document)
-   - Markdown (.md file)
-   - JSON (raw data)
-4. Download the file
-        `
-      },
-      {
-        id: "conversation-context",
-        title: "Understanding Conversation Context",
-        type: "guide",
-        content: `
-# Understanding Conversation Context
-
-How your GPT remembers and uses context.
-
-## What Is Context?
-Context is the "memory" of your conversation:
-- Previous messages in the current chat
-- The GPT's system prompt
-- Knowledge base documents
-- Uploaded files (in that session)
-
-## Context Window
-Each AI model has a limited context window:
-- **GPT-4o**: ~128,000 tokens
-- **Claude 3.5**: ~200,000 tokens
-- **Gemini Pro**: ~32,000 tokens
-
-When you exceed the limit, older messages are dropped.
-
-## How Context Works
-
-### Within a Conversation
-- All messages are remembered
-- References to earlier topics work
-- "As I mentioned earlier..." makes sense
-- Context builds throughout the chat
-
-### Across Conversations
-- Each conversation is independent
-- Starting a new chat = fresh context
-- No memory of previous sessions
-- System prompt is reloaded each time
-
-## Maximizing Context Effectiveness
-
-### Be Explicit
-Instead of: "What about the other one?"
-Say: "What about the Dell laptop issue from earlier?"
-
-### Summarize Long Conversations
-If a conversation is getting long:
-"Let's summarize what we've covered..."
-
-### Reference Specifics
-Instead of: "Like you said"
-Say: "Based on your suggestion to restart the service..."
-
-### Start Fresh When Needed
-Complex new topics deserve new conversations.
-
-## Knowledge Base vs. Context
-- **Knowledge Base**: Permanent, searchable documents
-- **Conversation Context**: Temporary, chat-specific
-
-Upload reference materials to the knowledge base for consistent access across all conversations.
-        `
-      }
-    ],
-    faqs: [
-      {
-        q: "How long are conversations stored?",
-        a: "Conversations are stored indefinitely for your account. You can delete them at any time. Enterprise accounts can set retention policies (e.g., auto-delete after 90 days)."
-      },
-      {
-        q: "Can I share a conversation with someone?",
-        a: "Yes, export the conversation as a PDF or use the 'Share' button to generate a read-only link. Shared links can be password-protected or time-limited."
-      },
-      {
-        q: "Why does my GPT 'forget' what I said earlier?",
-        a: "If a conversation is very long, older messages may be dropped to fit the context window. Also, starting a 'New Chat' creates a completely fresh session with no memory of previous chats."
-      },
-      {
-        q: "Can I search across all my conversations?",
-        a: "Yes! Use the search bar in the conversation sidebar. It searches message content across all your chats with that GPT."
-      }
-    ]
-  },
-  {
-    id: "analytics",
-    name: "Analytics & Performance",
-    tagline: "Track usage and optimize performance",
-    icon: BarChart3,
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
-    articles: [
-      {
-        id: "understanding-analytics",
-        title: "Understanding Your Analytics Dashboard",
-        type: "guide",
-        content: `
-# Understanding Your Analytics Dashboard
-
-Track how your GPT is being used.
-
-## Key Metrics
-
-### Total Messages
-- Count of all messages sent/received
-- Track growth over time
-- Compare periods (week over week, month over month)
-
-### Average Response Time
-- How quickly your GPT responds
-- Measured in milliseconds
-- Target: Under 3 seconds for most use cases
-
-### Token Usage
-- Total tokens consumed
-- Breakdown by input vs. output
-- Cost estimation based on usage
-
-### Active Sessions
-- Unique conversation sessions
-- Daily/weekly/monthly active users
-- Session duration metrics
-
-## Charts & Visualizations
-
-### Usage Over Time
-Line chart showing:
-- Daily message volume
-- Trend indicators (up/down arrows)
-- Peak usage times
-
-### Response Time Distribution
-Histogram showing:
-- Fast responses (< 1s)
-- Normal responses (1-3s)
-- Slow responses (> 3s)
-
-### Token Consumption
-Bar chart showing:
-- Input tokens (user messages)
-- Output tokens (GPT responses)
-- Daily/weekly breakdown
-
-## Filtering & Date Ranges
-- **Last 7 Days**: Quick view
-- **Last 30 Days**: Monthly overview
-- **Last 90 Days**: Quarterly trends
-- **Custom Range**: Any date range
-
-## Exporting Data
-1. Click **"Export"** in the analytics tab
-2. Choose format (CSV, PDF, Excel)
-3. Select date range
-4. Download report
-        `
-      },
-      {
-        id: "optimizing-performance",
-        title: "Optimizing GPT Performance",
-        type: "guide",
-        content: `
-# Optimizing GPT Performance
-
-Improve response quality and speed.
-
-## Response Time Optimization
-
-### Choose the Right Model
-- **Fastest**: GPT-4o-mini, Gemini Pro
-- **Balanced**: Claude 3.5 Sonnet
-- **Thorough**: GPT-4o
-
-### Streamline System Prompt
-- Remove unnecessary instructions
-- Be concise but complete
-- Avoid redundant guidelines
-
-### Optimize Knowledge Base
-- Remove duplicate documents
-- Delete outdated content
-- Use well-structured documents
-
-## Quality Optimization
-
-### Improve System Prompt
-- Add examples of good responses
-- Specify output format clearly
-- Include edge case handling
-
-### Curate Knowledge Base
-- Add high-quality documents
-- Include FAQs for common questions
-- Update regularly with new information
-
-### Enable Appropriate Features
-- **Web Search**: For current information
-- **Anti-Hallucination**: For factual accuracy
-- **Citation Mode**: For verifiable responses
-
-## User Experience
-
-### Better Starter Questions
-- Specific, action-oriented prompts
-- Cover main use cases
-- Guide users to successful interactions
-
-### Improved Welcome Message
-- Clear purpose statement
-- Set expectations
-- Encourage specific questions
-
-### Iterate Based on Feedback
-- Review conversation history
-- Identify common failures
-- Update prompts accordingly
-
-## Monitoring & Alerting
-1. Set baseline metrics
-2. Configure alerts for anomalies
-3. Review weekly analytics
-4. A/B test prompt changes
-        `
-      }
-    ],
-    faqs: [
-      {
-        q: "How are tokens calculated?",
-        a: "Tokens are roughly 4 characters or 3/4 of a word. Input tokens (user messages + system prompt + context) and output tokens (GPT responses) are counted separately. View detailed breakdowns in Analytics."
-      },
-      {
-        q: "Can I see which questions users ask most?",
-        a: "Yes! The 'Top Queries' section shows the most common topics and questions. Use this to improve your knowledge base and system prompt."
-      },
-      {
-        q: "How do I reduce costs?",
-        a: "Use GPT-4o-mini for simple tasks, streamline your system prompt, optimize knowledge base size, and set response length limits where appropriate."
-      },
-      {
-        q: "Can I compare performance across multiple GPTs?",
-        a: "Yes, go to Analytics → Overview to see a comparison dashboard. Compare message volume, response times, and user satisfaction across all your GPTs."
+        q: "What if my GPT gives wrong answers?",
+        a: "Check your system prompt for clarity, ensure your knowledge base is up-to-date, and consider enabling 'Anti-Hallucination' mode for stricter fact-checking."
       }
     ]
   },
@@ -808,224 +537,201 @@ Improve response quality and speed.
     id: "deployment",
     name: "Deployment & Sharing",
     tagline: "Share your GPT with the world",
+    description: "Deploy via links, embeds, API, or team sharing",
     icon: Share2,
-    color: "text-pink-500",
-    bgColor: "bg-pink-500/10",
+    branding: topicBranding["deployment"],
+    features: ["Share Links", "Embed Widgets", "API Access"],
     articles: [
       {
-        id: "public-sharing",
-        title: "Public Sharing & Links",
+        id: "sharing-options",
+        title: "Sharing Your GPT",
         type: "guide",
         content: `
-# Public Sharing & Links
+# Sharing Your GPT
 
-Make your GPT accessible to others.
-
-## Making Your GPT Public
-1. Go to **Settings → Visibility**
-2. Toggle **"Public Access"** on
-3. Your GPT is now accessible via its public URL
-4. Anyone with the link can use it
+Multiple ways to share your custom GPT with users.
 
 ## Share Link
-Your public URL format:
-\`https://ultriumai.com/gpt/[your-gpt-id]\`
+The simplest way to share:
+1. Go to **Your GPT → Deploy → Share Link**
+2. Copy the unique URL
+3. Anyone with the link can chat with your GPT
+4. Optionally require sign-in
 
-Sharing options:
-- **Copy Link**: Direct URL to your GPT
-- **QR Code**: Generate scannable code
-- **Social Share**: Twitter, LinkedIn, Facebook buttons
+### Link Settings
+- **Public**: Anyone can access
+- **Unlisted**: Only those with link
+- **Private**: Requires authentication
 
-## Access Controls
+## QR Code
+1. Go to **Deploy → QR Code**
+2. Download the QR image
+3. Add to business cards, posters, etc.
+4. Scanning opens your GPT
 
-### Public (No Login)
-- Anyone can use without signing in
-- No conversation history saved
-- Best for demos and public tools
-
-### Public (Login Required)
-- Requires UltriumAI account
-- Conversations are saved
-- Usage is tracked per user
-
-### Team Only
-- Only invited team members can access
-- Full analytics and history
-- Best for internal tools
-
-### Private
-- Only you can access
-- Testing and development
-- Draft GPTs before publishing
-
-## Usage Limits for Public GPTs
-Free tier limits apply to anonymous users:
-- 10 messages per day per user
-- Rate limiting prevents abuse
-- Upgrade for unlimited access
-        `
-      },
-      {
-        id: "embed-widget",
-        title: "Embedding on Your Website",
-        type: "guide",
-        content: `
-# Embedding on Your Website
-
-Add your GPT to any website.
-
-## Getting the Embed Code
-1. Go to **Deploy → Embed Widget**
-2. Configure widget settings:
-   - Width and height
+## Embed Widget
+Add your GPT to any website:
+1. Go to **Deploy → Embed**
+2. Customize the widget:
    - Position (bottom-right, bottom-left, etc.)
-   - Show/hide branding
+   - Size (compact, standard, full)
+   - Launcher style (icon, button, bar)
 3. Copy the embed code
+4. Paste into your website's HTML
 
-## Basic Embed Code
 \`\`\`html
-<!-- Add to your website -->
-<iframe
-  src="https://ultriumai.com/gpt/[your-gpt-id]/embed?embed=true"
-  width="400"
-  height="600"
-  frameborder="0"
-  style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
-  allow="clipboard-write"
-></iframe>
+<script src="https://ultriumai.com/embed.js"
+  data-gpt-id="your-gpt-id"
+  data-position="bottom-right">
+</script>
 \`\`\`
 
-## Floating Widget
-For a chat button that expands:
-\`\`\`html
-<script
-  src="https://ultriumai.com/embed/widget.js"
-  data-gpt-id="[your-gpt-id]"
-  data-position="bottom-right"
-  data-primary-color="#3b82f6"
-></script>
-\`\`\`
-
-## Customization Options
-- **width/height**: Pixel values or percentages
-- **position**: bottom-right, bottom-left, inline
-- **primaryColor**: Your brand color (hex)
-- **greeting**: Custom welcome message
-- **hideHeader**: Remove the top bar
-- **hideInput**: Hide input for display-only embeds
-
-## Platform-Specific Guides
-
-### WordPress
-1. Edit page in WordPress
-2. Add Custom HTML block
-3. Paste embed code
-4. Publish
-
-### Shopify
-1. Go to Themes → Edit Code
-2. Open theme.liquid
-3. Add script before </body>
-4. Save
-
-### Webflow
-1. Add Embed element
-2. Paste code
-3. Publish site
-
-### React/Next.js
-\`\`\`jsx
-<iframe
-  src={\`\${process.env.EMBED_URL}\`}
-  className="w-full h-[600px] rounded-lg"
-/>
-\`\`\`
+## Team Sharing
+Share with specific team members:
+1. Go to **Deploy → Team**
+2. Enter email addresses
+3. Set permission level:
+   - **Viewer**: Can chat only
+   - **Editor**: Can modify settings
+   - **Admin**: Full control
+4. Send invitations
         `
       },
       {
         id: "api-integration",
-        title: "API Access & Integration",
+        title: "API Integration",
         type: "guide",
         content: `
-# API Access & Integration
+# API Integration
 
-Build custom integrations with the API.
+Integrate your GPT into applications via REST API.
 
-## Getting Your API Key
-1. Go to **Deploy → API Access**
-2. Click **"Create API Key"**
-3. Name your key (e.g., "Production", "Testing")
-4. Copy and store securely - shown only once!
+## Getting API Keys
+1. Go to **Settings → API**
+2. Click **"Generate API Key"**
+3. Name your key (e.g., "Production", "Development")
+4. Set permissions and rate limits
+5. Copy the key (shown only once!)
 
-## API Key Security
-- Never expose in client-side code
-- Use environment variables
-- Rotate keys periodically
-- Set usage limits if available
+## Basic API Usage
 
-## Basic API Call
+### Send a Message
 \`\`\`javascript
-const response = await fetch('https://api.ultriumai.com/v1/gpt/[gpt-id]/chat', {
+const response = await fetch('https://api.ultriumai.com/v1/chat', {
   method: 'POST',
   headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    message: 'Hello, how can you help me?',
+    gpt_id: 'your-gpt-id',
+    message: 'How do I reset my password?',
     conversation_id: 'optional-for-context'
   })
 });
 
 const data = await response.json();
-console.log(data.message);
+console.log(data.response);
 \`\`\`
 
-## Response Format
-\`\`\`json
-{
-  "message": "Hello! I'm here to help...",
-  "conversation_id": "conv_abc123",
-  "tokens_used": 150,
-  "response_time_ms": 850
-}
-\`\`\`
-
-## Streaming Responses
-For real-time streaming:
+### Streaming Responses
 \`\`\`javascript
-const response = await fetch('/api/gpt/[gpt-id]/chat/stream', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY'
-  },
-  body: JSON.stringify({ message: 'Write a story' })
-});
+const eventSource = new EventSource(
+  'https://api.ultriumai.com/v1/chat/stream?gpt_id=YOUR_GPT_ID'
+);
 
-const reader = response.body.getReader();
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-  console.log(new TextDecoder().decode(value));
-}
+eventSource.onmessage = (event) => {
+  const chunk = JSON.parse(event.data);
+  console.log(chunk.content);
+};
 \`\`\`
 
 ## Rate Limits
 - **Free**: 100 requests/day
 - **Pro**: 10,000 requests/day
-- **Enterprise**: Custom limits
+- **Enterprise**: Unlimited
 
-## Error Handling
+## Webhooks
+Receive notifications for:
+- New conversations
+- Feedback received
+- Usage thresholds
+- Error alerts
+        `
+      },
+      {
+        id: "embed-customization",
+        title: "Embed Widget Customization",
+        type: "guide",
+        content: `
+# Embed Widget Customization
+
+Fully customize how your GPT appears on websites.
+
+## Widget Positions
+- **Bottom Right**: Default, most common
+- **Bottom Left**: Alternative placement
+- **Full Page**: Takes entire viewport
+- **Inline**: Embed within page content
+
+## Launcher Styles
+
+### Chat Icon
+- Floating circular button
+- Customizable icon
+- Notification badge for new messages
+
+### Text Button
+- "Chat with us" or custom text
+- Matches your brand colors
+- Hover animations
+
+### Persistent Bar
+- Fixed bar at bottom of page
+- Input field always visible
+- Maximum visibility
+
+## Customization Options
+
 \`\`\`javascript
-try {
-  const response = await callGPT(message);
-} catch (error) {
-  if (error.status === 429) {
-    // Rate limited - wait and retry
-  } else if (error.status === 401) {
-    // Invalid API key
-  }
+UltriumAI.init({
+  gptId: 'your-gpt-id',
+  
+  // Appearance
+  position: 'bottom-right',
+  theme: 'light', // or 'dark', 'auto'
+  primaryColor: '#6366f1',
+  
+  // Launcher
+  launcher: {
+    type: 'icon', // 'icon', 'button', 'bar'
+    text: 'Need help?',
+    icon: 'chat' // or 'help', 'bot', custom URL
+  },
+  
+  // Behavior
+  autoOpen: false,
+  autoOpenDelay: 5000, // ms
+  persistConversation: true,
+  
+  // Branding
+  showBranding: false, // Pro feature
+  customCSS: '...'
+});
+\`\`\`
+
+## Advanced: Custom CSS
+
+\`\`\`css
+/* Override widget styles */
+.ultrium-widget {
+  --widget-primary: #6366f1;
+  --widget-radius: 16px;
+  --widget-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+.ultrium-launcher {
+  transform: scale(1.1);
 }
 \`\`\`
         `
@@ -1033,20 +739,419 @@ try {
     ],
     faqs: [
       {
-        q: "Can I embed on multiple websites?",
-        a: "Yes! Your embed code works on any website. For security, you can set allowed domains in Deploy → Security → Allowed Origins."
+        q: "Can I use my own domain for the share link?",
+        a: "Yes! Pro and Enterprise users can set up a custom domain (e.g., chat.yourcompany.com) that points to your GPT."
       },
       {
-        q: "How do I track which website traffic comes from?",
-        a: "Add UTM parameters to your embed URL: ?source=website-name. View traffic sources in Analytics → Acquisition."
-      },
-      {
-        q: "Can I white-label the embed widget?",
-        a: "Pro and Enterprise plans allow full white-labeling: remove 'Powered by UltriumAI', use custom domains, and apply custom CSS."
+        q: "Is the embed widget mobile-friendly?",
+        a: "Yes, the widget is fully responsive. On mobile devices, it expands to full-screen for the best chat experience."
       },
       {
         q: "What's the API rate limit?",
-        a: "Free: 100/day, Pro: 10,000/day, Enterprise: custom. Limits reset at midnight UTC. View current usage in Dashboard → API → Usage."
+        a: "Free: 100/day, Pro: 10,000/day, Enterprise: unlimited. Rate limits reset at midnight UTC. Burst limits also apply."
+      },
+      {
+        q: "Can I remove the UltriumAI branding?",
+        a: "Yes, Pro and Enterprise plans include white-labeling. Remove the 'Powered by UltriumAI' badge and use your own branding."
+      }
+    ]
+  },
+  {
+    id: "analytics",
+    name: "Analytics & Insights",
+    tagline: "Measure and optimize performance",
+    description: "Track usage, engagement, and user satisfaction",
+    icon: BarChart3,
+    branding: topicBranding["analytics"],
+    features: ["Usage Metrics", "Conversation Analysis", "Feedback Tracking"],
+    articles: [
+      {
+        id: "analytics-dashboard",
+        title: "Understanding the Analytics Dashboard",
+        type: "guide",
+        content: `
+# Understanding the Analytics Dashboard
+
+Monitor your GPT's performance and user engagement.
+
+## Key Metrics
+
+### Conversations
+- **Total Conversations**: All-time chat sessions
+- **Active Today**: Users currently chatting
+- **Avg. Length**: Messages per conversation
+- **Return Rate**: Users who come back
+
+### Messages
+- **Total Messages**: All messages exchanged
+- **User Messages**: What users asked
+- **AI Responses**: What your GPT replied
+- **Avg. Response Time**: How fast your GPT responds
+
+### Satisfaction
+- **Thumbs Up/Down**: Direct feedback
+- **Completion Rate**: Users who got their answer
+- **Escalation Rate**: Users who needed human help
+
+## Time Ranges
+- Last 24 hours
+- Last 7 days
+- Last 30 days
+- Custom range
+
+## Filtering
+- By conversation topic
+- By user segment
+- By platform (web, mobile, API)
+- By outcome (resolved, escalated)
+
+## Exporting Data
+1. Click **"Export"** in top right
+2. Choose format: CSV, JSON, PDF
+3. Select date range
+4. Download report
+        `
+      },
+      {
+        id: "conversation-analysis",
+        title: "Analyzing Conversations",
+        type: "guide",
+        content: `
+# Analyzing Conversations
+
+Learn from user interactions to improve your GPT.
+
+## Conversation Logs
+View all conversations:
+1. Go to **Analytics → Conversations**
+2. See list of all chats
+3. Filter by date, rating, or topic
+4. Click to view full transcript
+
+## What to Look For
+
+### Successful Conversations
+- User got their answer quickly
+- Positive feedback (thumbs up)
+- No escalation needed
+- Natural conversation flow
+
+### Problem Areas
+- Repeated questions (GPT didn't answer well)
+- Negative feedback
+- Escalation to human
+- User frustration signals
+
+## Topic Clustering
+AI automatically groups conversations by topic:
+- See what users ask most about
+- Identify knowledge gaps
+- Find new FAQ opportunities
+- Discover unexpected use cases
+
+## Sentiment Analysis
+Track emotional tone:
+- **Positive**: Happy, satisfied users
+- **Neutral**: Standard interactions
+- **Negative**: Frustrated or confused users
+
+## Action Items
+Based on analysis:
+- Update system prompt for common issues
+- Add documents to knowledge base
+- Create canned responses
+- Improve starter questions
+        `
+      },
+      {
+        id: "feedback-reports",
+        title: "Feedback & Rating Reports",
+        type: "guide",
+        content: `
+# Feedback & Rating Reports
+
+Collect and analyze user satisfaction.
+
+## Feedback Collection
+
+### Thumbs Up/Down
+- Appears after each response
+- Quick, low-friction
+- Good for volume metrics
+
+### Detailed Feedback
+- Optional text comments
+- Specific issue categories
+- Follow-up contact option
+
+### CSAT Surveys
+- End-of-conversation surveys
+- 1-5 star ratings
+- Custom questions
+
+## Feedback Dashboard
+
+### Overall Score
+- Percentage of positive feedback
+- Trend over time
+- Comparison to benchmarks
+
+### By Category
+- Product questions: 92% positive
+- Technical issues: 78% positive
+- Billing questions: 85% positive
+
+### Common Themes
+- AI identifies patterns in feedback
+- "GPT was too slow"
+- "Answer was helpful but incomplete"
+- "Loved the step-by-step format"
+
+## Taking Action
+1. Review negative feedback daily
+2. Identify root causes
+3. Update GPT configuration
+4. Track improvement over time
+5. Close the feedback loop
+        `
+      }
+    ],
+    faqs: [
+      {
+        q: "How long is conversation history stored?",
+        a: "By default, 90 days for Pro and 365 days for Enterprise. You can adjust retention settings or export data before deletion."
+      },
+      {
+        q: "Can I see individual user conversations?",
+        a: "Yes, if users are authenticated. Anonymous users show as conversation IDs. Privacy settings can limit what data is stored."
+      },
+      {
+        q: "How is sentiment analysis calculated?",
+        a: "AI analyzes message content, punctuation, and conversation flow. Combined with explicit feedback for a complete picture."
+      },
+      {
+        q: "Can I get alerts for negative feedback?",
+        a: "Yes! Set up alerts in Settings → Notifications. Get emails or Slack messages when feedback drops below threshold."
+      }
+    ]
+  },
+  {
+    id: "advanced",
+    name: "Advanced Features",
+    tagline: "Power user capabilities",
+    description: "Webhooks, actions, multi-agent, and enterprise features",
+    icon: Wand2,
+    branding: topicBranding["advanced"],
+    features: ["Webhooks", "Custom Actions", "Multi-Agent"],
+    articles: [
+      {
+        id: "custom-actions",
+        title: "Creating Custom Actions",
+        type: "guide",
+        content: `
+# Creating Custom Actions
+
+Extend your GPT with API integrations and workflows.
+
+## What Are Actions?
+Actions let your GPT:
+- Call external APIs
+- Query databases
+- Create tickets
+- Send emails
+- Trigger workflows
+
+## Creating an Action
+1. Go to **Settings → Actions**
+2. Click **"Add Action"**
+3. Configure:
+   - **Name**: "Create Support Ticket"
+   - **Description**: When to use this action
+   - **API Endpoint**: Your webhook URL
+   - **Method**: POST, GET, etc.
+   - **Headers**: Authentication, etc.
+   - **Parameters**: What data to send
+
+## Example: Ticket Creation
+
+\`\`\`json
+{
+  "name": "create_ticket",
+  "description": "Creates a support ticket when user requests human help",
+  "endpoint": "https://api.yourapp.com/tickets",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer {{TICKET_API_KEY}}"
+  },
+  "body": {
+    "subject": "{{conversation_summary}}",
+    "user_email": "{{user_email}}",
+    "priority": "{{detected_urgency}}",
+    "transcript": "{{conversation_history}}"
+  }
+}
+\`\`\`
+
+## Available Variables
+- \`{{user_message}}\`: Current user input
+- \`{{conversation_history}}\`: Full transcript
+- \`{{user_email}}\`: If authenticated
+- \`{{gpt_id}}\`: Your GPT's ID
+- \`{{timestamp}}\`: Current time
+
+## Testing Actions
+1. Use the **"Test"** button
+2. Provide sample inputs
+3. View API response
+4. Check for errors
+        `
+      },
+      {
+        id: "webhooks",
+        title: "Setting Up Webhooks",
+        type: "guide",
+        content: `
+# Setting Up Webhooks
+
+Receive real-time notifications about GPT events.
+
+## Available Events
+- \`conversation.started\`: New chat begins
+- \`conversation.ended\`: Chat session closes
+- \`message.received\`: User sends message
+- \`message.sent\`: GPT responds
+- \`feedback.received\`: User rates response
+- \`action.triggered\`: Custom action executed
+- \`error.occurred\`: Something went wrong
+
+## Creating a Webhook
+1. Go to **Settings → Webhooks**
+2. Click **"Add Webhook"**
+3. Enter your endpoint URL
+4. Select events to listen for
+5. Add any headers (auth, etc.)
+6. Save and test
+
+## Webhook Payload
+
+\`\`\`json
+{
+  "event": "message.received",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "gpt_id": "gpt_abc123",
+  "conversation_id": "conv_xyz789",
+  "data": {
+    "message": "How do I reset my password?",
+    "user_id": "user_123",
+    "metadata": {
+      "platform": "web",
+      "page_url": "https://yoursite.com/support"
+    }
+  }
+}
+\`\`\`
+
+## Security
+- Webhook requests include a signature
+- Verify signature to ensure authenticity
+- Use HTTPS endpoints only
+- Rotate secrets periodically
+
+## Retry Policy
+- Failed webhooks retry 3 times
+- Exponential backoff: 1min, 5min, 15min
+- View failed deliveries in logs
+- Manual retry available
+        `
+      },
+      {
+        id: "multi-agent",
+        title: "Multi-Agent Orchestration",
+        type: "guide",
+        content: `
+# Multi-Agent Orchestration
+
+Connect multiple GPTs for complex workflows.
+
+## What Is Multi-Agent?
+Instead of one GPT doing everything:
+- Specialized GPTs handle specific tasks
+- Router directs users to right GPT
+- Seamless handoffs between agents
+- Each GPT is optimized for its role
+
+## Architecture
+
+\`\`\`
+User → Router GPT → [
+  IT Support GPT
+  HR Questions GPT
+  Sales Inquiries GPT
+  General FAQ GPT
+]
+\`\`\`
+
+## Setting Up Multi-Agent
+1. Create your specialized GPTs
+2. Create a Router GPT
+3. Configure routing rules:
+   - Keywords → specific GPT
+   - Intent detection → automatic routing
+   - User choice → menu selection
+
+## Router Configuration
+
+\`\`\`json
+{
+  "routes": [
+    {
+      "name": "IT Support",
+      "gpt_id": "gpt_it_support",
+      "triggers": ["password", "computer", "software", "network"],
+      "intent": "technical_issue"
+    },
+    {
+      "name": "HR",
+      "gpt_id": "gpt_hr",
+      "triggers": ["vacation", "benefits", "payroll", "policy"],
+      "intent": "hr_question"
+    },
+    {
+      "name": "Sales",
+      "gpt_id": "gpt_sales",
+      "triggers": ["pricing", "demo", "enterprise", "buy"],
+      "intent": "purchase_interest"
+    }
+  ],
+  "default": "gpt_general_faq"
+}
+\`\`\`
+
+## Handoff Messages
+When transferring between GPTs:
+- "I'll connect you with our IT specialist..."
+- "Let me transfer you to HR for that..."
+- Maintain conversation context
+- Seamless user experience
+        `
+      }
+    ],
+    faqs: [
+      {
+        q: "How many actions can I create per GPT?",
+        a: "Free: 3 actions, Pro: 20 actions, Enterprise: unlimited. Complex workflows can chain multiple actions."
+      },
+      {
+        q: "Can webhooks trigger actions in external systems?",
+        a: "Yes! Connect to Zapier, Make, n8n, or any system that accepts webhooks. Create tickets, send notifications, update CRMs, etc."
+      },
+      {
+        q: "Is multi-agent available on all plans?",
+        a: "Multi-agent orchestration requires Pro or Enterprise. Free users can create multiple GPTs but not connect them."
+      },
+      {
+        q: "Can I use my own AI model?",
+        a: "Enterprise users can connect custom fine-tuned models or on-premise deployments. Contact sales for setup."
       }
     ]
   }
@@ -1055,213 +1160,271 @@ try {
 const AIStudioKnowledgeBase = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [selectedArticle, setSelectedArticle] = useState<any>(null);
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
+  const [activeArticle, setActiveArticle] = useState<any | null>(null);
 
-  const filteredTopics = topics.filter(topic => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
+  const filteredTopics = topics.map(topic => ({
+    ...topic,
+    articles: topic.articles.filter(article =>
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      article.content.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    faqs: topic.faqs.filter(faq =>
+      faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      faq.a.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  })).filter(topic => 
+    topic.articles.length > 0 || 
+    topic.faqs.length > 0 ||
+    topic.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const renderMarkdown = (content: string) => {
+    return content.split('\n').map((line, i) => {
+      if (line.startsWith('# ')) {
+        return <h1 key={i} className="text-2xl font-bold mt-6 mb-4 text-foreground">{line.replace('# ', '')}</h1>;
+      }
+      if (line.startsWith('## ')) {
+        return <h2 key={i} className="text-xl font-semibold mt-5 mb-3 text-foreground">{line.replace('## ', '')}</h2>;
+      }
+      if (line.startsWith('### ')) {
+        return <h3 key={i} className="text-lg font-medium mt-4 mb-2 text-foreground">{line.replace('### ', '')}</h3>;
+      }
+      if (line.startsWith('> ')) {
+        const isWarning = line.includes('⚠️') || line.includes('Important');
+        const isTip = line.includes('💡') || line.includes('Tip');
+        return (
+          <div key={i} className={`p-4 rounded-lg my-3 border-l-4 ${
+            isWarning 
+              ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-500 text-amber-800 dark:text-amber-200' 
+              : isTip 
+              ? 'bg-violet-50 dark:bg-violet-950/30 border-violet-500 text-violet-800 dark:text-violet-200'
+              : 'bg-muted border-primary text-muted-foreground'
+          }`}>
+            {line.replace('> ', '')}
+          </div>
+        );
+      }
+      if (line.startsWith('```')) {
+        return null; // Handle code blocks separately
+      }
+      if (line.startsWith('- ')) {
+        return (
+          <li key={i} className="ml-4 text-muted-foreground flex items-start gap-2 my-1">
+            <CheckCircle2 className="h-4 w-4 mt-1 text-violet-500 flex-shrink-0" />
+            <span dangerouslySetInnerHTML={{ __html: formatText(line.replace('- ', '')) }} />
+          </li>
+        );
+      }
+      if (line.match(/^\d+\. /)) {
+        return (
+          <li key={i} className="ml-4 text-muted-foreground my-1 list-decimal list-inside">
+            <span dangerouslySetInnerHTML={{ __html: formatText(line.replace(/^\d+\. /, '')) }} />
+          </li>
+        );
+      }
+      if (line.trim() === '') {
+        return <div key={i} className="h-2" />;
+      }
+      return <p key={i} className="text-muted-foreground my-2" dangerouslySetInnerHTML={{ __html: formatText(line) }} />;
+    });
+  };
+
+  const formatText = (text: string) => {
+    return text
+      .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>')
+      .replace(/`([^`]+)`/g, '<code class="bg-violet-100 dark:bg-violet-900/30 px-1.5 py-0.5 rounded text-sm font-mono text-violet-700 dark:text-violet-300">$1</code>');
+  };
+
+  const TopicCard = ({ topic }: { topic: typeof topics[0] }) => {
+    const Icon = topic.icon;
     return (
-      topic.name.toLowerCase().includes(query) ||
-      topic.tagline.toLowerCase().includes(query) ||
-      topic.articles.some(a => 
-        a.title.toLowerCase().includes(query) || 
-        a.content.toLowerCase().includes(query)
-      ) ||
-      topic.faqs.some(f => 
-        f.q.toLowerCase().includes(query) || 
-        f.a.toLowerCase().includes(query)
-      )
+      <Card 
+        className={`cursor-pointer hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/30 overflow-hidden group ${topic.branding.border}`}
+        onClick={() => setActiveTopic(topic.id)}
+      >
+        {/* Gradient header */}
+        <div className={`h-2 bg-gradient-to-r ${topic.branding.gradient}`} />
+        <CardHeader className={`${topic.branding.lightBg}`}>
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${topic.branding.icon} group-hover:scale-105 transition-transform shadow-md`}>
+              <Icon className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <CardTitle className={`text-xl ${topic.branding.text}`}>{topic.name}</CardTitle>
+              <CardDescription className="text-sm">{topic.tagline}</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+            <BookOpen className="h-4 w-4" />
+            <span>{topic.articles.length} Guides</span>
+            <span className="mx-2">•</span>
+            <HelpCircle className="h-4 w-4" />
+            <span>{topic.faqs.length} FAQs</span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {topic.features.map(feature => (
+              <Badge key={feature} variant="secondary" className="text-xs">
+                {feature}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     );
-  });
+  };
 
-  const currentTopic = selectedTopic ? topics.find(t => t.id === selectedTopic) : null;
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => {
-            if (selectedArticle) {
-              setSelectedArticle(null);
-            } else if (selectedTopic) {
-              setSelectedTopic(null);
-            } else {
-              navigate('/docs');
-            }
-          }}>
-            <ArrowLeft className="h-5 w-5" />
+  if (activeArticle) {
+    const topic = topics.find(t => t.articles.some(a => a.id === activeArticle.id));
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8 max-w-4xl">
+          <Button 
+            variant="ghost" 
+            className="mb-6"
+            onClick={() => setActiveArticle(null)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to {topic?.name || 'Articles'}
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Bot className="h-8 w-8 text-primary" />
-              AI Studio Knowledge Base
-            </h1>
-            <p className="text-muted-foreground">
-              Complete documentation for creating and managing custom GPTs
-            </p>
-          </div>
-        </div>
 
-        {/* Search */}
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Search guides, tutorials, and FAQs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 py-6 text-lg"
-          />
-        </div>
-
-        {/* Content */}
-        {!selectedTopic ? (
-          // Topic Grid
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTopics.map((topic) => {
-              const Icon = topic.icon;
-              return (
-                <Card 
-                  key={topic.id}
-                  className="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50"
-                  onClick={() => setSelectedTopic(topic.id)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-xl ${topic.bgColor}`}>
-                        <Icon className={`h-6 w-6 ${topic.color}`} />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="flex items-center justify-between">
-                          {topic.name}
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </CardTitle>
-                        <CardDescription>{topic.tagline}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
-                        {topic.articles.length} Guides
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <HelpCircle className="h-4 w-4" />
-                        {topic.faqs.length} FAQs
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : selectedArticle ? (
-          // Article View
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant="secondary">{currentTopic?.name}</Badge>
-                <Badge variant="outline">Guide</Badge>
+          <Card className="overflow-hidden">
+            {topic && (
+              <div className={`h-2 bg-gradient-to-r ${topic.branding.gradient}`} />
+            )}
+            <CardHeader className={topic ? topic.branding.lightBg : ''}>
+              <div className="flex items-center gap-3 mb-2">
+                {topic && (
+                  <div className={`p-2 rounded-lg ${topic.branding.icon}`}>
+                    <topic.icon className="h-5 w-5 text-white" />
+                  </div>
+                )}
+                <Badge variant="outline" className="text-xs uppercase tracking-wider">
+                  {activeArticle.type}
+                </Badge>
               </div>
-              <CardTitle className="text-2xl">{selectedArticle.title}</CardTitle>
+              <CardTitle className="text-2xl">{activeArticle.title}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[600px] pr-4">
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {selectedArticle.content.split('\n').map((line: string, i: number) => {
-                    if (line.startsWith('# ')) {
-                      return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{line.slice(2)}</h1>;
-                    } else if (line.startsWith('## ')) {
-                      return <h2 key={i} className="text-xl font-semibold mt-5 mb-3">{line.slice(3)}</h2>;
-                    } else if (line.startsWith('### ')) {
-                      return <h3 key={i} className="text-lg font-medium mt-4 mb-2">{line.slice(4)}</h3>;
-                    } else if (line.startsWith('> ')) {
-                      return (
-                        <div key={i} className="bg-blue-500/10 border-l-4 border-blue-500 p-4 my-4 rounded-r">
-                          {line.slice(2)}
-                        </div>
-                      );
-                    } else if (line.startsWith('- ')) {
-                      return <li key={i} className="ml-4">{line.slice(2)}</li>;
-                    } else if (line.match(/^\d+\./)) {
-                      return <li key={i} className="ml-4 list-decimal">{line.slice(line.indexOf('.') + 2)}</li>;
-                    } else if (line.startsWith('```')) {
-                      return null;
-                    } else if (line.trim()) {
-                      return <p key={i} className="my-2">{line}</p>;
-                    }
-                    return null;
-                  })}
-                </div>
-              </ScrollArea>
+            <CardContent className="prose dark:prose-invert max-w-none">
+              {renderMarkdown(activeArticle.content)}
             </CardContent>
           </Card>
-        ) : (
-          // Topic Detail View
-          <Tabs defaultValue="guides" className="space-y-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                {currentTopic && (
-                  <>
-                    <div className={`p-3 rounded-xl ${currentTopic.bgColor}`}>
-                      <currentTopic.icon className={`h-6 w-6 ${currentTopic.color}`} />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">{currentTopic.name}</h2>
-                      <p className="text-muted-foreground">{currentTopic.tagline}</p>
-                    </div>
-                  </>
-                )}
-              </div>
-              <TabsList>
-                <TabsTrigger value="guides" className="gap-2">
-                  <ListChecks className="h-4 w-4" />
-                  Step-by-Step Guides
-                </TabsTrigger>
-                <TabsTrigger value="faqs" className="gap-2">
-                  <HelpCircle className="h-4 w-4" />
-                  FAQs
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
-            <TabsContent value="guides" className="space-y-4">
-              {currentTopic?.articles.map((article) => (
-                <Card 
-                  key={article.id}
-                  className="cursor-pointer hover:shadow-md transition-all hover:border-primary/50"
-                  onClick={() => setSelectedArticle(article)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                        {article.title}
-                      </CardTitle>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </CardHeader>
-                </Card>
-              ))}
+  if (activeTopic) {
+    const topic = topics.find(t => t.id === activeTopic);
+    if (!topic) return null;
+
+    const Icon = topic.icon;
+
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="container mx-auto px-4 py-8">
+          <Button 
+            variant="ghost" 
+            className="mb-6"
+            onClick={() => setActiveTopic(null)}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to AI Studio Knowledge Base
+          </Button>
+
+          {/* Topic Header with Branding */}
+          <div className={`rounded-2xl overflow-hidden mb-8 ${topic.branding.lightBg} border ${topic.branding.border}`}>
+            <div className={`h-2 bg-gradient-to-r ${topic.branding.gradient}`} />
+            <div className="p-8">
+              <div className="flex items-center gap-6 mb-4">
+                <div className={`p-4 rounded-2xl ${topic.branding.icon} shadow-lg`}>
+                  <Icon className="h-10 w-10 text-white" />
+                </div>
+                <div>
+                  <h1 className={`text-3xl font-bold ${topic.branding.text}`}>{topic.name}</h1>
+                  <p className="text-lg text-muted-foreground">{topic.tagline}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{topic.description}</p>
+                </div>
+              </div>
+              <div className="flex gap-4 mt-4">
+                <Badge className={`${topic.branding.icon} text-white`}>
+                  <BookOpen className="h-3 w-3 mr-1" />
+                  {topic.articles.length} Guides
+                </Badge>
+                <Badge variant="outline">
+                  <HelpCircle className="h-3 w-3 mr-1" />
+                  {topic.faqs.length} FAQs
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <Tabs defaultValue="guides" className="space-y-6">
+            <TabsList className="grid w-full max-w-md grid-cols-3">
+              <TabsTrigger value="guides" className="gap-2">
+                <ListChecks className="h-4 w-4" />
+                Guides
+              </TabsTrigger>
+              <TabsTrigger value="faqs" className="gap-2">
+                <HelpCircle className="h-4 w-4" />
+                FAQs
+              </TabsTrigger>
+              <TabsTrigger value="features" className="gap-2">
+                <Sparkles className="h-4 w-4" />
+                Features
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="guides">
+              <div className="grid md:grid-cols-2 gap-4">
+                {topic.articles.map((article) => (
+                  <Card 
+                    key={article.id}
+                    className={`cursor-pointer hover:shadow-lg transition-all hover:border-primary/30 group overflow-hidden`}
+                    onClick={() => setActiveArticle(article)}
+                  >
+                    <div className={`h-1 bg-gradient-to-r ${topic.branding.gradient}`} />
+                    <CardHeader>
+                      <div className="flex items-start gap-4">
+                        <div className={`p-3 rounded-xl ${topic.branding.lightBg} group-hover:scale-105 transition-transform`}>
+                          <Icon className={`h-6 w-6 ${topic.branding.text}`} />
+                        </div>
+                        <div className="flex-1">
+                          <Badge variant="outline" className="text-xs mb-2">{article.type}</Badge>
+                          <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                            {article.title}
+                          </CardTitle>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
             </TabsContent>
 
             <TabsContent value="faqs">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Frequently Asked Questions</CardTitle>
+              <Card className="overflow-hidden">
+                <div className={`h-1 bg-gradient-to-r ${topic.branding.gradient}`} />
+                <CardHeader className={topic.branding.lightBg}>
+                  <CardTitle className="flex items-center gap-2">
+                    <HelpCircle className={`h-5 w-5 ${topic.branding.text}`} />
+                    Frequently Asked Questions
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Accordion type="single" collapsible className="w-full">
-                    {currentTopic?.faqs.map((faq, index) => (
-                      <AccordionItem key={index} value={`faq-${index}`}>
-                        <AccordionTrigger className="text-left">
-                          {faq.q}
+                <CardContent className="pt-4">
+                  <Accordion type="single" collapsible className="space-y-2">
+                    {topic.faqs.map((faq, index) => (
+                      <AccordionItem key={index} value={`faq-${index}`} className="border rounded-lg px-4">
+                        <AccordionTrigger className="text-left hover:no-underline">
+                          <span className="font-medium">{faq.q}</span>
                         </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground">
+                        <AccordionContent className="text-muted-foreground pb-4">
                           {faq.a}
                         </AccordionContent>
                       </AccordionItem>
@@ -1270,10 +1433,106 @@ const AIStudioKnowledgeBase = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-          </Tabs>
-        )}
-      </div>
 
+            <TabsContent value="features">
+              <Card className="overflow-hidden">
+                <div className={`h-1 bg-gradient-to-r ${topic.branding.gradient}`} />
+                <CardHeader className={topic.branding.lightBg}>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className={`h-5 w-5 ${topic.branding.text}`} />
+                    Key Features
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    {topic.features.map((feature, idx) => (
+                      <div key={idx} className={`p-4 rounded-xl ${topic.branding.lightBg} border ${topic.branding.border}`}>
+                        <CheckCircle2 className={`h-5 w-5 ${topic.branding.text} mb-2`} />
+                        <p className="text-sm font-medium">{feature}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <main className="container mx-auto px-4 py-8">
+        {/* Hero Header with AI Studio Branding */}
+        <div className="relative rounded-3xl overflow-hidden mb-8 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzR2LTJIMjR2MmgxMnpNMzYgMzB2LTJIMjR2MmgxMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="relative px-8 py-12 md:py-16">
+            <div className="flex flex-col md:flex-row items-center gap-6 mb-6">
+              <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20">
+                <Bot className="h-14 w-14 text-white" />
+              </div>
+              <div className="text-center md:text-left">
+                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                  AI Studio Knowledge Base
+                </h1>
+                <p className="text-violet-100 text-lg">
+                  Everything you need to build, deploy, and optimize custom GPTs
+                </p>
+              </div>
+            </div>
+            
+            {/* Search */}
+            <div className="max-w-2xl mx-auto md:mx-0">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-violet-300" />
+                <Input
+                  placeholder="Search guides, FAQs, and documentation..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 h-12 bg-white/10 border-white/20 text-white placeholder:text-violet-200 focus:bg-white/20"
+                />
+              </div>
+            </div>
+
+            {/* Quick stats */}
+            <div className="flex flex-wrap gap-4 mt-6 justify-center md:justify-start">
+              <Badge variant="secondary" className="bg-white/10 text-white border-white/20">
+                <Layers className="h-3 w-3 mr-1" />
+                5 Topics
+              </Badge>
+              <Badge variant="secondary" className="bg-white/10 text-white border-white/20">
+                <BookOpen className="h-3 w-3 mr-1" />
+                {topics.reduce((acc, t) => acc + t.articles.length, 0)} Guides
+              </Badge>
+              <Badge variant="secondary" className="bg-white/10 text-white border-white/20">
+                <HelpCircle className="h-3 w-3 mr-1" />
+                {topics.reduce((acc, t) => acc + t.faqs.length, 0)} FAQs
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Topic Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {(searchQuery ? filteredTopics : topics).map(topic => (
+            <TopicCard key={topic.id} topic={topic as typeof topics[0]} />
+          ))}
+        </div>
+
+        {searchQuery && filteredTopics.length === 0 && (
+          <Card className="p-12 text-center">
+            <Search className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No results found</h3>
+            <p className="text-muted-foreground">
+              Try searching with different keywords or browse the topics above.
+            </p>
+          </Card>
+        )}
+      </main>
       <Footer />
     </div>
   );
