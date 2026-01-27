@@ -214,24 +214,30 @@ const AuthPage = () => {
   const branding = getBranding();
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${branding.bgClass} flex items-center justify-center p-4`}>
-      <div className="w-full max-w-md space-y-6">
+    <div className={`min-h-screen bg-gradient-to-br ${branding.bgClass} flex items-center justify-center p-4 relative overflow-hidden`}>
+      {/* Decorative background elements */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/8 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/8 rounded-full blur-[100px] pointer-events-none" />
+      
+      <div className="w-full max-w-md space-y-8 relative z-10">
         {/* Header - Dynamic Branding */}
         <div className="text-center">
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-4">
             <Link to="/">
-              <img src={branding.logo} alt={branding.name} className="h-14 w-auto cursor-pointer hover:opacity-80 transition-opacity" />
+              <div className="p-3 bg-black/50 rounded-2xl backdrop-blur-sm border border-white/10 transition-all duration-300 hover:scale-105 hover:border-primary/30">
+                <img src={branding.logo} alt={branding.name} className="h-16 w-auto" />
+              </div>
             </Link>
           </div>
-          <p className="text-sm text-muted-foreground">{branding.tagline}</p>
+          <p className="text-sm text-muted-foreground font-medium">{branding.tagline}</p>
           {returnProduct && (
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground/70 mt-2">
               Sign in to continue to {branding.name}
             </p>
           )}
         </div>
 
-        <Card>
+        <Card className="border-border/50 bg-card/80 backdrop-blur-sm shadow-2xl shadow-primary/5">
           <CardHeader>
             {/* Vanguard is invite-only - no signup allowed */}
             {returnProduct === 'vanguard' ? (

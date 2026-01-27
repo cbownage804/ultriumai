@@ -174,21 +174,30 @@ const Profile = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Profile Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account information and preferences
-        </p>
+    <div className="p-6 lg:p-8 space-y-8 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="relative pb-6 border-b border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-violet-500/5 -mx-6 lg:-mx-8 px-6 lg:px-8 rounded-2xl" />
+        <div className="relative space-y-2">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            Profile Settings
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Manage your account information and preferences
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Profile Information */}
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
+          <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card to-card/80">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <CardHeader className="relative">
+              <CardTitle className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+                  <User className="h-5 w-5 text-white" />
+                </div>
                 Personal Information
               </CardTitle>
               <CardDescription>

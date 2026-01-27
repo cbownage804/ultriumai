@@ -172,24 +172,27 @@ export const DashboardOverview = () => {
   const hasNoData = gptStats.totalGPTs === 0 && gptStats.totalConversations === 0;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-6 space-y-8">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0 animate-fade-in-up">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent animate-glow">
-            Good {getTimeOfDay()}, {profile?.full_name || user?.email?.split('@')[0]}!
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+        <div className="space-y-2">
+          <h1 className="text-4xl font-bold">
+            <span className="text-muted-foreground font-normal">Good {getTimeOfDay()}, </span>
+            <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+              {profile?.full_name || user?.email?.split('@')[0]}!
+            </span>
           </h1>
-          <p className="text-muted-foreground mt-1 animate-fade-in stagger-1">
-            Welcome to AI Studio - Build powerful AI solutions
+          <p className="text-muted-foreground">
+            Welcome to AI Studio — Build powerful AI solutions
           </p>
         </div>
-        <div className="flex items-center space-x-3 animate-fade-in stagger-2">
-          <Badge variant="outline" className="text-sm hover-scale">
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="px-4 py-1.5 text-sm border-primary/30 bg-primary/5">
             {subscription?.subscription_tier || 'Free'} Plan
           </Badge>
           {subscription?.subscribed && (
-            <Badge variant="default" className="text-sm hover-scale animate-pulse-glow">
-              <CheckCircle className="w-3 h-3 mr-1" />
+            <Badge className="px-4 py-1.5 text-sm bg-gradient-to-r from-emerald-500 to-emerald-600 border-0">
+              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
               Active
             </Badge>
           )}
@@ -197,56 +200,68 @@ export const DashboardOverview = () => {
       </div>
 
       {/* Key Metrics Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up stagger-3">
-        <Card className="border-l-4 border-l-primary hover-scale hover-glow animate-fade-in stagger-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="group relative overflow-hidden border-l-4 border-l-primary bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Your GPTs</CardTitle>
-            <Bot className="h-4 w-4 text-primary animate-bounce-gentle" />
+            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Bot className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-primary animate-glow">{gptStats.totalGPTs}</div>
-            <p className="text-xs text-muted-foreground mt-2">
+          <CardContent className="relative">
+            <div className="text-3xl font-bold text-primary">{gptStats.totalGPTs}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               {gptStats.activeGPTs} active
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500 hover-scale hover-glow animate-fade-in stagger-2">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="group relative overflow-hidden border-l-4 border-l-emerald-500 bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Conversations</CardTitle>
-            <MessageSquare className="h-4 w-4 text-green-500 animate-pulse" />
+            <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <MessageSquare className="h-4 w-4 text-emerald-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600 animate-glow">{gptStats.totalConversations}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative">
+            <div className="text-3xl font-bold text-emerald-500">{gptStats.totalConversations}</div>
+            <p className="text-xs text-muted-foreground mt-1">
               This month
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500 hover-scale hover-glow animate-fade-in stagger-3">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="group relative overflow-hidden border-l-4 border-l-blue-500 bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Satisfaction</CardTitle>
-            <Star className="h-4 w-4 text-blue-500 animate-pulse" />
+            <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Star className="h-4 w-4 text-blue-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600 animate-glow">{gptStats.avgSatisfaction}/5</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="relative">
+            <div className="text-3xl font-bold text-blue-500">{gptStats.avgSatisfaction}/5</div>
+            <p className="text-xs text-muted-foreground mt-1">
               Average rating
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-purple-500 hover-scale hover-glow animate-fade-in stagger-4">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <Card className="group relative overflow-hidden border-l-4 border-l-violet-500 bg-gradient-to-br from-card to-card/50 hover:shadow-lg hover:shadow-violet-500/5 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Credits Remaining</CardTitle>
-            <Zap className="h-4 w-4 text-purple-500 animate-bounce-gentle" />
+            <div className="h-9 w-9 rounded-xl bg-violet-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Zap className="h-4 w-4 text-violet-500" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600 animate-glow">
+          <CardContent className="relative">
+            <div className="text-3xl font-bold text-violet-500">
               {remainingCredits || (credits?.credits_limit || 0) - (credits?.credits_used || 0)}
             </div>
-            <div className="mt-2">
+            <div className="mt-3">
               <Progress value={100 - (usagePercentage || 0)} className="h-2" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
@@ -257,36 +272,39 @@ export const DashboardOverview = () => {
       </div>
 
       {/* Quick Actions */}
-      <Card className="animate-fade-in-up stagger-4">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 animate-glow">
-            <Zap className="h-5 w-5 text-primary" />
+      <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card via-card to-primary/[0.02]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+        <CardHeader className="relative">
+          <CardTitle className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
+              <Zap className="h-5 w-5 text-white" />
+            </div>
             <span>Quick Actions</span>
           </CardTitle>
           <CardDescription>
             Get started building AI solutions
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <CardContent className="relative">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
                 variant="outline"
-                className={`h-auto min-h-[100px] p-4 flex flex-col items-center justify-center gap-2 hover-scale hover-glow transition-all duration-300 animate-fade-in ${
-                  action.featured ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5 animate-pulse-glow' : ''
-                }`}
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className={`h-auto min-h-[120px] p-4 flex flex-col items-center justify-center gap-3 
+                  bg-background/50 hover:bg-background border-border/50 hover:border-primary/30
+                  hover:shadow-lg hover:-translate-y-1 transition-all duration-300
+                  ${action.featured ? 'border-primary/30 bg-primary/5 ring-1 ring-primary/10' : ''}`}
                 onClick={action.action}
               >
-                <div className={`p-2 rounded-full ${action.color} animate-float`}>
-                  <action.icon className="h-4 w-4 text-white" />
+                <div className={`p-3 rounded-xl ${action.color} shadow-lg`}>
+                  <action.icon className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-center">
-                  <div className={`font-medium text-sm whitespace-normal ${action.featured ? 'text-primary animate-glow' : ''}`}>
+                  <div className={`font-medium text-sm ${action.featured ? 'text-primary' : ''}`}>
                     {action.title}
                   </div>
-                  <div className="text-xs text-muted-foreground whitespace-normal mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     {action.description}
                   </div>
                 </div>

@@ -13,20 +13,25 @@ import vanguardLogo from '@/assets/vanguard-logo.png';
 
 const Pricing = () => {
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12]">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 relative overflow-hidden">
+      <section className="pt-32 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-emerald-500/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] lg:w-[800px] lg:h-[800px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[700px] md:h-[700px] lg:w-[900px] lg:h-[900px] bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/5 rounded-full blur-[80px]" />
+        <div className="absolute top-1/4 right-0 w-[250px] h-[250px] bg-cyan-500/5 rounded-full blur-[60px]" />
         
         <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <Badge className="mb-6 bg-white/10 text-white/80 border-white/20">Simple, Transparent Pricing</Badge>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-8">
+            <Zap className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-white/70">Simple, Transparent Pricing</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold mb-8 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent">
             Choose Your Plan
           </h1>
-          <p className="text-xl text-white/50 max-w-2xl mx-auto">
+          <p className="text-xl text-white/50 max-w-2xl mx-auto leading-relaxed">
             From personal security tools to enterprise AI platforms—find the perfect fit for your needs.
           </p>
         </div>

@@ -127,16 +127,20 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-[100px] pointer-events-none" />
+      
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="flex items-center justify-center space-x-3 mb-8">
-          <img src={ultraiumAiLogo} alt="UltriumAI" className="h-16 w-auto" />
-          <span className="text-3xl font-bold text-foreground">UltriumGPT</span>
+        <div className="flex items-center justify-center space-x-4 mb-10">
+          <img src={ultraiumAiLogo} alt="UltriumAI" className="h-16 w-auto transition-transform duration-300 hover:scale-110" />
+          <span className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">UltriumGPT</span>
         </div>
 
-        <Card className="border-border bg-card">
-          <CardHeader className="space-y-1">
+        <Card className="border-border/50 bg-card/80 backdrop-blur-sm shadow-2xl shadow-primary/5">
+          <CardHeader className="space-y-2 pb-4">
             <CardTitle className="text-2xl text-center text-card-foreground">Welcome</CardTitle>
             <CardDescription className="text-center text-muted-foreground">
               Sign in to your account or create a new one

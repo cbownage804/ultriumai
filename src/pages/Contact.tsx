@@ -80,35 +80,45 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a] to-[#0f0f12]">
       <Navigation />
       
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-4 relative overflow-hidden">
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-cyan-500/5" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[500px] md:h-[500px] lg:w-[600px] lg:h-[600px] bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] md:w-[600px] md:h-[600px] bg-primary/8 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-[300px] h-[300px] bg-cyan-500/5 rounded-full blur-[80px]" />
         
         <div className="container mx-auto text-center max-w-3xl relative z-10">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-8">
+            <MessageSquare className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-white/70">We're here to help</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-white to-white/50 bg-clip-text text-transparent">
             Let's Talk
           </h1>
-          <p className="text-xl text-white/60 max-w-xl mx-auto">
+          <p className="text-xl text-white/50 max-w-xl mx-auto leading-relaxed">
             Have a project in mind? Need enterprise support? We're here to help you succeed.
           </p>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-16 px-4">
+      <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-5 gap-12">
             
             {/* Contact Form - Takes 3 columns */}
             <div className="lg:col-span-3">
-              <Card className="bg-[#141414] border-white/10">
-                <CardContent className="p-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">Send a Message</h2>
-                  <p className="text-white/50 mb-8">We typically respond within 24 hours</p>
+              <Card className="bg-gradient-to-br from-[#141414] to-[#1a1a1f] border-white/10 shadow-2xl shadow-black/20">
+                <CardContent className="p-8 md:p-10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                      <Send className="h-5 w-5 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">Send a Message</h2>
+                  </div>
+                  <p className="text-white/50 mb-10 ml-13">We typically respond within 24 hours</p>
                   
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-4">
