@@ -352,7 +352,18 @@ export function SocialPostComposer({ initialContent = '', initialImageUrl }: Soc
                       {content || 'Your post preview will appear here...'}
                     </p>
                     {imageUrl && (
-                      <img src={imageUrl} alt="Preview" className="mt-3 rounded-lg w-full object-cover max-h-48" />
+                      <div className="mt-3 -mx-4">
+                        <img 
+                          src={imageUrl} 
+                          alt="Preview" 
+                          className="w-full object-contain cursor-pointer hover:opacity-95 transition-opacity"
+                          onClick={() => window.open(imageUrl, '_blank')}
+                          title="Click to view full size"
+                        />
+                        <p className="text-[10px] text-muted-foreground text-center mt-1 px-4">
+                          Click image to view full size • Watermark applied if product detected
+                        </p>
+                      </div>
                     )}
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
                       <span>0 Likes</span>
