@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
+import { SEOHead } from "@/components/SEOHead";
 
 const SafeSuiteProductPage = () => {
   const audiences = [
@@ -66,6 +67,11 @@ const SafeSuiteProductPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+      <SEOHead
+        title="SafeSuite — Simple, Modern Security for People & Small Teams | UltriumAI"
+        description="Password management, threat scanning, and dark web monitoring — all in one easy-to-use bundle. No enterprise complexity. Just protection that works for individuals and SMBs."
+        canonicalPath="/products/safesuite"
+      />
       <Navigation />
       
       {/* Hero Section */}
