@@ -65,21 +65,18 @@ serve(async (req) => {
       }
     }
 
-    // Determine post status and date
-    let postStatus = 'SCHEDULED';
-    let postDate: string | undefined;
-    
+    // Bundle.Social Create Post requires postDate and status must be DRAFT or SCHEDULED
+    const postStatus = 'SCHEDULED';
+    let postDate = new Date().toISOString();
+
     if (scheduledAt) {
-      const scheduleDate = new Date(scheduledAt);
-      if (scheduleDate > new Date()) {
-        postDate = scheduleDate.toISOString();
-        console.log('Scheduling post for:', postDate);
-      } else {
-        postStatus = 'POSTED';
+      const requestedDate = new Date(scheduledAt);
+      if (!Number.isNaN(requestedDate.getTime()) && requestedDate > new Date()) {
+        postDate = requestedDate.toISOString();
       }
-    } else {
-      postStatus = 'POSTED';
     }
+
+    console.log('Scheduling post for:', postDate);
 
     // Build post data for each platform type
     // platforms array contains social account IDs - we need to determine their types
@@ -101,10 +98,8 @@ serve(async (req) => {
       data: postData,
     };
 
-    // Add post date if scheduling
-    if (postDate) {
-      postPayload.postDate = postDate;
-    }
+    // postDate is required by Bundle.Social
+    postPayload.postDate = postDate;
 
     console.log('Creating Bundle.Social post with payload:', JSON.stringify(postPayload));
 
@@ -124,8 +119,8 @@ serve(async (req) => {
       throw new Error(`Failed to create post: ${postResponse.status} - ${errorText}`);
     }
 
-    const postData = await postResponse.json();
-    console.log('Bundle.Social post created:', postData.id);
+    const createdPost = await postResponse.json();
+    console.log('Bundle.Social post created:', createdPost.id);
 
     // Save to our database
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -141,7 +136,7 @@ serve(async (req) => {
         status: scheduledAt ? 'scheduled' : 'posted',
         scheduled_at: scheduledAt || null,
         posted_at: scheduledAt ? null : new Date().toISOString(),
-        bundle_post_id: postData.id,
+        bundle_post_id: createdPost.id,
         image_url: imageUrl || null,
         created_by: userId || null,
       })
@@ -155,7 +150,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       success: true,
-      bundlePostId: postData.id,
+      bundlePostId: createdPost.id,
       post: savedPost,
       scheduled: !!scheduledAt,
     }), { 
