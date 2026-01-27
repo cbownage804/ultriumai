@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import TeamManagement from '@/components/safepass/TeamManagement';
 import SecurityDashboard from '@/components/safepass/SecurityDashboard';
 import MSPConsole from '@/components/safepass/MSPConsole';
@@ -15,7 +16,6 @@ import {
   Copy, 
   Plus,
   AlertTriangle,
-  CheckCircle,
   Users,
   Building,
   Smartphone,
@@ -23,13 +23,12 @@ import {
   Settings,
   UserCheck
 } from 'lucide-react';
-
-import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
+import safepassLogo from '@/assets/safepass-logo.png';
 
 export const SafePassDemo = () => {
-  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState('vault');
-  const [showPassword, setShowPassword] = useState({});
+  const [showPassword, setShowPassword] = useState<Record<number, boolean>>({});
 
   const passwords = [
     { 
@@ -76,99 +75,81 @@ export const SafePassDemo = () => {
     { site: 'Twitter2022', accounts: 5400000, date: '2022-08-01', status: 'monitoring' }
   ];
 
-  const togglePassword = (id) => {
+  const togglePassword = (id: number) => {
     setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const getStrengthColor = (strength) => {
-    if (strength >= 80) return 'text-success';
-    if (strength >= 60) return 'text-warning';
-    return 'text-destructive';
+  const getStrengthColor = (strength: number) => {
+    if (strength >= 80) return 'text-emerald-500';
+    if (strength >= 60) return 'text-amber-500';
+    return 'text-red-500';
   };
 
-  const getStrengthBg = (strength) => {
-    if (strength >= 80) return 'bg-success';
-    if (strength >= 60) return 'bg-warning';
-    return 'bg-destructive';
-  };
+  const tabs = [
+    { id: 'vault', label: 'Password Vault', icon: Key },
+    { id: 'breach', label: 'Breach Monitor', icon: Shield },
+    { id: 'team', label: 'Team Access', icon: Users },
+    { id: 'teams', label: 'Teams', icon: UserCheck },
+    { id: 'security', label: 'Security', icon: Shield },
+    { id: 'msp', label: 'MSP Console', icon: Settings },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-foreground mb-2">🔐 SafePass Identity & Password Management</h3>
-        <p className="text-muted-foreground">Enterprise-grade password security with breach monitoring</p>
-        {user && profile && (
-          <div className="mt-2 px-4 py-2 bg-primary/10 rounded-lg inline-block">
-            <p className="text-sm text-primary">
-              Welcome back, <strong>{profile.full_name || profile.email}</strong>
-              {profile.company_name && ` from ${profile.company_name}`}
-            </p>
-          </div>
-        )}
+    <div className="space-y-4">
+      {/* Header with SafePass branding */}
+      <div className="text-center mb-4">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <img src={safepassLogo} alt="SafePass" className="h-8 w-auto" />
+          <h3 className="text-xl font-bold text-amber-500">SafePass Identity & Password Management</h3>
+        </div>
+        <p className="text-muted-foreground text-sm">Enterprise-grade password security with breach monitoring</p>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex justify-center gap-2 mb-6">
-        <Button 
-          variant={activeTab === 'vault' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('vault')}
-        >
-          <Key className="h-4 w-4 mr-2" />
-          Password Vault
-        </Button>
-        <Button 
-          variant={activeTab === 'breach' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('breach')}
-        >
-          <Shield className="h-4 w-4 mr-2" />
-          Breach Monitor
-        </Button>
-        <Button 
-          variant={activeTab === 'team' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('team')}
-        >
-          <Users className="h-4 w-4 mr-2" />
-          Team Access
-        </Button>
-        <Button 
-          variant={activeTab === 'teams' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('teams')}
-        >
-          <UserCheck className="h-4 w-4 mr-2" />
-          Teams
-        </Button>
-        <Button 
-          variant={activeTab === 'security' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('security')}
-        >
-          <Shield className="h-4 w-4 mr-2" />
-          Security
-        </Button>
-        <Button 
-          variant={activeTab === 'msp' ? 'default' : 'outline'} 
-          onClick={() => setActiveTab('msp')}
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          MSP Console
-        </Button>
-      </div>
+      {/* Navigation Tabs - styled like real app */}
+      <ScrollArea className="w-full">
+        <div className="flex gap-1 p-1 bg-muted/50 rounded-lg mb-4">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <Button 
+                key={tab.id}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "flex-shrink-0 gap-2 transition-all",
+                  activeTab === tab.id 
+                    ? "bg-amber-500 text-white hover:bg-amber-600 hover:text-white" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </Button>
+            );
+          })}
+        </div>
+      </ScrollArea>
 
       {activeTab === 'vault' && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <h4 className="text-lg font-semibold">Company Password Vault</h4>
-            <Button>
+            <h4 className="text-base font-semibold">Company Password Vault</h4>
+            <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-white">
               <Plus className="h-4 w-4 mr-2" />
               Add Password
             </Button>
           </div>
           
           {passwords.map((item) => (
-            <Card key={item.id} className={item.strength < 60 ? 'border-destructive/50' : ''}>
+            <Card key={item.id} className={cn(
+              "bg-card/50 border-border/50",
+              item.strength < 60 && "border-red-500/50"
+            )}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <Key className="h-5 w-5 text-primary" />
+                    <Key className="h-5 w-5 text-amber-500" />
                     <div>
                       <div className="font-medium">{item.site}</div>
                       <div className="text-sm text-muted-foreground">{item.username}</div>
@@ -176,12 +157,19 @@ export const SafePassDemo = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     {item.shared && (
-                      <Badge variant="secondary">
+                      <Badge variant="outline" className="text-xs">
                         <Users className="h-3 w-3 mr-1" />
                         Shared
                       </Badge>
                     )}
-                    <Badge variant={item.strength >= 80 ? 'default' : item.strength >= 60 ? 'outline' : 'destructive'}>
+                    <Badge className={cn(
+                      "text-xs",
+                      item.strength >= 80 
+                        ? "bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30" 
+                        : item.strength >= 60 
+                          ? "bg-amber-500/20 text-amber-500 hover:bg-amber-500/30"
+                          : "bg-red-500/20 text-red-500 hover:bg-red-500/30"
+                    )}>
                       {item.strength}% strength
                     </Badge>
                   </div>
@@ -192,30 +180,39 @@ export const SafePassDemo = () => {
                     type={showPassword[item.id] ? 'text' : 'password'}
                     value={item.password}
                     readOnly
-                    className="flex-1"
+                    className="flex-1 bg-background/50 border-border/50"
                   />
                   <Button 
-                    size="sm" 
+                    size="icon" 
                     variant="outline"
+                    className="shrink-0"
                     onClick={() => togglePassword(item.id)}
                   >
                     {showPassword[item.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
-                  <Button size="sm" variant="outline">
+                  <Button size="icon" variant="outline" className="shrink-0">
                     <Copy className="h-4 w-4" />
                   </Button>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className={getStrengthColor(item.strength)}>
-                      Password Strength: {item.strength}%
-                    </span>
-                  </div>
-                  <span className="text-muted-foreground">Last used: {item.lastUsed}</span>
+                  <span className={getStrengthColor(item.strength)}>
+                    Password Strength: {item.strength}%
+                  </span>
+                  <span className="text-muted-foreground text-xs">Last used: {item.lastUsed}</span>
                 </div>
                 
-                <Progress value={item.strength} className={`h-2 mt-2`} />
+                <Progress 
+                  value={item.strength} 
+                  className={cn(
+                    "h-1.5 mt-2",
+                    item.strength >= 80 
+                      ? "[&>div]:bg-emerald-500" 
+                      : item.strength >= 60 
+                        ? "[&>div]:bg-amber-500"
+                        : "[&>div]:bg-red-500"
+                  )} 
+                />
               </CardContent>
             </Card>
           ))}
@@ -355,14 +352,17 @@ export const SafePassDemo = () => {
         </div>
       )}
 
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-6 text-center">
-          <Shield className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h4 className="text-xl font-bold mb-2">Zero-Trust Password Security</h4>
-          <p className="text-muted-foreground mb-4">
+      {/* CTA with amber branding */}
+      <Card className="border-amber-500/20 bg-amber-500/5">
+        <CardContent className="p-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <img src={safepassLogo} alt="SafePass" className="h-6 w-auto" />
+          </div>
+          <h4 className="text-lg font-bold mb-1">Zero-Trust Password Security</h4>
+          <p className="text-muted-foreground text-sm mb-3">
             Advanced encryption, breach monitoring, and seamless team collaboration
           </p>
-          <Button size="lg">
+          <Button className="bg-amber-500 hover:bg-amber-600 text-white">
             Deploy SafePass Now
           </Button>
         </CardContent>
