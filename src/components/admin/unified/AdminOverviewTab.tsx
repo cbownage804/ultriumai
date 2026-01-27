@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Users,
@@ -10,7 +11,8 @@ import {
   Activity,
   Shield,
   Sparkles,
-  Zap
+  Zap,
+  Gauge
 } from 'lucide-react';
 
 interface AdminOverviewTabProps {
@@ -24,6 +26,8 @@ interface OverviewStats {
   vanguardUsers: number;
   totalRevenue: number;
   activeSubscriptions: number;
+  totalCapacityUsed: number;
+  totalCapacityAllocated: number;
 }
 
 export const AdminOverviewTab = ({ onNavigateToTab }: AdminOverviewTabProps) => {
@@ -33,7 +37,9 @@ export const AdminOverviewTab = ({ onNavigateToTab }: AdminOverviewTabProps) => 
     safeSuiteUsers: 0,
     vanguardUsers: 0,
     totalRevenue: 0,
-    activeSubscriptions: 0
+    activeSubscriptions: 0,
+    totalCapacityUsed: 0,
+    totalCapacityAllocated: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -66,13 +72,29 @@ export const AdminOverviewTab = ({ onNavigateToTab }: AdminOverviewTabProps) => 
         .select('*', { count: 'exact', head: true })
         .in('status', ['active', 'manual']);
 
+      // Get AI capacity usage from ledger (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { data: capacityData } = await supabase
+        .from('ai_credit_ledger')
+        .select('credits_used')
+        .gte('created_at', thirtyDaysAgo.toISOString());
+
+      const totalCapacityUsed = (capacityData || []).reduce(
+        (sum, entry) => sum + (Number(entry.credits_used) || 0), 
+        0
+      );
+
       setStats({
         totalUsers: profileCount || 0,
         aiStudioUsers: aiStudioCount || 0,
         safeSuiteUsers: safeSuiteCount || 0,
         vanguardUsers: vanguardCount || 0,
         totalRevenue: 0, // Would need Stripe integration
-        activeSubscriptions: (aiStudioCount || 0) + (safeSuiteCount || 0) + (vanguardCount || 0)
+        activeSubscriptions: (aiStudioCount || 0) + (safeSuiteCount || 0) + (vanguardCount || 0),
+        totalCapacityUsed,
+        totalCapacityAllocated: 1000000 // Platform total capacity pool
       });
     } catch (error) {
       console.error('Error loading overview stats:', error);
@@ -80,6 +102,10 @@ export const AdminOverviewTab = ({ onNavigateToTab }: AdminOverviewTabProps) => 
       setLoading(false);
     }
   };
+
+  const capacityPercentage = stats.totalCapacityAllocated > 0 
+    ? (stats.totalCapacityUsed / stats.totalCapacityAllocated) * 100 
+    : 0;
 
   const statCards = [
     {
@@ -111,11 +137,13 @@ export const AdminOverviewTab = ({ onNavigateToTab }: AdminOverviewTabProps) => 
       color: "text-amber-500"
     },
     {
-      title: "Active Subscriptions",
-      value: stats.activeSubscriptions,
-      icon: CreditCard,
-      description: "Across all products",
-      color: "text-cyan-500"
+      title: "AI Capacity (30d)",
+      value: stats.totalCapacityUsed,
+      icon: Gauge,
+      description: `${capacityPercentage.toFixed(1)}% of pool`,
+      color: "text-cyan-500",
+      showProgress: true,
+      progressValue: capacityPercentage
     },
     {
       title: "System Status",
@@ -157,10 +185,15 @@ export const AdminOverviewTab = ({ onNavigateToTab }: AdminOverviewTabProps) => 
                   <Badge variant="outline" className="text-green-600 border-green-600">
                     {stat.value}
                   </Badge>
-                ) : (
+                ) : typeof stat.value === 'number' ? (
                   stat.value.toLocaleString()
+                ) : (
+                  stat.value
                 )}
               </div>
+              {stat.showProgress && (
+                <Progress value={stat.progressValue} className="h-1 mt-2" />
+              )}
               <p className="text-xs text-muted-foreground mt-1">
                 {stat.description}
               </p>
