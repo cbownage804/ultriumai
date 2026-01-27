@@ -226,13 +226,14 @@ const Index = () => {
                     <span className="text-sm">AI Security Copilot & Playbooks</span>
                   </div>
                 </div>
-                <Button 
-                  className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0" 
-                  size="lg"
-                  onClick={() => safeWindowOpen('https://vanguard.ultriumai.com', '_blank')}
-                >
-                  Explore Vanguard <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/products/vanguard" className="w-full">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0" 
+                    size="lg"
+                  >
+                    Explore Vanguard <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -270,13 +271,14 @@ const Index = () => {
                     <span className="text-sm">SafeTrack Asset Management</span>
                   </div>
                 </div>
-                <Button 
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white border-0" 
-                  size="lg"
-                  onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')}
-                >
-                  Try SafeSuite <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+                <Link to="/products/safesuite" className="w-full">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white border-0" 
+                    size="lg"
+                  >
+                    Try SafeSuite <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>

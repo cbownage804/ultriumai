@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import { SEOHead } from "@/components/SEOHead";
 
 const VanguardProductPage = () => {
   const audiences = [
@@ -85,6 +86,11 @@ const VanguardProductPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+      <SEOHead
+        title="Vanguard — AI-Powered Security & Operations | UltriumAI"
+        description="A unified platform combining RMM, helpdesk, threat detection, and compliance tooling — all powered by AI. Built for MSPs, IT teams, and security-conscious organizations."
+        canonicalPath="/products/vanguard"
+      />
       <Navigation />
       
       {/* Hero Section */}

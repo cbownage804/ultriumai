@@ -61,7 +61,7 @@ const Footer = () => {
             <ul className="space-y-4">
               <li>
                 <button 
-                  onClick={() => handleNavigation('/ai-studio')} 
+                  onClick={() => handleNavigation('/products/ai-studio')} 
                   className="text-sm text-muted-foreground hover:text-primary flex items-center gap-3 group transition-all duration-200"
                 >
                   <div className="h-8 w-8 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-md group-hover:shadow-primary/20 transition-shadow">
@@ -72,7 +72,7 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => window.location.href = 'https://vanguard.ultriumai.com'} 
+                  onClick={() => handleNavigation('/products/vanguard')} 
                   className="text-sm text-muted-foreground hover:text-cyan-400 flex items-center gap-3 group transition-all duration-200"
                 >
                   <div className="h-8 w-8 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-md group-hover:shadow-cyan-500/20 transition-shadow">
@@ -83,7 +83,7 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => safeWindowOpen('https://safesuite.ultriumai.com', '_blank')} 
+                  onClick={() => handleNavigation('/products/safesuite')} 
                   className="text-sm text-muted-foreground hover:text-emerald-400 flex items-center gap-3 group transition-all duration-200"
                 >
                   <div className="h-8 w-8 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-md group-hover:shadow-emerald-500/20 transition-shadow">

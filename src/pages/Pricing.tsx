@@ -662,9 +662,9 @@ const Pricing = () => {
                       </Link>
                     </Button>
                     <Button variant="outline" className="w-full border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10" asChild>
-                      <a href="https://vanguard.ultriumai.com">
+                      <Link to="/products/vanguard">
                         Explore Vanguard
-                      </a>
+                      </Link>
                     </Button>
                   </div>
                 </div>

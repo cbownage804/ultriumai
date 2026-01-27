@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+import { SEOHead } from "@/components/SEOHead";
 
 const AIStudioProductPage = () => {
   const audiences = [
@@ -73,6 +74,11 @@ const AIStudioProductPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+      <SEOHead
+        title="AI Studio — Business AI Control Plane | UltriumAI"
+        description="Build, deploy, and govern AI assistants with predictable cost, enterprise controls, and full visibility. A Business AI Control Plane for MSPs, internal teams, and websites."
+        canonicalPath="/products/ai-studio"
+      />
       <Navigation />
       
       {/* Hero Section */}
