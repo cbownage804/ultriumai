@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  ArrowRight, Building2, Shield, Headphones, Monitor, Lock,
+  ArrowRight, Building2, Shield, Lock,
   BarChart3, FileCheck, AlertTriangle, Users, Zap, Check, Brain,
-  Network, Eye, Search, Activity, Server, Workflow
+  Network, Search, Activity, Server, Workflow
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import safeopsLogo from '@/assets/logos/logo-safeops.png';
+import safedeskLogo from '@/assets/logos/logo-safedesk.png';
 import { SEOHead } from "@/components/SEOHead";
 
 const VanguardProductPage = () => {
@@ -33,18 +35,16 @@ const VanguardProductPage = () => {
 
   const products = [
     {
-      icon: Monitor,
+      logo: safeopsLogo,
       title: "SafeOps™ RMM",
       description: "Remote monitoring and management with real-time endpoint visibility, automated patching, and proactive maintenance workflows.",
-      color: "text-cyan-500",
-      bgColor: "bg-cyan-500/10"
+      bgColor: "bg-black"
     },
     {
-      icon: Headphones,
+      logo: safedeskLogo,
       title: "SafeDesk™ Helpdesk",
       description: "AI-powered IT service desk with smart ticket routing, SLA management, automated resolutions, and seamless escalation workflows.",
-      color: "text-violet-500",
-      bgColor: "bg-violet-500/10"
+      bgColor: "bg-black"
     },
     {
       icon: AlertTriangle,
@@ -251,9 +251,15 @@ const VanguardProductPage = () => {
               return (
                 <Card key={i} className="bg-card border-border/50 hover:border-cyan-500/30 transition-all">
                   <CardContent className="p-6">
-                    <div className={`w-12 h-12 rounded-lg ${product.bgColor} flex items-center justify-center mb-4`}>
-                      <IconComponent className={`h-6 w-6 ${product.color}`} />
-                    </div>
+                    {product.logo ? (
+                      <div className={`w-14 h-14 rounded-lg ${product.bgColor} flex items-center justify-center mb-4 p-2`}>
+                        <img src={product.logo} alt={product.title} className="h-full w-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className={`w-12 h-12 rounded-lg ${product.bgColor} flex items-center justify-center mb-4`}>
+                        {IconComponent && <IconComponent className={`h-6 w-6 ${product.color}`} />}
+                      </div>
+                    )}
                     <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
                     <p className="text-muted-foreground text-sm">{product.description}</p>
                   </CardContent>
