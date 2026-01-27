@@ -302,26 +302,21 @@ const SafeSuiteProductPage = () => {
           </div>
 
           <Tabs defaultValue="safepass" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
-              <TabsTrigger value="safepass" className="flex items-center gap-2">
-                <img src={safepassLogo} alt="" className="h-4 w-auto" />
-                SafePass
+            <TabsList className="grid w-full grid-cols-5 mb-6 h-auto p-1">
+              <TabsTrigger value="safepass" className="py-3 px-2">
+                <img src={safepassLogo} alt="SafePass" className="h-8 w-auto" />
               </TabsTrigger>
-              <TabsTrigger value="safescan" className="flex items-center gap-2">
-                <img src={safescanLogo} alt="" className="h-4 w-auto" />
-                SafeScan
+              <TabsTrigger value="safescan" className="py-3 px-2">
+                <img src={safescanLogo} alt="SafeScan" className="h-8 w-auto" />
               </TabsTrigger>
-              <TabsTrigger value="safeweb" className="flex items-center gap-2">
-                <img src={safewebLogo} alt="" className="h-4 w-auto" />
-                SafeWeb
+              <TabsTrigger value="safeweb" className="py-3 px-2">
+                <img src={safewebLogo} alt="SafeWeb" className="h-8 w-auto" />
               </TabsTrigger>
-              <TabsTrigger value="safetrack" className="flex items-center gap-2">
-                <img src={safetrackLogo} alt="" className="h-4 w-auto" />
-                SafeTrack
+              <TabsTrigger value="safetrack" className="py-3 px-2">
+                <img src={safetrackLogo} alt="SafeTrack" className="h-8 w-auto" />
               </TabsTrigger>
-              <TabsTrigger value="safeassist" className="flex items-center gap-2">
-                <img src={safeassistLogo} alt="" className="h-4 w-auto" />
-                SafeAssist
+              <TabsTrigger value="safeassist" className="py-3 px-2">
+                <img src={safeassistLogo} alt="SafeAssist" className="h-8 w-auto" />
               </TabsTrigger>
             </TabsList>
 
