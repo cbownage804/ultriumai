@@ -94,22 +94,10 @@ import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
 
 import { SafeShieldApp } from '@/components/apps/SafeShieldApp';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
-import SafeScoreDemoPage from '@/pages/demos/SafeScoreDemoPage';
-import SafeNetDemoPage from '@/pages/demos/SafeNetDemoPage';
 import VanguardDemoPage from '@/pages/demos/VanguardDemoPage';
 import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
 import CustomGPTBuilderDemoPage from '@/pages/demos/CustomGPTBuilderDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
-import RMMDemoPage from '@/pages/demos/RMMDemoPage';
-import TicketingDemoPage from '@/pages/demos/TicketingDemoPage';
-import AntivirusDemoPage from '@/pages/demos/AntivirusDemoPage';
-import SafeMDRDemoPage from '@/pages/demos/SafeMDRDemoPage';
-import SafeCenterDemoPage from '@/pages/demos/SafeCenterDemoPage';
-import SafeLinkDemoPage from '@/pages/demos/SafeLinkDemoPage';
-import SafeMailDemoPage from '@/pages/demos/SafeMailDemoPage';
-import SafeDocDemoPage from '@/pages/demos/SafeDocDemoPage';
-import SafeKBDemoPage from '@/pages/demos/SafeKBDemoPage';
-import SafeSOCDemoPage from '@/pages/demos/SafeSOCDemoPage';
 import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
 import SecuritySuitePage from '@/pages/products/SecuritySuitePage';
 import OperationsSuitePage from '@/pages/products/OperationsSuitePage';
@@ -400,7 +388,25 @@ function AppRouter() {
         <Route path="/demos/safepass" element={<SafePassDemoPage />} />
         <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
         <Route path="/demos/custom-gpt-builder" element={<CustomGPTBuilderDemoPage />} />
-        <Route path="/demos/safescore" element={<SafeScoreDemoPage />} />
+        <Route path="/demos/vanguard" element={<VanguardDemoPage />} />
+        <Route path="/demos/darkweb" element={<DarkWebDemoPage />} />
+        <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
+        
+        {/* Redirect deprecated demo routes to active products */}
+        <Route path="/demos/safescore" element={<Navigate to="/products/safesuite" replace />} />
+        <Route path="/demos/safenet" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/rmm" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/ticketing" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/antivirus" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/safemdr" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/safelink" element={<Navigate to="/demos/safescan" replace />} />
+        <Route path="/demos/safemail" element={<Navigate to="/demos/safescan" replace />} />
+        <Route path="/demos/safedoc" element={<Navigate to="/demos/safescan" replace />} />
+        <Route path="/demos/safeshield" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/safecenter" element={<Navigate to="/products/vanguard" replace />} />
+        <Route path="/demos/safekb" element={<Navigate to="/products/ai-studio" replace />} />
+        <Route path="/demos/safesoc" element={<Navigate to="/products/vanguard" replace />} />
+        
         <Route path="/products/safescore" element={<SafeScorePage />} />
         <Route path="/products/security" element={<SecuritySuitePage />} />
         <Route path="/products/operations" element={<OperationsSuitePage />} />
@@ -417,24 +423,10 @@ function AppRouter() {
         <Route path="/safesuite/products/safepass" element={<SafePassProduct />} />
         <Route path="/safesuite/products/safeweb" element={<SafeWebProduct />} />
         <Route path="/safesuite/products/safescan" element={<SafeScanProduct />} />
-        <Route path="/demos/safenet" element={<SafeNetDemoPage />} />
-        <Route path="/demos/safeintel" element={<DarkWebDemoPage />} />
-        <Route path="/demos/rmm" element={<RMMDemoPage />} />
-        <Route path="/demos/ticketing" element={<TicketingDemoPage />} />
-        <Route path="/demos/antivirus" element={<AntivirusDemoPage />} />
-        <Route path="/demos/safemdr" element={<SafeMDRDemoPage />} />
-        <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
-        <Route path="/demos/safelink" element={<Navigate to="/demos/safescan" replace />} />
-        <Route path="/demos/safemail" element={<Navigate to="/demos/safescan" replace />} />
-        <Route path="/demos/safedoc" element={<Navigate to="/demos/safescan" replace />} />
         <Route path="/products/safelink" element={<Navigate to="/safesuite/features" replace />} />
         <Route path="/products/safemail" element={<Navigate to="/safesuite/features" replace />} />
         <Route path="/products/safedoc" element={<Navigate to="/safesuite/features" replace />} />
         <Route path="/safesuite/features" element={<SafeSuiteFeatures />} />
-        <Route path="/demos/safeshield" element={<AntivirusDemoPage />} />
-        <Route path="/demos/safecenter" element={<SafeCenterDemoPage />} />
-        <Route path="/demos/safekb" element={<SafeKBDemoPage />} />
-        <Route path="/demos/safesoc" element={<SafeSOCDemoPage />} />
         <Route path="/embed-demo" element={<EmbedDemo />} />
         <Route path="/safedoc-embed-demo" element={<SafeDocEmbedDemo />} />
         <Route path="/safemail-embed-demo" element={<SafeMailEmbedDemo />} />
