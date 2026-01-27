@@ -79,30 +79,40 @@ export function SocialPostComposer({ initialContent = '', initialImageUrl }: Soc
   const handlePostNow = async () => {
     if (!content || selectedAccounts.length === 0) return;
 
-    await schedulePost.mutateAsync({
-      title: title || content.substring(0, 50),
-      content,
-      platforms: selectedAccounts,
-      imageUrl: imageUrl || undefined,
-    });
+    try {
+      await schedulePost.mutateAsync({
+        title: title || content.substring(0, 50),
+        content,
+        platforms: selectedAccounts,
+        imageUrl: imageUrl || undefined,
+      });
 
-    resetForm();
+      resetForm();
+    } catch (error) {
+      // Error is already handled by the mutation's onError callback
+      console.error('Post failed:', error);
+    }
   };
 
   const handleSchedule = async () => {
     if (!content || selectedAccounts.length === 0 || !scheduleDate || !scheduleTime) return;
 
-    const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+    try {
+      const scheduledAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
 
-    await schedulePost.mutateAsync({
-      title: title || content.substring(0, 50),
-      content,
-      platforms: selectedAccounts,
-      scheduledAt,
-      imageUrl: imageUrl || undefined,
-    });
+      await schedulePost.mutateAsync({
+        title: title || content.substring(0, 50),
+        content,
+        platforms: selectedAccounts,
+        scheduledAt,
+        imageUrl: imageUrl || undefined,
+      });
 
-    resetForm();
+      resetForm();
+    } catch (error) {
+      // Error is already handled by the mutation's onError callback
+      console.error('Schedule failed:', error);
+    }
   };
 
   const resetForm = () => {
