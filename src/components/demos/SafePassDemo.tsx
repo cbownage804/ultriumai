@@ -96,13 +96,9 @@ export const SafePassDemo = () => {
 
   return (
     <div className="space-y-4">
-      {/* Header with SafePass branding */}
-      <div className="text-center mb-4">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <img src={safepassLogo} alt="SafePass" className="h-8 w-auto" />
-          <h3 className="text-xl font-bold text-amber-500">SafePass Identity & Password Management</h3>
-        </div>
-        <p className="text-muted-foreground text-sm">Enterprise-grade password security with breach monitoring</p>
+      {/* Header with SafePass branding - centered logo only */}
+      <div className="flex justify-center mb-4">
+        <img src={safepassLogo} alt="SafePass" className="h-10 w-auto" />
       </div>
 
       {/* Navigation Tabs - styled like real app */}
