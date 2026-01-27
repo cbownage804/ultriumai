@@ -57,12 +57,28 @@ Each post should feel like: "This company clearly understands how businesses act
 RETURN ONLY the post content. No explanations, no prefixes, no formatting notes.`;
 
 const CONTENT_TYPE_CONTEXT: Record<string, string> = {
+  // For Everyone (Consumer-focused)
+  personal_safety: `Write for regular people and families. Focus on everyday online safety - protecting kids, seniors, personal accounts. Use relatable scenarios like social media, online shopping, or streaming services. Position SafeSuite as the simple, affordable protection anyone can use. Warm, helpful tone.`,
+  password_tips: `Simple password advice for non-technical people. Avoid jargon. Use analogies (like "digital keys to your home"). Mention how SafeSuite's SafePass makes this easy without having to remember everything. Friendly and encouraging.`,
+  scam_alert: `Warn about real scams affecting everyday people - romance scams, fake texts, phishing emails, gift card fraud. Be specific but not scary. Empower readers with "here's how to spot it" advice. Position SafeSuite as a helpful safety net.`,
+  device_security: `Tips for phones, laptops, tablets, smart home devices. Practical advice for regular users - updates, app permissions, public WiFi. Make it feel achievable. SafeSuite helps monitor and protect all devices.`,
+  privacy_tips: `Help people understand and protect their personal information online. Social media settings, data sharing, tracking. Empowering, not paranoid. SafeSuite's dark web monitoring catches if info gets exposed.`,
+  
+  // For Small Businesses
+  smb_security: `Security basics for small business owners who wear many hats. Focus on practical, affordable steps. No enterprise complexity. Position SafeSuite as the small business security toolkit that doesn't require an IT department.`,
+  payment_safety: `Protect business transactions - payment processing, invoicing, vendor payments. Real scenarios like invoice fraud or payment redirect scams. Position SafeSuite and good practices as affordable protection.`,
+  email_security: `Business email compromise, phishing targeting employees, invoice scams. Practical tips any small team can implement. SafeSuite helps train awareness and catch threats early.`,
+  network_basics: `WiFi security, guest networks, remote work safety for small offices. Simple explanations without IT jargon. SafeSuite provides the monitoring small businesses need.`,
+  
+  // For MSPs & Enterprise
   threat_alert: `Focus on a real security threat or vulnerability. Frame the problem, then position UltriumAI's SafeSuite or scanning capabilities as the practical response. No fear-mongering.`,
-  security_tip: `Provide quick, actionable security advice. Keep it practical and accessible. End with a soft nudge toward SafeSuite.`,
   service_highlight: `Showcase UltriumAI's MSP services or AI Studio capabilities. Emphasize governance, control, white-label delivery, or predictable capacity.`,
   industry_news: `Comment on cybersecurity or AI news. Add unique insight. Position UltriumAI as a thought leader.`,
   compliance_update: `Share regulatory or compliance information relevant to businesses. Keep it accessible, not legal jargon.`,
   success_story: `Frame a business scenario or use case where AI Studio or SafeSuite solved a real problem. Keep it believable.`,
+  
+  // General
+  security_tip: `Provide quick, actionable security advice. Keep it practical and accessible. End with a soft nudge toward SafeSuite.`,
   awareness_campaign: `Create cybersecurity awareness content. Educate without being preachy. Make security approachable.`,
   custom_topic: `Generate based on the specific topic provided. Follow all positioning and tone guidelines.`,
 };
