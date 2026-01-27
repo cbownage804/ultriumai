@@ -233,20 +233,21 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
   };
 
   return (
-    <div className="bg-slate-50 border rounded-lg p-4 relative overflow-auto" style={{ height: '500px' }}>
-      <div className="absolute top-4 left-4 text-sm font-medium text-slate-600">
-        ABC Manufacturing Network Topology
-      </div>
-      
-      {/* Internet connection indicator */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-muted-foreground z-10" style={{ left: '400px', transform: 'translateX(-50%)' }}>
-        <Globe className="h-4 w-4" />
-        <span>Internet</span>
-      </div>
-      
-      <svg width="800" height="500" className="absolute inset-0">
-        {/* Internet connection line */}
-        <line x1={400} y1={50} x2={400} y2={100} stroke="#64748b" strokeWidth="2" strokeDasharray="5,5" />
+    <div className="bg-slate-50 border rounded-lg p-4 relative overflow-auto min-h-[400px] md:min-h-[500px]">
+      <div className="min-w-[700px] min-h-[450px] relative">
+        <div className="absolute top-4 left-4 text-sm font-medium text-slate-600">
+          ABC Manufacturing Network Topology
+        </div>
+        
+        {/* Internet connection indicator */}
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-xs text-muted-foreground z-10">
+          <Globe className="h-4 w-4" />
+          <span>Internet</span>
+        </div>
+        
+        <svg width="100%" height="450" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet" className="absolute inset-0">
+          {/* Internet connection line */}
+          <line x1={400} y1={50} x2={400} y2={100} stroke="#64748b" strokeWidth="2" strokeDasharray="5,5" />
         
         {/* Network connections */}
         {networkConnections.map((conn, index) => {
@@ -411,6 +412,7 @@ const NetworkTopologyView = ({ devices }: { devices: typeof mockNetworkDevices }
             <span className="text-foreground">High Risk / Offline</span>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
