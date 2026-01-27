@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +9,16 @@ import {
   Send, 
   Shield, 
   AlertTriangle,
-  CheckCircle,
-  Lightbulb,
-  MessageSquare,
-  Sparkles,
   Lock,
   Eye,
   FileSearch,
   HelpCircle,
-  Loader2
+  Loader2,
+  Key,
+  Search,
+  Laptop,
+  Sparkles,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,147 +27,238 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-  type?: 'text' | 'recommendation' | 'alert' | 'analysis';
 }
 
-interface QuickAction {
+interface QuickQuestion {
   icon: React.ElementType;
   label: string;
-  prompt: string;
+  question: string;
+  answer: string;
 }
 
 interface CompactProps {
   compactMode?: boolean;
 }
 
-const quickActions: QuickAction[] = [
-  { icon: Shield, label: 'Security Best Practices', prompt: 'What are the top security best practices I should follow?' },
-  { icon: AlertTriangle, label: 'Threat Analysis', prompt: 'Can you analyze this suspicious email I received?' },
-  { icon: Lock, label: 'Password Help', prompt: 'How can I create strong, unique passwords?' },
-  { icon: Eye, label: 'Privacy Tips', prompt: 'How do I protect my privacy online?' },
-  { icon: FileSearch, label: 'Breach Check', prompt: 'How do I check if my data was in a breach?' },
-  { icon: HelpCircle, label: 'Incident Response', prompt: 'I think I clicked a phishing link. What should I do?' },
+// Pre-defined questions with SafeSuite product recommendations
+const quickQuestions: QuickQuestion[] = [
+  { 
+    icon: Key, 
+    label: 'Protect Passwords', 
+    question: 'How can I protect my passwords?',
+    answer: `Great question! Here's how to **protect your passwords** effectively:
+
+🔐 **Use SafePass Password Vault**
+SafePass is included in your SafeSuite subscription and provides:
+- **256-bit encryption** for all stored passwords
+- **Automatic password generation** - create 20+ character unique passwords instantly
+- **Breach monitoring** - get alerted if any of your passwords appear in data leaks
+- **Secure sharing** - share credentials with family or team members safely
+- **Cross-device sync** - access passwords on all your devices
+
+✅ **Best Practices:**
+1. Never reuse passwords across sites
+2. Enable two-factor authentication (2FA) on all accounts
+3. Use SafePass to generate and store unique passwords
+4. Change passwords immediately after any breach notification
+
+👉 **Get Started:** Open SafePass from your SafeSuite dashboard to import your existing passwords and start generating secure ones!`
+  },
+  { 
+    icon: AlertTriangle, 
+    label: 'Check for Breaches', 
+    question: 'Has my data been exposed in a breach?',
+    answer: `I can help you check for data breaches! 🔍
+
+🌐 **Use SafeWeb Dark Web Monitor**
+SafeWeb continuously monitors the dark web and data breach databases for your information:
+
+**What SafeWeb Monitors:**
+- Email addresses and associated accounts
+- Passwords appearing in breach databases
+- Personal information on dark web forums
+- Company domain exposure
+- Credential dumps and leaks
+
+🚨 **If a Breach is Found:**
+1. SafeWeb alerts you immediately
+2. Shows exactly what data was exposed
+3. Provides step-by-step remediation guidance
+4. Recommends which passwords to change
+
+**Take Action Now:**
+1. Go to the **SafeWeb** tab in SafeSuite
+2. Enter your email address or domain
+3. Run a scan to check for exposures
+4. Follow the recommended actions
+
+💡 **Pro Tip:** Set up continuous monitoring to get instant alerts whenever your data appears in new breaches!`
+  },
+  { 
+    icon: Search, 
+    label: 'Scan for Threats', 
+    question: 'How do I scan files and links for threats?',
+    answer: `SafeScan provides **comprehensive threat detection** for files, emails, URLs, and more! 🛡️
+
+🔍 **SafeScan Features:**
+
+**Document Scanner**
+- Upload any file (PDF, Office docs, executables)
+- AI-powered malware detection
+- Identifies hidden macros and exploits
+
+**Email Threat Analysis**
+- Paste suspicious emails for analysis
+- Detects phishing attempts
+- Identifies spoofed senders and malicious links
+
+**URL Security Check**
+- Scan links before clicking
+- Identifies fake login pages
+- Checks against known malware sites
+
+**Password Security Analysis**
+- Check if passwords appear in breaches
+- Get strength ratings and recommendations
+- Identify weak or reused passwords
+
+📊 **Scan Results Include:**
+✓ Threat level rating (Safe / Warning / Dangerous)
+✓ Specific threats detected
+✓ Recommended actions
+✓ Detailed technical analysis
+
+👉 **Try It:** Go to the **SafeScan** tab and paste a suspicious URL or upload a file to analyze!`
+  },
+  { 
+    icon: Laptop, 
+    label: 'Track My Devices', 
+    question: 'How do I manage and secure my devices?',
+    answer: `SafeTrack helps you **inventory and manage all your assets**! 📱💻
+
+🏷️ **SafeTrack Asset Management:**
+
+**What You Can Track:**
+- Computers and laptops
+- Mobile devices (phones, tablets)
+- Software licenses
+- Network equipment
+- IoT devices
+
+**Key Features:**
+- **Asset Inventory** - Complete view of all devices
+- **Warranty Tracking** - Never miss an expiration
+- **License Management** - Track software renewals
+- **Lifecycle Management** - Plan replacements
+- **Assignment Tracking** - Know who has what
+
+🔒 **Security Benefits:**
+- Identify unpatched or outdated devices
+- Track devices that need security updates
+- Maintain compliance documentation
+- Quick response during security incidents
+
+**Getting Started:**
+1. Open **SafeTrack** from SafeSuite
+2. Add your devices manually or import from spreadsheet
+3. Set up warranty and license expiration alerts
+4. Review the security status dashboard
+
+💡 **Tip:** For businesses, SafeTrack integrates with Vanguard for advanced endpoint monitoring!`
+  },
+  { 
+    icon: HelpCircle, 
+    label: 'Phishing Help', 
+    question: 'I clicked a suspicious link. What should I do?',
+    answer: `🚨 **Don't panic!** Here's your immediate action plan:
+
+**Step 1: Stop & Disconnect (if needed)**
+- Close the browser tab immediately
+- If you downloaded anything, disconnect from the internet
+- Don't enter any passwords or personal info
+
+**Step 2: Change Passwords NOW**
+Use **SafePass** to quickly:
+- Reset your email password first
+- Change banking and financial passwords
+- Update any accounts using similar passwords
+
+**Step 3: Scan for Threats**
+Open **SafeScan** and:
+- Run a full device scan
+- Check for any downloaded malware
+- Scan the suspicious URL to confirm it's malicious
+
+**Step 4: Check for Exposure**
+Use **SafeWeb** to:
+- Monitor if your credentials appear in breach databases
+- Set up alerts for future exposures
+- Check the dark web for your information
+
+**Step 5: Enable Extra Protection**
+- Turn on 2FA on all critical accounts
+- Enable login alerts for your email
+- Review recent account activity
+
+⚠️ **If You Entered Credentials:**
+- Change those passwords IMMEDIATELY
+- Enable 2FA on that account
+- Monitor for unauthorized activity
+- Consider credit monitoring if financial info was shared
+
+🛡️ **SafeSuite has you covered** at every step of incident response!`
+  },
+  { 
+    icon: Eye, 
+    label: 'Privacy Tips', 
+    question: 'How can I protect my privacy online?',
+    answer: `Here's your **complete privacy protection guide** using SafeSuite! 🔒
+
+**🔐 Password Privacy with SafePass**
+- Use unique passwords for every site (hackers can't link accounts)
+- Enable biometric unlock for extra security
+- Use the password generator for truly random credentials
+
+**🌐 Breach Monitoring with SafeWeb**
+- Monitor your email addresses for exposures
+- Get alerted when your data appears on the dark web
+- Check if your phone number or address is leaked
+
+**🔍 Link Safety with SafeScan**
+- Scan links before clicking to avoid trackers
+- Check if sites are legitimate before entering info
+- Identify data-harvesting phishing pages
+
+**📱 Device Security with SafeTrack**
+- Keep inventory of devices that have your data
+- Know which devices need security updates
+- Track software that may have privacy concerns
+
+**🛡️ General Privacy Tips:**
+1. Use different email addresses for different purposes
+2. Review app permissions regularly
+3. Opt out of data broker sites
+4. Use private browsing for sensitive searches
+5. Enable 2FA everywhere
+
+**SafeSuite Privacy Audit:**
+Run a scan with each SafeSuite tool to get a complete picture of your privacy posture!`
+  }
 ];
 
-const sampleResponses: Record<string, string> = {
-  'What are the top security best practices I should follow?': `Great question! Here are the **top 5 security best practices** everyone should follow:
+const initialMessage = `Hi! I'm **SafeAssist**, your AI-powered security advisor. 🛡️
 
-1. **Use a Password Manager** 🔐
-   - Generate unique, complex passwords for every account
-   - Never reuse passwords across sites
+I can help you with security questions and show you how SafeSuite tools protect you.
 
-2. **Enable Two-Factor Authentication (2FA)** 📱
-   - Use authenticator apps over SMS when possible
-   - Enable on all critical accounts (email, banking, social)
-
-3. **Keep Software Updated** ⬆️
-   - Enable automatic updates on all devices
-   - Don't ignore security patches
-
-4. **Be Cautious with Links & Attachments** ⚠️
-   - Verify sender before clicking
-   - Hover over links to check the actual URL
-
-5. **Regular Backups** 💾
-   - Follow the 3-2-1 rule: 3 copies, 2 media types, 1 offsite
-
-Would you like me to go deeper into any of these topics?`,
-
-  'How can I create strong, unique passwords?': `Here's how to create **bulletproof passwords**:
-
-**The Formula for Strong Passwords:**
-- Minimum 16 characters (longer is better)
-- Mix uppercase, lowercase, numbers, and symbols
-- Never use personal information
-
-**Best Approach: Use a Passphrase** 🎯
-Example: \`Correct-Horse-Battery-Staple-42!\`
-- Easy to remember, hard to crack
-
-**Even Better: Use SafePass** 🔐
-- Generates random 20+ character passwords
-- Stores them securely with zero-knowledge encryption
-- Auto-fills across all your devices
-
-**Quick Tips:**
-✅ Never reuse passwords
-✅ Change passwords after any breach notification
-✅ Enable 2FA as an extra layer
-
-Want me to help you set up SafePass for your accounts?`,
-
-  'I think I clicked a phishing link. What should I do?': `🚨 **Don't panic!** Here's your immediate action plan:
-
-**Step 1: Disconnect (if malware suspected)**
-- Disconnect from WiFi/ethernet
-- Don't enter any credentials
-
-**Step 2: Change Passwords Immediately**
-- Start with your email account
-- Then banking and financial accounts
-- Use a clean device if possible
-
-**Step 3: Enable 2FA Everywhere**
-- This prevents attackers even if they have your password
-
-**Step 4: Scan Your Device**
-- Run a full antivirus scan
-- Use SafeScan to check for threats
-
-**Step 5: Monitor for Suspicious Activity**
-- Check bank statements
-- Review email sent folder
-- Enable login alerts
-
-**Step 6: Report the Phishing Attempt**
-- Forward to your IT department
-- Report to the impersonated company
-
-Would you like me to help you run a security scan or check for compromised accounts?`,
-
-  'How do I protect my privacy online?': `Here's your **privacy protection checklist**:
-
-**Browser & Tracking** 🌐
-- Use a privacy-focused browser (Firefox, Brave)
-- Install an ad blocker (uBlock Origin)
-- Enable "Do Not Track" settings
-- Clear cookies regularly
-
-**Social Media** 📱
-- Review privacy settings quarterly
-- Limit personal info in profiles
-- Be cautious with location sharing
-
-**Accounts & Data** 🔒
-- Use unique emails for different services
-- Opt out of data broker sites
-- Review app permissions regularly
-
-**Communication** 💬
-- Use end-to-end encrypted messaging (Signal)
-- Be aware of what you share in emails
-
-**SafeWeb can help** by monitoring if your data appears on the dark web or in data broker databases.
-
-Want me to run a privacy check for your email address?`,
-};
+**Choose a question below** to see how SafeSuite can help, or type your own question!`;
 
 export const SafeAssistDemo = ({ compactMode = false }: CompactProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: `Hi! I'm **SafeAssist**, your AI-powered security advisor. 🛡️
-
-I can help you with:
-- Security best practices and recommendations
-- Threat analysis and incident response
-- Password and privacy guidance
-- Understanding security alerts
-
-How can I help you stay secure today?`,
-      timestamp: new Date(),
-      type: 'text'
+      content: initialMessage,
+      timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState('');
@@ -179,16 +271,15 @@ How can I help you stay secure today?`,
     }
   }, [messages]);
 
-  const handleSend = async (prompt?: string) => {
-    const messageText = prompt || input;
+  const handleSend = async (question?: string, answer?: string) => {
+    const messageText = question || input;
     if (!messageText.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: messageText,
-      timestamp: new Date(),
-      type: 'text'
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -196,28 +287,71 @@ How can I help you stay secure today?`,
     setIsTyping(true);
 
     // Simulate AI response delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
 
-    const response = sampleResponses[messageText] || 
-      `I understand you're asking about "${messageText}". 
-
-As your security assistant, I can help you with:
-- **Threat Analysis**: Understanding and responding to security incidents
-- **Best Practices**: Recommendations for staying secure
-- **Tool Guidance**: How to use SafeSuite tools effectively
-
-Try asking about specific security topics, or use the quick actions below for common questions.`;
+    // Use provided answer or find matching question
+    let response = answer;
+    if (!response) {
+      const matchedQuestion = quickQuestions.find(
+        q => q.question.toLowerCase() === messageText.toLowerCase()
+      );
+      response = matchedQuestion?.answer || getGenericResponse(messageText);
+    }
 
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
       content: response,
-      timestamp: new Date(),
-      type: 'recommendation'
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, assistantMessage]);
     setIsTyping(false);
+  };
+
+  const getGenericResponse = (userInput: string): string => {
+    const lowerInput = userInput.toLowerCase();
+    
+    if (lowerInput.includes('password')) {
+      const q = quickQuestions.find(q => q.label === 'Protect Passwords');
+      return q?.answer || '';
+    }
+    if (lowerInput.includes('breach') || lowerInput.includes('leak') || lowerInput.includes('dark web')) {
+      const q = quickQuestions.find(q => q.label === 'Check for Breaches');
+      return q?.answer || '';
+    }
+    if (lowerInput.includes('scan') || lowerInput.includes('file') || lowerInput.includes('link') || lowerInput.includes('malware')) {
+      const q = quickQuestions.find(q => q.label === 'Scan for Threats');
+      return q?.answer || '';
+    }
+    if (lowerInput.includes('device') || lowerInput.includes('computer') || lowerInput.includes('laptop') || lowerInput.includes('asset')) {
+      const q = quickQuestions.find(q => q.label === 'Track My Devices');
+      return q?.answer || '';
+    }
+    if (lowerInput.includes('phish') || lowerInput.includes('click') || lowerInput.includes('suspicious')) {
+      const q = quickQuestions.find(q => q.label === 'Phishing Help');
+      return q?.answer || '';
+    }
+    if (lowerInput.includes('privacy') || lowerInput.includes('private') || lowerInput.includes('track')) {
+      const q = quickQuestions.find(q => q.label === 'Privacy Tips');
+      return q?.answer || '';
+    }
+
+    return `Thanks for your question! Let me point you to the right SafeSuite tool:
+
+🔐 **SafePass** - Password storage, generation, and breach monitoring
+🔍 **SafeScan** - Scan files, emails, URLs for threats
+🌐 **SafeWeb** - Dark web monitoring for your exposed data
+📱 **SafeTrack** - Device and asset inventory management
+🤖 **SafeAssist** - That's me! 24/7 security guidance
+
+**Try asking about:**
+- "How can I protect my passwords?"
+- "Has my data been exposed in a breach?"
+- "How do I scan files for threats?"
+- "I clicked a suspicious link. What should I do?"
+
+Each SafeSuite tool works together to provide complete security coverage!`;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -226,6 +360,8 @@ Try asking about specific security topics, or use the quick actions below for co
       handleSend();
     }
   };
+
+  const showQuickQuestions = messages.length <= 2;
 
   return (
     <div className={cn('flex flex-col', compactMode ? 'h-[450px]' : 'min-h-[600px]')}>
@@ -258,18 +394,17 @@ Try asking about specific security topics, or use the quick actions below for co
                 )}
                 <div
                   className={cn(
-                    'max-w-[80%] rounded-lg p-3',
+                    'max-w-[85%] rounded-lg p-3',
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted'
                   )}
                 >
                   <div 
-                    className="text-sm prose prose-sm dark:prose-invert max-w-none"
+                    className="text-sm whitespace-pre-wrap break-words"
                     dangerouslySetInnerHTML={{ 
                       __html: message.content
                         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\n/g, '<br />')
                         .replace(/`(.*?)`/g, '<code class="bg-background/50 px-1 rounded text-xs">$1</code>')
                     }}
                   />
@@ -292,21 +427,22 @@ Try asking about specific security topics, or use the quick actions below for co
           </div>
         </ScrollArea>
 
-        {/* Quick Actions */}
-        {!compactMode && messages.length <= 2 && (
-          <div className="px-4 pb-2">
-            <p className="text-xs text-muted-foreground mb-2">Quick actions:</p>
-            <div className="flex flex-wrap gap-2">
-              {quickActions.slice(0, 4).map((action) => (
+        {/* Quick Questions */}
+        {showQuickQuestions && (
+          <div className="px-4 pb-3 border-t pt-3">
+            <p className="text-xs text-muted-foreground mb-2">Ask a question:</p>
+            <div className="grid grid-cols-2 gap-2">
+              {quickQuestions.slice(0, compactMode ? 4 : 6).map((q) => (
                 <Button
-                  key={action.label}
+                  key={q.label}
                   variant="outline"
                   size="sm"
-                  className="text-xs"
-                  onClick={() => handleSend(action.prompt)}
+                  className="text-xs h-auto py-2 px-3 justify-start"
+                  onClick={() => handleSend(q.question, q.answer)}
+                  disabled={isTyping}
                 >
-                  <action.icon className="h-3 w-3 mr-1" />
-                  {action.label}
+                  <q.icon className="h-3 w-3 mr-2 flex-shrink-0" />
+                  <span className="truncate">{q.label}</span>
                 </Button>
               ))}
             </div>
@@ -338,7 +474,7 @@ Try asking about specific security topics, or use the quick actions below for co
       {!compactMode && (
         <Card className="mx-4 mt-4 border-emerald-500/20 bg-emerald-500/5">
           <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-4 flex-wrap">
               <Badge className="bg-emerald-500/20 text-emerald-500">
                 <Sparkles className="h-3 w-3 mr-1" />
                 AI-Powered
