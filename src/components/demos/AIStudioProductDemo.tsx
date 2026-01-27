@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,11 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Bot, 
   Sparkles, 
   Upload, 
-  Palette, 
   MessageSquare,
   Settings,
   Globe,
@@ -19,18 +19,131 @@ import {
   Check,
   ArrowRight,
   ArrowLeft,
-  Building2,
-  Users,
-  Shield,
   Rocket,
-  Copy,
   Code,
-  CheckCircle
+  CheckCircle,
+  Send,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+
+// Demo chat messages - predefined Q&A that doesn't use AI credits
+interface DemoChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface DemoQA {
+  question: string;
+  keywords: string[];
+  answer: string;
+}
+
+const DEMO_QA: DemoQA[] = [
+  {
+    question: "How do I reset my password?",
+    keywords: ["password", "reset", "forgot", "change"],
+    answer: `To reset your password, follow these simple steps:
+
+1. **Go to the login page** and click "Forgot Password"
+2. **Enter your email address** associated with your account
+3. **Check your inbox** for a password reset link (check spam folder too)
+4. **Click the link** and create a new secure password
+5. **Log in** with your new credentials
+
+💡 **Tip:** Use a password manager like **SafePass** to generate and store strong passwords securely!`
+  },
+  {
+    question: "What are your pricing plans?",
+    keywords: ["pricing", "price", "cost", "plan", "subscription", "pay"],
+    answer: `We offer flexible pricing to fit your needs:
+
+| Plan | Price | Features |
+|------|-------|----------|
+| **Starter** | Free | 100 messages/month, 1 GPT |
+| **Pro** | $29/mo | Unlimited messages, 10 GPTs, Priority support |
+| **Business** | $99/mo | Everything in Pro + Team features, API access |
+| **Enterprise** | Custom | Dedicated support, Custom integrations, SLA |
+
+🎉 **Special Offer:** Start with a 14-day free trial of Pro features!
+
+Would you like me to help you choose the best plan for your needs?`
+  },
+  {
+    question: "How do I contact support?",
+    keywords: ["support", "help", "contact", "reach", "assistance", "issue"],
+    answer: `We're here to help! Here are the ways to reach our support team:
+
+📧 **Email:** support@ultriumai.com
+💬 **Live Chat:** Available 24/7 in your dashboard
+📞 **Phone:** +1 (888) 555-0123 (Business hours: 9AM-6PM EST)
+
+**Response Times:**
+- 🚀 Enterprise: < 1 hour
+- ⚡ Pro: < 4 hours  
+- 📬 Free: < 24 hours
+
+You can also check our **Knowledge Base** at docs.ultriumai.com for instant answers!`
+  },
+  {
+    question: "How do I create a custom GPT?",
+    keywords: ["create", "build", "custom", "gpt", "assistant", "bot"],
+    answer: `Creating a custom GPT is easy with AI Studio! Here's how:
+
+1. **Click "Create New GPT"** in your dashboard
+2. **Define Identity** - Name your assistant and describe its purpose
+3. **Add Knowledge** - Upload documents, connect websites, or add FAQs
+4. **Configure Behavior** - Set the system prompt and personality
+5. **Deploy** - Get an embed code or API endpoint
+
+🎨 **Pro Tips:**
+- Start with a template to save time
+- Test with real questions before deploying
+- Use the web search feature for up-to-date information
+
+Need help? Try our GPT Builder wizard - it guides you step by step!`
+  },
+  {
+    question: "What file formats do you support?",
+    keywords: ["file", "format", "upload", "document", "pdf", "csv", "type"],
+    answer: `We support a wide variety of file formats for your knowledge base:
+
+**📄 Documents:**
+- PDF, DOCX, DOC, TXT, RTF
+
+**📊 Spreadsheets:**
+- CSV, XLSX, XLS
+
+**🌐 Web Content:**
+- HTML, Markdown, JSON
+
+**📁 Other:**
+- XML, YAML
+
+**Size Limits:**
+- Single file: Up to 50MB
+- Total storage: 1GB (Pro), 10GB (Business)
+
+💡 **Tip:** For best results, use well-structured documents with clear headings!`
+  }
+];
+
+const WELCOME_MESSAGE = `👋 **Hi there! I'm your Customer Support AI**
+
+I'm here to help you with any questions about our products and services. I've been trained on your company's documentation to provide accurate, helpful answers.
+
+**Here are some things I can help with:**
+- 🔐 Password and account issues
+- 💰 Pricing and subscription questions
+- 📞 How to contact support
+- 🤖 Creating custom GPT assistants
+- 📁 File formats and uploads
+
+Just type your question below or click one of the suggested topics!`;
 
 interface CompactProps {
   compactMode?: boolean;
@@ -93,6 +206,84 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
   const [selectedColor, setSelectedColor] = useState('#2563eb');
   const { toast } = useToast();
 
+  // Demo chat state
+  const [chatMessages, setChatMessages] = useState<DemoChatMessage[]>([
+    { id: 'welcome', role: 'assistant', content: WELCOME_MESSAGE }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [chatMessages]);
+
+  // Find matching answer from demo Q&A
+  const findDemoAnswer = (input: string): string => {
+    const lowerInput = input.toLowerCase();
+    
+    for (const qa of DEMO_QA) {
+      if (qa.keywords.some(keyword => lowerInput.includes(keyword))) {
+        return qa.answer;
+      }
+    }
+    
+    // Default response if no match
+    return `Thanks for your question! I understand you're asking about "${input}".
+
+While I'm a demo assistant with limited responses, the full version can answer any question based on your uploaded knowledge base.
+
+**Try asking me about:**
+- Password reset
+- Pricing plans
+- Contacting support
+- Creating custom GPTs
+- Supported file formats
+
+🚀 **Sign up for AI Studio** to create your own fully-trained assistant!`;
+  };
+
+  // Handle sending demo chat messages
+  const handleSendMessage = async () => {
+    if (!chatInput.trim()) return;
+    
+    const userMessage: DemoChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: chatInput
+    };
+    
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsTyping(true);
+    
+    // Simulate typing delay
+    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
+    
+    const answer = findDemoAnswer(chatInput);
+    const assistantMessage: DemoChatMessage = {
+      id: `assistant-${Date.now()}`,
+      role: 'assistant',
+      content: answer
+    };
+    
+    setChatMessages(prev => [...prev, assistantMessage]);
+    setIsTyping(false);
+  };
+
+  // Handle quick question click
+  const handleQuickQuestion = (question: string) => {
+    setChatInput(question);
+    // Auto-send after setting
+    setTimeout(() => {
+      const fakeEvent = { preventDefault: () => {} };
+      handleSendMessage();
+    }, 100);
+  };
+
   const builderSteps = [
     { step: 1, title: 'Identity', icon: Bot },
     { step: 2, title: 'Knowledge', icon: FileText },
@@ -126,8 +317,10 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
     setIsDeployed(true);
     toast({
       title: "🎉 GPT Deployed Successfully!",
-      description: "Your AI assistant is now live and ready to use.",
+      description: "Try chatting with your new AI assistant!",
     });
+    // Auto-switch to chat tab
+    setTimeout(() => setActiveTab('chat'), 500);
   };
 
   const copyEmbedCode = () => {
@@ -414,15 +607,21 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className={cn("grid w-full", isDeployed ? "grid-cols-3" : "grid-cols-2")}>
           <TabsTrigger value="builder">
             <Bot className="h-4 w-4 mr-2" />
-            GPT Builder
+            Builder
           </TabsTrigger>
           <TabsTrigger value="templates">
             <Zap className="h-4 w-4 mr-2" />
             Templates
           </TabsTrigger>
+          {isDeployed && (
+            <TabsTrigger value="chat" className="text-emerald-600">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Try It
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* GPT Builder Tab */}
@@ -527,6 +726,142 @@ export const AIStudioProductDemo = ({ compactMode = false }: CompactProps) => {
             </Button>
           </div>
         </TabsContent>
+
+        {/* Live Demo Chat Tab */}
+        {isDeployed && (
+          <TabsContent value="chat" className="mt-4">
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-2 pt-3 px-4" style={{ backgroundColor: `${selectedColor}10` }}>
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: selectedColor }}
+                  >
+                    <Bot className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">{formData.name}</CardTitle>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-xs text-muted-foreground">Online • Demo Mode</span>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                {/* Chat Messages */}
+                <div ref={scrollRef} className="h-[280px] overflow-y-auto p-4 space-y-4">
+                  {chatMessages.map((message) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={cn(
+                        "flex gap-3",
+                        message.role === 'user' ? "justify-end" : "justify-start"
+                      )}
+                    >
+                      {message.role === 'assistant' && (
+                        <div 
+                          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: `${selectedColor}20` }}
+                        >
+                          <Bot className="h-4 w-4" style={{ color: selectedColor }} />
+                        </div>
+                      )}
+                      <div className={cn(
+                        "max-w-[80%] rounded-lg p-3 text-sm",
+                        message.role === 'user' 
+                          ? "bg-primary text-primary-foreground" 
+                          : "bg-muted"
+                      )}>
+                        <div className="whitespace-pre-wrap prose prose-sm dark:prose-invert max-w-none [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1">
+                          {message.content.split('\n').map((line, i) => {
+                            // Simple markdown parsing
+                            let parsed = line
+                              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                              .replace(/`(.*?)`/g, '<code class="bg-background/50 px-1 rounded text-xs">$1</code>');
+                            return <p key={i} dangerouslySetInnerHTML={{ __html: parsed }} />;
+                          })}
+                        </div>
+                      </div>
+                      {message.role === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                          <User className="h-4 w-4 text-primary-foreground" />
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                  
+                  {isTyping && (
+                    <div className="flex gap-3">
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `${selectedColor}20` }}
+                      >
+                        <Bot className="h-4 w-4" style={{ color: selectedColor }} />
+                      </div>
+                      <div className="bg-muted rounded-lg p-3">
+                        <div className="flex gap-1">
+                          <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                          <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                          <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick Questions */}
+                {chatMessages.length <= 1 && (
+                  <div className="px-4 pb-2">
+                    <p className="text-xs text-muted-foreground mb-2">Try asking:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {DEMO_QA.slice(0, 3).map((qa, i) => (
+                        <Button
+                          key={i}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-7"
+                          onClick={() => handleQuickQuestion(qa.question)}
+                        >
+                          {qa.question}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Chat Input */}
+                <div className="p-3 border-t">
+                  <form 
+                    onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                    className="flex gap-2"
+                  >
+                    <Input
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      placeholder="Type your message..."
+                      className="flex-1"
+                      disabled={isTyping}
+                    />
+                    <Button 
+                      type="submit" 
+                      size="icon"
+                      disabled={!chatInput.trim() || isTyping}
+                      style={{ backgroundColor: selectedColor }}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </form>
+                  <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                    Demo mode • No AI credits used • Sign up for full experience
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
