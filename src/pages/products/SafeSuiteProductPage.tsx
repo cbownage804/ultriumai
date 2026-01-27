@@ -3,12 +3,14 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowRight, User, Building2, Shield, Key, Search, 
-  Globe, Monitor, Check, Zap, Lock, Heart
-} from "lucide-react";
+import { ArrowRight, User, Building2, Check, Zap, Lock, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
+import { safesuiteLogo, safeSuiteProducts } from "@/components/safesuite/SafeSuiteProductIcons";
+import safepassLogo from "@/assets/safepass-logo.png";
+import safescanLogo from "@/assets/safescan-logo.png";
+import safewebLogo from "@/assets/safeweb-logo.png";
+import safetrackLogo from "@/assets/safetrack-logo.png";
+import safeassistLogo from "@/assets/safeassist-logo-horizontal.png";
 import { SEOHead } from "@/components/SEOHead";
 
 const SafeSuiteProductPage = () => {
@@ -27,32 +29,29 @@ const SafeSuiteProductPage = () => {
 
   const features = [
     {
-      icon: Key,
+      logo: safepassLogo,
       title: "SafePass™ — Password Vault",
-      description: "Secure password storage with autofill, sharing, and breach monitoring. Never forget a password again.",
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10"
+      description: "Secure password storage with autofill, sharing, and breach monitoring. Never forget a password again."
     },
     {
-      icon: Search,
+      logo: safescanLogo,
       title: "SafeScan™ — Threat Scanning",
-      description: "Scan your devices and networks for vulnerabilities, malware, and security misconfigurations.",
-      color: "text-red-500",
-      bgColor: "bg-red-500/10"
+      description: "Scan your devices and networks for vulnerabilities, malware, and security misconfigurations."
     },
     {
-      icon: Globe,
+      logo: safewebLogo,
       title: "SafeWeb™ — Dark Web Monitoring",
-      description: "24/7 monitoring of the dark web for leaked credentials, data breaches, and identity exposure.",
-      color: "text-violet-500",
-      bgColor: "bg-violet-500/10"
+      description: "24/7 monitoring of the dark web for leaked credentials, data breaches, and identity exposure."
     },
     {
-      icon: Monitor,
+      logo: safetrackLogo,
       title: "SafeTrack™ — Asset Management",
-      description: "Keep track of your devices, software licenses, and digital assets in one simple dashboard.",
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10"
+      description: "Keep track of your devices, software licenses, and digital assets in one simple dashboard."
+    },
+    {
+      logo: safeassistLogo,
+      title: "SafeAssist™ — AI Security Assistant",
+      description: "Get plain-language security guidance and threat analysis powered by AI. Your personal security advisor."
     }
   ];
 
@@ -60,7 +59,7 @@ const SafeSuiteProductPage = () => {
     "No enterprise complexity — just simple, effective security",
     "Modern design that's easy to understand and use",
     "Affordable pricing for individuals and small teams",
-    "All-in-one bundle — password vault, scanning, and monitoring",
+    "All-in-one bundle — password vault, scanning, monitoring, and AI assistance",
     "Works across all your devices",
     "Privacy-first approach — your data stays yours"
   ];
@@ -157,25 +156,26 @@ const SafeSuiteProductPage = () => {
             </Badge>
             <h2 className="text-3xl font-bold mb-4">What's Included</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Four powerful tools in one simple package.
+              Five powerful tools in one simple package.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature, i) => {
-              const IconComponent = feature.icon;
-              return (
-                <Card key={i} className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
-                  <CardContent className="p-6">
-                    <div className={`w-12 h-12 rounded-lg ${feature.bgColor} flex items-center justify-center mb-4`}>
-                      <IconComponent className={`h-6 w-6 ${feature.color}`} />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground text-sm">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feature, i) => (
+              <Card key={i} className="bg-card border-border/50 hover:border-emerald-500/30 transition-all">
+                <CardContent className="p-6">
+                  <div className="w-14 h-14 rounded-xl bg-black/50 flex items-center justify-center mb-4 p-2">
+                    <img 
+                      src={feature.logo} 
+                      alt={feature.title} 
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
