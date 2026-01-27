@@ -367,7 +367,7 @@ Each SafeSuite tool works together to provide complete security coverage!`;
       {/* Header with SafeAssist branding - centered logo only */}
       {!compactMode && (
         <div className="flex justify-center mb-4 px-4">
-          <img src={safeassistLogo} alt="SafeAssist" className="h-14 w-auto" />
+          <img src={safeassistLogo} alt="SafeAssist" className="h-28 w-auto" />
         </div>
       )}
 
@@ -471,7 +471,7 @@ Each SafeSuite tool works together to provide complete security coverage!`;
         <Card className="mx-4 mt-4 border-emerald-500/20 bg-emerald-500/5">
           <CardContent className="p-4 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <img src={safeassistLogo} alt="SafeAssist" className="h-8 w-auto" />
+              <img src={safeassistLogo} alt="SafeAssist" className="h-16 w-auto" />
             </div>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Badge className="bg-emerald-500/20 text-emerald-500">

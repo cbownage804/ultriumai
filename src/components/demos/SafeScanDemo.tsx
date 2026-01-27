@@ -70,7 +70,7 @@ export const SafeScanDemo = () => {
     <div className="space-y-4">
       {/* Header with SafeScan branding - centered logo only */}
       <div className="flex justify-center mb-4">
-        <img src={safescanLogo} alt="SafeScan" className="h-14 w-auto" />
+        <img src={safescanLogo} alt="SafeScan" className="h-28 w-auto" />
       </div>
 
       {/* Scanner Selection - styled like real app */}
@@ -206,7 +206,7 @@ export const SafeScanDemo = () => {
       <Card className="border-red-500/20 bg-red-500/5">
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <img src={safescanLogo} alt="SafeScan" className="h-8 w-auto" />
+            <img src={safescanLogo} alt="SafeScan" className="h-16 w-auto" />
           </div>
           <h4 className="text-lg font-bold mb-1">Multi-Engine AI Detection</h4>
           <p className="text-muted-foreground text-sm mb-3">
