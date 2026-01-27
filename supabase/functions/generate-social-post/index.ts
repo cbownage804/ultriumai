@@ -77,6 +77,22 @@ const CONTENT_TYPE_CONTEXT: Record<string, string> = {
   compliance_update: `Share regulatory or compliance information relevant to businesses. Keep it accessible, not legal jargon.`,
   success_story: `Frame a business scenario or use case where AI Studio or SafeSuite solved a real problem. Keep it believable.`,
   
+  // Product-specific promos
+  safepass_promo: `Promote SafePass, the secure password vault. Highlight: zero-knowledge encryption, team password sharing, breach monitoring, built-in TOTP authenticator, password health scoring. Position as the foundation of good security - no more sticky notes or reused passwords.`,
+  safescan_promo: `Promote SafeScan, the unified threat scanner. Highlight: scan emails for phishing, check URLs before clicking, analyze suspicious documents, bulk scanning capabilities. Position as the first line of defense against everyday threats.`,
+  safeweb_promo: `Promote SafeWeb, the dark web monitor. Highlight: monitors for leaked credentials, data breach alerts, exposure risk scoring, AI-powered threat analysis. Position as your early warning system for when your data appears where it shouldn't.`,
+  safetrack_promo: `Promote SafeTrack, the IT asset manager. Highlight: hardware and software inventory, warranty tracking, depreciation calculations, QR-based asset tagging, maintenance scheduling. Position as complete visibility into your IT assets.`,
+  safeassist_promo: `Promote SafeAssist, the AI-powered security advisor. THIS IS CRITICAL - SafeAssist is:
+- An AI assistant that provides real-time security guidance to employees
+- Available 24/7 to answer security questions in plain language
+- Helps employees identify phishing, understand threats, and follow best practices
+- Like having a security expert available to every team member instantly
+- Proactive protection that trains and guides rather than just blocking
+Highlight: real-time guidance, threat analysis explanations, incident response help, personalized security advice. Position SafeAssist as your team's always-available security advisor - practical security designed for the modern workplace.
+Link: https://ultriumai.com/products/safesuite`,
+  vanguard_promo: `Promote Vanguard, the enterprise RMM and security platform. Highlight: endpoint management, XDR threat detection, remote monitoring, compliance automation, AI-powered threat response. Position as the MSP-grade security operations platform.`,
+  ai_studio: `Promote AI Studio, the Business AI Control Plane. Highlight: custom GPT creation, knowledge base training, white-label deployment, enterprise governance, predictable AI capacity. Position for MSPs and internal teams who need controlled AI.`,
+  
   // General
   security_tip: `Provide quick, actionable security advice. Keep it practical and accessible. End with a soft nudge toward SafeSuite.`,
   awareness_campaign: `Create cybersecurity awareness content. Educate without being preachy. Make security approachable.`,
