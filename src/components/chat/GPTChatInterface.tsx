@@ -258,11 +258,15 @@ export const GPTChatInterface = () => {
       );
       
       if (!creditResult.success && creditResult.error === 'insufficient_credits') {
-        toast({
-          title: "Credits Exhausted",
-          description: "This assistant is temporarily unavailable. Please upgrade your plan.",
-          variant: "destructive",
-        });
+        // Neutral message for end users - no mention of credits/pricing
+        const unavailableMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          role: 'assistant',
+          content: 'This assistant is temporarily unavailable. Please try again later.',
+          timestamp: new Date()
+        };
+        setMessages(prev => prev.slice(0, -1).concat(unavailableMessage));
+        return;
       }
       
       const assistantMessage: Message = {

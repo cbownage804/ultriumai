@@ -212,11 +212,12 @@ const Pricing = () => {
             <div className="inline-flex items-center justify-center px-10 py-5 bg-black rounded-2xl shadow-lg shadow-primary/30 mb-6">
               <img src={aiStudioLogo} alt="AI Studio" className="h-24 w-auto" />
             </div>
+            <h2 className="text-3xl font-bold text-white mb-4">Business AI Control Plane</h2>
             <p className="text-lg text-white/50 max-w-2xl mx-auto mb-4">
-              Build custom AI assistants trained on your data. White-label ready. No coding required.
+              Build, deploy, brand, govern, and monetize AI assistants with predictable cost and administrative control.
             </p>
             <p className="text-sm text-white/40">
-              1 AI Credit = AI processing capacity • Credits never exposed to end users
+              Monthly AI capacity • Controlled & governed • Business-ready
             </p>
           </div>
 
@@ -224,125 +225,144 @@ const Pricing = () => {
           <div className="mb-16">
             <div className="text-center mb-8">
               <Badge className="mb-3 bg-primary/20 text-primary border-primary/30">For MSPs & IT Firms</Badge>
-              <h3 className="text-2xl font-bold text-white mb-2">Build AI for Your Clients</h3>
+              <h3 className="text-2xl font-bold text-white mb-2">Turn AI Into a Managed Service</h3>
               <p className="text-white/50 text-sm max-w-xl mx-auto">
-                Build AI assistants for your clients under your brand, with full control over usage and cost.
+                Monthly AI capacity you can allocate across clients. Full cost control.
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {/* MSP Starter */}
               <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
-                <CardContent className="p-8">
-                  <h3 className="text-xl font-bold text-white mb-2">MSP Starter</h3>
-                  <p className="text-white/50 text-sm mb-6">Get started with client AI</p>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-2">MSP Starter</h3>
+                  <p className="text-white/50 text-xs mb-4">Get started with client AI</p>
                   
-                  <div className="mb-2">
-                    <span className="text-4xl font-bold text-white">$99</span>
-                    <span className="text-white/50">/month</span>
+                  <div className="mb-1">
+                    <span className="text-3xl font-bold text-white">$99</span>
+                    <span className="text-white/50 text-sm">/mo</span>
                   </div>
-                  <p className="text-sm text-primary mb-6">50,000 AI credits</p>
+                  <p className="text-sm text-primary mb-4">40,000 AI capacity</p>
 
-                  <div className="space-y-3 mb-8">
+                  <div className="space-y-2 mb-6">
                     {[
                       "5 Custom GPTs",
-                      "Client usage allocation",
+                      "Client allocation",
                       "White-label branding",
                       "Per-client analytics",
-                      "Email support",
                     ].map((feature, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="text-sm text-white/70">{feature}</span>
+                      <div key={i} className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-primary flex-shrink-0" />
+                        <span className="text-xs text-white/70">{feature}</span>
                       </div>
                     ))}
                   </div>
                 </CardContent>
-                <CardFooter className="p-8 pt-0">
-                  <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
-                    <Link to="/dashboard">
-                      Start Free Trial
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
+                <CardFooter className="p-6 pt-0">
+                  <Button variant="outline" size="sm" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+                    <Link to="/dashboard">Start Trial</Link>
                   </Button>
                 </CardFooter>
               </Card>
 
               {/* MSP Pro - Popular */}
-              <Card className="bg-[#141414] border-2 border-primary/50 relative scale-105 shadow-xl shadow-primary/10">
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white">
-                  Most Popular
+              <Card className="bg-[#141414] border-2 border-primary/50 relative shadow-xl shadow-primary/10">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-xs">
+                  Popular
                 </Badge>
-                <CardContent className="p-8">
-                  <h3 className="text-xl font-bold text-white mb-2">MSP Pro</h3>
-                  <p className="text-white/50 text-sm mb-6">Scale with your client base</p>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-2">MSP Pro</h3>
+                  <p className="text-white/50 text-xs mb-4">Scale with your clients</p>
                   
-                  <div className="mb-2">
-                    <span className="text-4xl font-bold text-primary">$249</span>
-                    <span className="text-white/50">/month</span>
+                  <div className="mb-1">
+                    <span className="text-3xl font-bold text-primary">$249</span>
+                    <span className="text-white/50 text-sm">/mo</span>
                   </div>
-                  <p className="text-sm text-primary mb-6">200,000 AI credits</p>
+                  <p className="text-sm text-primary mb-4">150,000 AI capacity</p>
 
-                  <div className="space-y-3 mb-8">
+                  <div className="space-y-2 mb-6">
                     {[
                       "25 Custom GPTs",
-                      "Multi-client management",
-                      "Advanced white-labeling",
-                      "API access & webhooks",
+                      "Multi-client mgmt",
+                      "API & webhooks",
                       "Priority support",
-                      "Overage billing ($10/10K)",
                     ].map((feature, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="text-sm text-white/70">{feature}</span>
+                      <div key={i} className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-primary flex-shrink-0" />
+                        <span className="text-xs text-white/70">{feature}</span>
                       </div>
                     ))}
                   </div>
                 </CardContent>
-                <CardFooter className="p-8 pt-0">
-                  <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                    <Link to="/dashboard">
-                      Start Free Trial
-                      <Brain className="ml-2 h-4 w-4" />
-                    </Link>
+                <CardFooter className="p-6 pt-0">
+                  <Button size="sm" className="w-full bg-primary hover:bg-primary/90" asChild>
+                    <Link to="/dashboard">Start Trial</Link>
                   </Button>
                 </CardFooter>
               </Card>
 
               {/* MSP Elite */}
               <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
-                <CardContent className="p-8">
-                  <h3 className="text-xl font-bold text-white mb-2">MSP Elite</h3>
-                  <p className="text-white/50 text-sm mb-6">Enterprise-grade capacity</p>
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-2">MSP Elite</h3>
+                  <p className="text-white/50 text-xs mb-4">Enterprise capacity</p>
                   
-                  <div className="mb-2">
-                    <span className="text-4xl font-bold text-white">$499</span>
-                    <span className="text-white/50">/month</span>
+                  <div className="mb-1">
+                    <span className="text-3xl font-bold text-white">$499</span>
+                    <span className="text-white/50 text-sm">/mo</span>
                   </div>
-                  <p className="text-sm text-primary mb-6">500,000 AI credits</p>
+                  <p className="text-sm text-primary mb-4">350,000 AI capacity</p>
 
-                  <div className="space-y-3 mb-8">
+                  <div className="space-y-2 mb-6">
                     {[
-                      "Unlimited Custom GPTs",
+                      "Unlimited GPTs",
                       "Unlimited clients",
-                      "Custom integrations",
-                      "Dedicated account manager",
+                      "Dedicated manager",
                       "SLA guarantee",
-                      "Credits roll over",
                     ].map((feature, i) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                        <span className="text-sm text-white/70">{feature}</span>
+                      <div key={i} className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-primary flex-shrink-0" />
+                        <span className="text-xs text-white/70">{feature}</span>
                       </div>
                     ))}
                   </div>
                 </CardContent>
-                <CardFooter className="p-8 pt-0">
-                  <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10" asChild>
-                    <Link to="/dashboard">
-                      Start Free Trial
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
+                <CardFooter className="p-6 pt-0">
+                  <Button variant="outline" size="sm" className="w-full border-primary/50 text-primary hover:bg-primary/10" asChild>
+                    <Link to="/dashboard">Start Trial</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Platform Pro */}
+              <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-bold text-white mb-2">Platform Pro</h3>
+                  <p className="text-white/50 text-xs mb-4">Maximum capacity</p>
+                  
+                  <div className="mb-1">
+                    <span className="text-3xl font-bold text-white">$999</span>
+                    <span className="text-white/50 text-sm">/mo</span>
+                  </div>
+                  <p className="text-sm text-primary mb-4">600,000 AI capacity</p>
+
+                  <div className="space-y-2 mb-6">
+                    {[
+                      "Everything in Elite",
+                      "Custom integrations",
+                      "Credits roll over",
+                      "24/7 support",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <Check className="h-3 w-3 text-primary flex-shrink-0" />
+                        <span className="text-xs text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-6 pt-0">
+                  <Button variant="outline" size="sm" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+                    <Link to="/dashboard">Start Trial</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -355,11 +375,11 @@ const Pricing = () => {
               <Badge className="mb-3 bg-violet-500/20 text-violet-400 border-violet-500/30">For Internal Teams</Badge>
               <h3 className="text-2xl font-bold text-white mb-2">Your Company's Private AI</h3>
               <p className="text-white/50 text-sm max-w-xl mx-auto">
-                Your company's AI, trained on your data, with predictable monthly usage.
+                Predictable monthly AI usage with no surprise costs.
               </p>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               {/* Team Basic */}
               <Card className="bg-[#141414] border-white/10 hover:border-violet-500/30 transition-all">
                 <CardContent className="p-8">
@@ -370,7 +390,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-white">$49</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-violet-400 mb-6">20,000 AI credits (hard cap)</p>
+                  <p className="text-sm text-violet-400 mb-6">15,000 AI capacity (hard cap)</p>
 
                   <div className="space-y-3 mb-8">
                     {[
@@ -410,7 +430,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-violet-400">$149</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-violet-400 mb-6">100,000 AI credits</p>
+                  <p className="text-sm text-violet-400 mb-6">75,000 AI capacity (hard cap)</p>
 
                   <div className="space-y-3 mb-8">
                     {[
@@ -419,7 +439,6 @@ const Pricing = () => {
                       "Advanced analytics",
                       "API access",
                       "Priority support",
-                      "Overage available",
                     ].map((feature, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <Check className="h-4 w-4 text-violet-400 flex-shrink-0" />
@@ -437,6 +456,42 @@ const Pricing = () => {
                   </Button>
                 </CardFooter>
               </Card>
+
+              {/* Team Enterprise */}
+              <Card className="bg-[#141414] border-white/10 hover:border-violet-500/30 transition-all">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">Team Enterprise</h3>
+                  <p className="text-white/50 text-sm mb-6">Custom for large organizations</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-white">Custom</span>
+                  </div>
+                  <p className="text-sm text-violet-400 mb-6">Custom AI capacity</p>
+
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "Unlimited GPTs",
+                      "Unlimited team members",
+                      "SSO integration",
+                      "Dedicated support",
+                      "SLA guarantee",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-violet-400 flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button variant="outline" className="w-full border-violet-500/50 text-violet-400 hover:bg-violet-500/10" asChild>
+                    <Link to="/contact">
+                      Contact Sales
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
           </div>
 
@@ -446,7 +501,7 @@ const Pricing = () => {
               <Badge className="mb-3 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">For Websites</Badge>
               <h3 className="text-2xl font-bold text-white mb-2">Website AI Assistants</h3>
               <p className="text-white/50 text-sm max-w-xl mx-auto">
-                Turn your website into a smart, lead-generating assistant without runaway costs.
+                A smart website assistant without spam or runaway costs. Designed for lead generation, not unlimited chat.
               </p>
             </div>
             
@@ -461,15 +516,15 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-white">$29</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-emerald-400 mb-6">5,000 credits • ~300 conversations</p>
+                  <p className="text-sm text-emerald-400 mb-6">3,000 capacity • 250 conversations</p>
 
                   <div className="space-y-3 mb-8">
                     {[
                       "1 Embedded GPT",
                       "Website chat widget",
                       "Lead capture forms",
-                      "3-5 messages per visitor",
-                      "Rate limiting included",
+                      "5 messages per visitor",
+                      "IP/session rate limiting",
                     ].map((feature, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
@@ -501,7 +556,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-emerald-400">$79</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-emerald-400 mb-6">20,000 credits • ~1,500 conversations</p>
+                  <p className="text-sm text-emerald-400 mb-6">12,000 capacity • 1,000 conversations</p>
 
                   <div className="space-y-3 mb-8">
                     {[
