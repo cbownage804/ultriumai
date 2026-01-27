@@ -13,7 +13,7 @@ const getProductLogoUrl = (product: string): string => {
     safescan: 'safescan-logo.png',
     safeweb: 'safeweb-logo.png',
     safetrack: 'safetrack-logo.png',
-    safeassist: 'safeassist-logo.png',
+    safeassist: 'safeassist-logo-horizontal.png',
     safesuite: 'safesuite-logo.png',
     ultriumgpt: 'ultrium-gpt-logo.png',
     aistudio: 'ultrium-gpt-logo.png', // AI Studio uses the same logo as UltriumGPT
@@ -63,7 +63,7 @@ const VISUAL_STYLES: Record<string, string> = {
   safescan_promo: 'Threat detection imagery with red warning accents, email scanning visualizations, URL analysis, document inspection, shield barriers catching malware. Alert-focused aesthetic with dark backgrounds and crimson red glows. Vigilant, protective, proactive.',
   safeweb_promo: 'Dark web monitoring imagery with cyan/teal accents, deep web visualizations, breach detection alerts, credential monitoring dashboards, hidden threat discovery. Mysterious yet protective aesthetic with dark backgrounds and cyan glows. Watchful, comprehensive, revealing.',
   safetrack_promo: 'IT asset management imagery with emerald green accents, inventory dashboards, device tracking maps, asset lifecycle visualizations, organized equipment grids. Organized and efficient aesthetic with dark backgrounds and green accents. Orderly, efficient, complete.',
-  safeassist_promo: 'AI assistant imagery with blue accents, chatbot interfaces, helpful robot assistants, conversation bubbles with security icons, friendly AI faces. Approachable tech aesthetic with dark backgrounds and blue glows. Helpful, intelligent, accessible.',
+  safeassist_promo: 'AI security advisor imagery with emerald green accents. Show a friendly AI assistant helping employees with security - conversation interfaces, protective guidance, security education. Imagery of AI helping humans navigate threats safely. Modern robot or AI face with welcoming expression surrounded by security icons (shields, locks, checkmarks). Employees getting real-time security advice. Dark backgrounds with emerald/teal glows. Helpful, intelligent, accessible, protective.',
   vanguard_promo: 'Enterprise RMM imagery with cyan accents, endpoint management dashboards, network monitoring visualizations, remote access connections, security agent deployment. Command center aesthetic with dark backgrounds and cyan highlights. Powerful, comprehensive, enterprise-grade.',
   
   // General
