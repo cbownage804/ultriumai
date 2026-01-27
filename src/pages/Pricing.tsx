@@ -205,130 +205,347 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* AI Studio Section */}
+      {/* AI Studio Section - Three Markets */}
       <section id="ai-studio" className="py-20 px-4 bg-gradient-to-b from-transparent via-primary/5 to-transparent">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center px-10 py-5 bg-black rounded-2xl shadow-lg shadow-primary/30 mb-6">
               <img src={aiStudioLogo} alt="AI Studio" className="h-24 w-auto" />
             </div>
-            <p className="text-lg text-white/50 max-w-xl mx-auto">
-              Build custom GPT assistants trained on your data. No coding required.
+            <p className="text-lg text-white/50 max-w-2xl mx-auto mb-4">
+              Build custom AI assistants trained on your data. White-label ready. No coding required.
+            </p>
+            <p className="text-sm text-white/40">
+              1 AI Credit = AI processing capacity • Credits never exposed to end users
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Starter */}
-            <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
-              <CardContent className="p-8">
-                <h3 className="text-xl font-bold text-white mb-2">Starter</h3>
-                <p className="text-white/50 text-sm mb-6">For small teams getting started</p>
-                
-                <div className="mb-8">
-                  <span className="text-4xl font-bold text-white">$99</span>
-                  <span className="text-white/50">/month</span>
-                </div>
+          {/* MSP / IT Firms */}
+          <div className="mb-16">
+            <div className="text-center mb-8">
+              <Badge className="mb-3 bg-primary/20 text-primary border-primary/30">For MSPs & IT Firms</Badge>
+              <h3 className="text-2xl font-bold text-white mb-2">Build AI for Your Clients</h3>
+              <p className="text-white/50 text-sm max-w-xl mx-auto">
+                Build AI assistants for your clients under your brand, with full control over usage and cost.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {/* MSP Starter */}
+              <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">MSP Starter</h3>
+                  <p className="text-white/50 text-sm mb-6">Get started with client AI</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-white">$99</span>
+                    <span className="text-white/50">/month</span>
+                  </div>
+                  <p className="text-sm text-primary mb-6">50,000 AI credits</p>
 
-                <div className="space-y-3 mb-8">
-                  {[
-                    "1 Custom GPT",
-                    "500 queries/month",
-                    "1GB knowledge base",
-                    "3 team seats",
-                    "API access",
-                    "Email support",
-                  ].map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="text-sm text-white/70">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-              <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
-                  <Link to="/dashboard">
-                    Start Free Trial
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "5 Custom GPTs",
+                      "Client usage allocation",
+                      "White-label branding",
+                      "Per-client analytics",
+                      "Email support",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+                    <Link to="/dashboard">
+                      Start Free Trial
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
 
-            {/* Professional */}
-            <Card className="bg-[#141414] border-2 border-primary/50 relative scale-105 shadow-xl shadow-primary/10">
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white">
-                Most Popular
-              </Badge>
-              <CardContent className="p-8">
-                <h3 className="text-xl font-bold text-white mb-2">Professional</h3>
-                <p className="text-white/50 text-sm mb-6">For growing businesses</p>
-                
-                <div className="mb-8">
-                  <span className="text-4xl font-bold text-primary">$499</span>
-                  <span className="text-white/50">/month</span>
-                </div>
+              {/* MSP Pro - Popular */}
+              <Card className="bg-[#141414] border-2 border-primary/50 relative scale-105 shadow-xl shadow-primary/10">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white">
+                  Most Popular
+                </Badge>
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">MSP Pro</h3>
+                  <p className="text-white/50 text-sm mb-6">Scale with your client base</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-primary">$249</span>
+                    <span className="text-white/50">/month</span>
+                  </div>
+                  <p className="text-sm text-primary mb-6">200,000 AI credits</p>
 
-                <div className="space-y-3 mb-8">
-                  {[
-                    "5 Custom GPTs",
-                    "2,500 queries/month",
-                    "5GB knowledge base",
-                    "10 team seats",
-                    "White-label deployment",
-                    "Priority support",
-                  ].map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="text-sm text-white/70">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-              <CardFooter className="p-8 pt-0">
-                <Button className="w-full bg-primary hover:bg-primary/90" asChild>
-                  <Link to="/dashboard">
-                    Start Free Trial
-                    <Brain className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "25 Custom GPTs",
+                      "Multi-client management",
+                      "Advanced white-labeling",
+                      "API access & webhooks",
+                      "Priority support",
+                      "Overage billing ($10/10K)",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button className="w-full bg-primary hover:bg-primary/90" asChild>
+                    <Link to="/dashboard">
+                      Start Free Trial
+                      <Brain className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
 
-            {/* Enterprise */}
-            <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
-              <CardContent className="p-8">
-                <h3 className="text-xl font-bold text-white mb-2">Enterprise</h3>
-                <p className="text-white/50 text-sm mb-6">For large-scale deployments</p>
-                
-                <div className="mb-8">
-                  <span className="text-4xl font-bold text-white">Custom</span>
-                </div>
+              {/* MSP Elite */}
+              <Card className="bg-[#141414] border-white/10 hover:border-primary/30 transition-all">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">MSP Elite</h3>
+                  <p className="text-white/50 text-sm mb-6">Enterprise-grade capacity</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-white">$499</span>
+                    <span className="text-white/50">/month</span>
+                  </div>
+                  <p className="text-sm text-primary mb-6">500,000 AI credits</p>
 
-                <div className="space-y-3 mb-8">
-                  {[
-                    "25+ Custom GPTs",
-                    "Unlimited queries",
-                    "25GB+ storage",
-                    "Unlimited seats",
-                    "On-premise deployment",
-                    "24/7 dedicated support",
-                  ].map((feature, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                      <span className="text-sm text-white/70">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-              <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10" asChild>
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "Unlimited Custom GPTs",
+                      "Unlimited clients",
+                      "Custom integrations",
+                      "Dedicated account manager",
+                      "SLA guarantee",
+                      "Credits roll over",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button variant="outline" className="w-full border-primary/50 text-primary hover:bg-primary/10" asChild>
+                    <Link to="/dashboard">
+                      Start Free Trial
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+
+          {/* Internal Business Teams */}
+          <div className="mb-16">
+            <div className="text-center mb-8">
+              <Badge className="mb-3 bg-violet-500/20 text-violet-400 border-violet-500/30">For Internal Teams</Badge>
+              <h3 className="text-2xl font-bold text-white mb-2">Your Company's Private AI</h3>
+              <p className="text-white/50 text-sm max-w-xl mx-auto">
+                Your company's AI, trained on your data, with predictable monthly usage.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              {/* Team Basic */}
+              <Card className="bg-[#141414] border-white/10 hover:border-violet-500/30 transition-all">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">Team Basic</h3>
+                  <p className="text-white/50 text-sm mb-6">Predictable AI for small teams</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-white">$49</span>
+                    <span className="text-white/50">/month</span>
+                  </div>
+                  <p className="text-sm text-violet-400 mb-6">20,000 AI credits (hard cap)</p>
+
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "3 Custom GPTs",
+                      "5 team members",
+                      "Knowledge base upload",
+                      "Usage dashboard",
+                      "Email support",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-violet-400 flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+                    <Link to="/dashboard">
+                      Start Free Trial
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Team Plus */}
+              <Card className="bg-[#141414] border-2 border-violet-500/50 relative shadow-xl shadow-violet-500/10">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-violet-500 text-white">
+                  Best Value
+                </Badge>
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">Team Plus</h3>
+                  <p className="text-white/50 text-sm mb-6">Extended capacity for growing teams</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-violet-400">$149</span>
+                    <span className="text-white/50">/month</span>
+                  </div>
+                  <p className="text-sm text-violet-400 mb-6">100,000 AI credits</p>
+
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "10 Custom GPTs",
+                      "25 team members",
+                      "Advanced analytics",
+                      "API access",
+                      "Priority support",
+                      "Overage available",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-violet-400 flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button className="w-full bg-violet-500 hover:bg-violet-600" asChild>
+                    <Link to="/dashboard">
+                      Start Free Trial
+                      <Users className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+
+          {/* Website / Embedded GPTs */}
+          <div>
+            <div className="text-center mb-8">
+              <Badge className="mb-3 bg-emerald-500/20 text-emerald-400 border-emerald-500/30">For Websites</Badge>
+              <h3 className="text-2xl font-bold text-white mb-2">Website AI Assistants</h3>
+              <p className="text-white/50 text-sm max-w-xl mx-auto">
+                Turn your website into a smart, lead-generating assistant without runaway costs.
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+              {/* Website Basic */}
+              <Card className="bg-[#141414] border-white/10 hover:border-emerald-500/30 transition-all">
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">Website Basic</h3>
+                  <p className="text-white/50 text-sm mb-6">Smart website assistant</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-white">$29</span>
+                    <span className="text-white/50">/month</span>
+                  </div>
+                  <p className="text-sm text-emerald-400 mb-6">5,000 credits • ~300 conversations</p>
+
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "1 Embedded GPT",
+                      "Website chat widget",
+                      "Lead capture forms",
+                      "3-5 messages per visitor",
+                      "Rate limiting included",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10" asChild>
+                    <Link to="/dashboard">
+                      Start Free Trial
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+
+              {/* Website Pro */}
+              <Card className="bg-[#141414] border-2 border-emerald-500/50 relative shadow-xl shadow-emerald-500/10">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white">
+                  Best for Lead Gen
+                </Badge>
+                <CardContent className="p-8">
+                  <h3 className="text-xl font-bold text-white mb-2">Website Pro</h3>
+                  <p className="text-white/50 text-sm mb-6">High-volume lead generation</p>
+                  
+                  <div className="mb-2">
+                    <span className="text-4xl font-bold text-emerald-400">$79</span>
+                    <span className="text-white/50">/month</span>
+                  </div>
+                  <p className="text-sm text-emerald-400 mb-6">20,000 credits • ~1,500 conversations</p>
+
+                  <div className="space-y-3 mb-8">
+                    {[
+                      "3 Embedded GPTs",
+                      "Custom branding",
+                      "CRM integrations",
+                      "Conversation analytics",
+                      "Priority support",
+                      "White-label option",
+                    ].map((feature, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                        <span className="text-sm text-white/70">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="p-8 pt-0">
+                  <Button className="w-full bg-emerald-500 hover:bg-emerald-600" asChild>
+                    <Link to="/dashboard">
+                      Start Free Trial
+                      <Sparkles className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          </div>
+
+          {/* Enterprise CTA */}
+          <div className="mt-16 text-center">
+            <Card className="bg-gradient-to-br from-[#141414] to-primary/10 border-primary/30 max-w-2xl mx-auto">
+              <CardContent className="p-10">
+                <h3 className="text-2xl font-bold text-white mb-4">Enterprise & Custom Solutions</h3>
+                <p className="text-white/60 mb-6">
+                  Need more? Custom credit volumes, on-premise deployment, dedicated support, and SLA guarantees available.
+                </p>
+                <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10" asChild>
                   <Link to="/contact">
                     Contact Sales
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
-              </CardFooter>
+              </CardContent>
             </Card>
           </div>
         </div>
