@@ -1,5 +1,6 @@
-// AI Studio Credit System - Separate from SafeSuite
-// 1 AI Credit = 1,000 tokens (internal only, never shown to users)
+// AI Studio Credit System - Business AI Control Plane
+// 1 AI Credit = 1,000 tokens (INTERNAL ONLY - never exposed to users)
+// Credits represent "AI capacity" in all user-facing contexts
 
 // GPT Credit Multipliers
 export const GPT_MULTIPLIERS = {
@@ -8,25 +9,35 @@ export const GPT_MULTIPLIERS = {
   WEB_ENABLED: 2.0,   // GPT with web search
 } as const;
 
-// AI Studio Plans - MSP / IT Firms
+// AI Studio Plans - MSP / IT Firms (Resale-Focused)
 export const MSP_PLANS = {
   msp_starter: {
     name: 'MSP Starter',
     price: 9900, // $99/mo
-    credits: 50000,
-    description: 'Build AI assistants for your clients under your brand',
+    credits: 40000,
+    description: 'Monthly AI capacity you can allocate across clients',
+    tagline: 'Turn AI into a managed service with full cost control.',
   },
   msp_pro: {
     name: 'MSP Pro',
     price: 24900, // $249/mo
-    credits: 200000,
+    credits: 150000,
     description: 'Scale with more capacity and advanced features',
+    tagline: 'Turn AI into a managed service with full cost control.',
   },
   msp_elite: {
     name: 'MSP Elite',
     price: 49900, // $499/mo
-    credits: 500000,
+    credits: 350000,
     description: 'Enterprise-grade capacity for large client bases',
+    tagline: 'Turn AI into a managed service with full cost control.',
+  },
+  platform_pro: {
+    name: 'Platform Pro',
+    price: 99900, // $999/mo
+    credits: 600000,
+    description: 'Maximum capacity for platform operators',
+    tagline: 'Turn AI into a managed service with full cost control.',
   },
 } as const;
 
@@ -35,16 +46,18 @@ export const TEAM_PLANS = {
   team_basic: {
     name: 'Team Basic',
     price: 4900, // $49/mo
-    credits: 20000,
-    description: 'Predictable AI usage for small teams',
+    credits: 15000,
+    description: 'Predictable monthly AI usage with no surprise costs',
     hardStop: true,
+    tagline: "Your company's AI, trained on your data, with predictable usage.",
   },
   team_plus: {
     name: 'Team Plus',
     price: 14900, // $149/mo
-    credits: 100000,
+    credits: 75000,
     description: 'Extended capacity for growing teams',
-    hardStop: false,
+    hardStop: true,
+    tagline: "Your company's AI, trained on your data, with predictable usage.",
   },
 } as const;
 
@@ -53,20 +66,24 @@ export const WEBSITE_PLANS = {
   website_basic: {
     name: 'Website Basic',
     price: 2900, // $29/mo
-    credits: 5000,
-    conversations: 300,
-    description: 'Turn your website into a smart assistant',
+    credits: 3000,
+    conversations: 250,
+    messagesPerVisitor: 5,
+    description: 'Designed for lead generation, not unlimited chat',
+    tagline: 'A smart website assistant without spam or runaway costs.',
   },
   website_pro: {
     name: 'Website Pro',
     price: 7900, // $79/mo
-    credits: 20000,
-    conversations: 1500,
-    description: 'Lead-generating AI without runaway costs',
+    credits: 12000,
+    conversations: 1000,
+    messagesPerVisitor: 5,
+    description: 'High-volume lead generation with controls',
+    tagline: 'A smart website assistant without spam or runaway costs.',
   },
 } as const;
 
-// Overage pricing
+// Overage pricing (MSP plans only)
 export const OVERAGE_PRICING = {
   CREDITS_PER_PACK: 10000,
   PRICE_PER_PACK: 1000, // $10 per 10,000 credits
