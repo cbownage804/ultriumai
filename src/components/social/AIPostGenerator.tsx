@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Sparkles, AlertTriangle, Lightbulb, Building2, Newspaper, FileCheck, Trophy, Shield, Pencil, Download, Key, Search, Globe, Package, Bot, Cpu } from 'lucide-react';
 import { useSocialPosts } from '@/hooks/useSocialPosts';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 import { Users, Home, Smartphone, CreditCard, Mail, Wifi } from 'lucide-react';
@@ -76,6 +77,7 @@ interface AIPostGeneratorProps {
 
 export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
   const { generatePost, generateImage, bundleAccounts } = useSocialPosts();
+  const { toast } = useToast();
   
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [tone, setTone] = useState('professional');
@@ -84,32 +86,43 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
   const platformTypes = [...new Set(bundleAccounts?.map(a => a.platform) || [])];
 
   const handleGenerateBoth = async () => {
-    // Find the content type from any group
-    const allTypes = CONTENT_TYPE_GROUPS.flatMap(g => g.types);
-    const contentType = allTypes.find(t => t.id === selectedType);
-    const topic = contentType 
-      ? `${contentType.description}${additionalContext ? `: ${additionalContext}` : ''}`
-      : additionalContext || 'Professional cybersecurity content';
+    if (!selectedType) return;
 
-    // Generate text first, then image with text context for product detection
-    const textResult = await generatePost.mutateAsync({
-      topic,
-      tone,
-      platforms: platformTypes,
-      additionalContext,
-      contentType: selectedType,
-    });
+    try {
+      // Find the content type from any group
+      const allTypes = CONTENT_TYPE_GROUPS.flatMap(g => g.types);
+      const contentType = allTypes.find(t => t.id === selectedType);
+      const topic = contentType 
+        ? `${contentType.description}${additionalContext ? `: ${additionalContext}` : ''}`
+        : additionalContext || 'Professional cybersecurity content';
 
-    // Now generate image with the generated post content for product logo detection
-    const imageResult = await generateImage.mutateAsync({
-      prompt: topic,
-      aspectRatio: '16:9',
-      contentType: selectedType,
-      postContent: textResult, // Pass generated text for product detection
-    });
-    
-    // Send to composer
-    onUseContent(textResult, imageResult);
+      // Generate text first, then image with text context for product detection
+      const textResult = await generatePost.mutateAsync({
+        topic,
+        tone,
+        platforms: platformTypes,
+        additionalContext,
+        contentType: selectedType,
+      });
+
+      // Now generate image with the generated post content for product logo detection
+      const imageResult = await generateImage.mutateAsync({
+        prompt: topic,
+        aspectRatio: '16:9',
+        contentType: selectedType,
+        postContent: textResult, // Pass generated text for product detection
+      });
+      
+      // Send to composer
+      onUseContent(textResult, imageResult);
+    } catch (error) {
+      console.error('AI Post Generator failed:', error);
+      toast({
+        title: 'Generation Failed',
+        description: error instanceof Error ? error.message : 'Failed to generate post and image.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const isGenerating = generatePost.isPending || generateImage.isPending;
