@@ -73,6 +73,7 @@ import SmallBusiness from '@/pages/SmallBusiness';
 import MediumBusiness from '@/pages/MediumBusiness';
 import Enterprise from '@/pages/Enterprise';
 import MSPs from '@/pages/MSPs';
+import AIStudioForMSPs from '@/pages/AIStudioForMSPs';
 import MSPSolutions from '@/pages/MSPSolutions';
 import BusinessSolutions from '@/pages/BusinessSolutions';
 import TegrityDashboardPage from '@/pages/TegrityDashboardPage';
@@ -323,6 +324,8 @@ function AppRouter() {
         <Route path="/medium-business" element={<MediumBusiness />} />
         <Route path="/enterprise" element={<Enterprise />} />
         <Route path="/msps" element={<MSPs />} />
+        <Route path="/ai-studio/msps" element={<AIStudioForMSPs />} />
+        <Route path="/ai-studio-for-msps" element={<AIStudioForMSPs />} />
         <Route path="/msp-solutions" element={<MSPSolutions />} />
         <Route path="/business-solutions" element={<BusinessSolutions />} />
         <Route path="/tegrity-dashboard" element={<TegrityDashboardPage />} />
