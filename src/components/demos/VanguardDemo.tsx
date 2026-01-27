@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,49 +46,32 @@ import {
   Terminal
 } from "lucide-react";
 import vanguardLogo from '@/assets/vanguard-logo.png';
+import { useThrottle } from '@/hooks/useThrottle';
+import { 
+  mockRMMDevices, 
+  mockTickets, 
+  mockSOCAlerts, 
+  mockCompliance, 
+  mockMSPClients,
+  platformModules,
+  liveActivityFeed 
+} from '@/data/vanguard-demo-data';
 
-// =============== MOCK DATA ===============
-
-const mockRMMDevices = [
-  { id: 1, name: "PROD-WEB-01", customer: "Acme Corp", os: "Ubuntu 22.04", status: "online", cpu: 45, memory: 62, patches: "current" },
-  { id: 2, name: "DC-PRIMARY", customer: "TechStart Inc", os: "Windows Server 2022", status: "online", cpu: 28, memory: 71, patches: "pending" },
-  { id: 3, name: "EXEC-LAPTOP-01", customer: "Acme Corp", os: "Windows 11", status: "online", cpu: 12, memory: 45, patches: "current" },
-  { id: 4, name: "DEV-MAC-03", customer: "Design Studio", os: "macOS Sonoma", status: "offline", cpu: 0, memory: 0, patches: "unknown" },
-  { id: 5, name: "FILE-SERVER-01", customer: "TechStart Inc", os: "Windows Server 2019", status: "online", cpu: 55, memory: 78, patches: "outdated" },
-];
-
-const mockTickets = [
-  { id: "TKT-1042", title: "VPN connection failing from home office", customer: "Acme Corp", priority: "high", status: "open", assignee: "John D.", created: "2h ago" },
-  { id: "TKT-1041", title: "Email sync issues on mobile device", customer: "TechStart Inc", priority: "medium", status: "in_progress", assignee: "Sarah M.", created: "4h ago" },
-  { id: "TKT-1040", title: "Request for new software installation", customer: "Design Studio", priority: "low", status: "open", assignee: null, created: "6h ago" },
-  { id: "TKT-1039", title: "Printer not connecting to network", customer: "Acme Corp", priority: "medium", status: "resolved", assignee: "John D.", created: "1d ago" },
-];
-
-const mockSOCAlerts = [
-  { id: 1, title: "Suspicious PowerShell Execution", severity: "critical", device: "DC-PRIMARY", source: "EDR", time: "5m ago", status: "investigating", mitre: "T1059.001" },
-  { id: 2, title: "Brute Force Login Attempts Detected", severity: "high", device: "PROD-WEB-01", source: "SIEM", time: "12m ago", status: "new", mitre: "T1110" },
-  { id: 3, title: "Unusual Outbound Traffic Pattern", severity: "medium", device: "FILE-SERVER-01", source: "Network", time: "45m ago", status: "investigating", mitre: "T1041" },
-  { id: 4, title: "Failed MFA Attempts - Executive Account", severity: "high", device: "EXEC-LAPTOP-01", source: "Identity", time: "1h ago", status: "resolved", mitre: "T1078" },
-];
-
-const mockCompliance = [
-  { framework: "SOC 2 Type II", score: 94, status: "compliant", lastAudit: "2024-01-15" },
-  { framework: "HIPAA", score: 88, status: "at_risk", lastAudit: "2024-01-10" },
-  { framework: "PCI-DSS", score: 96, status: "compliant", lastAudit: "2024-01-20" },
-  { framework: "NIST CSF", score: 91, status: "compliant", lastAudit: "2024-01-18" },
-];
-
-const mockMSPClients = [
-  { name: "Acme Corp", devices: 45, tickets: 3, threats: 1, status: "healthy" },
-  { name: "TechStart Inc", devices: 28, tickets: 5, threats: 2, status: "warning" },
-  { name: "Design Studio", devices: 12, tickets: 1, threats: 0, status: "healthy" },
-  { name: "Legal Partners LLP", devices: 32, tickets: 2, threats: 0, status: "healthy" },
-];
+// Icon mapping for dynamic rendering
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Monitor, Ticket, Eye, Target, FileCheck, Shield, Globe, Database, Network, Lock, Bot, Layers,
+  CheckCircle, Radio
+};
 
 // =============== COMPONENT ===============
 
 export const VanguardDemo = () => {
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Throttle tab changes to prevent rapid clicking
+  const handleTabChange = useThrottle((value: string) => {
+    setActiveTab(value);
+  }, 150);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -110,47 +93,67 @@ export const VanguardDemo = () => {
   };
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4" role="region" aria-label="Vanguard Platform Demo">
       {/* Header with Vanguard branding */}
       <div className="flex justify-center mb-4">
-        <img src={vanguardLogo} alt="Vanguard" className="h-28 w-auto" />
+        <img src={vanguardLogo} alt="Vanguard MSP Platform" className="h-28 w-auto" loading="lazy" />
       </div>
 
       {/* Product Suite Badges */}
-      <div className="flex flex-wrap justify-center gap-2 mb-4">
-        <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
-          <Monitor className="h-3 w-3 mr-1" />SafeOps RMM
+      <div className="flex flex-wrap justify-center gap-2 mb-4" role="list" aria-label="Platform capabilities">
+        <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30" role="listitem">
+          <Monitor className="h-3 w-3 mr-1" aria-hidden="true" />SafeOps RMM
         </Badge>
-        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-          <Ticket className="h-3 w-3 mr-1" />SafeDesk Helpdesk
+        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30" role="listitem">
+          <Ticket className="h-3 w-3 mr-1" aria-hidden="true" />SafeDesk Helpdesk
         </Badge>
-        <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-          <Eye className="h-3 w-3 mr-1" />SOC Operations
+        <Badge className="bg-red-500/20 text-red-400 border-red-500/30" role="listitem">
+          <Eye className="h-3 w-3 mr-1" aria-hidden="true" />SOC Operations
         </Badge>
-        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-          <FileCheck className="h-3 w-3 mr-1" />Compliance
+        <Badge className="bg-green-500/20 text-green-400 border-green-500/30" role="listitem">
+          <FileCheck className="h-3 w-3 mr-1" aria-hidden="true" />Compliance
         </Badge>
-        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-          <Building2 className="h-3 w-3 mr-1" />Multi-Tenant MSP
+        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30" role="listitem">
+          <Building2 className="h-3 w-3 mr-1" aria-hidden="true" />Multi-Tenant MSP
         </Badge>
       </div>
 
       {/* Module Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5 bg-muted/50">
-          <TabsTrigger value="overview" className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5 bg-muted/50" aria-label="Platform modules">
+          <TabsTrigger 
+            value="overview" 
+            className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+            aria-label="Platform overview"
+          >
             Overview
           </TabsTrigger>
-          <TabsTrigger value="rmm" className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+          <TabsTrigger 
+            value="rmm" 
+            className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+            aria-label="SafeOps Remote Monitoring"
+          >
             SafeOps
           </TabsTrigger>
-          <TabsTrigger value="helpdesk" className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+          <TabsTrigger 
+            value="helpdesk" 
+            className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+            aria-label="SafeDesk Helpdesk"
+          >
             SafeDesk
           </TabsTrigger>
-          <TabsTrigger value="soc" className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+          <TabsTrigger 
+            value="soc" 
+            className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+            aria-label="Security Operations Center"
+          >
             SOC
           </TabsTrigger>
-          <TabsTrigger value="msp" className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+          <TabsTrigger 
+            value="msp" 
+            className="text-xs data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+            aria-label="MSP Management Portal"
+          >
             MSP Portal
           </TabsTrigger>
         </TabsList>
@@ -283,11 +286,11 @@ export const VanguardDemo = () => {
               </Badge>
             </div>
             <div className="flex gap-2">
-              <Button size="sm" variant="outline" className="text-xs h-7">
-                <Terminal className="h-3 w-3 mr-1" />Remote Shell
+              <Button size="sm" variant="outline" className="text-xs h-7 focus-visible:ring-2 focus-visible:ring-cyan-500" aria-label="Open remote shell">
+                <Terminal className="h-3 w-3 mr-1" aria-hidden="true" />Remote Shell
               </Button>
-              <Button size="sm" variant="outline" className="text-xs h-7">
-                <RefreshCw className="h-3 w-3 mr-1" />Refresh
+              <Button size="sm" variant="outline" className="text-xs h-7 focus-visible:ring-2 focus-visible:ring-cyan-500" aria-label="Refresh device list">
+                <RefreshCw className="h-3 w-3 mr-1" aria-hidden="true" />Refresh
               </Button>
             </div>
           </div>
@@ -569,16 +572,16 @@ export const VanguardDemo = () => {
       </Tabs>
 
       {/* CTA with cyan branding */}
-      <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-purple-500/5">
+      <Card className="border-cyan-500/20 bg-gradient-to-r from-cyan-500/5 to-purple-500/5" role="region" aria-label="Call to action">
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <img src={vanguardLogo} alt="Vanguard" className="h-16 w-auto" />
+            <img src={vanguardLogo} alt="Vanguard Platform" className="h-16 w-auto" loading="lazy" />
           </div>
           <h4 className="text-lg font-bold mb-1">Complete MSP Security Platform</h4>
           <p className="text-muted-foreground text-sm mb-3">
             RMM, Helpdesk, SOC, Compliance, and AI-Powered Security in one unified platform
           </p>
-          <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white">
+          <Button className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2">
             Launch Vanguard Platform
           </Button>
         </CardContent>
