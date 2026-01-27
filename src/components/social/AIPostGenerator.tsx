@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Sparkles, AlertTriangle, Lightbulb, Building2, Newspaper, FileCheck, Trophy, Shield, Pencil, Download } from 'lucide-react';
+import { Loader2, Sparkles, AlertTriangle, Lightbulb, Building2, Newspaper, FileCheck, Trophy, Shield, Pencil, Download, Key, Search, Globe, Package, Bot, Cpu } from 'lucide-react';
 import { useSocialPosts } from '@/hooks/useSocialPosts';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +39,17 @@ const CONTENT_TYPE_GROUPS = [
       { id: 'industry_news', label: 'Industry News', description: 'Comment on cybersecurity news', icon: Newspaper, color: 'text-purple-400' },
       { id: 'compliance_update', label: 'Compliance Update', description: 'Regulatory and compliance info', icon: FileCheck, color: 'text-emerald-400' },
       { id: 'success_story', label: 'Success Story', description: 'Client success or use case', icon: Trophy, color: 'text-amber-400' },
+    ]
+  },
+  {
+    label: 'UltriumAI Products',
+    types: [
+      { id: 'safepass_promo', label: 'SafePass', description: 'Password manager & vault features', icon: Key, color: 'text-amber-400' },
+      { id: 'safescan_promo', label: 'SafeScan', description: 'Email, URL & document scanning', icon: Search, color: 'text-red-400' },
+      { id: 'safeweb_promo', label: 'SafeWeb', description: 'Dark web monitoring & breach alerts', icon: Globe, color: 'text-cyan-400' },
+      { id: 'safetrack_promo', label: 'SafeTrack', description: 'IT asset management & tracking', icon: Package, color: 'text-emerald-400' },
+      { id: 'safeassist_promo', label: 'SafeAssist', description: 'AI security assistant chatbot', icon: Bot, color: 'text-blue-400' },
+      { id: 'vanguard_promo', label: 'Vanguard', description: 'RMM & endpoint management', icon: Cpu, color: 'text-cyan-400' },
     ]
   },
   {
