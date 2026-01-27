@@ -4,19 +4,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
-  Search, 
   FileText, 
   Mail, 
   Link, 
   Key,
   AlertCircle, 
   CheckCircle, 
-  Clock,
   Zap,
   Shield,
   Upload
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import safescanLogo from '@/assets/safescan-logo.png';
 
 export const SafeScanDemo = () => {
   const [activeScanner, setActiveScanner] = useState('document');
@@ -52,6 +53,13 @@ export const SafeScanDemo = () => {
     }
   };
 
+  const tabs = [
+    { id: 'document', label: 'SafeDoc', icon: FileText },
+    { id: 'email', label: 'SafeMail', icon: Mail },
+    { id: 'url', label: 'SafeLink', icon: Link },
+    { id: 'password', label: 'SafePass', icon: Key },
+  ];
+
   const startScan = () => {
     setScanning(true);
     setScanProgress(0);
@@ -68,52 +76,46 @@ export const SafeScanDemo = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h3 className="text-2xl font-bold text-foreground mb-2">🔍 SafeScan AI-Powered Threat Detection</h3>
-        <p className="text-muted-foreground">Advanced scanning that catches what others miss</p>
+    <div className="space-y-4">
+      {/* Header with SafeScan branding - centered logo only */}
+      <div className="flex justify-center mb-4">
+        <img src={safescanLogo} alt="SafeScan" className="h-10 w-auto" />
       </div>
 
-      {/* Scanner Selection */}
-      <div className="flex justify-center gap-2 mb-6">
-        <Button 
-          variant={activeScanner === 'document' ? 'default' : 'outline'} 
-          onClick={() => setActiveScanner('document')}
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          SafeDoc
-        </Button>
-        <Button 
-          variant={activeScanner === 'email' ? 'default' : 'outline'} 
-          onClick={() => setActiveScanner('email')}
-        >
-          <Mail className="h-4 w-4 mr-2" />
-          SafeMail
-        </Button>
-        <Button 
-          variant={activeScanner === 'url' ? 'default' : 'outline'} 
-          onClick={() => setActiveScanner('url')}
-        >
-          <Link className="h-4 w-4 mr-2" />
-          SafeLink
-        </Button>
-        <Button 
-          variant={activeScanner === 'password' ? 'default' : 'outline'} 
-          onClick={() => setActiveScanner('password')}
-        >
-          <Key className="h-4 w-4 mr-2" />
-          SafePass
-        </Button>
-      </div>
+      {/* Scanner Selection - styled like real app */}
+      <ScrollArea className="w-full">
+        <div className="flex justify-center gap-1 p-1 bg-muted/50 rounded-lg mb-4">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <Button 
+                key={tab.id}
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "flex-shrink-0 gap-2 transition-all",
+                  activeScanner === tab.id 
+                    ? "bg-red-500 text-white hover:bg-red-600 hover:text-white" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setActiveScanner(tab.id)}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+              </Button>
+            );
+          })}
+        </div>
+      </ScrollArea>
 
       {/* Scan Interface */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {activeScanner === 'document' && <FileText className="h-5 w-5 text-primary" />}
-            {activeScanner === 'email' && <Mail className="h-5 w-5 text-primary" />}
-            {activeScanner === 'url' && <Link className="h-5 w-5 text-primary" />}
-            {activeScanner === 'password' && <Key className="h-5 w-5 text-primary" />}
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            {activeScanner === 'document' && <FileText className="h-5 w-5 text-red-500" />}
+            {activeScanner === 'email' && <Mail className="h-5 w-5 text-red-500" />}
+            {activeScanner === 'url' && <Link className="h-5 w-5 text-red-500" />}
+            {activeScanner === 'password' && <Key className="h-5 w-5 text-red-500" />}
             {activeScanner === 'document' && 'Document Scanner'}
             {activeScanner === 'email' && 'Email Threat Analysis'}
             {activeScanner === 'url' && 'URL Security Check'}
@@ -122,10 +124,10 @@ export const SafeScanDemo = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {activeScanner === 'document' && (
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground mb-4">Drop files here or click to upload</p>
-              <Button onClick={startScan}>
+            <div className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center bg-background/30">
+              <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-muted-foreground text-sm mb-3">Drop files here or click to upload</p>
+              <Button onClick={startScan} className="bg-red-500 hover:bg-red-600 text-white">
                 Scan Document
               </Button>
             </div>
@@ -133,9 +135,9 @@ export const SafeScanDemo = () => {
 
           {activeScanner === 'email' && (
             <div className="space-y-3">
-              <Input placeholder="Enter sender email address" defaultValue="noreply@suspicious-bank.com" />
-              <Input placeholder="Enter email subject" defaultValue="Urgent: Account Verification Required" />
-              <Button onClick={startScan} className="w-full">
+              <Input placeholder="Enter sender email address" defaultValue="noreply@suspicious-bank.com" className="bg-background/50" />
+              <Input placeholder="Enter email subject" defaultValue="Urgent: Account Verification Required" className="bg-background/50" />
+              <Button onClick={startScan} className="w-full bg-red-500 hover:bg-red-600 text-white">
                 Analyze Email
               </Button>
             </div>
@@ -143,8 +145,8 @@ export const SafeScanDemo = () => {
 
           {activeScanner === 'url' && (
             <div className="space-y-3">
-              <Input placeholder="Enter URL to scan" defaultValue="https://fake-microsoft-login.com" />
-              <Button onClick={startScan} className="w-full">
+              <Input placeholder="Enter URL to scan" defaultValue="https://fake-microsoft-login.com" className="bg-background/50" />
+              <Button onClick={startScan} className="w-full bg-red-500 hover:bg-red-600 text-white">
                 Scan URL
               </Button>
             </div>
@@ -155,10 +157,11 @@ export const SafeScanDemo = () => {
               <Input 
                 type="password" 
                 placeholder="Enter password to analyze" 
-                defaultValue="password123" 
+                defaultValue="password123"
+                className="bg-background/50"
               />
-              <Input placeholder="Enter email address for breach check (optional)" />
-              <Button onClick={startScan} className="w-full">
+              <Input placeholder="Enter email address for breach check (optional)" className="bg-background/50" />
+              <Button onClick={startScan} className="w-full bg-red-500 hover:bg-red-600 text-white">
                 Analyze Password Security
               </Button>
             </div>
@@ -201,38 +204,41 @@ export const SafeScanDemo = () => {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Shield className="h-8 w-8 mx-auto mb-2 text-success" />
-            <div className="text-2xl font-bold text-success">99.8%</div>
-            <div className="text-sm text-muted-foreground">Detection Accuracy</div>
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="bg-card/50 border-border/50">
+          <CardContent className="p-3 text-center">
+            <Shield className="h-6 w-6 mx-auto mb-1 text-emerald-500" />
+            <div className="text-lg font-bold text-emerald-500">99.8%</div>
+            <div className="text-xs text-muted-foreground">Detection Accuracy</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Zap className="h-8 w-8 mx-auto mb-2 text-primary" />
-            <div className="text-2xl font-bold text-primary">0.3s</div>
-            <div className="text-sm text-muted-foreground">Average Scan Time</div>
+        <Card className="bg-card/50 border-border/50">
+          <CardContent className="p-3 text-center">
+            <Zap className="h-6 w-6 mx-auto mb-1 text-red-500" />
+            <div className="text-lg font-bold text-red-500">0.3s</div>
+            <div className="text-xs text-muted-foreground">Average Scan Time</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <CheckCircle className="h-8 w-8 mx-auto mb-2 text-info" />
-            <div className="text-2xl font-bold text-info">500+</div>
-            <div className="text-sm text-muted-foreground">Threat Sources</div>
+        <Card className="bg-card/50 border-border/50">
+          <CardContent className="p-3 text-center">
+            <CheckCircle className="h-6 w-6 mx-auto mb-1 text-cyan-500" />
+            <div className="text-lg font-bold text-cyan-500">500+</div>
+            <div className="text-xs text-muted-foreground">Threat Sources</div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-6 text-center">
-          <Search className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h4 className="text-xl font-bold mb-2">Multi-Engine AI Detection</h4>
-          <p className="text-muted-foreground mb-4">
-            Combines behavioral analysis, signature detection, and machine learning for unmatched accuracy
+      {/* CTA with red branding */}
+      <Card className="border-red-500/20 bg-red-500/5">
+        <CardContent className="p-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <img src={safescanLogo} alt="SafeScan" className="h-6 w-auto" />
+          </div>
+          <h4 className="text-lg font-bold mb-1">Multi-Engine AI Detection</h4>
+          <p className="text-muted-foreground text-sm mb-3">
+            Combines behavioral analysis, signature detection, and machine learning
           </p>
-          <Button size="lg">
+          <Button className="bg-red-500 hover:bg-red-600 text-white">
             Deploy SafeScan Suite
           </Button>
         </CardContent>
