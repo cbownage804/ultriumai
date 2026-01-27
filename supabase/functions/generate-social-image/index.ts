@@ -251,6 +251,48 @@ IMPORTANT: Keep the original image exactly as-is. Only add the logo watermark ov
       }
     }
 
+    // Resize/crop the image to exactly 1200x628 (1.91:1 ratio) for Facebook compatibility
+    // Use AI to resize to exact dimensions
+    console.log('Resizing image to 1200x628 for Facebook compatibility...');
+    
+    const resizePrompt = `Resize and crop this image to EXACTLY 1200 pixels wide by 628 pixels tall.
+The aspect ratio must be exactly 1.91:1.
+- If the image is too tall, crop from top and bottom equally
+- If the image is too wide, crop from left and right equally
+- Maintain the central focus and quality of the original image
+- Do NOT add any text, logos, or watermarks
+- Output dimensions MUST be exactly 1200x628 pixels`;
+
+    const resizeResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`, 
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: resizePrompt },
+            { type: 'image_url', image_url: { url: generatedImage } }
+          ]
+        }],
+        modalities: ['image', 'text'],
+      }),
+    });
+
+    if (resizeResponse.ok) {
+      const resizeData = await resizeResponse.json();
+      const resizedImage = resizeData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (resizedImage) {
+        generatedImage = resizedImage;
+        console.log('Successfully resized image to 1200x628');
+      }
+    } else {
+      console.warn('Resize failed, using original image');
+    }
+
     // Convert base64 to buffer
     const base64Data = generatedImage.replace(/^data:image\/\w+;base64,/, '');
     const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
