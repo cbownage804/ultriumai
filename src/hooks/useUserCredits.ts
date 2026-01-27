@@ -160,20 +160,21 @@ export const useUserCredits = () => {
     if (!user) return;
     
     try {
-      // Fetch credit history using raw SQL via RPC or direct fetch
-      const response = await fetch(
-        `https://nsyobmjpdpvesjwdphlh.supabase.co/rest/v1/credit_history?user_id=eq.${user.id}&order=created_at.desc&limit=50`,
-        {
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      // Use Supabase client for type-safe queries
+      const { data, error } = await supabase
+        .from('credit_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
       
-      if (response.ok) {
-        const data = await response.json();
+      if (error) {
+        // Table might not exist yet - silently handle
+        console.log('Credit history not available:', error.message);
+        return;
+      }
+      
+      if (data) {
         setHistory(data as CreditHistory[]);
       }
     } catch (error) {
@@ -204,6 +205,7 @@ export const useUserCredits = () => {
         dailyToUse = amount - bonusToUse;
       }
 
+      // Update daily credits used
       const { error } = await supabase
         .from('user_credits')
         .update({
@@ -213,43 +215,25 @@ export const useUserCredits = () => {
 
       if (error) throw error;
 
-      // Update bonus credits separately if needed
+      // Update bonus credits separately if needed (use RPC or update via client)
       if (bonusToUse > 0) {
-        await fetch(
-          `https://nsyobmjpdpvesjwdphlh.supabase.co/rest/v1/user_credits?user_id=eq.${user.id}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI',
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({ bonus_credits: credits.bonus_credits - bonusToUse })
-          }
-        );
+        const newBonusCredits = credits.bonus_credits - bonusToUse;
+        await supabase
+          .from('user_credits')
+          .update({ bonus_credits: newBonusCredits } as Record<string, unknown>)
+          .eq('user_id', user.id);
       }
 
-      // Log the usage
+      // Log the usage to credit_history
       try {
-        await fetch(
-          `https://nsyobmjpdpvesjwdphlh.supabase.co/rest/v1/credit_history`,
-          {
-            method: 'POST',
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI',
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({
-              user_id: user.id,
-              credits_amount: -amount,
-              action_type: 'usage',
-              description
-            })
-          }
-        );
+        await supabase
+          .from('credit_history')
+          .insert([{
+            user_id: user.id,
+            credits_amount: -amount,
+            action_type: 'usage',
+            description
+          }]);
       } catch (e) {
         console.log('Credit history logging skipped');
       }
@@ -271,42 +255,23 @@ export const useUserCredits = () => {
     if (!user) return false;
 
     try {
-      // Update bonus credits via REST API
-      const session = await supabase.auth.getSession();
-      await fetch(
-        `https://nsyobmjpdpvesjwdphlh.supabase.co/rest/v1/user_credits?user_id=eq.${user.id}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI',
-            'Authorization': `Bearer ${session.data.session?.access_token}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ bonus_credits: credits.bonus_credits + amount })
-        }
-      );
+      // Update bonus credits using Supabase client
+      const newBonusCredits = credits.bonus_credits + amount;
+      await supabase
+        .from('user_credits')
+        .update({ bonus_credits: newBonusCredits } as Record<string, unknown>)
+        .eq('user_id', user.id);
 
-      // Log the purchase
+      // Log the purchase to credit_history
       try {
-        await fetch(
-          `https://nsyobmjpdpvesjwdphlh.supabase.co/rest/v1/credit_history`,
-          {
-            method: 'POST',
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zeW9ibWpwZHB2ZXNqd2RwaGxoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NjM3MjksImV4cCI6MjA2NzEzOTcyOX0.vkV_Xr2T28WA6kiOzcZ3LhzmbkozWNy8Lvx0b7GTgWI',
-              'Authorization': `Bearer ${session.data.session?.access_token}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'return=minimal'
-            },
-            body: JSON.stringify({
-              user_id: user.id,
-              credits_amount: amount,
-              action_type: 'purchase',
-              description
-            })
-          }
-        );
+        await supabase
+          .from('credit_history')
+          .insert([{
+            user_id: user.id,
+            credits_amount: amount,
+            action_type: 'purchase',
+            description
+          }]);
       } catch (e) {
         console.log('Credit history logging skipped');
       }
