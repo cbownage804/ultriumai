@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -27,9 +28,11 @@ import {
   Sparkles,
   Crown,
   Zap,
-  User as UserIcon
+  User as UserIcon,
+  BarChart3
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { AICapacityAnalyticsDashboard } from '@/components/ai-studio/AICapacityAnalyticsDashboard';
 
 interface AIStudioUser {
   id: string;
@@ -171,7 +174,25 @@ export const AIStudioAdminTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue="analytics" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="analytics" className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4" />
+          Capacity Analytics
+        </TabsTrigger>
+        <TabsTrigger value="users" className="flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          Users
+        </TabsTrigger>
+      </TabsList>
+
+      {/* Analytics Tab */}
+      <TabsContent value="analytics">
+        <AICapacityAnalyticsDashboard />
+      </TabsContent>
+
+      {/* Users Tab */}
+      <TabsContent value="users" className="space-y-6">
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
@@ -292,6 +313,7 @@ export const AIStudioAdminTab = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 };
