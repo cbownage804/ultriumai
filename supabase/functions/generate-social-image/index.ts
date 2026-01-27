@@ -6,6 +6,33 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Product logo URLs (from public folder - available after deploy)
+const getProductLogoUrl = (product: string): string => {
+  const logoMap: Record<string, string> = {
+    safepass: 'safepass-logo.png',
+    safescan: 'safescan-logo.png',
+    safeweb: 'safeweb-logo.png',
+    safetrack: 'safetrack-logo.png',
+    safeassist: 'safeassist-logo.png',
+    safesuite: 'safesuite-logo.png',
+    ultriumgpt: 'ultrium-gpt-logo.png',
+    vanguard: 'vanguard-logo.png',
+  };
+  return `https://ultriumai.lovable.app/logos/${logoMap[product] || 'safesuite-logo.png'}`;
+};
+
+// Keywords to detect product mentions
+const PRODUCT_KEYWORDS: Record<string, string[]> = {
+  safepass: ['safepass', 'password manager', 'password vault', 'credential', 'password management'],
+  safescan: ['safescan', 'email scan', 'url scan', 'document scan', 'threat scan', 'phishing'],
+  safeweb: ['safeweb', 'dark web', 'breach monitor', 'data breach', 'exposed credential'],
+  safetrack: ['safetrack', 'asset management', 'asset tracking', 'inventory', 'it asset'],
+  safeassist: ['safeassist', 'ai assistant', 'security assistant', 'chatbot'],
+  safesuite: ['safesuite', 'security suite', 'all-in-one security'],
+  ultriumgpt: ['ultriumgpt', 'custom gpt', 'ai builder', 'custom ai'],
+  vanguard: ['vanguard', 'rmm', 'endpoint management', 'remote monitoring'],
+};
+
 // Content-type specific visual styles for better image matching
 const VISUAL_STYLES: Record<string, string> = {
   // For Everyone (Consumer-focused) - warm, friendly, relatable imagery
@@ -34,17 +61,38 @@ const VISUAL_STYLES: Record<string, string> = {
   custom_topic: 'Professional technology and cybersecurity themed imagery with modern digital aesthetics.',
 };
 
+// Detect which product is mentioned in the content
+function detectProduct(text: string): string | null {
+  const lowerText = text.toLowerCase();
+  for (const [product, keywords] of Object.entries(PRODUCT_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lowerText.includes(keyword)) {
+        return product;
+      }
+    }
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt, aspectRatio = '16:9', contentType } = await req.json();
+    const { prompt, aspectRatio = '16:9', contentType, postContent } = await req.json();
     if (!prompt) throw new Error('Prompt is required');
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Detect product from prompt or post content
+    const detectedProduct = detectProduct(prompt) || (postContent ? detectProduct(postContent) : null);
+    console.log('Detected product:', detectedProduct || 'none');
 
     // Get visual style based on content type
     const visualStyle = contentType && VISUAL_STYLES[contentType] 
@@ -70,6 +118,7 @@ QUALITY REQUIREMENTS:
 - Cinematic lighting and depth
 - Rich, vibrant colors that pop on social feeds
 - Modern, premium aesthetic suitable for business content
+- IMPORTANT: Leave space in the bottom-right corner for a logo overlay
 
 ASPECT RATIO: ${aspectRatio} (optimize composition for this ratio)
 
@@ -109,17 +158,67 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
     }
 
     const data = await response.json();
-    const generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    let generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     
     if (!generatedImage) {
       console.error('No image in response:', JSON.stringify(data).substring(0, 500));
       throw new Error('No image generated');
     }
 
-    // Upload to Supabase storage
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // If a product was detected, watermark with the product logo
+    if (detectedProduct) {
+      console.log('Watermarking with product logo:', detectedProduct);
+      
+      try {
+        // Get logo URL from public folder
+        const logoUrl = getProductLogoUrl(detectedProduct);
+        console.log('Using logo URL:', logoUrl);
+        
+        // Use Gemini to composite the logo onto the image
+        const watermarkPrompt = `Add a small, semi-transparent watermark logo in the bottom-right corner of this image. 
+The watermark should be:
+- Positioned in the bottom-right corner with subtle padding
+- Semi-transparent (about 70% opacity) 
+- Small but visible (about 15-20% of image width)
+- Professionally integrated without disrupting the main image
+- The logo should be a clean overlay, not distorted
+
+IMPORTANT: Keep the original image exactly as-is. Only add the logo watermark overlay.`;
+
+        const watermarkResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`, 
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash-image',
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'text', text: watermarkPrompt },
+                { type: 'image_url', image_url: { url: generatedImage } },
+                { type: 'image_url', image_url: { url: logoUrl } }
+              ]
+            }],
+            modalities: ['image', 'text'],
+          }),
+        });
+
+        if (watermarkResponse.ok) {
+          const watermarkData = await watermarkResponse.json();
+          const watermarkedImage = watermarkData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          if (watermarkedImage) {
+            generatedImage = watermarkedImage;
+            console.log('Successfully watermarked image with', detectedProduct, 'logo');
+          }
+        } else {
+          console.warn('Watermark failed, using original image');
+        }
+      } catch (watermarkError) {
+        console.warn('Watermark error, using original image:', watermarkError);
+      }
+    }
 
     // Convert base64 to buffer
     const base64Data = generatedImage.replace(/^data:image\/\w+;base64,/, '');
@@ -138,7 +237,8 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
       // Fall back to returning base64 if storage upload fails
       return new Response(JSON.stringify({ 
         imageUrl: generatedImage, 
-        isBase64: true 
+        isBase64: true,
+        detectedProduct: detectedProduct || null
       }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
@@ -152,7 +252,8 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
 
     return new Response(JSON.stringify({ 
       imageUrl: publicUrlData.publicUrl, 
-      isBase64: false 
+      isBase64: false,
+      detectedProduct: detectedProduct || null
     }), { 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });

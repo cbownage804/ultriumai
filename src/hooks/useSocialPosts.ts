@@ -94,13 +94,15 @@ export function useSocialPosts() {
       prompt, 
       aspectRatio,
       contentType,
+      postContent,
     }: { 
       prompt: string; 
       aspectRatio?: string;
       contentType?: string;
+      postContent?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke('generate-social-image', {
-        body: { prompt, aspectRatio, contentType },
+        body: { prompt, aspectRatio, contentType, postContent },
       });
       if (error) throw error;
       if (data.error) throw new Error(data.error);

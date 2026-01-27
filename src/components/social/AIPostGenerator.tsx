@@ -79,21 +79,22 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
       ? `${contentType.description}${additionalContext ? `: ${additionalContext}` : ''}`
       : additionalContext || 'Professional cybersecurity content';
 
-    // Generate both in parallel
-    const [textResult, imageResult] = await Promise.all([
-      generatePost.mutateAsync({
-        topic,
-        tone,
-        platforms: platformTypes,
-        additionalContext,
-        contentType: selectedType,
-      }),
-      generateImage.mutateAsync({
-        prompt: topic,
-        aspectRatio: '16:9',
-        contentType: selectedType,
-      }),
-    ]);
+    // Generate text first, then image with text context for product detection
+    const textResult = await generatePost.mutateAsync({
+      topic,
+      tone,
+      platforms: platformTypes,
+      additionalContext,
+      contentType: selectedType,
+    });
+
+    // Now generate image with the generated post content for product logo detection
+    const imageResult = await generateImage.mutateAsync({
+      prompt: topic,
+      aspectRatio: '16:9',
+      contentType: selectedType,
+      postContent: textResult, // Pass generated text for product detection
+    });
     
     // Send to composer
     onUseContent(textResult, imageResult);
@@ -109,7 +110,7 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
           AI Post Generator
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Generate cybersecurity posts with auto-matching images (watermarked with UltriumAI logo)
+          Generate cybersecurity posts with auto-matching images (product logos watermarked when mentioned)
         </p>
       </CardHeader>
       <CardContent className="space-y-5">
