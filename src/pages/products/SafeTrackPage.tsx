@@ -10,11 +10,13 @@ import {
   ArrowRight, Check, Laptop, History, FileText,
   BarChart3, Warehouse, Users, Clock, AlertTriangle,
   Truck, MapPin, Wrench, Shield, Smartphone, Cloud,
-  RefreshCw, Search, Download
+  RefreshCw, Search, Download, Play
 } from 'lucide-react';
 import heroTrack from '@/assets/hero-track.jpg';
 import screenshotSafetrack from '@/assets/screenshot-safetrack.jpg';
 import { safeSuiteProducts } from '@/components/safesuite/SafeSuiteProductIcons';
+import { ProductDemoWrapper } from '@/components/demos/ProductDemoWrapper';
+import { SafeTrackDemo } from '@/components/demos/SafeTrackDemo';
 
 const features = [
   {
@@ -157,6 +159,32 @@ export default function SafeTrackPage() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </section>
+
+        {/* Interactive Demo Section */}
+        <section className="py-16 bg-muted/30">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <Badge className="mb-4 bg-orange-500/20 text-orange-400 border-orange-500/30">
+                <Play className="h-3 w-3 mr-1" />
+                Interactive Demo
+              </Badge>
+              <h2 className="text-3xl font-bold mb-4">Try SafeTrack Live</h2>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                Experience the full asset management platform with sample data
+              </p>
+            </div>
+            <ProductDemoWrapper
+              productName="SafeTrack Asset Management"
+              productColor="orange"
+              compactMode
+              compactHeight="h-[650px]"
+              fullDemoPath="/vanguard/assets"
+              description="Complete IT asset lifecycle management"
+            >
+              <SafeTrackDemo compactMode />
+            </ProductDemoWrapper>
           </div>
         </section>
 

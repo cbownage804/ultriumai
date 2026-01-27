@@ -6,11 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { 
   ArrowRight, Building2, Users, Globe, Shield, BarChart3, 
   Palette, Lock, Zap, Check, Settings, Bot, FileText,
-  Eye, Database, Workflow, MessageSquare
+  Eye, Database, Workflow, MessageSquare, Play
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
 import { SEOHead } from "@/components/SEOHead";
+import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
+import { AIStudioProductDemo } from "@/components/demos/AIStudioProductDemo";
 
 const AIStudioProductPage = () => {
   const audiences = [
@@ -285,6 +287,33 @@ const AIStudioProductPage = () => {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Interactive Demo Section */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
+              <Play className="h-3 w-3 mr-1" />
+              Interactive Demo
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Experience AI Studio</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              See how easy it is to build, customize, and deploy AI assistants
+            </p>
+          </div>
+
+          <ProductDemoWrapper
+            productName="AI Studio GPT Builder"
+            productColor="primary"
+            compactMode
+            compactHeight="h-[650px]"
+            fullDemoPath="/ai-studio"
+            description="Create custom AI assistants trained on your data"
+          >
+            <AIStudioProductDemo compactMode />
+          </ProductDemoWrapper>
         </div>
       </section>
 

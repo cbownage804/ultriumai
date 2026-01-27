@@ -3,10 +3,11 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowRight, Building2, Shield, Lock,
   BarChart3, FileCheck, AlertTriangle, Users, Zap, Check, Brain,
-  Network, Search, Activity, Server, Workflow
+  Network, Search, Activity, Server, Workflow, Play
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import vanguardLogo from '@/assets/vanguard-logo.png';
@@ -14,6 +15,9 @@ import safeopsLogo from '@/assets/logos/logo-safeops.png';
 import safedeskLogo from '@/assets/logos/logo-safedesk.png';
 import safedocLogo from '@/assets/logos/logo-safedoc.png';
 import { SEOHead } from "@/components/SEOHead";
+import { ProductDemoWrapper } from "@/components/demos/ProductDemoWrapper";
+import { VanguardDemo } from "@/components/demos/VanguardDemo";
+import { SafeTrackDemo } from "@/components/demos/SafeTrackDemo";
 
 const VanguardProductPage = () => {
   const audiences = [
@@ -303,6 +307,100 @@ const VanguardProductPage = () => {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Interactive Demo Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 bg-cyan-500/20 text-cyan-400 border-cyan-500/30">
+              <Play className="h-3 w-3 mr-1" />
+              Live Demo
+            </Badge>
+            <h2 className="text-3xl font-bold mb-4">Experience Vanguard</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Explore our security operations platform with interactive demos
+            </p>
+          </div>
+
+          <Tabs defaultValue="xdr" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 mb-6">
+              <TabsTrigger value="xdr" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                XDR Platform
+              </TabsTrigger>
+              <TabsTrigger value="assets" className="flex items-center gap-2">
+                <Server className="h-4 w-4" />
+                Asset Management
+              </TabsTrigger>
+              <TabsTrigger value="compliance" className="flex items-center gap-2">
+                <FileCheck className="h-4 w-4" />
+                Compliance
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="xdr">
+              <ProductDemoWrapper
+                productName="Vanguard XDR"
+                productColor="cyan"
+                compactMode
+                compactHeight="h-[700px]"
+                fullDemoPath="/demos/vanguard"
+                description="AI-powered threat detection and autonomous response"
+              >
+                <div className="p-4 overflow-auto h-full">
+                  <VanguardDemo />
+                </div>
+              </ProductDemoWrapper>
+            </TabsContent>
+
+            <TabsContent value="assets">
+              <ProductDemoWrapper
+                productName="SafeTrack Asset Management"
+                productColor="orange"
+                compactMode
+                compactHeight="h-[600px]"
+                fullDemoPath="/vanguard/assets"
+                description="Complete IT asset lifecycle management"
+              >
+                <SafeTrackDemo compactMode />
+              </ProductDemoWrapper>
+            </TabsContent>
+
+            <TabsContent value="compliance">
+              <ProductDemoWrapper
+                productName="Compliance & Auditing"
+                productColor="emerald"
+                compactMode
+                compactHeight="h-[500px]"
+                description="SOC 2, HIPAA, PCI DSS frameworks with automated evidence collection"
+              >
+                <div className="p-6 text-center">
+                  <FileCheck className="h-16 w-16 mx-auto mb-4 text-emerald-500" />
+                  <h3 className="text-xl font-bold mb-2">Compliance Automation</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Built-in frameworks for SOC 2, HIPAA, PCI DSS, NIST, and CIS benchmarks 
+                    with automated evidence collection and audit-ready reporting.
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                    {['SOC 2', 'HIPAA', 'PCI DSS', 'NIST'].map((framework) => (
+                      <div key={framework} className="p-4 border rounded-lg bg-muted/30">
+                        <Check className="h-5 w-5 text-emerald-500 mx-auto mb-2" />
+                        <span className="text-sm font-medium">{framework}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <Button className="mt-6 bg-emerald-500 hover:bg-emerald-600" asChild>
+                    <Link to="/contact">
+                      Request Demo
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </div>
+              </ProductDemoWrapper>
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 
