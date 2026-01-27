@@ -115,6 +115,9 @@ import SecuritySuitePage from '@/pages/products/SecuritySuitePage';
 import OperationsSuitePage from '@/pages/products/OperationsSuitePage';
 import HelpdeskPage from '@/pages/products/HelpdeskPage';
 import RMMPage from '@/pages/products/RMMPage';
+import AIStudioProductPage from '@/pages/products/AIStudioProductPage';
+import VanguardProductPage from '@/pages/products/VanguardProductPage';
+import SafeSuiteProductPage from '@/pages/products/SafeSuiteProductPage';
 import SafeSuiteFeatures from '@/pages/safesuite/SafeSuiteFeatures';
 
 // SafePass Standalone App
@@ -403,6 +406,9 @@ function AppRouter() {
         <Route path="/products/operations" element={<OperationsSuitePage />} />
         <Route path="/products/helpdesk" element={<HelpdeskPage />} />
         <Route path="/products/rmm" element={<RMMPage />} />
+        <Route path="/products/ai-studio" element={<AIStudioProductPage />} />
+        <Route path="/products/vanguard" element={<VanguardProductPage />} />
+        <Route path="/products/safesuite" element={<SafeSuiteProductPage />} />
         <Route path="/products/safetrack" element={<SafeTrackProduct />} />
         <Route path="/products/safepass" element={<SafePassProduct />} />
         <Route path="/products/safeweb" element={<SafeWebProduct />} />

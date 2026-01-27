@@ -70,7 +70,7 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
             <button 
-              onClick={() => handleNavigation('/ai-studio')}
+              onClick={() => handleNavigation('/products/ai-studio')}
               className="transition-transform duration-200 hover:scale-105"
               title="AI Studio™"
             >
@@ -80,7 +80,7 @@ const Navigation = () => {
             </button>
             
             <button 
-              onClick={() => handleExternalLink('https://vanguard.ultriumai.com')}
+              onClick={() => handleNavigation('/products/vanguard')}
               className="transition-transform duration-200 hover:scale-105"
               title="Vanguard™"
             >
@@ -90,7 +90,7 @@ const Navigation = () => {
             </button>
             
             <button 
-              onClick={() => handleNavigation('/safesuite')}
+              onClick={() => handleNavigation('/products/safesuite')}
               className="transition-transform duration-200 hover:scale-105"
               title="SafeSuite™"
             >
@@ -122,7 +122,7 @@ const Navigation = () => {
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
                   {/* SafeSuite */}
                   <button
-                    onClick={() => handleNavigation('/safesuite/features')}
+                    onClick={() => handleNavigation('/products/safesuite')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
@@ -139,7 +139,7 @@ const Navigation = () => {
 
                   {/* AI Studio */}
                   <button
-                    onClick={() => handleNavigation('/ai-studio')}
+                    onClick={() => handleNavigation('/products/ai-studio')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
@@ -150,13 +150,13 @@ const Navigation = () => {
                         <span className="font-semibold text-sm text-foreground group-hover/item:text-primary transition-colors">AI Studio™</span>
                         <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">Build custom GPT assistants trained on your data</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">Business AI Control Plane for governed AI assistants</p>
                     </div>
                   </button>
 
                   {/* Vanguard Suite */}
                   <button
-                    onClick={() => handleExternalLink('https://vanguard.ultriumai.com')}
+                    onClick={() => handleNavigation('/products/vanguard')}
                     className="group/item col-span-2 flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
@@ -167,7 +167,7 @@ const Navigation = () => {
                         <span className="font-semibold text-sm text-foreground group-hover/item:text-cyan-500 transition-colors">Vanguard Suite™</span>
                         <ArrowRight className="h-3 w-3 text-muted-foreground opacity-0 -translate-x-1 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all" />
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">Complete MSP platform including SafeOps™ (RMM), SafeDesk™ (Helpdesk), threat detection, compliance & more</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">AI-powered security & operations platform with RMM, helpdesk, and compliance</p>
                     </div>
                   </button>
                 </div>
@@ -258,7 +258,7 @@ const Navigation = () => {
           <div className="md:hidden bg-background border-t border-border/50 py-4">
             <div className="space-y-1">
               <button 
-                onClick={() => handleNavigationWithMenuClose('/ai-studio')} 
+                onClick={() => handleNavigationWithMenuClose('/products/ai-studio')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
@@ -268,8 +268,8 @@ const Navigation = () => {
               </button>
               
               <button 
-                onClick={() => handleExternalLink('https://vanguard.ultriumai.com')} 
-                className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-destructive hover:bg-muted/50 rounded-md"
+                onClick={() => handleNavigationWithMenuClose('/products/vanguard')} 
+                className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-cyan-500 hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
                   <img src={vanguardLogo} alt="Vanguard" className="h-full w-full object-contain" />
@@ -278,7 +278,7 @@ const Navigation = () => {
               </button>
               
               <button 
-                onClick={() => handleNavigationWithMenuClose('/safesuite')} 
+                onClick={() => handleNavigationWithMenuClose('/products/safesuite')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
