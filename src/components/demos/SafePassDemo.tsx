@@ -98,7 +98,7 @@ export const SafePassDemo = () => {
     <div className="space-y-4">
       {/* Header with SafePass branding - centered logo only */}
       <div className="flex justify-center mb-4">
-        <img src={safepassLogo} alt="SafePass" className="h-10 w-auto" />
+        <img src={safepassLogo} alt="SafePass" className="h-14 w-auto" />
       </div>
 
       {/* Navigation Tabs - styled like real app */}
@@ -352,7 +352,7 @@ export const SafePassDemo = () => {
       <Card className="border-amber-500/20 bg-amber-500/5">
         <CardContent className="p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <img src={safepassLogo} alt="SafePass" className="h-6 w-auto" />
+            <img src={safepassLogo} alt="SafePass" className="h-8 w-auto" />
           </div>
           <h4 className="text-lg font-bold mb-1">Zero-Trust Password Security</h4>
           <p className="text-muted-foreground text-sm mb-3">
