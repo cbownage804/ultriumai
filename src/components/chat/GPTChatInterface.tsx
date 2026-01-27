@@ -14,10 +14,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAnalyticsTracking } from "@/hooks/useAnalyticsTracking";
 import { useGPTConversations } from "@/hooks/useGPTConversations";
 import { useGPTAnalytics } from "@/hooks/useGPTAnalytics";
+import { useAIStudioCredits } from "@/hooks/useAIStudioCredits";
+import { getGPTMultiplier } from "@/types/aiStudioCredits";
 import { KnowledgeSearchService } from "@/services/KnowledgeSearchService";
 import ChatFileUploader from "./ChatFileUploader";
 import { CleanMarkdownRenderer } from "./CleanMarkdownRenderer";
 import ConversationSidebar from "./ConversationSidebar";
+import { AIStudioCreditIndicator } from "@/components/ai-studio/AIStudioCreditIndicator";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface AttachedFile {
@@ -48,6 +51,7 @@ export const GPTChatInterface = () => {
   const { toast } = useToast();
   const { trackMessageExchange, startSession } = useAnalyticsTracking();
   const { trackMessage } = useGPTAnalytics(gptId);
+  const { credits, deductCredits, checkCredits } = useAIStudioCredits();
   
   const {
     conversations,
@@ -237,6 +241,29 @@ export const GPTChatInterface = () => {
       if (error) throw error;
 
       const responseTime = Date.now() - startTime;
+      const tokensUsed = data.tokensUsed || 500; // Default estimate
+      
+      // Deduct AI Studio credits (separate from SafeSuite credits)
+      const gptMultiplier = getGPTMultiplier(
+        Boolean(gpt.enable_web_search), // has tools
+        Boolean(gpt.enable_web_search)  // has web search
+      );
+      
+      const creditResult = await deductCredits(
+        gpt.id,
+        tokensUsed,
+        'chat',
+        conversationId,
+        `Chat message in ${gpt.name}`
+      );
+      
+      if (!creditResult.success && creditResult.error === 'insufficient_credits') {
+        toast({
+          title: "Credits Exhausted",
+          description: "This assistant is temporarily unavailable. Please upgrade your plan.",
+          variant: "destructive",
+        });
+      }
       
       const assistantMessage: Message = {
         id: (Date.now() + 2).toString(),
@@ -248,13 +275,13 @@ export const GPTChatInterface = () => {
       setMessages(prev => prev.slice(0, -1).concat(assistantMessage));
 
       // Save assistant message to database
-      await saveMessage(conversationId, data.message, 'assistant', data.tokensUsed, responseTime);
+      await saveMessage(conversationId, data.message, 'assistant', tokensUsed, responseTime);
 
       // Track analytics
-      await trackMessage(data.tokensUsed, responseTime);
+      await trackMessage(tokensUsed, responseTime);
       
       if (sessionId) {
-        await trackMessageExchange(gpt.id, responseTime, data.tokensUsed, sessionId);
+        await trackMessageExchange(gpt.id, responseTime, tokensUsed, sessionId);
       }
 
       // Auto-update conversation title from first user message

@@ -293,6 +293,50 @@ export type Database = {
           },
         ]
       }
+      ai_credit_ledger: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          credits_used: number
+          description: string | null
+          gpt_id: string | null
+          id: string
+          tokens_used: number | null
+          usage_type: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          credits_used: number
+          description?: string | null
+          gpt_id?: string | null
+          id?: string
+          tokens_used?: number | null
+          usage_type: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          credits_used?: number
+          description?: string | null
+          gpt_id?: string | null
+          id?: string
+          tokens_used?: number | null
+          usage_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_ledger_gpt_id_fkey"
+            columns: ["gpt_id"]
+            isOneToOne: false
+            referencedRelation: "custom_gpts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alert_notifications: {
         Row: {
           alert_rule_id: string | null
@@ -3337,6 +3381,7 @@ export type Database = {
           conversation_retention: string | null
           conversation_sharing: boolean | null
           created_at: string
+          credit_multiplier: number
           custom_loading_message: string | null
           custom_message_ending: string | null
           description: string | null
@@ -3352,6 +3397,7 @@ export type Database = {
           loading_indicator: string | null
           logo_url: string | null
           max_integrations: number | null
+          monthly_credit_cap: number | null
           name: string
           placeholder_prompt: string | null
           preferred_model: string | null
@@ -3401,6 +3447,7 @@ export type Database = {
           conversation_retention?: string | null
           conversation_sharing?: boolean | null
           created_at?: string
+          credit_multiplier?: number
           custom_loading_message?: string | null
           custom_message_ending?: string | null
           description?: string | null
@@ -3416,6 +3463,7 @@ export type Database = {
           loading_indicator?: string | null
           logo_url?: string | null
           max_integrations?: number | null
+          monthly_credit_cap?: number | null
           name: string
           placeholder_prompt?: string | null
           preferred_model?: string | null
@@ -3465,6 +3513,7 @@ export type Database = {
           conversation_retention?: string | null
           conversation_sharing?: boolean | null
           created_at?: string
+          credit_multiplier?: number
           custom_loading_message?: string | null
           custom_message_ending?: string | null
           description?: string | null
@@ -3480,6 +3529,7 @@ export type Database = {
           loading_indicator?: string | null
           logo_url?: string | null
           max_integrations?: number | null
+          monthly_credit_cap?: number | null
           name?: string
           placeholder_prompt?: string | null
           preferred_model?: string | null
@@ -8901,6 +8951,48 @@ export type Database = {
           stripe_session_id?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      org_credits: {
+        Row: {
+          created_at: string
+          credit_reset_date: string
+          credits_remaining: number
+          credits_used_this_period: number
+          id: string
+          monthly_credit_limit: number
+          overage_credits_used: number
+          overage_enabled: boolean
+          plan_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credit_reset_date?: string
+          credits_remaining?: number
+          credits_used_this_period?: number
+          id?: string
+          monthly_credit_limit?: number
+          overage_credits_used?: number
+          overage_enabled?: boolean
+          plan_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credit_reset_date?: string
+          credits_remaining?: number
+          credits_used_this_period?: number
+          id?: string
+          monthly_credit_limit?: number
+          overage_credits_used?: number
+          overage_enabled?: boolean
+          plan_type?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -19961,6 +20053,17 @@ export type Database = {
       }
       current_device_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }
+      deduct_ai_credits: {
+        Args: {
+          p_conversation_id?: string
+          p_description?: string
+          p_gpt_id: string
+          p_tokens: number
+          p_usage_type: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       ensure_my_vault: { Args: never; Returns: string }
       generate_analytics_snapshot: {
         Args: { p_snapshot_type: string; p_user_id: string }
@@ -19969,6 +20072,7 @@ export type Database = {
       generate_invoice_number: { Args: never; Returns: string }
       generate_next_invoice_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
+      get_ai_studio_plan_credits: { Args: { plan: string }; Returns: number }
       get_device_alert_counts: {
         Args: { p_device_id: string }
         Returns: {
