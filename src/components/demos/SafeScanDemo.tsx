@@ -9,7 +9,6 @@ import {
   FileText, 
   Mail, 
   Link, 
-  Key,
   AlertCircle, 
   CheckCircle, 
   Zap,
@@ -20,11 +19,17 @@ import { cn } from '@/lib/utils';
 import safescanLogo from '@/assets/safescan-logo.png';
 
 export const SafeScanDemo = () => {
-  const [activeScanner, setActiveScanner] = useState('document');
+  const [activeScanner, setActiveScanner] = useState('url');
   const [scanProgress, setScanProgress] = useState(0);
   const [scanning, setScanning] = useState(false);
 
   const scanResults = {
+    url: {
+      url: 'https://fake-microsoft-login.com',
+      threats: 4,
+      status: 'malicious',
+      details: ['Domain spoofing', 'Fake login form', 'SSL certificate mismatch', 'Known malware distribution']
+    },
     document: {
       fileName: 'invoice_Q4_2024.pdf',
       threats: 2,
@@ -37,27 +42,13 @@ export const SafeScanDemo = () => {
       threats: 3,
       status: 'phishing',
       details: ['Domain spoofing detected', 'Credential harvesting attempt', 'Urgent language patterns']
-    },
-    url: {
-      url: 'https://fake-microsoft-login.com',
-      threats: 4,
-      status: 'malicious',
-      details: ['Domain spoofing', 'Fake login form', 'SSL certificate mismatch', 'Known malware distribution']
-    },
-    password: {
-      password: 'password123',
-      score: 15,
-      strength: 'very weak',
-      breaches: 15847,
-      details: ['Found in 15,847 data breaches', 'Common password pattern', 'Dictionary word detected', 'No special characters']
     }
   };
 
   const tabs = [
-    { id: 'document', label: 'SafeDoc', icon: FileText },
-    { id: 'email', label: 'SafeMail', icon: Mail },
-    { id: 'url', label: 'SafeLink', icon: Link },
-    { id: 'password', label: 'SafePass', icon: Key },
+    { id: 'url', label: 'URL Scanner', icon: Link },
+    { id: 'document', label: 'Document Scanner', icon: FileText },
+    { id: 'email', label: 'Email Scanner', icon: Mail },
   ];
 
   const startScan = () => {
@@ -112,17 +103,24 @@ export const SafeScanDemo = () => {
       <Card className="bg-card/50 border-border/50">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
+            {activeScanner === 'url' && <Link className="h-5 w-5 text-red-500" />}
             {activeScanner === 'document' && <FileText className="h-5 w-5 text-red-500" />}
             {activeScanner === 'email' && <Mail className="h-5 w-5 text-red-500" />}
-            {activeScanner === 'url' && <Link className="h-5 w-5 text-red-500" />}
-            {activeScanner === 'password' && <Key className="h-5 w-5 text-red-500" />}
+            {activeScanner === 'url' && 'URL Scanner'}
             {activeScanner === 'document' && 'Document Scanner'}
-            {activeScanner === 'email' && 'Email Threat Analysis'}
-            {activeScanner === 'url' && 'URL Security Check'}
-            {activeScanner === 'password' && 'Password Security Analysis'}
+            {activeScanner === 'email' && 'Email Scanner'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {activeScanner === 'url' && (
+            <div className="space-y-3">
+              <Input placeholder="Enter URL to scan" defaultValue="https://fake-microsoft-login.com" className="bg-background/50" />
+              <Button onClick={startScan} className="w-full bg-red-500 hover:bg-red-600 text-white">
+                Scan URL
+              </Button>
+            </div>
+          )}
+
           {activeScanner === 'document' && (
             <div className="border-2 border-dashed border-border/50 rounded-lg p-6 text-center bg-background/30">
               <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
@@ -139,30 +137,6 @@ export const SafeScanDemo = () => {
               <Input placeholder="Enter email subject" defaultValue="Urgent: Account Verification Required" className="bg-background/50" />
               <Button onClick={startScan} className="w-full bg-red-500 hover:bg-red-600 text-white">
                 Analyze Email
-              </Button>
-            </div>
-          )}
-
-          {activeScanner === 'url' && (
-            <div className="space-y-3">
-              <Input placeholder="Enter URL to scan" defaultValue="https://fake-microsoft-login.com" className="bg-background/50" />
-              <Button onClick={startScan} className="w-full bg-red-500 hover:bg-red-600 text-white">
-                Scan URL
-              </Button>
-            </div>
-          )}
-
-          {activeScanner === 'password' && (
-            <div className="space-y-3">
-              <Input 
-                type="password" 
-                placeholder="Enter password to analyze" 
-                defaultValue="password123"
-                className="bg-background/50"
-              />
-              <Input placeholder="Enter email address for breach check (optional)" className="bg-background/50" />
-              <Button onClick={startScan} className="w-full bg-red-500 hover:bg-red-600 text-white">
-                Analyze Password Security
               </Button>
             </div>
           )}
