@@ -3289,6 +3289,33 @@ export type Database = {
           },
         ]
       }
+      credit_history: {
+        Row: {
+          action_type: string
+          created_at: string
+          credits_amount: number
+          description: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          credits_amount: number
+          description: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          credits_amount?: number
+          description?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_gpts: {
         Row: {
           affiliate_id: string | null
@@ -17961,28 +17988,34 @@ export type Database = {
       }
       user_credits: {
         Row: {
+          bonus_credits: number | null
           created_at: string
           credits_limit: number
           credits_used: number
           id: string
+          last_reset: string | null
           reset_date: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          bonus_credits?: number | null
           created_at?: string
           credits_limit?: number
           credits_used?: number
           id?: string
+          last_reset?: string | null
           reset_date?: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          bonus_credits?: number | null
           created_at?: string
           credits_limit?: number
           credits_used?: number
           id?: string
+          last_reset?: string | null
           reset_date?: string
           updated_at?: string
           user_id?: string | null

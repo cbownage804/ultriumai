@@ -34,6 +34,7 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { CreditIndicator } from "@/components/credits/CreditIndicator";
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -162,6 +163,7 @@ const Dashboard = () => {
             <div className="flex-1">
               <h1 className="text-lg font-semibold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent animate-glow">{getPageTitle()}</h1>
             </div>
+            <CreditIndicator variant="compact" />
             <NotificationCenter />
           </header>
           <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
