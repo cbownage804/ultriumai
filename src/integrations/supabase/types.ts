@@ -15831,6 +15831,51 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_social_posts: {
+        Row: {
+          bundle_post_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          platforms: string[]
+          post_content: string
+          posted_at: string | null
+          scheduled_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          bundle_post_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          platforms?: string[]
+          post_content: string
+          posted_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          bundle_post_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          platforms?: string[]
+          post_content?: string
+          posted_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       script_executions: {
         Row: {
           completed_at: string | null

@@ -12,7 +12,8 @@ import {
   Settings,
   Users,
   FileText,
-  Building2
+  Building2,
+  Share2
 } from 'lucide-react';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { AdminOverviewTab } from '@/components/admin/unified/AdminOverviewTab';
@@ -22,6 +23,7 @@ import { SafeSuiteAdminTab } from '@/components/admin/unified/SafeSuiteAdminTab'
 import { VanguardAdminTab } from '@/components/admin/unified/VanguardAdminTab';
 import { AdminAuditLogTab } from '@/components/admin/unified/AdminAuditLogTab';
 import { MSPCapacityReportingTab } from '@/components/admin/unified/MSPCapacityReportingTab';
+import { SocialMediaManager } from '@/components/social/SocialMediaManager';
 
 const UnifiedAdminCenter = () => {
   const navigate = useNavigate();
@@ -105,6 +107,10 @@ const UnifiedAdminCenter = () => {
               <Building2 className="h-4 w-4" />
               MSP Capacity
             </TabsTrigger>
+            <TabsTrigger value="social" className="gap-2 data-[state=active]:bg-background">
+              <Share2 className="h-4 w-4" />
+              Social Media
+            </TabsTrigger>
             <TabsTrigger value="audit-log" className="gap-2 data-[state=active]:bg-background">
               <FileText className="h-4 w-4" />
               Audit Log
@@ -133,6 +139,10 @@ const UnifiedAdminCenter = () => {
 
           <TabsContent value="msp-capacity" className="mt-6">
             <MSPCapacityReportingTab />
+          </TabsContent>
+
+          <TabsContent value="social" className="mt-6">
+            <SocialMediaManager />
           </TabsContent>
 
           <TabsContent value="audit-log" className="mt-6">

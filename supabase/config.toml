@@ -180,3 +180,16 @@ verify_jwt = true
 
 [functions.safeassist-ai]
 verify_jwt = true
+
+# Social Media AI Generator
+[functions.generate-social-post]
+verify_jwt = false
+
+[functions.generate-social-image]
+verify_jwt = false
+
+[functions.schedule-bundle-post]
+verify_jwt = false
+
+[functions.get-bundle-accounts]
+verify_jwt = false
