@@ -41,6 +41,7 @@ import {
   Wrench
 } from 'lucide-react';
 import { TemplateInteractiveDemo } from './TemplateInteractiveDemo';
+import { GPTBuilderWizardDemo } from './GPTBuilderWizardDemo';
 
 export const CustomGPTBuilderDemo = () => {
   const [activeTab, setActiveTab] = useState('builder');
@@ -304,100 +305,11 @@ export const CustomGPTBuilderDemo = () => {
           </TabsList>
 
           <TabsContent value="builder" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Builder Form */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-primary" />
-                    <CardTitle>GPT Configuration</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="gpt-name">GPT Name</Label>
-                    <Input
-                      id="gpt-name"
-                      value={gptName}
-                      onChange={(e) => setGptName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="gpt-description">Description</Label>
-                    <Textarea
-                      id="gpt-description"
-                      value={gptDescription}
-                      onChange={(e) => setGptDescription(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Knowledge Base</Label>
-                    <div className="space-y-2">
-                      <Button variant="outline" className="w-full">
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Documents
-                      </Button>
-                      <div className="text-sm text-muted-foreground">
-                        Supported: PDF, DOCX, TXT, CSV, JSON
-                      </div>
-                    </div>
-                  </div>
-
-                  {isTraining ? (
-                    <div className="space-y-2">
-                      <Label>Training Progress</Label>
-                      <Progress value={trainingProgress} className="w-full" />
-                      <div className="text-sm text-muted-foreground">
-                        {trainingProgress < 100 ? `Training... ${trainingProgress}%` : 'Training Complete!'}
-                      </div>
-                    </div>
-                  ) : (
-                    <Button onClick={startTraining} className="w-full">
-                      <Brain className="mr-2 h-4 w-4" />
-                      Start Training
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Build Steps */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-success" />
-                    <CardTitle>Build Progress</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {builderSteps.map((step) => (
-                    <div key={step.id} className="flex items-start gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        step.status === 'completed' ? 'bg-success text-success-foreground' :
-                        step.status === 'active' ? 'bg-primary text-primary-foreground' :
-                        'bg-muted text-muted-foreground'
-                      }`}>
-                        {step.status === 'completed' ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <span className="text-sm font-medium">{step.id}</span>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className={`font-medium ${
-                          step.status === 'active' ? 'text-primary' : 'text-foreground'
-                        }`}>
-                          {step.title}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">{step.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
+            <Card>
+              <CardContent className="p-6">
+                <GPTBuilderWizardDemo onComplete={() => setActiveTab('templates')} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="branding" className="space-y-6">
