@@ -27,7 +27,7 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       color: "#3b82f6",
       features: [
         "3 Custom AI Apps",
-        "1,000 AI messages/month",
+        "Included monthly AI capacity",
         "Basic templates",
         "Public sharing links",
         "Email support",
@@ -35,7 +35,6 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       ],
       limits: {
         apps: 3,
-        messages: 1000,
         teamMembers: 1
       }
     },
@@ -50,7 +49,7 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       popular: true,
       features: [
         "15 Custom AI Apps",
-        "10,000 AI messages/month",
+        "Expanded AI capacity",
         "All templates",
         "Custom branding",
         "API access",
@@ -60,7 +59,6 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       ],
       limits: {
         apps: 15,
-        messages: 10000,
         teamMembers: 5
       }
     },
@@ -73,8 +71,7 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       icon: Building2,
       color: "#f59e0b",
       features: [
-        "Unlimited Custom AI Apps",
-        "50,000 AI messages/month",
+        "Scalable AI capacity",
         "All templates + early access",
         "White-label everything",
         "Client sub-accounts",
@@ -84,7 +81,6 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       ],
       limits: {
         apps: -1, // unlimited
-        messages: 50000,
         teamMembers: 25
       }
     },
@@ -97,8 +93,7 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       icon: Crown,
       color: "#dc2626",
       features: [
-        "Unlimited everything",
-        "Custom message limits",
+        "Custom AI capacity allocation",
         "On-premise deployment option",
         "SSO / SAML",
         "SLA guarantee",
@@ -108,7 +103,6 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       ],
       limits: {
         apps: -1,
-        messages: -1,
         teamMembers: -1
       }
     }
@@ -116,16 +110,16 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
 
   const usageAddons = [
     {
-      id: "messages-5k",
-      name: "5,000 Extra Messages",
-      price: 19,
-      description: "Add 5,000 AI messages to your monthly quota"
+      id: "capacity-boost",
+      name: "Capacity Boost",
+      price: 49,
+      description: "Expand your monthly AI capacity allocation"
     },
     {
-      id: "messages-25k",
-      name: "25,000 Extra Messages",
-      price: 79,
-      description: "Add 25,000 AI messages to your monthly quota"
+      id: "capacity-pro",
+      name: "Capacity Pro",
+      price: 149,
+      description: "Significant AI capacity expansion for scaling teams"
     },
     {
       id: "apps-5",
@@ -176,9 +170,9 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-3xl font-bold">AI App Platform Pricing</h2>
+        <h2 className="text-3xl font-bold">AI Studio — Business AI Control Plane</h2>
         <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-          Build, deploy, and monetize custom AI applications. Choose the plan that fits your needs.
+          Build, deploy, and govern AI assistants with predictable cost and enterprise controls.
         </p>
       </div>
 
@@ -257,10 +251,10 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Rocket className="h-5 w-5" />
-            Usage Add-ons
+            Capacity Add-ons
           </CardTitle>
           <CardDescription>
-            Need more capacity? Add extra messages or apps to your plan anytime.
+            Need more AI capacity? Expand your allocation anytime.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -283,8 +277,8 @@ const AIAppPricing = ({ onSelectPlan }: AIAppPricingProps) => {
       {/* Per-App Pricing Note */}
       <div className="text-center text-sm text-muted-foreground">
         <p>
-          Need per-app pricing for clients? The Agency plan includes reseller licensing 
-          where you can charge your clients per-app while managing everything from one dashboard.
+          Need to deliver AI to clients? The Agency plan includes reseller licensing 
+          with white-label options and client-level visibility.
         </p>
       </div>
     </div>

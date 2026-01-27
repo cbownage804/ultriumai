@@ -212,12 +212,12 @@ const Pricing = () => {
             <div className="inline-flex items-center justify-center px-10 py-5 bg-black rounded-2xl shadow-lg shadow-primary/30 mb-6">
               <img src={aiStudioLogo} alt="AI Studio" className="h-24 w-auto" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">Business AI Control Plane</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">AI Studio — A Business AI Control Plane</h2>
             <p className="text-lg text-white/50 max-w-2xl mx-auto mb-4">
-              Build, deploy, brand, govern, and monetize AI assistants with predictable cost and administrative control.
+              Build, deploy, and govern AI assistants with predictable cost, enterprise controls, and full visibility.
             </p>
             <p className="text-sm text-white/40">
-              Monthly AI capacity • Controlled & governed • Business-ready
+              Predictable AI capacity • Full governance • Enterprise-ready
             </p>
           </div>
 
@@ -227,7 +227,7 @@ const Pricing = () => {
               <Badge className="mb-3 bg-primary/20 text-primary border-primary/30">For MSPs & IT Firms</Badge>
               <h3 className="text-2xl font-bold text-white mb-2">Turn AI Into a Managed Service</h3>
               <p className="text-white/50 text-sm max-w-xl mx-auto">
-                Monthly AI capacity you can allocate across clients. Full cost control.
+                Deliver white-labeled AI assistants to your clients with predictable costs and complete control.
               </p>
             </div>
             
@@ -242,7 +242,7 @@ const Pricing = () => {
                     <span className="text-3xl font-bold text-white">$99</span>
                     <span className="text-white/50 text-sm">/mo</span>
                   </div>
-                  <p className="text-sm text-primary mb-4">40,000 AI capacity</p>
+                  <p className="text-sm text-primary mb-4">Included monthly AI capacity</p>
 
                   <div className="space-y-2 mb-6">
                     {[
@@ -278,7 +278,7 @@ const Pricing = () => {
                     <span className="text-3xl font-bold text-primary">$249</span>
                     <span className="text-white/50 text-sm">/mo</span>
                   </div>
-                  <p className="text-sm text-primary mb-4">150,000 AI capacity</p>
+                  <p className="text-sm text-primary mb-4">Expanded AI capacity for scale</p>
 
                   <div className="space-y-2 mb-6">
                     {[
@@ -311,7 +311,7 @@ const Pricing = () => {
                     <span className="text-3xl font-bold text-white">$499</span>
                     <span className="text-white/50 text-sm">/mo</span>
                   </div>
-                  <p className="text-sm text-primary mb-4">350,000 AI capacity</p>
+                  <p className="text-sm text-primary mb-4">Enterprise-grade AI capacity</p>
 
                   <div className="space-y-2 mb-6">
                     {[
@@ -344,13 +344,13 @@ const Pricing = () => {
                     <span className="text-3xl font-bold text-white">$999</span>
                     <span className="text-white/50 text-sm">/mo</span>
                   </div>
-                  <p className="text-sm text-primary mb-4">600,000 AI capacity</p>
+                  <p className="text-sm text-primary mb-4">Maximum AI capacity allocation</p>
 
                   <div className="space-y-2 mb-6">
                     {[
                       "Everything in Elite",
                       "Custom integrations",
-                      "Credits roll over",
+                      "Capacity rollover",
                       "24/7 support",
                     ].map((feature, i) => (
                       <div key={i} className="flex items-center gap-2">
@@ -390,7 +390,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-white">$49</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-violet-400 mb-6">15,000 AI capacity (hard cap)</p>
+                  <p className="text-sm text-violet-400 mb-6">Included monthly AI capacity</p>
 
                   <div className="space-y-3 mb-8">
                     {[
@@ -430,7 +430,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-violet-400">$149</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-violet-400 mb-6">75,000 AI capacity (hard cap)</p>
+                  <p className="text-sm text-violet-400 mb-6">Expanded AI capacity for teams</p>
 
                   <div className="space-y-3 mb-8">
                     {[
@@ -516,7 +516,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-white">$29</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-emerald-400 mb-6">3,000 capacity • 250 conversations</p>
+                  <p className="text-sm text-emerald-400 mb-6">Included monthly AI capacity</p>
 
                   <div className="space-y-3 mb-8">
                     {[
@@ -556,7 +556,7 @@ const Pricing = () => {
                     <span className="text-4xl font-bold text-emerald-400">$79</span>
                     <span className="text-white/50">/month</span>
                   </div>
-                  <p className="text-sm text-emerald-400 mb-6">12,000 capacity • 1,000 conversations</p>
+                  <p className="text-sm text-emerald-400 mb-6">Expanded AI capacity for lead gen</p>
 
                   <div className="space-y-3 mb-8">
                     {[
@@ -592,7 +592,7 @@ const Pricing = () => {
               <CardContent className="p-10">
                 <h3 className="text-2xl font-bold text-white mb-4">Enterprise & Custom Solutions</h3>
                 <p className="text-white/60 mb-6">
-                  Need more? Custom credit volumes, on-premise deployment, dedicated support, and SLA guarantees available.
+                  Need more? Custom AI capacity allocation, on-premise deployment, dedicated support, and SLA guarantees available.
                 </p>
                 <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10" asChild>
                   <Link to="/contact">
