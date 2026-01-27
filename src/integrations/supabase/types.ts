@@ -17988,34 +17988,55 @@ export type Database = {
       }
       user_credits: {
         Row: {
+          billing_period_start: string | null
           bonus_credits: number | null
           created_at: string
           credits_limit: number
           credits_used: number
+          daily_credits_limit: number | null
+          daily_credits_used: number | null
+          daily_reset_at: string | null
           id: string
           last_reset: string | null
+          monthly_credits_limit: number | null
+          monthly_credits_used: number | null
+          monthly_reset_at: string | null
           reset_date: string
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          billing_period_start?: string | null
           bonus_credits?: number | null
           created_at?: string
           credits_limit?: number
           credits_used?: number
+          daily_credits_limit?: number | null
+          daily_credits_used?: number | null
+          daily_reset_at?: string | null
           id?: string
           last_reset?: string | null
+          monthly_credits_limit?: number | null
+          monthly_credits_used?: number | null
+          monthly_reset_at?: string | null
           reset_date?: string
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          billing_period_start?: string | null
           bonus_credits?: number | null
           created_at?: string
           credits_limit?: number
           credits_used?: number
+          daily_credits_limit?: number | null
+          daily_credits_used?: number | null
+          daily_reset_at?: string | null
           id?: string
           last_reset?: string | null
+          monthly_credits_limit?: number | null
+          monthly_credits_used?: number | null
+          monthly_reset_at?: string | null
           reset_date?: string
           updated_at?: string
           user_id?: string | null
@@ -19971,6 +19992,10 @@ export type Database = {
       get_helpdesk_role: {
         Args: { _context_id?: string; _user_id: string }
         Returns: Database["public"]["Enums"]["helpdesk_role"]
+      }
+      get_monthly_credits_for_tier: {
+        Args: { is_subscribed: boolean; tier: string }
+        Returns: number
       }
       get_user_account_type: {
         Args: { _user_id: string }

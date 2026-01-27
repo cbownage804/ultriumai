@@ -3,10 +3,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
+/**
+ * Lovable-style credit system:
+ * - Daily credits: 5 credits, reset daily at midnight UTC, don't roll over
+ * - Monthly credits: Based on subscription tier, tied to billing period
+ * - Bonus credits: Purchased credits that never expire
+ */
+
 export interface UserCredits {
+  // Daily credits (5/day, reset daily, don't roll over)
+  daily_credits_used: number;
+  daily_credits_limit: number;
+  daily_reset_at: string;
+  // Monthly credits (based on tier, tied to billing period)
+  monthly_credits_used: number;
+  monthly_credits_limit: number;
+  monthly_reset_at: string;
+  billing_period_start: string;
+  // Bonus credits (purchased, never expire)
+  bonus_credits: number;
+  // Legacy fields for backwards compatibility
   credits_used: number;
   credits_limit: number;
-  bonus_credits: number;
   reset_date: string;
   last_reset: string;
 }
@@ -14,7 +32,7 @@ export interface UserCredits {
 export interface CreditHistory {
   id: string;
   credits_amount: number;
-  action_type: 'usage' | 'purchase' | 'reset' | 'bonus';
+  action_type: 'usage' | 'purchase' | 'reset' | 'bonus' | 'daily_reset' | 'monthly_reset';
   description: string;
   created_at: string;
 }
@@ -35,11 +53,26 @@ const getTodayMidnightUTC = () => {
   return now.toISOString();
 };
 
+// Get next month from now
+const getNextMonth = () => {
+  const now = new Date();
+  now.setMonth(now.getMonth() + 1);
+  return now.toISOString();
+};
+
 export const useUserCredits = () => {
   const [credits, setCredits] = useState<UserCredits>({
-    credits_used: 0,
-    credits_limit: 100,
+    daily_credits_used: 0,
+    daily_credits_limit: 5,
+    daily_reset_at: getNextMidnightUTC(),
+    monthly_credits_used: 0,
+    monthly_credits_limit: 0,
+    monthly_reset_at: getNextMonth(),
+    billing_period_start: getTodayMidnightUTC(),
     bonus_credits: 0,
+    // Legacy
+    credits_used: 0,
+    credits_limit: 5,
     reset_date: getNextMidnightUTC(),
     last_reset: getTodayMidnightUTC()
   });
@@ -48,33 +81,55 @@ export const useUserCredits = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const checkAndResetCredits = useCallback(async (currentCredits: UserCredits & { user_id?: string }) => {
+  // Check and reset daily credits if needed
+  const checkAndResetDailyCredits = useCallback(async (currentCredits: Record<string, unknown>) => {
     if (!user) return currentCredits;
     
     const now = new Date();
-    const resetDate = new Date(currentCredits.reset_date);
+    const dailyResetAt = new Date(currentCredits.daily_reset_at as string || getNextMidnightUTC());
     
-    // Check if we've passed the reset date (daily reset at midnight UTC)
-    if (now >= resetDate) {
-      // Reset credits
-      const newResetDate = getNextMidnightUTC();
+    if (now >= dailyResetAt) {
+      const newDailyResetAt = getNextMidnightUTC();
       const { data, error } = await supabase
         .from('user_credits')
         .update({
-          credits_used: 0,
-          reset_date: newResetDate,
-          last_reset: getTodayMidnightUTC()
-        })
+          daily_credits_used: 0,
+          daily_reset_at: newDailyResetAt
+        } as Record<string, unknown>)
         .eq('user_id', user.id)
         .select()
         .single();
       
       if (!error && data) {
-        return {
-          ...data,
-          bonus_credits: (data as Record<string, unknown>).bonus_credits as number || 0,
-          last_reset: (data as Record<string, unknown>).last_reset as string || getTodayMidnightUTC()
-        };
+        return data as Record<string, unknown>;
+      }
+    }
+    
+    return currentCredits;
+  }, [user]);
+
+  // Check and reset monthly credits if needed
+  const checkAndResetMonthlyCredits = useCallback(async (currentCredits: Record<string, unknown>) => {
+    if (!user) return currentCredits;
+    
+    const now = new Date();
+    const monthlyResetAt = new Date(currentCredits.monthly_reset_at as string || getNextMonth());
+    
+    if (now >= monthlyResetAt) {
+      const newMonthlyResetAt = getNextMonth();
+      const { data, error } = await supabase
+        .from('user_credits')
+        .update({
+          monthly_credits_used: 0,
+          monthly_reset_at: newMonthlyResetAt,
+          billing_period_start: getTodayMidnightUTC()
+        } as Record<string, unknown>)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+      
+      if (!error && data) {
+        return data as Record<string, unknown>;
       }
     }
     
@@ -90,7 +145,6 @@ export const useUserCredits = () => {
     try {
       setIsLoading(true);
       
-      // Try to get existing credits record
       const { data, error } = await supabase
         .from('user_credits')
         .select('*')
@@ -98,50 +152,67 @@ export const useUserCredits = () => {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // No record found, create one with daily reset
+        // No record found, create one with Lovable-style defaults
         const { data: newData, error: insertError } = await supabase
           .from('user_credits')
           .insert({
             user_id: user.id,
+            daily_credits_used: 0,
+            daily_credits_limit: 5,
+            daily_reset_at: getNextMidnightUTC(),
+            monthly_credits_used: 0,
+            monthly_credits_limit: 0, // Free tier gets no monthly credits
+            monthly_reset_at: getNextMonth(),
+            billing_period_start: getTodayMidnightUTC(),
+            bonus_credits: 0,
+            // Legacy fields
             credits_used: 0,
-            credits_limit: 100,
+            credits_limit: 5,
             reset_date: getNextMidnightUTC()
-          })
+          } as Record<string, unknown>)
           .select()
           .single();
 
         if (insertError) throw insertError;
         
         if (newData) {
+          const rawData = newData as Record<string, unknown>;
           setCredits({
-            credits_used: newData.credits_used || 0,
-            credits_limit: newData.credits_limit || 100,
-            bonus_credits: (newData as Record<string, unknown>).bonus_credits as number || 0,
-            reset_date: newData.reset_date || getNextMidnightUTC(),
-            last_reset: (newData as Record<string, unknown>).last_reset as string || getTodayMidnightUTC()
+            daily_credits_used: rawData.daily_credits_used as number || 0,
+            daily_credits_limit: rawData.daily_credits_limit as number || 5,
+            daily_reset_at: rawData.daily_reset_at as string || getNextMidnightUTC(),
+            monthly_credits_used: rawData.monthly_credits_used as number || 0,
+            monthly_credits_limit: rawData.monthly_credits_limit as number || 0,
+            monthly_reset_at: rawData.monthly_reset_at as string || getNextMonth(),
+            billing_period_start: rawData.billing_period_start as string || getTodayMidnightUTC(),
+            bonus_credits: rawData.bonus_credits as number || 0,
+            credits_used: (newData as { credits_used?: number }).credits_used || 0,
+            credits_limit: (newData as { credits_limit?: number }).credits_limit || 5,
+            reset_date: (newData as { reset_date?: string }).reset_date || getNextMidnightUTC(),
+            last_reset: rawData.last_reset as string || getTodayMidnightUTC()
           });
         }
       } else if (error) {
         throw error;
       } else if (data) {
-        // Check if we need to reset (daily reset logic)
-        const rawData = data as Record<string, unknown>;
-        const currentCredits = {
-          credits_used: data.credits_used || 0,
-          credits_limit: data.credits_limit || 100,
-          bonus_credits: rawData.bonus_credits as number || 0,
-          reset_date: data.reset_date || getNextMidnightUTC(),
-          last_reset: rawData.last_reset as string || getTodayMidnightUTC()
-        };
-        
-        const updatedData = await checkAndResetCredits(currentCredits);
+        // Check if we need to reset (daily and monthly)
+        let rawData = data as Record<string, unknown>;
+        rawData = await checkAndResetDailyCredits(rawData);
+        rawData = await checkAndResetMonthlyCredits(rawData);
         
         setCredits({
-          credits_used: updatedData.credits_used || 0,
-          credits_limit: updatedData.credits_limit || 100,
-          bonus_credits: updatedData.bonus_credits || 0,
-          reset_date: updatedData.reset_date || getNextMidnightUTC(),
-          last_reset: updatedData.last_reset || getTodayMidnightUTC()
+          daily_credits_used: rawData.daily_credits_used as number || 0,
+          daily_credits_limit: rawData.daily_credits_limit as number || 5,
+          daily_reset_at: rawData.daily_reset_at as string || getNextMidnightUTC(),
+          monthly_credits_used: rawData.monthly_credits_used as number || 0,
+          monthly_credits_limit: rawData.monthly_credits_limit as number || 0,
+          monthly_reset_at: rawData.monthly_reset_at as string || getNextMonth(),
+          billing_period_start: rawData.billing_period_start as string || getTodayMidnightUTC(),
+          bonus_credits: rawData.bonus_credits as number || 0,
+          credits_used: (data as { credits_used?: number }).credits_used || 0,
+          credits_limit: (data as { credits_limit?: number }).credits_limit || 5,
+          reset_date: (data as { reset_date?: string }).reset_date || getNextMidnightUTC(),
+          last_reset: rawData.last_reset as string || getTodayMidnightUTC()
         });
       }
     } catch (error) {
@@ -154,13 +225,12 @@ export const useUserCredits = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user, checkAndResetCredits, toast]);
+  }, [user, checkAndResetDailyCredits, checkAndResetMonthlyCredits, toast]);
 
   const loadHistory = useCallback(async () => {
     if (!user) return;
     
     try {
-      // Use Supabase client for type-safe queries
       const { data, error } = await supabase
         .from('credit_history')
         .select('*')
@@ -169,7 +239,6 @@ export const useUserCredits = () => {
         .limit(50);
       
       if (error) {
-        // Table might not exist yet - silently handle
         console.log('Credit history not available:', error.message);
         return;
       }
@@ -182,49 +251,61 @@ export const useUserCredits = () => {
     }
   }, [user]);
 
+  /**
+   * Use credits with priority:
+   * 1. Daily credits (free, reset daily)
+   * 2. Monthly credits (subscription-based)
+   * 3. Bonus credits (purchased, never expire)
+   */
   const useCredits = useCallback(async (amount: number, description: string = 'AI interaction') => {
     if (!user) return false;
     
-    const totalAvailable = credits.credits_limit - credits.credits_used + credits.bonus_credits;
+    const dailyRemaining = credits.daily_credits_limit - credits.daily_credits_used;
+    const monthlyRemaining = credits.monthly_credits_limit - credits.monthly_credits_used;
+    const totalAvailable = dailyRemaining + monthlyRemaining + credits.bonus_credits;
+    
     if (amount > totalAvailable) {
       toast({
         title: "Insufficient Credits",
-        description: "You don't have enough credits. Purchase more to continue.",
+        description: `You need ${amount} credits but only have ${totalAvailable} remaining. Purchase more to continue.`,
         variant: "destructive",
       });
       return false;
     }
 
     try {
-      // First use bonus credits, then daily credits
-      let bonusToUse = 0;
-      let dailyToUse = amount;
+      // Calculate how to distribute the deduction
+      let dailyToUse = Math.min(dailyRemaining, amount);
+      let remainingAfterDaily = amount - dailyToUse;
       
-      if (credits.bonus_credits > 0) {
-        bonusToUse = Math.min(credits.bonus_credits, amount);
-        dailyToUse = amount - bonusToUse;
+      let monthlyToUse = Math.min(monthlyRemaining, remainingAfterDaily);
+      let remainingAfterMonthly = remainingAfterDaily - monthlyToUse;
+      
+      let bonusToUse = remainingAfterMonthly; // Whatever's left comes from bonus
+
+      // Update credits in database
+      const updatePayload: Record<string, unknown> = {};
+      
+      if (dailyToUse > 0) {
+        updatePayload.daily_credits_used = credits.daily_credits_used + dailyToUse;
       }
-
-      // Update daily credits used
-      const { error } = await supabase
-        .from('user_credits')
-        .update({
-          credits_used: credits.credits_used + dailyToUse
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update bonus credits separately if needed (use RPC or update via client)
+      if (monthlyToUse > 0) {
+        updatePayload.monthly_credits_used = credits.monthly_credits_used + monthlyToUse;
+      }
       if (bonusToUse > 0) {
-        const newBonusCredits = credits.bonus_credits - bonusToUse;
-        await supabase
-          .from('user_credits')
-          .update({ bonus_credits: newBonusCredits } as Record<string, unknown>)
-          .eq('user_id', user.id);
+        updatePayload.bonus_credits = credits.bonus_credits - bonusToUse;
       }
 
-      // Log the usage to credit_history
+      if (Object.keys(updatePayload).length > 0) {
+        const { error } = await supabase
+          .from('user_credits')
+          .update(updatePayload)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      }
+
+      // Log the usage
       try {
         await supabase
           .from('credit_history')
@@ -238,9 +319,11 @@ export const useUserCredits = () => {
         console.log('Credit history logging skipped');
       }
 
+      // Update local state
       setCredits(prev => ({
         ...prev,
-        credits_used: prev.credits_used + dailyToUse,
+        daily_credits_used: prev.daily_credits_used + dailyToUse,
+        monthly_credits_used: prev.monthly_credits_used + monthlyToUse,
         bonus_credits: prev.bonus_credits - bonusToUse
       }));
 
@@ -255,14 +338,12 @@ export const useUserCredits = () => {
     if (!user) return false;
 
     try {
-      // Update bonus credits using Supabase client
       const newBonusCredits = credits.bonus_credits + amount;
       await supabase
         .from('user_credits')
         .update({ bonus_credits: newBonusCredits } as Record<string, unknown>)
         .eq('user_id', user.id);
 
-      // Log the purchase to credit_history
       try {
         await supabase
           .from('credit_history')
@@ -293,10 +374,10 @@ export const useUserCredits = () => {
     loadHistory();
   }, [loadCredits, loadHistory]);
 
-  // Calculate time until reset
-  const getTimeUntilReset = useCallback(() => {
+  // Calculate time until daily reset
+  const getTimeUntilDailyReset = useCallback(() => {
     const now = new Date();
-    const resetDate = new Date(credits.reset_date);
+    const resetDate = new Date(credits.daily_reset_at);
     const diff = resetDate.getTime() - now.getTime();
     
     if (diff <= 0) return 'Resetting...';
@@ -305,14 +386,30 @@ export const useUserCredits = () => {
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     
     return `${hours}h ${minutes}m`;
-  }, [credits.reset_date]);
+  }, [credits.daily_reset_at]);
+
+  // Calculate time until monthly reset
+  const getTimeUntilMonthlyReset = useCallback(() => {
+    const now = new Date();
+    const resetDate = new Date(credits.monthly_reset_at);
+    const diff = resetDate.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Resetting...';
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    return `${days} days`;
+  }, [credits.monthly_reset_at]);
+
+  // Legacy function for backwards compatibility
+  const getTimeUntilReset = getTimeUntilDailyReset;
 
   useEffect(() => {
     loadCredits();
     loadHistory();
   }, [user, loadCredits, loadHistory]);
 
-  // Set up real-time subscription for credit changes
+  // Real-time subscription
   useEffect(() => {
     if (!user) return;
 
@@ -337,9 +434,16 @@ export const useUserCredits = () => {
     };
   }, [user, loadCredits]);
 
-  const remainingCredits = credits.credits_limit - credits.credits_used + credits.bonus_credits;
-  const dailyRemaining = credits.credits_limit - credits.credits_used;
-  const usagePercentage = (credits.credits_used / credits.credits_limit) * 100;
+  // Calculate remaining credits
+  const dailyRemaining = credits.daily_credits_limit - credits.daily_credits_used;
+  const monthlyRemaining = credits.monthly_credits_limit - credits.monthly_credits_used;
+  const totalRemaining = dailyRemaining + monthlyRemaining + credits.bonus_credits;
+  
+  // Legacy calculations for backwards compatibility
+  const remainingCredits = totalRemaining;
+  const usagePercentage = credits.daily_credits_limit > 0 
+    ? (credits.daily_credits_used / credits.daily_credits_limit) * 100 
+    : 0;
 
   return {
     credits,
@@ -348,8 +452,14 @@ export const useUserCredits = () => {
     refreshCredits,
     useCredits,
     addBonusCredits,
-    remainingCredits,
+    // New Lovable-style values
     dailyRemaining,
+    monthlyRemaining,
+    totalRemaining,
+    getTimeUntilDailyReset,
+    getTimeUntilMonthlyReset,
+    // Legacy values for backwards compatibility
+    remainingCredits,
     usagePercentage,
     getTimeUntilReset
   };
