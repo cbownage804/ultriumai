@@ -7,11 +7,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Bot, 
   Send, 
-  Shield, 
   AlertTriangle,
   Lock,
   Eye,
-  FileSearch,
   HelpCircle,
   Loader2,
   Key,
@@ -21,6 +19,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import safeassistLogo from '@/assets/safeassist-logo.png';
 
 interface Message {
   id: string;
@@ -365,13 +364,10 @@ Each SafeSuite tool works together to provide complete security coverage!`;
 
   return (
     <div className={cn('flex flex-col', compactMode ? 'h-[450px]' : 'min-h-[600px]')}>
+      {/* Header with SafeAssist branding - centered logo only */}
       {!compactMode && (
-        <div className="text-center mb-4 px-4">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Bot className="h-8 w-8 text-emerald-500" />
-            <h3 className="text-2xl font-bold">SafeAssist AI</h3>
-          </div>
-          <p className="text-muted-foreground">Your 24/7 AI-powered security advisor</p>
+        <div className="flex justify-center mb-4 px-4">
+          <img src={safeassistLogo} alt="SafeAssist" className="h-10 w-auto" />
         </div>
       )}
 
@@ -474,6 +470,9 @@ Each SafeSuite tool works together to provide complete security coverage!`;
       {!compactMode && (
         <Card className="mx-4 mt-4 border-emerald-500/20 bg-emerald-500/5">
           <CardContent className="p-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <img src={safeassistLogo} alt="SafeAssist" className="h-6 w-auto" />
+            </div>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Badge className="bg-emerald-500/20 text-emerald-500">
                 <Sparkles className="h-3 w-3 mr-1" />
