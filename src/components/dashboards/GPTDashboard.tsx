@@ -199,20 +199,24 @@ export const GPTDashboard = () => {
           ) : (
             <div className="space-y-4">
               {customGPTs.slice(0, 5).map((gpt) => (
-                <div key={gpt.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border rounded-lg gap-4">
+                <div 
+                  key={gpt.id} 
+                  className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border rounded-lg gap-4 hover:bg-muted/50 transition-colors cursor-pointer group"
+                  onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}
+                >
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                       <Bot className="h-5 w-5 text-primary" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="font-medium truncate">{gpt.name}</h4>
+                      <h4 className="font-medium truncate group-hover:text-primary transition-colors">{gpt.name}</h4>
                       <p className="text-sm text-muted-foreground truncate max-w-[300px]">
                         {gpt.description || 'No description'}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     {/* Status badges */}
                     <Badge variant={gpt.is_active ? 'default' : 'secondary'}>
                       {gpt.is_active ? 'Active' : 'Inactive'}
