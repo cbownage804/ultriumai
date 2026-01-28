@@ -24,6 +24,7 @@ interface RealTimeAIChatProps {
   context?: 'security' | 'helpdesk' | 'rmm' | 'general' | 'ai_studio_help';
   title?: string;
   systemPromptOverride?: string;
+  onReady?: (sendMessage: (message: string) => void) => void;
 }
 
 // Available ElevenLabs voices
@@ -40,7 +41,8 @@ const AVAILABLE_VOICES = [
 const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({ 
   context = 'general', 
   title = 'AI Assistant',
-  systemPromptOverride
+  systemPromptOverride,
+  onReady
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -274,6 +276,13 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
       setIsLoading(false);
     }
   };
+
+  // Expose sendMessage to parent via onReady callback
+  useEffect(() => {
+    if (onReady && currentConversationId && user) {
+      onReady(sendMessage);
+    }
+  }, [onReady, currentConversationId, user]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
