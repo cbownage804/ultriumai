@@ -9,11 +9,10 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Code, Globe, Database, Plus, Settings, Trash2, Play, Eye } from "lucide-react";
+import { Code, Globe, Plus, Settings, Trash2, Play, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
-import { useAccountType } from "@/hooks/useAccountType";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -22,7 +21,7 @@ interface Action {
   gpt_id?: string;
   name: string;
   description: string;
-  action_type: 'document' | 'api' | 'webhook' | 'database' | 'security';
+  action_type: 'api' | 'webhook' | 'security';
   config: any;
   is_enabled: boolean;
   is_beta?: boolean;
@@ -33,7 +32,6 @@ interface Action {
 const CustomGPTActions = () => {
   const { user } = useAuth();
   const { gpts } = useCustomGPTs();
-  const { isUltriumEmployee } = useAccountType();
   const { toast } = useToast();
   
   const [actions, setActions] = useState<Action[]>([]);
@@ -41,7 +39,7 @@ const CustomGPTActions = () => {
   const [newAction, setNewAction] = useState({
     name: '',
     description: '',
-    action_type: 'document' as Action['action_type'],
+    action_type: 'api' as Action['action_type'],
     config: {}
   });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -86,11 +84,9 @@ const CustomGPTActions = () => {
   };
 
   const actionTypes = [
-    { value: 'document', label: 'Document Analysis', icon: FileText, color: 'text-blue-600' },
     { value: 'api', label: 'API Integration', icon: Globe, color: 'text-green-600' },
-    { value: 'webhook', label: 'Webhook Action', icon: Code, color: 'text-purple-600' },
-    { value: 'database', label: 'Database Query', icon: Database, color: 'text-orange-600' },
-    { value: 'security', label: 'Security Scanner', icon: Settings, color: 'text-red-600' }
+    { value: 'webhook', label: 'Webhook Trigger', icon: Code, color: 'text-purple-600' },
+    { value: 'security', label: 'SafeScan Integration', icon: Settings, color: 'text-red-600' }
   ];
 
   const toggleAction = async (id: string) => {
@@ -169,7 +165,7 @@ const CustomGPTActions = () => {
       if (error) throw error;
 
       setActions(prev => [data as Action, ...prev]);
-      setNewAction({ name: '', description: '', action_type: 'document', config: {} });
+      setNewAction({ name: '', description: '', action_type: 'api', config: {} });
       setIsDialogOpen(false);
       
       toast({
@@ -228,7 +224,7 @@ const CustomGPTActions = () => {
 
   const getActionIcon = (action_type: Action['action_type']) => {
     const actionType = actionTypes.find(t => t.value === action_type);
-    if (!actionType) return FileText;
+    if (!actionType) return Settings;
     return actionType.icon;
   };
 
@@ -376,25 +372,6 @@ const CustomGPTActions = () => {
               </TabsContent>
               
               <TabsContent value="config" className="space-y-4">
-                {newAction.action_type === 'document' && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Supported File Formats</Label>
-                      <div className="flex gap-2 flex-wrap">
-                        {['PDF', 'DOCX', 'TXT', 'MD', 'CSV'].map(format => (
-                          <Badge key={format} variant="outline" className="cursor-pointer">
-                            {format}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Max File Size (MB)</Label>
-                      <Input type="number" placeholder="10" defaultValue="10" />
-                    </div>
-                  </div>
-                )}
-                
                 {newAction.action_type === 'api' && (
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -445,66 +422,38 @@ const CustomGPTActions = () => {
                   </div>
                 )}
                 
-                {newAction.action_type === 'database' && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Database Type</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select database..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="postgresql">PostgreSQL</SelectItem>
-                          <SelectItem value="mysql">MySQL</SelectItem>
-                          <SelectItem value="mongodb">MongoDB</SelectItem>
-                          <SelectItem value="supabase">Supabase</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Connection String</Label>
-                      <Input type="password" placeholder="postgresql://user:pass@host:port/db" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Default Query</Label>
-                      <Textarea placeholder="SELECT * FROM users WHERE..." rows={3} />
-                    </div>
-                  </div>
-                )}
-                
                 {newAction.action_type === 'security' && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Security Scanner Type</Label>
+                      <Label>SafeSuite Integration</Label>
                       <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select scanner type..." />
+                          <SelectValue placeholder="Select integration type..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="link">Link Scanner</SelectItem>
-                          <SelectItem value="email">Email Security</SelectItem>
-                          <SelectItem value="attachment">Attachment Scanner</SelectItem>
+                          <SelectItem value="url">SafeScan - URL Security Check</SelectItem>
+                          <SelectItem value="breach">SafeWeb - Breach Detection</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Threat Detection Level</Label>
+                      <Label>Scan Depth</Label>
                       <Select defaultValue="standard">
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="standard">Standard</SelectItem>
-                          <SelectItem value="advanced">Advanced</SelectItem>
+                          <SelectItem value="basic">Quick Scan</SelectItem>
+                          <SelectItem value="standard">Standard Scan</SelectItem>
+                          <SelectItem value="advanced">Deep Scan</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Auto-Block Malicious Content</Label>
+                      <Label>Auto-Alert on Threats</Label>
                       <div className="flex items-center space-x-2">
                         <Switch defaultChecked />
-                        <span className="text-sm text-muted-foreground">Automatically block detected threats</span>
+                        <span className="text-sm text-muted-foreground">Automatically alert on detected threats or breaches</span>
                       </div>
                     </div>
                   </div>
@@ -626,31 +575,22 @@ const CustomGPTActions = () => {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {[
-                  // Ultrium-branded templates - only visible to Ultrium employees
-                  ...(isUltriumEmployee ? [
-                    {
-                      name: 'Ultrium SafeLink™ Scanner',
-                      description: 'Advanced link security scanning and threat detection',
-                      action_type: 'security' as const,
-                      icon: Settings,
-                      isInternal: true
-                    },
-                    {
-                      name: 'Ultrium SafeMail™ Scanner',
-                      description: 'Email header analysis and reputation checking',
-                      action_type: 'security' as const,
-                      icon: Settings,
-                      isInternal: true
-                    },
-                    {
-                      name: 'Ultrium SafeDoc™ Scanner',
-                      description: 'File hash analysis and malware detection',
-                      action_type: 'security' as const,
-                      icon: Settings,
-                      isInternal: true
-                    }
-                  ] : []),
-                  // Public templates - visible to everyone
+                  // SafeSuite Integration Templates
+                  {
+                    name: 'SafeScan URL Checker',
+                    description: 'Scan URLs for malware, phishing, and security threats',
+                    action_type: 'security' as const,
+                    icon: Settings,
+                    isInternal: false
+                  },
+                  {
+                    name: 'SafeWeb Breach Alert',
+                    description: 'Check if credentials appear in dark web breaches',
+                    action_type: 'security' as const,
+                    icon: Settings,
+                    isInternal: false
+                  },
+                  // General Integration Templates
                   {
                     name: 'Autotask Ticket Creator',
                     description: 'Automatically create tickets in Autotask PSA',
@@ -659,15 +599,22 @@ const CustomGPTActions = () => {
                     isInternal: false
                   },
                   {
-                    name: 'Email Sender',
-                    description: 'Send emails through SMTP or email service APIs',
+                    name: 'Email Notification',
+                    description: 'Send email alerts via SendGrid, Mailgun, or SMTP',
                     action_type: 'api' as const,
                     icon: Globe,
                     isInternal: false
                   },
                   {
-                    name: 'Slack Notifier',
-                    description: 'Send messages to Slack channels',
+                    name: 'Slack Webhook',
+                    description: 'Send messages and alerts to Slack channels',
+                    action_type: 'webhook' as const,
+                    icon: Code,
+                    isInternal: false
+                  },
+                  {
+                    name: 'Microsoft Teams Webhook',
+                    description: 'Post notifications to Microsoft Teams channels',
                     action_type: 'webhook' as const,
                     icon: Code,
                     isInternal: false
