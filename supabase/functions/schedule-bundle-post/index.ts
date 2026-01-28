@@ -7,10 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Facebook requires aspect ratio <= 1.91.
-// 1200x628 is actually 1.9108 (> 1.91), so we enforce 1200x629 (~1.9078).
-const TARGET_WIDTH = 1200;
-const TARGET_HEIGHT = 629;
+// Square 1:1 format for social media posts
+const TARGET_WIDTH = 1080;
+const TARGET_HEIGHT = 1080;
 
 interface PostRequest {
   title: string;
