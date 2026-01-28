@@ -159,7 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     if (!isValid) {
-      throw new Error('Invalid verification code');
+      throw new Error('The code didn\'t match. Please try again with a new code from your authenticator app.');
     }
 
     logStep("MFA verification successful", { userId: user.id });
