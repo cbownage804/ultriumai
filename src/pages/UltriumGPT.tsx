@@ -228,7 +228,7 @@ Always be helpful, encouraging, and focused on empowering users to build great A
                     <p className="font-medium text-sm">Need more help?</p>
                     <p className="text-xs text-muted-foreground">Browse full documentation</p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => navigate('/docs/ai-studio')}>
                     <BookOpen className="h-4 w-4 mr-2" />
                     Docs
                     <ChevronRight className="h-4 w-4 ml-1" />
