@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2, Pencil } from "lucide-react";
+import { Bot, MessageSquare, Users, TrendingUp, Plus, Trash2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -125,7 +125,7 @@ export const GPTDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/dashboard/gpt/build')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -150,26 +150,14 @@ export const GPTDashboard = () => {
           </CardHeader>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/dashboard/gpt/chat')}>
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/dashboard/ultrium-gpt')}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <MessageSquare className="h-5 w-5" />
-              Test & Chat
+              Studio Assistant
             </CardTitle>
             <CardDescription>
-              Interact with your custom GPTs
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
-        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/dashboard/analytics')}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="h-5 w-5" />
-              View Analytics
-            </CardTitle>
-            <CardDescription>
-              Monitor performance and usage
+              Get help building your GPTs
             </CardDescription>
           </CardHeader>
         </Card>

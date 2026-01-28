@@ -43,12 +43,8 @@ const getGptSpecificItems = (gptId: string) => [
   { title: "Deploy", url: `/ai-studio/deploy/${gptId}`, icon: Settings, tooltip: "Deploy and share this GPT" },
 ];
 
-const managementItems = [
-  { title: "API Management", url: "/dashboard/api-management", icon: Key, tooltip: "Manage API keys, usage limits, and access permissions" },
-  { title: "White-label", url: "/dashboard/white-label", icon: Palette, tooltip: "Customize branding and white-label your solutions" },
-  { title: "Team Management", url: "/dashboard/teams", icon: Users, tooltip: "Manage team members, roles, and permissions" },
-  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3, tooltip: "View usage statistics and performance metrics" },
-];
+// Management items removed - all functionality now lives per-GPT
+// (Integrations tab for API, Branding tab for white-label, Team tab for team management, Analytics tab for analytics)
 
 const accountItems = [
   { title: "Profile", url: "/dashboard/profile", icon: User, tooltip: "Manage your account profile and personal information" },
@@ -94,8 +90,7 @@ export function AppSidebar() {
   
   const [openSections, setOpenSections] = useState({
     gpt: true,
-    gptSpecific: true,
-    management: false
+    gptSpecific: true
   });
   
   const isCollapsed = state === "collapsed";
@@ -246,38 +241,7 @@ export function AppSidebar() {
         )}
 
 
-        {/* Management & Analytics Section */}
-        <Collapsible open={openSections.management} onOpenChange={() => toggleSection('management')}>
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
-                <span className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  {!isCollapsed && "Management"}
-                </span>
-                {!isCollapsed && (
-                  openSections.management ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
-                )}
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {managementItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild tooltip={item.tooltip}>
-                        <NavLink to={item.url} className={getNavClass}>
-                          <item.icon className="h-4 w-4" />
-                          {!isCollapsed && <span className="ml-2">{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
+        {/* Management section removed - all functionality now lives per-GPT */}
 
 
         {/* Premium Upgrade Section */}
