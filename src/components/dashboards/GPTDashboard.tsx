@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2, Sliders, Zap, User, Rocket } from "lucide-react";
+import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -225,61 +225,16 @@ export const GPTDashboard = () => {
                       {gpt.chat_count || 0} chats
                     </Badge>
                     
-                    {/* Action buttons with tooltips */}
+                    {/* Action buttons */}
                     <TooltipProvider>
                       <div className="flex items-center gap-1 ml-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/dashboard/gpt/build?edit=${gpt.id}`)}>
-                              <Bot className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Build / Edit</TooltipContent>
-                        </Tooltip>
-                        
-                        <Tooltip>
-                          <TooltipTrigger asChild>
                             <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}>
-                              <User className="h-4 w-4" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Personalize</TooltipContent>
-                        </Tooltip>
-                        
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/actions/${gpt.id}`)}>
-                              <Zap className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Actions</TooltipContent>
-                        </Tooltip>
-                        
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/chat/${gpt.id}`)}>
-                              <MessageSquare className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Chat</TooltipContent>
-                        </Tooltip>
-                        
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/analytics/${gpt.id}`)}>
-                              <BarChart3 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Analyze</TooltipContent>
-                        </Tooltip>
-                        
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/deploy/${gpt.id}`)}>
-                              <Rocket className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Deploy</TooltipContent>
+                          <TooltipContent>Edit</TooltipContent>
                         </Tooltip>
                         
                         <Tooltip>
