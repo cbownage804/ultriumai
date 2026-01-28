@@ -366,13 +366,13 @@ const CustomGPTActions = () => {
             </div>
           </div>
 
-          {/* Development Status */}
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-            <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+          {/* Status Notice */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
             <div className="text-xs">
-              <span className="font-medium text-amber-700 dark:text-amber-400">In Development:</span>
+              <span className="font-medium text-green-700 dark:text-green-400">Active:</span>
               <span className="text-muted-foreground ml-1">
-                Actions are currently configurable but automatic GPT triggering is coming soon. Use the Test button to preview action behavior.
+                Enabled actions are automatically available to your GPT during conversations. When relevant, the AI will use your actions to scan URLs, check breaches, or trigger webhooks.
               </span>
             </div>
           </div>
