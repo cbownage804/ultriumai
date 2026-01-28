@@ -294,98 +294,38 @@ export const DashboardOverview = () => {
         </CardContent>
       </Card>
 
-      {/* Features Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Bot className="h-5 w-5" />
-              <span>AI Studio Features</span>
-            </CardTitle>
-            <CardDescription>
-              Build and deploy custom AI solutions
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/gpt/build')}>
-              <div className="flex items-center space-x-3">
-                <Code className="h-8 w-8 text-primary" />
-                <div>
-                  <h3 className="font-semibold">Custom GPT Builder</h3>
-                  <p className="text-sm text-muted-foreground">Create AI assistants trained on your data</p>
-                </div>
-              </div>
-              <Badge variant="outline">Available</Badge>
+      {/* Pro Tips - full width since Features section removed (redundant with Quick Actions) */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <span>Pro Tips</span>
+          </CardTitle>
+          <CardDescription>
+            Get the most out of AI Studio
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
+              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+              <span className="text-sm">Train GPTs on your specific domain knowledge</span>
             </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/gpt/templates')}>
-              <div className="flex items-center space-x-3">
-                <Star className="h-8 w-8 text-amber-500" />
-                <div>
-                  <h3 className="font-semibold">GPT Templates</h3>
-                  <p className="text-sm text-muted-foreground">36+ pre-built templates to get started</p>
-                </div>
-              </div>
-              <Badge variant="outline">Available</Badge>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
+              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+              <span className="text-sm">Use templates as starting points</span>
             </div>
-
-            <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate('/dashboard/ultrium-gpt')}>
-              <div className="flex items-center space-x-3">
-                <Sparkles className="h-8 w-8 text-purple-500" />
-                <div>
-                  <h3 className="font-semibold">Ultrium GPT</h3>
-                  <p className="text-sm text-muted-foreground">Your AI co-pilot for building solutions</p>
-                </div>
-              </div>
-              <Badge variant="outline">Available</Badge>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
+              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+              <span className="text-sm">Connect external APIs for dynamic responses</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Pro Tips */}
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <span>Pro Tips</span>
-            </CardTitle>
-            <CardDescription>
-              Get the most out of AI Studio
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Build smarter AI solutions with these best practices:
-            </p>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                Train GPTs on your specific domain knowledge
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                Use templates as starting points
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                Connect external APIs for dynamic responses
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                White-label to match your brand
-              </li>
-            </ul>
-            <Button 
-              className="w-full mt-4"
-              variant="outline"
-              onClick={() => navigate('/dashboard/gpt/templates')}
-            >
-              <Star className="h-4 w-4 mr-2" />
-              Explore Templates
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
+              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+              <span className="text-sm">White-label to match your brand</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Subscription Management Section */}
       <div className="grid gap-6 lg:grid-cols-2">
