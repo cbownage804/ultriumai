@@ -26,7 +26,8 @@ import {
   Play,
   Star,
   Crown,
-  Check
+  Check,
+  BookOpen
 } from "lucide-react";
 import heroAi from "@/assets/hero-ai.jpg";
 import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
@@ -222,6 +223,10 @@ const AIStudio = () => {
               <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300" onClick={() => window.location.href = '/demos/custom-gpt-builder'}>
                 <Play className="mr-2 h-5 w-5" />
                 View Demo
+              </Button>
+              <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300" onClick={() => window.location.href = '/docs/ai-studio'}>
+                <BookOpen className="mr-2 h-5 w-5" />
+                Documentation
               </Button>
               <Button variant="outline" size="lg" className="text-lg px-10 py-7 h-auto border-border/50 hover:border-violet-500/50 hover:bg-violet-500/5 transition-all duration-300" onClick={() => window.location.href = '/contact'}>
                 <Calendar className="mr-2 h-5 w-5" />

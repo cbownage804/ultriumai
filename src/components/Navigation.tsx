@@ -193,6 +193,13 @@ const Navigation = () => {
             </button>
             
             <button 
+              onClick={() => handleNavigation('/docs')}
+              className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
+            >
+              Docs
+            </button>
+            
+            <button 
               onClick={() => handleNavigation('/contact')}
               className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
             >
@@ -294,6 +301,10 @@ const Navigation = () => {
               
               <button onClick={() => handleNavigationWithMenuClose('/pricing')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
                 Pricing
+              </button>
+              
+              <button onClick={() => handleNavigationWithMenuClose('/docs')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
+                Docs
               </button>
               
               <button onClick={() => handleNavigationWithMenuClose('/contact')} className="block w-full text-left px-3 py-2 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-md">
