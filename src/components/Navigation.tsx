@@ -70,7 +70,7 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-4">
             <button 
-              onClick={() => handleNavigation('/products/ai-studio')}
+              onClick={() => handleNavigation('/dashboard')}
               className="transition-transform duration-200 hover:scale-105"
               title="AI Studio™"
             >
@@ -80,7 +80,7 @@ const Navigation = () => {
             </button>
             
             <button 
-              onClick={() => handleNavigation('/products/vanguard')}
+              onClick={() => handleNavigation('/vanguard')}
               className="transition-transform duration-200 hover:scale-105"
               title="Vanguard™"
             >
@@ -90,7 +90,7 @@ const Navigation = () => {
             </button>
             
             <button 
-              onClick={() => handleNavigation('/products/safesuite')}
+              onClick={() => handleNavigation('/safesuite')}
               className="transition-transform duration-200 hover:scale-105"
               title="SafeSuite™"
             >
@@ -122,7 +122,7 @@ const Navigation = () => {
                 <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
                   {/* SafeSuite */}
                   <button
-                    onClick={() => handleNavigation('/products/safesuite')}
+                    onClick={() => handleNavigation('/safesuite')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-emerald-500/20 overflow-hidden">
@@ -139,7 +139,7 @@ const Navigation = () => {
 
                   {/* AI Studio */}
                   <button
-                    onClick={() => handleNavigation('/products/ai-studio')}
+                    onClick={() => handleNavigation('/dashboard')}
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
@@ -156,7 +156,7 @@ const Navigation = () => {
 
                   {/* Vanguard Suite */}
                   <button
-                    onClick={() => handleNavigation('/products/vanguard')}
+                    onClick={() => handleNavigation('/vanguard')}
                     className="group/item col-span-2 flex items-start gap-3 p-3 rounded-xl hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-cyan-500/20 overflow-hidden">
@@ -265,7 +265,7 @@ const Navigation = () => {
           <div className="md:hidden bg-background border-t border-border/50 py-4">
             <div className="space-y-1">
               <button 
-                onClick={() => handleNavigationWithMenuClose('/products/ai-studio')} 
+                onClick={() => handleNavigationWithMenuClose('/dashboard')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
@@ -275,7 +275,7 @@ const Navigation = () => {
               </button>
               
               <button 
-                onClick={() => handleNavigationWithMenuClose('/products/vanguard')} 
+                onClick={() => handleNavigationWithMenuClose('/vanguard')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-cyan-500 hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
@@ -285,7 +285,7 @@ const Navigation = () => {
               </button>
               
               <button 
-                onClick={() => handleNavigationWithMenuClose('/products/safesuite')} 
+                onClick={() => handleNavigationWithMenuClose('/safesuite')} 
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-emerald-500 hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
