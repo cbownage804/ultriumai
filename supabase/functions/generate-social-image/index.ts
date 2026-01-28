@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
+// Adds additional codecs (incl. WebP) for ImageScript's Image.decode()
+import "npm:@imagescript/codecs";
 import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
@@ -22,6 +24,19 @@ const corsHeaders = {
 const TARGET_WIDTH = 1080;
 const TARGET_HEIGHT = 1080;
 
+// Stable origins for fetching public assets (logos) from the edge runtime.
+// NOTE: The in-editor preview often runs on a tokenized lovableproject.com origin that edge-runtime fetch
+// can't access. We prefer the stable id-preview host and fall back to the published domain.
+const STABLE_PREVIEW_ORIGIN = 'https://id-preview--51e5cd04-5f19-440a-a7ba-de30fc766877.lovable.app';
+const PUBLISHED_ORIGIN = 'https://ultriumai.lovable.app';
+
+function normalizeAssetOrigin(origin?: string | null): string {
+  if (!origin) return STABLE_PREVIEW_ORIGIN;
+  // If the origin is a tokenized lovableproject.com host, use the stable preview origin instead.
+  if (origin.includes('lovableproject.com')) return STABLE_PREVIEW_ORIGIN;
+  return origin;
+}
+
 // Product logo URLs (from public folder - available after deploy)
 const getProductLogoUrl = (product: string, origin?: string | null): string => {
   const logoMap: Record<string, string> = {
@@ -37,7 +52,7 @@ const getProductLogoUrl = (product: string, origin?: string | null): string => {
     vanguard: 'vanguard-logo.png',
   };
 
-  const base = origin || 'https://ultriumai.lovable.app';
+  const base = normalizeAssetOrigin(origin);
   const file = logoMap[product] || 'ultriumai-logo.png';
   return new URL(`/logos/${file}`, base).toString();
 };
@@ -47,16 +62,25 @@ function dataUrlToBytes(dataUrl: string): Uint8Array {
   return Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
 }
 
-async function fetchLogoBytes(logoUrl: string, fallbackOrigin: string): Promise<Uint8Array | null> {
+async function fetchLogoBytes(logoUrl: string, fallbackOrigin?: string): Promise<Uint8Array | null> {
   const tryUrls: string[] = [];
 
+  // Always try the requested URL first.
   tryUrls.push(logoUrl);
-  // If the request origin isn't available (or fetch fails due to preview/published mismatch),
-  // also try the published domain.
+
+  // Then try stable preview + published origins for the same pathname.
   try {
     const u = new URL(logoUrl);
-    const fallback = new URL(u.pathname, fallbackOrigin).toString();
-    if (fallback !== logoUrl) tryUrls.push(fallback);
+    const stablePreview = new URL(u.pathname, STABLE_PREVIEW_ORIGIN).toString();
+    const published = new URL(u.pathname, PUBLISHED_ORIGIN).toString();
+    if (!tryUrls.includes(stablePreview)) tryUrls.push(stablePreview);
+    if (!tryUrls.includes(published)) tryUrls.push(published);
+
+    // And finally, if a caller supplies a custom fallback origin, try that too.
+    if (fallbackOrigin) {
+      const fallback = new URL(u.pathname, fallbackOrigin).toString();
+      if (!tryUrls.includes(fallback)) tryUrls.push(fallback);
+    }
   } catch {
     // ignore malformed URL
   }
@@ -64,13 +88,17 @@ async function fetchLogoBytes(logoUrl: string, fallbackOrigin: string): Promise<
   for (const url of tryUrls) {
     try {
       const res = await fetch(url);
-      if (res.ok) return new Uint8Array(await res.arrayBuffer());
+      if (res.ok) {
+        console.log('Logo fetch OK:', url);
+        return new Uint8Array(await res.arrayBuffer());
+      }
       console.warn('Logo fetch failed:', res.status, url);
     } catch (e) {
       console.warn('Logo fetch error:', url, e);
     }
   }
 
+  console.warn('Logo fetch failed for all candidates. First URL:', logoUrl);
   return null;
 }
 
@@ -86,17 +114,17 @@ async function ensurePng1200x629AndWatermark(params: {
   img = img.cover(TARGET_WIDTH, TARGET_HEIGHT);
 
   if (params.logoUrl) {
-    const fallbackOrigin = params.logoFallbackOrigin || 'https://ultriumai.lovable.app';
+    const fallbackOrigin = params.logoFallbackOrigin || PUBLISHED_ORIGIN;
     const logoBytes = await fetchLogoBytes(params.logoUrl, fallbackOrigin);
     if (logoBytes) {
       let logo = await Image.decode(logoBytes);
 
-      // Size: ~16% of width, maintain aspect ratio.
-      const targetLogoWidth = Math.max(120, Math.round(TARGET_WIDTH * 0.16));
+      // Size: slightly larger so it's always visible on feed previews.
+      const targetLogoWidth = Math.max(140, Math.round(TARGET_WIDTH * 0.22));
       logo = logo.resize(targetLogoWidth, Image.RESIZE_AUTO);
 
       // Slight transparency to feel like a watermark.
-      logo.opacity(0.85);
+      logo.opacity(0.92);
 
       const padding = Math.round(TARGET_WIDTH * 0.02); // ~24px
       const x = Math.max(0, TARGET_WIDTH - logo.width - padding);
@@ -313,10 +341,30 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
     }
 
     const data = await response.json();
-    let generatedImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
+    const message = data.choices?.[0]?.message;
+
+    // The gateway can return images in different shapes depending on the provider.
+    // Prefer message.images, but fall back to message.content (array of parts) if needed.
+    let generatedImage: string | undefined = message?.images?.[0]?.image_url?.url;
+
+    if (!generatedImage && message?.images?.[0]?.url) {
+      generatedImage = message.images[0].url;
+    }
+
+    if (!generatedImage && Array.isArray(message?.content)) {
+      const parts = message.content as any[];
+      const imagePart = parts.find((p) => p?.type === 'image_url' || p?.type === 'image');
+      generatedImage = imagePart?.image_url?.url || imagePart?.image_url || imagePart?.url;
+    }
+
     if (!generatedImage) {
-      console.error('No image in response:', JSON.stringify(data).substring(0, 500));
+      console.error(
+        'No image in response. message keys:',
+        message ? Object.keys(message) : null,
+        'content type:',
+        typeof message?.content,
+      );
+      console.error('No image in response (truncated):', JSON.stringify(data).substring(0, 1200));
       throw new Error('No image generated');
     }
 
@@ -327,11 +375,12 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
     const origin = req.headers.get('origin');
     const watermarkProduct = detectedProduct || 'ultriumai';
     const logoUrl = getProductLogoUrl(watermarkProduct, origin);
+    console.log('Applying watermark:', watermarkProduct, 'logoUrl:', logoUrl);
     generatedImage = await ensurePng1200x629AndWatermark({
       imageDataUrl: generatedImage,
       logoUrl,
       // If the origin points at preview, we still want a stable fallback.
-      logoFallbackOrigin: 'https://ultriumai.lovable.app',
+      logoFallbackOrigin: PUBLISHED_ORIGIN,
     });
 
     // Convert base64 to buffer
