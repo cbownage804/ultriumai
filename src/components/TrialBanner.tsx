@@ -6,11 +6,19 @@ import { Clock, Crown, X } from 'lucide-react';
 import { useState } from 'react';
 
 export function TrialBanner() {
-  const { subscription } = useSubscription();
+  const { subscription, isLoading } = useSubscription();
   const { user } = useAuth();
   const [dismissed, setDismissed] = useState(false);
 
+  // Don't show while loading subscription status - prevents flash of expired banner
+  if (isLoading) return null;
+  
+  // Don't show if dismissed, no user, or user is subscribed
   if (!user || dismissed || subscription.subscribed) return null;
+  
+  // Don't show if user has a paid tier (even if subscribed flag might be delayed)
+  const paidTiers = ['starter', 'professional', 'agency', 'enterprise', 'premium', 'pro', 'business'];
+  if (paidTiers.includes(subscription.subscription_tier?.toLowerCase())) return null;
 
   // Calculate trial info
   const userCreatedAt = new Date(user.created_at);
