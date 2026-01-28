@@ -126,7 +126,11 @@ serve(async (req) => {
     for (const subscription of subscriptions.data) {
       for (const item of subscription.items.data) {
         const priceId = item.price.id;
-        const endDate = new Date(subscription.current_period_end * 1000).toISOString();
+        const endDate = subscription.current_period_end 
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : null;
+        
+        logStep("Processing subscription item", { priceId, subscriptionId: subscription.id, endDate });
         
         // Check if this is an AI Studio subscription
         if (AI_STUDIO_PRICE_TO_TIER[priceId]) {
