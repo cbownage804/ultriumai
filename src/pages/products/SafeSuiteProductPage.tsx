@@ -168,7 +168,7 @@ const SafeSuiteProductPage = () => {
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/pricing#safesuite">
+              <Link to="/pricing/safesuite">
                 View Plans
               </Link>
             </Button>
@@ -487,7 +487,7 @@ const SafeSuiteProductPage = () => {
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild>
-                  <Link to="/pricing#safesuite">
+                  <Link to="/pricing/safesuite">
                     View Plans
                   </Link>
                 </Button>

@@ -93,7 +93,7 @@ const AIStudioForMSPs = () => {
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10" asChild>
-              <Link to="/pricing#ai-studio">
+              <Link to="/pricing/ai-studio">
                 View Pricing
               </Link>
             </Button>

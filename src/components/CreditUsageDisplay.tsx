@@ -107,7 +107,7 @@ export function CreditUsageDisplay() {
           )}
           <Button 
             variant="outline" 
-            onClick={() => window.location.href = '/pricing'}
+            onClick={() => window.location.href = '/pricing/ai-studio'}
             className="flex-1"
           >
             <TrendingUp className="w-4 h-4 mr-2" />

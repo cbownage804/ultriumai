@@ -140,18 +140,18 @@ export function SubscriptionStatus() {
         {/* Action buttons */}
         <div className="flex gap-2 pt-2">
           {!subscription.subscribed || isSubscriptionExpired ? (
-            <Button className="flex-1" onClick={() => window.location.href = '/pricing'}>
+            <Button className="flex-1" onClick={() => window.location.href = '/pricing/ai-studio'}>
               <TrendingUp className="w-4 h-4 mr-2" />
               Upgrade Plan
             </Button>
           ) : (
-            <Button variant="outline" onClick={() => openCustomerPortal('safesuite')} className="flex-1">
+            <Button variant="outline" onClick={() => openCustomerPortal('ai-studio')} className="flex-1">
               <CreditCard className="w-4 h-4 mr-2" />
               Manage Subscription
             </Button>
           )}
           {isInTrial && (
-            <Button onClick={() => window.location.href = '/pricing'}>
+            <Button onClick={() => window.location.href = '/pricing/ai-studio'}>
               <Crown className="w-4 h-4 mr-2" />
               Subscribe Now
             </Button>
