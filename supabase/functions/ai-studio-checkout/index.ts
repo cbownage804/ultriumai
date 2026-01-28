@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // AI Studio Plan Price IDs - These should be created in Stripe
@@ -13,6 +13,7 @@ const PLAN_PRICES: Record<string, { priceId: string; name: string }> = {
   msp_starter: { priceId: "price_ai_studio_msp_starter", name: "AI Studio MSP Starter" },
   msp_pro: { priceId: "price_ai_studio_msp_pro", name: "AI Studio MSP Pro" },
   msp_elite: { priceId: "price_ai_studio_msp_elite", name: "AI Studio MSP Elite" },
+  platform_pro: { priceId: "price_ai_studio_platform_pro", name: "AI Studio Platform Pro" },
   // Team Plans
   team_basic: { priceId: "price_ai_studio_team_basic", name: "AI Studio Team Basic" },
   team_plus: { priceId: "price_ai_studio_team_plus", name: "AI Studio Team Plus" },
