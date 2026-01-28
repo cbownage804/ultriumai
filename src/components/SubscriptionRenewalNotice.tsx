@@ -47,7 +47,7 @@ export function SubscriptionRenewalNotice() {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={openCustomerPortal}
+              onClick={() => openCustomerPortal('safesuite')}
               className="shrink-0"
             >
               <CreditCard className="w-4 h-4 mr-1" />

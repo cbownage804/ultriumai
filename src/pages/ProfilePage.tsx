@@ -707,7 +707,7 @@ const ProfilePage = () => {
                   {subscription.subscribed ? (
                     <Button 
                       variant="outline" 
-                      onClick={openCustomerPortal}
+                      onClick={() => openCustomerPortal('safesuite')}
                       disabled={isSubscriptionLoading}
                     >
                       <Settings className="w-4 h-4 mr-2" />

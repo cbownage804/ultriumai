@@ -87,7 +87,7 @@ export function GracePeriodManager() {
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={openCustomerPortal} className="flex-1">
+          <Button onClick={() => openCustomerPortal('safesuite')} className="flex-1">
             <CreditCard className="w-4 h-4 mr-2" />
             Update Payment Method
           </Button>
