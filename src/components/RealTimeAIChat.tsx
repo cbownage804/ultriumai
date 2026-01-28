@@ -21,8 +21,9 @@ interface Message {
 }
 
 interface RealTimeAIChatProps {
-  context?: 'security' | 'helpdesk' | 'rmm' | 'general';
+  context?: 'security' | 'helpdesk' | 'rmm' | 'general' | 'ai_studio_help';
   title?: string;
+  systemPromptOverride?: string;
 }
 
 // Available ElevenLabs voices
@@ -38,7 +39,8 @@ const AVAILABLE_VOICES = [
 
 const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({ 
   context = 'general', 
-  title = 'AI Assistant' 
+  title = 'AI Assistant',
+  systemPromptOverride
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -230,12 +232,14 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
     await saveMessage(currentConversationId, userMessage.content, 'user');
 
     try {
+      const defaultSystemPrompt = `You are UltriumGPT's intelligent assistant with web browsing and memory capabilities. You help users with cybersecurity, MSP operations, SafeDesk management, and business technology questions. Be concise and direct in your responses. You have access to current information through web browsing and can learn from websites to build persistent knowledge. Available commands: /browse [url], /learn [url], /memory, /forget [topic]. If you need more context about a specific situation, ask targeted follow-up questions or suggest using web browsing commands.`;
+      
       const { data, error } = await supabase.functions.invoke('ai-web-browser', {
         body: {
           message: content,
           model: 'gpt-4o-mini',
           context,
-          systemPrompt: `You are UltriumGPT's intelligent assistant with web browsing and memory capabilities. You help users with cybersecurity, MSP operations, SafeDesk management, and business technology questions. Be concise and direct in your responses. You have access to current information through web browsing and can learn from websites to build persistent knowledge. Available commands: /browse [url], /learn [url], /memory, /forget [topic]. If you need more context about a specific situation, ask targeted follow-up questions or suggest using web browsing commands.`
+          systemPrompt: systemPromptOverride || defaultSystemPrompt
         }
       });
 
