@@ -145,7 +145,7 @@ export function SubscriptionStatus() {
               Upgrade Plan
             </Button>
           ) : (
-            <Button variant="outline" onClick={openCustomerPortal} className="flex-1">
+            <Button variant="outline" onClick={() => openCustomerPortal('safesuite')} className="flex-1">
               <CreditCard className="w-4 h-4 mr-2" />
               Manage Subscription
             </Button>

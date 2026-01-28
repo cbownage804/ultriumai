@@ -459,7 +459,7 @@ const Profile = () => {
                   variant="outline" 
                   size="sm" 
                   className="w-full"
-                  onClick={openCustomerPortal}
+                  onClick={() => openCustomerPortal('safesuite')}
                 >
                   Manage Subscription
                 </Button>

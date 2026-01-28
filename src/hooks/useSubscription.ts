@@ -132,7 +132,7 @@ export const useSubscription = () => {
     }
   };
 
-  const openCustomerPortal = async () => {
+  const openCustomerPortal = async (product: 'safesuite' | 'ai-studio' | 'vanguard' = 'safesuite') => {
     if (!user || !session) {
       toast({
         title: "Authentication required",
@@ -142,8 +142,17 @@ export const useSubscription = () => {
       return;
     }
 
+    // Map product to the appropriate edge function
+    const portalFunctions = {
+      'safesuite': 'safesuite-customer-portal',
+      'ai-studio': 'ai-studio-customer-portal',
+      'vanguard': 'vanguard-customer-portal',
+    };
+
+    const functionName = portalFunctions[product];
+
     try {
-      const { data, error } = await supabase.functions.invoke('customer-portal', {
+      const { data, error } = await supabase.functions.invoke(functionName, {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
@@ -154,7 +163,7 @@ export const useSubscription = () => {
       // Open customer portal in a new tab
       safeWindowOpen(data.url, '_blank');
     } catch (error) {
-      console.error('Error opening customer portal:', error);
+      console.error(`Error opening ${product} customer portal:`, error);
       toast({
         title: "Error",
         description: "Failed to open customer portal.",
