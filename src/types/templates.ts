@@ -79,4 +79,5 @@ export interface GPTTemplate {
   created_at: string;
   features: string[];
   config: GPTTemplateConfig;
+  credit_cost?: number; // Credits required to install (default: 50)
 }

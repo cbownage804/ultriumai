@@ -1,9 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Heart, ArrowRight, Zap } from 'lucide-react';
+import { Clock, Heart, ArrowRight, Zap, Coins } from 'lucide-react';
 import { GPTTemplate } from '@/types/templates';
 import { motion } from 'framer-motion';
+import { CREDIT_COSTS } from '@/types/credits';
 
 interface RecentAndFavoritesSectionProps {
   recentTemplateIds: string[];
@@ -92,9 +93,10 @@ export function RecentAndFavoritesSection({
                         className="h-7 text-xs gap-1"
                         onClick={() => onInstall(template)}
                         disabled={isInstalling || !canInstall}
+                        title={`${template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL} credits`}
                       >
-                        <Zap className="h-3 w-3" />
-                        Use
+                        <Coins className="h-3 w-3" />
+                        {template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL}
                       </Button>
                     </div>
                   </CardContent>

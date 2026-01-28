@@ -1,9 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, ArrowRight, Crown, Zap } from 'lucide-react';
+import { Sparkles, ArrowRight, Crown, Zap, Coins } from 'lucide-react';
 import { GPTTemplate } from '@/types/templates';
 import { motion } from 'framer-motion';
+import { CREDIT_COSTS } from '@/types/credits';
 
 interface FeaturedTemplatesSectionProps {
   templates: GPTTemplate[];
@@ -113,8 +114,8 @@ export function FeaturedTemplatesSection({
                     onClick={() => onInstall(template)}
                     disabled={isInstalling || !canInstall}
                   >
-                    <Zap className="h-3 w-3" />
-                    Use Now
+                    <Coins className="h-3 w-3" />
+                    {template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL} credits
                     <ArrowRight className="h-3 w-3" />
                   </Button>
                 </div>
