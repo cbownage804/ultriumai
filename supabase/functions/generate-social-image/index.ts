@@ -52,18 +52,20 @@ const getProductLogoUrl = (product: string): string => {
   return `https://ultriumai.lovable.app/logos/${logoMap[product] || 'safesuite-logo.png'}`;
 };
 
-// Keywords to detect product mentions
-const PRODUCT_KEYWORDS: Record<string, string[]> = {
-  safepass: ['safepass', 'password manager', 'password vault', 'credential', 'password management'],
-  safescan: ['safescan', 'email scan', 'url scan', 'document scan', 'threat scan', 'phishing'],
-  safeweb: ['safeweb', 'dark web', 'breach monitor', 'data breach', 'exposed credential'],
-  safetrack: ['safetrack', 'asset management', 'asset tracking', 'inventory', 'it asset'],
-  safeassist: ['safeassist', 'ai assistant', 'security assistant', 'chatbot'],
-  safesuite: ['safesuite', 'security suite', 'all-in-one security'],
-  ultriumgpt: ['ultriumgpt', 'custom gpt', 'ai builder', 'custom ai'],
-  aistudio: ['ai studio', 'aistudio', 'gpt builder', 'ai control plane', 'business ai', 'white-label ai', 'msp ai', 'ai capacity', 'custom assistants'],
-  vanguard: ['vanguard', 'rmm', 'endpoint management', 'remote monitoring'],
-};
+// Keywords to detect product mentions - ORDER MATTERS: SafeSuite checked first as umbrella product
+const PRODUCT_KEYWORDS: [string, string[]][] = [
+  // SafeSuite MUST be checked first - it's the umbrella brand that includes multiple products
+  ['safesuite', ['safesuite', 'safe suite', 'security suite', 'all-in-one security', 'complete security', 'security solution', 'safesuite provides', 'see safesuite']],
+  // Individual products checked after SafeSuite
+  ['safepass', ['safepass', 'password manager', 'password vault', 'password management']],
+  ['safescan', ['safescan', 'email scan', 'url scan', 'document scan', 'threat scan']],
+  ['safeweb', ['safeweb', 'dark web monitoring', 'breach monitoring', 'exposed credential']],
+  ['safetrack', ['safetrack', 'asset management', 'asset tracking', 'it asset']],
+  ['safeassist', ['safeassist', 'ai assistant', 'security assistant']],
+  ['ultriumgpt', ['ultriumgpt', 'custom gpt', 'ai builder', 'custom ai']],
+  ['aistudio', ['ai studio', 'aistudio', 'gpt builder', 'ai control plane', 'business ai', 'white-label ai', 'msp ai', 'ai capacity', 'custom assistants']],
+  ['vanguard', ['vanguard', 'rmm', 'endpoint management', 'remote monitoring']],
+];
 
 // Content-type specific visual styles for better image matching
 const VISUAL_STYLES: Record<string, string> = {
@@ -121,7 +123,8 @@ function detectProduct(text: string, contentType?: string): string | null {
   }
   
   const lowerText = text.toLowerCase();
-  for (const [product, keywords] of Object.entries(PRODUCT_KEYWORDS)) {
+  // Check in order - SafeSuite first as umbrella brand
+  for (const [product, keywords] of PRODUCT_KEYWORDS) {
     for (const keyword of keywords) {
       if (lowerText.includes(keyword)) {
         return product;
