@@ -30,7 +30,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context = 'general', systemPrompt, model = 'gpt-4o-mini' } = await req.json() as WebBrowseRequest;
+    const { message, context = 'general', systemPrompt, model = 'google/gemini-3-flash-preview' } = await req.json() as WebBrowseRequest;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -400,16 +400,16 @@ If users ask about web content I haven't learned yet, suggest using these comman
 }
 
 async function callOpenAI(message: string, systemPrompt: string, model: string) {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
   
-  if (!openAIApiKey) {
-    throw new Error('OpenAI API key not configured');
+  if (!lovableApiKey) {
+    throw new Error('LOVABLE_API_KEY is not configured');
   }
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${openAIApiKey}`,
+      'Authorization': `Bearer ${lovableApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -424,7 +424,15 @@ async function callOpenAI(message: string, systemPrompt: string, model: string) 
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again in a moment.');
+    }
+    if (response.status === 402) {
+      throw new Error('AI credits exhausted. Please add more credits to continue.');
+    }
+    const errorText = await response.text();
+    console.error('Lovable AI Gateway error:', response.status, errorText);
+    throw new Error(`AI Gateway error: ${response.statusText}`);
   }
 
   const data = await response.json();
