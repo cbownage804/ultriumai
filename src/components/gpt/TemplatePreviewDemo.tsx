@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { GPTTemplate } from "@/types/templates";
-import { Send, Bot, User, Sparkles, Download, Play, ArrowRight, Loader2 } from "lucide-react";
+import { Send, Bot, User, Sparkles, Download, Play, ArrowRight, Loader2, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { CREDIT_COSTS } from "@/types/credits";
 
 interface TemplatePreviewDemoProps {
   template: GPTTemplate | null;
@@ -147,14 +148,14 @@ export function TemplatePreviewDemo({
                 onClick={() => onInstall(template)}
                 disabled={isInstalling || !canInstall}
                 style={{ backgroundColor: template.config.theme_color }}
+                className="gap-1"
               >
                 {isInstalling ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Download className="h-4 w-4 mr-2" />
+                  <Coins className="h-4 w-4" />
                 )}
-                Install & Use
-                <ArrowRight className="h-4 w-4 ml-2" />
+                Install ({template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL} credits)
               </Button>
             </div>
           </DialogHeader>

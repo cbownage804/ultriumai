@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GPTTemplate } from "@/types/templates";
-import { Sparkles, TrendingUp, Lightbulb, ArrowRight, Zap, Target, Clock } from "lucide-react";
+import { Sparkles, TrendingUp, Lightbulb, ArrowRight, Zap, Target, Clock, Coins } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CREDIT_COSTS } from "@/types/credits";
 
 interface SmartRecommendationsProps {
   templates: GPTTemplate[];
@@ -206,7 +207,7 @@ export function SmartRecommendations({
                   
                   <Button 
                     size="sm" 
-                    className="w-full"
+                    className="w-full gap-1"
                     onClick={(e) => {
                       e.stopPropagation();
                       onInstall(rec.template);
@@ -214,8 +215,8 @@ export function SmartRecommendations({
                     disabled={isInstalling || !canInstall}
                     style={{ backgroundColor: rec.template.config.theme_color }}
                   >
-                    Install
-                    <ArrowRight className="h-3 w-3 ml-1" />
+                    <Coins className="h-3 w-3" />
+                    {rec.template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL} credits
                   </Button>
                 </CardContent>
               </Card>

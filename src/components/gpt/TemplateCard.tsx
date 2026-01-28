@@ -9,10 +9,12 @@ import {
   Heart,
   Star,
   Eye,
+  Coins,
 } from 'lucide-react';
 import { GPTTemplate } from '@/types/templates';
 import { TemplateRatingStars } from './TemplateRatingStars';
 import { cn } from '@/lib/utils';
+import { CREDIT_COSTS } from '@/types/credits';
 
 interface TemplateCardProps {
   template: GPTTemplate;
@@ -169,11 +171,12 @@ export function TemplateCard({
           )}
           <Button 
             size="sm" 
-            className="flex-1"
+            className="flex-1 gap-1"
             onClick={onInstall}
             disabled={isInstalling || !canInstall}
           >
-            Use Now
+            <Coins className="h-3 w-3" />
+            {template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL} credits
           </Button>
         </div>
       </CardContent>

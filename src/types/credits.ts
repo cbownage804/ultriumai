@@ -18,6 +18,9 @@ export const CREDIT_COSTS = {
   // Media generation
   IMAGE_GENERATION: 13,            // AI image generation
   
+  // Templates
+  TEMPLATE_INSTALL: 50,            // Installing a GPT template
+  
   // API usage
   API_CALL_BASIC: 1,              // Simple API calls
   API_CALL_COMPLEX: 5,            // Complex API operations

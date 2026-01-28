@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GPTTemplate } from "@/types/templates";
-import { Check, X, Download, Scale, Sparkles, Star, Users, Zap, Brain, Globe } from "lucide-react";
+import { Check, X, Download, Scale, Sparkles, Star, Users, Zap, Brain, Globe, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TemplateRatingStars } from "./TemplateRatingStars";
+import { CREDIT_COSTS } from "@/types/credits";
 
 interface TemplateComparisonToolProps {
   templates: GPTTemplate[];
@@ -173,12 +174,12 @@ export function TemplateComparisonTool({
                       </p>
                       <Button 
                         size="sm" 
-                        className="w-full"
+                        className="w-full gap-1"
                         onClick={() => onInstall(template)}
                         style={{ backgroundColor: template.config.theme_color }}
                       >
-                        <Download className="h-3 w-3 mr-1" />
-                        Install
+                        <Coins className="h-3 w-3" />
+                        {template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL} credits
                       </Button>
                     </CardContent>
                   </Card>

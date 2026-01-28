@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb, TestTube, Heart, Star, Scale, Wand2, Eye } from "lucide-react";
+import { Search, Filter, Sparkles, Download, TrendingUp, Zap, Lock, Crown, ArrowRight, Play, Globe, CheckCircle2, Lightbulb, TestTube, Heart, Star, Scale, Wand2, Eye, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,6 +28,8 @@ import { SmartRecommendations } from "@/components/gpt/SmartRecommendations";
 import { GPTCreationWizard } from "@/components/gpt/GPTCreationWizard";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CREDIT_COSTS } from "@/types/credits";
+import { checkCredits, deductCredits } from "@/utils/creditUtils";
 
 const GPTTemplatesMarketplace = () => {
   const navigate = useNavigate();
@@ -81,6 +83,11 @@ const GPTTemplatesMarketplace = () => {
       }
     });
 
+  // Helper to get credit cost for a template
+  const getTemplateCreditCost = (template: GPTTemplate) => {
+    return template.credit_cost ?? CREDIT_COSTS.TEMPLATE_INSTALL;
+  };
+
   const handleInstallTemplate = async (template: GPTTemplate) => {
     if (!user || !canCreateMore) {
       toast({
@@ -91,9 +98,34 @@ const GPTTemplatesMarketplace = () => {
       return;
     }
 
+    const creditCost = getTemplateCreditCost(template);
+
+    // Check if user has enough credits
+    const creditCheck = await checkCredits(user.id, 'TEMPLATE_INSTALL', creditCost);
+    if (!creditCheck.hasEnough) {
+      toast({
+        title: "Insufficient credits",
+        description: `This template costs ${creditCost} credits. You have ${creditCheck.remaining} remaining.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsInstalling(true);
     
     try {
+      // Deduct credits first
+      const deductResult = await deductCredits(user.id, 'TEMPLATE_INSTALL', creditCost);
+      if (!deductResult.success) {
+        toast({
+          title: "Credit deduction failed",
+          description: deductResult.error || "Failed to deduct credits. Please try again.",
+          variant: "destructive",
+        });
+        setIsInstalling(false);
+        return;
+      }
+
       const newGPT = {
         name: template.name,
         description: template.description,
@@ -116,7 +148,7 @@ const GPTTemplatesMarketplace = () => {
         
         toast({
           title: "Template installed!",
-          description: `${template.name} is ready to use. Redirecting to chat...`,
+          description: `${template.name} is ready to use. ${creditCost} credits used.`,
         });
         setSelectedTemplate(null);
         
