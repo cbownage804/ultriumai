@@ -1,22 +1,20 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
-  Settings,
-  BarChart3,
-  Users,
-  Link2,
   ArrowLeft,
   Bot,
   Sliders,
   BookOpen,
   Zap,
   Palette,
+  BarChart3,
+  Users,
+  Link2,
   Rocket,
-  MessageSquare
+  MessageSquare,
+  Sparkles
 } from "lucide-react";
 import { GPTAnalyticsDashboard } from "./GPTAnalyticsDashboard";
 import { GPTTeamSharing } from "./GPTTeamSharing";
@@ -26,8 +24,9 @@ import { GPTKnowledgeBase } from "./GPTKnowledgeBase";
 import { GPTActionsPanel } from "./GPTActionsPanel";
 import { GPTWhiteLabelPanel } from "./GPTWhiteLabelPanel";
 import { GPTDeployPanel } from "./GPTDeployPanel";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface GPTSettingsPanelProps {
   gpt: {
@@ -40,6 +39,17 @@ interface GPTSettingsPanelProps {
   };
   onBack?: () => void;
 }
+
+const tabs = [
+  { id: "configuration", label: "Configuration", icon: Sliders, description: "Basic settings" },
+  { id: "knowledge", label: "Knowledge", icon: BookOpen, description: "Data sources" },
+  { id: "actions", label: "Actions", icon: Zap, description: "Automations" },
+  { id: "whitelabel", label: "Branding", icon: Palette, description: "Customize look" },
+  { id: "analytics", label: "Analytics", icon: BarChart3, description: "Performance" },
+  { id: "sharing", label: "Team", icon: Users, description: "Collaboration" },
+  { id: "integrations", label: "Integrations", icon: Link2, description: "Connect apps" },
+  { id: "deploy", label: "Deploy", icon: Rocket, description: "Go live" },
+];
 
 export function GPTSettingsPanel({ gpt, onBack }: GPTSettingsPanelProps) {
   const [activeTab, setActiveTab] = useState("configuration");
@@ -54,172 +64,185 @@ export function GPTSettingsPanel({ gpt, onBack }: GPTSettingsPanelProps) {
     }
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "configuration":
+        return <GPTConfiguration gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      case "knowledge":
+        return <GPTKnowledgeBase gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      case "actions":
+        return <GPTActionsPanel gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      case "whitelabel":
+        return <GPTWhiteLabelPanel gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      case "analytics":
+        return <GPTAnalyticsDashboard gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      case "sharing":
+        return <GPTTeamSharing gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      case "integrations":
+        return <GPTIntegrations gptId={gpt.id} gptName={gpt.name} apiEnabled={gpt.api_enabled} embedEnabled={gpt.embed_enabled} themeColor={themeColor} />;
+      case "deploy":
+        return <GPTDeployPanel gptId={gpt.id} gptName={gpt.name} themeColor={themeColor} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={handleBack}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to My GPTs
-        </Button>
-        <div className="flex items-center gap-3">
-          <div 
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold"
-            style={{ backgroundColor: themeColor }}
+    <div className="min-h-screen">
+      {/* Premium Header */}
+      <div className="relative overflow-hidden">
+        {/* Background gradient */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{ 
+            background: `linear-gradient(135deg, ${themeColor} 0%, transparent 50%)` 
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+        
+        {/* Decorative elements */}
+        <div 
+          className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-10"
+          style={{ backgroundColor: themeColor }}
+        />
+        
+        <div className="relative z-10 px-6 py-8">
+          {/* Back button */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleBack}
+            className="mb-6 hover:bg-white/10 transition-colors"
           >
-            {gpt.name.charAt(0)}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              {gpt.name}
-              <Badge variant="outline">
-                <Settings className="h-3 w-3 mr-1" />
-                Settings
-              </Badge>
-            </h1>
-            {gpt.description && (
-              <p className="text-muted-foreground text-sm max-w-xl truncate">{gpt.description}</p>
-            )}
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to My GPTs
+          </Button>
+
+          {/* GPT Identity */}
+          <div className="flex items-start gap-5">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="relative"
+            >
+              <div 
+                className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-2xl"
+                style={{ 
+                  backgroundColor: themeColor,
+                  boxShadow: `0 20px 40px -10px ${themeColor}50`
+                }}
+              >
+                {gpt.name.charAt(0)}
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-background flex items-center justify-center">
+                <Sparkles className="h-3 w-3 text-white" />
+              </div>
+            </motion.div>
+            
+            <div className="flex-1">
+              <motion.div
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <h1 className="text-3xl font-bold tracking-tight mb-1">
+                  {gpt.name}
+                </h1>
+                {gpt.description && (
+                  <p className="text-muted-foreground max-w-xl mb-3">
+                    {gpt.description}
+                  </p>
+                )}
+                <div className="flex items-center gap-3">
+                  <Badge 
+                    className="px-3 py-1"
+                    style={{ 
+                      backgroundColor: `${themeColor}20`,
+                      color: themeColor,
+                      borderColor: `${themeColor}40`
+                    }}
+                  >
+                    <Bot className="h-3 w-3 mr-1" />
+                    Active
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/chat/${gpt.id}`)}
+                    className="gap-2"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Test Chat
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Settings Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <ScrollArea className="w-full">
-          <TabsList className="inline-flex w-max gap-1 p-1">
-            <TabsTrigger value="configuration" className="flex items-center gap-2">
-              <Sliders className="h-4 w-4" />
-              Configuration
-            </TabsTrigger>
-            <TabsTrigger value="knowledge" className="flex items-center gap-2">
-              <BookOpen className="h-4 w-4" />
-              Knowledge
-            </TabsTrigger>
-            <TabsTrigger value="actions" className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Actions
-            </TabsTrigger>
-            <TabsTrigger value="whitelabel" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
-              White-Label
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="sharing" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Team & Sharing
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="flex items-center gap-2">
-              <Link2 className="h-4 w-4" />
-              Integrations
-            </TabsTrigger>
-            <TabsTrigger value="deploy" className="flex items-center gap-2">
-              <Rocket className="h-4 w-4" />
-              Deploy
-            </TabsTrigger>
-          </TabsList>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+      {/* Navigation Tabs */}
+      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b">
+        <div className="px-6">
+          <ScrollArea className="w-full">
+            <div className="flex gap-1 py-2">
+              {tabs.map((tab, index) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                
+                return (
+                  <motion.button
+                    key={tab.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "relative flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                      isActive 
+                        ? "text-foreground" 
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute inset-0 rounded-xl"
+                        style={{ backgroundColor: `${themeColor}15` }}
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <Icon className={cn(
+                      "h-4 w-4 relative z-10 transition-colors",
+                      isActive && "text-primary"
+                    )} 
+                    style={isActive ? { color: themeColor } : undefined}
+                    />
+                    <span className="relative z-10">{tab.label}</span>
+                  </motion.button>
+                );
+              })}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+      </div>
 
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="mt-6"
-        >
-          <TabsContent value="configuration" className="m-0">
-            <GPTConfiguration
-              gptId={gpt.id}
-              gptName={gpt.name}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-
-          <TabsContent value="knowledge" className="m-0">
-            <GPTKnowledgeBase
-              gptId={gpt.id}
-              gptName={gpt.name}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-
-          <TabsContent value="actions" className="m-0">
-            <GPTActionsPanel
-              gptId={gpt.id}
-              gptName={gpt.name}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-
-          <TabsContent value="whitelabel" className="m-0">
-            <GPTWhiteLabelPanel
-              gptId={gpt.id}
-              gptName={gpt.name}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-
-          <TabsContent value="analytics" className="m-0">
-            <GPTAnalyticsDashboard 
-              gptId={gpt.id}
-              gptName={gpt.name}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-
-          <TabsContent value="sharing" className="m-0">
-            <GPTTeamSharing
-              gptId={gpt.id}
-              gptName={gpt.name}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-
-          <TabsContent value="integrations" className="m-0">
-            <GPTIntegrations
-              gptId={gpt.id}
-              gptName={gpt.name}
-              apiEnabled={gpt.api_enabled}
-              embedEnabled={gpt.embed_enabled}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-
-          <TabsContent value="deploy" className="m-0">
-            <GPTDeployPanel
-              gptId={gpt.id}
-              gptName={gpt.name}
-              themeColor={themeColor}
-            />
-          </TabsContent>
-        </motion.div>
-      </Tabs>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" onClick={() => navigate(`/chat/${gpt.id}`)}>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Test Chat
-            </Button>
-            <Button variant="outline" onClick={() => navigate(`/dashboard/gpt/build?edit=${gpt.id}`)}>
-              <Bot className="h-4 w-4 mr-2" />
-              Edit in Builder
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Tab Content */}
+      <div className="px-6 py-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderTabContent()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
