@@ -255,7 +255,7 @@ const SecuritySettings = () => {
               className="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               value={ipWhitelist}
               onChange={(e) => setIpWhitelist(e.target.value)}
-              placeholder="192.168.1.1&#10;10.0.0.1"
+              placeholder="203.0.113.45&#10;198.51.100.0/24&#10;45.33.32.156"
             />
           </div>
           <Button onClick={handleUpdateIpWhitelist} disabled={loading}>
