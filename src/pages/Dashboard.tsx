@@ -32,7 +32,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
-import { UltriumGPTAssistant } from "@/components/UltriumGPTAssistant";
+import { StudioAssistant } from "@/components/StudioAssistant";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { CreditIndicator } from "@/components/credits/CreditIndicator";
 
@@ -125,7 +125,7 @@ const Dashboard = () => {
 
   const renderContent = () => {
     if (isDashboardOverview) return <DashboardOverview />;
-    if (isUltriumGPTPage) return <div className="p-6"><UltriumGPTAssistant /></div>;
+    if (isUltriumGPTPage) return <div className="p-6"><StudioAssistant /></div>;
     if (isGPTDashboard) return <GPTDashboard />;
     if (isChatPage) return <ChatInterface />;
     

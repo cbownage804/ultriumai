@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UserProfileDropdown from "./UserProfileDropdown";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
-import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
+import aiStudioLogo from "@/assets/ai-studio-logo.png";
 import vanguardLogo from "@/assets/vanguard-logo.png";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
 import { safeWindowOpen } from "@/utils/security";
@@ -75,7 +75,7 @@ const Navigation = () => {
               title="AI Studio™"
             >
               <div className="h-16 w-16 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-lg shadow-primary/20 p-1">
-                <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain scale-150" />
+                <img src={aiStudioLogo} alt="AI Studio" className="h-full w-full object-contain scale-150" />
               </div>
             </button>
             
@@ -143,7 +143,7 @@ const Navigation = () => {
                     className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-primary/10 border border-transparent hover:border-primary/30 transition-all duration-200 text-left"
                   >
                     <div className="shrink-0 w-12 h-12 rounded-lg bg-black flex items-center justify-center shadow-lg shadow-primary/20 overflow-hidden">
-                      <img src={ultriumGPTLogo} alt="AI Studio" className="w-10 h-10 object-contain" />
+                      <img src={aiStudioLogo} alt="AI Studio" className="w-10 h-10 object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -269,7 +269,7 @@ const Navigation = () => {
                 className="flex items-center gap-3 w-full text-left px-3 py-2 text-foreground/80 hover:text-primary hover:bg-muted/50 rounded-md"
               >
                 <div className="h-8 w-8 rounded-md bg-black p-0.5 flex items-center justify-center overflow-hidden">
-                  <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
+                  <img src={aiStudioLogo} alt="AI Studio" className="h-full w-full object-contain" />
                 </div>
                 AI Studio™
               </button>

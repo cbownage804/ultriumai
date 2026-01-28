@@ -51,7 +51,7 @@ export const CTAActions = {
   
   // Products
   launchAIStudio: () => navigateToExternal('/ai-studio'),
-  tryUltriumGPT: () => navigateToExternal('/ultrium-gpt'),
+  openStudioAssistant: () => navigateToExternal('/ai-studio/assistant'),
   
   // Pricing
   viewPricing: () => navigateToExternal('/pricing'),

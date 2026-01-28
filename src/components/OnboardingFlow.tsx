@@ -181,7 +181,7 @@ const OnboardingFlow = () => {
             <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <CardTitle>Welcome to UltriumGPT! 🎉</CardTitle>
+            <CardTitle>Welcome to AI Studio! 🎉</CardTitle>
             <p className="text-muted-foreground">
               You've completed the onboarding process. You're ready to build amazing AI experiences!
             </p>
@@ -205,7 +205,7 @@ const OnboardingFlow = () => {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Rocket className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">Welcome to UltriumGPT</h1>
+              <h1 className="text-3xl font-bold">Welcome to AI Studio</h1>
             </div>
             <p className="text-muted-foreground text-lg">
               Let's get you set up in just a few steps

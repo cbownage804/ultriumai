@@ -101,11 +101,11 @@ const MSPSolutions = () => {
       gradient: "from-green-100 to-emerald-100"
     },
     {
-      id: "ultrium-gpt-msp",
-      name: "UltriumGPT™ MSP Edition",
-      category: "AI-Powered MSP Assistant",
-      description: "Advanced AI platform specifically trained for MSP operations, client management, and service delivery",
-      longDescription: "Revolutionary AI assistant designed specifically for MSPs, trained on MSP best practices, client management workflows, and technical documentation.",
+      id: "ai-studio-msp",
+      name: "AI Studio™ MSP Edition",
+      category: "Business AI Control Plane for MSPs",
+      description: "Build, deploy, and govern custom AI assistants for your clients and operations",
+      longDescription: "The complete Business AI Control Plane for MSPs. Create white-labeled GPT assistants trained on your processes, deploy to clients, and maintain full governance over AI usage.",
       icon: Brain,
       features: [
         "MSP workflow automation and optimization",

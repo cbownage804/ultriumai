@@ -19,7 +19,7 @@ const BlogSection = () => {
   const blogPosts: BlogPost[] = [
     {
       id: '1',
-      title: 'The Future of AI-Powered Cybersecurity: UltriumGPT Revolution',
+      title: 'The Future of AI-Powered Cybersecurity: AI Studio Revolution',
       excerpt: 'Discover how artificial intelligence is transforming cybersecurity with advanced threat detection, automated responses, and predictive analytics.',
       author: 'Dr. Sarah Chen',
       publishDate: '2024-01-15',

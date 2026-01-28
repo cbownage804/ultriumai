@@ -117,10 +117,10 @@ const MSPDemos = () => {
       color: 'green'
     },
     {
-      id: 'ultrium-gpt',
-      name: '🧠 UltriumGPT - AI Business Intelligence',
-      description: 'Advanced AI platform for client support automation, security analysis, and business intelligence',
-      demoUrl: '/demos/ultriumgpt',
+      id: 'ai-studio',
+      name: '🧠 AI Studio - Business AI Control Plane',
+      description: 'Build, deploy, and govern custom AI assistants for your clients and operations',
+      demoUrl: '/demos/ai-studio',
       features: [
         'AI-powered client helpdesk automation',
         'Real-time security incident analysis and response',
@@ -376,11 +376,11 @@ const MSPDemos = () => {
                     )}
                     {selectedDemo === 'safecenter-platform' && <RMMDemo />}
                     {selectedDemo === 'password-management' && <SafePassDemo />}
-                    {selectedDemo === 'ultrium-gpt' && (
+                    {selectedDemo === 'ai-studio' && (
                       <div className="space-y-4">
                         <div className="bg-muted p-4 rounded-lg text-center">
                           <p className="text-muted-foreground mb-4">
-                            Experience UltriumGPT's full AI capabilities including voice interface, security analysis, and workflow automation.
+                            Experience AI Studio's full capabilities including custom GPT creation, deployment, and governance.
                           </p>
                           <Button 
                             asChild 

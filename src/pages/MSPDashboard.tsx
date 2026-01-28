@@ -53,7 +53,7 @@ import { MSPChurnPrediction } from '@/components/MSPChurnPrediction';
 import { MSPCompetitiveBenchmarks } from '@/components/MSPCompetitiveBenchmarks';
 import { MSPLeadScoring } from '@/components/MSPLeadScoring';
 import { HelpdeskDashboard } from '@/components/dashboards/HelpdeskDashboard';
-import { UltriumGPTAssistant } from '@/components/UltriumGPTAssistant';
+import { StudioAssistant } from '@/components/StudioAssistant';
 import { SecurityDashboard } from '@/components/dashboards/SecurityDashboard';
 import { BusinessIntelligence } from '@/components/dashboards/BusinessIntelligence';
 import { ClientPortal } from '@/components/client/ClientPortal';
@@ -936,9 +936,9 @@ const MSPControlCenter = () => {
                 <HeadphonesIcon className="h-4 w-4" />
                 SafeDesk
               </TabsTrigger>
-              <TabsTrigger value="ultriumgpt" className="h-10 flex items-center gap-2">
+              <TabsTrigger value="ai-studio" className="h-10 flex items-center gap-2">
                 <Zap className="h-4 w-4" />
-                UltriumGPT
+                AI Studio
               </TabsTrigger>
               <TabsTrigger value="safescan" className="h-10">SafeScan</TabsTrigger>
             </TabsList>
@@ -1192,8 +1192,8 @@ const MSPControlCenter = () => {
             <HelpdeskDashboard />
           </TabsContent>
 
-          <TabsContent value="ultriumgpt" className="space-y-4">
-            <UltriumGPTAssistant />
+          <TabsContent value="ai-studio" className="space-y-4">
+            <StudioAssistant />
           </TabsContent>
 
           <TabsContent value="security" className="space-y-4">

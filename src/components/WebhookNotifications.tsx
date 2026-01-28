@@ -223,7 +223,7 @@ const WebhookNotifications = () => {
       const testPayload = {
         event: "webhook.test",
         webhook_id: webhook.id,
-        message: "This is a test webhook notification from UltriumGPT",
+        message: "This is a test webhook notification from AI Studio",
         timestamp: new Date().toISOString()
       };
 

@@ -41,7 +41,7 @@ interface Message {
 }
 
 
-export const UltriumGPTAssistant = () => {
+export const StudioAssistant = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const { creditsRemaining, hasCredits, refresh: refreshCredits } = useAICredits();

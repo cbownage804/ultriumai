@@ -146,10 +146,10 @@ export const DashboardOverview = () => {
       color: "bg-secondary",
     },
     {
-      title: "Ultrium GPT",
+      title: "Studio Assistant",
       description: "Your AI co-pilot",
       icon: Sparkles,
-      action: () => navigate("/dashboard/ultrium-gpt"),
+      action: () => navigate("/ai-studio/assistant"),
       color: "bg-purple-500",
     },
   ];

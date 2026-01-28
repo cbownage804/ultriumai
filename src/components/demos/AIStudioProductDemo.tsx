@@ -28,7 +28,7 @@ import {
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
-import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+import aiStudioLogo from '@/assets/ai-studio-logo.png';
 
 // Demo chat messages - predefined Q&A that doesn't use AI credits
 interface DemoChatMessage {

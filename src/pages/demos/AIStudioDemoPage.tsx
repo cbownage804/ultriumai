@@ -6,11 +6,11 @@ import { ProductJsonLd } from "@/components/seo/ProductJsonLd";
 import { useWebVitals } from "@/hooks/useWebVitals";
 
 // Lazy load heavy demo component
-const UltriumGPTFullDemo = lazy(() => 
-  import("@/components/demos/UltriumGPTFullDemo")
+const AIStudioFullDemo = lazy(() => 
+  import("@/components/demos/AIStudioFullDemo")
 );
 
-const UltriumGPTDemoPage = () => {
+const AIStudioDemoPage = () => {
   // Monitor Core Web Vitals
   useWebVitals({ 
     enableLogging: import.meta.env.DEV,
@@ -38,7 +38,7 @@ const UltriumGPTDemoPage = () => {
       <main className="pt-20" role="main" aria-label="AI Studio Demo">
         <DemoErrorBoundary demoName="AI Studio">
           <Suspense fallback={<DemoSkeleton variant="cards" />}>
-            <UltriumGPTFullDemo />
+            <AIStudioFullDemo />
           </Suspense>
         </DemoErrorBoundary>
       </main>
@@ -47,4 +47,4 @@ const UltriumGPTDemoPage = () => {
   );
 };
 
-export default UltriumGPTDemoPage;
+export default AIStudioDemoPage;

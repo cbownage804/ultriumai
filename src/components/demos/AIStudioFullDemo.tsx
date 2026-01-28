@@ -34,7 +34,7 @@ const MockAIChat = () => {
     {
       id: '1',
       role: 'assistant',
-      content: "Hello! I'm UltriumGPT, your intelligent AI assistant. I can help with security analysis, workflow automation, and business intelligence. What would you like to know?",
+      content: "Hello! I'm the Studio Assistant, your intelligent AI guide. I can help with building custom GPTs, deployment options, and best practices. What would you like to know?",
       timestamp: '2:30 PM'
     }
   ]);
@@ -219,7 +219,7 @@ const MockWorkflowAutomation = () => (
   </div>
 );
 
-const UltriumGPTFullDemo = () => {
+const AIStudioFullDemo = () => {
   const [activeModel] = useState('gpt-4o-mini');
 
   const aiFeatures = [
@@ -494,4 +494,4 @@ const UltriumGPTFullDemo = () => {
   );
 };
 
-export default UltriumGPTFullDemo;
+export default AIStudioFullDemo;

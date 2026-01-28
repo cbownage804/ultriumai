@@ -281,11 +281,11 @@ const demoApps: DemoApp[] = [
     ]
   },
   {
-    id: "ultrium-gpt",
-    name: "UltriumGPT",
+    id: "ai-studio",
+    name: "AI Studio",
     category: "AI Assistant",
     description: "Intelligent business assistant for MSPs and IT professionals",
-    longDescription: "Specialized AI assistant trained on MSP procedures, IT documentation, and business processes. Provides instant answers to common IT questions, troubleshooting guidance, and operational support.",
+    longDescription: "Business AI Control Plane for building, deploying, and managing custom GPT assistants. Create AI trained on your procedures, documentation, and processes for instant answers, troubleshooting, and operational support.",
     icon: Bot,
     features: [
       "MSP procedure knowledge",

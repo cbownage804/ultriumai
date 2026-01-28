@@ -10,7 +10,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import heroSecurity from "@/assets/hero-security.jpg";
 import heroCustomAI from "@/assets/hero-custom-ai.jpg";
-import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+import aiStudioLogo from '@/assets/ai-studio-logo.png';
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 
