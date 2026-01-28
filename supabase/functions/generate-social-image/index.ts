@@ -18,8 +18,10 @@ const corsHeaders = {
   ].join(', '),
 };
 
+// Facebook requires aspect ratio <= 1.91.
+// 1200x628 is actually 1.9108 (> 1.91), so we use 1200x629 (~1.9078).
 const TARGET_WIDTH = 1200;
-const TARGET_HEIGHT = 628;
+const TARGET_HEIGHT = 629;
 
 // Product logo URLs (from public folder - available after deploy)
 const getProductLogoUrl = (product: string, origin?: string | null): string => {
@@ -72,7 +74,7 @@ async function fetchLogoBytes(logoUrl: string, fallbackOrigin: string): Promise<
   return null;
 }
 
-async function ensurePng1200x628AndWatermark(params: {
+async function ensurePng1200x629AndWatermark(params: {
   imageDataUrl: string;
   logoUrl?: string | null;
   logoFallbackOrigin?: string;
@@ -215,7 +217,7 @@ serve(async (req) => {
       : VISUAL_STYLES.custom_topic;
 
     // Enhanced prompt for beautiful, text-free images optimized for social feeds
-    // Facebook requires aspect ratio at most 1.91:1, so we use 1200x628 (1.91:1 exactly)
+    // Facebook requires aspect ratio <= 1.91:1. We enforce 1200x629 (~1.9078) in post-processing.
     const enhancedPrompt = `Create a stunning, high-quality LANDSCAPE social media image.
 
 TOPIC: ${prompt}
@@ -223,7 +225,7 @@ TOPIC: ${prompt}
 VISUAL DIRECTION: ${visualStyle}
 
 CRITICAL IMAGE DIMENSIONS:
-- MUST be a WIDE LANDSCAPE format (approximately 1200x628 pixels, 1.91:1 ratio)
+- MUST be a WIDE LANDSCAPE format (approximately 1200x629 pixels, <= 1.91:1 ratio)
 - Width must be significantly greater than height (almost 2x wider than tall)
 - This is NOT a square or portrait image - it MUST be a wide horizontal banner
 
@@ -291,7 +293,7 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
     const origin = req.headers.get('origin');
     const watermarkProduct = detectedProduct || 'safesuite';
     const logoUrl = getProductLogoUrl(watermarkProduct, origin);
-    generatedImage = await ensurePng1200x628AndWatermark({
+    generatedImage = await ensurePng1200x629AndWatermark({
       imageDataUrl: generatedImage,
       logoUrl,
       // If the origin points at preview, we still want a stable fallback.

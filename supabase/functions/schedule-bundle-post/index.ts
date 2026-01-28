@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
+import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Facebook requires aspect ratio <= 1.91.
+// 1200x628 is actually 1.9108 (> 1.91), so we enforce 1200x629 (~1.9078).
+const TARGET_WIDTH = 1200;
+const TARGET_HEIGHT = 629;
 
 interface PostRequest {
   title: string;
@@ -46,16 +52,30 @@ serve(async (req) => {
         if (!imageResponse.ok) {
           console.warn('Failed to download image:', imageResponse.status);
         } else {
-          const imageBlob = await imageResponse.blob();
+          let imageBlob = await imageResponse.blob();
           const contentType = imageResponse.headers.get('content-type') || 'image/png';
           const extension = contentType.split('/')[1] || 'png';
           
           console.log('Image downloaded, size:', imageBlob.size, 'type:', contentType);
+
+          // Safety: re-encode to FB-safe dimensions before uploading (prevents hard rejections).
+          try {
+            const bytes = new Uint8Array(await imageBlob.arrayBuffer());
+            const img = await Image.decode(bytes);
+            const processed = img.cover(TARGET_WIDTH, TARGET_HEIGHT);
+            const pngBytes = await processed.encode(1);
+            imageBlob = new Blob([pngBytes], { type: 'image/png' });
+            console.log(`Image re-encoded to ${TARGET_WIDTH}x${TARGET_HEIGHT} (png) for platform safety`);
+          } catch (e) {
+            console.warn('Image re-encode failed; uploading original image instead:', e);
+          }
           
           // Create FormData for multipart upload (Bundle.Social requires this)
           const formData = new FormData();
           formData.append('teamId', teamId);
-          formData.append('file', imageBlob, `image.${extension}`);
+          // Always use png extension if we re-encoded.
+          const safeExt = (imageBlob.type || '').includes('png') ? 'png' : extension;
+          formData.append('file', imageBlob, `image.${safeExt}`);
           
           console.log('Uploading image to Bundle.Social via multipart/form-data...');
           const uploadResponse = await fetch('https://api.bundle.social/api/v1/upload/', {
