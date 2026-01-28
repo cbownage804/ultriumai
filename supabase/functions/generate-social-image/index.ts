@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
+import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,35 +11,8 @@ const corsHeaders = {
 const TARGET_WIDTH = 1200;
 const TARGET_HEIGHT = 628;
 
-function getPngDimensionsFromBase64DataUrl(dataUrl: string): { width: number; height: number } | null {
-  try {
-    if (!dataUrl?.startsWith('data:image/')) return null;
-    const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
-    const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-
-    // PNG signature
-    if (
-      bytes.length < 24 ||
-      bytes[0] !== 0x89 ||
-      bytes[1] !== 0x50 ||
-      bytes[2] !== 0x4e ||
-      bytes[3] !== 0x47
-    ) {
-      return null;
-    }
-
-    // IHDR chunk width/height at offsets 16 and 20
-    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    const width = view.getUint32(16);
-    const height = view.getUint32(20);
-    return { width, height };
-  } catch {
-    return null;
-  }
-}
-
 // Product logo URLs (from public folder - available after deploy)
-const getProductLogoUrl = (product: string): string => {
+const getProductLogoUrl = (product: string, origin?: string | null): string => {
   const logoMap: Record<string, string> = {
     safepass: 'safepass-logo.png',
     safescan: 'safescan-logo.png',
@@ -49,8 +24,52 @@ const getProductLogoUrl = (product: string): string => {
     aistudio: 'ultrium-gpt-logo.png', // AI Studio uses the same logo as UltriumGPT
     vanguard: 'vanguard-logo.png',
   };
-  return `https://ultriumai.lovable.app/logos/${logoMap[product] || 'safesuite-logo.png'}`;
+
+  const base = origin || 'https://ultriumai.lovable.app';
+  const file = logoMap[product] || 'safesuite-logo.png';
+  return new URL(`/logos/${file}`, base).toString();
 };
+
+function dataUrlToBytes(dataUrl: string): Uint8Array {
+  const base64Data = dataUrl.replace(/^data:image\/\w+;base64,/, '');
+  return Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+}
+
+async function ensurePng1200x628AndWatermark(params: {
+  imageDataUrl: string;
+  logoUrl?: string | null;
+}): Promise<string> {
+  const baseBytes = dataUrlToBytes(params.imageDataUrl);
+  let img = await Image.decode(baseBytes);
+
+  // Full-bleed: always cover-crop to exact social dimensions.
+  img = img.cover(TARGET_WIDTH, TARGET_HEIGHT);
+
+  if (params.logoUrl) {
+    const logoRes = await fetch(params.logoUrl);
+    if (logoRes.ok) {
+      const logoBytes = new Uint8Array(await logoRes.arrayBuffer());
+      let logo = await Image.decode(logoBytes);
+
+      // Size: ~16% of width, maintain aspect ratio.
+      const targetLogoWidth = Math.max(120, Math.round(TARGET_WIDTH * 0.16));
+      logo = logo.resize(targetLogoWidth, Image.RESIZE_AUTO);
+
+      // Slight transparency to feel like a watermark.
+      logo.opacity(0.7);
+
+      const padding = Math.round(TARGET_WIDTH * 0.02); // ~24px
+      const x = Math.max(0, TARGET_WIDTH - logo.width - padding);
+      const y = Math.max(0, TARGET_HEIGHT - logo.height - padding);
+      img.composite(logo, x, y);
+    } else {
+      console.warn('Logo fetch failed:', logoRes.status, params.logoUrl);
+    }
+  }
+
+  const pngBytes = await img.encode(1);
+  return `data:image/png;base64,${encodeBase64(pngBytes)}`;
+}
 
 // Keywords to detect product mentions - ORDER MATTERS: SafeSuite checked first as umbrella product
 const PRODUCT_KEYWORDS: [string, string[]][] = [
@@ -184,7 +203,6 @@ QUALITY REQUIREMENTS:
 - Cinematic lighting and depth
 - Rich, vibrant colors that pop on social feeds
 - Modern, premium aesthetic suitable for business content
-- IMPORTANT: Leave space in the bottom-right corner for a logo overlay
 
 COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds preferred for contrast.`;
 
@@ -229,141 +247,15 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
       throw new Error('No image generated');
     }
 
-    // Resize first to lock exact Facebook-safe dimensions, then apply watermark after (so it can't be cropped away)
-    console.log(`Resizing image to ${TARGET_WIDTH}x${TARGET_HEIGHT} for Facebook compatibility...`);
-
-    const resizePrompt = `Resize and crop this image to EXACTLY ${TARGET_WIDTH} pixels wide by ${TARGET_HEIGHT} pixels tall.
-The aspect ratio must be exactly 1.91:1.
-- Crop symmetrically as needed to maintain the central focus
-- Preserve quality and sharpness
-- Do NOT add any text, logos, or watermarks
-- Output dimensions MUST be exactly ${TARGET_WIDTH}x${TARGET_HEIGHT} pixels`;
-
-    const resizeResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
-        messages: [{
-          role: 'user',
-          content: [
-            { type: 'text', text: resizePrompt },
-            { type: 'image_url', image_url: { url: generatedImage } },
-          ],
-        }],
-        modalities: ['image', 'text'],
-      }),
+    // Deterministic post-processing (no AI editing):
+    // - enforce exact 1200x628 full-bleed dimensions
+    // - overlay the REAL product logo from /public/logos (prevents model re-drawing)
+    const origin = req.headers.get('origin');
+    const logoUrl = detectedProduct ? getProductLogoUrl(detectedProduct, origin) : null;
+    generatedImage = await ensurePng1200x628AndWatermark({
+      imageDataUrl: generatedImage,
+      logoUrl,
     });
-
-    if (resizeResponse.ok) {
-      const resizeData = await resizeResponse.json();
-      const resizedImage = resizeData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-      if (resizedImage) {
-        generatedImage = resizedImage;
-        console.log(`Successfully resized image to ${TARGET_WIDTH}x${TARGET_HEIGHT}`);
-      }
-    } else {
-      console.warn('Resize failed, using original image');
-    }
-
-    let watermarkApplied = false;
-
-    // Apply watermark AFTER resize so it remains visible and in-frame.
-    if (detectedProduct) {
-      console.log('Watermarking with product logo:', detectedProduct);
-
-      try {
-        const logoUrl = getProductLogoUrl(detectedProduct);
-        console.log('Using logo URL:', logoUrl);
-
-        const watermarkPrompt = `Overlay the provided logo onto the provided image as a small, semi-transparent watermark.
-
-REQUIREMENTS:
-- Place the logo in the bottom-right corner with comfortable padding from the edges
-- Opacity about 70% (semi-transparent)
-- Size about 15–18% of image width
-- The logo must remain crisp (no distortion)
-- DO NOT change the image size, aspect ratio, or crop
-- FINAL OUTPUT DIMENSIONS MUST STAY EXACTLY ${TARGET_WIDTH}x${TARGET_HEIGHT} pixels
-- Do NOT add any text or additional graphics
-
-IMPORTANT: Keep the base image unchanged except for adding the logo overlay.`;
-
-        const watermarkResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.5-flash-image',
-            messages: [{
-              role: 'user',
-              content: [
-                { type: 'text', text: watermarkPrompt },
-                { type: 'image_url', image_url: { url: generatedImage } },
-                { type: 'image_url', image_url: { url: logoUrl } },
-              ],
-            }],
-            modalities: ['image', 'text'],
-          }),
-        });
-
-        if (watermarkResponse.ok) {
-          const watermarkData = await watermarkResponse.json();
-          const watermarkedImage = watermarkData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-          if (watermarkedImage) {
-            generatedImage = watermarkedImage;
-            watermarkApplied = true;
-            console.log('Successfully watermarked image with', detectedProduct, 'logo');
-          }
-        } else {
-          console.warn('Watermark failed, using resized image');
-        }
-      } catch (watermarkError) {
-        console.warn('Watermark error, using resized image:', watermarkError);
-      }
-    }
-
-    // Verify final PNG dimensions; if something drifted, force a final conform step.
-    const dims = getPngDimensionsFromBase64DataUrl(generatedImage);
-    if (!dims || dims.width !== TARGET_WIDTH || dims.height !== TARGET_HEIGHT) {
-      console.warn('Final image dimensions mismatch:', dims, '— enforcing exact dimensions');
-
-      const conformPrompt = watermarkApplied
-        ? `Ensure this image remains EXACTLY ${TARGET_WIDTH}x${TARGET_HEIGHT} pixels. If any resizing/cropping is needed, preserve the existing watermark in the bottom-right exactly as it appears. Do not add new text or graphics.`
-        : `Resize and crop this image to EXACTLY ${TARGET_WIDTH}x${TARGET_HEIGHT} pixels. Do not add text, logos, or watermarks.`;
-
-      const conformResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-image',
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'text', text: conformPrompt },
-              { type: 'image_url', image_url: { url: generatedImage } },
-            ],
-          }],
-          modalities: ['image', 'text'],
-        }),
-      });
-
-      if (conformResponse.ok) {
-        const conformData = await conformResponse.json();
-        const conformed = conformData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        if (conformed) {
-          generatedImage = conformed;
-        }
-      }
-    }
 
     // Convert base64 to buffer
     const base64Data = generatedImage.replace(/^data:image\/\w+;base64,/, '');
