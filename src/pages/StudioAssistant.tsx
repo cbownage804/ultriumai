@@ -24,10 +24,10 @@ import {
 } from 'lucide-react';
 
 const QUICK_ACTIONS = [
-  { label: "Create a new GPT", icon: Rocket, route: "/ai-studio?page=templates" },
-  { label: "Browse Templates", icon: BookOpen, route: "/ai-studio?page=templates" },
-  { label: "My GPTs", icon: Share2, route: "/ai-studio?page=library" },
-  { label: "AI Studio Hub", icon: Palette, route: "/ai-studio" },
+  { label: "Create a new GPT", icon: Rocket, route: "/dashboard/gpt/build" },
+  { label: "Browse Templates", icon: BookOpen, route: "/dashboard/gpt/templates" },
+  { label: "My GPTs", icon: Share2, route: "/dashboard/gpt" },
+  { label: "AI Studio Hub", icon: Palette, route: "/dashboard" },
 ];
 
 const STARTER_QUESTIONS = [
