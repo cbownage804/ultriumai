@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,11 @@ import {
   Webhook, 
   Code, 
   Trash2,
-  Edit,
-  Play,
   ExternalLink,
-  CheckCircle,
-  XCircle,
-  Settings
+  Settings,
+  Loader2,
+  Play,
+  Shield
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -30,6 +29,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface GPTActionsPanelProps {
   gptId: string;
@@ -41,17 +42,21 @@ interface Action {
   id: string;
   name: string;
   description: string;
-  type: 'webhook' | 'api' | 'function';
+  type: 'webhook' | 'api' | 'function' | 'security';
   endpoint?: string;
   isEnabled: boolean;
   lastRun?: string;
   successRate?: number;
+  config?: any;
 }
 
 export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [actions, setActions] = useState<Action[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingAction, setEditingAction] = useState<Action | null>(null);
   
   const [formData, setFormData] = useState({
@@ -62,33 +67,48 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
     isEnabled: true
   });
 
-  // Mock data
-  useEffect(() => {
-    setActions([
-      {
-        id: '1',
-        name: 'Create Ticket',
-        description: 'Creates a support ticket in the helpdesk system',
-        type: 'webhook',
-        endpoint: 'https://api.helpdesk.com/tickets',
-        isEnabled: true,
-        lastRun: new Date().toISOString(),
-        successRate: 98
-      },
-      {
-        id: '2',
-        name: 'Send Email',
-        description: 'Sends an email notification',
-        type: 'api',
-        endpoint: 'https://api.email.com/send',
-        isEnabled: true,
-        lastRun: new Date().toISOString(),
-        successRate: 100
-      }
-    ]);
-  }, [gptId]);
+  // Fetch real actions from the database
+  const fetchActions = useCallback(async () => {
+    if (!gptId) return;
+    
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('gpt_actions')
+        .select('*')
+        .eq('gpt_id', gptId)
+        .order('created_at', { ascending: false });
 
-  const handleSaveAction = () => {
+      if (error) throw error;
+
+      const mappedActions: Action[] = (data || []).map((action: any) => ({
+        id: action.id,
+        name: action.name,
+        description: action.description || '',
+        type: action.action_type as Action['type'],
+        endpoint: action.config?.api?.endpoint || action.config?.webhook?.url || '',
+        isEnabled: action.is_enabled,
+        config: action.config
+      }));
+
+      setActions(mappedActions);
+    } catch (error) {
+      console.error('Error fetching actions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load actions",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [gptId, toast]);
+
+  useEffect(() => {
+    fetchActions();
+  }, [fetchActions]);
+
+  const handleSaveAction = async () => {
     if (!formData.name.trim()) {
       toast({
         title: "Error",
@@ -98,35 +118,86 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
       return;
     }
 
-    if (editingAction) {
-      setActions(prev => prev.map(a => 
-        a.id === editingAction.id ? { ...a, ...formData } : a
-      ));
+    if (!user) {
       toast({
-        title: "Action updated",
-        description: `${formData.name} has been updated`
+        title: "Error",
+        description: "You must be logged in",
+        variant: "destructive"
       });
-    } else {
-      const newAction: Action = {
-        id: `action-${Date.now()}`,
-        ...formData
-      };
-      setActions(prev => [...prev, newAction]);
-      toast({
-        title: "Action created",
-        description: `${formData.name} has been added`
-      });
+      return;
     }
 
-    setIsDialogOpen(false);
-    setEditingAction(null);
-    setFormData({
-      name: '',
-      description: '',
-      type: 'webhook',
-      endpoint: '',
-      isEnabled: true
-    });
+    setIsSaving(true);
+
+    try {
+      const config = {
+        [formData.type]: {
+          endpoint: formData.endpoint,
+          url: formData.endpoint,
+          method: 'POST',
+          headers: {}
+        }
+      };
+
+      if (editingAction) {
+        const { error } = await supabase
+          .from('gpt_actions')
+          .update({
+            name: formData.name,
+            description: formData.description,
+            action_type: formData.type,
+            config,
+            is_enabled: formData.isEnabled
+          })
+          .eq('id', editingAction.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Action updated",
+          description: `${formData.name} has been updated`
+        });
+      } else {
+        const { error } = await supabase
+          .from('gpt_actions')
+          .insert({
+            gpt_id: gptId,
+            user_id: user.id,
+            name: formData.name,
+            description: formData.description,
+            action_type: formData.type,
+            config,
+            is_enabled: formData.isEnabled
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Action created",
+          description: `${formData.name} has been added`
+        });
+      }
+
+      setIsDialogOpen(false);
+      setEditingAction(null);
+      setFormData({
+        name: '',
+        description: '',
+        type: 'webhook',
+        endpoint: '',
+        isEnabled: true
+      });
+      fetchActions();
+    } catch (error) {
+      console.error('Error saving action:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save action",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleEdit = (action: Action) => {
@@ -141,22 +212,54 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setActions(prev => prev.filter(a => a.id !== id));
-    toast({
-      title: "Action deleted",
-      description: "The action has been removed"
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('gpt_actions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setActions(prev => prev.filter(a => a.id !== id));
+      toast({
+        title: "Action deleted",
+        description: "The action has been removed"
+      });
+    } catch (error) {
+      console.error('Error deleting action:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete action",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleToggle = (id: string, enabled: boolean) => {
-    setActions(prev => prev.map(a => 
-      a.id === id ? { ...a, isEnabled: enabled } : a
-    ));
-    toast({
-      title: enabled ? "Action enabled" : "Action disabled",
-      description: `The action has been ${enabled ? 'enabled' : 'disabled'}`
-    });
+  const handleToggle = async (id: string, enabled: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('gpt_actions')
+        .update({ is_enabled: enabled })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setActions(prev => prev.map(a => 
+        a.id === id ? { ...a, isEnabled: enabled } : a
+      ));
+      toast({
+        title: enabled ? "Action enabled" : "Action disabled",
+        description: `The action has been ${enabled ? 'enabled' : 'disabled'}`
+      });
+    } catch (error) {
+      console.error('Error toggling action:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update action",
+        variant: "destructive"
+      });
+    }
   };
 
   const getTypeIcon = (type: Action['type']) => {
@@ -167,6 +270,10 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
         return <ExternalLink className="h-5 w-5 text-green-500" />;
       case 'function':
         return <Code className="h-5 w-5 text-purple-500" />;
+      case 'security':
+        return <Shield className="h-5 w-5 text-orange-500" />;
+      default:
+        return <Zap className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -230,11 +337,11 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
                   </div>
                   <div className="space-y-2">
                     <Label>Type</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(['webhook', 'api', 'function'] as const).map((type) => (
+                    <div className="grid grid-cols-4 gap-2">
+                      {(['webhook', 'api', 'function', 'security'] as const).map((type) => (
                         <button
                           key={type}
-                          onClick={() => setFormData(prev => ({ ...prev, type }))}
+                          onClick={() => setFormData(prev => ({ ...prev, type: type as Action['type'] }))}
                           className={`p-3 rounded-lg border-2 text-center transition-all ${
                             formData.type === type
                               ? 'border-primary bg-primary/5'
@@ -268,7 +375,8 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveAction}>
+                  <Button onClick={handleSaveAction} disabled={isSaving}>
+                    {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     {editingAction ? 'Save Changes' : 'Create Action'}
                   </Button>
                 </DialogFooter>
@@ -287,7 +395,11 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {actions.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : actions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Zap className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No actions configured yet</p>
