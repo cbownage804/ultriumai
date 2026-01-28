@@ -1,4 +1,20 @@
-import { GPTTemplate } from "@/types/templates";
+import { GPTTemplate, GPTTemplateConfig } from "@/types/templates";
+import { getCategoryDefaults, extendedTemplateConfigs } from "./templateConfigDefaults";
+
+// Helper to build complete config for a template
+export const getTemplateFullConfig = (templateId: string, category: string, baseConfig: Partial<GPTTemplateConfig>): GPTTemplateConfig => {
+  const categoryDefaults = getCategoryDefaults(category);
+  const templateSpecifics = extendedTemplateConfigs[templateId] || {};
+  
+  return {
+    // Category defaults first
+    ...categoryDefaults,
+    // Base config from template
+    ...baseConfig,
+    // Template-specific overrides
+    ...templateSpecifics,
+  } as GPTTemplateConfig;
+};
 
 export const gptTemplates: GPTTemplate[] = [
   // ========================================
