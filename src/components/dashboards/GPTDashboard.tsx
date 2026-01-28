@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2, Sliders } from "lucide-react";
+import { Bot, MessageSquare, Users, TrendingUp, Plus, Settings, Eye, BarChart3, Trash2, Sliders, Zap, User, Rocket } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import {
   AlertDialog,
@@ -198,45 +199,100 @@ export const GPTDashboard = () => {
           ) : (
             <div className="space-y-4">
               {customGPTs.slice(0, 5).map((gpt) => (
-                <div key={gpt.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div key={gpt.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border rounded-lg gap-4">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
                       <Bot className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <h4 className="font-medium">{gpt.name}</h4>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0">
+                      <h4 className="font-medium truncate">{gpt.name}</h4>
+                      <p className="text-sm text-muted-foreground truncate max-w-[300px]">
                         {gpt.description || 'No description'}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Status badges */}
                     <Badge variant={gpt.is_active ? 'default' : 'secondary'}>
                       {gpt.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                     <Badge variant="outline">
                       {gpt.chat_count || 0} chats
                     </Badge>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/chat/${gpt.id}`)}>
-                      <Eye className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/dashboard/gpt/build?edit=${gpt.id}`)}>
-                      <Settings className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}>
-                      <Sliders className="h-4 w-4 mr-1" />
-                      Settings
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => setGptToDelete({ id: gpt.id, name: gpt.name })}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    
+                    {/* Action buttons with tooltips */}
+                    <TooltipProvider>
+                      <div className="flex items-center gap-1 ml-2">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/dashboard/gpt/build?edit=${gpt.id}`)}>
+                              <Bot className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Build / Edit</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/settings/${gpt.id}`)}>
+                              <User className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Personalize</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/actions/${gpt.id}`)}>
+                              <Zap className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Actions</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/chat/${gpt.id}`)}>
+                              <MessageSquare className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Chat</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/analytics/${gpt.id}`)}>
+                              <BarChart3 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Analyze</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigate(`/ai-studio/deploy/${gpt.id}`)}>
+                              <Rocket className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Deploy</TooltipContent>
+                        </Tooltip>
+                        
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                              onClick={() => setGptToDelete({ id: gpt.id, name: gpt.name })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TooltipProvider>
                   </div>
                 </div>
               ))}
