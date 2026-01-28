@@ -244,8 +244,8 @@ export function AppSidebar() {
         {/* Management section removed - all functionality now lives per-GPT */}
 
 
-        {/* Premium Upgrade Section */}
-        {subscription.subscription_tier === "free" && !isCollapsed && (
+        {/* Premium Upgrade Section - Only show for truly free users */}
+        {!subscription.subscribed && subscription.subscription_tier === "free" && !isCollapsed && (
           <SidebarGroup>
             <SidebarGroupContent>
               <Card className="mx-2 mb-2 border-purple-200 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30">
