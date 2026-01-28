@@ -138,6 +138,43 @@ const CONTENT_TYPE_TO_PRODUCT: Record<string, string> = {
   ai_studio: 'aistudio',
 };
 
+// Content-type specific visual styles for better image matching
+const VISUAL_STYLES: Record<string, string> = {
+  // For Everyone (Consumer-focused) - warm, friendly, relatable imagery
+  personal_safety: 'Warm, protective family-oriented imagery. Happy people using devices safely, cozy home settings with subtle security elements, protective shields around family silhouettes. Soft blues, greens, warm lighting.',
+  password_tips: 'Friendly key and lock imagery, digital vault doors, secure padlocks with warm glows, fingerprint scans. Approachable and non-technical feeling. Bright, clean colors.',
+  scam_alert: 'Warning imagery without being scary - caution signs, magnifying glass over suspicious elements, protective barriers catching threats. Orange and yellow alert tones balanced with calming blues.',
+  device_security: 'Modern devices (phones, laptops, tablets) with protective shields or glowing security auras. Clean, lifestyle photography feel. Bright, optimistic colors.',
+  privacy_tips: 'Privacy-focused imagery - secure envelopes, private browsing concepts, data protection symbols. People in control of their information. Soft purples and teals.',
+  
+  // For Small Businesses - professional but accessible
+  smb_security: 'Small business scenes - small office, coffee shop, retail store with subtle security elements. Professional but approachable. Clean blues and warm accents.',
+  payment_safety: 'Secure payment imagery - protected credit cards, safe transactions, digital payment shields. Trust-building visuals. Green and blue tones for security and trust.',
+  email_security: 'Email security visuals - protected inbox, spam filtering concepts, secure envelope imagery. Clean, professional. Blues and protective shield elements.',
+  network_basics: 'WiFi and network security - protected routers, secure connection symbols, small office network diagrams. Approachable tech imagery. Blue and cyan tones.',
+  
+  // For MSPs & Enterprise
+  ai_studio: 'Futuristic AI control panel imagery with glowing violet/purple accents, neural network patterns, custom AI assistants, dashboard interfaces, enterprise AI deployment. Premium tech aesthetic with dark backgrounds and neon violet glows. Sophisticated, powerful, innovative.',
+  threat_alert: 'Dramatic cybersecurity scene with red/orange warning tones, digital shields, network visualization, hacker silhouettes, or malware patterns. Dark moody atmosphere.',
+  service_highlight: 'Professional business technology scene showing servers, dashboards, team collaboration, or enterprise infrastructure. Corporate blue tones.',
+  industry_news: 'Modern tech news aesthetic with abstract data visualizations, global networks, or futuristic cityscape elements. Dynamic and current feeling.',
+  compliance_update: 'Official, structured visuals with documents, checklists, certification badges, or regulatory symbols. Clean and trustworthy.',
+  success_story: 'Positive, achievement-oriented imagery with upward graphs, trophy elements, handshakes, or celebrating team silhouettes. Warm, optimistic colors.',
+  
+  // UltriumAI Product Promos
+  safepass_promo: 'Premium password vault imagery with golden amber accents, secure key icons, digital vault doors, biometric authentication, master passwords. Luxurious security aesthetic with dark backgrounds and warm amber/gold glows. Trustworthy, secure, premium.',
+  safescan_promo: 'Threat detection imagery with red warning accents, email scanning visualizations, URL analysis, document inspection, shield barriers catching malware. Alert-focused aesthetic with dark backgrounds and crimson red glows. Vigilant, protective, proactive.',
+  safeweb_promo: 'Dark web monitoring imagery with cyan/teal accents, deep web visualizations, breach detection alerts, credential monitoring dashboards, hidden threat discovery. Mysterious yet protective aesthetic with dark backgrounds and cyan glows. Watchful, comprehensive, revealing.',
+  safetrack_promo: 'IT asset management imagery with emerald green accents, inventory dashboards, device tracking maps, asset lifecycle visualizations, organized equipment grids. Organized and efficient aesthetic with dark backgrounds and green accents. Orderly, efficient, complete.',
+  safeassist_promo: 'AI security advisor imagery with emerald green accents. Show a friendly AI assistant helping employees with security - conversation interfaces, protective guidance, security education. Modern robot or AI face with welcoming expression surrounded by security icons. Dark backgrounds with emerald/teal glows. Helpful, intelligent, accessible, protective.',
+  vanguard_promo: 'Enterprise RMM imagery with cyan accents, endpoint management dashboards, network monitoring visualizations, remote access connections, security agent deployment. Command center aesthetic with dark backgrounds and cyan highlights. Powerful, comprehensive, enterprise-grade.',
+  
+  // General
+  security_tip: 'Clean, helpful visual with lock icons, checkmarks, protective shields, or secure connections. Bright, approachable colors like blues and greens.',
+  awareness_campaign: 'Educational cybersecurity visuals with protective symbols, awareness ribbons, or community-focused security imagery. Accessible and inclusive.',
+  custom_topic: 'Professional technology and cybersecurity themed imagery with modern digital aesthetics.',
+};
+
 // Detect which product is mentioned in the content
 function detectProduct(text: string, contentType?: string): string | null {
   // If content type maps to a product, use that
