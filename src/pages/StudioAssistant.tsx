@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,6 +60,15 @@ const CONTEXTUAL_TIPS = [
 const UltriumGPT = () => {
   const navigate = useNavigate();
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+  const [chatSendMessage, setChatSendMessage] = useState<((msg: string) => void) | null>(null);
+
+  // When a question is selected and chat is ready, send it
+  useEffect(() => {
+    if (selectedQuestion && chatSendMessage) {
+      chatSendMessage(selectedQuestion);
+      setSelectedQuestion(null);
+    }
+  }, [selectedQuestion, chatSendMessage]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,6 +153,7 @@ const UltriumGPT = () => {
                 <RealTimeAIChat 
                   context="ai_studio_help" 
                   title="Studio Assistant"
+                  onReady={(sendFn) => setChatSendMessage(() => sendFn)}
                   systemPromptOverride={`You are the Studio Assistant, an AI helper for UltriumAI's AI Studio platform. Your purpose is to help users understand and use AI Studio to build, customize, and deploy their own custom GPT assistants.
 
 ## Your Knowledge Areas:
