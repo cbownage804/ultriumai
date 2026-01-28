@@ -152,7 +152,7 @@ serve(async (req) => {
       }
     }
 
-    // Update AI Studio subscription in database
+    // Update AI Studio subscription in database (don't include stripe_subscription_id if column doesn't exist)
     const { error: aiError } = await supabaseAdmin.from("subscribers").upsert({
       email: userEmail,
       user_id: userId,
@@ -160,12 +160,13 @@ serve(async (req) => {
       subscribed: aiStudioSubscribed,
       subscription_tier: aiStudioTier,
       subscription_end: aiStudioEnd,
-      stripe_subscription_id: aiStudioStripeId,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
     if (aiError) {
       logStep("Error updating AI Studio subscription", { error: aiError });
+    } else {
+      logStep("AI Studio subscription updated successfully", { tier: aiStudioTier });
     }
 
     // Update SafeSuite subscription in database
