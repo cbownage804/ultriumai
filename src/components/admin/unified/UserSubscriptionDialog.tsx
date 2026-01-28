@@ -86,6 +86,14 @@ export const UserSubscriptionDialog = ({
   const [aiStudioTier, setAiStudioTier] = useState(user?.products.ai_studio?.tier || 'free');
   const [safesuiteTier, setSafesuiteTier] = useState(user?.products.safesuite?.tier || 'free');
   const [vanguardTier, setVanguardTier] = useState(user?.products.vanguard?.tier || 'none');
+  
+  // Track Stripe-managed status locally (can be updated after sync)
+  const [aiStudioStripeManaged, setAiStudioStripeManaged] = useState(
+    !!user?.products.ai_studio?.stripe_subscription_id
+  );
+  const [safesuiteStripeManaged, setSafesuiteStripeManaged] = useState(
+    !!user?.products.safesuite?.stripe_subscription_id
+  );
 
   // Reset state when user changes
   useEffect(() => {
@@ -93,12 +101,12 @@ export const UserSubscriptionDialog = ({
       setAiStudioTier(user.products.ai_studio?.tier || 'free');
       setSafesuiteTier(user.products.safesuite?.tier || 'free');
       setVanguardTier(user.products.vanguard?.tier || 'none');
+      setAiStudioStripeManaged(!!user.products.ai_studio?.stripe_subscription_id);
+      setSafesuiteStripeManaged(!!user.products.safesuite?.stripe_subscription_id);
     }
   }, [user]);
 
   const isStripeManaged = (stripeId: string | null | undefined) => !!stripeId;
-
-  // Sync subscription from Stripe
   const handleSyncFromStripe = async () => {
     if (!user) return;
     setSyncing(true);
@@ -117,9 +125,12 @@ export const UserSubscriptionDialog = ({
         // Update local state with synced values
         if (data.ai_studio?.tier) {
           setAiStudioTier(data.ai_studio.tier);
+          // Mark as Stripe-managed if there's an active subscription
+          setAiStudioStripeManaged(data.ai_studio.subscribed);
         }
         if (data.safesuite?.tier) {
           setSafesuiteTier(data.safesuite.tier);
+          setSafesuiteStripeManaged(data.safesuite.subscribed);
         }
 
         toast({
@@ -233,7 +244,7 @@ export const UserSubscriptionDialog = ({
                 <Sparkles className="h-4 w-4 text-purple-500" />
                 <Label className="text-sm font-medium">AI Studio</Label>
               </div>
-              {isStripeManaged(user.products.ai_studio?.stripe_subscription_id) ? (
+              {aiStudioStripeManaged ? (
                 <Badge variant="outline" className="text-blue-500 border-blue-500/50 text-xs">
                   <CreditCard className="h-3 w-3 mr-1" />
                   Stripe
@@ -279,7 +290,7 @@ export const UserSubscriptionDialog = ({
                 <Shield className="h-4 w-4 text-emerald-500" />
                 <Label className="text-sm font-medium">SafeSuite</Label>
               </div>
-              {isStripeManaged(user.products.safesuite?.stripe_subscription_id) ? (
+              {safesuiteStripeManaged ? (
                 <Badge variant="outline" className="text-blue-500 border-blue-500/50 text-xs">
                   <CreditCard className="h-3 w-3 mr-1" />
                   Stripe
