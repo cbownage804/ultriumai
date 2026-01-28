@@ -1,5 +1,5 @@
 import { MessageSquare, History, Settings, User, LogOut, Bot, Crown, Zap, Star, Check, BarChart3, Users, TrendingUp, Key, Palette, Shield, Home, ArrowLeft, ChevronDown, ChevronRight } from "lucide-react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -24,17 +24,23 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const gptItems = [
+// General GPT section items (always visible)
+const gptGeneralItems = [
   { title: "GPT Dashboard", url: "/dashboard/gpt", icon: Bot, tooltip: "Custom GPT overview and analytics" },
   { title: "Templates", url: "/dashboard/gpt/templates", icon: Star, tooltip: "Browse pre-built GPT templates for common use cases" },
-  { title: "Build", url: "/dashboard/gpt/build", icon: Bot, tooltip: "Create and configure custom AI assistants" },
-  { title: "Personalize", url: "/dashboard/gpt/personalize", icon: User, tooltip: "Customize GPT appearance, behavior, and branding" },
-  { title: "Actions", url: "/dashboard/gpt/actions", icon: Zap, tooltip: "Add custom actions and integrations" },
-  { title: "Chat", url: "/dashboard/gpt/chat", icon: MessageSquare, tooltip: "Test and interact with your custom GPTs" },
-  { title: "Analyze", url: "/dashboard/gpt/analyze", icon: BarChart3, tooltip: "View GPT performance and analytics" },
-  { title: "Deploy", url: "/dashboard/gpt/deploy", icon: Settings, tooltip: "Publish and share your GPTs with others" },
+  { title: "Build New", url: "/dashboard/gpt/build", icon: Bot, tooltip: "Create a new custom AI assistant" },
+];
+
+// GPT-specific items (only visible when a GPT is selected)
+const getGptSpecificItems = (gptId: string) => [
+  { title: "Chat", url: `/chat/${gptId}`, icon: MessageSquare, tooltip: "Chat with this GPT" },
+  { title: "Edit", url: `/dashboard/gpt/build?edit=${gptId}`, icon: Bot, tooltip: "Edit GPT configuration" },
+  { title: "Personalize", url: `/ai-studio/settings/${gptId}`, icon: User, tooltip: "Customize appearance and behavior" },
+  { title: "Actions", url: `/ai-studio/actions/${gptId}`, icon: Zap, tooltip: "Configure custom actions" },
+  { title: "Analyze", url: `/ai-studio/analytics/${gptId}`, icon: BarChart3, tooltip: "View performance metrics" },
+  { title: "Deploy", url: `/ai-studio/deploy/${gptId}`, icon: Settings, tooltip: "Deploy and share this GPT" },
 ];
 
 const managementItems = [
@@ -53,18 +59,42 @@ const adminItems = [
   { title: "Platform Admin", url: "/admin", icon: Crown, tooltip: "Platform-wide administration and management" },
 ];
 
+// Helper to extract GPT ID from various route patterns
+const extractGptIdFromPath = (pathname: string, searchParams: string): string | null => {
+  // Check for /chat/:gptId pattern
+  const chatMatch = pathname.match(/^\/chat\/([^/]+)/);
+  if (chatMatch) return chatMatch[1];
+  
+  // Check for /ai-studio/*/gptId patterns
+  const aiStudioMatch = pathname.match(/^\/ai-studio\/[^/]+\/([^/]+)/);
+  if (aiStudioMatch) return aiStudioMatch[1];
+  
+  // Check for ?edit=gptId query param
+  const params = new URLSearchParams(searchParams);
+  const editId = params.get('edit');
+  if (editId) return editId;
+  
+  return null;
+};
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { subscription } = useSubscription();
   const { toast } = useToast();
+  
+  // Extract GPT ID from current route
+  const currentGptId = extractGptIdFromPath(location.pathname, location.search);
+  const gptSpecificItems = currentGptId ? getGptSpecificItems(currentGptId) : [];
   
   // Check if user is admin (UltriumAI employee with confirmed email)
   const isAdmin = user?.email?.endsWith('@ultriumai.com') && user?.email_confirmed_at != null;
   
   const [openSections, setOpenSections] = useState({
     gpt: true,
+    gptSpecific: true,
     management: false
   });
   
@@ -147,7 +177,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Custom GPTs Section */}
+        {/* Custom GPTs Section - General Items */}
         <Collapsible open={openSections.gpt} onOpenChange={() => toggleSection('gpt')}>
           <SidebarGroup>
             <SidebarGroupLabel asChild>
@@ -164,7 +194,7 @@ export function AppSidebar() {
             <CollapsibleContent>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {gptItems.map((item) => (
+                  {gptGeneralItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild tooltip={item.tooltip}>
                         <NavLink to={item.url} className={getNavClass}>
@@ -179,6 +209,41 @@ export function AppSidebar() {
             </CollapsibleContent>
           </SidebarGroup>
         </Collapsible>
+
+        {/* GPT-Specific Section - Only visible when a GPT is selected */}
+        {currentGptId && (
+          <Collapsible open={openSections.gptSpecific} onOpenChange={() => toggleSection('gptSpecific')}>
+            <SidebarGroup>
+              <SidebarGroupLabel asChild>
+                <CollapsibleTrigger className="flex items-center justify-between w-full hover:bg-muted/50 rounded-md px-2 py-1">
+                  <span className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    {!isCollapsed && "Current GPT"}
+                  </span>
+                  {!isCollapsed && (
+                    openSections.gptSpecific ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+                  )}
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {gptSpecificItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton asChild tooltip={item.tooltip}>
+                          <NavLink to={item.url} className={getNavClass}>
+                            <item.icon className="h-4 w-4" />
+                            {!isCollapsed && <span className="ml-2">{item.title}</span>}
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        )}
 
 
         {/* Management & Analytics Section */}
