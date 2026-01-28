@@ -7,23 +7,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// AI Studio Plan Price IDs - These should be created in Stripe
+// AI Studio Plan Price IDs
 const PLAN_PRICES: Record<string, { priceId: string; name: string }> = {
   // MSP Plans
-  msp_starter: { priceId: "price_ai_studio_msp_starter", name: "AI Studio MSP Starter" },
-  msp_pro: { priceId: "price_ai_studio_msp_pro", name: "AI Studio MSP Pro" },
-  msp_elite: { priceId: "price_ai_studio_msp_elite", name: "AI Studio MSP Elite" },
-  platform_pro: { priceId: "price_ai_studio_platform_pro", name: "AI Studio Platform Pro" },
+  msp_starter: { priceId: "price_1SufpiH1u6E0bsJTjYHxUB0S", name: "AI Studio MSP Starter" },
+  msp_pro: { priceId: "price_1SufpkH1u6E0bsJTvIBfLHhJ", name: "AI Studio MSP Pro" },
+  msp_elite: { priceId: "price_1SufplH1u6E0bsJTBSp1Sk22", name: "AI Studio MSP Elite" },
+  platform_pro: { priceId: "price_1SufpmH1u6E0bsJTNXc7zgdh", name: "AI Studio Platform Pro" },
   // Team Plans
-  team_basic: { priceId: "price_ai_studio_team_basic", name: "AI Studio Team Basic" },
-  team_plus: { priceId: "price_ai_studio_team_plus", name: "AI Studio Team Plus" },
+  team_basic: { priceId: "price_1SufpoH1u6E0bsJTeVF7r7l8", name: "AI Studio Team Basic" },
+  team_plus: { priceId: "price_1SufppH1u6E0bsJTQVp5tPOV", name: "AI Studio Team Plus" },
   // Website Plans
-  website_basic: { priceId: "price_ai_studio_website_basic", name: "AI Studio Website Basic" },
-  website_pro: { priceId: "price_ai_studio_website_pro", name: "AI Studio Website Pro" },
-  // Legacy plan IDs (keep for backwards compatibility)
-  creator: { priceId: "price_ai_studio_creator", name: "AI Studio Creator" },
-  professional: { priceId: "price_ai_studio_professional", name: "AI Studio Professional" },
-  agency: { priceId: "price_ai_studio_agency", name: "AI Studio Agency" },
+  website_basic: { priceId: "price_1SufpqH1u6E0bsJT9kB6UsXe", name: "AI Studio Website Basic" },
+  website_pro: { priceId: "price_1SufprH1u6E0bsJThEY4BJTd", name: "AI Studio Website Pro" },
 };
 
 // Usage Add-on Price IDs
