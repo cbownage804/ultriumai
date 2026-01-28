@@ -3,18 +3,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Brain, Loader2, Sparkles } from "lucide-react";
+import { Brain, Loader2, Sparkles, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
 import { useAuth } from "@/hooks/useAuth";
 import { WebCrawler } from "@/components/knowledge/WebCrawler";
 import { DocumentProcessor } from "@/components/knowledge/DocumentProcessor";
+import { useNavigate } from "react-router-dom";
 
 
 const CustomGPTBuild = () => {
   const { user } = useAuth();
   const { gpts } = useCustomGPTs();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [selectedGPTId, setSelectedGPTId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,6 +64,17 @@ const CustomGPTBuild = () => {
 
   return (
     <div className="space-y-6">
+      {/* Back button */}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={() => navigate('/dashboard/gpt')}
+        className="gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to My GPTs
+      </Button>
+
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <Brain className="h-6 w-6 text-primary" />
