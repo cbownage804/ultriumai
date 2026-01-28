@@ -84,7 +84,14 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
       security: {
         scannerType: 'url',
         threatLevel: 'standard',
-        autoBlock: true
+        autoBlock: true,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL to scan for threats' }
+          },
+          required: ['url']
+        }
       }
     }
   },
@@ -100,7 +107,14 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
       security: {
         scannerType: 'breach',
         threatLevel: 'standard',
-        autoBlock: false
+        autoBlock: false,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            email: { type: 'string', description: 'Email address to check for breaches' }
+          },
+          required: ['email']
+        }
       }
     }
   },
@@ -114,9 +128,39 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     category: 'SafeSuite Security',
     config: {
       security: {
-        scannerType: 'url',
+        scannerType: 'advanced',
         threatLevel: 'advanced',
-        autoBlock: true
+        autoBlock: true,
+        inputSchema: {
+          type: 'object',
+          properties: {
+            target: { type: 'string', description: 'URL, IP, or domain to scan' },
+            scanDepth: { type: 'string', enum: ['shallow', 'deep'], default: 'deep' }
+          },
+          required: ['target']
+        }
+      }
+    }
+  },
+  {
+    id: 'password-strength-check',
+    name: 'Password Strength Analyzer',
+    description: 'Evaluate password security and provide improvement suggestions',
+    type: 'security',
+    endpoint: '',
+    icon: <Lock className="h-5 w-5" />,
+    category: 'SafeSuite Security',
+    config: {
+      security: {
+        scannerType: 'password',
+        threatLevel: 'standard',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            password: { type: 'string', description: 'Password to analyze (not stored)' }
+          },
+          required: ['password']
+        }
       }
     }
   },
@@ -126,9 +170,51 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     name: 'Create Ticket',
     description: 'Creates a support ticket in your helpdesk system',
     type: 'webhook',
-    endpoint: 'https://api.helpdesk.com/tickets',
+    endpoint: '',
     icon: <Ticket className="h-5 w-5" />,
-    category: 'Support'
+    category: 'Support',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            subject: { type: 'string', description: 'Ticket subject line' },
+            description: { type: 'string', description: 'Detailed description of the issue' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
+            requesterEmail: { type: 'string', description: 'Email of the person reporting' }
+          },
+          required: ['subject', 'description']
+        }
+      }
+    }
+  },
+  {
+    id: 'escalate-ticket',
+    name: 'Escalate Ticket',
+    description: 'Escalates an existing ticket to higher priority or team',
+    type: 'webhook',
+    endpoint: '',
+    icon: <Ticket className="h-5 w-5" />,
+    category: 'Support',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            ticketId: { type: 'string', description: 'ID of the ticket to escalate' },
+            reason: { type: 'string', description: 'Reason for escalation' },
+            targetTeam: { type: 'string', description: 'Team to escalate to' }
+          },
+          required: ['ticketId', 'reason']
+        }
+      }
+    }
   },
   // Communication
   {
@@ -136,46 +222,197 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     name: 'Send Email',
     description: 'Sends an email notification to specified recipients',
     type: 'api',
-    endpoint: 'https://api.sendgrid.com/v3/mail/send',
+    endpoint: '',
     icon: <Mail className="h-5 w-5" />,
-    category: 'Communication'
+    category: 'Communication',
+    config: {
+      api: {
+        endpoint: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            to: { type: 'string', description: 'Recipient email address' },
+            subject: { type: 'string', description: 'Email subject line' },
+            body: { type: 'string', description: 'Email body content' },
+            isHtml: { type: 'boolean', default: false, description: 'Whether body is HTML' }
+          },
+          required: ['to', 'subject', 'body']
+        }
+      }
+    }
   },
   {
     id: 'slack-notification',
     name: 'Slack Notification',
-    description: 'Posts a message to a Slack channel',
+    description: 'Posts a message to a Slack channel via webhook',
     type: 'webhook',
-    endpoint: 'https://hooks.slack.com/services/...',
+    endpoint: '',
     icon: <MessageSquare className="h-5 w-5" />,
-    category: 'Communication'
+    category: 'Communication',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            text: { type: 'string', description: 'Message text to post' },
+            channel: { type: 'string', description: 'Channel name (optional, uses webhook default)' }
+          },
+          required: ['text']
+        }
+      }
+    }
   },
   {
-    id: 'push-notification',
-    name: 'Push Notification',
-    description: 'Sends a push notification to mobile devices',
+    id: 'teams-notification',
+    name: 'Teams Notification',
+    description: 'Posts a message to a Microsoft Teams channel',
     type: 'webhook',
-    endpoint: 'https://fcm.googleapis.com/fcm/send',
+    endpoint: '',
+    icon: <MessageSquare className="h-5 w-5" />,
+    category: 'Communication',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', description: 'Message card title' },
+            text: { type: 'string', description: 'Message content' },
+            themeColor: { type: 'string', default: '0076D7', description: 'Accent color hex' }
+          },
+          required: ['text']
+        }
+      }
+    }
+  },
+  {
+    id: 'sms-notification',
+    name: 'SMS Notification',
+    description: 'Sends an SMS message via Twilio or similar provider',
+    type: 'api',
+    endpoint: '',
     icon: <Bell className="h-5 w-5" />,
-    category: 'Communication'
+    category: 'Communication',
+    config: {
+      api: {
+        endpoint: '',
+        method: 'POST',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            to: { type: 'string', description: 'Phone number in E.164 format' },
+            message: { type: 'string', description: 'SMS message content (max 160 chars)' }
+          },
+          required: ['to', 'message']
+        }
+      }
+    }
   },
   // Productivity
   {
     id: 'create-calendar-event',
     name: 'Create Calendar Event',
-    description: 'Schedules a new event on Google Calendar',
+    description: 'Schedules a new event on your calendar',
     type: 'api',
-    endpoint: 'https://www.googleapis.com/calendar/v3/calendars',
+    endpoint: '',
     icon: <Calendar className="h-5 w-5" />,
-    category: 'Productivity'
+    category: 'Productivity',
+    config: {
+      api: {
+        endpoint: '',
+        method: 'POST',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', description: 'Event title' },
+            description: { type: 'string', description: 'Event description' },
+            startTime: { type: 'string', description: 'Start time (ISO 8601)' },
+            endTime: { type: 'string', description: 'End time (ISO 8601)' },
+            attendees: { type: 'array', items: { type: 'string' }, description: 'List of attendee emails' }
+          },
+          required: ['title', 'startTime', 'endTime']
+        }
+      }
+    }
+  },
+  {
+    id: 'create-task',
+    name: 'Create Task',
+    description: 'Creates a new task in your task management system',
+    type: 'webhook',
+    endpoint: '',
+    icon: <FileText className="h-5 w-5" />,
+    category: 'Productivity',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', description: 'Task title' },
+            description: { type: 'string', description: 'Task details' },
+            dueDate: { type: 'string', description: 'Due date (ISO 8601)' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+            assignee: { type: 'string', description: 'Email of assignee' }
+          },
+          required: ['title']
+        }
+      }
+    }
   },
   {
     id: 'generate-report',
     name: 'Generate Report',
-    description: 'Creates a PDF report from provided data',
+    description: 'Creates a formatted report from provided data',
     type: 'function',
     endpoint: '',
     icon: <FileText className="h-5 w-5" />,
-    category: 'Productivity'
+    category: 'Productivity',
+    config: {
+      function: {
+        name: 'generate_report',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', description: 'Report title' },
+            data: { type: 'object', description: 'Data to include in report' },
+            format: { type: 'string', enum: ['pdf', 'html', 'markdown'], default: 'markdown' }
+          },
+          required: ['title', 'data']
+        }
+      }
+    }
+  },
+  {
+    id: 'summarize-content',
+    name: 'Summarize Content',
+    description: 'AI-powered content summarization',
+    type: 'function',
+    endpoint: '',
+    icon: <Sparkles className="h-5 w-5" />,
+    category: 'Productivity',
+    config: {
+      function: {
+        name: 'summarize_content',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            content: { type: 'string', description: 'Content to summarize' },
+            maxLength: { type: 'number', default: 200, description: 'Maximum summary length in words' },
+            style: { type: 'string', enum: ['bullet', 'paragraph', 'executive'], default: 'paragraph' }
+          },
+          required: ['content']
+        }
+      }
+    }
   },
   // Data
   {
@@ -185,16 +422,159 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     type: 'function',
     endpoint: '',
     icon: <Database className="h-5 w-5" />,
-    category: 'Data'
+    category: 'Data',
+    config: {
+      function: {
+        name: 'database_query',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            table: { type: 'string', description: 'Table name to query' },
+            filters: { type: 'object', description: 'Filter conditions' },
+            select: { type: 'array', items: { type: 'string' }, description: 'Columns to return' },
+            limit: { type: 'number', default: 100, description: 'Maximum rows to return' }
+          },
+          required: ['table']
+        }
+      }
+    }
   },
   {
     id: 'web-search',
     name: 'Web Search',
     description: 'Searches the web for real-time information',
     type: 'api',
-    endpoint: 'https://api.bing.microsoft.com/v7.0/search',
+    endpoint: '',
     icon: <Search className="h-5 w-5" />,
-    category: 'Data'
+    category: 'Data',
+    config: {
+      api: {
+        endpoint: '',
+        method: 'GET',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: { type: 'string', description: 'Search query' },
+            maxResults: { type: 'number', default: 5, description: 'Maximum results to return' }
+          },
+          required: ['query']
+        }
+      }
+    }
+  },
+  {
+    id: 'fetch-url',
+    name: 'Fetch URL Content',
+    description: 'Retrieves and parses content from a web URL',
+    type: 'function',
+    endpoint: '',
+    icon: <ExternalLink className="h-5 w-5" />,
+    category: 'Data',
+    config: {
+      function: {
+        name: 'fetch_url',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            url: { type: 'string', description: 'URL to fetch' },
+            format: { type: 'string', enum: ['text', 'markdown', 'json'], default: 'text' }
+          },
+          required: ['url']
+        }
+      }
+    }
+  },
+  {
+    id: 'extract-data',
+    name: 'Extract Structured Data',
+    description: 'Extracts structured data from unstructured text using AI',
+    type: 'function',
+    endpoint: '',
+    icon: <Database className="h-5 w-5" />,
+    category: 'Data',
+    config: {
+      function: {
+        name: 'extract_data',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            text: { type: 'string', description: 'Text to extract data from' },
+            schema: { type: 'object', description: 'Expected output schema' }
+          },
+          required: ['text', 'schema']
+        }
+      }
+    }
+  },
+  // Automation
+  {
+    id: 'zapier-trigger',
+    name: 'Zapier Webhook',
+    description: 'Triggers a Zapier workflow via webhook',
+    type: 'webhook',
+    endpoint: '',
+    icon: <Zap className="h-5 w-5" />,
+    category: 'Automation',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            data: { type: 'object', description: 'Data payload to send to Zapier' }
+          },
+          required: ['data']
+        }
+      }
+    }
+  },
+  {
+    id: 'make-scenario',
+    name: 'Make (Integromat) Trigger',
+    description: 'Triggers a Make.com scenario via webhook',
+    type: 'webhook',
+    endpoint: '',
+    icon: <Zap className="h-5 w-5" />,
+    category: 'Automation',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            data: { type: 'object', description: 'Data payload to send to Make' }
+          },
+          required: ['data']
+        }
+      }
+    }
+  },
+  {
+    id: 'custom-webhook',
+    name: 'Custom Webhook',
+    description: 'Send data to any custom webhook endpoint',
+    type: 'webhook',
+    endpoint: '',
+    icon: <Webhook className="h-5 w-5" />,
+    category: 'Automation',
+    config: {
+      webhook: {
+        url: '',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        inputSchema: {
+          type: 'object',
+          properties: {
+            payload: { type: 'object', description: 'JSON payload to send' }
+          },
+          required: ['payload']
+        }
+      }
+    }
   }
 ];
 
