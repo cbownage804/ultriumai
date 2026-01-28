@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { TrialBanner } from '@/components/TrialBanner';
 import { SubscriptionRenewalNotice } from '@/components/SubscriptionRenewalNotice';
 import { GracePeriodManager } from '@/components/GracePeriodManager';
+import { HelpBanner } from '@/components/HelpBanner';
 
 import ProfilePage from "@/pages/ProfilePage";
 import CustomGPTBuild from "@/components/CustomGPTBuild";
@@ -168,6 +169,7 @@ const Dashboard = () => {
           </header>
           <div className="flex flex-1 flex-col h-[calc(100vh-4rem)]">
             <div className="space-y-4 p-4 animate-fade-in-up stagger-1">
+              <HelpBanner />
               <TrialBanner />
               <SubscriptionRenewalNotice />
               <GracePeriodManager />
