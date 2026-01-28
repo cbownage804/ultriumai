@@ -125,13 +125,13 @@ export const UserSubscriptionDialog = ({
         // Update local state with synced values
         const newAiTier = data.ai_studio?.tier || 'free';
         const newSsTier = data.safesuite?.tier || 'free';
-        const aiSubscribed = data.ai_studio?.subscribed === true;
-        const ssSubscribed = data.safesuite?.subscribed === true;
+        const aiStripeManaged = !!data.ai_studio?.stripe_subscription_id;
+        const ssStripeManaged = !!data.safesuite?.stripe_subscription_id;
         
         setAiStudioTier(newAiTier);
-        setAiStudioStripeManaged(aiSubscribed);
+        setAiStudioStripeManaged(aiStripeManaged);
         setSafesuiteTier(newSsTier);
-        setSafesuiteStripeManaged(ssSubscribed);
+        setSafesuiteStripeManaged(ssStripeManaged);
 
         toast({
           title: "Synced from Stripe",

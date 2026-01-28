@@ -84,6 +84,15 @@ export const AllUsersAdminTab = () => {
     filterUsers();
   }, [users, searchTerm]);
 
+  // If the table data refreshes while the dialog is open, keep the selected user in sync
+  useEffect(() => {
+    if (!selectedUser) return;
+    const updated = users.find(u => u.user_id === selectedUser.user_id);
+    if (updated && updated !== selectedUser) {
+      setSelectedUser(updated);
+    }
+  }, [users, selectedUser?.user_id]);
+
   const loadAllUsers = async () => {
     try {
       setLoading(true);
