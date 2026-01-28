@@ -57,10 +57,13 @@ export function GPTConfiguration({ gptId, gptName, themeColor, onUpdate }: GPTCo
     // General
     name: "",
     description: "",
+    avatar_url: "",
+    logo_url: "",
     theme_color: "#3b82f6",
     secondary_color: "#3b82f6",
     background_type: "color",
     background_color: "#ffffff",
+    background_image: "",
     
     // Persona
     system_prompt: "",
@@ -141,32 +144,69 @@ export function GPTConfiguration({ gptId, gptName, themeColor, onUpdate }: GPTCo
         // Apply template defaults first
         ...templateDefaults,
         // Then override with actual GPT values from database
+        // General
         name: gpt.name || "",
         description: gpt.description || "",
+        avatar_url: gpt.avatar_url || "",
+        logo_url: gpt.logo_url || "",
+        theme_color: gpt.theme_color || templateDefaults.theme_color || "#3b82f6",
+        secondary_color: gpt.secondary_color || templateDefaults.secondary_color || gpt.theme_color || "#3b82f6",
+        background_type: gpt.background_type || "color",
+        background_color: gpt.background_color || "#0a0a0a",
+        
+        // Persona
         system_prompt: gpt.system_prompt || "",
+        
+        // Conversation
+        language: gpt.language || "en",
+        placeholder_prompt: gpt.placeholder_prompt || templateDefaults.placeholder_prompt || "",
+        loading_indicator: gpt.loading_indicator || "dots",
+        loading_message: gpt.custom_loading_message || "",
+        starter_questions: (gpt.starter_questions as string[]) || [],
+        starter_header: gpt.starter_questions_header || "",
+        starter_expand_text: gpt.starter_questions_expand || "View More",
+        starter_collapse_text: gpt.starter_questions_collapse || "View less",
+        message_ending: gpt.custom_message_ending || templateDefaults.message_ending || "",
+        error_message: gpt.error_message || templateDefaults.error_message || "I'm sorry, I encountered an error. Please try again.",
+        conversation_duration: gpt.conversation_duration || "24h",
+        
+        // Citations
+        idk_message: gpt.unknown_message || templateDefaults.idk_message || "I couldn't find specific information about that. Please contact support for assistance.",
+        show_citations: gpt.show_citations || templateDefaults.show_citations || "none",
+        mention_sources: gpt.should_mention_sources ? "yes" : (templateDefaults.mention_sources || "yes"),
+        
+        // Intelligence
+        capability_mode: gpt.agent_capability || templateDefaults.capability_mode || "optimal",
+        knowledge_source: gpt.generate_responses_from || templateDefaults.knowledge_source || "data_and_general",
         preferred_model: gpt.preferred_model || templateDefaults.preferred_model || "gpt-4o",
         enable_web_search: gpt.enable_web_search ?? templateDefaults.enable_web_search ?? false,
-        theme_color: gpt.theme_color || templateDefaults.theme_color || "#3b82f6",
-        secondary_color: templateDefaults.secondary_color || gpt.theme_color || "#3b82f6",
-        placeholder_prompt: gpt.placeholder_prompt || templateDefaults.placeholder_prompt || "",
-        category: gpt.category || "general",
-        starter_questions: (gpt.starter_questions as string[]) || [],
+        
+        // Advanced
+        enable_feedback: gpt.user_feedback ?? templateDefaults.enable_feedback ?? true,
+        enable_sharing: gpt.conversation_sharing ?? templateDefaults.enable_sharing ?? true,
+        enable_export: gpt.conversation_exporting ?? templateDefaults.enable_export ?? false,
+        remove_branding: gpt.remove_branding ?? false,
+        agent_title: gpt.agent_title || "",
+        title_color: gpt.title_color || "#000000",
+        spotlight_avatar: gpt.spotlight_avatar ?? false,
+        show_user_avatar: gpt.user_avatar ?? false,
+        avatar_orientation: gpt.avatar_orientations || "agent_left",
+        terms_of_service: gpt.terms_of_service || "",
+        
+        // Security
+        anti_hallucination: gpt.anti_hallucination ?? templateDefaults.anti_hallucination ?? true,
         visibility: gpt.agent_visibility || templateDefaults.visibility || "private",
+        enable_recaptcha: gpt.recaptcha ?? false,
+        whitelisted_domains: gpt.whitelisted_domains || "",
+        retention_period: gpt.conversation_retention || "12_months",
+        
         // Template-only fields (prefilled from template)
         welcome_message: templateDefaults.welcome_message || "",
         communication_style: templateDefaults.communication_style || "",
         expertise_areas: templateDefaults.expertise_areas || "",
-        idk_message: templateDefaults.idk_message || "I couldn't find specific information about that. Please contact support for assistance.",
-        show_citations: templateDefaults.show_citations || "none",
-        mention_sources: templateDefaults.mention_sources || "yes",
-        capability_mode: templateDefaults.capability_mode || "optimal",
-        knowledge_source: templateDefaults.knowledge_source || "data_and_general",
-        message_ending: templateDefaults.message_ending || "",
-        error_message: templateDefaults.error_message || "I'm sorry, I encountered an error. Please try again.",
-        anti_hallucination: templateDefaults.anti_hallucination ?? true,
-        enable_feedback: templateDefaults.enable_feedback ?? true,
-        enable_sharing: templateDefaults.enable_sharing ?? true,
-        enable_export: templateDefaults.enable_export ?? false,
+        
+        // Legacy
+        category: gpt.category || "general",
       }));
       setHasChanges(false);
     }
@@ -181,16 +221,65 @@ export function GPTConfiguration({ gptId, gptName, themeColor, onUpdate }: GPTCo
     setIsSaving(true);
     try {
       await updateGPT(gptId, {
+        // General
         name: formData.name,
         description: formData.description,
+        avatar_url: formData.avatar_url || null,
+        logo_url: formData.logo_url || null,
+        theme_color: formData.theme_color,
+        primary_color: formData.theme_color,
+        secondary_color: formData.secondary_color,
+        background_type: formData.background_type,
+        background_color: formData.background_color,
+        
+        // Persona
         system_prompt: formData.system_prompt,
+        
+        // Conversation
+        language: formData.language,
+        placeholder_prompt: formData.placeholder_prompt,
+        loading_indicator: formData.loading_indicator,
+        custom_loading_message: formData.loading_message,
+        starter_questions: formData.starter_questions,
+        starter_questions_header: formData.starter_header,
+        starter_questions_expand: formData.starter_expand_text,
+        starter_questions_collapse: formData.starter_collapse_text,
+        custom_message_ending: formData.message_ending,
+        error_message: formData.error_message,
+        conversation_duration: formData.conversation_duration,
+        
+        // Citations
+        unknown_message: formData.idk_message,
+        show_citations: formData.show_citations,
+        should_mention_sources: formData.mention_sources === "yes",
+        
+        // Intelligence
+        agent_capability: formData.capability_mode,
+        generate_responses_from: formData.knowledge_source,
         preferred_model: formData.preferred_model,
         enable_web_search: formData.enable_web_search,
-        theme_color: formData.theme_color,
-        placeholder_prompt: formData.placeholder_prompt,
-        category: formData.category,
-        starter_questions: formData.starter_questions,
+        
+        // Advanced
+        user_feedback: formData.enable_feedback,
+        conversation_sharing: formData.enable_sharing,
+        conversation_exporting: formData.enable_export,
+        remove_branding: formData.remove_branding,
+        agent_title: formData.agent_title,
+        title_color: formData.title_color,
+        spotlight_avatar: formData.spotlight_avatar,
+        user_avatar: formData.show_user_avatar,
+        avatar_orientations: formData.avatar_orientation,
+        terms_of_service: formData.terms_of_service,
+        
+        // Security
+        anti_hallucination: formData.anti_hallucination,
         agent_visibility: formData.visibility,
+        recaptcha: formData.enable_recaptcha,
+        whitelisted_domains: formData.whitelisted_domains,
+        conversation_retention: formData.retention_period,
+        
+        // Legacy
+        category: formData.category,
       });
       
       toast({
