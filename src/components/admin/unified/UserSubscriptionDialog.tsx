@@ -123,15 +123,11 @@ export const UserSubscriptionDialog = ({
 
       if (data?.success) {
         // Update local state with synced values
-        if (data.ai_studio?.tier) {
-          setAiStudioTier(data.ai_studio.tier);
-          // Mark as Stripe-managed if there's an active subscription
-          setAiStudioStripeManaged(data.ai_studio.subscribed);
-        }
-        if (data.safesuite?.tier) {
-          setSafesuiteTier(data.safesuite.tier);
-          setSafesuiteStripeManaged(data.safesuite.subscribed);
-        }
+        setAiStudioTier(data.ai_studio?.tier || 'free');
+        setAiStudioStripeManaged(data.ai_studio?.subscribed === true);
+        
+        setSafesuiteTier(data.safesuite?.tier || 'free');
+        setSafesuiteStripeManaged(data.safesuite?.subscribed === true);
 
         toast({
           title: "Synced from Stripe",
