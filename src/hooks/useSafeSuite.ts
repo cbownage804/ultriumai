@@ -253,7 +253,7 @@ export function useSafeSuiteCheckout() {
     tier: SafeSuiteTier,
     interval: 'monthly' | 'yearly' = 'monthly',
     seats?: number
-  ): Promise<string | null> => {
+  ): Promise<{ url?: string; upgraded?: boolean; redirectUrl?: string; message?: string } | null> => {
     setLoading(true);
     setError(null);
 
@@ -267,21 +267,30 @@ export function useSafeSuiteCheckout() {
         if (fnError) throw fnError;
 
         if (data?.url) {
-          return data.url;
+          return { url: data.url };
         }
 
         throw new Error('No checkout URL returned');
       }
 
-      // Pro tier uses standard checkout
+      // Pro tier uses standard checkout (also handles upgrades)
       const { data, error: fnError } = await supabase.functions.invoke('safesuite-checkout', {
-        body: { tier, interval }
+        body: { tier, billing: interval }
       });
 
       if (fnError) throw fnError;
 
+      // Handle direct upgrade (no checkout needed)
+      if (data?.upgraded) {
+        return { 
+          upgraded: true, 
+          redirectUrl: data.redirectUrl,
+          message: data.message 
+        };
+      }
+
       if (data?.url) {
-        return data.url;
+        return { url: data.url };
       }
 
       throw new Error('No checkout URL returned');
