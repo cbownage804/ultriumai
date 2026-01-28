@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Code, Globe, Plus, Settings, Trash2, Play, Eye } from "lucide-react";
+import { Code, Globe, Plus, Settings, Trash2, Play, Eye, Info, Zap, MessageSquare, CheckCircle2, ArrowRight, Lightbulb } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useCustomGPTs } from "@/hooks/useCustomGPTs";
@@ -288,17 +288,103 @@ const CustomGPTActions = () => {
         </Card>
       )}
 
+      {/* How It Works Section */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Lightbulb className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">How Actions Work</CardTitle>
+              <CardDescription>
+                Extend your GPT's capabilities with automated integrations
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Flow Diagram */}
+          <div className="flex items-center justify-between gap-2 p-4 bg-muted/50 rounded-lg overflow-x-auto">
+            <div className="flex flex-col items-center gap-1 min-w-[80px]">
+              <div className="p-2 rounded-full bg-background border">
+                <MessageSquare className="h-4 w-4 text-blue-500" />
+              </div>
+              <span className="text-xs text-center font-medium">User Message</span>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <div className="flex flex-col items-center gap-1 min-w-[80px]">
+              <div className="p-2 rounded-full bg-background border">
+                <Zap className="h-4 w-4 text-amber-500" />
+              </div>
+              <span className="text-xs text-center font-medium">GPT Decides</span>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <div className="flex flex-col items-center gap-1 min-w-[80px]">
+              <div className="p-2 rounded-full bg-background border">
+                <Settings className="h-4 w-4 text-purple-500" />
+              </div>
+              <span className="text-xs text-center font-medium">Action Runs</span>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <div className="flex flex-col items-center gap-1 min-w-[80px]">
+              <div className="p-2 rounded-full bg-background border">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              </div>
+              <span className="text-xs text-center font-medium">Result Shown</span>
+            </div>
+          </div>
+
+          {/* Action Types Explained */}
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="p-3 rounded-lg border bg-background">
+              <div className="flex items-center gap-2 mb-2">
+                <Globe className="h-4 w-4 text-green-600" />
+                <span className="font-medium text-sm">API Integration</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Connect to external services like Autotask, Jira, or custom APIs to create tickets, send data, or retrieve information.
+              </p>
+            </div>
+            <div className="p-3 rounded-lg border bg-background">
+              <div className="flex items-center gap-2 mb-2">
+                <Code className="h-4 w-4 text-purple-600" />
+                <span className="font-medium text-sm">Webhook Trigger</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Send notifications to Slack, Teams, or other platforms when specific events occur in conversations.
+              </p>
+            </div>
+            <div className="p-3 rounded-lg border bg-background">
+              <div className="flex items-center gap-2 mb-2">
+                <Settings className="h-4 w-4 text-red-600" />
+                <span className="font-medium text-sm">SafeScan Integration</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Leverage SafeSuite security tools to scan URLs or check for credential breaches during conversations.
+              </p>
+            </div>
+          </div>
+
+          {/* Development Status */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs">
+              <span className="font-medium text-amber-700 dark:text-amber-400">In Development:</span>
+              <span className="text-muted-foreground ml-1">
+                Actions are currently configurable but automatic GPT triggering is coming soon. Use the Test button to preview action behavior.
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex justify-between items-start flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Actions</h1>
+          <h1 className="text-3xl font-bold">Your Actions</h1>
           <p className="text-muted-foreground mt-2">
-            Add powerful capabilities to your Custom GPT
+            Configure and manage actions for your Custom GPT
           </p>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant="secondary" className="text-xs">
-              ✨ More agentic actions coming soon...
-            </Badge>
-          </div>
         </div>
         
         <div className="flex gap-2 flex-wrap">
@@ -546,16 +632,19 @@ const CustomGPTActions = () => {
             })}
             
             {actions.length === 0 && (
-              <Card>
-                <CardContent className="p-12 text-center">
+              <Card className="border-dashed">
+                <CardContent className="p-8 text-center">
                   <div className="text-muted-foreground">
-                    <Code className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <h3 className="text-lg font-medium mb-2">No actions created yet</h3>
-                    <p className="text-sm mb-4">
-                      Actions allow your GPT to perform tasks like analyzing documents, 
-                      calling APIs, or connecting to databases.
+                    <div className="p-3 rounded-full bg-muted/50 w-fit mx-auto mb-4">
+                      <Zap className="h-8 w-8 opacity-50" />
+                    </div>
+                    <h3 className="text-lg font-medium mb-2">No actions configured</h3>
+                    <p className="text-sm mb-4 max-w-md mx-auto">
+                      Start by selecting a template below, or create a custom action. 
+                      Actions extend what your GPT can do—like scanning URLs for threats or sending Slack notifications.
                     </p>
                     <Button onClick={() => setIsDialogOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
                       Create Your First Action
                     </Button>
                   </div>
