@@ -3,24 +3,70 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles, Building2, Globe, Users, Zap, ArrowRight } from "lucide-react";
+import { Check, Sparkles, Building2, Globe, Users, Zap, ArrowRight, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import aiStudioLogo from '@/assets/ai-studio-logo.png';
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
 import { MSP_PLANS, TEAM_PLANS, WEBSITE_PLANS } from "@/types/aiStudioCredits";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const AIStudioPricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { subscription, isLoading: subscriptionLoading } = useSubscription();
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
-  const handleGetStarted = (planId?: string) => {
-    if (user) {
-      navigate('/ai-studio');
-    } else {
+  const isSubscribed = subscription?.subscribed;
+
+  const handleGetStarted = async (planId?: string) => {
+    if (!user) {
       navigate('/auth');
+      return;
     }
+
+    // If user is already subscribed, go to checkout to upgrade
+    if (planId) {
+      setCheckoutLoading(planId);
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-studio-checkout', {
+          body: { plan_id: planId }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.upgraded) {
+          toast.success(data.message || 'Plan upgraded successfully!');
+          if (data.redirectUrl) {
+            window.location.href = data.redirectUrl;
+          }
+          return;
+        }
+        
+        if (data?.url) {
+          window.open(data.url, '_blank');
+        }
+      } catch (err) {
+        console.error('Checkout error:', err);
+        toast.error('Failed to start checkout');
+      } finally {
+        setCheckoutLoading(null);
+      }
+      return;
+    }
+
+    // No plan specified, just go to dashboard
+    navigate('/ai-studio');
   };
 
+  const getButtonText = (planId: string) => {
+    if (checkoutLoading === planId) return <Loader2 className="h-4 w-4 animate-spin" />;
+    if (!user) return 'Start Trial';
+    if (isSubscribed) return 'Upgrade';
+    return 'Subscribe';
+  };
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-background/95">
       <Navigation />
@@ -80,8 +126,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-6 pt-0">
-                <Button variant="outline" size="sm" className="w-full" onClick={() => handleGetStarted('msp_starter')}>
-                  Start Trial
+                <Button variant="outline" size="sm" className="w-full" onClick={() => handleGetStarted('msp_starter')} disabled={checkoutLoading === 'msp_starter'}>
+                  {getButtonText('msp_starter')}
                 </Button>
               </CardFooter>
             </Card>
@@ -111,8 +157,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-6 pt-0">
-                <Button size="sm" className="w-full" onClick={() => handleGetStarted('msp_pro')}>
-                  Start Trial
+                <Button size="sm" className="w-full" onClick={() => handleGetStarted('msp_pro')} disabled={checkoutLoading === 'msp_pro'}>
+                  {getButtonText('msp_pro')}
                 </Button>
               </CardFooter>
             </Card>
@@ -139,8 +185,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-6 pt-0">
-                <Button variant="outline" size="sm" className="w-full" onClick={() => handleGetStarted('msp_elite')}>
-                  Start Trial
+                <Button variant="outline" size="sm" className="w-full" onClick={() => handleGetStarted('msp_elite')} disabled={checkoutLoading === 'msp_elite'}>
+                  {getButtonText('msp_elite')}
                 </Button>
               </CardFooter>
             </Card>
@@ -167,8 +213,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-6 pt-0">
-                <Button variant="outline" size="sm" className="w-full" onClick={() => handleGetStarted('platform_pro')}>
-                  Start Trial
+                <Button variant="outline" size="sm" className="w-full" onClick={() => handleGetStarted('platform_pro')} disabled={checkoutLoading === 'platform_pro'}>
+                  {getButtonText('platform_pro')}
                 </Button>
               </CardFooter>
             </Card>
@@ -244,8 +290,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button className="w-full bg-violet-500 hover:bg-violet-600" onClick={() => handleGetStarted('team_basic')}>
-                  Start Trial
+                <Button className="w-full bg-violet-500 hover:bg-violet-600" onClick={() => handleGetStarted('team_basic')} disabled={checkoutLoading === 'team_basic'}>
+                  {getButtonText('team_basic')}
                 </Button>
               </CardFooter>
             </Card>
@@ -272,8 +318,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full" onClick={() => handleGetStarted('team_plus')}>
-                  Start Trial
+                <Button variant="outline" className="w-full" onClick={() => handleGetStarted('team_plus')} disabled={checkoutLoading === 'team_plus'}>
+                  {getButtonText('team_plus')}
                 </Button>
               </CardFooter>
             </Card>
@@ -318,8 +364,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button variant="outline" className="w-full" onClick={() => handleGetStarted('website_basic')}>
-                  Start Trial
+                <Button variant="outline" className="w-full" onClick={() => handleGetStarted('website_basic')} disabled={checkoutLoading === 'website_basic'}>
+                  {getButtonText('website_basic')}
                 </Button>
               </CardFooter>
             </Card>
@@ -349,8 +395,8 @@ const AIStudioPricing = () => {
                 </div>
               </CardContent>
               <CardFooter className="p-8 pt-0">
-                <Button className="w-full bg-cyan-500 hover:bg-cyan-600" onClick={() => handleGetStarted('website_pro')}>
-                  Start Trial
+                <Button className="w-full bg-cyan-500 hover:bg-cyan-600" onClick={() => handleGetStarted('website_pro')} disabled={checkoutLoading === 'website_pro'}>
+                  {getButtonText('website_pro')}
                 </Button>
               </CardFooter>
             </Card>
