@@ -120,6 +120,29 @@ export function AppSidebar() {
   const getNavClass = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
 
+  const getPlanLabel = (tier?: string | null) => {
+    if (!tier) return null;
+    const labels: Record<string, string> = {
+      free: "Free",
+      enterprise: "Enterprise",
+      professional: "Professional",
+      starter: "Starter",
+      msp_starter: "MSP Starter",
+      msp_pro: "MSP Pro",
+      msp_elite: "MSP Elite",
+      platform_pro: "Platform Pro",
+      team_basic: "Team Basic",
+      team_plus: "Team Plus",
+      website_basic: "Website Basic",
+      website_pro: "Website Pro",
+      safesuite_pro: "SafeSuite Pro",
+      safesuite_business: "SafeSuite Business",
+      safesuite_enterprise: "SafeSuite Enterprise",
+    };
+
+    return labels[tier] || tier;
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
@@ -302,8 +325,8 @@ export function AppSidebar() {
           <div className="mt-2 pt-2 border-t">
             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             {subscription.subscription_tier && (
-              <p className="text-xs text-primary font-medium capitalize">
-                {subscription.subscription_tier} Plan
+              <p className="text-xs text-primary font-medium">
+                {getPlanLabel(subscription.subscription_tier)} Plan
               </p>
             )}
           </div>
