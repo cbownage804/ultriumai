@@ -333,7 +333,13 @@ const RealTimeAIChat: React.FC<RealTimeAIChatProps> = ({
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setAutoSpeak(!autoSpeak)}
+              onClick={() => {
+                if (autoSpeak) {
+                  // When muting, also stop any currently playing audio
+                  stopCurrentAudio();
+                }
+                setAutoSpeak(!autoSpeak);
+              }}
               className="h-8 px-2"
             >
               {autoSpeak ? (
