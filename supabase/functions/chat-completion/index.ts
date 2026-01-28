@@ -578,7 +578,7 @@ serve(async (req) => {
       });
     }
 
-    // EXISTING: Handle new GPT Chat Interface format
+    // EXISTING: Handle new GPT Chat Interface format with ACTION SUPPORT
     if (gptId && messages && systemPrompt) {
       // Initialize Supabase client
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -599,7 +599,7 @@ serve(async (req) => {
         }
       }
 
-      // Get GPT details and knowledge base
+      // Get GPT details, knowledge base, AND enabled actions
       const { data: gpt, error: gptError } = await supabase
         .from('custom_gpts')
         .select('*, gpt_documents(*)')
@@ -615,6 +615,61 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      // Fetch enabled actions for this GPT
+      const { data: actions } = await supabase
+        .from('gpt_actions')
+        .select('*')
+        .eq('gpt_id', gptId)
+        .eq('is_enabled', true);
+
+      console.log(`Found ${actions?.length || 0} enabled actions for GPT ${gptId}`);
+
+      // Convert actions to OpenAI tool format
+      const tools = actions?.map((action: any) => {
+        let parameters: any = {
+          type: 'object',
+          properties: {},
+          required: []
+        };
+
+        // Define parameters based on action type
+        if (action.action_type === 'security') {
+          const scannerType = action.config?.security?.scannerType || 'url';
+          if (scannerType === 'url') {
+            parameters.properties.url = {
+              type: 'string',
+              description: 'The URL to scan for security threats'
+            };
+            parameters.required = ['url'];
+          } else if (scannerType === 'breach') {
+            parameters.properties.email = {
+              type: 'string',
+              description: 'The email address to check for breaches'
+            };
+            parameters.required = ['email'];
+          }
+        } else if (action.action_type === 'api') {
+          parameters.properties.data = {
+            type: 'object',
+            description: 'The data to send to the API'
+          };
+        } else if (action.action_type === 'webhook') {
+          parameters.properties.message = {
+            type: 'string',
+            description: 'The message to send via webhook'
+          };
+        }
+
+        return {
+          type: 'function',
+          function: {
+            name: `action_${action.id.replace(/-/g, '_')}`,
+            description: `${action.name}: ${action.description || 'Execute this action'}`,
+            parameters
+          }
+        };
+      }) || [];
 
       // Web search integration
       let webSearchContext = '';
@@ -666,7 +721,6 @@ serve(async (req) => {
           }
         } catch (searchError) {
           console.error('Web search error:', searchError);
-          // Continue without web search if it fails
         }
       }
 
@@ -675,7 +729,7 @@ serve(async (req) => {
       if (gpt.gpt_documents && gpt.gpt_documents.length > 0) {
         const relevantDocs = gpt.gpt_documents
           .filter((doc: any) => doc.processed_content)
-          .slice(0, 5); // Limit to 5 documents to stay within token limits
+          .slice(0, 5);
         
         if (relevantDocs.length > 0) {
           knowledgeContext = '\n\nKnowledge Base:\n' + 
@@ -685,30 +739,45 @@ serve(async (req) => {
         }
       }
 
+      // Add actions context to system prompt
+      let actionsContext = '';
+      if (actions && actions.length > 0) {
+        actionsContext = '\n\nYou have the following actions available:\n' + 
+          actions.map((a: any) => `- ${a.name}: ${a.description}`).join('\n') +
+          '\n\nUse these actions when appropriate to help the user. For security scans, always use the action to check URLs or emails rather than making assumptions.';
+      }
+
       // Prepare messages for OpenAI
       const openAIMessages: ChatMessage[] = [
         {
           role: 'system',
-          content: systemPrompt + knowledgeContext + webSearchContext
+          content: systemPrompt + knowledgeContext + webSearchContext + actionsContext
         },
         ...messages
       ];
 
-      console.log('Sending request to OpenAI with', openAIMessages.length, 'messages');
+      console.log('Sending request to OpenAI with', openAIMessages.length, 'messages and', tools.length, 'tools');
 
-      // Call OpenAI API
+      // Call OpenAI API with tools if available
+      const requestBody: any = {
+        model: gpt.preferred_model || 'gpt-4o-mini',
+        messages: openAIMessages,
+        temperature: 0.7,
+        max_tokens: 1000,
+      };
+
+      if (tools.length > 0) {
+        requestBody.tools = tools;
+        requestBody.tool_choice = 'auto';
+      }
+
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${openAIApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: gpt.preferred_model || 'gpt-4o-mini',
-          messages: openAIMessages,
-          temperature: 0.7,
-          max_tokens: 1000,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!openAIResponse.ok) {
@@ -717,11 +786,87 @@ serve(async (req) => {
         throw new Error(`OpenAI API error: ${openAIResponse.status}`);
       }
 
-      const openAIResult = await openAIResponse.json();
-      const assistantMessage = openAIResult.choices[0]?.message?.content;
-      const tokensUsed = openAIResult.usage?.total_tokens;
+      let openAIResult = await openAIResponse.json();
+      let assistantMessage = openAIResult.choices[0]?.message;
+      let tokensUsed = openAIResult.usage?.total_tokens || 0;
 
-      if (!assistantMessage) {
+      // Handle tool calls if present
+      if (assistantMessage?.tool_calls && assistantMessage.tool_calls.length > 0) {
+        console.log('Processing', assistantMessage.tool_calls.length, 'tool calls');
+        
+        const toolResults: any[] = [];
+        
+        for (const toolCall of assistantMessage.tool_calls) {
+          const functionName = toolCall.function.name;
+          const actionId = functionName.replace('action_', '').replace(/_/g, '-');
+          
+          try {
+            const args = JSON.parse(toolCall.function.arguments);
+            console.log(`Executing action ${actionId} with args:`, args);
+            
+            // Execute the action
+            const actionResponse = await fetch(`${supabaseUrl}/functions/v1/execute-action`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                actionId,
+                inputData: args,
+                testMode: false
+              })
+            });
+            
+            const actionResult = await actionResponse.json();
+            console.log(`Action ${actionId} result:`, actionResult);
+            
+            toolResults.push({
+              tool_call_id: toolCall.id,
+              role: 'tool',
+              content: JSON.stringify(actionResult)
+            });
+          } catch (error: any) {
+            console.error(`Error executing action ${actionId}:`, error);
+            toolResults.push({
+              tool_call_id: toolCall.id,
+              role: 'tool',
+              content: JSON.stringify({ error: error.message })
+            });
+          }
+        }
+
+        // Send tool results back to OpenAI for final response
+        const followUpMessages = [
+          ...openAIMessages,
+          assistantMessage,
+          ...toolResults
+        ];
+
+        const followUpResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: gpt.preferred_model || 'gpt-4o-mini',
+            messages: followUpMessages,
+            temperature: 0.7,
+            max_tokens: 1000,
+          }),
+        });
+
+        if (followUpResponse.ok) {
+          const followUpResult = await followUpResponse.json();
+          assistantMessage = followUpResult.choices[0]?.message;
+          tokensUsed += followUpResult.usage?.total_tokens || 0;
+        }
+      }
+
+      const finalMessage = assistantMessage?.content || 'I was unable to generate a response.';
+
+      if (!finalMessage) {
         throw new Error('No response from OpenAI');
       }
 
@@ -749,19 +894,20 @@ serve(async (req) => {
               tokens_used: tokensUsed,
               metadata: {
                 model: gpt.preferred_model || 'gpt-4o-mini',
-                message_length: assistantMessage.length
+                message_length: finalMessage.length,
+                actions_used: assistantMessage?.tool_calls?.length || 0
               }
             });
 
         } catch (error) {
           console.error('Error storing conversation data:', error);
-          // Don't fail the request if analytics storage fails
         }
       }
 
       return new Response(JSON.stringify({ 
-        message: assistantMessage,
-        tokensUsed: tokensUsed 
+        message: finalMessage,
+        tokensUsed: tokensUsed,
+        actionsUsed: assistantMessage?.tool_calls?.length || 0
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
