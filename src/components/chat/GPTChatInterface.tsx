@@ -450,7 +450,7 @@ export const GPTChatInterface = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(-1)}
                   className="hover:bg-primary/10 transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
