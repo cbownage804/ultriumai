@@ -51,8 +51,26 @@ interface UserSubscriptionDialogProps {
   onUpdate: () => void;
 }
 
-const AI_STUDIO_TIERS = ['free', 'starter', 'professional', 'enterprise'];
-const SAFESUITE_TIERS = ['free', 'pro', 'business'];
+// AI Studio tiers organized by segment
+const AI_STUDIO_TIERS = [
+  // Core tiers
+  { value: 'free', label: 'Free', group: 'Core' },
+  // MSP & IT Firms
+  { value: 'msp_starter', label: 'MSP Starter ($99)', group: 'MSP' },
+  { value: 'msp_pro', label: 'MSP Pro ($249)', group: 'MSP' },
+  { value: 'msp_elite', label: 'MSP Elite ($499)', group: 'MSP' },
+  { value: 'platform_pro', label: 'Platform Pro ($999)', group: 'MSP' },
+  // Internal Business Teams
+  { value: 'team_basic', label: 'Team Basic ($49)', group: 'Teams' },
+  { value: 'team_plus', label: 'Team Plus ($149)', group: 'Teams' },
+  // Website / Embedded AI
+  { value: 'website_basic', label: 'Website Basic ($29)', group: 'Website' },
+  { value: 'website_pro', label: 'Website Pro ($79)', group: 'Website' },
+  // Enterprise
+  { value: 'enterprise', label: 'Enterprise (Custom)', group: 'Enterprise' },
+];
+
+const SAFESUITE_TIERS = ['free', 'pro', 'business', 'enterprise'];
 const VANGUARD_TIERS = ['starter', 'professional', 'enterprise'];
 
 export const UserSubscriptionDialog = ({
@@ -184,12 +202,23 @@ export const UserSubscriptionDialog = ({
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                {AI_STUDIO_TIERS.map(tier => (
-                  <SelectItem key={tier} value={tier}>
-                    {tier.charAt(0).toUpperCase() + tier.slice(1)}
-                  </SelectItem>
-                ))}
+              <SelectContent className="max-h-[300px]">
+                {['Core', 'MSP', 'Teams', 'Website', 'Enterprise'].map(group => {
+                  const tiersInGroup = AI_STUDIO_TIERS.filter(t => t.group === group);
+                  if (tiersInGroup.length === 0) return null;
+                  return (
+                    <div key={group}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                        {group}
+                      </div>
+                      {tiersInGroup.map(tier => (
+                        <SelectItem key={tier.value} value={tier.value}>
+                          {tier.label}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
