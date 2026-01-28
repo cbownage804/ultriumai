@@ -49,31 +49,10 @@ serve(async (req) => {
     }
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    // Give all UltriumAI employees enterprise status - check this FIRST before cache
-    if (user.email.endsWith('@ultriumai.com') || user.email === 'brandon.howard@kwccpa.com') {
-      logStep("UltriumAI employee detected - granting enterprise status", { email: user.email });
-      
-      // Update database to reflect enterprise status
-      const enterpriseData = {
-        email: user.email,
-        user_id: user.id,
-        stripe_customer_id: null,
-        subscribed: true,
-        subscription_tier: "enterprise",
-        subscription_end: null,
-        updated_at: new Date().toISOString(),
-      };
-      
-      await supabaseClient.from("subscribers").upsert(enterpriseData, { onConflict: 'email' });
-      
-      return new Response(JSON.stringify({
-        subscribed: true,
-        subscription_tier: "enterprise",
-        subscription_end: null // No expiration for admins
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+    // Note: Removed auto-enterprise for internal emails - use actual Stripe subscription data
+    const isInternalUser = user.email.endsWith('@ultriumai.com') || user.email === 'brandon.howard@kwccpa.com';
+    if (isInternalUser) {
+      logStep("Internal user detected - will check actual Stripe subscription", { email: user.email });
     }
 
     // First, try to get subscription from database (fast)
@@ -152,22 +131,38 @@ serve(async (req) => {
         subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
         logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
         
-        // Determine subscription tier from price
+        // Determine subscription tier from product ID
         const priceId = subscription.items.data[0].price.id;
-        const price = await stripe.prices.retrieve(priceId);
-        const amount = price.unit_amount || 0;
+        const productId = subscription.items.data[0].price.product as string;
         
-        // Map amounts to our pricing tiers (per user amounts - doubled pricing)
-        if (amount >= 8000) { // $80+ = Enterprise
-          subscriptionTier = "enterprise";
-        } else if (amount >= 5000) { // $50+ = Professional
-          subscriptionTier = "professional";
-        } else if (amount >= 3000) { // $30+ = Starter
-          subscriptionTier = "starter";
-        } else {
-          subscriptionTier = "free";
-        }
-        logStep("Determined subscription tier", { priceId, amount, subscriptionTier });
+        // Map product IDs to subscription tiers
+        const productTierMap: Record<string, string> = {
+          // AI Studio MSP Tiers
+          "prod_TsQhHWymjiY3Zy": "msp_starter",     // MSP Starter $99
+          "prod_TsPhioFXabALEY": "msp_starter",     // MSP Starter (older)
+          "prod_TsQhJnC8GZPjrI": "msp_pro",         // MSP Pro $249
+          "prod_TsPhtSBxqC7L0w": "msp_pro",         // MSP Pro (older)
+          "prod_TsQhlE5ORVd1NC": "msp_elite",       // MSP Elite $499
+          "prod_TsPhFEtb7FOMSg": "msp_elite",       // MSP Elite (older)
+          "prod_TsQhOcMqgRSHxc": "platform_pro",    // Platform Pro $999
+          "prod_TsPhQ6giwYyau7": "platform_pro",    // Platform Pro (older)
+          // AI Studio Team Tiers
+          "prod_TsQhnzjERazYLu": "team_basic",      // Team Basic $49
+          "prod_TsQhyZilpXT6Te": "team_plus",       // Team Plus $149
+          // AI Studio Website Tiers
+          "prod_TsQhZ1WMs8dFSt": "website_basic",   // Website Basic $29
+          "prod_TsPhgvwhBCk4tn": "website_basic",   // Website Basic (older)
+          "prod_TsQhRCAEIpxai1": "website_pro",     // Website Pro $79
+          "prod_TsPhciN9yjVX1c": "website_pro",     // Website Pro (older)
+          // SafeSuite Tiers
+          "prod_TsPzD1oR0cpYRl": "safesuite_pro",   // SafeSuite Pro
+          "prod_TsPs3I5eCybg7o": "safesuite_pro",   // SafeSuite Pro (older)
+          "prod_TsPzaw5xfK0fGn": "safesuite_business", // SafeSuite Business
+          "prod_TsPhrnVrS2CTEI": "safesuite_enterprise", // SafeSuite Enterprise
+        };
+        
+        subscriptionTier = productTierMap[productId] || "free";
+        logStep("Determined subscription tier", { priceId, productId, subscriptionTier });
       } else {
         logStep("No active subscription found");
       }
