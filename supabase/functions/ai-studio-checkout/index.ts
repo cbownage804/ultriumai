@@ -66,8 +66,15 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { planId, addonId } = await req.json();
-    logStep("Request body parsed", { planId, addonId });
+    // Support both camelCase and snake_case payloads (frontend may send plan_id)
+    const body = await req.json().catch(() => ({}));
+    const planId: string | null = body?.planId ?? body?.plan_id ?? body?.plan ?? null;
+    const addonId: string | null = body?.addonId ?? body?.addon_id ?? body?.addon ?? null;
+    logStep("Request body parsed", {
+      planId,
+      addonId,
+      bodyKeys: body && typeof body === "object" ? Object.keys(body) : [],
+    });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
