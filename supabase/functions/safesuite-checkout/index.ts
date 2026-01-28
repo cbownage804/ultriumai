@@ -19,6 +19,12 @@ const TIER_PRICES = {
   }
 };
 
+// SafeSuite product IDs for identifying existing subscriptions
+const SAFESUITE_PRODUCT_IDS = [
+  "prod_SSLFsRKjD1Y2Tx", // Pro
+  "prod_SSLGBWrGEJgLIW", // Business
+];
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[SAFESUITE-CHECKOUT] ${step}${detailsStr}`);
@@ -61,19 +67,91 @@ serve(async (req) => {
     const billingCycle = billing === 'yearly' ? 'yearly' : 'monthly';
     const priceId = TIER_PRICES[tier as keyof typeof TIER_PRICES][billingCycle];
     
-    logStep("Creating checkout session", { tier, billingCycle, priceId });
+    logStep("Processing checkout request", { tier, billingCycle, priceId });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     // Check if customer already exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    let customerId;
+    let customerId: string | undefined;
+    
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
+      
+      // Check for existing SafeSuite subscriptions
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 10,
+      });
+      
+      // Find any existing SafeSuite subscription
+      const existingSafesuiteSubItem = subscriptions.data.find(sub => {
+        return sub.items.data.some(item => {
+          const productId = typeof item.price.product === 'string' 
+            ? item.price.product 
+            : item.price.product?.id;
+          return SAFESUITE_PRODUCT_IDS.includes(productId || '');
+        });
+      });
+      
+      if (existingSafesuiteSubItem) {
+        logStep("Found existing SafeSuite subscription, upgrading instead of creating new", {
+          subscriptionId: existingSafesuiteSubItem.id,
+          currentTier: existingSafesuiteSubItem.metadata?.tier
+        });
+        
+        // Get the subscription item to update
+        const itemToUpdate = existingSafesuiteSubItem.items.data.find(item => {
+          const productId = typeof item.price.product === 'string' 
+            ? item.price.product 
+            : item.price.product?.id;
+          return SAFESUITE_PRODUCT_IDS.includes(productId || '');
+        });
+        
+        if (itemToUpdate) {
+          // Update the existing subscription to the new price
+          await stripe.subscriptions.update(existingSafesuiteSubItem.id, {
+            items: [
+              {
+                id: itemToUpdate.id,
+                price: priceId,
+              }
+            ],
+            metadata: {
+              user_id: user.id,
+              tier: tier,
+              product: 'safesuite'
+            },
+            proration_behavior: 'create_prorations', // Prorate the difference
+          });
+          
+          logStep("Subscription upgraded successfully", { 
+            subscriptionId: existingSafesuiteSubItem.id,
+            newTier: tier,
+            newPriceId: priceId
+          });
+          
+          // Return success without redirect - subscription updated directly
+          const origin = req.headers.get("origin") || "https://ultriumai.lovable.app";
+          return new Response(JSON.stringify({ 
+            success: true,
+            upgraded: true,
+            message: `Successfully upgraded to SafeSuite ${tier.charAt(0).toUpperCase() + tier.slice(1)}`,
+            redirectUrl: `${origin}/safesuite/billing?upgraded=true&tier=${tier}`
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      }
     }
 
+    // No existing SafeSuite subscription - create new checkout session
     const origin = req.headers.get("origin") || "https://ultriumai.lovable.app";
+    
+    logStep("Creating new checkout session", { tier, billingCycle, priceId });
     
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

@@ -55,9 +55,17 @@ export default function SafeSuiteBilling() {
       return;
     }
 
-    const url = await createCheckout(targetTier, yearlyBilling ? 'yearly' : 'monthly');
-    if (url) {
-      window.open(url, '_blank');
+    const result = await createCheckout(targetTier, yearlyBilling ? 'yearly' : 'monthly');
+    if (result) {
+      if (result.upgraded) {
+        // Subscription was upgraded directly (no checkout needed)
+        toast.success(result.message || 'Subscription upgraded successfully!');
+        if (result.redirectUrl) {
+          window.location.href = result.redirectUrl;
+        }
+      } else if (result.url) {
+        window.open(result.url, '_blank');
+      }
     } else {
       toast.error('Failed to create checkout session');
     }
@@ -65,9 +73,16 @@ export default function SafeSuiteBilling() {
 
   const handleBusinessCheckout = async () => {
     setSeatSelectorOpen(false);
-    const url = await createCheckout('business', yearlyBilling ? 'yearly' : 'monthly', seats);
-    if (url) {
-      window.open(url, '_blank');
+    const result = await createCheckout('business', yearlyBilling ? 'yearly' : 'monthly', seats);
+    if (result) {
+      if (result.upgraded) {
+        toast.success(result.message || 'Subscription upgraded successfully!');
+        if (result.redirectUrl) {
+          window.location.href = result.redirectUrl;
+        }
+      } else if (result.url) {
+        window.open(result.url, '_blank');
+      }
     } else {
       toast.error('Failed to create checkout session');
     }
