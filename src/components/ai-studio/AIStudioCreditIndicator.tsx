@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAIStudioCredits } from '@/hooks/useAIStudioCredits';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -11,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { AIStudioUpgradeModal } from './AIStudioUpgradeModal';
 
 interface AIStudioCreditIndicatorProps {
   variant?: 'compact' | 'full';
@@ -21,6 +23,7 @@ export function AIStudioCreditIndicator({
   variant = 'compact',
   showUpgrade = true 
 }: AIStudioCreditIndicatorProps) {
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const { 
     credits, 
     isLoading, 
@@ -167,14 +170,20 @@ export function AIStudioCreditIndicator({
 
         {/* Upgrade/Add capacity button */}
         {showUpgrade && (
-          <Button 
-            className="w-full" 
-            variant={isLow ? 'default' : 'outline'}
-            onClick={() => window.location.href = '/pricing#ai-studio'}
-          >
-            <TrendingUp className="w-4 h-4 mr-2" />
-            {isExhausted ? 'Add Capacity' : 'Upgrade Plan'}
-          </Button>
+          <>
+            <Button 
+              className="w-full" 
+              variant={isLow ? 'default' : 'outline'}
+              onClick={() => setUpgradeModalOpen(true)}
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              {isExhausted ? 'Add Capacity' : 'Upgrade Plan'}
+            </Button>
+            <AIStudioUpgradeModal 
+              open={upgradeModalOpen} 
+              onOpenChange={setUpgradeModalOpen} 
+            />
+          </>
         )}
       </CardContent>
     </Card>

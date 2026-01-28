@@ -58,6 +58,9 @@ import ProfilePage from '@/pages/ProfilePage';
 
 import Pricing from '@/pages/Pricing';
 import MSPPricing from '@/pages/MSPPricing';
+import AIStudioPricing from '@/pages/pricing/AIStudioPricing';
+import SafeSuitePricing from '@/pages/pricing/SafeSuitePricing';
+import VanguardPricing from '@/pages/pricing/VanguardPricing';
 import StudioAssistant from '@/pages/StudioAssistant';
 import Solutions from '@/pages/Solutions';
 import LiveDemos from '@/pages/LiveDemos';
@@ -292,6 +295,9 @@ function AppRouter() {
           </ProtectedRoute>
         } />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/pricing/ai-studio" element={<AIStudioPricing />} />
+        <Route path="/pricing/safesuite" element={<SafeSuitePricing />} />
+        <Route path="/pricing/vanguard" element={<VanguardPricing />} />
         <Route path="/msp-pricing" element={<MSPPricing />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
