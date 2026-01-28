@@ -91,7 +91,7 @@ export function ImageUploader({ imageUrl, onImageChange }: ImageUploaderProps) {
           <img 
             src={imageUrl} 
             alt="Post image" 
-            className="w-full h-48 object-cover"
+            className="w-full aspect-square object-contain bg-muted/20"
           />
           <Button
             variant="destructive"

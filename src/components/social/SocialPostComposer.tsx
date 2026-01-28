@@ -185,7 +185,11 @@ export function SocialPostComposer({ initialContent = '', initialImageUrl }: Soc
             <div className="mt-1">
               {imageUrl ? (
                 <div className="relative rounded-lg overflow-hidden border border-border/50">
-                  <img src={imageUrl} alt="Post image" className="w-full h-32 object-cover" />
+                  <img
+                    src={imageUrl}
+                    alt="Post image"
+                    className="w-full aspect-square object-contain bg-muted/20"
+                  />
                   <Button
                     variant="destructive"
                     size="sm"
@@ -366,7 +370,7 @@ export function SocialPostComposer({ initialContent = '', initialImageUrl }: Soc
                      <img
                        src={imageUrl}
                        alt="Preview"
-                       className="w-full aspect-[1200/628] object-cover hover:opacity-95 transition-opacity"
+                        className="w-full aspect-square object-contain bg-background hover:opacity-95 transition-opacity"
                      />
                    </button>
                  )}
