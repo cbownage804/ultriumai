@@ -34,6 +34,21 @@ export function SubscriptionTestSuite() {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunningTests, setIsRunningTests] = useState(false);
 
+  // Admin-only access check
+  const isAdmin = user?.email?.endsWith('@ultriumai.com');
+  
+  if (!isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <Shield className="h-16 w-16 text-muted-foreground/50 mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Access Restricted</h2>
+        <p className="text-muted-foreground max-w-md">
+          The Subscription Test Suite is an internal tool available only to UltriumAI administrators.
+        </p>
+      </div>
+    );
+  }
+
   const runSubscriptionTests = async () => {
     setIsRunningTests(true);
     const results: TestResult[] = [];
