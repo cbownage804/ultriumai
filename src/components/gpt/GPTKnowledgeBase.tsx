@@ -43,25 +43,39 @@ export function GPTKnowledgeBase({ gptId, gptName, themeColor }: GPTKnowledgeBas
   const [urlInput, setUrlInput] = useState("");
   const [isAddingUrl, setIsAddingUrl] = useState(false);
 
-  // Mock data for demo
+  // Load knowledge sources from database
   useEffect(() => {
-    setKnowledgeItems([
-      {
-        id: '1',
-        type: 'file',
-        name: 'Company Policies.pdf',
-        status: 'ready',
-        size: '2.4 MB',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        type: 'url',
-        name: 'https://docs.company.com/faq',
-        status: 'ready',
-        createdAt: new Date().toISOString()
+    const loadKnowledgeSources = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('knowledge_sources')
+          .select('id, name, source_type, status, total_size_bytes, created_at')
+          .eq('gpt_id', gptId)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const items: KnowledgeItem[] = (data || []).map(source => ({
+          id: source.id,
+          type: source.source_type === 'url' || source.source_type === 'website' ? 'url' : 'file',
+          name: source.name,
+          status: source.status === 'completed' ? 'ready' : source.status === 'error' ? 'error' : 'processing',
+          size: source.total_size_bytes ? `${(source.total_size_bytes / 1024 / 1024).toFixed(2)} MB` : undefined,
+          createdAt: source.created_at
+        }));
+
+        setKnowledgeItems(items);
+      } catch (error) {
+        console.error('Error loading knowledge sources:', error);
+      } finally {
+        setIsLoading(false);
       }
-    ]);
+    };
+
+    if (gptId) {
+      loadKnowledgeSources();
+    }
   }, [gptId]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -270,23 +284,40 @@ export function GPTKnowledgeBase({ gptId, gptName, themeColor }: GPTKnowledgeBas
       </Card>
 
       {/* Storage Info */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Storage Usage</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Used: 4.8 MB</span>
-              <span>Limit: 50 MB</span>
+      {knowledgeItems.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Storage Usage</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {(() => {
+                const totalBytes = knowledgeItems.reduce((sum, item) => {
+                  const sizeMatch = item.size?.match(/^([\d.]+)\s*MB$/i);
+                  return sum + (sizeMatch ? parseFloat(sizeMatch[1]) * 1024 * 1024 : 0);
+                }, 0);
+                const usedMB = (totalBytes / 1024 / 1024).toFixed(1);
+                const limitMB = 50;
+                const remaining = (limitMB - parseFloat(usedMB)).toFixed(1);
+                const percentage = (parseFloat(usedMB) / limitMB) * 100;
+
+                return (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span>Used: {usedMB} MB</span>
+                      <span>Limit: {limitMB} MB</span>
+                    </div>
+                    <Progress value={percentage} className="h-2" />
+                    <p className="text-xs text-muted-foreground">
+                      {remaining} MB remaining
+                    </p>
+                  </>
+                );
+              })()}
             </div>
-            <Progress value={9.6} className="h-2" />
-            <p className="text-xs text-muted-foreground">
-              45.2 MB remaining
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
