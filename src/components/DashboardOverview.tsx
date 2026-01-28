@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SubscriptionStatus } from "@/components/SubscriptionStatus";
 import { CreditUsageDisplay } from "@/components/CreditUsageDisplay";
 import { SubscriptionTestSuite } from "@/components/SubscriptionTestSuite";
@@ -18,7 +19,14 @@ import {
   MessageSquare,
   Star,
   Sparkles,
-  Code
+  Code,
+  Lightbulb,
+  BookOpen,
+  Palette,
+  Globe,
+  Shield,
+  Users,
+  BarChart3
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -143,6 +151,50 @@ export const DashboardOverview = () => {
       icon: Sparkles,
       action: () => navigate("/dashboard/ultrium-gpt"),
       color: "bg-purple-500",
+    },
+  ];
+
+  // Pro tips with clickable explanations
+  const proTips = [
+    {
+      title: "Train on domain knowledge",
+      description: "Upload documents, PDFs, or text files to teach your GPT about your specific industry, products, or services. This creates a custom knowledge base for accurate, contextual responses.",
+      icon: BookOpen,
+    },
+    {
+      title: "Use templates as starting points",
+      description: "Browse our template marketplace for pre-configured GPTs. They're optimized for common use cases and can be customized to fit your exact needs.",
+      icon: Lightbulb,
+    },
+    {
+      title: "Connect external APIs",
+      description: "Integrate live data sources like CRMs, databases, or web services. Your GPT can fetch real-time information and perform actions on external systems.",
+      icon: Globe,
+    },
+    {
+      title: "White-label your brand",
+      description: "Remove all AI Studio branding and customize colors, logos, and styling to match your company identity for a seamless customer experience.",
+      icon: Palette,
+    },
+    {
+      title: "Set up team collaboration",
+      description: "Invite team members to collaborate on GPT development. Assign roles, share analytics, and manage access permissions across your organization.",
+      icon: Users,
+    },
+    {
+      title: "Monitor with analytics",
+      description: "Track usage patterns, popular queries, response quality, and user satisfaction. Use insights to continuously improve your GPT's performance.",
+      icon: BarChart3,
+    },
+    {
+      title: "Use system prompts wisely",
+      description: "Craft detailed system prompts that define personality, boundaries, and response style. Well-written prompts dramatically improve output quality.",
+      icon: Code,
+    },
+    {
+      title: "Enable anti-hallucination",
+      description: "Turn on factual grounding to reduce inaccurate responses. Your GPT will cite sources and acknowledge uncertainty when appropriate.",
+      icon: Shield,
     },
   ];
 
@@ -294,7 +346,7 @@ export const DashboardOverview = () => {
         </CardContent>
       </Card>
 
-      {/* Pro Tips - full width since Features section removed (redundant with Quick Actions) */}
+      {/* Pro Tips - clickable with tooltip explanations */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -306,24 +358,23 @@ export const DashboardOverview = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
-              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-              <span className="text-sm">Train GPTs on your specific domain knowledge</span>
+          <TooltipProvider delayDuration={200}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {proTips.map((tip, index) => (
+                <Tooltip key={index}>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border hover:border-primary/40 hover:bg-primary/5 cursor-pointer transition-all duration-200 group">
+                      <tip.icon className="h-5 w-5 text-green-500 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm">{tip.title}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs p-3">
+                    <p className="text-sm">{tip.description}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
-              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-              <span className="text-sm">Use templates as starting points</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
-              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-              <span className="text-sm">Connect external APIs for dynamic responses</span>
-            </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-background/50 border">
-              <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-              <span className="text-sm">White-label to match your brand</span>
-            </div>
-          </div>
+          </TooltipProvider>
         </CardContent>
       </Card>
 
