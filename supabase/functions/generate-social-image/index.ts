@@ -18,10 +18,9 @@ const corsHeaders = {
   ].join(', '),
 };
 
-// Facebook requires aspect ratio <= 1.91.
-// 1200x628 is actually 1.9108 (> 1.91), so we use 1200x629 (~1.9078).
-const TARGET_WIDTH = 1200;
-const TARGET_HEIGHT = 629;
+// Square 1:1 format for social media posts (Instagram/Facebook standard)
+const TARGET_WIDTH = 1080;
+const TARGET_HEIGHT = 1080;
 
 // Product logo URLs (from public folder - available after deploy)
 const getProductLogoUrl = (product: string, origin?: string | null): string => {
@@ -217,17 +216,17 @@ serve(async (req) => {
       : VISUAL_STYLES.custom_topic;
 
     // Enhanced prompt for beautiful, text-free images optimized for social feeds
-    // Facebook requires aspect ratio <= 1.91:1. We enforce 1200x629 (~1.9078) in post-processing.
-    const enhancedPrompt = `Create a stunning, high-quality LANDSCAPE social media image.
+    // Square 1:1 format (1080x1080) for maximum platform compatibility
+    const enhancedPrompt = `Create a stunning, high-quality SQUARE social media image.
 
 TOPIC: ${prompt}
 
 VISUAL DIRECTION: ${visualStyle}
 
 CRITICAL IMAGE DIMENSIONS:
-- MUST be a WIDE LANDSCAPE format (approximately 1200x629 pixels, <= 1.91:1 ratio)
-- Width must be significantly greater than height (almost 2x wider than tall)
-- This is NOT a square or portrait image - it MUST be a wide horizontal banner
+- MUST be a PERFECT SQUARE format (1080x1080 pixels, 1:1 aspect ratio)
+- Width and height must be exactly equal
+- This is NOT a landscape or portrait image - it MUST be a square
 
 CRITICAL REQUIREMENTS (MUST FOLLOW):
 - ABSOLUTELY NO text, words, letters, numbers, or typography of any kind

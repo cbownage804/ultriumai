@@ -108,8 +108,8 @@ export function AIPostGenerator({ onUseContent }: AIPostGeneratorProps) {
       // Now generate image with the generated post content for product logo detection
        const imageResult = await generateImage.mutateAsync({
         prompt: topic,
-         // Social feed optimized: exact 1.91:1 (1200×628) will be enforced server-side.
-         aspectRatio: '1.91:1',
+         // Square 1:1 (1080×1080) for maximum platform compatibility
+         aspectRatio: '1:1',
         contentType: selectedType,
         postContent: textResult, // Pass generated text for product detection
       });
