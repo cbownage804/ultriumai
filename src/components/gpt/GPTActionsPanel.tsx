@@ -67,9 +67,60 @@ interface ActionTemplate {
   endpoint: string;
   icon: React.ReactNode;
   category: string;
+  config?: any;
 }
 
 const ACTION_TEMPLATES: ActionTemplate[] = [
+  // SafeSuite Security Actions
+  {
+    id: 'safescan-url-checker',
+    name: 'SafeScan URL Checker',
+    description: 'Scan URLs for malware, phishing, and security threats',
+    type: 'security',
+    endpoint: '',
+    icon: <Shield className="h-5 w-5" />,
+    category: 'SafeSuite Security',
+    config: {
+      security: {
+        scannerType: 'url',
+        threatLevel: 'standard',
+        autoBlock: true
+      }
+    }
+  },
+  {
+    id: 'safeweb-breach-alert',
+    name: 'SafeWeb Breach Alert',
+    description: 'Check if emails have been compromised in data breaches',
+    type: 'security',
+    endpoint: '',
+    icon: <Shield className="h-5 w-5" />,
+    category: 'SafeSuite Security',
+    config: {
+      security: {
+        scannerType: 'breach',
+        threatLevel: 'standard',
+        autoBlock: false
+      }
+    }
+  },
+  {
+    id: 'advanced-threat-scanner',
+    name: 'Advanced Threat Scanner',
+    description: 'Deep scan with AI-powered threat detection',
+    type: 'security',
+    endpoint: '',
+    icon: <Shield className="h-5 w-5" />,
+    category: 'SafeSuite Security',
+    config: {
+      security: {
+        scannerType: 'url',
+        threatLevel: 'advanced',
+        autoBlock: true
+      }
+    }
+  },
+  // Support
   {
     id: 'create-ticket',
     name: 'Create Ticket',
@@ -79,6 +130,7 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     icon: <Ticket className="h-5 w-5" />,
     category: 'Support'
   },
+  // Communication
   {
     id: 'send-email',
     name: 'Send Email',
@@ -98,6 +150,16 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     category: 'Communication'
   },
   {
+    id: 'push-notification',
+    name: 'Push Notification',
+    description: 'Sends a push notification to mobile devices',
+    type: 'webhook',
+    endpoint: 'https://fcm.googleapis.com/fcm/send',
+    icon: <Bell className="h-5 w-5" />,
+    category: 'Communication'
+  },
+  // Productivity
+  {
     id: 'create-calendar-event',
     name: 'Create Calendar Event',
     description: 'Schedules a new event on Google Calendar',
@@ -105,15 +167,6 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     endpoint: 'https://www.googleapis.com/calendar/v3/calendars',
     icon: <Calendar className="h-5 w-5" />,
     category: 'Productivity'
-  },
-  {
-    id: 'database-query',
-    name: 'Database Query',
-    description: 'Executes a safe read query against your database',
-    type: 'function',
-    endpoint: '',
-    icon: <Database className="h-5 w-5" />,
-    category: 'Data'
   },
   {
     id: 'generate-report',
@@ -124,6 +177,16 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     icon: <FileText className="h-5 w-5" />,
     category: 'Productivity'
   },
+  // Data
+  {
+    id: 'database-query',
+    name: 'Database Query',
+    description: 'Executes a safe read query against your database',
+    type: 'function',
+    endpoint: '',
+    icon: <Database className="h-5 w-5" />,
+    category: 'Data'
+  },
   {
     id: 'web-search',
     name: 'Web Search',
@@ -132,33 +195,6 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     endpoint: 'https://api.bing.microsoft.com/v7.0/search',
     icon: <Search className="h-5 w-5" />,
     category: 'Data'
-  },
-  {
-    id: 'security-scan',
-    name: 'Security Scan',
-    description: 'Performs a security check on URLs or emails',
-    type: 'security',
-    endpoint: '',
-    icon: <Shield className="h-5 w-5" />,
-    category: 'Security'
-  },
-  {
-    id: 'push-notification',
-    name: 'Push Notification',
-    description: 'Sends a push notification to mobile devices',
-    type: 'webhook',
-    endpoint: 'https://fcm.googleapis.com/fcm/send',
-    icon: <Bell className="h-5 w-5" />,
-    category: 'Communication'
-  },
-  {
-    id: 'authenticate-user',
-    name: 'Authenticate User',
-    description: 'Verifies user identity and returns auth token',
-    type: 'api',
-    endpoint: '',
-    icon: <Lock className="h-5 w-5" />,
-    category: 'Security'
   }
 ];
 
@@ -176,8 +212,10 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
     description: '',
     type: 'webhook' as Action['type'],
     endpoint: '',
-    isEnabled: true
+    isEnabled: true,
+    config: null as any
   });
+  const [selectedTemplate, setSelectedTemplate] = useState<ActionTemplate | null>(null);
 
   // Fetch real actions from the database
   const fetchActions = useCallback(async () => {
@@ -242,14 +280,32 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
     setIsSaving(true);
 
     try {
-      const config = {
-        [formData.type]: {
-          endpoint: formData.endpoint,
-          url: formData.endpoint,
-          method: 'POST',
-          headers: {}
-        }
-      };
+      // Use template config if available, otherwise build from form
+      let config: any;
+      
+      if (formData.config) {
+        // Use the template's pre-built config
+        config = formData.config;
+      } else if (formData.type === 'security') {
+        // Build security config
+        config = {
+          security: {
+            scannerType: 'url',
+            threatLevel: 'standard',
+            autoBlock: true
+          }
+        };
+      } else {
+        // Build standard config for api/webhook/function
+        config = {
+          [formData.type]: {
+            endpoint: formData.endpoint,
+            url: formData.endpoint,
+            method: 'POST',
+            headers: {}
+          }
+        };
+      }
 
       if (editingAction) {
         const { error } = await supabase
@@ -292,12 +348,14 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
 
       setIsDialogOpen(false);
       setEditingAction(null);
+      setSelectedTemplate(null);
       setFormData({
         name: '',
         description: '',
         type: 'webhook',
         endpoint: '',
-        isEnabled: true
+        isEnabled: true,
+        config: null
       });
       fetchActions();
     } catch (error) {
@@ -319,7 +377,8 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
       description: action.description,
       type: action.type,
       endpoint: action.endpoint || '',
-      isEnabled: action.isEnabled
+      isEnabled: action.isEnabled,
+      config: action.config || null
     });
     setIsDialogOpen(true);
   };
@@ -389,16 +448,59 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
     }
   };
 
-  const handleUseTemplate = (template: ActionTemplate) => {
-    setEditingAction(null);
-    setFormData({
-      name: template.name,
-      description: template.description,
-      type: template.type,
-      endpoint: template.endpoint,
-      isEnabled: true
-    });
-    setIsDialogOpen(true);
+  const handleUseTemplate = async (template: ActionTemplate) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      // Directly create the action from template
+      const config = template.config || {
+        [template.type]: {
+          endpoint: template.endpoint,
+          url: template.endpoint,
+          method: 'POST',
+          headers: {}
+        }
+      };
+
+      const { error } = await supabase
+        .from('gpt_actions')
+        .insert({
+          gpt_id: gptId,
+          user_id: user.id,
+          name: template.name,
+          description: template.description,
+          action_type: template.type,
+          config,
+          is_enabled: true
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Action added",
+        description: `${template.name} has been added to your GPT`
+      });
+      
+      fetchActions();
+    } catch (error) {
+      console.error('Error creating action from template:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add action",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const categories = [...new Set(ACTION_TEMPLATES.map(t => t.category))];
@@ -427,7 +529,8 @@ export function GPTActionsPanel({ gptId, gptName, themeColor }: GPTActionsPanelP
                     description: '',
                     type: 'webhook',
                     endpoint: '',
-                    isEnabled: true
+                    isEnabled: true,
+                    config: null
                   });
                 }}>
                   <Plus className="h-4 w-4 mr-2" />
