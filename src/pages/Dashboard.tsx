@@ -11,7 +11,7 @@ import CustomGPTDeploy from "@/components/CustomGPTDeploy";
 import CustomGPTAsk from "@/components/CustomGPTAsk";
 import CustomGPTActions from "@/components/CustomGPTActions";
 import CustomGPTAnalyze from "@/components/CustomGPTAnalyze";
-import WhiteLabelCustomization from "@/components/WhiteLabelCustomization";
+import GPTWhiteLabel from "@/components/gpt/GPTWhiteLabel";
 import APIManager from "@/components/APIManager";
 import ConversationHistory from "@/components/ConversationHistory";
 import AnalyticsDashboard from "@/components/AnalyticsDashboard";
@@ -140,7 +140,7 @@ const Dashboard = () => {
     if (isAnalyticsPage) return <div className="p-6"><AnalyticsDashboard /></div>;
     if (isTemplatesPage) return <div className="p-6"><GPTTemplatesMarketplace /></div>;
     if (isAPIManagementPage) return <div className="p-6"><APIManager /></div>;
-    if (isWhiteLabelPage) return <div className="p-6"><WhiteLabelCustomization /></div>;
+    if (isWhiteLabelPage) return <div className="p-6"><GPTWhiteLabel /></div>;
     if (isTeamManagementPage) return <div className="p-6"><TeamManagement /></div>;
     if (isTeamAnalyticsPage) return <div className="p-6"><TeamAnalytics /></div>;
     if (isSecuritySettingsPage) return <div className="p-6"><SecuritySettings /></div>;
