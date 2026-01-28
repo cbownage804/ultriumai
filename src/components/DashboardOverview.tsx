@@ -413,8 +413,8 @@ export const DashboardOverview = () => {
         <CreditUsageDisplay />
       </div>
 
-      {/* Testing & Development Tools */}
-      {(user?.email?.includes('@ultriumai.com') || subscription?.subscription_tier === 'enterprise') && (
+      {/* Testing & Development Tools - Admin only */}
+      {user?.email?.endsWith('@ultriumai.com') && (
         <SubscriptionTestSuite />
       )}
 
