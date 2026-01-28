@@ -46,13 +46,16 @@ export const UltriumGPTAssistant = () => {
     {
       id: '1',
       role: 'system',
-      content: `Hello! I'm UltriumGPT, your comprehensive AI assistant. 
+      content: `Hello! I'm the Studio Assistant, your AI-powered guide for AI Studio.
 
-I can help you with IT support, generate reports, search the web, create images, and automatically handle system management tasks.
+I can help you with:
+• Building and configuring custom GPTs
+• Deploying your GPTs (embed, API, Teams)
+• Adding knowledge sources and training data
+• Customizing appearance and branding
+• Understanding templates and best practices
 
-**💡 Pro Tip: For the complete business intelligence platform experience with voice capabilities, advanced AI modes, chat history, and enhanced features, use Ultrium GPT!**
-
-Choose a question below to get started, or ask me anything!`,
+What would you like help with today?`,
       timestamp: new Date(),
     }
   ]);
@@ -121,18 +124,18 @@ Choose a question below to get started, or ask me anything!`,
       }
 
     } catch (error) {
-      console.error('Error calling UltriumGPT:', error);
+      console.error('Error calling Studio Assistant:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I apologize, but I'm having trouble connecting to my systems right now. Please try again in a moment, or contact support if the issue persists.",
+        content: "I apologize, but I'm having trouble connecting right now. Please try again in a moment, or contact support if the issue persists.",
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
       
       toast({
         title: "Connection Error",
-        description: "Unable to connect to UltriumGPT. Please try again.",
+        description: "Unable to connect to Studio Assistant. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -229,26 +232,17 @@ Choose a question below to get started, or ask me anything!`,
         {/* Header Section */}
         <div className="text-center space-y-4 py-8">
           <div className="flex items-center justify-center gap-3">
-            <div className="p-3 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg">
-              <Zap className="h-8 w-8 text-white" />
+            <div className="relative">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+                <Bot className="h-8 w-8 text-white" />
+              </div>
+              <Zap className="h-5 w-5 text-yellow-500 absolute -top-1 -right-1" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              UltriumGPT Assistant
-            </h1>
           </div>
+          <h1 className="text-4xl font-bold">Studio Assistant</h1>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Your comprehensive AI assistant for IT support, system management, research, and creative tasks
+            Your AI-powered guide to building, deploying, and managing custom GPTs
           </p>
-          <div className="mt-6">
-            <Button 
-              size="lg" 
-              onClick={() => window.location.href = '/ultrium-gpt'}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <HeadphonesIcon className="h-5 w-5 mr-2" />
-              🎙️ Launch Full Ultrium GPT Platform (Voice & Advanced Features)
-            </Button>
-          </div>
         </div>
 
         {/* Main Content Area */}
@@ -261,10 +255,10 @@ Choose a question below to get started, or ask me anything!`,
                   <div className="p-2 rounded-lg bg-primary/10">
                     <Bot className="h-6 w-6 text-primary" />
                   </div>
-                  Chat with UltriumGPT
+                  Ask Me Anything
                 </CardTitle>
                 <CardDescription className="text-base">
-                  Ask questions, request reports, search the web, generate images, or get IT support
+                  Get help with AI Studio features, building GPTs, deployment, and best practices
                 </CardDescription>
               </CardHeader>
               
@@ -358,7 +352,7 @@ Choose a question below to get started, or ask me anything!`,
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <Loader2 className="h-4 w-4 animate-spin text-primary" />
                               <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent font-medium">
-                                UltriumGPT is thinking...
+                                Studio Assistant is thinking...
                               </span>
                             </div>
                           </div>
@@ -371,14 +365,13 @@ Choose a question below to get started, or ask me anything!`,
 
                 <Separator className="my-6" />
 
-                {/* Enhanced Input Area */}
-                <div className="space-y-4">
+                  <div className="space-y-4">
                   <div className="relative">
                     <Textarea
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything - generate reports, search the web, create images, troubleshoot issues, or get IT support..."
+                      placeholder="Ask about building GPTs, deployment options, customization, or any AI Studio feature..."
                       rows={4}
                       disabled={isLoading}
                       className="resize-none border-border/50 focus:border-primary/50 bg-background/50 backdrop-blur-sm text-base p-4 rounded-xl"
