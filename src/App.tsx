@@ -58,7 +58,7 @@ import ProfilePage from '@/pages/ProfilePage';
 
 import Pricing from '@/pages/Pricing';
 import MSPPricing from '@/pages/MSPPricing';
-import UltriumGPT from '@/pages/UltriumGPT';
+import StudioAssistant from '@/pages/StudioAssistant';
 import Solutions from '@/pages/Solutions';
 import LiveDemos from '@/pages/LiveDemos';
 
@@ -95,7 +95,7 @@ import SafeScanDemoPage from '@/pages/demos/SafeScanDemoPage';
 import { SafeShieldApp } from '@/components/apps/SafeShieldApp';
 import SafePassDemoPage from '@/pages/demos/SafePassDemoPage';
 import VanguardDemoPage from '@/pages/demos/VanguardDemoPage';
-import UltriumGPTDemoPage from '@/pages/demos/UltriumGPTDemoPage';
+import AIStudioDemoPage from '@/pages/demos/AIStudioDemoPage';
 import CustomGPTBuilderDemoPage from '@/pages/demos/CustomGPTBuilderDemoPage';
 import DarkWebDemoPage from '@/pages/demos/DarkWebDemoPage';
 import SafeMailEmbedDemo from '@/pages/SafeMailEmbedDemo';
@@ -305,12 +305,14 @@ function AppRouter() {
             <OnboardingFlow />
           </ProtectedRoute>
         } />
-        {/* UltriumGPT Platform */}
-        <Route path="/ultrium-gpt" element={
+        {/* AI Studio Platform */}
+        <Route path="/ai-studio/assistant" element={
           <ProtectedRoute>
-            <UltriumGPT />
+            <StudioAssistant />
           </ProtectedRoute>
         } />
+        {/* Legacy redirect */}
+        <Route path="/ultrium-gpt" element={<Navigate to="/ai-studio/assistant" replace />} />
         <Route path="/small-business" element={<SmallBusiness />} />
         <Route path="/medium-business" element={<MediumBusiness />} />
         <Route path="/enterprise" element={<Enterprise />} />
@@ -386,7 +388,9 @@ function AppRouter() {
         } />
         <Route path="/demos/safescan" element={<SafeScanDemoPage />} />
         <Route path="/demos/safepass" element={<SafePassDemoPage />} />
-        <Route path="/demos/ultriumgpt" element={<UltriumGPTDemoPage />} />
+        <Route path="/demos/ai-studio" element={<AIStudioDemoPage />} />
+        {/* Legacy redirect */}
+        <Route path="/demos/ultriumgpt" element={<Navigate to="/demos/ai-studio" replace />} />
         <Route path="/demos/custom-gpt-builder" element={<CustomGPTBuilderDemoPage />} />
         <Route path="/demos/vanguard" element={<VanguardDemoPage />} />
         <Route path="/demos/darkweb" element={<DarkWebDemoPage />} />

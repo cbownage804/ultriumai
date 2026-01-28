@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
-import aiStudioLogo from '@/assets/ultrium-gpt-logo.png';
+import aiStudioLogo from '@/assets/ai-studio-logo.png';
 import safesuiteLogo from '@/assets/safesuite-logo.png';
 import vanguardLogo from '@/assets/vanguard-logo.png';
 

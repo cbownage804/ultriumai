@@ -59,7 +59,7 @@ const menuItems = [
     title: "AI Assistant",
     icon: Bot,
     items: [
-      { title: "UltriumGPT", url: "/dashboard/ultrium-gpt", icon: Bot },
+      { title: "Studio Assistant", url: "/ai-studio/assistant", icon: Bot },
       { title: "Voice Assistant", url: "/dashboard/voice-assistant", icon: Bot },
       { title: "AI Intelligence", url: "/dashboard/ai/intelligence", icon: Bot },
       { title: "Vision Analyzer", url: "/dashboard/ai/vision", icon: Eye },

@@ -43,11 +43,11 @@ export const WhiteLabelDomain = ({ config, setConfig }: WhiteLabelDomainProps) =
           <div className="bg-muted p-4 rounded-lg space-y-2">
             <div className="flex justify-between items-center">
               <span className="font-mono text-sm">CNAME</span>
-              <span className="font-mono text-sm">your-app.ultriumgpt.com</span>
+              <span className="font-mono text-sm">your-app.aistudio.ultriumai.com</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-mono text-sm">TXT</span>
-              <span className="font-mono text-sm">ultriumgpt-verify=abc123</span>
+              <span className="font-mono text-sm">aistudio-verify=abc123</span>
             </div>
           </div>
         </div>

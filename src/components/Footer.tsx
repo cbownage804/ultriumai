@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Phone, MapPin } from "lucide-react";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
-import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
+import aiStudioLogo from "@/assets/ai-studio-logo.png";
 import vanguardLogo from "@/assets/vanguard-logo.png";
 import { safesuiteLogo } from "@/components/safesuite/SafeSuiteProductIcons";
 import { safeWindowOpen } from "@/utils/security";
@@ -65,7 +65,7 @@ const Footer = () => {
                   className="text-sm text-muted-foreground hover:text-primary flex items-center gap-3 group transition-all duration-200"
                 >
                   <div className="h-8 w-8 rounded-lg bg-black flex items-center justify-center overflow-hidden shadow-md group-hover:shadow-primary/20 transition-shadow">
-                    <img src={ultriumGPTLogo} alt="AI Studio" className="h-6 w-6 object-contain" />
+                    <img src={aiStudioLogo} alt="AI Studio" className="h-6 w-6 object-contain" />
                   </div>
                   <span className="group-hover:translate-x-1 transition-transform">AI Studio™</span>
                 </button>

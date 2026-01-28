@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ultraiumAiLogo from "/lovable-uploads/c622085b-3688-49a3-a53e-cd4d7330f920.png";
-import ultriumGPTLogo from "@/assets/ultrium-gpt-logo.png";
+import aiStudioLogo from "@/assets/ai-studio-logo.png";
 
 
 import {
@@ -126,7 +126,7 @@ export function AppSidebar() {
         <div className="flex items-center space-x-3">
           <NavLink to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
             <div className="h-10 w-10 rounded-lg overflow-hidden bg-black p-1">
-              <img src={ultriumGPTLogo} alt="AI Studio" className="h-full w-full object-contain" />
+              <img src={aiStudioLogo} alt="AI Studio" className="h-full w-full object-contain" />
             </div>
             {!isCollapsed && (
               <span className="text-lg font-bold text-foreground">AI Studio</span>
@@ -162,7 +162,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Studio Assistant - AI-powered guide for AI Studio">
-                  <NavLink to="/dashboard/ultrium-gpt" className={getNavClass}>
+                  <NavLink to="/ai-studio/assistant" className={getNavClass}>
                     <Bot className="h-4 w-4 text-primary" />
                     {!isCollapsed && <span className="ml-2 font-semibold text-primary">Studio Assistant</span>}
                   </NavLink>
