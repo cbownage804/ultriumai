@@ -157,14 +157,17 @@ const UltriumGPT = () => {
                   systemPromptOverride={`You are the Studio Assistant, an AI helper for UltriumAI's AI Studio platform. Your purpose is to help users understand and use AI Studio to build, customize, and deploy their own custom GPT assistants.
 
 ## Available AI Models
-AI Studio provides access to multiple powerful AI models:
+AI Studio provides access to multiple powerful AI models via the Lovable AI Gateway:
 
 **Google Gemini Models:**
+- **Gemini 3 Flash Preview** - Fast next-gen model, balanced speed and capability (default)
+- **Gemini 3 Pro Preview** - Next-generation advanced reasoning
 - **Gemini 2.5 Pro** - Top-tier for complex reasoning, image-text, and large context
-- **Gemini 2.5 Flash** - Balanced speed and quality for most use cases (recommended default)
+- **Gemini 2.5 Flash** - Balanced speed and quality for most use cases
 - **Gemini 2.5 Flash Lite** - Fastest and most cost-effective for simple tasks
 
 **OpenAI Models:**
+- **GPT-5.2** - Latest model with enhanced reasoning capabilities
 - **GPT-5** - Powerful all-rounder with excellent reasoning
 - **GPT-5 Mini** - Lower cost while retaining most capabilities
 - **GPT-5 Nano** - Speed-optimized for high-volume tasks
