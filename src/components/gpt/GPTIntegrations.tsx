@@ -65,8 +65,8 @@ const webhookEvents = [
 export function GPTIntegrations({
   gptId,
   gptName,
-  apiEnabled = false,
-  embedEnabled = false,
+  apiEnabled: initialApiEnabled = false,
+  embedEnabled: initialEmbedEnabled = false,
   onToggleApi,
   onToggleEmbed,
   themeColor = "#3b82f6"
@@ -83,6 +83,28 @@ export function GPTIntegrations({
   const [keyDialogOpen, setKeyDialogOpen] = useState(false);
   const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
   const [newKeyResult, setNewKeyResult] = useState<string | null>(null);
+  
+  // Local state for toggles when callbacks not provided
+  const [apiEnabled, setApiEnabled] = useState(initialApiEnabled);
+  const [embedEnabled, setEmbedEnabled] = useState(initialEmbedEnabled);
+
+  const handleToggleApi = (checked: boolean) => {
+    setApiEnabled(checked);
+    onToggleApi?.(checked);
+    toast({ 
+      title: checked ? "API Access Enabled" : "API Access Disabled",
+      description: checked ? "You can now access this GPT via API" : "API access has been disabled"
+    });
+  };
+
+  const handleToggleEmbed = (checked: boolean) => {
+    setEmbedEnabled(checked);
+    onToggleEmbed?.(checked);
+    toast({ 
+      title: checked ? "Embed Widget Enabled" : "Embed Widget Disabled",
+      description: checked ? "The chat widget is now available for embedding" : "Embed widget has been disabled"
+    });
+  };
 
   // Filter API keys for this GPT
   const gptApiKeys = apiKeys.filter(key => key.gpt_id === gptId || !key.gpt_id);
@@ -175,7 +197,7 @@ export function GPTIntegrations({
                 </div>
                 <Switch 
                   checked={apiEnabled} 
-                  onCheckedChange={onToggleApi}
+                  onCheckedChange={handleToggleApi}
                 />
               </div>
             </CardHeader>
@@ -459,7 +481,7 @@ export function GPTIntegrations({
                 </div>
                 <Switch 
                   checked={embedEnabled} 
-                  onCheckedChange={onToggleEmbed}
+                  onCheckedChange={handleToggleEmbed}
                 />
               </div>
             </CardHeader>
