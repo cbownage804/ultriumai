@@ -64,21 +64,32 @@ serve(async (req) => {
 
     logStep("Database check", { found: !!dbSubscription, email: user.email });
 
-    // If we have recent data (updated within last hour), return it
-    if (dbSubscription && !dbError) {
+    // Cache rules:
+    // - Internal users: ALWAYS bypass cache (so we don't get stuck with old forced tiers)
+    // - If the cached row lacks a stripe_customer_id but shows subscribed=true, treat as stale
+    const bypassCache = Boolean(
+      isInternalUser ||
+      (dbSubscription && !dbError && dbSubscription.subscribed && !dbSubscription.stripe_customer_id)
+    );
+
+    // If we have recent data (updated within last hour), return it (unless bypassing)
+    if (!bypassCache && dbSubscription && !dbError) {
       const lastUpdated = new Date(dbSubscription.updated_at);
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      
+
       if (lastUpdated > oneHourAgo) {
         logStep("Using cached subscription data", { tier: dbSubscription.subscription_tier });
-        return new Response(JSON.stringify({
-          subscribed: dbSubscription.subscribed,
-          subscription_tier: dbSubscription.subscription_tier || "free",
-          subscription_end: dbSubscription.subscription_end
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
+        return new Response(
+          JSON.stringify({
+            subscribed: dbSubscription.subscribed,
+            subscription_tier: dbSubscription.subscription_tier || "free",
+            subscription_end: dbSubscription.subscription_end,
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
       }
     }
 
@@ -119,7 +130,7 @@ serve(async (req) => {
       const subscriptions = await stripe.subscriptions.list({
         customer: customerId,
         status: "active",
-        limit: 1,
+        limit: 20,
       });
       
       const hasActiveSub = subscriptions.data.length > 0;
@@ -127,14 +138,6 @@ serve(async (req) => {
       let subscriptionEnd = null;
 
       if (hasActiveSub) {
-        const subscription = subscriptions.data[0];
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-        logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
-        
-        // Determine subscription tier from product ID
-        const priceId = subscription.items.data[0].price.id;
-        const productId = subscription.items.data[0].price.product as string;
-        
         // Map product IDs to subscription tiers
         const productTierMap: Record<string, string> = {
           // AI Studio MSP Tiers
@@ -160,8 +163,70 @@ serve(async (req) => {
           "prod_TsPzaw5xfK0fGn": "safesuite_business", // SafeSuite Business
           "prod_TsPhrnVrS2CTEI": "safesuite_enterprise", // SafeSuite Enterprise
         };
-        
-        subscriptionTier = productTierMap[productId] || "free";
+
+        // Prefer AI Studio products when multiple subscriptions exist
+        const aiStudioProductIds = new Set([
+          // MSP
+          "prod_TsQhHWymjiY3Zy",
+          "prod_TsPhioFXabALEY",
+          "prod_TsQhJnC8GZPjrI",
+          "prod_TsPhtSBxqC7L0w",
+          "prod_TsQhlE5ORVd1NC",
+          "prod_TsPhFEtb7FOMSg",
+          "prod_TsQhOcMqgRSHxc",
+          "prod_TsPhQ6giwYyau7",
+          // Team
+          "prod_TsQhnzjERazYLu",
+          "prod_TsQhyZilpXT6Te",
+          // Website
+          "prod_TsQhZ1WMs8dFSt",
+          "prod_TsPhgvwhBCk4tn",
+          "prod_TsQhRCAEIpxai1",
+          "prod_TsPhciN9yjVX1c",
+        ]);
+
+        const pickSubscription = () => {
+          const getItemProductId = (item: any): string | null => {
+            const p = item?.price?.product;
+            if (!p) return null;
+            return typeof p === "string" ? p : p.id;
+          };
+
+          // 1) AI Studio subscription
+          const aiStudioSub = subscriptions.data.find((sub: any) =>
+            sub.items?.data?.some((item: any) => {
+              const pid = getItemProductId(item);
+              return pid ? aiStudioProductIds.has(pid) : false;
+            })
+          );
+
+          if (aiStudioSub) return aiStudioSub;
+
+          // 2) Any subscription that maps to a known tier
+          const knownSub = subscriptions.data.find((sub: any) =>
+            sub.items?.data?.some((item: any) => {
+              const pid = getItemProductId(item);
+              return pid ? Boolean(productTierMap[pid]) : false;
+            })
+          );
+
+          return knownSub || subscriptions.data[0];
+        };
+
+        const subscription = pickSubscription();
+        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        logStep("Active subscription selected", { subscriptionId: subscription.id, endDate: subscriptionEnd });
+
+        // Pick the first line item that maps to a known tier
+        const selectedItem = subscription.items.data.find((item: any) => {
+          const pid = typeof item.price.product === "string" ? item.price.product : item.price.product?.id;
+          return pid ? Boolean(productTierMap[pid]) : false;
+        }) || subscription.items.data[0];
+
+        const priceId = selectedItem.price.id;
+        const productId = typeof selectedItem.price.product === "string" ? selectedItem.price.product : selectedItem.price.product?.id;
+
+        subscriptionTier = (productId && productTierMap[productId]) || "free";
         logStep("Determined subscription tier", { priceId, productId, subscriptionTier });
       } else {
         logStep("No active subscription found");
