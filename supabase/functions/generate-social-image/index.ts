@@ -32,12 +32,13 @@ const getProductLogoUrl = (product: string, origin?: string | null): string => {
     safeassist: 'safeassist-logo-horizontal.png',
     safesuite: 'safesuite-logo.png',
     ultriumgpt: 'ultrium-gpt-logo.png',
-    aistudio: 'ultrium-gpt-logo.png', // AI Studio uses the same logo as UltriumGPT
+    aistudio: 'ultrium-gpt-logo.png',
+    ultriumai: 'ultriumai-logo.png', // Default fallback logo
     vanguard: 'vanguard-logo.png',
   };
 
   const base = origin || 'https://ultriumai.lovable.app';
-  const file = logoMap[product] || 'safesuite-logo.png';
+  const file = logoMap[product] || 'ultriumai-logo.png';
   return new URL(`/logos/${file}`, base).toString();
 };
 
@@ -283,11 +284,11 @@ COLOR PALETTE: Deep blues, cyans, teals, with accent colors. Dark backgrounds pr
     }
 
     // Deterministic post-processing (no AI editing):
-    // - enforce exact 1200x628 full-bleed dimensions
+    // - enforce exact 1080x1080 full-bleed dimensions
     // - ALWAYS overlay the REAL logo from /public/logos (prevents model re-drawing)
-    //   If no product detected, default to SafeSuite as the umbrella Ultrium brand watermark.
+    //   If no product detected, default to UltriumAI as the brand watermark.
     const origin = req.headers.get('origin');
-    const watermarkProduct = detectedProduct || 'safesuite';
+    const watermarkProduct = detectedProduct || 'ultriumai';
     const logoUrl = getProductLogoUrl(watermarkProduct, origin);
     generatedImage = await ensurePng1200x629AndWatermark({
       imageDataUrl: generatedImage,
