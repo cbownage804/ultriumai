@@ -170,7 +170,7 @@ const AIStudioProductPage = () => {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
-              <Link to="/pricing#ai-studio">
+              <Link to="/pricing/ai-studio">
                 View Pricing
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -433,7 +433,7 @@ const AIStudioProductPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="bg-primary hover:bg-primary/90" asChild>
-              <Link to="/pricing#ai-studio">
+              <Link to="/pricing/ai-studio">
                 View Pricing
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
